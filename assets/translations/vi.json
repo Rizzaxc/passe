@@ -1,0 +1,216 @@
+{
+  "profileView": {
+    "genderLabel": "Giới Tính",
+    "ageGroupLabel": "Nhóm Tuổi",
+    "industryLabel": "Ngành Nghề",
+    "networkLabel": "Network",
+    "network_selection_title": "Chọn Network",
+    "selected_networks": "Network Đã Chọn",
+    "no_networks_found": "Không tìm thấy network nào theo từ khoá",
+    "industry_selection_title": "Chọn Ngành Nghề",
+    "playtimeLabel": "Lịch Hằng Tuần",
+    "network_feature_explanation": "Bạn chưa chọn tổ chức nào. Chọn tối đa 2 cơ quan/ tổ chức/ trường học bạn đã hoặc đang là thành viên. Pubox sẽ kết nối bạn đến những người cùng network.",
+    "industry_feature_explanation": "Chọn tối đa 2 ngạch bạn đang làm việc. Pubox sẽ kết nối bạn đến những người cùng ngành nghề.",
+    "profile_feature_explanation": "Điền profile để Pubox giúp bạn kết nối với người khác tốt hơn.",
+    "alumni": "Cựu Thành viên",
+    "currentMember": "Thành viên hiện tại",
+    "toggleAlumniStatus": "Đổi trạng thái thành viên"
+  },
+  "timeslot": {
+    "dayOfWeek": {
+      "label": "Ngày Trong Tuần",
+      "everyday": "Hàng Ngày",
+      "monday": "Thứ 2",
+      "tuesday": "Thứ 3",
+      "wednesday": "Thứ 4",
+      "thursday": "Thứ 5",
+      "friday": "Thứ 6",
+      "saturday": "Thứ 7",
+      "sunday": "Chủ Nhật",
+      "even": "Ngày Chẵn (2,4,6)",
+      "odd": "Ngày Lẻ (3,5,7)",
+      "weekend": "Cuối Tuần",
+      "shortName": {
+        "everyday": "HN",
+        "monday": "T2",
+        "tuesday": "T3",
+        "wednesday": "T4",
+        "thursday": "T5",
+        "friday": "T6",
+        "saturday": "T7",
+        "sunday": "CN",
+        "even": "246",
+        "odd": "357",
+        "weekend": "CT"
+      }
+    },
+    "dayChunk": {
+      "label": "Khoảng Giờ",
+      "early": "Sáng (4h-9h)",
+      "midday": "Trưa (9h-14h)",
+      "noon": "Chiều (14h-18h)",
+      "night": "Tối (18h-24h)",
+      "shortName": {
+        "early": "Sáng",
+        "midday": "Trưa",
+        "noon": "Chiều",
+        "night": "Tối"
+      }
+    }
+  },
+  "gender": {
+    "male": "Nam",
+    "female": "Nữ"
+  },
+  "ageGroup": {
+    "student": "Học Sinh & Sinh Viên",
+    "mature": "Trưởng Thành",
+    "middleAge": "Trung Niên"
+  },
+  "industry": {
+    "agriculture": "Nông Nghiệp",
+    "construction": "Xây Dựng",
+    "culinaryTourism": "Ẩm Thực & Du Lịch",
+    "educationAcademia": "Giáo Dục & Nghiên Cứu",
+    "energy": "Năng Lượng",
+    "entertainmentContentCreation": "Giải Trí & Sáng Tạo Nội Dung",
+    "fashionBeauty": "Thời Trang & Sắc Đẹp",
+    "financeConsulting": "Finance & Consulting",
+    "government": "Hành Chính Chính Phủ",
+    "healthcare": "Y Tế",
+    "legalServices": "Luật",
+    "manufacturing": "Sản Xuất",
+    "mediaCommunications": "Báo Chí & Media",
+    "nonprofitCharity": "Non-profit & Từ Thiện",
+    "realEstate": "Bất Động Sản",
+    "retailOnlineCommerce": "Bán Lẻ & TMĐT",
+    "technology": "Công Nghệ",
+    "transportation": "Vận Tải"
+  },
+  "networkCategory": {
+    "highSchool": "Trường Trung Học",
+    "giftedHighSchool": "Trường Chuyên",
+    "university": "Đại Học",
+    "company": "Công Ty"
+  },
+  "homeTab": {
+    "filter": {
+      "location": "Địa điểm",
+      "time": "Thời gian",
+      "weekdayLabel": "Thứ trong tuần",
+      "dayChunkLabel": "Buổi"
+    },
+    "empty": {
+      "title": "Không tìm thấy kết quả",
+      "message": "Điều chỉnh bộ lọc hoặc quay lại sau"
+    },
+    "error": {
+      "title": "Lỗi tải dữ liệu",
+      "retry": "Thử lại"
+    },
+    "teammate": {
+      "title": "Đồng đội"
+    },
+    "challenger": {
+      "title": "Đối thủ"
+    },
+    "neutral": {
+      "title": "Trung lập",
+      "filter": {
+        "all": "Tất Cả",
+        "coach": "Huấn Luyện Viên",
+        "referee": "Trọng Tài"
+      },
+      "empty": {
+        "title": "Không tìm thấy chuyên gia",
+        "message": "Thử điều chỉnh bộ lọc hoặc quay lại sau"
+      },
+      "book": "Đặt Lịch",
+      "experience": "{years} năm kinh nghiệm",
+      "reviews": "{count} đánh giá",
+      "role": {
+        "coach": "Huấn Luyện Viên",
+        "referee": "Trọng Tài"
+      },
+      "booking": {
+        "title": "Đặt Lịch Hẹn",
+        "confirm": "Xác Nhận Đặt Lịch",
+        "selectService": "Chọn Dịch Vụ",
+        "selectDate": "Chọn Ngày",
+        "selectTime": "Chọn Giờ",
+        "noSlots": "Không có khung giờ trống cho ngày này",
+        "notes": "Ghi Chú Thêm",
+        "notesHint": "Thêm yêu cầu đặc biệt hoặc ghi chú...",
+        "summary": "Tóm Tắt Đặt Lịch",
+        "service": "Dịch Vụ",
+        "date": "Ngày",
+        "time": "Giờ",
+        "total": "Tổng Cộng",
+        "success": "Đặt lịch thành công!",
+        "error": "Đặt lịch thất bại. Vui lòng thử lại."
+      },
+      "details": {
+        "bio": "Tiểu Sử"
+      }
+    },
+    "venue": {
+      "title": "Sân tập & Tụ Điểm"
+    }
+  },
+  "manageTab": {
+    "title": "Quản Lý",
+    "schedule": {
+      "title": "Thời gian biểu",
+      "today": "Hôm nay",
+      "tomorrow": "Ngày mai",
+      "participants": "{count} người tham gia",
+      "empty": {
+        "title": "Không có lịch hẹn",
+        "message": "Các cuộc hẹn sắp tới sẽ hiển thị ở đây"
+      }
+    },
+    "lobby": {
+      "title": "Lobby",
+      "participants": "{current}/{max} người chơi",
+      "scheduledFor": "Đã lên lịch cho {time}",
+      "createNew": "Tạo Lobby Mới",
+      "createFirst": "Tạo Lobby Đầu Tiên",
+      "navigate": "Vào Phòng Chơi",
+      "navigateMessage": "Đang mở phòng {lobbyTitle}...",
+      "createMessage": "Tính năng tạo lobby sắp ra mắt!",
+      "empty": {
+        "title": "Không tìm thấy lobby",
+        "message": "Tạo lobby để bắt đầu chơi với người khác"
+      }
+    }
+  },
+  "createLobby": {
+    "title": "Tạo Phòng Chơi",
+    "create": "Tạo",
+    "lobbyName": "Tên Phòng",
+    "lobbyNameHint": "Nhập tên cho phòng chơi của bạn",
+    "description": "Mô Tả",
+    "descriptionHint": "Mô tả phòng chơi của bạn (không bắt buộc)",
+    "sport": "Môn Thể Thao",
+    "sportLocked": "Không thể thay đổi môn thể thao",
+    "visibility": "Hiển Thị",
+    "public": "Công Khai",
+    "publicDescription": "Bất kỳ ai cũng có thể tìm và tham gia phòng của bạn",
+    "private": "Riêng Tư",
+    "privateDescription": "Chỉ những người có đường dẫn mới có thể tham gia",
+    "homeGround": "Sân Nhà",
+    "specificLocation": "Địa Điểm Cụ Thể",
+    "specificLocationHint": "Nhập địa điểm cụ thể",
+    "playtime": "Thời Gian Chơi",
+    "dayOfWeek": "Ngày Trong Tuần",
+    "timeSlot": "Khung Giờ",
+    "setTimeslot": "Đặt Khung Giờ",
+    "maxParticipants": "Số Người Tham Gia Tối Đa",
+    "participantCount": "{count} người tham gia"
+  },
+  "sport": {
+    "basketball": "Bóng Rổ"
+  },
+  "not_set": "Chưa Thiết Lập",
+  "done": "Xong"
+}

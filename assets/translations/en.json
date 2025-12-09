@@ -1,0 +1,209 @@
+{
+  "profileView": {
+    "genderLabel": "Gender",
+    "ageGroupLabel": "Age Group",
+    "industryLabel": "Industry",
+    "networkLabel": "Network",
+    "playtimeLabel": "Playtime",
+    "network_selection_title": "Select Networks",
+    "search_network": "Search networks...",
+    "selected_networks": "Selected Networks",
+    "no_networks_found": "No networks found matching the search criteria",
+    "industry_selection_title": "Select Industries",
+    "network_feature_explanation": "Choose at most 2 schools/ universities/ companies that you were or are a part of. Pubox will connect you with people who share your networks.",
+    "industry_feature_explanation": "Choose at most 2 industries that you work in. Pubox will connect you with people who share your industries.",
+    "profile_feature_explanation": "Fill in your profile will help Pubox connect you more effectively."
+  },
+  "timeslot": {
+    "dayOfWeek": {
+      "label": "Day Of Week",
+      "everyday": "Everyday",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday",
+      "even": "Mon-Wed-Fri",
+      "odd": "Tue-Thu-Sat",
+      "weekend": "Weekend",
+      "shortName": {
+        "everyday": "All",
+        "monday": "Mon",
+        "tuesday": "Tue",
+        "wednesday": "Wed",
+        "thursday": "Thu",
+        "friday": "Fri",
+        "saturday": "Sat",
+        "sunday": "Sun",
+        "even": "M-W-F",
+        "odd": "T-Th-Sa",
+        "weekend": "Wkn"
+      }
+    },
+    "dayChunk": {
+      "label": "Time Range",
+      "early": "Early (4am-9am)",
+      "midday": "Midday (9am-2pm)",
+      "noon": "Afternoon (2pm-6pm)",
+      "night": "Evening (6pm-12am)",
+      "shortName": {
+        "early": "Early",
+        "midday": "Midday",
+        "noon": "Afternoon",
+        "night": "Evening"
+      }
+    }
+  },
+  "gender": {
+    "male": "Male",
+    "female": "Female"
+  },
+  "ageGroup": {
+    "student": "Student",
+    "mature": "Mature",
+    "middleAge": "Middle Age"
+  },
+  "industry": {
+    "agriculture": "Agriculture",
+    "construction": "Construction",
+    "culinaryTourism": "Culinary & Tourism",
+    "educationAcademia": "Education & Academia",
+    "energy": "Energy",
+    "entertainmentContentCreation": "Entertainment & Content Creation",
+    "fashionBeauty": "Fashion & Beauty",
+    "financeConsulting": "Finance & Consulting",
+    "government": "Government",
+    "healthcare": "Healthcare",
+    "legalServices": "Legal Services",
+    "manufacturing": "Manufacturing",
+    "mediaCommunications": "Media & Communications",
+    "nonprofitCharity": "Non-profit & Charity",
+    "realEstate": "Real Estate",
+    "retailOnlineCommerce": "Retail & Online Commerce",
+    "technology": "Technology",
+    "transportation": "Transportation"
+  },
+  "networkCategory": {
+    "highSchool": "High School",
+    "giftedHighSchool": "Gifted High School",
+    "university": "University",
+    "company": "Company"
+  },
+  "homeTab": {
+    "title": "Home",
+    "filter": {
+      "location": "Location",
+      "time": "Time",
+      "weekdayLabel": "Weekday",
+      "dayChunkLabel": "Day Chunk"
+    },
+    "empty": {
+      "title": "No results found",
+      "message": "Try adjusting your filters or check back later"
+    },
+    "error": {
+      "title": "Error loading teammates",
+      "retry": "Retry"
+    },
+    "teammate": {
+      "title": "Teammates"
+    },
+    "professional": {
+      "title": "Professionals",
+      "filter": {
+        "all": "All",
+        "coach": "Coach",
+        "referee": "Referee"
+      },
+      "empty": {
+        "title": "No professionals found",
+        "message": "Try adjusting your filters or check back later"
+      },
+      "book": "Book",
+      "experience": "{years} years experience",
+      "reviews": "{count} reviews",
+      "role": {
+        "coach": "Coach",
+        "referee": "Referee"
+      },
+      "booking": {
+        "title": "Book Session",
+        "confirm": "Confirm Booking",
+        "selectService": "Select Service",
+        "selectDate": "Select Date",
+        "selectTime": "Select Time",
+        "noSlots": "No available time slots for this date",
+        "notes": "Additional Notes",
+        "notesHint": "Add any special requests or notes...",
+        "summary": "Booking Summary",
+        "service": "Service",
+        "date": "Date",
+        "time": "Time",
+        "total": "Total",
+        "success": "Booking confirmed successfully!",
+        "error": "Failed to book session. Please try again."
+      },
+      "details": {
+        "bio": "Bio"
+      }
+    }
+  },
+  "manageTab": {
+    "title": "Manage",
+    "schedule": {
+      "title": "Schedule",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "participants": "{count} participants",
+      "empty": {
+        "title": "No appointments scheduled",
+        "message": "Your upcoming appointments will appear here"
+      }
+    },
+    "lobby": {
+      "title": "Lobbies",
+      "participants": "{current}/{max} players",
+      "scheduledFor": "Scheduled for {time}",
+      "createNew": "Create New Lobby",
+      "createFirst": "Create Your First Lobby",
+      "navigate": "Navigate to Lobby",
+      "navigateMessage": "Opening {lobbyTitle} lobby...",
+      "createMessage": "Lobby creation coming soon!",
+      "empty": {
+        "title": "No lobbies found",
+        "message": "Create a lobby to start playing with others"
+      }
+    }
+  },
+  "createLobby": {
+    "title": "Create Lobby",
+    "create": "Create",
+    "lobbyName": "Lobby Name",
+    "lobbyNameHint": "Enter a name for your lobby",
+    "description": "Description",
+    "descriptionHint": "Describe your lobby (optional)",
+    "sport": "Sport",
+    "sportLocked": "Sport selection is locked",
+    "visibility": "Visibility",
+    "public": "Public",
+    "publicDescription": "Anyone can find and join your lobby",
+    "private": "Private",
+    "privateDescription": "Only people with the link can join",
+    "homeGround": "Home Ground",
+    "specificLocation": "Specific Location",
+    "specificLocationHint": "Enter a specific location",
+    "playtime": "Playtime",
+    "dayOfWeek": "Day of Week",
+    "timeSlot": "Time Slot",
+    "setTimeslot": "Set Timeslot",
+    "maxParticipants": "Maximum Participants",
+    "participantCount": "{count} participants"
+  },
+  "sport": {
+    "basketball": "Basketball"
+  },
+  "not_set": "Not set",
+  "done": "Done"
+}

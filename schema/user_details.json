@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Freeform data for user profile",
+  "type": "object",
+  "properties": {
+    "gender": {
+      "type": "string"
+    },
+    "age_group": {
+      "type": "string"
+    },
+    "playtime": {
+      "type": "array"
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "city": {
+          "type": "integer"
+        },
+        "districts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "sport": {
+      "description": "Sport profile for the user",
+      "type": "object",
+      "properties": {
+        "1": {
+          "title": "Soccer",
+          "type": "object",
+          "properties": {
+            "skill": {
+              "type": "integer"
+            }
+          }
+        },
+        "2": {
+          "title": "Basketball",
+          "type": "object",
+          "properties": {
+            "skill": {
+              "type": "integer"
+            }
+          }
+        },
+        "3": {
+          "title": "Badminton",
+          "type": "object",
+          "properties": {
+            "skill": {
+              "type": "integer"
+            }
+          }
+        },
+        "4": {
+          "title": "Tennis",
+          "type": "object",
+          "properties": {
+            "skill": {
+              "type": "integer"
+            }
+          }
+        },
+        "5": {
+          "title": "Pickleball",
+          "type": "object",
+          "properties": {
+            "skill": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
+  }
+}
