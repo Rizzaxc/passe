@@ -37,7 +37,7 @@ find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
 - Generic, omni-present features or models go into /core
 - Avoid nesting, prefer a flat folder structure
 - Use Riverpod for state management. Avoid using Provider
-- App-level model is created with freezed. persisted in json form
+- App-level model is created with freezed. persisted in json form. app state persistence key is _stateKey (mostly for riverpod providers)
 - If an entity has db id and its app model is enum, use the db value as the enum value
 - Use JsonEnum whenever possible
 - Use SharedPreferences to persist important app states

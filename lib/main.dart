@@ -10,13 +10,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:pubox/ui/theme.dart';
+import 'package:forui/forui.dart';
+import 'ui/main.dart' as ui;
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:talker_riverpod_logger/talker_riverpod_logger_observer.dart';
 import 'package:talker_riverpod_logger/talker_riverpod_logger_settings.dart';
-import 'package:toastification/toastification.dart';
 
 import 'logger/observer.dart';
 import 'router.dart';
@@ -36,7 +36,7 @@ Future<void> main() async {
   assert(env == envLocal || env == envTest || env == envLive);
 
   final supabaseURL = dotenv.env['SUPABASE_URL']!;
-  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY']!;
+  final supabaseAnonKey = dotenv.env['SUPABASE_PUBLIC_KEY']!;
   await Supabase.initialize(url: supabaseURL, anonKey: supabaseAnonKey);
 
   WidgetsFlutterBinding.ensureInitialized();
@@ -100,19 +100,14 @@ class Pubox extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
 
-    return ToastificationWrapper(
-      config: const ToastificationConfig(
-        alignment: Alignment.topCenter,
-        animationDuration: Duration(milliseconds: 250),
-      ),
-      child: MaterialApp.router(
-        theme: lightTheme,
-        title: 'Pubox',
-        routerConfig: router,
-        localizationsDelegates: context.localizationDelegates,
-        supportedLocales: context.supportedLocales,
-        locale: context.locale,
-      ),
+    return MaterialApp.router(
+      title: 'Pubox',
+      builder: (_, child) =>
+          FAnimatedTheme(data: ui.pbThemeLight, child: child!),
+      routerConfig: router,
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
     );
   }
 }
@@ -132,18 +127,14 @@ class ScaffoldWithNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: navigationShell,
       extendBody: true,
+
       bottomNavigationBar: AnimatedBottomNavigationBar(
         activeIndex: navigationShell.currentIndex,
-        backgroundColor: colorScheme.surface,
         splashRadius: 0,
-        inactiveColor: colorScheme.onSurfaceVariant,
-        activeColor: colorScheme.primary,
         iconSize: 28,
-        borderColor: colorScheme.outline,
         onTap: (int index) => _onTap(context, index),
         gapLocation: GapLocation.center,
         notchSmoothness: NotchSmoothness.softEdge,

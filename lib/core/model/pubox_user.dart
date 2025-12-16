@@ -9,7 +9,8 @@ part 'pubox_user.g.dart';
 abstract class PuboxUser with _$PuboxUser {
   const factory PuboxUser({
     String? id,
-    @Default('Guest') String displayName,
+    @Default('Guest') String username,
+    @Default('0000') String tagNumber,
     String? email,
     UserDetails? details,
   }) = _PuboxUser;

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PuboxUser {
 
- String? get id; String get displayName; String? get email; UserDetails? get details;
+ String? get id; String get username; String get tagNumber; String? get email; UserDetails? get details;
 /// Create a copy of PuboxUser
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $PuboxUserCopyWith<PuboxUser> get copyWith => _$PuboxUserCopyWithImpl<PuboxUser>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PuboxUser&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.email, email) || other.email == email)&&(identical(other.details, details) || other.details == details));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PuboxUser&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.tagNumber, tagNumber) || other.tagNumber == tagNumber)&&(identical(other.email, email) || other.email == email)&&(identical(other.details, details) || other.details == details));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,displayName,email,details);
+int get hashCode => Object.hash(runtimeType,id,username,tagNumber,email,details);
 
 @override
 String toString() {
-  return 'PuboxUser(id: $id, displayName: $displayName, email: $email, details: $details)';
+  return 'PuboxUser(id: $id, username: $username, tagNumber: $tagNumber, email: $email, details: $details)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $PuboxUserCopyWith<$Res>  {
   factory $PuboxUserCopyWith(PuboxUser value, $Res Function(PuboxUser) _then) = _$PuboxUserCopyWithImpl;
 @useResult
 $Res call({
- String? id, String displayName, String? email, UserDetails? details
+ String? id, String username, String tagNumber, String? email, UserDetails? details
 });
 
 
@@ -65,10 +65,11 @@ class _$PuboxUserCopyWithImpl<$Res>
 
 /// Create a copy of PuboxUser
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? displayName = null,Object? email = freezed,Object? details = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? username = null,Object? tagNumber = null,Object? email = freezed,Object? details = freezed,}) {
   return _then(_self.copyWith(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String?,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
+as String?,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
+as String,tagNumber: null == tagNumber ? _self.tagNumber : tagNumber // ignore: cast_nullable_to_non_nullable
 as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String?,details: freezed == details ? _self.details : details // ignore: cast_nullable_to_non_nullable
 as UserDetails?,
@@ -168,10 +169,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id,  String displayName,  String? email,  UserDetails? details)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id,  String username,  String tagNumber,  String? email,  UserDetails? details)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PuboxUser() when $default != null:
-return $default(_that.id,_that.displayName,_that.email,_that.details);case _:
+return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.details);case _:
   return orElse();
 
 }
@@ -189,10 +190,10 @@ return $default(_that.id,_that.displayName,_that.email,_that.details);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id,  String displayName,  String? email,  UserDetails? details)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id,  String username,  String tagNumber,  String? email,  UserDetails? details)  $default,) {final _that = this;
 switch (_that) {
 case _PuboxUser():
-return $default(_that.id,_that.displayName,_that.email,_that.details);case _:
+return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.details);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -209,10 +210,10 @@ return $default(_that.id,_that.displayName,_that.email,_that.details);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id,  String displayName,  String? email,  UserDetails? details)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id,  String username,  String tagNumber,  String? email,  UserDetails? details)?  $default,) {final _that = this;
 switch (_that) {
 case _PuboxUser() when $default != null:
-return $default(_that.id,_that.displayName,_that.email,_that.details);case _:
+return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.details);case _:
   return null;
 
 }
@@ -224,11 +225,12 @@ return $default(_that.id,_that.displayName,_that.email,_that.details);case _:
 @JsonSerializable()
 
 class _PuboxUser implements PuboxUser {
-  const _PuboxUser({this.id, this.displayName = 'Guest', this.email, this.details});
+  const _PuboxUser({this.id, this.username = 'Guest', this.tagNumber = '0000', this.email, this.details});
   factory _PuboxUser.fromJson(Map<String, dynamic> json) => _$PuboxUserFromJson(json);
 
 @override final  String? id;
-@override@JsonKey() final  String displayName;
+@override@JsonKey() final  String username;
+@override@JsonKey() final  String tagNumber;
 @override final  String? email;
 @override final  UserDetails? details;
 
@@ -245,16 +247,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PuboxUser&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.email, email) || other.email == email)&&(identical(other.details, details) || other.details == details));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PuboxUser&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.tagNumber, tagNumber) || other.tagNumber == tagNumber)&&(identical(other.email, email) || other.email == email)&&(identical(other.details, details) || other.details == details));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,displayName,email,details);
+int get hashCode => Object.hash(runtimeType,id,username,tagNumber,email,details);
 
 @override
 String toString() {
-  return 'PuboxUser(id: $id, displayName: $displayName, email: $email, details: $details)';
+  return 'PuboxUser(id: $id, username: $username, tagNumber: $tagNumber, email: $email, details: $details)';
 }
 
 
@@ -265,7 +267,7 @@ abstract mixin class _$PuboxUserCopyWith<$Res> implements $PuboxUserCopyWith<$Re
   factory _$PuboxUserCopyWith(_PuboxUser value, $Res Function(_PuboxUser) _then) = __$PuboxUserCopyWithImpl;
 @override @useResult
 $Res call({
- String? id, String displayName, String? email, UserDetails? details
+ String? id, String username, String tagNumber, String? email, UserDetails? details
 });
 
 
@@ -282,10 +284,11 @@ class __$PuboxUserCopyWithImpl<$Res>
 
 /// Create a copy of PuboxUser
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? displayName = null,Object? email = freezed,Object? details = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? username = null,Object? tagNumber = null,Object? email = freezed,Object? details = freezed,}) {
   return _then(_PuboxUser(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String?,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
+as String?,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
+as String,tagNumber: null == tagNumber ? _self.tagNumber : tagNumber // ignore: cast_nullable_to_non_nullable
 as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String?,details: freezed == details ? _self.details : details // ignore: cast_nullable_to_non_nullable
 as UserDetails?,
