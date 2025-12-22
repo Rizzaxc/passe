@@ -34,6 +34,7 @@ class AuthController extends _$AuthController {
           event == AuthChangeEvent.tokenRefreshed) {
         // Reload state from server; if offline/unreachable, fall back to cached data (within TTL).
         state = const AsyncValue.loading();
+
         state = await AsyncValue.guard(() async {
           try {
             return await _loadFromServer();
@@ -119,9 +120,8 @@ class AuthController extends _$AuthController {
       );
       // Let the auth listener update the state; no manual state setting here.
       return null;
-    } on AuthException catch (_) {
-      // Propagate Supabase auth errors to the caller
-      rethrow;
+    } on AuthException catch (e) {
+      throw Exception(e.message);
     } catch (_) {
       rethrow;
     }
@@ -138,7 +138,7 @@ class AuthController extends _$AuthController {
       // State will be updated via the auth listener
     } on AuthException catch (e, st) {
       state = AsyncValue.error(e, st);
-      rethrow;
+      throw Exception(e.message);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;
@@ -154,7 +154,8 @@ class AuthController extends _$AuthController {
       // State will be updated via the auth listener
     } on AuthException catch (e, st) {
       state = AsyncValue.error(e, st);
-      rethrow;
+      throw Exception(e.message);
+
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;
@@ -166,7 +167,6 @@ class AuthController extends _$AuthController {
     required String password,
     Map<String, dynamic>? data,
   }) async {
-    state = const AsyncValue.loading();
     try {
       // Optionally pass user metadata via `data`
       await supabase.auth.signUp(
@@ -177,7 +177,6 @@ class AuthController extends _$AuthController {
       // After sign up, depending on email confirmation settings, there might be no session.
       if (supabase.auth.currentSession == null) {
         // No session yet (e.g., email confirmation required). Keep state null.
-        state = const AsyncValue.data(null);
         return null;
       }
 
@@ -188,7 +187,7 @@ class AuthController extends _$AuthController {
         // nullify the session and signal retry.
         await supabase.auth.signOut();
         throw TimeoutException(
-          'Account initialization did not complete in time. Please try again.',
+          'Account initialization did not complete in time. Please try logging in.',
         );
       }
 
@@ -198,11 +197,10 @@ class AuthController extends _$AuthController {
     } on TimeoutException catch (_) {
       // A deliberate timeout to allow the UI to prompt retry
       rethrow;
-    } on AuthException catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
+    } on AuthException catch (e) {
+      throw Exception(e.message);
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      // report the exception
       rethrow;
     }
   }
@@ -216,7 +214,7 @@ class AuthController extends _$AuthController {
       rethrow;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
-      rethrow;
+      // report the exception
     }
   }
 

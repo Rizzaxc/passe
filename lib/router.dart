@@ -43,8 +43,10 @@ GoRouter router(Ref ref) {
       final isLoggingIn = state.uri.path == const AuthRoute().location;
       switch (user.value) {
         case AsyncError():
+          if (isLoggingIn) return null;
           return const AuthRoute().location;
         case AsyncLoading():
+          if (isLoggingIn) return null;
           return const SplashRoute().location;
         case AsyncData(value: null):
           if (isSplash || !isLoggingIn) return const AuthRoute().location;

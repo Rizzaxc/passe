@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_controller.dart';
 
@@ -25,9 +26,19 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
       if (state == null || !state.validate()) return;
 
       state.save();
-      await ref
-          .read(authControllerProvider.notifier)
-          .signInWithPassword(email: email, password: pass);
+      try {
+        await ref
+            .read(authControllerProvider.notifier)
+            .signInWithPassword(email: email, password: pass);
+      } catch (e) {
+        if (!context.mounted) return;
+        showFToast(
+          context: context,
+          title: const Text('Login Failed'),
+          description: Text(e.toString()),
+          alignment: .bottomCenter,
+        );
+      }
     }
 
     Future<void> onRegister() async {
@@ -35,9 +46,19 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
       if (state == null || !state.validate()) return;
       state.save();
 
-      await ref
-          .read(authControllerProvider.notifier)
-          .signUpWithPassword(email: email, password: pass);
+      try {
+        await ref
+            .read(authControllerProvider.notifier)
+            .signUpWithPassword(email: email, password: pass);
+      } catch (e) {
+        if (!context.mounted) return;
+        showFToast(
+          context: context,
+          title: const Text('SignUp Failed'),
+          description: Text(e.toString()),
+          alignment: .bottomCenter,
+        );
+      }
     }
 
     return FScaffold(
@@ -126,6 +147,20 @@ class SocialAuthSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    Future<void> handleAuthAction(Future<void> Function() action, String errorTitle) async {
+      try {
+        await action();
+      } catch (e) {
+        if (!context.mounted) return;
+        showFToast(
+          context: context,
+          title: Text(errorTitle),
+          description: Text(e.toString()),
+          alignment: .bottomCenter,
+        );
+      }
+    }
+
     return Column(
       children: [
         const SizedBox(height: 16),
@@ -134,24 +169,30 @@ class SocialAuthSection extends ConsumerWidget {
 
         FButton(
           style: FButtonStyle.outline(),
-          onPress: () =>
-              ref.read(authControllerProvider.notifier).signInWithGoogle(),
+          onPress: () => handleAuthAction(
+            () => ref.read(authControllerProvider.notifier).signInWithGoogle(),
+            'Google Login Failed',
+          ),
           prefix: const Icon(FontAwesomeIcons.google),
           child: const Text('Continue with Google'),
         ),
         const SizedBox(height: 12),
         FButton(
           style: FButtonStyle.outline(),
-          onPress: () =>
-              ref.read(authControllerProvider.notifier).signInWithApple(),
+          onPress: () => handleAuthAction(
+            () => ref.read(authControllerProvider.notifier).signInWithApple(),
+            'Apple Login Failed',
+          ),
           prefix: const Icon(FontAwesomeIcons.apple),
           child: const Text('Continue with Apple'),
         ),
         const SizedBox(height: 12),
         FButton(
           style: FButtonStyle.secondary(),
-          onPress: () =>
-              ref.read(authControllerProvider.notifier).continueAsGuest(),
+          onPress: () => handleAuthAction(
+            () => ref.read(authControllerProvider.notifier).continueAsGuest(),
+            'Guest Login Failed',
+          ),
           prefix: const Icon(FIcons.forward),
           child: const Text('Continue as Guest'),
         ),

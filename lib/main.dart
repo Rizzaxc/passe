@@ -103,7 +103,7 @@ class Pubox extends HookConsumerWidget {
       title: 'Pubox',
       restorationScopeId: 'app',
       builder: (_, child) =>
-          FAnimatedTheme(data: ui.pbThemeLight, child: child!),
+          FAnimatedTheme(data: ui.pbThemeLight, child: FToaster(child: child!)),
       routerConfig: router,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
