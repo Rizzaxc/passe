@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -102,6 +101,7 @@ class Pubox extends HookConsumerWidget {
 
     return MaterialApp.router(
       title: 'Pubox',
+      restorationScopeId: 'app',
       builder: (_, child) =>
           FAnimatedTheme(data: ui.pbThemeLight, child: child!),
       routerConfig: router,
@@ -118,11 +118,12 @@ class ScaffoldWithNavBar extends StatelessWidget {
 
   final StatefulNavigationShell navigationShell;
 
+  // TODO: change
   static final tabIcons = <IconData>[
-    CupertinoIcons.house_fill,
-    Icons.edit_calendar_rounded,
-    FontAwesomeIcons.heartPulse,
-    CupertinoIcons.profile_circled,
+    FIcons.house,
+    FIcons.waypoints,
+    FIcons.activity,
+    FIcons.user,
   ];
 
   @override

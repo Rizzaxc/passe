@@ -3,7 +3,22 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 
-enum Sport { others, soccer, basketball, badminton, tennis, pickleball }
+enum Sport {
+  others,
+  soccer,
+  basketball,
+  badminton,
+  tennis,
+  pickleball;
+
+  String getLocalizedName(BuildContext context) {
+    return context.tr('sport.$name');
+  }
+
+  static List<String> getAllLocalizedNames(BuildContext context) {
+    return Sport.values.map((e) => e.getLocalizedName(context)).toList();
+  }
+}
 
 @JsonEnum()
 enum DayChunk {

@@ -34,7 +34,7 @@ final class SelectedSportStateProvider
 }
 
 String _$selectedSportStateHash() =>
-    r'099d16637369ede1d6e8d4ab29118024cccfdffc';
+    r'bdbed74668dc35e21231481543aabe63695040a4';
 
 abstract class _$SelectedSportState extends $AsyncNotifier<Sport> {
   FutureOr<Sport> build();

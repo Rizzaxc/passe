@@ -44,7 +44,7 @@ class AuthController extends _$AuthController {
       } else if (event == AuthChangeEvent.signedOut) {
         // Clear state
         state = const AsyncValue.loading();
-        await _revertToGuest();
+        await _userPrefs.clearUserData();
         state = const AsyncValue.data(null);
       }
     });
@@ -57,17 +57,9 @@ class AuthController extends _$AuthController {
 
     // 3. Persist State Changes
     listenSelf((previous, next) {
-      next.whenOrNull(
-        data: (user) {
-          if (user != null) {
-            _userPrefs.setString(_stateKey, jsonEncode(user.toJson()));
-            _userPrefs.setInt(
-              _stateSavedAtKey,
-              DateTime.now().millisecondsSinceEpoch,
-            );
-          }
-        },
-      );
+      if (next is AsyncData) {
+        _saveToStorage();
+      }
     });
 
     // 4. Guest and/or offline-safe logic
@@ -101,10 +93,8 @@ class AuthController extends _$AuthController {
   }
 
   Future<void> _saveToStorage() async {
-    if (supabase.auth.currentSession == null) return;
-
     final user = state.value;
-    if (user != null) {
+    if (user != null && supabase.auth.currentSession != null) {
       await _userPrefs.setString(_stateKey, jsonEncode(user.toJson()));
       await _userPrefs.setInt(
         _stateSavedAtKey,
@@ -221,8 +211,6 @@ class AuthController extends _$AuthController {
     state = const AsyncValue.loading();
     try {
       await supabase.auth.signOut();
-      await _revertToGuest();
-      state = const AsyncValue.data(null);
     } on AuthException catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;
@@ -264,8 +252,12 @@ class AuthController extends _$AuthController {
     );
   }
 
+  Future<void> continueAsGuest() async {
+    state = const AsyncValue.data(PuboxUser());
+  }
+
   Future<void> _revertToGuest() async {
-    await _userPrefs.clearUserData();
+    await continueAsGuest();
   }
 
   Future<bool> hasInitialized() async {

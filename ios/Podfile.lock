@@ -65,8 +65,6 @@ PODS:
     - Flutter
   - location (0.0.1):
     - Flutter
-  - objective_c (0.0.1):
-    - Flutter
   - package_info_plus (0.4.5):
     - Flutter
   - path_provider_foundation (0.0.1):
@@ -78,10 +76,12 @@ PODS:
     - Flutter
   - PromisesObjC (2.4.0)
   - Sentry/HybridSDK (8.56.2)
-  - sentry_flutter (9.8.0):
+  - sentry_flutter (9.9.0):
     - Flutter
     - FlutterMacOS
     - Sentry/HybridSDK (= 8.56.2)
+  - share_plus (0.0.1):
+    - Flutter
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -106,12 +106,12 @@ DEPENDENCIES:
   - health (from `.symlinks/plugins/health/ios`)
   - in_app_review (from `.symlinks/plugins/in_app_review/ios`)
   - location (from `.symlinks/plugins/location/ios`)
-  - objective_c (from `.symlinks/plugins/objective_c/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - pointer_interceptor_ios (from `.symlinks/plugins/pointer_interceptor_ios/ios`)
   - sentry_flutter (from `.symlinks/plugins/sentry_flutter/ios`)
+  - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
@@ -155,8 +155,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/in_app_review/ios"
   location:
     :path: ".symlinks/plugins/location/ios"
-  objective_c:
-    :path: ".symlinks/plugins/objective_c/ios"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
   path_provider_foundation:
@@ -167,6 +165,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/pointer_interceptor_ios/ios"
   sentry_flutter:
     :path: ".symlinks/plugins/sentry_flutter/ios"
+  share_plus:
+    :path: ".symlinks/plugins/share_plus/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   sign_in_with_apple:
@@ -197,14 +197,14 @@ SPEC CHECKSUMS:
   health: b2123f165ca25ea7faaa4a4b3e7b1b6405483b28
   in_app_review: 436034b18594851a7328d7f1c2ed5ec235b79cfc
   location: d5cf8598915965547c3f36761ae9cc4f4e87d22e
-  objective_c: 77e887b5ba1827970907e10e832eec1683f3431d
   package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
   path_provider_foundation: 0b743cbb62d8e47eab856f09262bb8c1ddcfe6ba
   permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
   pointer_interceptor_ios: a78ffe95ad3c6cd52c42ad362c116d92355c3d42
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   Sentry: b53951377b78e21a734f5dc8318e333dbfc682d7
-  sentry_flutter: f074f75557daea0e1dd9607381a05cc0e3e456fe
+  sentry_flutter: 5770c2e47270cefab2d79590f8b6360c600943e4
+  share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
   shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6
   sign_in_with_apple: f3bf75217ea4c2c8b91823f225d70230119b8440
   url_launcher_ios: bb13df5870e8c4234ca12609d04010a21be43dfa

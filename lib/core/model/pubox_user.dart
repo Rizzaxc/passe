@@ -7,6 +7,8 @@ part 'pubox_user.g.dart';
 
 @freezed
 abstract class PuboxUser with _$PuboxUser {
+  const PuboxUser._();
+
   const factory PuboxUser({
     String? id,
     @Default('Guest') String username,
@@ -17,4 +19,6 @@ abstract class PuboxUser with _$PuboxUser {
 
   factory PuboxUser.fromJson(Map<String, dynamic> json) =>
       _$PuboxUserFromJson(json);
+
+  bool get isGuest => id == null;
 }

@@ -224,8 +224,8 @@ return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.detail
 /// @nodoc
 @JsonSerializable()
 
-class _PuboxUser implements PuboxUser {
-  const _PuboxUser({this.id, this.username = 'Guest', this.tagNumber = '0000', this.email, this.details});
+class _PuboxUser extends PuboxUser {
+  const _PuboxUser({this.id, this.username = 'Guest', this.tagNumber = '0000', this.email, this.details}): super._();
   factory _PuboxUser.fromJson(Map<String, dynamic> json) => _$PuboxUserFromJson(json);
 
 @override final  String? id;

@@ -209,7 +209,12 @@
     "participantCount": "{count} người tham gia"
   },
   "sport": {
-    "basketball": "Bóng Rổ"
+    "others": "Khác",
+    "soccer": "Bóng Đá",
+    "basketball": "Bóng Rổ",
+    "badminton": "Cầu Lông",
+    "tennis": "Quần Vợt",
+    "pickleball": "Pickleball"
   },
   "not_set": "Chưa Thiết Lập",
   "done": "Xong"

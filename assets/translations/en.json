@@ -202,7 +202,12 @@
     "participantCount": "{count} participants"
   },
   "sport": {
-    "basketball": "Basketball"
+    "others": "Others",
+    "soccer": "Soccer",
+    "basketball": "Basketball",
+    "badminton": "Badminton",
+    "tennis": "Tennis",
+    "pickleball": "Pickleball"
   },
   "not_set": "Not set",
   "done": "Done"

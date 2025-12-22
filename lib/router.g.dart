@@ -6,7 +6,12 @@ part of 'router.dart';
 // GoRouterGenerator
 // **************************************************************************
 
-List<RouteBase> get $appRoutes => [$splashRoute, $authRoute, $mainRoute];
+List<RouteBase> get $appRoutes => [
+  $splashRoute,
+  $authRoute,
+  $notificationRoute,
+  $mainRoute,
+];
 
 RouteBase get $splashRoute =>
     GoRouteData.$route(path: '/splash', factory: $SplashRoute._fromState);
@@ -39,6 +44,32 @@ mixin $AuthRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/auth');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $notificationRoute => GoRouteData.$route(
+  path: '/notifications',
+  factory: $NotificationRoute._fromState,
+);
+
+mixin $NotificationRoute on GoRouteData {
+  static NotificationRoute _fromState(GoRouterState state) =>
+      const NotificationRoute();
+
+  @override
+  String get location => GoRouteData.$location('/notifications');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -370,4 +401,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'a41c1758c41cf6ceb855ccfa7fdbf18d730b2b1e';
+String _$routerHash() => r'bcea98109a2b286b49dc2e99527e6449aa89582b';

@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
+import '../core/sport_selector.dart';
+import '../router.dart';
+import '../ui/main.dart';
+import 'lobby_section/main.dart';
+import 'schedule_section/main.dart';
 
 class ManageTab extends StatefulWidget {
   final int initialIndex;
@@ -11,44 +17,46 @@ class ManageTab extends StatefulWidget {
     return ManageTab(initialIndex: initialIndex);
   }
 
+  static const manageSections = <FTabEntry>[
+    FTabEntry(
+      child: ScheduleSubtab(),
+      label: Icon(FIcons.calendarDays),
+    ),
+    FTabEntry(
+      child: LobbySubtab(),
+      label: Icon(FIcons.users),
+    ),
+  ];
+
   @override
   State<ManageTab> createState() => _ManageTabState();
 }
 
 class _ManageTabState extends State<ManageTab> with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+  late final FTabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialIndex);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+    _tabController = FTabController(
+      length: 2,
+      vsync: this,
+      index: widget.initialIndex,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return FScaffold(
+      header: FHeader(
         title: const Text('Manage'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Schedule'),
-            Tab(text: 'Lobby'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          Center(child: Text('Schedule Content')),
-          Center(child: Text('Lobby Content')),
+        suffixes: [
+          const NotificationIconButton(),
+          const SportSelector(),
         ],
+      ),
+      child: FTabs(
+        children: ManageTab.manageSections,
       ),
     );
   }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,6 +10,7 @@ import 'home_tab/main.dart';
 import 'main.dart';
 import 'manage_tab/main.dart';
 import 'health_tab/main.dart';
+import 'notification/main.dart';
 import 'profile_tab/main.dart';
 import 'splash/main.dart';
 
@@ -33,6 +33,7 @@ GoRouter router(Ref ref) {
 
   final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
+    restorationScopeId: 'router',
     refreshListenable: user,
     initialLocation: const SplashRoute().location,
     debugLogDiagnostics: true,
@@ -42,18 +43,20 @@ GoRouter router(Ref ref) {
       final isLoggingIn = state.uri.path == const AuthRoute().location;
       switch (user.value) {
         case AsyncError():
-          return HomeRoute().location;
+          return const AuthRoute().location;
         case AsyncLoading():
           return const SplashRoute().location;
         case AsyncData(value: null):
-          if (isSplash) return const AuthRoute().location;
-          if (isLoggingIn) return null;
+          if (isSplash || !isLoggingIn) return const AuthRoute().location;
+          return null;
+        case AsyncData(value: final user):
+          if (user!.isGuest) {
+            if (isSplash) return HomeRoute().location;
+            if (isLoggingIn) return HomeRoute().location;
+            return null;
+          }
 
-          return const SplashRoute().location;
-        case AsyncData(value: PuboxUser()):
-          if (isSplash) return HomeRoute().location;
-          if (isLoggingIn) return HomeRoute().location;
-
+          if (isSplash || isLoggingIn) return HomeRoute().location;
           return null;
       }
     },
@@ -85,6 +88,17 @@ class AuthRoute extends GoRouteData with $AuthRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const AuthScreen();
+  }
+}
+
+@TypedGoRoute<NotificationRoute>(path: '/notifications')
+@immutable
+class NotificationRoute extends GoRouteData with $NotificationRoute {
+  const NotificationRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const NotificationPage();
   }
 }
 

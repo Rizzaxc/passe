@@ -9,20 +9,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 final supabase = Supabase.instance.client;
 
 const genericErrorMessage = 'Something happened. Please try again.';
-//
-// extension ContextExtension on BuildContext {
-//   void showToast(String message,
-//       {ToastificationType type = ToastificationType.success}) {
-//     toastification.show(
-//       margin: const EdgeInsets.fromLTRB(16, 48, 16, 8),
-//       type: type,
-//       style: ToastificationStyle.fillColored,
-//       autoCloseDuration: const Duration(seconds: 3),
-//       description: Text(message),
-//       showProgressBar: false,
-//     );
-//   }
-// }
+
+
 
 extension StringExtension on String {
   String capitalize() {

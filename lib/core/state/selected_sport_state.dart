@@ -7,7 +7,7 @@ part 'selected_sport_state.g.dart';
 
 @riverpod
 class SelectedSportState extends _$SelectedSportState {
-  static const _prefKey = 'STORED_SPORT_PERSISTENT_KEY';
+  static const _prefKey = 'SELECTED_SPORT';
   late final UserPreferences localStorage;
 
   int get id => state as int;
