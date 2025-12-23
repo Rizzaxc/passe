@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../ui/main.dart';
 import 'auth_controller.dart';
 
 class AuthScreen extends StatefulHookConsumerWidget {
@@ -63,80 +64,44 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
 
     return FScaffold(
       header: FHeader(title: const Text('Welcome')),
-      child: FTabs(
-        children: [
-          FTabEntry(
-            label: const Text('Login'),
-            child: Form(
-              key: _key,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Forui text fields fallback to Material if unavailable
-                    FTextFormField.email(
-                      label: const Text('Email'),
-                      keyboardType: TextInputType.emailAddress,
-                      autovalidateMode: .onUserInteraction,
-                      clearable: (value) => value.text.isNotEmpty,
-                      autofillHints: const [AutofillHints.email],
-                      onSaved: (value) => email = value ?? '',
-                    ),
-                    const SizedBox(height: 12),
-                    FTextFormField.password(
-                      label: const Text('Password'),
-                      clearable: (value) => value.text.isNotEmpty,
-                      autovalidateMode: .onUserInteraction,
-                      autofillHints: const [AutofillHints.password],
-                      onSaved: (value) => pass = value ?? '',
-                    ),
-                    const SizedBox(height: 16),
-                    FButton(onPress: onLogin, child: const Text('Login')),
-                    const SocialAuthSection(),
-                  ],
-                ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _key,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FTextFormField.email(
+                label: const Text('Email'),
+                keyboardType: TextInputType.emailAddress,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                clearable: (value) => value.text.isNotEmpty,
+                autofillHints: const [AutofillHints.email],
+                onSaved: (value) => email = value ?? '',
               ),
-            ),
-          ),
-          FTabEntry(
-            label: const Text('Sign Up'),
-            child: Form(
-              key: _key,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    FTextFormField.email(
-                      label: const Text('Email'),
-                      keyboardType: TextInputType.emailAddress,
-                      clearable: (value) => value.text.isNotEmpty,
-                      autovalidateMode: .onUserInteraction,
-
-                      autofillHints: const [AutofillHints.email],
-                      onSaved: (value) => email = value ?? '',
-                    ),
-                    const SizedBox(height: 12),
-                    FTextFormField.password(
-                      label: const Text('Password'),
-                      clearable: (value) => value.text.isNotEmpty,
-                      autovalidateMode: .onUserInteraction,
-                      autofillHints: const [AutofillHints.newPassword],
-                      onSaved: (value) => pass = value ?? '',
-                    ),
-                    const SizedBox(height: 16),
-                    FButton(
-                      onPress: onRegister,
-                      child: const Text('Create account'),
-                    ),
-                    const SocialAuthSection(),
-                  ],
-                ),
+              const SizedBox(height: 12),
+              FTextFormField.password(
+                label: const Text('Password'),
+                clearable: (value) => value.text.isNotEmpty,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                autofillHints: const [AutofillHints.password],
+                onSaved: (value) => pass = value ?? '',
               ),
-            ),
+              const SizedBox(height: 16),
+              // FDualButton(
+              //   firstChild: const Text('Sign In', style: TextStyle(fontWeight: .bold),),
+              //   secondChild: const Text('Sign Up'),
+              //   onFirstPressed: onLogin,
+              //   onSecondPressed: onRegister,
+              //   secondStyle: FButtonStyle.primary(),
+              //
+              //   flex: 60,
+              // ),
+              const SizedBox(height: 16),
+              const SocialAuthSection(),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

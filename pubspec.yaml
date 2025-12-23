@@ -39,7 +39,6 @@ dependencies:
   timeago: ^3.7.0
   permission_handler: ^12.0.0+1
   #  infinite_scroll_pagination: ^5.0.0
-  animated_bottom_navigation_bar: ^1.3.3
   json_annotation: ^4.9.0
   go_router: ^17.0.0
   crypto: ^3.0.6
@@ -113,6 +112,19 @@ flutter:
     - assets/translations/
 
   fonts:
+    - family: Bitter
+      fonts:
+        - asset: assets/google_fonts/Bitter-Regular.ttf
+
+        - asset: assets/google_fonts/Bitter-Italic.ttf
+          style: italic
+        - asset: assets/google_fonts/Bitter-Light.ttf
+          weight: 200
+        - asset: assets/google_fonts/Bitter-Bold.ttf
+          weight: 700
+        - asset: assets/google_fonts/Bitter-ExtraBold.ttf
+          weight: 900
+
     - family: PuboxIcons
       fonts:
         - asset: assets/fonts/PuboxIcons.ttf

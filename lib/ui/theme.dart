@@ -1,12 +1,78 @@
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:pubox/ui/button_styles.dart';
 
 // ignore_for_file: avoid_redundant_argument_values
 
 const pbRed = Color(0xFFFF2010);
 const pbBlue = Color(0xFF3090F2);
 const pbGreen = Color(0xFF959D54);
+
+FThemeData get pbThemeLight {
+  const colors = FColors(
+    brightness: .light,
+    systemOverlayStyle: .dark,
+    barrier: Color(0x33000000),
+    // background: Color(0xFFFFFFFF),
+    background: Color(0xFFF4F5EE),
+
+    foreground: Color(0xFF09090B),
+    primary: pbRed,
+    primaryForeground: Color(0xFFFFF1F2),
+    secondary: Color(0xFFE6E8DD),
+    secondaryForeground: Color(0xFF18181B),
+    muted: Color(0xFFE4E4E0),
+    mutedForeground: Color(0xFF71717A),
+    destructive: pbBlue,
+    destructiveForeground: Color(0xFFFAFAFA),
+    error: Color(0xFFEF4444),
+    errorForeground: Color(0xFFFAFAFA),
+    border: Color(0xFFDCDCD9),
+  );
+
+  final typography = _typography(colors: colors);
+  final style = _style(colors: colors, typography: typography);
+
+  return FThemeData(
+    colors: colors,
+    typography: typography,
+    style: style,
+    buttonStyles: buttonStyles(colors: colors, typography: typography, style: style),
+    extensions: [
+      PuboxColor(color: pbRed),
+      PuboxColor(color: pbBlue),
+      PuboxColor(color: pbGreen),
+    ],
+  );
+}
+
+FThemeData get pbThemeDark {
+  const colors = FColors(
+    brightness: .dark,
+    systemOverlayStyle: .light,
+    barrier: Color(0x7A000000),
+    background: Color(0xFF0C0A09),
+    foreground: Color(0xFFF2F2F2),
+    primary: Color(0xFFE11D48),
+    primaryForeground: Color(0xFFFFF1F2),
+    secondary: Color(0xFF27272A),
+    secondaryForeground: Color(0xFFFAFAFA),
+    muted: Color(0xFF262626),
+    mutedForeground: Color(0xFFA1A1AA),
+    destructive: Color(0xFF7F1D1D),
+    destructiveForeground: Color(0xFFFEF2F2),
+    error: Color(0xFF7F1D1D),
+    errorForeground: Color(0xFFFEF2F2),
+    border: Color(0xFF27272A),
+  );
+
+  final typography = _typography(colors: colors);
+  final style = _style(colors: colors, typography: typography);
+
+  return FThemeData(colors: colors, typography: typography, style: style);
+}
 
 class PuboxColor extends ThemeExtension<PuboxColor> {
   final Color color;
@@ -26,79 +92,9 @@ class PuboxColor extends ThemeExtension<PuboxColor> {
   }
 }
 
-FThemeData get pbThemeLight {
-  const colors = FColors(
-    brightness: Brightness.light,
-    systemOverlayStyle: SystemUiOverlayStyle.dark,
-    barrier: Color(0x33000000),
-    background: Color(0xFFFFFFFF),
-    foreground: Color(0xFF09090B),
-    primary: Color(0xFFDC2626),
-    primaryForeground: Color(0xFFFEF2F2),
-    secondary: Color(0xFFF5F5F5),
-    secondaryForeground: Color(0xFF171717),
-    muted: Color(0xFFF5F5F5),
-    mutedForeground: Color(0xFF71717A),
-    destructive: Color(0xFFEF4444),
-    destructiveForeground: Color(0xFFFAFAFA),
-    error: Color(0xFFEF4444),
-    errorForeground: Color(0xFFFAFAFA),
-    border: Color(0xFFE5E5E5),
-  );
-
-  final typography = _typography(colors: colors);
-  final style = _style(colors: colors, typography: typography);
-
-  return FThemeData(
-    colors: colors,
-    typography: typography,
-    style: style,
-    extensions: [
-      PuboxColor(color: pbRed),
-      PuboxColor(color: pbBlue),
-      PuboxColor(color: pbGreen),
-    ],
-  );
-}
-
-FThemeData get pbThemeDark {
-  const colors = FColors(
-    brightness: Brightness.dark,
-    systemOverlayStyle: SystemUiOverlayStyle.light,
-    barrier: Color(0x7A000000),
-    background: Color(0xFF0A0A0A),
-    foreground: Color(0xFFFAFAFA),
-    primary: Color(0xFFDC2626),
-    primaryForeground: Color(0xFFFEF2F2),
-    secondary: Color(0xFF262626),
-    secondaryForeground: Color(0xFFFAFAFA),
-    muted: Color(0xFF262626),
-    mutedForeground: Color(0xFFA3A3A3),
-    destructive: Color(0xFF7F1D1D),
-    destructiveForeground: Color(0xFFFEF2F2),
-    error: Color(0xFF7F1D1D),
-    errorForeground: Color(0xFFFEF2F2),
-    border: Color(0xFF262626),
-  );
-
-  final typography = _typography(colors: colors);
-  final style = _style(colors: colors, typography: typography);
-
-  return FThemeData(
-    colors: colors,
-    typography: typography,
-    style: style,
-    extensions: [
-      PuboxColor(color: pbRed),
-      PuboxColor(color: pbBlue),
-      PuboxColor(color: pbGreen),
-    ],
-  );
-}
-
 FTypography _typography({
   required FColors colors,
-  String defaultFontFamily = 'packages/forui/Bitter',
+  String defaultFontFamily = 'Bitter',
 }) => FTypography(
   xs: TextStyle(
     color: colors.foreground,
@@ -182,18 +178,71 @@ FStyle _style({required FColors colors, required FTypography typography}) =>
       ),
       focusedOutlineStyle: FFocusedOutlineStyle(
         color: colors.primary,
-        borderRadius: const BorderRadius.all(Radius.circular(8)),
+        borderRadius: const BorderRadius.all(Radius.circular(12)),
       ),
-      iconStyle: IconThemeData(color: colors.primary, size: 20),
+      iconStyle: IconThemeData(color: colors.primary, size: 24),
       tappableStyle: FTappableStyle(),
-      borderRadius: const FLerpBorderRadius.all(Radius.circular(8), min: 24),
+      borderRadius: const FLerpBorderRadius.all(Radius.circular(12), min: 24),
       borderWidth: 1,
-      pagePadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      pagePadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       shadow: const [
         BoxShadow(
           color: Color(0x0d000000),
           offset: Offset(0, 1),
-          blurRadius: 2,
+          blurRadius: 2.5,
         ),
       ],
     );
+
+
+// FThemeData get roseLight {
+//   const colors = FColors(
+//     brightness: .light,
+//     systemOverlayStyle: .dark,
+//     barrier: Color(0x33000000),
+//     background: Color(0xFFFFFFFF),
+//     foreground: Color(0xFF09090B),
+//     primary: Color(0xFFE11D48),
+//     primaryForeground: Color(0xFFFFF1F2),
+//     secondary: Color(0xFFF4F4F5),
+//     secondaryForeground: Color(0xFF18181B),
+//     muted: Color(0xFFF4F4F5),
+//     mutedForeground: Color(0xFF71717A),
+//     destructive: Color(0xFFEF4444),
+//     destructiveForeground: Color(0xFFFAFAFA),
+//     error: Color(0xFFEF4444),
+//     errorForeground: Color(0xFFFAFAFA),
+//     border: Color(0xFFE4E4E7),
+//   );
+//
+//   final typography = _typography(colors: colors);
+//   final style = _style(colors: colors, typography: typography);
+//
+//   return FThemeData(colors: colors, typography: typography, style: style);
+// }
+//
+// FThemeData get roseDark {
+//   const colors = FColors(
+//     brightness: .dark,
+//     systemOverlayStyle: .light,
+//     barrier: Color(0x7A000000),
+//     background: Color(0xFF0C0A09),
+//     foreground: Color(0xFFF2F2F2),
+//     primary: Color(0xFFE11D48),
+//     primaryForeground: Color(0xFFFFF1F2),
+//     secondary: Color(0xFF27272A),
+//     secondaryForeground: Color(0xFFFAFAFA),
+//     muted: Color(0xFF262626),
+//     mutedForeground: Color(0xFFA1A1AA),
+//     destructive: Color(0xFF7F1D1D),
+//     destructiveForeground: Color(0xFFFEF2F2),
+//     error: Color(0xFF7F1D1D),
+//     errorForeground: Color(0xFFFEF2F2),
+//     border: Color(0xFF27272A),
+//   );
+//
+//   final typography = _typography(colors: colors);
+//   final style = _style(colors: colors, typography: typography);
+//
+//   return FThemeData(colors: colors, typography: typography, style: style);
+// }

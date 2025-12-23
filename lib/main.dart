@@ -1,12 +1,10 @@
 import 'dart:async';
 
-import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -102,8 +100,11 @@ class Pubox extends HookConsumerWidget {
     return MaterialApp.router(
       title: 'Pubox',
       restorationScopeId: 'app',
-      builder: (_, child) =>
-          FAnimatedTheme(data: ui.pbThemeLight, child: FToaster(child: child!)),
+      builder: (_, child) => FAnimatedTheme(
+        data: ui.pbThemeLight,
+        child: FToaster(child: child!),
+      ),
+      theme: ui.pbThemeLight.toApproximateMaterialTheme(),
       routerConfig: router,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
@@ -118,30 +119,32 @@ class ScaffoldWithNavBar extends StatelessWidget {
 
   final StatefulNavigationShell navigationShell;
 
-  // TODO: change
-  static final tabIcons = <IconData>[
-    FIcons.house,
-    FIcons.waypoints,
-    FIcons.activity,
-    FIcons.user,
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      extendBody: true,
-
-      bottomNavigationBar: AnimatedBottomNavigationBar(
-        activeIndex: navigationShell.currentIndex,
-        splashRadius: 0,
-        iconSize: 28,
-        onTap: (int index) => _onTap(context, index),
-        gapLocation: GapLocation.center,
-        notchSmoothness: NotchSmoothness.softEdge,
-        notchMargin: 8,
-        icons: tabIcons,
+    return FScaffold(
+      footer: FBottomNavigationBar(
+        index: navigationShell.currentIndex,
+        onChange: (index) => _onTap(context, index),
+        children: [
+          FBottomNavigationBarItem(
+            icon: Icon(FIcons.house),
+            label: Text('Home'),
+          ),
+          FBottomNavigationBarItem(
+            icon: Icon(FIcons.waypoints),
+            label: Text('Manage'),
+          ),
+          FBottomNavigationBarItem(
+            icon: Icon(FIcons.activity),
+            label: Text('Health'),
+          ),
+          FBottomNavigationBarItem(
+            icon: Icon(FIcons.user),
+            label: Text('Profile'),
+          ),
+        ],
       ),
+      child: navigationShell,
     );
   }
 
