@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import 'auth/auth_controller.dart';
 import 'auth/auth_screen.dart';
@@ -23,6 +24,8 @@ final supabase = Supabase.instance.client;
 
 @riverpod
 GoRouter router(Ref ref) {
+  final talker = Talker();
+
   final user = ValueNotifier<AsyncValue<PuboxUser?>>(const AsyncLoading());
   ref.onDispose(user.dispose);
 
@@ -33,10 +36,11 @@ GoRouter router(Ref ref) {
 
   final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
+    observers: [TalkerRouteObserver(talker)],
     restorationScopeId: 'router',
     refreshListenable: user,
     initialLocation: const SplashRoute().location,
-    debugLogDiagnostics: true,
+    // debugLogDiagnostics: true,
     routes: $appRoutes,
     redirect: (context, state) {
       final isSplash = state.uri.path == const SplashRoute().location;

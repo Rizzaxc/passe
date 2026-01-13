@@ -3,9 +3,11 @@ import 'dart:convert';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/model/pubox_user.dart';
 import '../core/model/user_details.dart';
+import '../main.dart';
 import '../core/user_preferences.dart';
 
 part 'auth_controller.g.dart';
@@ -13,6 +15,7 @@ part 'auth_controller.g.dart';
 @riverpod
 class AuthController extends _$AuthController {
   final supabase = Supabase.instance.client;
+  final talker = Talker();
 
   static const _stateKey = 'USER_DATA';
 
@@ -120,9 +123,11 @@ class AuthController extends _$AuthController {
       );
       // Let the auth listener update the state; no manual state setting here.
       return null;
-    } on AuthException catch (e) {
-      throw Exception(e.message);
-    } catch (_) {
+    } on AuthException catch (e, st) {
+      talker.handle(e, st);
+      rethrow;
+    } catch (e, st) {
+      talker.handle(e, st);
       rethrow;
     }
   }
@@ -137,9 +142,11 @@ class AuthController extends _$AuthController {
       );
       // State will be updated via the auth listener
     } on AuthException catch (e, st) {
+      talker.handle(e, st);
       state = AsyncValue.error(e, st);
-      throw Exception(e.message);
+      rethrow;
     } catch (e, st) {
+      talker.handle(e, st);
       state = AsyncValue.error(e, st);
       rethrow;
     }
@@ -153,10 +160,11 @@ class AuthController extends _$AuthController {
       );
       // State will be updated via the auth listener
     } on AuthException catch (e, st) {
+      talker.handle(e, st);
       state = AsyncValue.error(e, st);
-      throw Exception(e.message);
-
+      rethrow;
     } catch (e, st) {
+      talker.handle(e, st);
       state = AsyncValue.error(e, st);
       rethrow;
     }
@@ -194,13 +202,16 @@ class AuthController extends _$AuthController {
       final user = await _loadFromServer();
       state = AsyncValue.data(user);
       return user;
-    } on TimeoutException catch (_) {
+    } on TimeoutException catch (e, st) {
       // A deliberate timeout to allow the UI to prompt retry
+      talker.handle(e, st);
       rethrow;
-    } on AuthException catch (e) {
-      throw Exception(e.message);
+    } on AuthException catch (e, st) {
+      talker.handle(e, st);
+      rethrow;
     } catch (e, st) {
       // report the exception
+      talker.handle(e, st);
       rethrow;
     }
   }
@@ -210,9 +221,11 @@ class AuthController extends _$AuthController {
     try {
       await supabase.auth.signOut();
     } on AuthException catch (e, st) {
+      talker.handle(e, st);
       state = AsyncValue.error(e, st);
       rethrow;
     } catch (e, st) {
+      talker.handle(e, st);
       state = AsyncValue.error(e, st);
       // report the exception
     }
@@ -252,6 +265,11 @@ class AuthController extends _$AuthController {
 
   Future<void> continueAsGuest() async {
     state = const AsyncValue.data(PuboxUser());
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _loadFromServer());
   }
 
   Future<void> _revertToGuest() async {

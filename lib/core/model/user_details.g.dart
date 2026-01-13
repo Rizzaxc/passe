@@ -6,37 +6,38 @@ part of 'user_details.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_SportProfile _$SportProfileFromJson(Map<String, dynamic> json) =>
+_SportProfile _$SportProfileFromJson(Map json) =>
     _SportProfile(skill: (json['skill'] as num?)?.toInt());
 
 Map<String, dynamic> _$SportProfileToJson(_SportProfile instance) =>
-    <String, dynamic>{'skill': instance.skill};
+    <String, dynamic>{'skill': ?instance.skill};
 
-_UserDetails _$UserDetailsFromJson(Map<String, dynamic> json) => _UserDetails(
+_UserDetails _$UserDetailsFromJson(Map json) => _UserDetails(
   gender: $enumDecodeNullable(_$GenderEnumMap, json['gender']),
   ageGroup: $enumDecodeNullable(_$AgeGroupEnumMap, json['ageGroup']),
-  playtime:
-      (json['playtime'] as List<dynamic>?)
-          ?.map((e) => Timeslot.fromJson(e as Map<String, dynamic>))
-          .toList() ??
-      const [],
+  playtime: (json['playtime'] as List<dynamic>?)
+      ?.map((e) => Timeslot.fromJson(Map<String, dynamic>.from(e as Map)))
+      .toList(),
   location: json['location'] == null
       ? null
-      : UserLocation.fromJson(json['location'] as Map<String, dynamic>),
-  sport:
-      (json['sport'] as Map<String, dynamic>?)?.map(
-        (k, e) => MapEntry(k, SportProfile.fromJson(e as Map<String, dynamic>)),
-      ) ??
-      const {},
+      : UserLocation.fromJson(
+          Map<String, dynamic>.from(json['location'] as Map),
+        ),
+  sport: (json['sport'] as Map?)?.map(
+    (k, e) => MapEntry(
+      k as String,
+      SportProfile.fromJson(Map<String, dynamic>.from(e as Map)),
+    ),
+  ),
 );
 
 Map<String, dynamic> _$UserDetailsToJson(_UserDetails instance) =>
     <String, dynamic>{
-      'gender': _$GenderEnumMap[instance.gender],
-      'ageGroup': _$AgeGroupEnumMap[instance.ageGroup],
-      'playtime': instance.playtime,
-      'location': instance.location,
-      'sport': instance.sport,
+      'gender': ?_$GenderEnumMap[instance.gender],
+      'ageGroup': ?_$AgeGroupEnumMap[instance.ageGroup],
+      'playtime': ?instance.playtime?.map((e) => e.toJson()).toList(),
+      'location': ?instance.location?.toJson(),
+      'sport': ?instance.sport?.map((k, e) => MapEntry(k, e.toJson())),
     };
 
 const _$GenderEnumMap = {Gender.male: 'male', Gender.female: 'female'};

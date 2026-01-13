@@ -6,7 +6,7 @@ part of 'timeslot.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Timeslot _$TimeslotFromJson(Map<String, dynamic> json) => Timeslot(
+Timeslot _$TimeslotFromJson(Map json) => Timeslot(
   $enumDecode(_$DayOfWeekEnumMap, json['dayOfWeek']),
   $enumDecode(_$DayChunkEnumMap, json['dayChunk']),
 );

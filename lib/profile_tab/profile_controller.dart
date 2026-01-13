@@ -1,72 +1,95 @@
+import 'dart:convert';
+
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/model/enum.dart';
+import '../core/model/network.dart';
 import '../core/model/user_details.dart';
+import '../main.dart';
 
+part 'profile_controller.freezed.dart';
 part 'profile_controller.g.dart';
+
+@freezed
+abstract class ProfileState with _$ProfileState {
+  const factory ProfileState({
+    required String username,
+    required UserDetails details,
+    @Default([]) List<Network> networks,
+    @Default([]) List<Industry> industries,
+  }) = _ProfileState;
+}
 
 @riverpod
 class ProfileController extends _$ProfileController {
   final supabase = Supabase.instance.client;
+  final talker = Talker();
 
   @override
-  UserDetails build() {
+  ProfileState build() {
     final user = ref.watch(authControllerProvider).value;
-    return user?.details ?? const UserDetails();
+    // Note: in a real app, networks and industries would be fetched from /profile
+    // For now, initializing with empty lists if not available in user object
+    // Assuming User model might have been updated too, but issue says fetched separately.
+    return ProfileState(
+      username: user?.username ?? 'Guest',
+      details: user?.details ?? const UserDetails(),
+    );
   }
 
-  void updateDraft(UserDetails details) {
-    state = details;
+  void updateDraft({
+    String? username,
+    UserDetails? details,
+    List<Network>? networks,
+    List<Industry>? industries,
+  }) {
+    state = state.copyWith(
+      username: username ?? state.username,
+      details: details ?? state.details,
+      networks: networks ?? state.networks,
+      industries: industries ?? state.industries,
+    );
   }
 
   void resetDraft() {
     final user = ref.read(authControllerProvider).value;
-    state = user?.details ?? const UserDetails();
-  }
-
-  Future<void> updateUsername(String username) async {
-    final user = ref.read(authControllerProvider).value;
-    if (user == null || user.id == null) return;
-
-    try {
-      await supabase
-          .from('user')
-          .update({'username': username})
-          .eq('id', user.id!);
-    } on PostgrestException catch (e) {
-      throw Exception(e.message);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<void> updateDetails(UserDetails details) async {
-    final user = ref.read(authControllerProvider).value;
-    if (user == null || user.id == null) return;
-
-    try {
-      await supabase
-          .from('user')
-          .update({'details': details.toJson()})
-          .eq('id', user.id!);
-    } on PostgrestException catch (e) {
-      throw Exception(e.message);
-    } catch (e) {
-      rethrow;
-    }
+    state = ProfileState(
+      username: user?.username ?? 'Guest',
+      details: user?.details ?? const UserDetails(),
+    );
   }
 
   Future<void> commit() async {
-    await updateDetails(state);
+    final user = ref.read(authControllerProvider).value;
+    if (user == null || user.id == null) return;
+
+    try {
+      await supabase.from('user').update({
+        'username': state.username,
+        'details': state.details.toJson(),
+      }).eq('id', user.id!);
+
+      await ref.read(authControllerProvider.notifier).refresh();
+    } on PostgrestException catch (e, st) {
+      talker.handle(e, st, state.details.toString());
+      rethrow;
+    } catch (e, st) {
+      talker.handle(e, st);
+      rethrow;
+    }
   }
 
-  Future<void> updateSportProfile(String sportId, SportProfile sportProfile) async {
-    final updatedSports = Map<String, SportProfile>.from(state.sport);
+  void updateSportProfile(String sportId, SportProfile sportProfile) {
+    final updatedSports = Map<String, SportProfile>.from(state.details.sport!);
     updatedSports[sportId] = sportProfile;
 
-    state = state.copyWith(sport: updatedSports);
-    await commit();
+    state = state.copyWith(
+      details: state.details.copyWith(sport: updatedSports),
+    );
   }
 
   Future<void> changePassword(String newPassword) async {
@@ -76,9 +99,11 @@ class ProfileController extends _$ProfileController {
           password: newPassword,
         ),
       );
-    } on AuthException catch (e) {
-      throw Exception(e.message);
-    } catch (e) {
+    } on AuthException catch (e, st) {
+      talker.handle(e, st);
+      rethrow;
+    } catch (e, st) {
+      talker.handle(e, st);
       rethrow;
     }
   }

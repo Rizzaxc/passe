@@ -6,7 +6,7 @@
     "gender": {
       "type": "string"
     },
-    "age_group": {
+    "ageGroup": {
       "type": "string"
     },
     "playtime": {

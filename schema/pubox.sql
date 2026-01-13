@@ -855,7 +855,7 @@ CREATE TABLE IF NOT EXISTS "public"."user" (
             "gender": {
               "type": "string"
             },
-            "age_group": {
+            "ageGroup": {
               "type": "string"
             },
             "playtime": {

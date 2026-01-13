@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException, PostgrestException;
 
 import '../ui/main.dart';
 import 'auth_controller.dart';
@@ -34,10 +34,14 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
             .signInWithPassword(email: email, password: pass);
       } catch (e) {
         if (!context.mounted) return;
+        String message = 'error_generic'.tr();
+        if (e is AuthException && e.message.contains('Invalid login credentials')) {
+          message = e.message;
+        }
         showFToast(
           context: context,
           title: Text('auth.loginFailed'.tr()),
-          description: Text(e.toString()),
+          description: Text(message),
           alignment: .bottomCenter,
         );
       }
@@ -54,10 +58,14 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
             .signUpWithPassword(email: email, password: pass);
       } catch (e) {
         if (!context.mounted) return;
+        String message = 'error_generic'.tr();
+        if (e is AuthException && e.message.contains('User already registered')) {
+          message = e.message;
+        }
         showFToast(
           context: context,
           title: Text('auth.signUpFailed'.tr()),
-          description: Text(e.toString()),
+          description: Text(message),
           alignment: .bottomCenter,
         );
       }
@@ -83,7 +91,7 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
                   if (value == null || value.isEmpty) {
                     return 'auth.emailEmpty'.tr();
                   }
-                  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                  final emailRegex = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
                   if (!emailRegex.hasMatch(value)) {
                     return 'auth.emailInvalid'.tr();
                   }
@@ -142,7 +150,7 @@ class SocialAuthSection extends ConsumerWidget {
         showFToast(
           context: context,
           title: Text(errorTitle),
-          description: Text(e.toString()),
+          description: Text('error_generic'.tr()),
           alignment: .bottomCenter,
         );
       }

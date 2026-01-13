@@ -28,7 +28,7 @@ PODS:
   - google_maps_flutter_ios (0.0.1):
     - Flutter
     - Google-Maps-iOS-Utils (< 7.0, >= 5.0)
-    - GoogleMaps (< 10.0, >= 8.4)
+    - GoogleMaps (< 11.0, >= 8.4)
   - google_sign_in_ios (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -67,16 +67,13 @@ PODS:
     - Flutter
   - package_info_plus (0.4.5):
     - Flutter
-  - path_provider_foundation (0.0.1):
-    - Flutter
-    - FlutterMacOS
   - permission_handler_apple (9.3.0):
     - Flutter
   - pointer_interceptor_ios (0.0.1):
     - Flutter
   - PromisesObjC (2.4.0)
   - Sentry/HybridSDK (8.56.2)
-  - sentry_flutter (9.9.1):
+  - sentry_flutter (9.10.0):
     - Flutter
     - FlutterMacOS
     - Sentry/HybridSDK (= 8.56.2)
@@ -107,7 +104,6 @@ DEPENDENCIES:
   - in_app_review (from `.symlinks/plugins/in_app_review/ios`)
   - location (from `.symlinks/plugins/location/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
-  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - pointer_interceptor_ios (from `.symlinks/plugins/pointer_interceptor_ios/ios`)
   - sentry_flutter (from `.symlinks/plugins/sentry_flutter/ios`)
@@ -157,8 +153,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/location/ios"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
-  path_provider_foundation:
-    :path: ".symlinks/plugins/path_provider_foundation/darwin"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
   pointer_interceptor_ios:
@@ -187,8 +181,8 @@ SPEC CHECKSUMS:
   flutter_native_splash: df59bb2e1421aa0282cb2e95618af4dcb0c56c29
   geolocator_apple: 66b711889fd333205763b83c9dcf0a57a28c7afd
   Google-Maps-iOS-Utils: 0a484b05ed21d88c9f9ebbacb007956edd508a96
-  google_maps_flutter_ios: e31555a04d1986ab130f2b9f24b6cdc861acc6d3
-  google_sign_in_ios: 055d43c4754f2860a53decd5133b78d05615fffd
+  google_maps_flutter_ios: ffdd933832966673a1f57f5effd014dc8d4d43a2
+  google_sign_in_ios: 7336a3372ea93ea56a21e126a0055ffca3723601
   GoogleMaps: 0608099d4870cac8754bdba9b6953db543432438
   GoogleSignIn: c7f09cfbc85a1abf69187be091997c317cc33b77
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
@@ -198,12 +192,11 @@ SPEC CHECKSUMS:
   in_app_review: 436034b18594851a7328d7f1c2ed5ec235b79cfc
   location: d5cf8598915965547c3f36761ae9cc4f4e87d22e
   package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
-  path_provider_foundation: 0b743cbb62d8e47eab856f09262bb8c1ddcfe6ba
   permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
   pointer_interceptor_ios: a78ffe95ad3c6cd52c42ad362c116d92355c3d42
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   Sentry: b53951377b78e21a734f5dc8318e333dbfc682d7
-  sentry_flutter: d44ce25f0ed7b944b885c5d34883092a3e6b2aa9
+  sentry_flutter: bbcc012a946214d9baba4567feac162ea87700fa
   share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
   shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6
   sign_in_with_apple: f3bf75217ea4c2c8b91823f225d70230119b8440

@@ -11,7 +11,8 @@ class AgeGroupSelectionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final details = ref.watch(profileControllerProvider);
+    final profileState = ref.watch(profileControllerProvider);
+    final details = profileState.details;
 
     return FScaffold(
       header: FHeader(
@@ -25,30 +26,34 @@ class AgeGroupSelectionScreen extends ConsumerWidget {
         child: FSelectTileGroup<AgeGroup>(
           label: Text('profile.ageGroup'.tr()),
           control: FMultiValueControl.managedRadio(
-              onChange: (selectedAgeGroup) {
-                final updatedDetails = details.copyWith(
-                  ageGroup: selectedAgeGroup.firstOrNull,
-                );
-                ref
-                    .read(profileControllerProvider.notifier)
-                    .updateDraft(updatedDetails);
-              }
+            initial: details.ageGroup,
+            onChange: (selectedAgeGroup) {
+              final updatedDetails = details.copyWith(
+                ageGroup: selectedAgeGroup.firstOrNull,
+              );
+              ref
+                  .read(profileControllerProvider.notifier)
+                  .updateDraft(details: updatedDetails);
+            },
           ),
           children: <FSelectTile<AgeGroup>>[
             FSelectTile.suffix(
               prefix: Icon(FontAwesomeIcons.graduationCap),
-                title: Text(AgeGroup.student.getLocalizedName(context)),
-                value: AgeGroup.student),
+              title: Text(AgeGroup.student.getLocalizedName(context)),
+              value: AgeGroup.student,
+            ),
             FSelectTile.suffix(
-                prefix: Icon(FontAwesomeIcons.briefcase),
+              prefix: Icon(FontAwesomeIcons.briefcase),
 
-                title: Text(AgeGroup.mature.getLocalizedName(context)),
-                value: AgeGroup.mature),
+              title: Text(AgeGroup.mature.getLocalizedName(context)),
+              value: AgeGroup.mature,
+            ),
             FSelectTile.suffix(
-                prefix: Icon(FontAwesomeIcons.wineGlass),
+              prefix: Icon(FontAwesomeIcons.wineGlass),
 
-                title: Text(AgeGroup.middleAge.getLocalizedName(context)),
-                value: AgeGroup.middleAge),
+              title: Text(AgeGroup.middleAge.getLocalizedName(context)),
+              value: AgeGroup.middleAge,
+            ),
           ],
         ),
       ),

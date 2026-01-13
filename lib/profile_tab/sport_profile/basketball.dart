@@ -5,21 +5,22 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../core/model/enum.dart';
 import '../../core/model/user_details.dart';
 
-class PickleballInfo extends ConsumerWidget {
+class BasketballProfile extends ConsumerWidget {
   final UserDetails details;
 
-  const PickleballInfo({super.key, required this.details});
+  const BasketballProfile({super.key, required this.details});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sport = Sport.pickleball;
+    final sport = Sport.basketball;
     final sportId = sport.index;
     final sportName = sport.getLocalizedName(context);
-    final sportProfile = details.sport[sportId.toString()];
+    final sportProfile = details.sport?[sportId.toString()];
     final skillLevel = sportProfile?.skill;
 
     return FTileGroup(
-      label: Text('profile.sportInfo'.tr()),
+      label: Text('profile.sportProfile'.tr(args: [sportName])),
+      description: Text('profile.profile_feature_explanation'.tr()),
       children: [
         FTile(
           title: Text(sportName),

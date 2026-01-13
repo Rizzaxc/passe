@@ -155,9 +155,9 @@ enum StakeUnit {
 }
 
 enum City {
-  @JsonValue('1')
+  @JsonValue(1)
   hochiminh('hcm', 'Tp Hồ Chí Minh', 1),
-  @JsonValue('2')
+  @JsonValue(2)
   hanoi('hn', 'Hà Nội', 2);
 
   final String shorthand;

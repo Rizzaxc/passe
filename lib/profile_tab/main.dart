@@ -1,8 +1,10 @@
 import 'package:avatar_plus/avatar_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../auth/auth_controller.dart';
 import '../core/model/enum.dart';
 import '../core/model/user_details.dart';
@@ -14,13 +16,13 @@ import '../ui/main.dart';
 import 'age_group_selection_screen.dart';
 import 'guest_profile_view.dart';
 import 'profile_controller.dart';
-import 'sport_info/badminton_info.dart';
-import 'sport_info/basketball_info.dart';
-import 'sport_info/pickleball_info.dart';
-import 'sport_info/soccer_info.dart';
-import 'sport_info/tennis_info.dart';
+import 'sport_profile/badminton.dart';
+import 'sport_profile/basketball.dart';
+import 'sport_profile/pickleball.dart';
+import 'sport_profile/soccer.dart';
+import 'sport_profile/tennis.dart';
 
-class ProfileTab extends ConsumerWidget {
+class ProfileTab extends HookConsumerWidget {
   const ProfileTab({super.key});
 
   static final instance = ProfileTab();
@@ -47,23 +49,37 @@ class ProfileTab extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Section 1: Avatar + Account Info
-                _buildAvatar(context, user),
+                _buildAvatar(context, profileState),
                 const SizedBox(height: 16),
-                _buildAccountSection(context, ref, user),
+                _buildAccountSection(context, ref, profileState, user),
                 const SizedBox(height: 24),
 
                 // Section 2: General Info
-                _buildGeneralInfoSection(context, ref, profileState),
+                _buildGeneralInfoSection(context, ref, profileState.details),
                 const SizedBox(height: 24),
 
-                // Section 3: Sport-Specific Info
-                _buildSportInfoSection(context, ref, profileState),
+                // Section 3: Network & Industry Info
+                _buildNetworkIndustrySection(context, ref, profileState),
+                const SizedBox(height: 24),
+
+                // Section 4: Sport-Specific Info
+                _buildSportInfoSection(context, ref, profileState.details),
                 const SizedBox(height: 24),
 
                 // Commit Button
                 FButton(
-                  onPress: () {
-                    ref.read(profileControllerProvider.notifier).commit();
+                  onPress: () async {
+                    try {
+                      await ref.read(profileControllerProvider.notifier).commit();
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      showFToast(
+                        context: context,
+                        title: Text('error'.tr()),
+                        description: Text('error_generic'.tr()),
+                        alignment: .bottomCenter,
+                      );
+                    }
                   },
                   style: FButtonStyle.primary(),
                   child: Text('profile.commit'.tr()),
@@ -78,25 +94,53 @@ class ProfileTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildAvatar(BuildContext context, user) {
+  Widget _buildAvatar(BuildContext context, ProfileState profileState) {
     return Center(
       child: CircleAvatar(
         radius: 60,
         backgroundColor: context.theme.colors.primary,
         // TODO: allow user to upload their own picture
-        child: AvatarPlus('${user.username}#${user.tagNumber}'),
+        child: AvatarPlus(profileState.username),
       ),
     );
   }
 
-  Widget _buildAccountSection(BuildContext context, WidgetRef ref, user) {
+  Widget _buildAccountSection(
+      BuildContext context, WidgetRef ref, ProfileState profileState, user) {
+    final isEditingUsername = useState(false);
+    final controller = useTextEditingController(text: profileState.username);
+
     return FTileGroup(
       label: Text('profile.accountInfo'.tr()),
+      description: Text('profile.profile_feature_explanation'.tr()),
       children: [
-        FTile(
-          title: Text('profile.username'.tr()),
-          details: Text('${user.username}#${user.tagNumber}'),
-        ),
+        if (isEditingUsername.value)
+          FTile.raw(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: FTextField(
+                label: Text('profile.username'.tr()),
+                control: FTextFieldControl.managed(
+                  controller: controller,
+                  onChange: (value) {
+                    ref
+                        .read(profileControllerProvider.notifier)
+                        .updateDraft(username: value.text);
+                  },
+                ),
+                suffixBuilder: (context, style, states) => FButton.icon(
+                  onPress: () => isEditingUsername.value = false,
+                  child: const Icon(FIcons.check),
+                ),
+              ),
+            ),
+          )
+        else
+          FTile(
+            onPress: () => isEditingUsername.value = true,
+            title: Text('profile.username'.tr()),
+            details: Text('${profileState.username}#${user.tagNumber}'),
+          ),
         if (user.email != null)
           FTile(title: Text('profile.email'.tr()), details: Text(user.email!)),
         FTile(
@@ -147,6 +191,7 @@ class ProfileTab extends ConsumerWidget {
 
     return FTileGroup(
       label: Text('profile.generalInfo'.tr()),
+      description: Text('profile.profile_feature_explanation'.tr()),
       children: [
         FTile(
           suffix: genderSuffix,
@@ -164,7 +209,7 @@ class ProfileTab extends ConsumerWidget {
             );
             ref
                 .read(profileControllerProvider.notifier)
-                .updateDraft(updatedDetails);
+                .updateDraft(details: updatedDetails);
           },
         ),
         FTile(
@@ -190,11 +235,52 @@ class ProfileTab extends ConsumerWidget {
         FTile(
           title: Text('profile.playtime'.tr()),
           details: Text(
-            details.playtime.isNotEmpty
-                ? '${details.playtime.length} timeslots'
+            (details.playtime != null && details.playtime!.isNotEmpty)
+                ? '${details.playtime!.length} timeslots'
                 : 'not_set'.tr(),
           ),
           onPress: () {},
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNetworkIndustrySection(
+      BuildContext context, WidgetRef ref, ProfileState profileState) {
+    return Column(
+      children: [
+        FTileGroup(
+          label: Text('profile.networkLabel'.tr()),
+          description: Text('profile.network_feature_explanation'.tr()),
+          children: [
+            FTile(
+              title: Text('profile.networkLabel'.tr()),
+              details: Text(
+                profileState.networks.isNotEmpty
+                    ? profileState.networks.map((e) => e.name).join(', ')
+                    : 'not_set'.tr(),
+              ),
+              onPress: () {},
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        FTileGroup(
+          label: Text('profile.industryLabel'.tr()),
+          description: Text('profile.industry_feature_explanation'.tr()),
+          children: [
+            FTile(
+              title: Text('profile.industryLabel'.tr()),
+              details: Text(
+                profileState.industries.isNotEmpty
+                    ? profileState.industries
+                        .map((e) => e.getLocalizedName(context))
+                        .join(', ')
+                    : 'not_set'.tr(),
+              ),
+              onPress: () {},
+            ),
+          ],
         ),
       ],
     );
@@ -207,11 +293,11 @@ class ProfileTab extends ConsumerWidget {
     return selectedSportAsync.when(
       data: (sport) {
         return switch (sport) {
-          Sport.soccer => SoccerInfo(details: details),
-          Sport.basketball => BasketballInfo(details: details),
-          Sport.badminton => BadmintonInfo(details: details),
-          Sport.tennis => TennisInfo(details: details),
-          Sport.pickleball => PickleballInfo(details: details),
+          Sport.soccer => SoccerProfile(details: details),
+          Sport.basketball => BasketballProfile(details: details),
+          Sport.badminton => BadmintonProfile(details: details),
+          Sport.tennis => TennisProfile(details: details),
+          Sport.pickleball => PickleballProfile(details: details),
           Sport.others => const SizedBox.shrink(),
         };
       },

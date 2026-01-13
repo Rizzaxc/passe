@@ -7,7 +7,7 @@ version: 0.0.1+1
 
 environment:
   sdk: ^3.10.0
-  flutter: ">=3.0.0"
+  flutter: ">=3.38.0"
 
 dependencies:
   flutter:
@@ -57,8 +57,8 @@ dependencies:
   diacritic: ^0.1.6
   avatar_plus: ^0.0.5
   auto_size_text: ^3.0.0
-  freezed: ^3.2.0
-  hooks_riverpod: ^3.0.3
+  freezed: ^3.2.4
+  hooks_riverpod: ^3.2.0
   flutter_hooks: ^0.21.3+1
   riverpod_annotation: ^4.0.0
   # TODO: Add image_picker package for avatar image upload functionality
@@ -66,11 +66,12 @@ dependencies:
   # awesome_notifications: ^0.10.0
   # google_mobile_ads: ^5.2.0
   in_app_review: ^2.0.11
-  place_pickarte: ^1.0.2
   freezed_annotation: ^3.1.0
   talker_riverpod_logger: ^5.1.5
   talker_flutter: ^5.1.5
   forui: ^0.17.0
+  riverpod: ^3.2.0
+  hooks: ^1.0.0
 
 dev_dependencies:
   supabase: ^2.7.0
@@ -95,9 +96,13 @@ dev_dependencies:
   go_router_builder:
   build_runner:
   build_verify:
-  custom_lint:
-  riverpod_generator: ^4.0.0+1
-  riverpod_lint: ^3.0.3
+#  custom_lint:
+  analyzer: ^10.0.1
+  riverpod_generator: ^4.0.2
+  riverpod_lint: ^3.1.2
+
+dependency_overrides:
+  analyzer: ^10.0.1
 flutter:
 
   # The following line ensures that the Material Icons font is

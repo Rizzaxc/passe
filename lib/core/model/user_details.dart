@@ -1,7 +1,9 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 import 'enum.dart';
+import 'network.dart';
 import 'timeslot.dart';
 import 'user_location.dart';
 
@@ -23,13 +25,12 @@ abstract class UserDetails with _$UserDetails {
   const factory UserDetails({
     Gender? gender,
     AgeGroup? ageGroup,
-    @Default([]) List<Timeslot> playtime,
+    List<Timeslot>? playtime,
     UserLocation? location,
-    @Default({}) Map<String, SportProfile> sport,
+    Map<String, SportProfile>? sport,
   }) = _UserDetails;
 
   factory UserDetails.fromJson(Map<String, dynamic> json) =>
       _$UserDetailsFromJson(json);
-
 }
 

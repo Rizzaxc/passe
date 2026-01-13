@@ -6,7 +6,7 @@ part of 'network.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_Network _$NetworkFromJson(Map<String, dynamic> json) => _Network(
+_Network _$NetworkFromJson(Map json) => _Network(
   id: (json['id'] as num).toInt(),
   name: json['name'] as String,
   isAlumni: json['isAlumni'] as bool,
@@ -19,7 +19,7 @@ Map<String, dynamic> _$NetworkToJson(_Network instance) => <String, dynamic>{
   'name': instance.name,
   'isAlumni': instance.isAlumni,
   'category': _$NetworkCategoryEnumMap[instance.category]!,
-  'city': _$CityEnumMap[instance.city],
+  'city': ?_$CityEnumMap[instance.city],
 };
 
 const _$NetworkCategoryEnumMap = {
@@ -29,4 +29,4 @@ const _$NetworkCategoryEnumMap = {
   NetworkCategory.company: 'company',
 };
 
-const _$CityEnumMap = {City.hochiminh: '1', City.hanoi: '2'};
+const _$CityEnumMap = {City.hochiminh: 1, City.hanoi: 2};

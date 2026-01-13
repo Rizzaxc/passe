@@ -13,7 +13,7 @@ part of 'profile_controller.dart';
 final profileControllerProvider = ProfileControllerProvider._();
 
 final class ProfileControllerProvider
-    extends $NotifierProvider<ProfileController, UserDetails> {
+    extends $NotifierProvider<ProfileController, ProfileState> {
   ProfileControllerProvider._()
     : super(
         from: null,
@@ -33,27 +33,27 @@ final class ProfileControllerProvider
   ProfileController create() => ProfileController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(UserDetails value) {
+  Override overrideWithValue(ProfileState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<UserDetails>(value),
+      providerOverride: $SyncValueProvider<ProfileState>(value),
     );
   }
 }
 
-String _$profileControllerHash() => r'f1d56da81e09b677d2c02d0e576a73deaf1d38ce';
+String _$profileControllerHash() => r'2618084728bfd5d955063861824a518f5be59a39';
 
-abstract class _$ProfileController extends $Notifier<UserDetails> {
-  UserDetails build();
+abstract class _$ProfileController extends $Notifier<ProfileState> {
+  ProfileState build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<UserDetails, UserDetails>;
+    final ref = this.ref as $Ref<ProfileState, ProfileState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<UserDetails, UserDetails>,
-              UserDetails,
+              AnyNotifier<ProfileState, ProfileState>,
+              ProfileState,
               Object?,
               Object?
             >;
