@@ -233,7 +233,7 @@ class AuthController extends _$AuthController {
     }
 
     final username = data['username'] as String?;
-    final tagNumber = data['tagNumber'] as String?;
+    final tagNumber = data['tag_number'] as String?;
     final email = user.email;
     
     // Safely parse details using fromJson if it exists

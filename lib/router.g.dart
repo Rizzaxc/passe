@@ -363,12 +363,12 @@ mixin $ProfileRoute on GoRouteData {
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(router)
-const routerProvider = RouterProvider._();
+final routerProvider = RouterProvider._();
 
 final class RouterProvider
     extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
     with $Provider<GoRouter> {
-  const RouterProvider._()
+  RouterProvider._()
     : super(
         from: null,
         argument: null,

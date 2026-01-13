@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class TeammateSubtab extends StatelessWidget {
@@ -5,6 +6,6 @@ class TeammateSubtab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Teammate Content'));
+    return Center(child: Text('home.teammate'.tr()));
   }
 }

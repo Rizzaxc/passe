@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class LobbySubtab extends StatelessWidget {
@@ -5,6 +6,6 @@ class LobbySubtab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Lobby Content'));
+    return Center(child: Text('manage.lobby'.tr()));
   }
 }

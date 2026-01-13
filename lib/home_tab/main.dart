@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -70,7 +71,7 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return FScaffold(
       header: FHeader(
-        title: const Text('Home'),
+        title: Text('nav.home'.tr()),
         suffixes: [
           const NotificationIconButton(),
           const SportSelector(),

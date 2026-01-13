@@ -19,7 +19,7 @@ FThemeData get pbThemeLight {
     background: Color(0xFFF4F5EE),
 
     foreground: Color(0xFF09090B),
-    primary: pbRed,
+    primary: pbGreen,
     primaryForeground: Color(0xFFFFF1F2),
     secondary: Color(0xFFE6E8DD),
     secondaryForeground: Color(0xFF18181B),
@@ -27,7 +27,7 @@ FThemeData get pbThemeLight {
     mutedForeground: Color(0xFF71717A),
     destructive: pbBlue,
     destructiveForeground: Color(0xFFFAFAFA),
-    error: Color(0xFFEF4444),
+    error: pbRed,
     errorForeground: Color(0xFFFAFAFA),
     border: Color(0xFFDCDCD9),
   );

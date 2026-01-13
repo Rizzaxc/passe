@@ -10,11 +10,11 @@ part of 'selected_sport_state.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(SelectedSportState)
-const selectedSportStateProvider = SelectedSportStateProvider._();
+final selectedSportStateProvider = SelectedSportStateProvider._();
 
 final class SelectedSportStateProvider
     extends $AsyncNotifierProvider<SelectedSportState, Sport> {
-  const SelectedSportStateProvider._()
+  SelectedSportStateProvider._()
     : super(
         from: null,
         argument: null,
@@ -34,14 +34,13 @@ final class SelectedSportStateProvider
 }
 
 String _$selectedSportStateHash() =>
-    r'bdbed74668dc35e21231481543aabe63695040a4';
+    r'd4ac244175180406c97369e48d2342738b5af2b1';
 
 abstract class _$SelectedSportState extends $AsyncNotifier<Sport> {
   FutureOr<Sport> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build();
     final ref = this.ref as $Ref<AsyncValue<Sport>, Sport>;
     final element =
         ref.element
@@ -51,6 +50,58 @@ abstract class _$SelectedSportState extends $AsyncNotifier<Sport> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(OthersAlertShown)
+final othersAlertShownProvider = OthersAlertShownProvider._();
+
+final class OthersAlertShownProvider
+    extends $NotifierProvider<OthersAlertShown, bool> {
+  OthersAlertShownProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'othersAlertShownProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$othersAlertShownHash();
+
+  @$internal
+  @override
+  OthersAlertShown create() => OthersAlertShown();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$othersAlertShownHash() => r'bea7fda8a522db124b780b9199d29219f22c2618';
+
+abstract class _$OthersAlertShown extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
   }
 }

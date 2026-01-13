@@ -128,19 +128,19 @@ class ScaffoldWithNavBar extends StatelessWidget {
         children: [
           FBottomNavigationBarItem(
             icon: Icon(FIcons.house),
-            label: Text('Home'),
+            label: Text('nav.home'.tr()),
           ),
           FBottomNavigationBarItem(
             icon: Icon(FIcons.waypoints),
-            label: Text('Manage'),
+            label: Text('nav.manage'.tr()),
           ),
           FBottomNavigationBarItem(
             icon: Icon(FIcons.activity),
-            label: Text('Health'),
+            label: Text('nav.health'.tr()),
           ),
           FBottomNavigationBarItem(
             icon: Icon(FIcons.user),
-            label: Text('Profile'),
+            label: Text('nav.profile'.tr()),
           ),
         ],
       ),

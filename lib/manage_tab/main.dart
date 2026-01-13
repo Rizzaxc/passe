@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import '../core/sport_selector.dart';
@@ -49,7 +50,7 @@ class _ManageTabState extends State<ManageTab> with SingleTickerProviderStateMix
   Widget build(BuildContext context) {
     return FScaffold(
       header: FHeader(
-        title: const Text('Manage'),
+        title: Text('nav.manage'.tr()),
         suffixes: [
           const NotificationIconButton(),
           const SportSelector(),

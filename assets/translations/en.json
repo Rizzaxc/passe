@@ -1,19 +1,4 @@
 {
-  "profileView": {
-    "genderLabel": "Gender",
-    "ageGroupLabel": "Age Group",
-    "industryLabel": "Industry",
-    "networkLabel": "Network",
-    "playtimeLabel": "Playtime",
-    "network_selection_title": "Select Networks",
-    "search_network": "Search networks...",
-    "selected_networks": "Selected Networks",
-    "no_networks_found": "No networks found matching the search criteria",
-    "industry_selection_title": "Select Industries",
-    "network_feature_explanation": "Choose at most 2 schools/ universities/ companies that you were or are a part of. Pubox will connect you with people who share your networks.",
-    "industry_feature_explanation": "Choose at most 2 industries that you work in. Pubox will connect you with people who share your industries.",
-    "profile_feature_explanation": "Fill in your profile will help Pubox connect you more effectively."
-  },
   "timeslot": {
     "dayOfWeek": {
       "label": "Day Of Week",
@@ -207,8 +192,83 @@
     "basketball": "Basketball",
     "badminton": "Badminton",
     "tennis": "Tennis",
-    "pickleball": "Pickleball"
+    "pickleball": "Pickleball",
+    "selectSport": "Please select a sport",
+    "othersAlertDescription": "You are currently viewing 'Others' category. Please select a specific sport to see relevant content."
   },
   "not_set": "Not set",
-  "done": "Done"
+  "done": "Done",
+  "auth": {
+    "welcome": "Welcome",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "emailEmpty": "Please enter your email",
+    "emailInvalid": "Please enter a valid email address",
+    "passwordEmpty": "Please enter your password",
+    "passwordLength": "Password must be at least 8 characters long",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "loginFailed": "Login Failed",
+    "signUpFailed": "SignUp Failed",
+    "googleContinue": "Continue with Google",
+    "appleContinue": "Continue with Apple",
+    "guestContinue": "Continue as Guest",
+    "googleLoginFailed": "Google Login Failed",
+    "appleLoginFailed": "Apple Login Failed",
+    "guestLoginFailed": "Guest Login Failed"
+  },
+  "nav": {
+    "home": "Home",
+    "manage": "Manage",
+    "health": "Health",
+    "profile": "Profile"
+  },
+  "home": {
+    "teammate": "Teammate Content",
+    "challenger": "Challenger Content",
+    "neutral": "Neutral Content",
+    "location": "Location Content"
+  },
+  "manage": {
+    "schedule": "Schedule Content",
+    "lobby": "Lobby Content"
+  },
+  "profile": {
+    "content": "Profile Content",
+    "logout": "Logout",
+    "accountInfo": "Account Info",
+    "username": "Username",
+    "email": "Email",
+    "changePassword": "Change Password",
+    "generalInfo": "General Info",
+    "noGeneralInfo": "No general information provided",
+    "gender": "Gender",
+    "ageGroup": "Age Group",
+    "location": "Location",
+    "playtime": "Playtime",
+    "sportInfo": "Sport Info",
+    "noSportInfo": "No sport information provided",
+    "commit": "Commit",
+    "genderLabel": "Gender",
+    "ageGroupLabel": "Age Group",
+    "industryLabel": "Industry",
+    "networkLabel": "Network",
+    "playtimeLabel": "Playtime",
+    "network_selection_title": "Select Networks",
+    "search_network": "Search networks...",
+    "selected_networks": "Selected Networks",
+    "no_networks_found": "No networks found matching the search criteria",
+    "industry_selection_title": "Select Industries",
+    "network_feature_explanation": "Choose at most 2 schools/ universities/ companies that you were or are a part of. Pubox will connect you with people who share your networks.",
+    "industry_feature_explanation": "Choose at most 2 industries that you work in. Pubox will connect you with people who share your industries.",
+    "profile_feature_explanation": "Fill in your profile will help Pubox connect you more effectively.",
+    "confirmLogout": "Confirm Logout?",
+    "alumni": "Alumni",
+    "currentMember": "Current Member",
+    "toggleAlumniStatus": "Toggle Alumni Status"
+  },
+  "health": {
+    "title": "Health",
+    "content": "Health Content"
+  }
 }

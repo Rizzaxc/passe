@@ -1,8 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
 import '../ui/main.dart';
 import 'auth_controller.dart';
@@ -35,7 +36,7 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
         if (!context.mounted) return;
         showFToast(
           context: context,
-          title: const Text('Login Failed'),
+          title: Text('auth.loginFailed'.tr()),
           description: Text(e.toString()),
           alignment: .bottomCenter,
         );
@@ -55,7 +56,7 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
         if (!context.mounted) return;
         showFToast(
           context: context,
-          title: const Text('SignUp Failed'),
+          title: Text('auth.signUpFailed'.tr()),
           description: Text(e.toString()),
           alignment: .bottomCenter,
         );
@@ -63,7 +64,7 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
     }
 
     return FScaffold(
-      header: FHeader(title: const Text('Welcome')),
+      header: FHeader(title: Text('auth.welcome'.tr())),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -72,31 +73,52 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               FTextFormField.email(
-                label: const Text('Email'),
+                label: Text('auth.emailLabel'.tr()),
                 keyboardType: TextInputType.emailAddress,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 clearable: (value) => value.text.isNotEmpty,
                 autofillHints: const [AutofillHints.email],
                 onSaved: (value) => email = value ?? '',
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'auth.emailEmpty'.tr();
+                  }
+                  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                  if (!emailRegex.hasMatch(value)) {
+                    return 'auth.emailInvalid'.tr();
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 12),
               FTextFormField.password(
-                label: const Text('Password'),
+                label: Text('auth.passwordLabel'.tr()),
                 clearable: (value) => value.text.isNotEmpty,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 autofillHints: const [AutofillHints.password],
                 onSaved: (value) => pass = value ?? '',
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'auth.passwordEmpty'.tr();
+                  }
+                  if (value.length < 8) {
+                    return 'auth.passwordLength'.tr();
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
-              // FDualButton(
-              //   firstChild: const Text('Sign In', style: TextStyle(fontWeight: .bold),),
-              //   secondChild: const Text('Sign Up'),
-              //   onFirstPressed: onLogin,
-              //   onSecondPressed: onRegister,
-              //   secondStyle: FButtonStyle.primary(),
-              //
-              //   flex: 60,
-              // ),
+              FDualButton(
+                firstChild: Text(
+                  'auth.signIn'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                secondChild: Text('auth.signUp'.tr()),
+                onFirstPressed: onLogin,
+                onSecondPressed: onRegister,
+                secondStyle: context.theme.buttonStyles.destructive,
+                flex: 60,
+              ),
               const SizedBox(height: 16),
               const SocialAuthSection(),
             ],
@@ -136,30 +158,30 @@ class SocialAuthSection extends ConsumerWidget {
           style: FButtonStyle.outline(),
           onPress: () => handleAuthAction(
             () => ref.read(authControllerProvider.notifier).signInWithGoogle(),
-            'Google Login Failed',
+            'auth.googleLoginFailed'.tr(),
           ),
           prefix: const Icon(FontAwesomeIcons.google),
-          child: const Text('Continue with Google'),
+          child: Text('auth.googleContinue'.tr()),
         ),
         const SizedBox(height: 12),
         FButton(
           style: FButtonStyle.outline(),
           onPress: () => handleAuthAction(
             () => ref.read(authControllerProvider.notifier).signInWithApple(),
-            'Apple Login Failed',
+            'auth.appleLoginFailed'.tr(),
           ),
           prefix: const Icon(FontAwesomeIcons.apple),
-          child: const Text('Continue with Apple'),
+          child: Text('auth.appleContinue'.tr()),
         ),
         const SizedBox(height: 12),
         FButton(
           style: FButtonStyle.secondary(),
           onPress: () => handleAuthAction(
             () => ref.read(authControllerProvider.notifier).continueAsGuest(),
-            'Guest Login Failed',
+            'auth.guestLoginFailed'.tr(),
           ),
           prefix: const Icon(FIcons.forward),
-          child: const Text('Continue as Guest'),
+          child: Text('auth.guestContinue'.tr()),
         ),
       ],
     );

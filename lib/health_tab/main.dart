@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import '../core/sport_selector.dart';
@@ -13,14 +14,14 @@ class HealthTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return FScaffold(
       header: FHeader(
-        title: const Text('Health'),
+        title: Text('health.title'.tr()),
         suffixes: [
           const NotificationIconButton(),
           const SportSelector(),
         ],
       ),
-      child: const Center(
-        child: Text('Health Content'),
+      child: Center(
+        child: Text('health.content'.tr()),
       ),
     );
   }

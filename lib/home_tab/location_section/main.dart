@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class LocationSubtab extends StatelessWidget {
@@ -5,6 +6,6 @@ class LocationSubtab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Location Content'));
+    return Center(child: Text('home.location'.tr()));
   }
 }

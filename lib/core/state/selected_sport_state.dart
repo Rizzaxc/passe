@@ -10,7 +10,7 @@ class SelectedSportState extends _$SelectedSportState {
   static const _prefKey = 'SELECTED_SPORT';
   late final UserPreferences localStorage;
 
-  int get id => state as int;
+  int get id => state.value?.index ?? 0;
 
   @override
   FutureOr<Sport> build() async {
@@ -27,4 +27,12 @@ class SelectedSportState extends _$SelectedSportState {
   Future<void> saveToStorage() async {
     await localStorage.setInt(_prefKey, id);
   }
+}
+
+@riverpod
+class OthersAlertShown extends _$OthersAlertShown {
+  @override
+  bool build() => false;
+
+  void setShown() => state = true;
 }
