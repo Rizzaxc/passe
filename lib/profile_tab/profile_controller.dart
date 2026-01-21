@@ -25,6 +25,185 @@ abstract class ProfileState with _$ProfileState {
 }
 
 @riverpod
+class NetworkController extends _$NetworkController {
+  final supabase = Supabase.instance.client;
+
+  @override
+  List<Network> build() {
+    final user = ref.watch(authControllerProvider).value;
+    if (user == null || user.id == null) return [];
+
+    // Fetch initial data
+    _fetchNetworks(user.id!);
+
+    return [];
+  }
+
+  Future<void> _fetchNetworks(String userId) async {
+    try {
+      final response = await supabase
+          .from('user_network')
+          .select('alumni, network(id, name, category, city)')
+          .eq('user_id', userId);
+
+      final networks = (response as List).map((data) {
+        final networkData = data['network'] as Map<String, dynamic>;
+        return Network(
+          id: networkData['id'] as int,
+          name: networkData['name'] as String,
+          isAlumni: data['alumni'] as bool,
+          category: NetworkCategory.fromString(networkData['category'] as String?),
+          city: networkData['city'] != null
+              ? City.values.firstWhere(
+                  (c) => c.name.toLowerCase() == (networkData['city'] as String).toLowerCase(),
+                  orElse: () => City.hanoi,
+                )
+              : null,
+        );
+      }).toList();
+
+      state = networks;
+    } catch (e, st) {
+      Talker().handle(e, st, 'Error fetching user networks');
+    }
+  }
+
+  void toggle(Network network) {
+    final current = state.toSet();
+    if (current.contains(network)) {
+      current.remove(network);
+    } else if (current.length < 2) {
+      current.add(network);
+    } else {
+      current.remove(current.first);
+      current.add(network);
+    }
+    state = current.toList();
+  }
+
+  void toggleAlumni(int networkId) {
+    state = [
+      for (final network in state)
+        if (network.id == networkId)
+          network.copyWith(isAlumni: !network.isAlumni)
+        else
+          network,
+    ];
+  }
+
+  void updateAll(List<Network> networks) {
+    state = networks;
+  }
+
+  void reset() {
+    ref.invalidateSelf();
+  }
+
+  Future<void> commit() async {
+    if (supabase.auth.currentUser == null) return;
+    final userId = supabase.auth.currentUser!.id;
+
+    try {
+      await supabase.from('user_network').delete().eq('user_id', userId);
+      if (state.isNotEmpty) {
+        await supabase.from('user_network').insert(
+              state
+                  .map((network) => {
+                        'user_id': userId,
+                        'network_id': network.id,
+                        'alumni': network.isAlumni,
+                      })
+                  .toList(),
+            );
+      }
+    } catch (e, st) {
+      Talker().handle(e, st, 'Error committing user networks');
+      rethrow;
+    }
+  }
+}
+
+@riverpod
+class IndustryController extends _$IndustryController {
+  final supabase = Supabase.instance.client;
+
+  @override
+  List<Industry> build() {
+    final user = ref.watch(authControllerProvider).value;
+    if (user == null || user.id == null) return [];
+
+    // Fetch initial data
+    final fetch = _fetchIndustries(user.id!);
+    return [];
+  }
+
+
+
+  Future<void> _fetchIndustries(String userId) async {
+
+    try {
+      final response = await supabase
+          .from('user_industry')
+          .select('industry_id')
+          .eq('user_id', userId);
+
+      final industries = (response as List).map((data) {
+        final industryId = data['industry_id'] as int;
+        return Industry.values[industryId];
+      }).toList();
+
+      state = industries;
+    } catch (e, st) {
+      Talker().handle(e, st, 'Error fetching user industries');
+    }
+  }
+
+  void toggle(Industry industry) {
+    final current = state.toSet();
+    if (current.contains(industry)) {
+      current.remove(industry);
+    } else if (current.length < 2) {
+      current.add(industry);
+    } else {
+      current.remove(current.first);
+      current.add(industry);
+    }
+    state = current.toList();
+  }
+
+  void updateAll(List<Industry> industries) {
+    if (industries.length > 2) return;
+    state = industries;
+  }
+
+  void reset() {
+    ref.invalidateSelf();
+  }
+
+  Future<void> commit() async {
+    if (supabase.auth.currentUser == null) return;
+    final userId = supabase.auth.currentUser!.id;
+
+    try {
+      await supabase.from('user_industry').delete().eq('user_id', userId);
+      if (state.isNotEmpty) {
+        await supabase.from('user_industry').insert(
+              state
+                  .map((industry) => {
+                        'user_id': userId,
+                        'industry_id': industry.index,
+                      })
+                  .toList(),
+            );
+      }
+    } catch (e, st) {
+      Talker().handle(e, st, 'Error committing user industries');
+      rethrow;
+    }
+  }
+}
+
+@riverpod
 class ProfileController extends _$ProfileController {
   final supabase = Supabase.instance.client;
   final talker = Talker();
@@ -32,12 +211,15 @@ class ProfileController extends _$ProfileController {
   @override
   ProfileState build() {
     final user = ref.watch(authControllerProvider).value;
-    // Note: in a real app, networks and industries would be fetched from /profile
-    // For now, initializing with empty lists if not available in user object
-    // Assuming User model might have been updated too, but issue says fetched separately.
+
+    final networks = ref.watch(networkControllerProvider);
+    final industries = ref.watch(industryControllerProvider);
+    
     return ProfileState(
       username: user?.username ?? 'Guest',
       details: user?.details ?? const UserDetails(),
+      networks: networks,
+      industries: industries,
     );
   }
 
@@ -56,10 +238,15 @@ class ProfileController extends _$ProfileController {
   }
 
   void resetDraft() {
+    ref.read(networkControllerProvider.notifier).reset();
+    ref.read(industryControllerProvider.notifier).reset();
+
     final user = ref.read(authControllerProvider).value;
     state = ProfileState(
       username: user?.username ?? 'Guest',
       details: user?.details ?? const UserDetails(),
+      networks: ref.read(networkControllerProvider),
+      industries: ref.read(industryControllerProvider),
     );
   }
 
@@ -68,18 +255,29 @@ class ProfileController extends _$ProfileController {
     if (user == null || user.id == null) return;
 
     try {
-      await supabase.from('user').update({
-        'username': state.username,
-        'details': state.details.toJson(),
-      }).eq('id', user.id!);
+      await Future.wait([
+        // 1. Update user basic info & details json
+        supabase.from('user').update({
+          'username': state.username,
+          'details': state.details.toJson(),
+        }).eq('id', user.id!),
 
-      await ref.read(authControllerProvider.notifier).refresh();
+        // 2. Sync networks (user_network table)
+        ref.read(networkControllerProvider.notifier).commit(),
+
+        // 3. Sync industries (user_industry table)
+        ref.read(industryControllerProvider.notifier).commit(),
+      ]);
     } on PostgrestException catch (e, st) {
       talker.handle(e, st, state.details.toString());
       rethrow;
     } catch (e, st) {
       talker.handle(e, st);
       rethrow;
+    } finally {
+      if (ref.mounted) {
+        await ref.read(authControllerProvider.notifier).refresh();
+      }
     }
   }
 

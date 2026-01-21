@@ -15,7 +15,11 @@ import '../notification/notification_icon_button.dart';
 import '../ui/main.dart';
 import 'age_group_selection_screen.dart';
 import 'guest_profile_view.dart';
+import 'industry_selection_screen.dart';
+import 'network_selection_screen.dart';
 import 'profile_controller.dart';
+import 'network_empty_placeholder.dart';
+import 'industry_empty_placeholder.dart';
 import 'sport_profile/badminton.dart';
 import 'sport_profile/basketball.dart';
 import 'sport_profile/pickleball.dart';
@@ -70,7 +74,9 @@ class ProfileTab extends HookConsumerWidget {
                 FButton(
                   onPress: () async {
                     try {
-                      await ref.read(profileControllerProvider.notifier).commit();
+                      await ref
+                          .read(profileControllerProvider.notifier)
+                          .commit();
                     } catch (e) {
                       if (!context.mounted) return;
                       showFToast(
@@ -106,7 +112,11 @@ class ProfileTab extends HookConsumerWidget {
   }
 
   Widget _buildAccountSection(
-      BuildContext context, WidgetRef ref, ProfileState profileState, user) {
+    BuildContext context,
+    WidgetRef ref,
+    ProfileState profileState,
+    user,
+  ) {
     final isEditingUsername = useState(false);
     final controller = useTextEditingController(text: profileState.username);
 
@@ -182,7 +192,10 @@ class ProfileTab extends HookConsumerWidget {
   }
 
   Widget _buildGeneralInfoSection(
-      BuildContext context, WidgetRef ref, UserDetails details) {
+    BuildContext context,
+    WidgetRef ref,
+    UserDetails details,
+  ) {
     final genderSuffix = () {
       if (details.gender == null) return null;
       if (details.gender == Gender.male) return const Icon(FIcons.mars);
@@ -204,9 +217,7 @@ class ProfileTab extends HookConsumerWidget {
             final nextGender = currentGender == Gender.male
                 ? Gender.female
                 : Gender.male;
-            final updatedDetails = details.copyWith(
-              gender: nextGender,
-            );
+            final updatedDetails = details.copyWith(gender: nextGender);
             ref
                 .read(profileControllerProvider.notifier)
                 .updateDraft(details: updatedDetails);
@@ -246,40 +257,51 @@ class ProfileTab extends HookConsumerWidget {
   }
 
   Widget _buildNetworkIndustrySection(
-      BuildContext context, WidgetRef ref, ProfileState profileState) {
+    BuildContext context,
+    WidgetRef ref,
+    ProfileState profileState,
+  ) {
     return Column(
       children: [
-        FTileGroup(
-          label: Text('profile.networkLabel'.tr()),
-          description: Text('profile.network_feature_explanation'.tr()),
-          children: [
-            FTile(
-              title: Text('profile.networkLabel'.tr()),
-              details: Text(
-                profileState.networks.isNotEmpty
-                    ? profileState.networks.map((e) => e.name).join(', ')
-                    : 'not_set'.tr(),
+        (profileState.networks.isEmpty)
+            ? NetworkEmptyPlaceholder()
+            : FTileGroup(
+                label: Text('profile.networkLabel'.tr()),
+                description: Text('profile.network_feature_explanation'.tr()),
+                children: [
+                  FTile(
+                    title: Text('profile.networkLabel'.tr()),
+                    details: Text(
+                      profileState.networks.map((e) => e.name).join(', '),
+                    ),
+                    onPress: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const NetworkSelectionScreen(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              onPress: () {},
-            ),
-          ],
-        ),
         const SizedBox(height: 24),
         FTileGroup(
           label: Text('profile.industryLabel'.tr()),
           description: Text('profile.industry_feature_explanation'.tr()),
           children: [
-            FTile(
-              title: Text('profile.industryLabel'.tr()),
-              details: Text(
-                profileState.industries.isNotEmpty
-                    ? profileState.industries
-                        .map((e) => e.getLocalizedName(context))
-                        .join(', ')
-                    : 'not_set'.tr(),
+            if (profileState.industries.isEmpty)
+              FTile.raw(child: IndustryEmptyPlaceholder())
+            else
+              FTile.raw(
+                child: Text(
+                  profileState.industries
+                      .map((e) => e.getLocalizedName(context))
+                      .join(', '),
+                ),
+                onPress: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const IndustrySelectionScreen(),
+                  ),
+                ),
               ),
-              onPress: () {},
-            ),
           ],
         ),
       ],
@@ -287,7 +309,10 @@ class ProfileTab extends HookConsumerWidget {
   }
 
   Widget _buildSportInfoSection(
-      BuildContext context, WidgetRef ref, UserDetails details) {
+    BuildContext context,
+    WidgetRef ref,
+    UserDetails details,
+  ) {
     final selectedSportAsync = ref.watch(selectedSportStateProvider);
 
     return selectedSportAsync.when(

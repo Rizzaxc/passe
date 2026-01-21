@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../core/model/enum.dart';
 import '../../core/model/user_details.dart';
+import 'sport_empty_placeholder.dart';
 
 class BasketballProfile extends ConsumerWidget {
   final UserDetails details;
@@ -18,15 +19,15 @@ class BasketballProfile extends ConsumerWidget {
     final sportProfile = details.sport?[sportId.toString()];
     final skillLevel = sportProfile?.skill;
 
-    return FTileGroup(
+    return sportProfile == null
+        ? SportEmptyPlaceholder(sportName: sportName)
+        : FTileGroup(
       label: Text('profile.sportProfile'.tr(args: [sportName])),
-      description: Text('profile.profile_feature_explanation'.tr()),
+      description: Text('profile.sport_feature_explanation'.tr()),
       children: [
         FTile(
           title: Text(sportName),
-          subtitle: Text(
-            skillLevel != null ? 'Skill Level: $skillLevel' : 'not_set'.tr(),
-          ),
+          subtitle: Text('Skill Level: $skillLevel'),
           onPress: () {},
         ),
       ],
