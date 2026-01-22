@@ -276,5 +276,22 @@
   "health": {
     "title": "Health",
     "content": "Health Content"
+  },
+  "welcome": {
+    "skip": "Skip",
+    "next": "Next",
+    "getStarted": "Get Started",
+    "page1": {
+      "title": "Connect with community",
+      "description": "Find teammates and opponents that match your skill level and schedule"
+    },
+    "page2": {
+      "title": "Manage your games",
+      "description": "Create and join game sessions, track your appointments easily"
+    },
+    "page3": {
+      "title": "Improve your skills",
+      "description": "Track your progress, connect with coaches and improve your performance"
+    }
   }
 }

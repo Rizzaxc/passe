@@ -125,7 +125,7 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
                 secondChild: Text('auth.signUp'.tr()),
                 onFirstPressed: onLogin,
                 onSecondPressed: onRegister,
-                secondStyle: context.theme.buttonStyles.destructive,
+                secondStyle: (styles) => styles.destructive,
                 flex: 60,
               ),
               const SizedBox(height: 16),
@@ -157,40 +157,79 @@ class SocialAuthSection extends ConsumerWidget {
       }
     }
 
+    const iconBoxWidth = 24.0;
+    const contentWidth = 200.0;
+
+    Widget buildRow({
+      required IconData icon,
+      required String label,
+      required VoidCallback onTap,
+      Color? iconColor,
+    }) {
+      final buttonStyle = context.theme.buttonStyles.outline;
+
+      return FTappable(
+        style: buttonStyle.tappableStyle.call,
+        builder: (context, states, child) => DecoratedBox(
+          decoration: buttonStyle.decoration.resolve(states),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            child: Center(child: child),
+          ),
+        ),
+        onPress: onTap,
+        child: SizedBox(
+          width: contentWidth,
+          child: Row(
+            children: [
+              SizedBox(
+                width: iconBoxWidth,
+                child: Icon(icon, color: iconColor),
+              ),
+              const SizedBox(width: 16),
+              Text(label, style: context.theme.typography.base,),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Column(
       children: [
         const SizedBox(height: 16),
         const Divider(),
         const SizedBox(height: 16),
-
-        FButton(
-          style: FButtonStyle.outline(),
-          onPress: () => handleAuthAction(
-            () => ref.read(authControllerProvider.notifier).signInWithGoogle(),
-            'auth.googleLoginFailed'.tr(),
-          ),
-          prefix: const Icon(FontAwesomeIcons.google),
-          child: Text('auth.googleContinue'.tr()),
-        ),
-        const SizedBox(height: 12),
-        FButton(
-          style: FButtonStyle.outline(),
-          onPress: () => handleAuthAction(
-            () => ref.read(authControllerProvider.notifier).signInWithApple(),
-            'auth.appleLoginFailed'.tr(),
-          ),
-          prefix: const Icon(FontAwesomeIcons.apple),
-          child: Text('auth.appleContinue'.tr()),
-        ),
-        const SizedBox(height: 12),
-        FButton(
-          style: FButtonStyle.secondary(),
-          onPress: () => handleAuthAction(
-            () => ref.read(authControllerProvider.notifier).continueAsGuest(),
-            'auth.guestLoginFailed'.tr(),
-          ),
-          prefix: const Icon(FIcons.forward),
-          child: Text('auth.guestContinue'.tr()),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 8,
+          children: [
+            buildRow(
+              icon: FontAwesomeIcons.google,
+              label: 'auth.googleContinue'.tr(),
+              iconColor: const Color(0xFF4285F4),
+              onTap: () => handleAuthAction(
+                () => ref.read(authControllerProvider.notifier).signInWithGoogle(),
+                'auth.googleLoginFailed'.tr(),
+              ),
+            ),
+            buildRow(
+              icon: FontAwesomeIcons.apple,
+              label: 'auth.appleContinue'.tr(),
+              iconColor: context.theme.colors.foreground,
+              onTap: () => handleAuthAction(
+                () => ref.read(authControllerProvider.notifier).signInWithApple(),
+                'auth.appleLoginFailed'.tr(),
+              ),
+            ),
+            buildRow(
+              icon: FIcons.forward,
+              label: 'auth.guestContinue'.tr(),
+              onTap: () => handleAuthAction(
+                () => ref.read(authControllerProvider.notifier).continueAsGuest(),
+                'auth.guestLoginFailed'.tr(),
+              ),
+            ),
+          ],
         ),
       ],
     );

@@ -1,10 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../core/model/timeslot.dart';
 import '../core/timeslot_picker.dart';
 import '../ui/dual_button.dart';
 import 'profile_controller.dart';
@@ -74,9 +72,9 @@ class PlaytimeSelectionScreen extends ConsumerWidget {
               ),
             const SizedBox(height: 24),
             FDualButton(
-              firstStyle: FButtonStyle.outline(),
-              secondStyle: FButtonStyle.outline(),
-              flex: 80,
+              firstStyle: (styles) => styles.outline,
+              secondStyle: (styles) => styles.outline,
+              flex: 85,
               onFirstPressed: () async {
                 final timeslot = await showTimeslotPicker(context: context);
                 if (timeslot != null) {

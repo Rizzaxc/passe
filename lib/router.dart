@@ -6,6 +6,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import 'auth/auth_controller.dart';
 import 'auth/auth_screen.dart';
+import 'auth/welcome_screen.dart';
 import 'core/model/pubox_user.dart';
 import 'home_tab/main.dart';
 import 'main.dart';
@@ -56,25 +57,26 @@ GoRouter router(Ref ref) {
     routes: $appRoutes,
     redirect: (context, state) {
       final isSplash = state.uri.path == const SplashRoute().location;
-      final isLoggingIn = state.uri.path == const AuthRoute().location;
+      final isAuthFlow = state.uri.path == const AuthRoute().location ||
+          state.uri.path == const WelcomeRoute().location;
       switch (user.value) {
         case AsyncError():
-          if (isLoggingIn) return null;
-          return const AuthRoute().location;
+          if (isAuthFlow) return null;
+          return const WelcomeRoute().location;
         case AsyncLoading():
-          if (isLoggingIn) return null;
+          if (isAuthFlow) return null;
           return const SplashRoute().location;
         case AsyncData(value: null):
-          if (isSplash || !isLoggingIn) return const AuthRoute().location;
+          if (isSplash || !isAuthFlow) return const WelcomeRoute().location;
           return null;
         case AsyncData(value: final user):
           if (user!.isGuest) {
             if (isSplash) return HomeRoute().location;
-            if (isLoggingIn) return HomeRoute().location;
+            if (isAuthFlow) return HomeRoute().location;
             return null;
           }
 
-          if (isSplash || isLoggingIn) return HomeRoute().location;
+          if (isSplash || isAuthFlow) return HomeRoute().location;
           return null;
       }
     },
@@ -106,6 +108,17 @@ class AuthRoute extends GoRouteData with $AuthRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const AuthScreen();
+  }
+}
+
+@TypedGoRoute<WelcomeRoute>(path: '/welcome')
+@immutable
+class WelcomeRoute extends GoRouteData with $WelcomeRoute {
+  const WelcomeRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const WelcomeScreen();
   }
 }
 

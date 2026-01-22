@@ -281,5 +281,22 @@
   "health": {
     "title": "Sức khỏe",
     "content": "Nội dung Sức khỏe"
+  },
+  "welcome": {
+    "skip": "Bỏ qua",
+    "next": "Tiếp",
+    "getStarted": "Bắt đầu",
+    "page1": {
+      "title": "Kết nối cộng đồng",
+      "description": "Tìm kiếm đồng đội và đối thủ phù hợp với trình độ và lịch trình của bạn"
+    },
+    "page2": {
+      "title": "Quản lý lịch chơi",
+      "description": "Tạo và tham gia các buổi chơi, theo dõi lịch hẹn dễ dàng"
+    },
+    "page3": {
+      "title": "Nâng cao kỹ năng",
+      "description": "Theo dõi tiến bộ, kết nối với huấn luyện viên và cải thiện phong độ"
+    }
   }
 }

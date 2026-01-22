@@ -14,8 +14,8 @@ import 'package:forui/forui.dart';
 ///   secondChild: const Text('Sign Up'),
 ///   onFirstPressed: onLogin,
 ///   onSecondPressed: onRegister,
-///   firstStyle: FButtonStyle.primary(),
-///   secondStyle: FButtonStyle.outline(),
+///   firstStyle: (styles) => styles.primary,
+///   secondStyle: (styles) => styles.outline,
 ///   axis: Axis.horizontal,
 ///   flex: 60,
 /// )
@@ -25,8 +25,8 @@ class FDualButton extends StatefulWidget {
   final Widget secondChild;
   final VoidCallback? onFirstPressed;
   final VoidCallback? onSecondPressed;
-  final FButtonStyle? firstStyle;
-  final FButtonStyle? secondStyle;
+  final FButtonStyle Function(FButtonStyles styles)? firstStyle;
+  final FButtonStyle Function(FButtonStyles styles)? secondStyle;
   final Axis axis;
   final int flex;
 
@@ -69,9 +69,9 @@ class _FDualButtonState extends State<FDualButton> {
     }
   }
 
-  FButtonStyle _modifyStyle(FButtonStyle? style, bool isFirst) {
+  FButtonStyle _modifyStyle(FButtonStyle Function(FButtonStyles)? styleBuilder, bool isFirst) {
     final theme = FTheme.of(context);
-    final baseStyle = style ?? theme.buttonStyles.primary;
+    final baseStyle = styleBuilder?.call(theme.buttonStyles) ?? theme.buttonStyles.primary;
 
     final baseDecoration = baseStyle.decoration.resolve({});
     final borderRadius = baseDecoration.borderRadius as BorderRadius?;
@@ -121,7 +121,7 @@ class _FDualButtonState extends State<FDualButton> {
       Expanded(
         flex: widget.flex,
         child: FButton(
-          style: firstStyle,
+          style: (_) => firstStyle,
           onPress: _isProcessing ? null : _handleFirstPressed,
           child: widget.firstChild,
         ),
@@ -134,7 +134,7 @@ class _FDualButtonState extends State<FDualButton> {
       Expanded(
         flex: 100 - widget.flex,
         child: FButton(
-          style: secondStyle,
+          style: (_) => secondStyle,
           onPress: _isProcessing ? null : _handleSecondPressed,
           child: widget.secondChild,
         ),

@@ -169,7 +169,7 @@ class _GuestAuthFormState extends ConsumerState<_GuestAuthForm> {
               secondChild: Text('auth.signUp'.tr()),
               onFirstPressed: _onLogin,
               onSecondPressed: _onRegister,
-              secondStyle: context.theme.buttonStyles.destructive,
+              secondStyle: (styles) => styles.destructive,
               flex: 60,
             ),
             const SizedBox(height: 16),

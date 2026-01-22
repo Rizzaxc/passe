@@ -9,6 +9,7 @@ part of 'router.dart';
 List<RouteBase> get $appRoutes => [
   $splashRoute,
   $authRoute,
+  $welcomeRoute,
   $notificationRoute,
   $mainRoute,
 ];
@@ -44,6 +45,29 @@ mixin $AuthRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/auth');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $welcomeRoute =>
+    GoRouteData.$route(path: '/welcome', factory: $WelcomeRoute._fromState);
+
+mixin $WelcomeRoute on GoRouteData {
+  static WelcomeRoute _fromState(GoRouterState state) => const WelcomeRoute();
+
+  @override
+  String get location => GoRouteData.$location('/welcome');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -401,4 +425,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'e25fb03a8ffcfd26b88e43ce8cae6350d46df0cd';
+String _$routerHash() => r'22839587972316e019d98fc7c0f306b15a70d005';
