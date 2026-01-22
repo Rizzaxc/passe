@@ -17,6 +17,7 @@ import 'age_group_selection_screen.dart';
 import 'guest_profile_view.dart';
 import 'industry_selection_screen.dart';
 import 'network_selection_screen.dart';
+import 'playtime_selection_screen.dart';
 import 'profile_controller.dart';
 import 'network_empty_placeholder.dart';
 import 'industry_empty_placeholder.dart';
@@ -250,7 +251,11 @@ class ProfileTab extends HookConsumerWidget {
                 ? '${details.playtime!.length} timeslots'
                 : 'not_set'.tr(),
           ),
-          onPress: () {},
+          onPress: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const PlaytimeSelectionScreen(),
+            ),
+          ),
         ),
       ],
     );

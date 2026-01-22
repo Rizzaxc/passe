@@ -290,6 +290,14 @@ class ProfileController extends _$ProfileController {
     );
   }
 
+  void resetPlaytime() {
+    final user = ref.read(authControllerProvider).value;
+    final originalPlaytime = user?.details?.playtime;
+    state = state.copyWith(
+      details: state.details.copyWith(playtime: originalPlaytime),
+    );
+  }
+
   Future<void> changePassword(String newPassword) async {
     try {
       await supabase.auth.updateUser(

@@ -73,74 +73,17 @@ enum DayOfWeek {
     return context.tr('timeslot.dayOfWeek.label');
   }
 
-  String getLocalizedName(BuildContext context) {
-    return context.tr('timeslot.dayOfWeek.$name');
-  }
-
   static List<String> getAllLocalizedName(BuildContext context) {
     return Gender.values.map((each) => each.getLocalizedName(context)).toList();
   }
 
-  String getShortName([BuildContext? context]) {
-    if (context != null) {
-      return context.tr('timeslot.dayOfWeek.shortName.$name');
-    }
-    // Fallback to hardcoded strings for backward compatibility
-    switch (this) {
-      case DayOfWeek.everyday:
-        return 'HN';
-      case DayOfWeek.monday:
-        return 'T2';
-      case DayOfWeek.tuesday:
-        return 'T3';
-      case DayOfWeek.wednesday:
-        return 'T4';
-      case DayOfWeek.thursday:
-        return 'T5';
-      case DayOfWeek.friday:
-        return 'T6';
-      case DayOfWeek.saturday:
-        return 'T7';
-      case DayOfWeek.sunday:
-        return 'CN';
-      case DayOfWeek.even:
-        return '246';
-      case DayOfWeek.odd:
-        return '357';
-      case DayOfWeek.weekend:
-        return 'CT';
-    }
+  String getShortName(BuildContext context) {
+    return context.tr('timeslot.dayOfWeek.shortName.$name');
+
   }
 
-  String getFullName([BuildContext? context]) {
-    if (context != null) {
-      return context.tr('timeslot.dayOfWeek.$name');
-    }
-    // Fallback to hardcoded strings for backward compatibility
-    switch (this) {
-      case DayOfWeek.everyday:
-        return 'Hàng Ngày';
-      case DayOfWeek.monday:
-        return 'Thứ 2';
-      case DayOfWeek.tuesday:
-        return 'Thứ 3';
-      case DayOfWeek.wednesday:
-        return 'Thứ 4';
-      case DayOfWeek.thursday:
-        return 'Thứ 5';
-      case DayOfWeek.friday:
-        return 'Thứ 6';
-      case DayOfWeek.saturday:
-        return 'Thứ 7';
-      case DayOfWeek.sunday:
-        return 'Chủ Nhật';
-      case DayOfWeek.even:
-        return 'Ngày Chẵn (2,4,6)';
-      case DayOfWeek.odd:
-        return 'Ngày Lẻ (3,5,7)';
-      case DayOfWeek.weekend:
-        return 'Cuối Tuần';
-    }
+  String getFullName(BuildContext context) {
+    return context.tr('timeslot.dayOfWeek.$name');
   }
 }
 

@@ -16,7 +16,8 @@ class AuthScreen extends StatefulHookConsumerWidget {
 }
 
 class _AuthScreen extends ConsumerState<AuthScreen> {
-  final _key = GlobalKey<FormState>();
+  final _key = GlobalKey<FormState>(debugLabel: 'auth_screen_form');
+
 
   @override
   Widget build(BuildContext context) {

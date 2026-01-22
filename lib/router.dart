@@ -29,9 +29,21 @@ GoRouter router(Ref ref) {
   final user = ValueNotifier<AsyncValue<PuboxUser?>>(const AsyncLoading());
   ref.onDispose(user.dispose);
 
-  // update the listenable, when the auth state changes
+  // Only update the listenable when there's a meaningful auth state change
+  // (logged in vs logged out), not on every AsyncValue change
+  PuboxUser? previousUser;
+  bool isFirstUpdate = true;
   ref.listen(authControllerProvider, (_, next) {
-    user.value = next;
+    final currentUser = next.value;
+    final hasAuthStateChanged = isFirstUpdate ||
+        (previousUser == null) != (currentUser == null) ||
+        (previousUser?.isGuest != currentUser?.isGuest);
+
+    if (hasAuthStateChanged) {
+      user.value = next;
+      previousUser = currentUser;
+      isFirstUpdate = false;
+    }
   });
 
   final router = GoRouter(
@@ -165,7 +177,7 @@ class HomeRoute extends GoRouteData with $HomeRoute {
   const HomeRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) => HomeTab.instance;
+  Widget build(BuildContext context, GoRouterState state) => const HomeTab();
 }
 
 @immutable
@@ -210,7 +222,7 @@ class ManageRoute extends GoRouteData with $ManageRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      ManageTab.instance;
+      const ManageTab();
 }
 
 @immutable
@@ -237,7 +249,7 @@ class HealthRoute extends GoRouteData with $HealthRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HealthTab.instance;
+      const HealthTab();
 }
 
 @immutable
@@ -246,5 +258,5 @@ class ProfileRoute extends GoRouteData with $ProfileRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      ProfileTab.instance;
+      const ProfileTab();
 }

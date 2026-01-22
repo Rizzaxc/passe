@@ -55,7 +55,7 @@ class _GuestAuthForm extends ConsumerStatefulWidget {
 }
 
 class _GuestAuthFormState extends ConsumerState<_GuestAuthForm> {
-  final _key = GlobalKey<FormState>();
+  final _key = GlobalKey<FormState>(debugLabel: 'guest_profile_form');
   String _email = '';
   String _password = '';
 

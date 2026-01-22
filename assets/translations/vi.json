@@ -10,8 +10,8 @@
       "friday": "Thứ 6",
       "saturday": "Thứ 7",
       "sunday": "Chủ Nhật",
-      "even": "Ngày Chẵn (2,4,6)",
-      "odd": "Ngày Lẻ (3,5,7)",
+      "even": "T2-T4-T6",
+      "odd": "T3-T5-T7",
       "weekend": "Cuối Tuần",
       "shortName": {
         "everyday": "HN",
