@@ -1,17 +1,82 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
 import '../core/sport_selector.dart';
-import '../router.dart';
+import '../home_tab/filter.dart';
 import '../ui/main.dart';
+import 'achievements_section/main.dart';
+import 'activity_data_section/main.dart';
+import 'health_controller.dart';
+import 'not_linked_view.dart';
+import 'user_health_section/main.dart';
 
-class HealthTab extends StatelessWidget {
-  const HealthTab({super.key});
+class HealthTab extends ConsumerStatefulWidget {
+  final int initialIndex;
 
-  static final instance = HealthTab();
+  const HealthTab({super.key, this.initialIndex = 0});
+
+  factory HealthTab.withInitialTab(int initialIndex) {
+    return HealthTab(initialIndex: initialIndex);
+  }
+
+  @override
+  ConsumerState<HealthTab> createState() => _HealthTabState();
+}
+
+class _HealthTabState extends ConsumerState<HealthTab> {
+  late int _currentIndex;
+
+  static const _sections = [
+    (
+      icon: FIcons.trendingUp,
+      titleKey: 'health.userHealth.title',
+      child: UserHealthSubtab(),
+    ),
+    (
+      icon: FIcons.activity,
+      titleKey: 'health.activityData.title',
+      child: ActivityDataSubtab(),
+    ),
+    (
+      icon: FIcons.trophy,
+      titleKey: 'health.achievements.title',
+      child: AchievementsSubtab(),
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
+
+  void _onTabChanged(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
+  List<FTabEntry> _buildTabEntries() {
+    return List.generate(_sections.length, (index) {
+      final section = _sections[index];
+      final isSelected = _currentIndex == index;
+
+      return FTabEntry(
+        label: Icon(
+          section.icon,
+          key: const ValueKey('icon'),
+        ),
+        child: section.child,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final healthStatus = ref.watch(healthControllerProvider);
+
     return FScaffold(
       header: FHeader(
         title: Text('health.title'.tr()),
@@ -20,8 +85,24 @@ class HealthTab extends StatelessWidget {
           const SportSelector(),
         ],
       ),
-      child: Center(
-        child: Text('health.content'.tr()),
+      child: healthStatus.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(
+          child: Text('health.error'.tr()),
+        ),
+        data: (status) {
+          if (status == HealthLinkStatus.notLinked) {
+            return const HealthNotLinkedView();
+          }
+
+          return FTabs(
+            control: FTabControl.lifted(
+              index: _currentIndex,
+              onChange: _onTabChanged,
+            ),
+            children: _buildTabEntries(),
+          );
+        },
       ),
     );
   }

@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>This app needs access to your health data to track your activity metrics during sports sessions.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>This app needs permission to save workout data to Apple Health.</string>
 </dict>
 </plist>

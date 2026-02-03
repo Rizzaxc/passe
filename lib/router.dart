@@ -142,7 +142,7 @@ class NotificationRoute extends GoRouteData with $NotificationRoute {
           routes: [
             TypedGoRoute<HomeTeammateRoute>(path: 'teammate'),
             TypedGoRoute<HomeChallengerRoute>(path: 'challenger'),
-            TypedGoRoute<HomeNeutralRoute>(path: 'neutral'),
+            TypedGoRoute<HomeProfessionalRoute>(path: 'professional'),
             TypedGoRoute<HomePlaceRoute>(path: 'place'),
           ],
         ),
@@ -161,7 +161,14 @@ class NotificationRoute extends GoRouteData with $NotificationRoute {
     ),
     TypedStatefulShellBranch(
       routes: [
-        TypedGoRoute<HealthRoute>(path: '/health'),
+        TypedGoRoute<HealthRoute>(
+          path: '/health',
+          routes: [
+            TypedGoRoute<HealthUserHealthRoute>(path: 'user_health'),
+            TypedGoRoute<HealthActivityDataRoute>(path: 'activity_data'),
+            TypedGoRoute<HealthAchievementsRoute>(path: 'achievements'),
+          ],
+        ),
       ],
     ),
     TypedStatefulShellBranch(
@@ -212,8 +219,8 @@ class HomeChallengerRoute extends GoRouteData with $HomeChallengerRoute {
 }
 
 @immutable
-class HomeNeutralRoute extends GoRouteData with $HomeNeutralRoute {
-  const HomeNeutralRoute();
+class HomeProfessionalRoute extends GoRouteData with $HomeProfessionalRoute {
+  const HomeProfessionalRoute();
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
@@ -263,6 +270,33 @@ class HealthRoute extends GoRouteData with $HealthRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       const HealthTab();
+}
+
+@immutable
+class HealthUserHealthRoute extends GoRouteData with $HealthUserHealthRoute {
+  const HealthUserHealthRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      HealthTab.withInitialTab(0);
+}
+
+@immutable
+class HealthActivityDataRoute extends GoRouteData with $HealthActivityDataRoute {
+  const HealthActivityDataRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      HealthTab.withInitialTab(1);
+}
+
+@immutable
+class HealthAchievementsRoute extends GoRouteData with $HealthAchievementsRoute {
+  const HealthAchievementsRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      HealthTab.withInitialTab(2);
 }
 
 @immutable

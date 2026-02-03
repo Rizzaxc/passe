@@ -127,8 +127,8 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
               factory: $HomeChallengerRoute._fromState,
             ),
             GoRouteData.$route(
-              path: 'neutral',
-              factory: $HomeNeutralRoute._fromState,
+              path: 'professional',
+              factory: $HomeProfessionalRoute._fromState,
             ),
             GoRouteData.$route(
               path: 'place',
@@ -158,7 +158,24 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
     ),
     StatefulShellBranchData.$branch(
       routes: [
-        GoRouteData.$route(path: '/health', factory: $HealthRoute._fromState),
+        GoRouteData.$route(
+          path: '/health',
+          factory: $HealthRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'user_health',
+              factory: $HealthUserHealthRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'activity_data',
+              factory: $HealthActivityDataRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'achievements',
+              factory: $HealthAchievementsRoute._fromState,
+            ),
+          ],
+        ),
       ],
     ),
     StatefulShellBranchData.$branch(
@@ -235,12 +252,12 @@ mixin $HomeChallengerRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-mixin $HomeNeutralRoute on GoRouteData {
-  static HomeNeutralRoute _fromState(GoRouterState state) =>
-      const HomeNeutralRoute();
+mixin $HomeProfessionalRoute on GoRouteData {
+  static HomeProfessionalRoute _fromState(GoRouterState state) =>
+      const HomeProfessionalRoute();
 
   @override
-  String get location => GoRouteData.$location('/home/neutral');
+  String get location => GoRouteData.$location('/home/professional');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -344,6 +361,69 @@ mixin $HealthRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/health');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $HealthUserHealthRoute on GoRouteData {
+  static HealthUserHealthRoute _fromState(GoRouterState state) =>
+      const HealthUserHealthRoute();
+
+  @override
+  String get location => GoRouteData.$location('/health/user_health');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $HealthActivityDataRoute on GoRouteData {
+  static HealthActivityDataRoute _fromState(GoRouterState state) =>
+      const HealthActivityDataRoute();
+
+  @override
+  String get location => GoRouteData.$location('/health/activity_data');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $HealthAchievementsRoute on GoRouteData {
+  static HealthAchievementsRoute _fromState(GoRouterState state) =>
+      const HealthAchievementsRoute();
+
+  @override
+  String get location => GoRouteData.$location('/health/achievements');
 
   @override
   void go(BuildContext context) => context.go(location);

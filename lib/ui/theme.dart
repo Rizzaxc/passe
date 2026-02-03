@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pubox/ui/button_styles.dart';
 
+import 'tabs_style.dart';
+
 // ignore_for_file: avoid_redundant_argument_values
 
 const pbRed = Color(0xFFFF2010);
@@ -40,12 +42,18 @@ FThemeData get pbThemeLight {
     typography: typography,
     style: style,
     buttonStyles: buttonStyles(colors: colors, typography: typography, style: style),
+    tabsStyle: tabsStyle(colors: colors, typography: typography, style: style),
     extensions: [
       PuboxColor(color: pbRed),
-      PuboxColor(color: pbBlue),
       PuboxColor(color: pbGreen),
+      PuboxColor(color: pbBlue),
+
     ],
   );
+}
+
+extension PuboxColorExtension on FThemeData {
+  PuboxColor get brand => extension<PuboxColor>();
 }
 
 FThemeData get pbThemeDark {

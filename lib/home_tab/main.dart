@@ -3,15 +3,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../core/sport_selector.dart';
-import '../router.dart';
 import '../ui/main.dart';
 import 'challenger_section/main.dart';
+import 'filter.dart';
 import 'location_section/main.dart';
-import 'neutral_section/main.dart';
+import 'professional_section/main.dart';
 import 'teammate_section/main.dart';
 
-class HomeTab extends StatefulWidget {
+class HomeTab extends ConsumerStatefulWidget {
   final int initialIndex;
 
   const HomeTab({super.key, this.initialIndex = 0})
@@ -23,62 +24,73 @@ class HomeTab extends StatefulWidget {
     return HomeTab(initialIndex: initialIndex);
   }
 
-  static const homeSections = <FTabEntry>[
-    FTabEntry(
+  @override
+  ConsumerState<HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends ConsumerState<HomeTab>
+    with SingleTickerProviderStateMixin {
+  late int _currentIndex;
+
+  static const _sections = [
+    (
+      icon: CupertinoIcons.person_2_fill,
+      titleKey: 'home.teammate',
       child: TeammateSubtab(),
-      label: Icon(
-        CupertinoIcons.person_2_fill,
-      ),
     ),
-    FTabEntry(
+    (
+      icon: FontAwesomeIcons.fireFlameCurved,
+      titleKey: 'home.challenger',
       child: ChallengerSubtab(),
-      label: Icon(FontAwesomeIcons.fireFlameCurved),
     ),
-    FTabEntry(
-      child: NeutralSubtab(),
-      label: Icon(FontAwesomeIcons.flagCheckered),
+    (
+      icon: FontAwesomeIcons.flagCheckered,
+      titleKey: 'home.professional',
+      child: ProfessionalSubtab(),
     ),
-    FTabEntry(
+    (
+      icon: FontAwesomeIcons.locationDot,
+      titleKey: 'home.location',
       child: LocationSubtab(),
-      label: Icon(FontAwesomeIcons.shieldHalved),
     ),
   ];
 
   @override
-  State<HomeTab> createState() => _HomeTabState();
-}
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
 
-class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
-  // late final FTabControl _tabControl;
+  void _onTabChanged(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _tabControl = FTabControl.managed(
-  //     length: 4,
-  //     vsync: this,
-  //     index: widget.initialIndex,
-  //   );
-  // }
+  List<FTabEntry> _buildTabEntries() {
+    return List.generate(_sections.length, (index) {
+      final section = _sections[index];
 
-  // @override
-  // void dispose() {
-  //   _tabController.dispose();
-  //   super.dispose();
-  // }
+      return FTabEntry(
+        label: Icon(section.icon, key: const ValueKey('icon')),
+        child: section.child,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return FScaffold(
       header: FHeader(
         title: Text('nav.home'.tr()),
-        suffixes: [
-          const NotificationIconButton(),
-          const SportSelector(),
-        ],
+        suffixes: [const NotificationIconButton(), const SportSelector()],
       ),
       child: FTabs(
-        children: HomeTab.homeSections,
+        control: FTabControl.lifted(
+          index: _currentIndex,
+          onChange: _onTabChanged,
+        ),
+        children: _buildTabEntries(),
       ),
     );
   }

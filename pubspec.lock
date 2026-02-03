@@ -249,6 +249,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.2"
+  code_assets:
+    dependency: transitive
+    description:
+      name: code_assets
+      sha256: "83ccdaa064c980b5596c35dd64a8d3ecc68620174ab9b90b6343b753aa721687"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   code_builder:
     dependency: transitive
     description:
@@ -793,10 +801,10 @@ packages:
     dependency: "direct main"
     description:
       name: health
-      sha256: ec6ba8485bb86cac9001fe721811dae470172d0a153ad6778e77fb1ff975dd8f
+      sha256: "0508ef1b018198309933a7d615bb59a244c85ad96b57d328ebd47f062e4f7c69"
       url: "https://pub.dev"
     source: hosted
-    version: "13.2.1"
+    version: "13.3.0"
   hooks:
     dependency: "direct main"
     description:
@@ -1037,6 +1045,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.6.3"
+  native_toolchain_c:
+    dependency: transitive
+    description:
+      name: native_toolchain_c
+      sha256: "89e83885ba09da5fdf2cdacc8002a712ca238c28b7f717910b34bcd27b0d03ac"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.17.4"
   nitrogen_types:
     dependency: transitive
     description:
@@ -1061,6 +1077,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
+  objective_c:
+    dependency: transitive
+    description:
+      name: objective_c
+      sha256: "7fd0c4d8ac8980011753b9bdaed2bf15111365924cdeeeaeb596214ea2b03537"
+      url: "https://pub.dev"
+    source: hosted
+    version: "9.2.4"
   package_config:
     dependency: transitive
     description:
@@ -1121,10 +1145,10 @@ packages:
     dependency: transitive
     description:
       name: path_provider_foundation
-      sha256: "6d13aece7b3f5c5a9731eaf553ff9dcbc2eff41087fd2df587fd0fed9a3eb0c4"
+      sha256: "2a376b7d6392d80cd3705782d2caa734ca4727776db0b6ec36ef3f1855197699"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.1"
+    version: "2.6.0"
   path_provider_linux:
     dependency: transitive
     description:
@@ -1409,10 +1433,10 @@ packages:
     dependency: transitive
     description:
       name: shared_preferences_android
-      sha256: "83af5c682796c0f7719c2bbf74792d113e40ae97981b8f266fa84574573556bc"
+      sha256: cbc40be9be1c5af4dab4d6e0de4d5d3729e6f3d65b89d21e1815d57705644a6f
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.18"
+    version: "2.4.20"
   shared_preferences_foundation:
     dependency: transitive
     description:
@@ -1526,10 +1550,10 @@ packages:
     dependency: transitive
     description:
       name: source_gen
-      sha256: "585bc140f20da42c584ece2df28f4d9ef2566955332b626f655957b3a8c8ad54"
+      sha256: "1d562a3c1f713904ebbed50d2760217fd8a51ca170ac4b05b0db490699dbac17"
       url: "https://pub.dev"
     source: hosted
-    version: "4.1.2"
+    version: "4.2.0"
   source_helper:
     dependency: transitive
     description:
@@ -1638,34 +1662,34 @@ packages:
     dependency: transitive
     description:
       name: talker
-      sha256: a9a76f677905bc5cf62ace21a6eea49303cf06ac187bcad52b2004f0b9623fd7
+      sha256: "4160d27f4da6d87f016212bbe6abfb15c8954b72726a0f154d72f77664c48b8c"
       url: "https://pub.dev"
     source: hosted
-    version: "5.1.12"
+    version: "5.1.13"
   talker_flutter:
     dependency: "direct main"
     description:
       name: talker_flutter
-      sha256: "93a287fd7f5a898de6b4b02a5def9acd1cda73ff3f2aa9873877a0cefa943281"
+      sha256: "6a807972565dc7d5bacfb6a980efa0f766bfdbacac5660adf150aa386c440052"
       url: "https://pub.dev"
     source: hosted
-    version: "5.1.12"
+    version: "5.1.13"
   talker_logger:
     dependency: transitive
     description:
       name: talker_logger
-      sha256: da3d91c36bad10838cba5123b6bdf7d4310411f8f7500539ce364deda3550ac6
+      sha256: ed5f8434f17f3988548abc5f617b88e7a5d2d61d7a975e7c12eee75755848aa8
       url: "https://pub.dev"
     source: hosted
-    version: "5.1.12"
+    version: "5.1.13"
   talker_riverpod_logger:
     dependency: "direct main"
     description:
       name: talker_riverpod_logger
-      sha256: dc20d93765a405f6c5f7a00ac4f890843b8996b9921e3f4c5d04654c0234ae12
+      sha256: "1594134fc35a74aedad03b49408d8fc0cd1e9d64bf0868ddcc58895eb3278726"
       url: "https://pub.dev"
     source: hosted
-    version: "5.1.12"
+    version: "5.1.13"
   term_glyph:
     dependency: transitive
     description:
@@ -1814,10 +1838,10 @@ packages:
     dependency: "direct main"
     description:
       name: vector_graphics_compiler
-      sha256: d354a7ec6931e6047785f4db12a1f61ec3d43b207fc0790f863818543f8ff0dc
+      sha256: "201e876b5d52753626af64b6359cd13ac6011b80728731428fd34bc840f71c9b"
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.19"
+    version: "1.1.20"
   vector_math:
     dependency: transitive
     description:
@@ -1846,10 +1870,10 @@ packages:
     dependency: transitive
     description:
       name: video_player_avfoundation
-      sha256: "2a7aaf2f28212c285e0fb29b50728bbea513d743dd48d3024098015f169fb937"
+      sha256: "7cc0a9257103851eb299a2407e895b0fd6832d323dcfde622a23cdc25a1de269"
       url: "https://pub.dev"
     source: hosted
-    version: "2.8.10"
+    version: "2.9.0"
   video_player_platform_interface:
     dependency: transitive
     description:
@@ -1971,5 +1995,5 @@ packages:
     source: hosted
     version: "2.1.0"
 sdks:
-  dart: ">=3.10.0 <4.0.0"
-  flutter: ">=3.38.0"
+  dart: ">=3.10.3 <4.0.0"
+  flutter: ">=3.38.4"

@@ -52,6 +52,7 @@ class SportSelector extends ConsumerWidget {
 
     return selectedSportAsync.when(
       data: (selectedSport) {
+        FPopoverController? popoverController;
         return FPopoverMenu(
           menuAnchor: Alignment.topRight,
           childAnchor: Alignment.bottomRight,
@@ -68,12 +69,14 @@ class SportSelector extends ConsumerWidget {
                   selected: isSelected,
                   onPress: () {
                     ref.read(selectedSportStateProvider.notifier).change(sport);
+                    popoverController?.hide();
                   },
                 );
               }).toList(),
             ),
           ],
           builder: (context, controller, child) {
+            popoverController = controller;
             return FHeaderAction(
               icon: _getSportIcon(selectedSport),
               onPress: controller.toggle,

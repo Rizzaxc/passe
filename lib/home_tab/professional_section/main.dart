@@ -4,27 +4,24 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../filter.dart';
 
-class TeammateSubtab extends ConsumerWidget {
-  const TeammateSubtab({super.key});
+class ProfessionalSubtab extends ConsumerWidget {
+  const ProfessionalSubtab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(filterStateProvider);
     return SingleChildScrollView(
-      // padding: EdgeInsets.zero,
       child: Column(
-        // mainAxisSize: .min,
         children: [
           FHeader.nested(
             titleAlignment: Alignment.centerLeft,
-
             style: (style) =>
                 style.copyWith(padding: EdgeInsets.symmetric(vertical: 0)),
             title: Text(
-              'home.teammate'.tr(),
+              'home.professional'.tr(),
               style: context.theme.typography.xl,
             ),
-            suffixes: [const FilterWidget()],
+            prefixes: [const FilterWidget()],
           ),
         ],
       ),

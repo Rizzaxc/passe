@@ -76,12 +76,30 @@
     "university": "Đại Học",
     "company": "Công Ty"
   },
+  "city": {
+    "hochiminh": "Tp Hồ Chí Minh",
+    "hanoi": "Hà Nội"
+  },
+  "district": {
+    "urban": "Quận",
+    "rural": "Huyện",
+    "township": "Thị xã",
+    "city": "Thành phố"
+  },
   "homeTab": {
     "filter": {
       "location": "Địa điểm",
       "time": "Thời gian",
       "weekdayLabel": "Thứ trong tuần",
-      "dayChunkLabel": "Buổi"
+      "dayChunkLabel": "Buổi",
+      "search": "Tìm kiếm",
+      "searchHint": "Nhập từ khoá/ SearchID...",
+      "city": "Thành phố",
+      "district": "Quận/ Huyện",
+      "any": "Tất cả",
+      "schedule": "Thời gian",
+      "scheduleHint": "Để trống",
+      "close": "Đóng"
     },
     "empty": {
       "title": "Không tìm thấy kết quả",
@@ -97,7 +115,7 @@
     "challenger": {
       "title": "Đối thủ"
     },
-    "neutral": {
+    "professional": {
       "title": "Trung lập",
       "filter": {
         "all": "Tất Cả",
@@ -233,7 +251,7 @@
   "home": {
     "teammate": "Đồng đội",
     "challenger": "Đối thủ",
-    "neutral": "Trung lập",
+    "professional": "HLV & Trọng Tài",
     "location": "Địa điểm"
   },
   "manage": {
@@ -279,8 +297,27 @@
     "toggleAlumniStatus": "Đổi trạng thái thành viên"
   },
   "health": {
-    "title": "Sức khỏe",
-    "content": "Nội dung Sức khỏe"
+    "title": "Health",
+    "notLinked": {
+      "title": "Kết nối Dữ liệu Sức khỏe",
+      "description": "Liên kết Apple Health hoặc Google Fit để theo dõi xu hướng sức khỏe, chỉ số trong hoạt động và gặt hái mục tiêu.",
+      "linkButton": "Kết nối Health",
+      "notAvailableIOS": "Dịch vụ sức khỏe không khả dụng. Vui lòng chạy trên thiết bị thật có cài đặt ứng dụng Health.",
+      "notAvailableAndroid": "Health Connect không khả dụng. Vui lòng cài đặt Health Connect từ Play Store."
+    },
+    "userHealth": {
+      "title": "Xu hướng",
+      "content": "Xem chỉ số chung và xu hướng sức khỏe của bạn"
+    },
+    "activityData": {
+      "title": "Hoạt động",
+      "content": "Theo dõi chỉ số trong hoạt động của bạn"
+    },
+    "achievements": {
+      "title": "Thành tựu",
+      "content": "Xem mục tiêu và thành tựu của bạn"
+    },
+    "error": "Đã xảy ra lỗi. Vui lòng thử lại."
   },
   "welcome": {
     "skip": "Bỏ qua",

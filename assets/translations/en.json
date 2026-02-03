@@ -76,13 +76,31 @@
     "university": "University",
     "company": "Company"
   },
+  "city": {
+    "hochiminh": "Ho Chi Minh City",
+    "hanoi": "Hanoi"
+  },
+  "district": {
+    "urban": "District",
+    "rural": "District",
+    "township": "Town",
+    "city": "City"
+  },
   "homeTab": {
     "title": "Home",
     "filter": {
       "location": "Location",
       "time": "Time",
       "weekdayLabel": "Weekday",
-      "dayChunkLabel": "Day Chunk"
+      "dayChunkLabel": "Day Chunk",
+      "search": "Search",
+      "searchHint": "Enter keyword/ SearchID...",
+      "city": "City",
+      "district": "District",
+      "any": "Any",
+      "schedule": "Schedule",
+      "scheduleHint": "Leave blank",
+      "close": "Close"
     },
     "empty": {
       "title": "No results found",
@@ -226,10 +244,10 @@
     "profile": "Profile"
   },
   "home": {
-    "teammate": "Teammate Content",
-    "challenger": "Challenger Content",
-    "neutral": "Neutral Content",
-    "location": "Location Content"
+    "teammate": "Teammates",
+    "challenger": "Challengers",
+    "professional": "Professionals",
+    "location": "Locations"
   },
   "manage": {
     "schedule": "Schedule Content",
@@ -275,7 +293,26 @@
   },
   "health": {
     "title": "Health",
-    "content": "Health Content"
+    "notLinked": {
+      "title": "Connect Your Health Data",
+      "description": "Link Apple Health or Google Fit to track your fitness metrics, monitor activity trends, and earn achievements.",
+      "linkButton": "Link Health Service",
+      "notAvailableIOS": "Health services are not available. Please run on a physical device with the Health app installed.",
+      "notAvailableAndroid": "Health Connect is not available. Please install Health Connect from the Play Store."
+    },
+    "userHealth": {
+      "title": "User Health",
+      "content": "View your health metrics and trends"
+    },
+    "activityData": {
+      "title": "Activity",
+      "content": "Track your per-activity statistics"
+    },
+    "achievements": {
+      "title": "Achievements",
+      "content": "View your goals and achievements"
+    },
+    "error": "Something went wrong. Please try again."
   },
   "welcome": {
     "skip": "Skip",

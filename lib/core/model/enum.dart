@@ -1,15 +1,20 @@
 // follow database ID
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:health/health.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 enum Sport {
-  others,
-  soccer,
-  basketball,
-  badminton,
-  tennis,
-  pickleball;
+  others(null),
+  soccer(HealthWorkoutActivityType.SOCCER),
+  basketball(HealthWorkoutActivityType.BASKETBALL),
+  badminton(HealthWorkoutActivityType.BADMINTON),
+  tennis(HealthWorkoutActivityType.TENNIS),
+  pickleball(HealthWorkoutActivityType.PICKLEBALL);
+
+  final HealthWorkoutActivityType? healthWorkoutType;
+
+  const Sport(this.healthWorkoutType);
 
   String getLocalizedName(BuildContext context) {
     return context.tr('sport.$name');
@@ -17,6 +22,18 @@ enum Sport {
 
   static List<String> getAllLocalizedNames(BuildContext context) {
     return Sport.values.map((e) => e.getLocalizedName(context)).toList();
+  }
+
+  /// Convert from HealthWorkoutActivityType to Sport.
+  /// Returns [Sport.others] if no matching sport is found.
+  static Sport fromHealthWorkoutType(HealthWorkoutActivityType? type) {
+    if (type == null) return Sport.others;
+    for (final sport in Sport.values) {
+      if (sport.healthWorkoutType == type) {
+        return sport;
+      }
+    }
+    return Sport.others;
   }
 }
 
@@ -99,15 +116,19 @@ enum StakeUnit {
 
 enum City {
   @JsonValue(1)
-  hochiminh('hcm', 'Tp Hồ Chí Minh', 1),
+  hochiminh('hcm', 'hochiminh', 1),
   @JsonValue(2)
-  hanoi('hn', 'Hà Nội', 2);
+  hanoi('hn', 'hanoi', 2);
 
   final String shorthand;
   final String name;
   final int dbIndex;
 
   const City(this.shorthand, this.name, this.dbIndex);
+
+  String getLocalizedName(BuildContext context) {
+    return context.tr('city.$name');
+  }
 
   factory City.fromShorthand(String shorthand) {
     switch (shorthand.toLowerCase()) {
@@ -143,10 +164,15 @@ class District {
   final String? code;
 
   /// Full name with prefix (e.g., "Quận 1")
-  String get fullName => '${type.prefix} $name';
+  String get fullName => '$name ${type.prefix}';
+
+  String getLocalizedFullName(BuildContext context) => '${context.tr('district.${type.name}')} $name';
 
   /// Full name with city (e.g., "Tp Hồ Chí Minh - Quận 1")
-  String get fullNameWithCity => '${city.name} - ${type.prefix} $name';
+  String get fullNameWithCity => '${city.name} - $name ${type.prefix}';
+
+  String getLocalizedFullNameWithCity(BuildContext context) =>
+      '${city.getLocalizedName(context)} - ${context.tr('district.${type.name}')} $name';
 
   const District({
     required this.id,
