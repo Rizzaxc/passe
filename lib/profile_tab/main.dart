@@ -1,7 +1,7 @@
+import 'dart:io';
 import 'package:avatar_plus/avatar_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -14,6 +14,8 @@ import '../core/state/selected_sport_state.dart';
 import '../notification/notification_icon_button.dart';
 import '../ui/main.dart';
 import 'age_group_selection_screen.dart';
+import 'change_password_screen.dart';
+import 'change_username_screen.dart';
 import 'guest_profile_view.dart';
 import 'industry_selection_screen.dart';
 import 'network_selection_screen.dart';
@@ -27,7 +29,7 @@ import 'sport_profile/pickleball.dart';
 import 'sport_profile/soccer.dart';
 import 'sport_profile/tennis.dart';
 
-class ProfileTab extends HookConsumerWidget {
+class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
 
   static final instance = ProfileTab();
@@ -54,7 +56,7 @@ class ProfileTab extends HookConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Section 1: Avatar + Account Info
-                _buildAvatar(context, profileState),
+                _buildAvatar(context, ref, profileState),
                 const SizedBox(height: 16),
                 _buildAccountSection(context, ref, profileState, user),
                 const SizedBox(height: 24),
@@ -101,13 +103,82 @@ class ProfileTab extends HookConsumerWidget {
     );
   }
 
-  Widget _buildAvatar(BuildContext context, ProfileState profileState) {
+  Widget _buildAvatar(
+    BuildContext context,
+    WidgetRef ref,
+    ProfileState profileState,
+  ) {
+    final generatedAvatar = profileState.details.generatedAvatar;
+    final pickedAvatar = profileState.pickedAvatar;
+
+    ImageProvider? imageProvider;
+    if (pickedAvatar != null) {
+      imageProvider = FileImage(File(pickedAvatar.path));
+    } else if (generatedAvatar == '') {
+      // If generatedAvatar is empty string, it means there's a custom photo
+      final userId = ref.read(authControllerProvider).value?.id;
+      if (userId != null) {
+        final avatarUrl = Supabase.instance.client.storage
+            .from('user_avatar')
+            .getPublicUrl('$userId.jpg');
+        // Add cache busting
+        final cacheBusted =
+            '$avatarUrl?t=${DateTime.now().millisecondsSinceEpoch}';
+        imageProvider = NetworkImage(cacheBusted);
+      }
+    }
+
     return Center(
-      child: CircleAvatar(
-        radius: 60,
-        backgroundColor: context.theme.colors.primary,
-        // TODO: allow user to upload their own picture
-        child: AvatarPlus(profileState.username),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 60,
+            backgroundColor: context.theme.colors.primary,
+            backgroundImage: imageProvider,
+            child: imageProvider != null
+                ? null
+                : AvatarPlus(generatedAvatar ?? profileState.username),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (imageProvider != null)
+                FButton.icon(
+                  onPress: () => ref
+                      .read(profileControllerProvider.notifier)
+                      .removeAvatar(),
+                  style: FButtonStyle.ghost(),
+                  child: const Icon(FIcons.trash),
+                )
+              else
+                FButton.icon(
+                  onPress: () => ref
+                      .read(profileControllerProvider.notifier)
+                      .randomizeAvatar(),
+                  style: FButtonStyle.ghost(),
+                  child: const Icon(FIcons.shuffle),
+                ),
+              const SizedBox(width: 12),
+              FButton.icon(
+                onPress: () async {
+                  try {
+                    ref.read(profileControllerProvider.notifier).uploadAvatar();
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    showFToast(
+                      context: context,
+                      title: Text('profile.uploadFailed'.tr()),
+                      alignment: .bottomCenter,
+                    );
+                  }
+                },
+                style: FButtonStyle.ghost(),
+                child: const Icon(FIcons.camera),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -118,48 +189,29 @@ class ProfileTab extends HookConsumerWidget {
     ProfileState profileState,
     user,
   ) {
-    final isEditingUsername = useState(false);
-    final controller = useTextEditingController(text: profileState.username);
-
     return FTileGroup(
       label: Text('profile.accountInfo'.tr()),
       description: Text('profile.profile_feature_explanation'.tr()),
       children: [
-        if (isEditingUsername.value)
-          FTile.raw(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: FTextField(
-                label: Text('profile.username'.tr()),
-                control: FTextFieldControl.managed(
-                  controller: controller,
-                  onChange: (value) {
-                    ref
-                        .read(profileControllerProvider.notifier)
-                        .updateDraft(username: value.text);
-                  },
-                ),
-                suffixBuilder: (context, style, states) => FButton.icon(
-                  onPress: () => isEditingUsername.value = false,
-                  child: const Icon(FIcons.check),
-                ),
-              ),
+        FTile(
+          onPress: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const ChangeUsernameScreen(),
             ),
-          )
-        else
-          FTile(
-            onPress: () => isEditingUsername.value = true,
-            title: Text('profile.username'.tr()),
-            details: Text('${profileState.username}#${user.tagNumber}'),
           ),
+          title: Text('profile.username'.tr()),
+          details: Text('${profileState.username}#${user.tagNumber}'),
+        ),
         if (user.email != null)
           FTile(title: Text('profile.email'.tr()), details: Text(user.email!)),
         FTile(
-          onPress: () {
-            // TODO: Implement change password logic
-          },
+          onPress: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const ChangePasswordScreen(),
+            ),
+          ),
           title: Text('profile.changePassword'.tr()),
-          details: const Icon(Icons.password),
+          details: Icon(Icons.password, color: context.theme.colors.primary),
         ),
         FTile(
           style: (style) => style.copyWith(
@@ -199,8 +251,8 @@ class ProfileTab extends HookConsumerWidget {
   ) {
     final genderSuffix = () {
       if (details.gender == null) return null;
-      if (details.gender == Gender.male) return const Icon(FIcons.mars);
-      return const Icon(FIcons.venus);
+      if (details.gender == Gender.male) return FIcons.mars;
+      return FIcons.venus;
     }();
 
     return FTileGroup(
@@ -208,10 +260,18 @@ class ProfileTab extends HookConsumerWidget {
       description: Text('profile.profile_feature_explanation'.tr()),
       children: [
         FTile(
-          suffix: genderSuffix,
+          suffix: details.gender != null
+              ? Icon(genderSuffix, color: context.theme.colors.primary)
+              : null,
+
           title: Text('profile.gender'.tr()),
           details: Text(
             details.gender?.getLocalizedName(context) ?? 'not_set'.tr(),
+            style: TextStyle(
+              color: (details.gender != null)
+                  ? context.theme.colors.primary
+                  : context.theme.colors.mutedForeground,
+            ),
           ),
           onPress: () {
             final currentGender = details.gender;
@@ -228,6 +288,11 @@ class ProfileTab extends HookConsumerWidget {
           title: Text('profile.ageGroup'.tr()),
           details: Text(
             details.ageGroup?.getLocalizedName(context) ?? 'not_set'.tr(),
+            style: TextStyle(
+              color: (details.ageGroup != null)
+                  ? context.theme.colors.primary
+                  : context.theme.colors.mutedForeground,
+            ),
           ),
           onPress: () => Navigator.of(context).push(
             MaterialPageRoute(
@@ -241,16 +306,22 @@ class ProfileTab extends HookConsumerWidget {
             details.location != null
                 ? _formatLocation(details.location!)
                 : 'not_set'.tr(),
+            style: TextStyle(
+              color: (details.location != null)
+                  ? context.theme.colors.primary
+                  : context.theme.colors.mutedForeground,
+            ),
           ),
           onPress: () {},
         ),
         FTile(
           title: Text('profile.playtime'.tr()),
-          details: Text(
-            (details.playtime != null && details.playtime!.isNotEmpty)
-                ? '${details.playtime!.length} timeslots'
-                : 'not_set'.tr(),
-          ),
+          details: (details.playtime != null && details.playtime!.isNotEmpty)
+              ? const Icon(FIcons.chevronRight)
+              : Text(
+                  'not_set'.tr(),
+                  style: TextStyle(color: context.theme.colors.mutedForeground),
+                ),
           onPress: () => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => const PlaytimeSelectionScreen(),

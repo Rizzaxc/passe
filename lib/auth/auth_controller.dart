@@ -12,6 +12,12 @@ import '../core/user_preferences.dart';
 
 part 'auth_controller.g.dart';
 
+class UsernameTakenException implements Exception {
+  const UsernameTakenException();
+  @override
+  String toString() => 'UsernameTakenException: username + tag_number combination is already taken';
+}
+
 @riverpod
 class AuthController extends _$AuthController {
   final supabase = Supabase.instance.client;
@@ -123,9 +129,6 @@ class AuthController extends _$AuthController {
       );
       // Let the auth listener update the state; no manual state setting here.
       return null;
-    } on AuthException catch (e, st) {
-      talker.handle(e, st);
-      rethrow;
     } catch (e, st) {
       talker.handle(e, st);
       rethrow;
@@ -206,9 +209,6 @@ class AuthController extends _$AuthController {
       // A deliberate timeout to allow the UI to prompt retry
       talker.handle(e, st);
       rethrow;
-    } on AuthException catch (e, st) {
-      talker.handle(e, st);
-      rethrow;
     } catch (e, st) {
       // report the exception
       talker.handle(e, st);
@@ -265,6 +265,51 @@ class AuthController extends _$AuthController {
 
   Future<void> continueAsGuest() async {
     state = const AsyncValue.data(PuboxUser());
+  }
+
+  Future<void> changeUsername(String newUsername) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) throw Exception('Not authenticated');
+
+    final currentUser = state.value;
+    final currentTag = currentUser?.tagNumber;
+    if (currentTag == null) throw Exception('No tag number');
+
+    // Check for existing (username, tag_number) collision
+    final existing = await supabase
+        .from('user')
+        .select('id')
+        .eq('username', newUsername)
+        .eq('tag_number', currentTag)
+        .maybeSingle();
+
+    if (existing != null && existing['id'] != userId) {
+      throw const UsernameTakenException();
+    }
+
+    try {
+      await supabase
+          .from('user')
+          .update({'username': newUsername}).eq('id', userId);
+    } on PostgrestException catch (e, st) {
+      talker.handle(e, st);
+      // unique constraint violation from DB race condition
+      if (e.code == '23505') {
+        throw const UsernameTakenException();
+      }
+      rethrow;
+    }
+
+    await refresh();
+  }
+
+  Future<void> changePassword(String newPassword) async {
+    try {
+      await supabase.auth.updateUser(UserAttributes(password: newPassword));
+    } on AuthException catch (e, st) {
+      talker.handle(e, st);
+      rethrow;
+    }
   }
 
   Future<void> refresh() async {

@@ -61,8 +61,7 @@ dependencies:
   hooks_riverpod: ^3.2.0
   flutter_hooks: ^0.21.3+1
   riverpod_annotation: ^4.0.0
-  # TODO: Add image_picker package for avatar image upload functionality
-  # image_picker: ^1.0.7
+  image_picker: ^1.0.7
   # awesome_notifications: ^0.10.0
   # google_mobile_ads: ^5.2.0
   in_app_review: ^2.0.11

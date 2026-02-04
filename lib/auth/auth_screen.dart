@@ -3,21 +3,42 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show AuthException, PostgrestException;
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
 import '../ui/main.dart';
 import 'auth_controller.dart';
 
-class AuthScreen extends StatefulHookConsumerWidget {
+class AuthScreen extends StatelessWidget {
   const AuthScreen({super.key});
 
   @override
-  ConsumerState<AuthScreen> createState() => _AuthScreen();
+  Widget build(BuildContext context) {
+    return FScaffold(
+      header: FHeader(title: Text('auth.welcome'.tr())),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const AuthForm(),
+            const SizedBox(height: 16),
+            const SocialAuthSection(),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _AuthScreen extends ConsumerState<AuthScreen> {
-  final _key = GlobalKey<FormState>(debugLabel: 'auth_screen_form');
+class AuthForm extends ConsumerStatefulWidget {
+  const AuthForm({super.key});
 
+  @override
+  ConsumerState<AuthForm> createState() => _AuthFormState();
+}
+
+class _AuthFormState extends ConsumerState<AuthForm> {
+  final _key = GlobalKey<FormState>(debugLabel: 'auth_form');
 
   @override
   Widget build(BuildContext context) {
@@ -35,14 +56,15 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
             .signInWithPassword(email: email, password: pass);
       } catch (e) {
         if (!context.mounted) return;
-        String message = 'error_generic'.tr();
-        if (e is AuthException && e.message.contains('Invalid login credentials')) {
-          message = e.message;
+        String message = 'error_generic';
+
+        if (e is AuthException && e.statusCode == '400') {
+          message = 'auth.credentialsInvalid';
         }
         showFToast(
           context: context,
           title: Text('auth.loginFailed'.tr()),
-          description: Text(message),
+          description: Text(message.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -59,87 +81,80 @@ class _AuthScreen extends ConsumerState<AuthScreen> {
             .signUpWithPassword(email: email, password: pass);
       } catch (e) {
         if (!context.mounted) return;
-        String message = 'error_generic'.tr();
-        if (e is AuthException && e.message.contains('User already registered')) {
-          message = e.message;
+        String message = 'error_generic';
+        if (e is AuthException && e.statusCode == '422') {
+          message = 'auth.userAlreadyRegistered';
         }
         showFToast(
           context: context,
           title: Text('auth.signUpFailed'.tr()),
-          description: Text(message),
+          description: Text(message.tr()),
           alignment: .bottomCenter,
         );
       }
     }
 
-    return FScaffold(
-      header: FHeader(title: Text('auth.welcome'.tr())),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _key,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FTextFormField.email(
-                label: Text('auth.emailLabel'.tr()),
-                keyboardType: TextInputType.emailAddress,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                clearable: (value) => value.text.isNotEmpty,
-                autofillHints: const [AutofillHints.email],
-                onSaved: (value) => email = value ?? '',
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'auth.emailEmpty'.tr();
-                  }
-                  final emailRegex = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
-                  if (!emailRegex.hasMatch(value)) {
-                    return 'auth.emailInvalid'.tr();
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              FTextFormField.password(
-                label: Text('auth.passwordLabel'.tr()),
-                clearable: (value) => value.text.isNotEmpty,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                autofillHints: const [AutofillHints.password],
-                onSaved: (value) => pass = value ?? '',
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'auth.passwordEmpty'.tr();
-                  }
-                  if (value.length < 8) {
-                    return 'auth.passwordLength'.tr();
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              FDualButton(
-                firstChild: Text(
-                  'auth.signIn'.tr(),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                secondChild: Text('auth.signUp'.tr()),
-                onFirstPressed: onLogin,
-                onSecondPressed: onRegister,
-                secondStyle: (styles) => styles.destructive,
-                flex: 60,
-              ),
-              const SizedBox(height: 16),
-              const SocialAuthSection(),
-            ],
+    return Form(
+      key: _key,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FTextFormField.email(
+            label: Text('auth.emailLabel'.tr()),
+            keyboardType: TextInputType.emailAddress,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            clearable: (value) => value.text.isNotEmpty,
+            autofillHints: const [AutofillHints.email],
+            onSaved: (value) => email = value ?? '',
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'auth.emailEmpty'.tr();
+              }
+              final emailRegex = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
+              if (!emailRegex.hasMatch(value)) {
+                return 'auth.emailInvalid'.tr();
+              }
+              return null;
+            },
           ),
-        ),
+          const SizedBox(height: 12),
+          FTextFormField.password(
+            label: Text('auth.passwordLabel'.tr()),
+            clearable: (value) => value.text.isNotEmpty,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            autofillHints: const [AutofillHints.password],
+            onSaved: (value) => pass = value ?? '',
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'auth.passwordEmpty'.tr();
+              }
+              if (value.length < 8) {
+                return 'auth.passwordLength'.tr();
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          FDualButton(
+            firstChild: Text(
+              'auth.signIn'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            secondChild: Text('auth.signUp'.tr()),
+            onFirstPressed: onLogin,
+            onSecondPressed: onRegister,
+            secondStyle: (styles) => styles.destructive,
+            flex: 60,
+          ),
+        ],
       ),
     );
   }
 }
 
 class SocialAuthSection extends ConsumerWidget {
-  const SocialAuthSection({super.key});
+  final bool showGuestOption;
+  const SocialAuthSection({super.key, this.showGuestOption = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -221,14 +236,15 @@ class SocialAuthSection extends ConsumerWidget {
                 'auth.appleLoginFailed'.tr(),
               ),
             ),
-            buildRow(
-              icon: FIcons.forward,
-              label: 'auth.guestContinue'.tr(),
-              onTap: () => handleAuthAction(
-                () => ref.read(authControllerProvider.notifier).continueAsGuest(),
-                'auth.guestLoginFailed'.tr(),
+            if (showGuestOption)
+              buildRow(
+                icon: FIcons.forward,
+                label: 'auth.guestContinue'.tr(),
+                onTap: () => handleAuthAction(
+                  () => ref.read(authControllerProvider.notifier).continueAsGuest(),
+                  'auth.guestLoginFailed'.tr(),
+                ),
               ),
-            ),
           ],
         ),
       ],

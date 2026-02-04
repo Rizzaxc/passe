@@ -217,7 +217,7 @@
     "tennis": "Tennis",
     "pickleball": "Pickleball",
     "sportNotSelected": "Chọn Môn thể thao",
-    "othersAlertDescription": "Bạn cần chọn một môn thể thao để xem các nội dung phù hợp. Bấm vào biểu tượng dấu chấm hỏi ở góc phải màn hình."
+    "othersAlertDescription": "Bạn cần chọn một môn thể thao để xem các nội dung phù hợp. Bấm vào biểu tượng ở góc phải màn hình để điều chỉnh."
   },
   "not_set": "Chưa Thiết Lập",
   "done": "Xong",
@@ -240,7 +240,9 @@
     "guestContinue": "Tạm Skip Đăng nhập",
     "googleLoginFailed": "Đăng nhập Google thất bại",
     "appleLoginFailed": "Đăng nhập Apple thất bại",
-    "guestLoginFailed": "Đăng nhập Khách thất bại"
+    "guestLoginFailed": "Đăng nhập Khách thất bại",
+    "credentialsInvalid": "Email hoặc mật khẩu không đúng",
+    "userAlreadyRegistered": "Email này đã được đăng ký"
   },
   "nav": {
     "home": "Home",
@@ -291,10 +293,25 @@
     "empty_network": "Chưa chọn network. Thêm trường học hoặc công ty để kết nối với người khác.",
     "empty_industry": "Chưa chọn ngành nghề. Thêm ngành nghề để tìm kiếm các kết nối chuyên nghiệp.",
     "empty_sport_profile": "Chưa thiết lập hồ sơ thể thao. Cập nhật trình độ để tìm đối thủ phù hợp.",
+    "changeUsername": "Đổi Username",
+    "newUsername": "Username Mới",
+    "confirmUsername": "Xác nhận Username",
+    "newPassword": "Mật khẩu mới",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "passwordMismatch": "Mật khẩu không khớp",
+    "passwordTooShort": "Mật khẩu phải dài ít nhất 8 ký tự",
+    "passwordChanged": "Đổi mật khẩu thành công",
+    "usernameMismatch": "Username không khớp",
+    "usernameInvalidChars": "Username chỉ được chứa chữ cái và số",
+    "usernameTaken": "Username này đã được sử dụng",
     "confirmLogout": "Bấm giữ để đăng xuất",
     "alumni": "Cựu Thành viên",
     "currentMember": "Thành viên hiện tại",
-    "toggleAlumniStatus": "Đổi trạng thái thành viên"
+    "toggleAlumniStatus": "Đổi trạng thái thành viên",
+    "randomizeAvatar": "Ngẫu nhiên",
+    "removeAvatar": "Gỡ bỏ",
+    "uploadPhoto": "Tải ảnh lên",
+    "uploadFailed": "Tải ảnh thất bại"
   },
   "health": {
     "title": "Health",

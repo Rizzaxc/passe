@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ProfileState {
 
- String get username; UserDetails get details; List<Network> get networks; List<Industry> get industries;
+ String get username; UserDetails get details; List<Network> get networks; List<Industry> get industries; XFile? get pickedAvatar;
 /// Create a copy of ProfileState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ProfileStateCopyWith<ProfileState> get copyWith => _$ProfileStateCopyWithImpl<P
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileState&&(identical(other.username, username) || other.username == username)&&(identical(other.details, details) || other.details == details)&&const DeepCollectionEquality().equals(other.networks, networks)&&const DeepCollectionEquality().equals(other.industries, industries));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileState&&(identical(other.username, username) || other.username == username)&&(identical(other.details, details) || other.details == details)&&const DeepCollectionEquality().equals(other.networks, networks)&&const DeepCollectionEquality().equals(other.industries, industries)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,username,details,const DeepCollectionEquality().hash(networks),const DeepCollectionEquality().hash(industries));
+int get hashCode => Object.hash(runtimeType,username,details,const DeepCollectionEquality().hash(networks),const DeepCollectionEquality().hash(industries),pickedAvatar);
 
 @override
 String toString() {
-  return 'ProfileState(username: $username, details: $details, networks: $networks, industries: $industries)';
+  return 'ProfileState(username: $username, details: $details, networks: $networks, industries: $industries, pickedAvatar: $pickedAvatar)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ProfileStateCopyWith<$Res>  {
   factory $ProfileStateCopyWith(ProfileState value, $Res Function(ProfileState) _then) = _$ProfileStateCopyWithImpl;
 @useResult
 $Res call({
- String username, UserDetails details, List<Network> networks, List<Industry> industries
+ String username, UserDetails details, List<Network> networks, List<Industry> industries, XFile? pickedAvatar
 });
 
 
@@ -62,13 +62,14 @@ class _$ProfileStateCopyWithImpl<$Res>
 
 /// Create a copy of ProfileState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? username = null,Object? details = null,Object? networks = null,Object? industries = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? username = null,Object? details = null,Object? networks = null,Object? industries = null,Object? pickedAvatar = freezed,}) {
   return _then(_self.copyWith(
 username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,details: null == details ? _self.details : details // ignore: cast_nullable_to_non_nullable
 as UserDetails,networks: null == networks ? _self.networks : networks // ignore: cast_nullable_to_non_nullable
 as List<Network>,industries: null == industries ? _self.industries : industries // ignore: cast_nullable_to_non_nullable
-as List<Industry>,
+as List<Industry>,pickedAvatar: freezed == pickedAvatar ? _self.pickedAvatar : pickedAvatar // ignore: cast_nullable_to_non_nullable
+as XFile?,
   ));
 }
 /// Create a copy of ProfileState
@@ -162,10 +163,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String username,  UserDetails details,  List<Network> networks,  List<Industry> industries)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String username,  UserDetails details,  List<Network> networks,  List<Industry> industries,  XFile? pickedAvatar)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProfileState() when $default != null:
-return $default(_that.username,_that.details,_that.networks,_that.industries);case _:
+return $default(_that.username,_that.details,_that.networks,_that.industries,_that.pickedAvatar);case _:
   return orElse();
 
 }
@@ -183,10 +184,10 @@ return $default(_that.username,_that.details,_that.networks,_that.industries);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String username,  UserDetails details,  List<Network> networks,  List<Industry> industries)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String username,  UserDetails details,  List<Network> networks,  List<Industry> industries,  XFile? pickedAvatar)  $default,) {final _that = this;
 switch (_that) {
 case _ProfileState():
-return $default(_that.username,_that.details,_that.networks,_that.industries);case _:
+return $default(_that.username,_that.details,_that.networks,_that.industries,_that.pickedAvatar);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +204,10 @@ return $default(_that.username,_that.details,_that.networks,_that.industries);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String username,  UserDetails details,  List<Network> networks,  List<Industry> industries)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String username,  UserDetails details,  List<Network> networks,  List<Industry> industries,  XFile? pickedAvatar)?  $default,) {final _that = this;
 switch (_that) {
 case _ProfileState() when $default != null:
-return $default(_that.username,_that.details,_that.networks,_that.industries);case _:
+return $default(_that.username,_that.details,_that.networks,_that.industries,_that.pickedAvatar);case _:
   return null;
 
 }
@@ -217,8 +218,8 @@ return $default(_that.username,_that.details,_that.networks,_that.industries);ca
 /// @nodoc
 
 
-class _ProfileState implements ProfileState {
-  const _ProfileState({required this.username, required this.details, final  List<Network> networks = const [], final  List<Industry> industries = const []}): _networks = networks,_industries = industries;
+class _ProfileState extends ProfileState {
+  const _ProfileState({required this.username, required this.details, final  List<Network> networks = const [], final  List<Industry> industries = const [], this.pickedAvatar}): _networks = networks,_industries = industries,super._();
   
 
 @override final  String username;
@@ -237,6 +238,7 @@ class _ProfileState implements ProfileState {
   return EqualUnmodifiableListView(_industries);
 }
 
+@override final  XFile? pickedAvatar;
 
 /// Create a copy of ProfileState
 /// with the given fields replaced by the non-null parameter values.
@@ -248,16 +250,16 @@ _$ProfileStateCopyWith<_ProfileState> get copyWith => __$ProfileStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProfileState&&(identical(other.username, username) || other.username == username)&&(identical(other.details, details) || other.details == details)&&const DeepCollectionEquality().equals(other._networks, _networks)&&const DeepCollectionEquality().equals(other._industries, _industries));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProfileState&&(identical(other.username, username) || other.username == username)&&(identical(other.details, details) || other.details == details)&&const DeepCollectionEquality().equals(other._networks, _networks)&&const DeepCollectionEquality().equals(other._industries, _industries)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,username,details,const DeepCollectionEquality().hash(_networks),const DeepCollectionEquality().hash(_industries));
+int get hashCode => Object.hash(runtimeType,username,details,const DeepCollectionEquality().hash(_networks),const DeepCollectionEquality().hash(_industries),pickedAvatar);
 
 @override
 String toString() {
-  return 'ProfileState(username: $username, details: $details, networks: $networks, industries: $industries)';
+  return 'ProfileState(username: $username, details: $details, networks: $networks, industries: $industries, pickedAvatar: $pickedAvatar)';
 }
 
 
@@ -268,7 +270,7 @@ abstract mixin class _$ProfileStateCopyWith<$Res> implements $ProfileStateCopyWi
   factory _$ProfileStateCopyWith(_ProfileState value, $Res Function(_ProfileState) _then) = __$ProfileStateCopyWithImpl;
 @override @useResult
 $Res call({
- String username, UserDetails details, List<Network> networks, List<Industry> industries
+ String username, UserDetails details, List<Network> networks, List<Industry> industries, XFile? pickedAvatar
 });
 
 
@@ -285,13 +287,14 @@ class __$ProfileStateCopyWithImpl<$Res>
 
 /// Create a copy of ProfileState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? username = null,Object? details = null,Object? networks = null,Object? industries = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? username = null,Object? details = null,Object? networks = null,Object? industries = null,Object? pickedAvatar = freezed,}) {
   return _then(_ProfileState(
 username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,details: null == details ? _self.details : details // ignore: cast_nullable_to_non_nullable
 as UserDetails,networks: null == networks ? _self._networks : networks // ignore: cast_nullable_to_non_nullable
 as List<Network>,industries: null == industries ? _self._industries : industries // ignore: cast_nullable_to_non_nullable
-as List<Industry>,
+as List<Industry>,pickedAvatar: freezed == pickedAvatar ? _self.pickedAvatar : pickedAvatar // ignore: cast_nullable_to_non_nullable
+as XFile?,
   ));
 }
 

@@ -278,7 +278,7 @@ as int?,
 /// @nodoc
 mixin _$UserDetails {
 
- Gender? get gender; AgeGroup? get ageGroup; List<Timeslot>? get playtime; UserLocation? get location; Map<String, SportProfile>? get sport;
+ Gender? get gender; AgeGroup? get ageGroup; List<Timeslot>? get playtime; UserLocation? get location; Map<String, SportProfile>? get sport; String? get generatedAvatar;
 /// Create a copy of UserDetails
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -291,16 +291,16 @@ $UserDetailsCopyWith<UserDetails> get copyWith => _$UserDetailsCopyWithImpl<User
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserDetails&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&const DeepCollectionEquality().equals(other.playtime, playtime)&&(identical(other.location, location) || other.location == location)&&const DeepCollectionEquality().equals(other.sport, sport));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserDetails&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&const DeepCollectionEquality().equals(other.playtime, playtime)&&(identical(other.location, location) || other.location == location)&&const DeepCollectionEquality().equals(other.sport, sport)&&(identical(other.generatedAvatar, generatedAvatar) || other.generatedAvatar == generatedAvatar));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,gender,ageGroup,const DeepCollectionEquality().hash(playtime),location,const DeepCollectionEquality().hash(sport));
+int get hashCode => Object.hash(runtimeType,gender,ageGroup,const DeepCollectionEquality().hash(playtime),location,const DeepCollectionEquality().hash(sport),generatedAvatar);
 
 @override
 String toString() {
-  return 'UserDetails(gender: $gender, ageGroup: $ageGroup, playtime: $playtime, location: $location, sport: $sport)';
+  return 'UserDetails(gender: $gender, ageGroup: $ageGroup, playtime: $playtime, location: $location, sport: $sport, generatedAvatar: $generatedAvatar)';
 }
 
 
@@ -311,7 +311,7 @@ abstract mixin class $UserDetailsCopyWith<$Res>  {
   factory $UserDetailsCopyWith(UserDetails value, $Res Function(UserDetails) _then) = _$UserDetailsCopyWithImpl;
 @useResult
 $Res call({
- Gender? gender, AgeGroup? ageGroup, List<Timeslot>? playtime, UserLocation? location, Map<String, SportProfile>? sport
+ Gender? gender, AgeGroup? ageGroup, List<Timeslot>? playtime, UserLocation? location, Map<String, SportProfile>? sport, String? generatedAvatar
 });
 
 
@@ -328,14 +328,15 @@ class _$UserDetailsCopyWithImpl<$Res>
 
 /// Create a copy of UserDetails
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? gender = freezed,Object? ageGroup = freezed,Object? playtime = freezed,Object? location = freezed,Object? sport = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? gender = freezed,Object? ageGroup = freezed,Object? playtime = freezed,Object? location = freezed,Object? sport = freezed,Object? generatedAvatar = freezed,}) {
   return _then(_self.copyWith(
 gender: freezed == gender ? _self.gender : gender // ignore: cast_nullable_to_non_nullable
 as Gender?,ageGroup: freezed == ageGroup ? _self.ageGroup : ageGroup // ignore: cast_nullable_to_non_nullable
 as AgeGroup?,playtime: freezed == playtime ? _self.playtime : playtime // ignore: cast_nullable_to_non_nullable
 as List<Timeslot>?,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
 as UserLocation?,sport: freezed == sport ? _self.sport : sport // ignore: cast_nullable_to_non_nullable
-as Map<String, SportProfile>?,
+as Map<String, SportProfile>?,generatedAvatar: freezed == generatedAvatar ? _self.generatedAvatar : generatedAvatar // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 /// Create a copy of UserDetails
@@ -432,10 +433,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Gender? gender,  AgeGroup? ageGroup,  List<Timeslot>? playtime,  UserLocation? location,  Map<String, SportProfile>? sport)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Gender? gender,  AgeGroup? ageGroup,  List<Timeslot>? playtime,  UserLocation? location,  Map<String, SportProfile>? sport,  String? generatedAvatar)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UserDetails() when $default != null:
-return $default(_that.gender,_that.ageGroup,_that.playtime,_that.location,_that.sport);case _:
+return $default(_that.gender,_that.ageGroup,_that.playtime,_that.location,_that.sport,_that.generatedAvatar);case _:
   return orElse();
 
 }
@@ -453,10 +454,10 @@ return $default(_that.gender,_that.ageGroup,_that.playtime,_that.location,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Gender? gender,  AgeGroup? ageGroup,  List<Timeslot>? playtime,  UserLocation? location,  Map<String, SportProfile>? sport)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Gender? gender,  AgeGroup? ageGroup,  List<Timeslot>? playtime,  UserLocation? location,  Map<String, SportProfile>? sport,  String? generatedAvatar)  $default,) {final _that = this;
 switch (_that) {
 case _UserDetails():
-return $default(_that.gender,_that.ageGroup,_that.playtime,_that.location,_that.sport);case _:
+return $default(_that.gender,_that.ageGroup,_that.playtime,_that.location,_that.sport,_that.generatedAvatar);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -473,10 +474,10 @@ return $default(_that.gender,_that.ageGroup,_that.playtime,_that.location,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Gender? gender,  AgeGroup? ageGroup,  List<Timeslot>? playtime,  UserLocation? location,  Map<String, SportProfile>? sport)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Gender? gender,  AgeGroup? ageGroup,  List<Timeslot>? playtime,  UserLocation? location,  Map<String, SportProfile>? sport,  String? generatedAvatar)?  $default,) {final _that = this;
 switch (_that) {
 case _UserDetails() when $default != null:
-return $default(_that.gender,_that.ageGroup,_that.playtime,_that.location,_that.sport);case _:
+return $default(_that.gender,_that.ageGroup,_that.playtime,_that.location,_that.sport,_that.generatedAvatar);case _:
   return null;
 
 }
@@ -488,7 +489,7 @@ return $default(_that.gender,_that.ageGroup,_that.playtime,_that.location,_that.
 @JsonSerializable()
 
 class _UserDetails implements UserDetails {
-  const _UserDetails({this.gender, this.ageGroup, final  List<Timeslot>? playtime, this.location, final  Map<String, SportProfile>? sport}): _playtime = playtime,_sport = sport;
+  const _UserDetails({this.gender, this.ageGroup, final  List<Timeslot>? playtime, this.location, final  Map<String, SportProfile>? sport, this.generatedAvatar}): _playtime = playtime,_sport = sport;
   factory _UserDetails.fromJson(Map<String, dynamic> json) => _$UserDetailsFromJson(json);
 
 @override final  Gender? gender;
@@ -512,6 +513,7 @@ class _UserDetails implements UserDetails {
   return EqualUnmodifiableMapView(value);
 }
 
+@override final  String? generatedAvatar;
 
 /// Create a copy of UserDetails
 /// with the given fields replaced by the non-null parameter values.
@@ -526,16 +528,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserDetails&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&const DeepCollectionEquality().equals(other._playtime, _playtime)&&(identical(other.location, location) || other.location == location)&&const DeepCollectionEquality().equals(other._sport, _sport));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserDetails&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&const DeepCollectionEquality().equals(other._playtime, _playtime)&&(identical(other.location, location) || other.location == location)&&const DeepCollectionEquality().equals(other._sport, _sport)&&(identical(other.generatedAvatar, generatedAvatar) || other.generatedAvatar == generatedAvatar));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,gender,ageGroup,const DeepCollectionEquality().hash(_playtime),location,const DeepCollectionEquality().hash(_sport));
+int get hashCode => Object.hash(runtimeType,gender,ageGroup,const DeepCollectionEquality().hash(_playtime),location,const DeepCollectionEquality().hash(_sport),generatedAvatar);
 
 @override
 String toString() {
-  return 'UserDetails(gender: $gender, ageGroup: $ageGroup, playtime: $playtime, location: $location, sport: $sport)';
+  return 'UserDetails(gender: $gender, ageGroup: $ageGroup, playtime: $playtime, location: $location, sport: $sport, generatedAvatar: $generatedAvatar)';
 }
 
 
@@ -546,7 +548,7 @@ abstract mixin class _$UserDetailsCopyWith<$Res> implements $UserDetailsCopyWith
   factory _$UserDetailsCopyWith(_UserDetails value, $Res Function(_UserDetails) _then) = __$UserDetailsCopyWithImpl;
 @override @useResult
 $Res call({
- Gender? gender, AgeGroup? ageGroup, List<Timeslot>? playtime, UserLocation? location, Map<String, SportProfile>? sport
+ Gender? gender, AgeGroup? ageGroup, List<Timeslot>? playtime, UserLocation? location, Map<String, SportProfile>? sport, String? generatedAvatar
 });
 
 
@@ -563,14 +565,15 @@ class __$UserDetailsCopyWithImpl<$Res>
 
 /// Create a copy of UserDetails
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? gender = freezed,Object? ageGroup = freezed,Object? playtime = freezed,Object? location = freezed,Object? sport = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? gender = freezed,Object? ageGroup = freezed,Object? playtime = freezed,Object? location = freezed,Object? sport = freezed,Object? generatedAvatar = freezed,}) {
   return _then(_UserDetails(
 gender: freezed == gender ? _self.gender : gender // ignore: cast_nullable_to_non_nullable
 as Gender?,ageGroup: freezed == ageGroup ? _self.ageGroup : ageGroup // ignore: cast_nullable_to_non_nullable
 as AgeGroup?,playtime: freezed == playtime ? _self._playtime : playtime // ignore: cast_nullable_to_non_nullable
 as List<Timeslot>?,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
 as UserLocation?,sport: freezed == sport ? _self._sport : sport // ignore: cast_nullable_to_non_nullable
-as Map<String, SportProfile>?,
+as Map<String, SportProfile>?,generatedAvatar: freezed == generatedAvatar ? _self.generatedAvatar : generatedAvatar // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

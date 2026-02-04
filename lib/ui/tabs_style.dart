@@ -67,7 +67,7 @@ FTabsStyle tabsStyle({
   selectedLabelTextStyle: typography.sm.copyWith(
     fontWeight: .w500,
     fontFamily: typography.defaultFontFamily,
-    color: pbRed,
+    color: colors.primary,
   ),
   unselectedLabelTextStyle: typography.sm.copyWith(
     fontWeight: .w500,

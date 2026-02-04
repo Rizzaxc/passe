@@ -274,7 +274,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                                 notifier.setSchedule(updated);
                               }
                             },
-                            child: const Icon(FIcons.plus, color: pbRed),
+                            child: const Icon(FIcons.plus),
                           ),
                         ],
                       ),

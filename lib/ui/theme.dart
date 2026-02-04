@@ -7,8 +7,7 @@ import 'package:pubox/ui/button_styles.dart';
 import 'tabs_style.dart';
 
 // ignore_for_file: avoid_redundant_argument_values
-
-const pbRed = Color(0xFFFF2010);
+// const pbRed = Color(0xFFDC143C);
 const pbBlue = Color(0xFF3090F2);
 const pbGreen = Color(0xFF959D54);
 
@@ -17,19 +16,21 @@ FThemeData get pbThemeLight {
     brightness: .light,
     systemOverlayStyle: .dark,
     barrier: Color(0x33000000),
-    // background: Color(0xFFFFFFFF),
     background: Color(0xFFF4F5EE),
+    // background: Color(0xFFFFFFFF),
 
     foreground: Color(0xFF09090B),
-    primary: pbGreen,
+    primary: Color(0xFFDC143C),
     primaryForeground: Color(0xFFFFF1F2),
-    secondary: Color(0xFFE6E8DD),
+    secondary: Color(0xFFF4F4F5),
     secondaryForeground: Color(0xFF18181B),
-    muted: Color(0xFFE4E4E0),
+    muted: Color(0xFFE5E7EB),
     mutedForeground: Color(0xFF71717A),
-    destructive: pbBlue,
+
+    destructive: Color(0xFFF97316),
     destructiveForeground: Color(0xFFFAFAFA),
-    error: pbRed,
+
+    error: Color(0xFFf95c16),
     errorForeground: Color(0xFFFAFAFA),
     border: Color(0xFFDCDCD9),
   );
@@ -41,19 +42,18 @@ FThemeData get pbThemeLight {
     colors: colors,
     typography: typography,
     style: style,
-    buttonStyles: buttonStyles(colors: colors, typography: typography, style: style),
+    buttonStyles: buttonStyles(
+      colors: colors,
+      typography: typography,
+      style: style,
+    ),
     tabsStyle: tabsStyle(colors: colors, typography: typography, style: style),
-    extensions: [
-      PuboxColor(color: pbRed),
-      PuboxColor(color: pbGreen),
-      PuboxColor(color: pbBlue),
-
-    ],
+    extensions: [PuboxColors(green: pbGreen, blue: pbBlue)],
   );
 }
 
 extension PuboxColorExtension on FThemeData {
-  PuboxColor get brand => extension<PuboxColor>();
+  PuboxColors get brand => extension<PuboxColors>();
 }
 
 FThemeData get pbThemeDark {
@@ -79,24 +79,34 @@ FThemeData get pbThemeDark {
   final typography = _typography(colors: colors);
   final style = _style(colors: colors, typography: typography);
 
-  return FThemeData(colors: colors, typography: typography, style: style);
+  return FThemeData(
+    colors: colors,
+    typography: typography,
+    style: style,
+    extensions: [PuboxColors(green: pbGreen, blue: pbBlue)],
+  );
 }
 
-class PuboxColor extends ThemeExtension<PuboxColor> {
-  final Color color;
+class PuboxColors extends ThemeExtension<PuboxColors> {
+  final Color green;
+  final Color blue;
 
-  const PuboxColor({required this.color});
-
-  @override
-  PuboxColor copyWith({Color? color}) => PuboxColor(color: color ?? this.color);
+  const PuboxColors({required this.green, required this.blue});
 
   @override
-  PuboxColor lerp(PuboxColor? other, double t) {
-    if (other is! PuboxColor) {
+  PuboxColors copyWith({Color? green, Color? blue}) =>
+      PuboxColors(green: green ?? this.green, blue: blue ?? this.blue);
+
+  @override
+  PuboxColors lerp(PuboxColors? other, double t) {
+    if (other is! PuboxColors) {
       return this;
     }
 
-    return PuboxColor(color: Color.lerp(color, other.color, t)!);
+    return PuboxColors(
+      green: Color.lerp(green, other.green, t)!,
+      blue: Color.lerp(blue, other.blue, t)!,
+    );
   }
 }
 
@@ -201,7 +211,6 @@ FStyle _style({required FColors colors, required FTypography typography}) =>
         ),
       ],
     );
-
 
 // FThemeData get roseLight {
 //   const colors = FColors(

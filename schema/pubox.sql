@@ -847,6 +847,7 @@ CREATE TABLE IF NOT EXISTS "public"."user" (
     "username" character varying(16) DEFAULT "public"."nanoid"(16) NOT NULL,
     "tag_number" character varying(4) DEFAULT "lpad"(((("floor"(("random"() * (10000)::double precision)))::integer)::character varying)::"text", 4, '0'::"text") NOT NULL,
     "details" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    CONSTRAINT "user_username_alphanumeric" CHECK ("username" ~ '^[a-zA-Z0-9]+$'),
     CONSTRAINT "user_details_schema" CHECK ("extensions"."jsonb_matches_schema"('{
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "description": "Freeform data for user profile",
@@ -874,6 +875,9 @@ CREATE TABLE IF NOT EXISTS "public"."user" (
                   }
                 }
               }
+            },
+            "generatedAvatar": {
+              "type": "string"
             },
             "sport": {
               "description": "Sport profile for the user",

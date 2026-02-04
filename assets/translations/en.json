@@ -212,7 +212,7 @@
     "tennis": "Tennis",
     "pickleball": "Pickleball",
     "selectSport": "Please select a sport",
-    "othersAlertDescription": "You are currently viewing 'Others' category. Please select a specific sport to see relevant content."
+    "othersAlertDescription": "Please select a specific sport to see relevant content."
   },
   "not_set": "Not set",
   "done": "Done",
@@ -229,13 +229,15 @@
     "signIn": "Sign In",
     "signUp": "Sign Up",
     "loginFailed": "Login Failed",
-    "signUpFailed": "SignUp Failed",
+    "signUpFailed": "Sign Up Failed",
     "googleContinue": "Continue with Google",
     "appleContinue": "Continue with Apple",
     "guestContinue": "Continue as Guest",
     "googleLoginFailed": "Google Login Failed",
     "appleLoginFailed": "Apple Login Failed",
-    "guestLoginFailed": "Guest Login Failed"
+    "guestLoginFailed": "Guest Login Failed",
+    "credentialsInvalid": "Invalid email or password",
+    "userAlreadyRegistered": "This email is already registered"
   },
   "nav": {
     "home": "Home",
@@ -286,10 +288,25 @@
     "empty_network": "No networks selected. Add your schools or companies to connect with others.",
     "empty_industry": "No industries selected. Add your industries to find professional connections.",
     "empty_sport_profile": "Sport profile not set. Update your skill level to find better matches.",
+    "changeUsername": "Change Username",
+    "newUsername": "New Username",
+    "confirmUsername": "Confirm Username",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordChanged": "Password changed successfully",
+    "usernameMismatch": "Usernames do not match",
+    "usernameInvalidChars": "Username can only contain letters and numbers",
+    "usernameTaken": "This username is already taken",
     "confirmLogout": "Confirm Logout?",
     "alumni": "Alumni",
     "currentMember": "Current Member",
-    "toggleAlumniStatus": "Toggle Alumni Status"
+    "toggleAlumniStatus": "Toggle Alumni Status",
+    "randomizeAvatar": "Randomize",
+    "removeAvatar": "Remove",
+    "uploadPhoto": "Upload Photo",
+    "uploadFailed": "Failed to upload photo"
   },
   "health": {
     "title": "Health",

@@ -29,6 +29,7 @@ _UserDetails _$UserDetailsFromJson(Map json) => _UserDetails(
       SportProfile.fromJson(Map<String, dynamic>.from(e as Map)),
     ),
   ),
+  generatedAvatar: json['generatedAvatar'] as String?,
 );
 
 Map<String, dynamic> _$UserDetailsToJson(_UserDetails instance) =>
@@ -38,6 +39,7 @@ Map<String, dynamic> _$UserDetailsToJson(_UserDetails instance) =>
       'playtime': ?instance.playtime?.map((e) => e.toJson()).toList(),
       'location': ?instance.location?.toJson(),
       'sport': ?instance.sport?.map((k, e) => MapEntry(k, e.toJson())),
+      'generatedAvatar': ?instance.generatedAvatar,
     };
 
 const _$GenderEnumMap = {Gender.male: 'male', Gender.female: 'female'};

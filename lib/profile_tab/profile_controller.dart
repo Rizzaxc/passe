@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -21,7 +22,10 @@ abstract class ProfileState with _$ProfileState {
     required UserDetails details,
     @Default([]) List<Network> networks,
     @Default([]) List<Industry> industries,
+    XFile? pickedAvatar,
   }) = _ProfileState;
+
+  const ProfileState._();
 }
 
 @riverpod
@@ -214,10 +218,21 @@ class ProfileController extends _$ProfileController {
 
     final networks = ref.watch(networkControllerProvider);
     final industries = ref.watch(industryControllerProvider);
-    
+
+    final username = user?.username ?? 'Guest';
+    final tagNumber = user?.tagNumber ?? '0000';
+    var details = user?.details ?? const UserDetails();
+
+    if (details.generatedAvatar == null) {
+      final seed = username == 'Guest'
+          ? '${DateTime.now().millisecondsSinceEpoch}'
+          : '${username}_$tagNumber';
+      details = details.copyWith(generatedAvatar: seed);
+    }
+
     return ProfileState(
-      username: user?.username ?? 'Guest',
-      details: user?.details ?? const UserDetails(),
+      username: username,
+      details: details,
       networks: networks,
       industries: industries,
     );
@@ -228,12 +243,54 @@ class ProfileController extends _$ProfileController {
     UserDetails? details,
     List<Network>? networks,
     List<Industry>? industries,
+    XFile? pickedAvatar,
+    bool clearPickedAvatar = false,
   }) {
     state = state.copyWith(
       username: username ?? state.username,
       details: details ?? state.details,
       networks: networks ?? state.networks,
       industries: industries ?? state.industries,
+      pickedAvatar: clearPickedAvatar ? null : (pickedAvatar ?? state.pickedAvatar),
+    );
+  }
+
+  void randomizeAvatar() {
+    final user = ref.read(authControllerProvider).value;
+    final tagNumber = user?.tagNumber ?? '0000';
+    final seed = '${DateTime.now().microsecondsSinceEpoch}_$tagNumber';
+    updateDraft(
+      details: state.details.copyWith(generatedAvatar: seed),
+      clearPickedAvatar: true,
+    );
+  }
+
+  void removeAvatar() {
+    final user = ref.read(authControllerProvider).value;
+    final tagNumber = user?.tagNumber ?? '0000';
+    final seed = '${DateTime.now().microsecondsSinceEpoch}_$tagNumber';
+    updateDraft(
+      details: state.details.copyWith(generatedAvatar: seed),
+      clearPickedAvatar: true,
+    );
+  }
+
+  void uploadAvatar() async {
+    final user = ref.read(authControllerProvider).value;
+    if (user == null || user.id == null) return;
+
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 80,
+    );
+    if (picked == null) return;
+
+    updateDraft(
+      details: state.details.copyWith(generatedAvatar: ''),
+      pickedAvatar: picked,
     );
   }
 
@@ -254,18 +311,61 @@ class ProfileController extends _$ProfileController {
     final user = ref.read(authControllerProvider).value;
     if (user == null || user.id == null) return;
 
+    var updatedDetails = state.details;
+
     try {
+      // 1. Handle Avatar storage operations
+      final oldGeneratedAvatar = user.details?.generatedAvatar;
+      final newGeneratedAvatar = state.details.generatedAvatar;
+
+      // If we previously had a custom photo (generatedAvatar was '')
+      // and now we have a generated one (not ''), remove the custom photo from bucket
+      if (oldGeneratedAvatar == '' && newGeneratedAvatar != '' && newGeneratedAvatar != null) {
+        try {
+          final path = '${user.id}.jpg';
+          await supabase.storage.from('user_avatar').remove([path]);
+        } catch (e, st) {
+          talker.handle(e, st, 'Failed to remove avatar from storage');
+        }
+      }
+
+      // If there's a picked avatar, upload it
+      if (state.pickedAvatar != null) {
+        try {
+          final bytes = await state.pickedAvatar!.readAsBytes();
+          final path = '${user.id}.jpg';
+
+          await supabase.storage.from('user_avatar').uploadBinary(
+                path,
+                bytes,
+                fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+              );
+        } catch (e, st) {
+          talker.handle(e, st, 'Failed to upload avatar to storage');
+          // If upload fails, we might want to revert to a generated avatar
+          // but for now let's just log it. The user will see a broken image or old one.
+          // To be safe, if it fails and we intended it to be custom, maybe we should
+          // set generatedAvatar back to something.
+          // But according to instructions: "nullify the url if that previous step fails"
+          // Since we don't have avatarUrl anymore, if upload fails, we should probably
+          // set a generatedAvatar so it's not "null" (which means custom).
+          final tagNumber = user.tagNumber;
+          final seed = 'fallback_${DateTime.now().millisecondsSinceEpoch}_$tagNumber';
+          updatedDetails = updatedDetails.copyWith(generatedAvatar: seed);
+        }
+      }
+
       await Future.wait([
-        // 1. Update user basic info & details json
+        // 2. Update user basic info & details json
         supabase.from('user').update({
           'username': state.username,
-          'details': state.details.toJson(),
+          'details': updatedDetails.toJson(),
         }).eq('id', user.id!),
 
-        // 2. Sync networks (user_network table)
+        // 3. Sync networks (user_network table)
         ref.read(networkControllerProvider.notifier).commit(),
 
-        // 3. Sync industries (user_industry table)
+        // 4. Sync industries (user_industry table)
         ref.read(industryControllerProvider.notifier).commit(),
       ]);
     } on PostgrestException catch (e, st) {

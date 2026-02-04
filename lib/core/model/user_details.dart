@@ -28,6 +28,7 @@ abstract class UserDetails with _$UserDetails {
     List<Timeslot>? playtime,
     UserLocation? location,
     Map<String, SportProfile>? sport,
+    String? generatedAvatar,
   }) = _UserDetails;
 
   factory UserDetails.fromJson(Map<String, dynamic> json) =>

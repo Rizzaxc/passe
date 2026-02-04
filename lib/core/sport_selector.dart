@@ -38,14 +38,33 @@ class SportSelector extends ConsumerWidget {
     if (selectedSportAsync.value == Sport.others && !alertShown) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!ref.read(othersAlertShownProvider)) {
-          showFToast(
-            context: context,
-            title: Text(tr('sport.sportNotSelected')),
-            description: Text(tr('sport.othersAlertDescription')),
-            duration: null,
-            icon: const Icon(FIcons.triangleAlert),
-          );
           ref.read(othersAlertShownProvider.notifier).setShown();
+          showFDialog(
+            context: context,
+            barrierDismissible: false,
+            useRootNavigator: true,
+            builder: (dialogContext, style, animation) => PopScope(
+              canPop: false,
+              child: FDialog(
+                animation: animation,
+                title: Text(tr('sport.sportNotSelected')),
+                body: Text(tr('sport.othersAlertDescription')),
+                direction: Axis.vertical,
+                actions: [
+                  for (final sport in Sport.values.where((s) => s != Sport.others))
+                    FButton(
+                      style: FButtonStyle.outline(),
+                      prefix: _getSportIcon(sport),
+                      onPress: () {
+                        ref.read(selectedSportStateProvider.notifier).change(sport);
+                        Navigator.of(dialogContext).pop();
+                      },
+                      child: Text(sport.getLocalizedName(dialogContext)),
+                    ),
+                ],
+              ),
+            ),
+          );
         }
       });
     }
