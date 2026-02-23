@@ -9,6 +9,59 @@ part of 'profile_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(NetworkSearchController)
+final networkSearchControllerProvider = NetworkSearchControllerProvider._();
+
+final class NetworkSearchControllerProvider
+    extends $NotifierProvider<NetworkSearchController, NetworkSearchState> {
+  NetworkSearchControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'networkSearchControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$networkSearchControllerHash();
+
+  @$internal
+  @override
+  NetworkSearchController create() => NetworkSearchController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(NetworkSearchState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<NetworkSearchState>(value),
+    );
+  }
+}
+
+String _$networkSearchControllerHash() =>
+    r'7d349d56bf6a551e42aa1dd9188931cecdeb7213';
+
+abstract class _$NetworkSearchController extends $Notifier<NetworkSearchState> {
+  NetworkSearchState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<NetworkSearchState, NetworkSearchState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<NetworkSearchState, NetworkSearchState>,
+              NetworkSearchState,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(NetworkController)
 final networkControllerProvider = NetworkControllerProvider._();
 

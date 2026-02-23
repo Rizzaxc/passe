@@ -28,6 +28,86 @@ abstract class ProfileState with _$ProfileState {
   const ProfileState._();
 }
 
+@freezed
+abstract class NetworkSearchState with _$NetworkSearchState {
+  const factory NetworkSearchState({
+    @Default([]) List<Network> results,
+    @Default(false) bool isLoading,
+    @Default({}) Set<City> cityFilters,
+    @Default({}) Set<NetworkCategory> categoryFilters,
+  }) = _NetworkSearchState;
+}
+
+@riverpod
+class NetworkSearchController extends _$NetworkSearchController {
+  @override
+  NetworkSearchState build() => const NetworkSearchState();
+
+  void toggleCity(City city) {
+    final updated = {...state.cityFilters};
+    if (!updated.remove(city)) updated.add(city);
+    state = state.copyWith(cityFilters: updated);
+    _reSearch();
+  }
+
+  void toggleCategory(NetworkCategory category) {
+    final updated = {...state.categoryFilters};
+    if (!updated.remove(category)) updated.add(category);
+    state = state.copyWith(categoryFilters: updated);
+    _reSearch();
+  }
+
+  String _lastQuery = '';
+
+  Future<void> search(String query) async {
+    _lastQuery = query;
+    await _executeSearch(query);
+  }
+
+  Future<void> _reSearch() async {
+    if (_lastQuery.isEmpty) return;
+    await _executeSearch(_lastQuery);
+  }
+
+  Future<void> _executeSearch(String query) async {
+    if (query.length < 3) {
+      state = state.copyWith(results: [], isLoading: false);
+      return;
+    }
+
+    state = state.copyWith(isLoading: true);
+    try {
+      final supabase = Supabase.instance.client;
+      final params = <String, dynamic>{
+        'search_term': query,
+        'result_limit': 10,
+        'filter_cities': state.cityFilters.map((c) => c.dbIndex).toList(),
+        'filter_categories': state.categoryFilters.map((c) => c.jsonValue).toList(),
+      };
+
+      final response = await supabase.rpc(
+        'search_networks_unaccent',
+        params: params,
+      );
+
+      state = state.copyWith(
+        isLoading: false,
+        results: (response as List).map((data) {
+          return Network(
+            id: data['id'] as int,
+            name: data['name'] as String,
+            isAlumni: false,
+            category: NetworkCategory.fromString(data['category'] as String?),
+            city: data['city'] != null ? City.values[data['city'] as int] : null,
+          );
+        }).toList(),
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+}
+
 @riverpod
 class NetworkController extends _$NetworkController {
   final supabase = Supabase.instance.client;
@@ -58,10 +138,7 @@ class NetworkController extends _$NetworkController {
           isAlumni: data['alumni'] as bool,
           category: NetworkCategory.fromString(networkData['category'] as String?),
           city: networkData['city'] != null
-              ? City.values.firstWhere(
-                  (c) => c.name.toLowerCase() == (networkData['city'] as String).toLowerCase(),
-                  orElse: () => City.hanoi,
-                )
+              ? City.values[networkData['city'] as int]
               : null,
         );
       }).toList();
@@ -72,17 +149,18 @@ class NetworkController extends _$NetworkController {
     }
   }
 
-  void toggle(Network network) {
+  /// Returns false if at max capacity and trying to add.
+  bool toggle(Network network) {
     final current = state.toSet();
     if (current.contains(network)) {
       current.remove(network);
     } else if (current.length < 2) {
       current.add(network);
     } else {
-      current.remove(current.first);
-      current.add(network);
+      return false;
     }
     state = current.toList();
+    return true;
   }
 
   void toggleAlumni(int networkId) {

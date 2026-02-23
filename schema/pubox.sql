@@ -536,33 +536,40 @@ $$;
 ALTER FUNCTION "public"."professional_booking_review_updated_trigger_fn"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."search_networks_unaccent"("search_term" "text", "result_limit" integer DEFAULT 20) RETURNS TABLE("id" bigint, "name" "text", "category" "text")
+CREATE OR REPLACE FUNCTION "public"."search_networks_unaccent"(
+    "search_term" "text",
+    "result_limit" integer DEFAULT 20,
+    "filter_cities" bigint[] DEFAULT NULL,
+    "filter_categories" "text"[] DEFAULT NULL
+) RETURNS TABLE("id" bigint, "name" "text", "category" "text", "city" bigint)
     LANGUAGE "sql"
     SET "search_path" TO ''
     AS $$
 SELECT
     n.id,
     n.name,
-    n.category
+    n.category,
+    n.city
 FROM public.network n
 WHERE
-    -- Try both accented and unaccented matching for Vietnamese text
-    (extensions.unaccent(LOWER(n.name)) ILIKE '%' || extensions.unaccent(LOWER(search_term)) || '%'
-        OR LOWER(n.name) ILIKE '%' || LOWER(search_term) || '%')
+    char_length(search_term) >= 5
+    AND (
+        extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(n.name))) > 0.3
+        OR extensions.word_similarity(LOWER(search_term), LOWER(n.name)) > 0.3
+    )
+    AND (coalesce(cardinality(filter_cities), 0) = 0 OR n.city = ANY(filter_cities))
+    AND (coalesce(cardinality(filter_categories), 0) = 0 OR n.category = ANY(filter_categories))
 ORDER BY
-    -- Prioritize exact matches, then prefix matches, then contains
-    CASE
-        WHEN LOWER(n.name) = LOWER(search_term) THEN 1
-        WHEN LOWER(n.name) LIKE LOWER(search_term) || '%' THEN 2
-        WHEN extensions.unaccent(LOWER(n.name)) LIKE extensions.unaccent(LOWER(search_term)) || '%' THEN 3
-        ELSE 4
-        END,
+    greatest(
+        extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(n.name))),
+        extensions.word_similarity(LOWER(search_term), LOWER(n.name))
+    ) DESC,
     n.name
 LIMIT result_limit;
 $$;
 
 
-ALTER FUNCTION "public"."search_networks_unaccent"("search_term" "text", "result_limit" integer) OWNER TO "postgres";
+ALTER FUNCTION "public"."search_networks_unaccent"("search_term" "text", "result_limit" integer, "filter_cities" bigint[], "filter_categories" "text"[]) OWNER TO "postgres";
 
 SET default_tablespace = '';
 
@@ -1766,9 +1773,9 @@ GRANT ALL ON FUNCTION "public"."professional_booking_review_updated_trigger_fn"(
 
 
 
-GRANT ALL ON FUNCTION "public"."search_networks_unaccent"("search_term" "text", "result_limit" integer) TO "anon";
-GRANT ALL ON FUNCTION "public"."search_networks_unaccent"("search_term" "text", "result_limit" integer) TO "authenticated";
-GRANT ALL ON FUNCTION "public"."search_networks_unaccent"("search_term" "text", "result_limit" integer) TO "service_role";
+GRANT ALL ON FUNCTION "public"."search_networks_unaccent"("search_term" "text", "result_limit" integer, "filter_cities" bigint[], "filter_categories" "text"[]) TO "anon";
+GRANT ALL ON FUNCTION "public"."search_networks_unaccent"("search_term" "text", "result_limit" integer, "filter_cities" bigint[], "filter_categories" "text"[]) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."search_networks_unaccent"("search_term" "text", "result_limit" integer, "filter_cities" bigint[], "filter_categories" "text"[]) TO "service_role";
 
 
 

@@ -47,7 +47,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       showFToast(
         context: context,
         title: Text('error'.tr()),
-        description: Text('error_generic'.tr()),
+        description: Text('errorGeneric'.tr()),
         alignment: .bottomCenter,
       );
     } finally {
@@ -104,7 +104,6 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               const SizedBox(height: 24),
               FButton(
                 onPress: _isLoading ? null : _submit,
-                style: FButtonStyle.primary(),
                 child: _isLoading
                     ? const SizedBox(
                         width: 16,

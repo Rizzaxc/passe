@@ -23,7 +23,7 @@ class BasketballProfile extends ConsumerWidget {
         ? SportEmptyPlaceholder(sportName: sportName)
         : FTileGroup(
       label: Text('profile.sportProfile'.tr(args: [sportName])),
-      description: Text('profile.sport_feature_explanation'.tr()),
+      description: Text('profile.sportFeatureExplanation'.tr()),
       children: [
         FTile(
           title: Text(sportName),

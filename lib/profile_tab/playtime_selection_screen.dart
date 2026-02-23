@@ -33,7 +33,7 @@ class PlaytimeSelectionScreen extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(32.0),
                   child: Text(
-                    'profile.playtime_explanation'.tr(),
+                    'profile.playtimeExplanation'.tr(),
                     style: context.theme.typography.base.copyWith(
                       color: context.theme.colors.mutedForeground,
                     ),
@@ -49,12 +49,13 @@ class PlaytimeSelectionScreen extends ConsumerWidget {
                         title: Text(
                           '${timeslot.dayChunk.getShortName(context)} ${timeslot.dayOfWeek.getFullName(context)}',
                         ),
-                        suffix: IconButton(
-                          icon: Icon(
+                        suffix: FButton.icon(
+                          variant: .ghost,
+                          child: Icon(
                             FIcons.trash,
                             color: context.theme.colors.destructive,
                           ),
-                          onPressed: () {
+                          onPress: () {
                             final updatedTimeslots = [...timeslots];
                             updatedTimeslots.remove(timeslot);
                             ref
@@ -71,9 +72,9 @@ class PlaytimeSelectionScreen extends ConsumerWidget {
                     .toList(),
               ),
             const SizedBox(height: 24),
-            FDualButton(
-              firstStyle: (styles) => styles.outline,
-              secondStyle: (styles) => styles.outline,
+            PDualButton(
+              firstVariant: .outline,
+              secondVariant: .outline,
               flex: 85,
               onFirstPressed: () async {
                 final timeslot = await showTimeslotPicker(context: context);

@@ -4,7 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../core/model/enum.dart';
 import '../core/model/timeslot.dart';
-import '../ui/theme.dart';
+import '../ui/search_field.dart';
 import 'filter_controller.dart';
 
 export 'filter_controller.dart' show FilterData, filterStateProvider;
@@ -15,7 +15,7 @@ class FilterWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return FButton.icon(
-      style: FButtonStyle.ghost(),
+      variant: .ghost,
       onPress: () {
         showFSheet(
           context: context,
@@ -64,9 +64,10 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
     return FSheets(
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: context.theme.colors.background,
+          borderRadius: BorderRadius.circular(32),
           border: Border.symmetric(
             horizontal: BorderSide(color: context.theme.colors.border),
           ),
@@ -78,19 +79,10 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
             spacing: 32,
             children: [
               // Search section
-              FTextField(
+              PSearchField(
                 hint: context.tr('homeTab.filter.searchHint'),
-                prefixBuilder: (context, style, states) {
-                  return Padding(
-                    padding: EdgeInsets.fromLTRB(8, 4, 0, 4),
-                    child: Icon(FIcons.search),
-                  );
-                },
-                autocorrect: false,
-                control: FTextFieldControl.managed(
-                  controller: _searchController,
-                  onChange: (value) => notifier.setFilter(value.text),
-                ),
+                controller: _searchController,
+                onChange: (value) => notifier.setFilter(value),
               ),
 
               // Location section
@@ -140,6 +132,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                             d.getLocalizedFullName(context): d,
                       },
                     },
+                    style: .delta(tileStyle: .delta(backgroundColor: .delta([.all(context.theme.colors.background)]))),
                     maxHeight: 200,
                     label: null,
                     title: Text(context.tr('homeTab.filter.district')),
@@ -177,7 +170,6 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                         context.tr('homeTab.filter.schedule'),
                         style: context.theme.typography.base.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: context.theme.colors.primary,
                         ),
                       ),
                     ],
@@ -198,20 +190,19 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                                 notifier.setSchedule(updated);
                               },
                               child: FBadge(
-                                style: FBadgeStyle.secondary(),
+                                variant: .outline,
                                 child: Row(
                                   crossAxisAlignment: .center,
                                   spacing: 4,
                                   children: [
                                     Text(
                                       '${timeslot.dayChunk.getShortName(context)} ${timeslot.dayOfWeek.getShortName(context)}',
-                                      style: context.theme.typography.base,
                                     ),
                                     Icon(
                                       FIcons.x,
                                       size: 12,
                                       color:
-                                          context.theme.colors.mutedForeground,
+                                          context.theme.colors.destructive,
                                     ),
                                   ],
                                 ),
@@ -262,7 +253,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                             ),
                           ),
                           FButton.icon(
-                            style: FButtonStyle.ghost(),
+                            variant: .ghost,
                             onPress: () {
                               final timeslot = Timeslot(
                                 _pendingDayOfWeek,
@@ -287,7 +278,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 onPress: () => Navigator.of(context).pop(),
                 child: Icon(FIcons.check),
               ),
-              const SizedBox(height: 16,)
+              const SizedBox(height: 8,)
             ],
           ),
         ),

@@ -9,129 +9,107 @@ import 'theme.dart';
 /// Extension on FButtonStyle to add Pubox accent color styles
 extension FButtonStyleExtension on FButtonStyle {
   /// Accent blue button style using pbBlue color
-  static FButtonStyle Function(FButtonStyle) accentBlue() {
-    return (style) {
-      final baseBorderRadius = style.decoration.resolve({}).borderRadius;
-      final baseTextStyle = style.contentStyle.textStyle.resolve({});
+  static FButtonStyle accentBlueStyle(FButtonStyle base) {
+    final baseBorderRadius = base.decoration.base.borderRadius;
 
-      return FButtonStyle(
-        decoration: FWidgetStateMap({
-          WidgetState.disabled: BoxDecoration(
-            borderRadius: baseBorderRadius,
-            color: pbBlue.withValues(alpha: 0.5),
-          ),
-          WidgetState.hovered | WidgetState.pressed: BoxDecoration(
-            borderRadius: baseBorderRadius,
-            color: Color.lerp(pbBlue, Colors.black, 0.1),
-          ),
-          WidgetState.any: BoxDecoration(
-            borderRadius: baseBorderRadius,
-            color: pbBlue,
-          ),
-        }),
-        focusedOutlineStyle: style.focusedOutlineStyle,
-        contentStyle: FButtonContentStyle(
-          textStyle: FWidgetStateMap({
-            WidgetState.disabled: baseTextStyle.copyWith(
-              color: Colors.white.withValues(alpha: 0.5),
-            ),
-            WidgetState.any: baseTextStyle.copyWith(
-              color: Colors.white,
-            ),
-          }),
-          iconStyle: FWidgetStateMap({
-            WidgetState.disabled: IconThemeData(
-              color: Colors.white.withValues(alpha: 0.5),
-              size: 20,
-            ),
-            WidgetState.any: IconThemeData(color: Colors.white, size: 20),
-          }),
-          circularProgressStyle: FWidgetStateMap({
-            WidgetState.disabled: FCircularProgressStyle(
-              iconStyle: IconThemeData(color: Colors.white.withValues(alpha: 0.5), size: 20),
-            ),
-            WidgetState.any: FCircularProgressStyle(
-              iconStyle: IconThemeData(color: Colors.white, size: 20),
-            ),
-          }),
-          padding: style.contentStyle.padding,
-          spacing: style.contentStyle.spacing,
+    return FButtonStyle(
+      decoration: .from(
+        BoxDecoration(
+          borderRadius: baseBorderRadius,
+          color: pbBlue,
         ),
-        iconContentStyle: FButtonIconContentStyle(
-          iconStyle: FWidgetStateMap({
-            WidgetState.disabled: IconThemeData(
-              color: Colors.white.withValues(alpha: 0.5),
-              size: 20,
-            ),
-            WidgetState.any: IconThemeData(color: Colors.white, size: 20),
-          }),
+        variants: {
+          [.disabled]: .delta(color: pbBlue.withValues(alpha: 0.5)),
+          [.hovered, .pressed]: .delta(color: Color.lerp(pbBlue, Colors.black, 0.1)),
+        },
+      ),
+      focusedOutlineStyle: base.focusedOutlineStyle,
+      contentStyle: FButtonContentStyle(
+        textStyle: .from(
+          base.contentStyle.textStyle.base.copyWith(color: Colors.white),
+          variants: {
+            [.disabled]: .delta(color: Colors.white.withValues(alpha: 0.5)),
+          },
         ),
-        tappableStyle: style.tappableStyle,
-      );
-    };
+        iconStyle: .from(
+          IconThemeData(color: Colors.white, size: 20),
+          variants: {
+            [.disabled]: .delta(color: Colors.white.withValues(alpha: 0.5)),
+          },
+        ),
+        circularProgressStyle: .from(
+          FCircularProgressStyle(
+            iconStyle: IconThemeData(color: Colors.white, size: 20),
+          ),
+          variants: {
+            [.disabled]: .delta(iconStyle: .delta(color: Colors.white.withValues(alpha: 0.5))),
+          },
+        ),
+        padding: base.contentStyle.padding,
+        spacing: base.contentStyle.spacing,
+      ),
+      iconContentStyle: FButtonIconContentStyle(
+        iconStyle: .from(
+          IconThemeData(color: Colors.white, size: 20),
+          variants: {
+            [.disabled]: .delta(color: Colors.white.withValues(alpha: 0.5)),
+          },
+        ),
+      ),
+      tappableStyle: base.tappableStyle,
+    );
   }
 
   /// Accent green button style using pbGreen color
-  static FButtonStyle Function(FButtonStyle) accentGreen() {
-    return (style) {
-      final baseBorderRadius = style.decoration.resolve({}).borderRadius;
-      final baseTextStyle = style.contentStyle.textStyle.resolve({});
+  static FButtonStyle accentGreenStyle(FButtonStyle base) {
+    final baseBorderRadius = base.decoration.base.borderRadius;
 
-      return FButtonStyle(
-        decoration: FWidgetStateMap({
-          WidgetState.disabled: BoxDecoration(
-            borderRadius: baseBorderRadius,
-            color: pbGreen.withValues(alpha: 0.5),
-          ),
-          WidgetState.hovered | WidgetState.pressed: BoxDecoration(
-            borderRadius: baseBorderRadius,
-            color: Color.lerp(pbGreen, Colors.black, 0.1),
-          ),
-          WidgetState.any: BoxDecoration(
-            borderRadius: baseBorderRadius,
-            color: pbGreen,
-          ),
-        }),
-        focusedOutlineStyle: style.focusedOutlineStyle,
-        contentStyle: FButtonContentStyle(
-          textStyle: FWidgetStateMap({
-            WidgetState.disabled: baseTextStyle.copyWith(
-              color: Colors.white.withValues(alpha: 0.5),
-            ),
-            WidgetState.any: baseTextStyle.copyWith(
-              color: Colors.white,
-            ),
-          }),
-          iconStyle: FWidgetStateMap({
-            WidgetState.disabled: IconThemeData(
-              color: Colors.white.withValues(alpha: 0.5),
-              size: 20,
-            ),
-            WidgetState.any: IconThemeData(color: Colors.white, size: 20),
-          }),
-          circularProgressStyle: FWidgetStateMap({
-            WidgetState.disabled: FCircularProgressStyle(
-              iconStyle: IconThemeData(color: Colors.white.withValues(alpha: 0.5), size: 20),
-            ),
-            WidgetState.any: FCircularProgressStyle(
-              iconStyle: IconThemeData(color: Colors.white, size: 20),
-            ),
-          }),
-          padding: style.contentStyle.padding,
-          spacing: style.contentStyle.spacing,
+    return FButtonStyle(
+      decoration: .from(
+        BoxDecoration(
+          borderRadius: baseBorderRadius,
+          color: pbGreen,
         ),
-        iconContentStyle: FButtonIconContentStyle(
-          iconStyle: FWidgetStateMap({
-            WidgetState.disabled: IconThemeData(
-              color: Colors.white.withValues(alpha: 0.5),
-              size: 20,
-            ),
-            WidgetState.any: IconThemeData(color: Colors.white, size: 20),
-          }),
+        variants: {
+          [.disabled]: .delta(color: pbGreen.withValues(alpha: 0.5)),
+          [.hovered, .pressed]: .delta(color: Color.lerp(pbGreen, Colors.black, 0.1)),
+        },
+      ),
+      focusedOutlineStyle: base.focusedOutlineStyle,
+      contentStyle: FButtonContentStyle(
+        textStyle: .from(
+          base.contentStyle.textStyle.base.copyWith(color: Colors.white),
+          variants: {
+            [.disabled]: .delta(color: Colors.white.withValues(alpha: 0.5)),
+          },
         ),
-        tappableStyle: style.tappableStyle,
-      );
-    };
+        iconStyle: .from(
+          IconThemeData(color: Colors.white, size: 20),
+          variants: {
+            [.disabled]: .delta(color: Colors.white.withValues(alpha: 0.5)),
+          },
+        ),
+        circularProgressStyle: .from(
+          FCircularProgressStyle(
+            iconStyle: IconThemeData(color: Colors.white, size: 20),
+          ),
+          variants: {
+            [.disabled]: .delta(iconStyle: .delta(color: Colors.white.withValues(alpha: 0.5))),
+          },
+        ),
+        padding: base.contentStyle.padding,
+        spacing: base.contentStyle.spacing,
+      ),
+      iconContentStyle: FButtonIconContentStyle(
+        iconStyle: .from(
+          IconThemeData(color: Colors.white, size: 20),
+          variants: {
+            [.disabled]: .delta(color: Colors.white.withValues(alpha: 0.5)),
+          },
+        ),
+      ),
+      tappableStyle: base.tappableStyle,
+    );
   }
 }
 
@@ -140,74 +118,76 @@ FButtonStyles buttonStyles({
   required FTypography typography,
   required FStyle style,
 }) => FButtonStyles(
-  primary: .inherit(
-    colors: colors,
-    style: style,
-    typography: typography,
-    color: colors.primary,
-    foregroundColor: colors.primaryForeground,
-  ),
-  secondary: .inherit(
-    colors: colors,
-    style: style,
-    typography: typography,
-    color: colors.secondary,
-    foregroundColor: colors.secondaryForeground,
-  ),
-  destructive: .inherit(
-    colors: colors,
-    style: style,
-    typography: typography,
-    color: colors.destructive,
-    foregroundColor: colors.destructiveForeground,
-  ),
-  outline: FButtonStyle(
-    decoration: FWidgetStateMap({
-      WidgetState.disabled: BoxDecoration(
-        border: .all(color: colors.disable(colors.border)),
-        borderRadius: style.borderRadius,
-      ),
-      WidgetState.hovered | WidgetState.pressed: BoxDecoration(
-        border: .all(color: colors.border),
-        borderRadius: style.borderRadius,
-        color: colors.secondary,
-      ),
-      WidgetState.any: BoxDecoration(
-        border: .all(color: colors.border),
-        borderRadius: style.borderRadius,
-      ),
-    }),
-    focusedOutlineStyle: style.focusedOutlineStyle,
-    contentStyle: .inherit(
+  FVariants(
+    FButtonSizeStyles.inherit(
       typography: typography,
-      enabled: colors.secondaryForeground,
-      disabled: colors.disable(colors.secondaryForeground),
-    ),
-    iconContentStyle: .inherit(
-      enabled: colors.secondaryForeground,
-      disabled: colors.disable(colors.secondaryForeground),
-    ),
-    tappableStyle: style.tappableStyle,
-  ),
-  ghost: FButtonStyle(
-    decoration: FWidgetStateMap({
-      WidgetState.disabled: BoxDecoration(borderRadius: style.borderRadius),
-      WidgetState.hovered | WidgetState.pressed: BoxDecoration(
-        borderRadius: style.borderRadius,
-        color: colors.secondary,
+      style: style,
+      decoration: .from(
+        BoxDecoration(borderRadius: style.borderRadius, color: colors.primary),
+        variants: {
+          [.hovered, .pressed]: .delta(color: colors.hover(colors.primary)),
+          [.disabled]: .delta(color: colors.disable(colors.primary)),
+        },
       ),
-      WidgetState.any: BoxDecoration(borderRadius: style.borderRadius),
-    }),
-    focusedOutlineStyle: style.focusedOutlineStyle,
-    contentStyle: .inherit(
-      typography: typography,
-      enabled: colors.secondaryForeground,
-      disabled: colors.disable(colors.secondaryForeground),
+      foregroundColor: colors.primaryForeground,
+      disabledForegroundColor: colors.disable(colors.primaryForeground),
     ),
-    iconContentStyle: .inherit(
-      enabled: colors.secondaryForeground,
-      disabled: colors.disable(colors.secondaryForeground),
-    ),
-    tappableStyle: style.tappableStyle,
+    variants: {
+      [.secondary]: FButtonSizeStyles.inherit(
+        typography: typography,
+        style: style,
+        decoration: .from(
+          BoxDecoration(borderRadius: style.borderRadius, color: colors.secondary),
+          variants: {
+            [.hovered, .pressed]: .delta(color: colors.hover(colors.secondary)),
+            [.disabled]: .delta(color: colors.disable(colors.secondary)),
+          },
+        ),
+        foregroundColor: colors.secondaryForeground,
+        disabledForegroundColor: colors.disable(colors.secondaryForeground),
+      ),
+      [.destructive]: FButtonSizeStyles.inherit(
+        typography: typography,
+        style: style,
+        decoration: .from(
+          BoxDecoration(borderRadius: style.borderRadius, color: colors.destructive),
+          variants: {
+            [.hovered, .pressed]: .delta(color: colors.hover(colors.destructive)),
+            [.disabled]: .delta(color: colors.disable(colors.destructive)),
+          },
+        ),
+        foregroundColor: colors.destructiveForeground,
+        disabledForegroundColor: colors.disable(colors.destructiveForeground),
+      ),
+      [.outline]: FButtonSizeStyles.inherit(
+        typography: typography,
+        style: style,
+        decoration: .from(
+          BoxDecoration(
+            border: .all(color: colors.border),
+            borderRadius: style.borderRadius,
+          ),
+          variants: {
+            [.disabled]: .delta(color: colors.disable(colors.border)),
+            [.hovered, .pressed]: .delta(color: colors.secondary),
+          },
+        ),
+        foregroundColor: colors.secondaryForeground,
+        disabledForegroundColor: colors.disable(colors.secondaryForeground),
+      ),
+      [.ghost]: FButtonSizeStyles.inherit(
+        typography: typography,
+        style: style,
+        decoration: .from(
+          BoxDecoration(borderRadius: style.borderRadius),
+          variants: {
+            [.disabled]: const .delta(),
+            [.hovered, .pressed]: .delta(color: colors.secondary),
+          },
+        ),
+        foregroundColor: colors.secondaryForeground,
+        disabledForegroundColor: colors.disable(colors.secondaryForeground),
+      ),
+    },
   ),
 );

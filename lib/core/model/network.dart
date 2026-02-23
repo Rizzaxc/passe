@@ -25,16 +25,16 @@ enum NetworkCategory {
     return context.tr('networkCategory.$name');
   }
 
-  String get displayName {
+  String get jsonValue {
     switch (this) {
       case NetworkCategory.highSchool:
-        return 'High School';
+        return 'high school';
       case NetworkCategory.giftedHighSchool:
-        return 'Gifted High School';
+        return 'gifted high school';
       case NetworkCategory.university:
-        return 'University';
+        return 'university';
       case NetworkCategory.company:
-        return 'Company';
+        return 'company';
     }
   }
 
@@ -45,9 +45,9 @@ enum NetworkCategory {
       case NetworkCategory.giftedHighSchool:
         return Colors.purple;
       case NetworkCategory.university:
-        return Colors.green;
+        return Colors.red;
       case NetworkCategory.company:
-        return Colors.orange;
+        return Colors.brown;
     }
   }
 

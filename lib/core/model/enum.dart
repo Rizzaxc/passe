@@ -1,4 +1,5 @@
 // follow database ID
+import 'package:diacritic/diacritic.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:health/health.dart';
@@ -115,6 +116,8 @@ enum StakeUnit {
 }
 
 enum City {
+  @JsonValue(0)
+  none('none', '', 0),
   @JsonValue(1)
   hochiminh('hcm', 'hochiminh', 1),
   @JsonValue(2)
@@ -132,6 +135,8 @@ enum City {
 
   factory City.fromShorthand(String shorthand) {
     switch (shorthand.toLowerCase()) {
+      case 'none':
+        return City.none;
       case 'hn':
         return City.hanoi;
       case 'hcm':
@@ -210,6 +215,8 @@ class VietnamLocationData {
   /// Get districts for a specific city
   List<District> getDistrictsByCity(City city) {
     switch (city) {
+      case City.none:
+        return [];
       case City.hochiminh:
         return _hcmcDistricts;
       case City.hanoi:
@@ -692,8 +699,10 @@ enum Industry {
   technology,
   transportation;
 
-  String getLocalizedName(BuildContext context) {
-    return context.tr('industry.$name');
+  String getLocalizedName(BuildContext context, {bool withoutDiacritics = false}) {
+    final localizedName = context.tr('industry.$name');
+    if (withoutDiacritics) return removeDiacritics(localizedName);
+    return localizedName;
   }
 
   static List<String> getAllLocalizedName(BuildContext context) {

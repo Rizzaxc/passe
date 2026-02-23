@@ -9,44 +9,44 @@ import 'package:forui/forui.dart';
 ///
 /// Example:
 /// ```dart
-/// FDualButton(
+/// PDualButton(
 ///   firstChild: const Text('Sign In'),
 ///   secondChild: const Text('Sign Up'),
 ///   onFirstPressed: onLogin,
 ///   onSecondPressed: onRegister,
-///   firstStyle: (styles) => styles.primary,
-///   secondStyle: (styles) => styles.outline,
+///   firstVariant: null, // primary (default)
+///   secondVariant: .destructive,
 ///   axis: Axis.horizontal,
 ///   flex: 60,
 /// )
 /// ```
-class FDualButton extends StatefulWidget {
+class PDualButton extends StatefulWidget {
   final Widget firstChild;
   final Widget secondChild;
   final VoidCallback? onFirstPressed;
   final VoidCallback? onSecondPressed;
-  final FButtonStyle Function(FButtonStyles styles)? firstStyle;
-  final FButtonStyle Function(FButtonStyles styles)? secondStyle;
+  final FButtonVariant? firstVariant;
+  final FButtonVariant? secondVariant;
   final Axis axis;
   final int flex;
 
-  const FDualButton({
+  const PDualButton({
     required this.firstChild,
     required this.secondChild,
     this.onFirstPressed,
     this.onSecondPressed,
-    this.firstStyle,
-    this.secondStyle,
+    this.firstVariant,
+    this.secondVariant,
     this.axis = Axis.horizontal,
     this.flex = 50,
     super.key,
   });
 
   @override
-  State<FDualButton> createState() => _FDualButtonState();
+  State<PDualButton> createState() => _PDualButtonState();
 }
 
-class _FDualButtonState extends State<FDualButton> {
+class _PDualButtonState extends State<PDualButton> {
   bool _isProcessing = false;
 
   void _handleFirstPressed() {
@@ -69,59 +69,47 @@ class _FDualButtonState extends State<FDualButton> {
     }
   }
 
-  FButtonStyle _modifyStyle(FButtonStyle Function(FButtonStyles)? styleBuilder, bool isFirst) {
-    final theme = FTheme.of(context);
-    final baseStyle = styleBuilder?.call(theme.buttonStyles) ?? theme.buttonStyles.primary;
-
-    final baseDecoration = baseStyle.decoration.resolve({});
-    final borderRadius = baseDecoration.borderRadius as BorderRadius?;
-
-    BorderRadius modifiedRadius;
+  FButtonStyleDelta _styleDelta(bool isFirst) {
+    BorderRadius radius;
     if (widget.axis == Axis.horizontal) {
       if (isFirst) {
-        modifiedRadius = (borderRadius ?? BorderRadius.circular(8)).copyWith(
-          topRight: Radius.zero,
-          bottomRight: Radius.zero,
+        radius = const BorderRadius.only(
+          topLeft: Radius.circular(12),
+          bottomLeft: Radius.circular(12),
         );
       } else {
-        modifiedRadius = (borderRadius ?? BorderRadius.circular(8)).copyWith(
-          topLeft: Radius.zero,
-          bottomLeft: Radius.zero,
+        radius = const BorderRadius.only(
+          topRight: Radius.circular(12),
+          bottomRight: Radius.circular(12),
         );
       }
     } else {
       if (isFirst) {
-        modifiedRadius = (borderRadius ?? BorderRadius.circular(8)).copyWith(
-          bottomLeft: Radius.zero,
-          bottomRight: Radius.zero,
+        radius = const BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
         );
       } else {
-        modifiedRadius = (borderRadius ?? BorderRadius.circular(8)).copyWith(
-          topLeft: Radius.zero,
-          topRight: Radius.zero,
+        radius = const BorderRadius.only(
+          bottomLeft: Radius.circular(12),
+          bottomRight: Radius.circular(12),
         );
       }
     }
 
-    return baseStyle.copyWith(
-      decoration: FWidgetStateMap({
-        WidgetState.any: baseDecoration.copyWith(
-          borderRadius: modifiedRadius,
-        ),
-      }),
+    return .delta(
+      decoration: .delta([.all(.delta(borderRadius: radius))]),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final firstStyle = _modifyStyle(widget.firstStyle, true);
-    final secondStyle = _modifyStyle(widget.secondStyle, false);
-
     final children = [
       Expanded(
         flex: widget.flex,
         child: FButton(
-          style: (_) => firstStyle,
+          variant: widget.firstVariant,
+          style: _styleDelta(true),
           onPress: _isProcessing ? null : _handleFirstPressed,
           child: widget.firstChild,
         ),
@@ -134,7 +122,8 @@ class _FDualButtonState extends State<FDualButton> {
       Expanded(
         flex: 100 - widget.flex,
         child: FButton(
-          style: (_) => secondStyle,
+          variant: widget.secondVariant,
+          style: _styleDelta(false),
           onPress: _isProcessing ? null : _handleSecondPressed,
           child: widget.secondChild,
         ),

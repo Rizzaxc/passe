@@ -2,6 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:diacritic/diacritic.dart';
+
 import '../../core/model/enum.dart';
 import 'profile_controller.dart';
 
@@ -23,8 +25,7 @@ class IndustrySelectionScreen extends ConsumerWidget {
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: FSelectTileGroup<Industry>(
-          label: Text('profile.industryLabel'.tr()),
-          description: Text('profile.industry_selection_limit'.tr(args: ['2'])),
+          description: Text('profile.industryFeatureExplanation'.tr()),
           control: FMultiValueControl.managed(
             initial: selectedIndustries.toSet(),
             onChange: (selected) {
@@ -39,8 +40,8 @@ class IndustrySelectionScreen extends ConsumerWidget {
           children:
               (Industry.values.toList()..sort(
                     (a, b) => a
-                        .getLocalizedName(context)
-                        .compareTo(b.getLocalizedName(context)),
+                        .getLocalizedName(context, withoutDiacritics: true)
+                        .compareTo(b.getLocalizedName(context, withoutDiacritics: true)),
                   ))
                   .map(
                     (industry) => FSelectTile.suffix(

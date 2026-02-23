@@ -53,7 +53,7 @@ class SportSelector extends ConsumerWidget {
                 actions: [
                   for (final sport in Sport.values.where((s) => s != Sport.others))
                     FButton(
-                      style: FButtonStyle.outline(),
+                      variant: .outline,
                       prefix: _getSportIcon(sport),
                       onPress: () {
                         ref.read(selectedSportStateProvider.notifier).change(sport);
@@ -104,12 +104,12 @@ class SportSelector extends ConsumerWidget {
         );
       },
       loading: () => FButton.icon(
-        style: FButtonStyle.ghost(),
+        variant: .ghost,
         onPress: null,
         child: const Icon(Icons.question_mark, size: 24),
       ),
       error: (err, stack) => FButton.icon(
-        style: FButtonStyle.ghost(),
+        variant: .ghost,
         onPress: null,
         child: const Icon(FIcons.triangleAlert),
       ),

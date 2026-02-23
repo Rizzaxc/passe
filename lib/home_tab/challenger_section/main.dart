@@ -15,8 +15,7 @@ class ChallengerSubtab extends ConsumerWidget {
         children: [
           FHeader.nested(
             titleAlignment: Alignment.centerLeft,
-            style: (style) =>
-                style.copyWith(padding: EdgeInsets.symmetric(vertical: 0)),
+            style: .delta(padding: .value(EdgeInsets.symmetric(vertical: 0))),
             title: Text(
               'home.challenger'.tr(),
               style: context.theme.typography.xl,

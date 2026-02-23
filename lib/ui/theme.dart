@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pubox/ui/button_styles.dart';
 
+import 'select_menu_tile_style.dart';
 import 'tabs_style.dart';
 
 // ignore_for_file: avoid_redundant_argument_values
@@ -32,6 +33,8 @@ FThemeData get pbThemeLight {
 
     error: Color(0xFFf95c16),
     errorForeground: Color(0xFFFAFAFA),
+    card: Color(0xFFFFFFFF),
+
     border: Color(0xFFDCDCD9),
   );
 
@@ -48,6 +51,7 @@ FThemeData get pbThemeLight {
       style: style,
     ),
     tabsStyle: tabsStyle(colors: colors, typography: typography, style: style),
+    selectMenuTileStyle: CustomFSelectMenuTileStyle.selectMenuTileStyle(colors: colors, typography: typography, style: style),
     extensions: [PuboxColors(green: pbGreen, blue: pbBlue)],
   );
 }
@@ -73,6 +77,7 @@ FThemeData get pbThemeDark {
     destructiveForeground: Color(0xFFFEF2F2),
     error: Color(0xFF7F1D1D),
     errorForeground: Color(0xFFFEF2F2),
+    card: Color(0xFF1C1917),
     border: Color(0xFF27272A),
   );
 

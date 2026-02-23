@@ -71,8 +71,8 @@
     "transportation": "Vận Tải"
   },
   "networkCategory": {
-    "highSchool": "Trường Trung Học",
-    "giftedHighSchool": "Trường Chuyên",
+    "highSchool": "THPT",
+    "giftedHighSchool": "THPT Chuyên",
     "university": "Đại Học",
     "company": "Công Ty"
   },
@@ -165,6 +165,8 @@
       "today": "Hôm nay",
       "tomorrow": "Ngày mai",
       "participants": "{count} người tham gia",
+      "selectDate": "Chọn ngày để xem lịch",
+      "stub": "Nội dung lịch trình sắp có",
       "empty": {
         "title": "Không có lịch hẹn",
         "message": "Các cuộc hẹn sắp tới sẽ hiển thị ở đây"
@@ -219,10 +221,10 @@
     "sportNotSelected": "Chọn Môn thể thao",
     "othersAlertDescription": "Bạn cần chọn một môn thể thao để xem các nội dung phù hợp. Bấm vào biểu tượng ở góc phải màn hình để điều chỉnh."
   },
-  "not_set": "Chưa Thiết Lập",
+  "notSet": "Chưa Thiết Lập",
   "done": "Xong",
   "error": "Lỗi",
-  "error_generic": "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+  "errorGeneric": "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
   "auth": {
     "welcome": "Welcome",
     "emailLabel": "Email",
@@ -279,20 +281,20 @@
     "commit": "Lưu thay đổi",
     "genderLabel": "Giới Tính",
     "ageGroupLabel": "Nhóm Tuổi",
+    "industryAndNetworkLabel": "Ngành Nghề & Mạng Lưới",
     "industryLabel": "Ngành Nghề",
-    "networkLabel": "Network",
-    "network_selection_title": "Chọn Network",
-    "selected_networks": "Network Đã Chọn",
-    "no_networks_found": "Không tìm thấy network nào theo từ khoá",
-    "industry_selection_title": "Chọn Ngành Nghề",
+    "networkLabel": "Mạng Lưới",
+    "networkSearchHint": "Tìm theo tên trường học/ tổ chức/ công ty",
+    "selectedNetworks": "Đã Chọn",
+    "noNetworksFound": "Không tìm thấy network nào theo từ khoá",
     "playtimeLabel": "Lịch Hằng Tuần",
-    "network_feature_explanation": "Bạn chưa chọn tổ chức nào. Chọn tối đa 2 cơ quan/ tổ chức/ trường học bạn đã hoặc đang là thành viên. Pubox sẽ kết nối bạn đến những người cùng network.",
-    "industry_feature_explanation": "Chọn tối đa 2 ngạch bạn đang làm việc. Pubox sẽ kết nối bạn đến những người cùng ngành nghề.",
-    "sport_feature_explanation": "Cập nhật trình độ để tìm đối thủ phù hợp và kết nối với những người có cùng đam mê thể thao.",
-    "profile_feature_explanation": "Điền profile để Pubox giúp bạn kết nối với người khác tốt hơn.",
-    "empty_network": "Chưa chọn network. Thêm trường học hoặc công ty để kết nối với người khác.",
-    "empty_industry": "Chưa chọn ngành nghề. Thêm ngành nghề để tìm kiếm các kết nối chuyên nghiệp.",
-    "empty_sport_profile": "Chưa thiết lập hồ sơ thể thao. Cập nhật trình độ để tìm đối thủ phù hợp.",
+    "networkFeatureExplanation": "Bạn chưa chọn tổ chức nào. Chọn tối đa 2 trường học/ tổ chức/ công ty bạn đã hoặc đang là thành viên. Pubox sẽ kết nối bạn đến những người cùng network.",
+    "industryFeatureExplanation": "Chọn tối đa 2 ngạch bạn đang làm việc. Pubox sẽ kết nối bạn đến những người cùng ngành nghề.",
+    "sportFeatureExplanation": "Cập nhật trình độ để tìm đối thủ phù hợp và kết nối với những người có cùng đam mê thể thao.",
+    "profileFeatureExplanation": "Điền profile để Pubox giúp bạn kết nối với người khác tốt hơn.",
+    "emptyNetwork": "Chưa chọn network. Thêm trường học hoặc công ty để kết nối với người khác.",
+    "emptyIndustry": "Chưa chọn ngành nghề. Thêm ngành nghề để tìm kiếm các kết nối chuyên nghiệp.",
+    "emptySportProfile": "Chưa thiết lập hồ sơ thể thao. Cập nhật trình độ để tìm đối thủ phù hợp.",
     "changeUsername": "Đổi Username",
     "newUsername": "Username Mới",
     "confirmUsername": "Xác nhận Username",
@@ -311,7 +313,8 @@
     "randomizeAvatar": "Ngẫu nhiên",
     "removeAvatar": "Gỡ bỏ",
     "uploadPhoto": "Tải ảnh lên",
-    "uploadFailed": "Tải ảnh thất bại"
+    "uploadFailed": "Tải ảnh thất bại",
+    "networkMaxReached": "Tối đa 2 tổ chức. Hãy xoá bớt 1 trước."
   },
   "health": {
     "title": "Health",

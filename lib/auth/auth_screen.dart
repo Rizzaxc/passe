@@ -135,7 +135,7 @@ class _AuthFormState extends ConsumerState<AuthForm> {
             },
           ),
           const SizedBox(height: 16),
-          FDualButton(
+          PDualButton(
             firstChild: Text(
               'auth.signIn'.tr(),
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -143,7 +143,7 @@ class _AuthFormState extends ConsumerState<AuthForm> {
             secondChild: Text('auth.signUp'.tr()),
             onFirstPressed: onLogin,
             onSecondPressed: onRegister,
-            secondStyle: (styles) => styles.destructive,
+            secondVariant: .destructive,
             flex: 60,
           ),
         ],
@@ -166,7 +166,7 @@ class SocialAuthSection extends ConsumerWidget {
         showFToast(
           context: context,
           title: Text(errorTitle),
-          description: Text('error_generic'.tr()),
+          description: Text('errorGeneric'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -181,12 +181,12 @@ class SocialAuthSection extends ConsumerWidget {
       required VoidCallback onTap,
       Color? iconColor,
     }) {
-      final buttonStyle = context.theme.buttonStyles.outline;
+      final buttonStyle = context.theme.buttonStyles.outline.base;
 
       return FTappable(
-        style: buttonStyle.tappableStyle.call,
-        builder: (context, states, child) => DecoratedBox(
-          decoration: buttonStyle.decoration.resolve(states),
+        style: buttonStyle.tappableStyle,
+        builder: (context, variants, child) => DecoratedBox(
+          decoration: buttonStyle.decoration.resolve(variants),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             child: Center(child: child),

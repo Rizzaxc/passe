@@ -51,7 +51,7 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
       showFToast(
         context: context,
         title: Text('error'.tr()),
-        description: Text('error_generic'.tr()),
+        description: Text('errorGeneric'.tr()),
         alignment: .bottomCenter,
       );
     } finally {
@@ -133,7 +133,6 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
               const SizedBox(height: 24),
               FButton(
                 onPress: _isLoading ? null : _submit,
-                style: FButtonStyle.primary(),
                 child: _isLoading
                     ? const SizedBox(
                         width: 16,

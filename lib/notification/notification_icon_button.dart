@@ -8,7 +8,7 @@ class NotificationIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FButton.icon(
-      style: FButtonStyle.ghost(),
+      variant: .ghost,
       child: const Icon(FIcons.bell),
       onPress: () => const NotificationRoute().push(context),
     );

@@ -21,8 +21,6 @@ import 'industry_selection_screen.dart';
 import 'network_selection_screen.dart';
 import 'playtime_selection_screen.dart';
 import 'profile_controller.dart';
-import 'network_empty_placeholder.dart';
-import 'industry_empty_placeholder.dart';
 import 'sport_profile/badminton.dart';
 import 'sport_profile/basketball.dart';
 import 'sport_profile/pickleball.dart';
@@ -85,12 +83,11 @@ class ProfileTab extends ConsumerWidget {
                       showFToast(
                         context: context,
                         title: Text('error'.tr()),
-                        description: Text('error_generic'.tr()),
+                        description: Text('errorGeneric'.tr()),
                         alignment: .bottomCenter,
                       );
                     }
                   },
-                  style: FButtonStyle.primary(),
                   child: Text('profile.commit'.tr()),
                 ),
               ],
@@ -148,7 +145,7 @@ class ProfileTab extends ConsumerWidget {
                   onPress: () => ref
                       .read(profileControllerProvider.notifier)
                       .removeAvatar(),
-                  style: FButtonStyle.ghost(),
+                  variant: .ghost,
                   child: const Icon(FIcons.trash),
                 )
               else
@@ -156,7 +153,7 @@ class ProfileTab extends ConsumerWidget {
                   onPress: () => ref
                       .read(profileControllerProvider.notifier)
                       .randomizeAvatar(),
-                  style: FButtonStyle.ghost(),
+                  variant: .ghost,
                   child: const Icon(FIcons.shuffle),
                 ),
               const SizedBox(width: 12),
@@ -173,7 +170,7 @@ class ProfileTab extends ConsumerWidget {
                     );
                   }
                 },
-                style: FButtonStyle.ghost(),
+                variant: .ghost,
                 child: const Icon(FIcons.camera),
               ),
             ],
@@ -191,7 +188,7 @@ class ProfileTab extends ConsumerWidget {
   ) {
     return FTileGroup(
       label: Text('profile.accountInfo'.tr()),
-      description: Text('profile.profile_feature_explanation'.tr()),
+      description: Text('profile.profileFeatureExplanation'.tr()),
       children: [
         FTile(
           onPress: () => Navigator.of(context).push(
@@ -214,12 +211,8 @@ class ProfileTab extends ConsumerWidget {
           details: Icon(Icons.password, color: context.theme.colors.primary),
         ),
         FTile(
-          style: (style) => style.copyWith(
-            decoration: FWidgetStateMap<BoxDecoration>({
-              WidgetState.any: BoxDecoration(
-                color: context.theme.colors.destructive,
-              ),
-            }),
+          style: .delta(
+            backgroundColor: .delta([.all(context.theme.colors.destructive)]),
           ),
           onPress: () {
             showFToast(
@@ -233,12 +226,9 @@ class ProfileTab extends ConsumerWidget {
               ref.read(authControllerProvider.notifier).signOut(),
           title: Text(
             'profile.logout'.tr(),
-            style: TextStyle(color: context.theme.colors.destructiveForeground),
+            style: TextStyle(color: context.theme.colors.destructive),
           ),
-          details: Icon(
-            FIcons.logOut,
-            color: context.theme.colors.destructiveForeground,
-          ),
+          details: Icon(FIcons.logOut, color: context.theme.colors.destructive),
         ),
       ],
     );
@@ -257,7 +247,7 @@ class ProfileTab extends ConsumerWidget {
 
     return FTileGroup(
       label: Text('profile.generalInfo'.tr()),
-      description: Text('profile.profile_feature_explanation'.tr()),
+      description: Text('profile.profileFeatureExplanation'.tr()),
       children: [
         FTile(
           suffix: details.gender != null
@@ -266,7 +256,7 @@ class ProfileTab extends ConsumerWidget {
 
           title: Text('profile.gender'.tr()),
           details: Text(
-            details.gender?.getLocalizedName(context) ?? 'not_set'.tr(),
+            details.gender?.getLocalizedName(context) ?? 'notSet'.tr(),
             style: TextStyle(
               color: (details.gender != null)
                   ? context.theme.colors.primary
@@ -287,7 +277,7 @@ class ProfileTab extends ConsumerWidget {
         FTile(
           title: Text('profile.ageGroup'.tr()),
           details: Text(
-            details.ageGroup?.getLocalizedName(context) ?? 'not_set'.tr(),
+            details.ageGroup?.getLocalizedName(context) ?? 'notSet'.tr(),
             style: TextStyle(
               color: (details.ageGroup != null)
                   ? context.theme.colors.primary
@@ -305,7 +295,7 @@ class ProfileTab extends ConsumerWidget {
           details: Text(
             details.location != null
                 ? _formatLocation(details.location!)
-                : 'not_set'.tr(),
+                : 'notSet'.tr(),
             style: TextStyle(
               color: (details.location != null)
                   ? context.theme.colors.primary
@@ -319,7 +309,7 @@ class ProfileTab extends ConsumerWidget {
           details: (details.playtime != null && details.playtime!.isNotEmpty)
               ? const Icon(FIcons.chevronRight)
               : Text(
-                  'not_set'.tr(),
+                  'notSet'.tr(),
                   style: TextStyle(color: context.theme.colors.mutedForeground),
                 ),
           onPress: () => Navigator.of(context).push(
@@ -337,47 +327,62 @@ class ProfileTab extends ConsumerWidget {
     WidgetRef ref,
     ProfileState profileState,
   ) {
+    final industryRowTitle = profileState.industries.isEmpty
+        ? Text('profile.industryLabel'.tr())
+        : Text(
+            profileState.industries
+                .map((e) => e.getLocalizedName(context))
+                .join(', '),
+            maxLines: 2,
+          );
+
+    final networkRowTitle = profileState.networks.isEmpty
+        ? Text('profile.networkLabel'.tr())
+        : Text(
+      profileState.networks
+          .map((e) => e.getLocalizedName(context))
+          .join(', '),
+      maxLines: 2,
+    );
     return Column(
       children: [
-        (profileState.networks.isEmpty)
-            ? NetworkEmptyPlaceholder()
-            : FTileGroup(
-                label: Text('profile.networkLabel'.tr()),
-                description: Text('profile.network_feature_explanation'.tr()),
-                children: [
-                  FTile(
-                    title: Text('profile.networkLabel'.tr()),
-                    details: Text(
-                      profileState.networks.map((e) => e.name).join(', '),
-                    ),
-                    onPress: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const NetworkSelectionScreen(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-        const SizedBox(height: 24),
         FTileGroup(
-          label: Text('profile.industryLabel'.tr()),
-          description: Text('profile.industry_feature_explanation'.tr()),
+          label: Text('profile.industryAndNetworkLabel'.tr()),
           children: [
-            if (profileState.industries.isEmpty)
-              FTile.raw(child: IndustryEmptyPlaceholder())
-            else
-              FTile.raw(
-                child: Text(
-                  profileState.industries
-                      .map((e) => e.getLocalizedName(context))
-                      .join(', '),
-                ),
-                onPress: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const IndustrySelectionScreen(),
-                  ),
+            FTile(
+              prefix: Icon(FIcons.briefcaseBusiness),
+              title: industryRowTitle,
+              suffix: profileState.industries.isEmpty
+                  ? Text(
+                      'notSet'.tr(),
+                      style: TextStyle(
+                        color: context.theme.colors.mutedForeground,
+                      ),
+                    )
+                  : null,
+              onPress: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const IndustrySelectionScreen(),
                 ),
               ),
+            ),
+            FTile(
+              prefix: Icon(FIcons.network),
+              title: networkRowTitle,
+              suffix: profileState.networks.isEmpty
+                  ? Text(
+                'notSet'.tr(),
+                style: TextStyle(
+                  color: context.theme.colors.mutedForeground,
+                ),
+              )
+                  : null,
+              onPress: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const NetworkSelectionScreen(),
+                ),
+              ),
+            ),
           ],
         ),
       ],

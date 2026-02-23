@@ -18,8 +18,7 @@ class TeammateSubtab extends ConsumerWidget {
           FHeader.nested(
             titleAlignment: Alignment.centerLeft,
 
-            style: (style) =>
-                style.copyWith(padding: EdgeInsets.symmetric(vertical: 0)),
+            style: .delta(padding: .value(EdgeInsets.zero)),
             title: Text(
               'home.teammate'.tr(),
               style: context.theme.typography.xl,

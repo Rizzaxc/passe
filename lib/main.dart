@@ -100,9 +100,12 @@ class Pubox extends HookConsumerWidget {
     return MaterialApp.router(
       title: 'Pubox',
       restorationScopeId: 'app',
-      builder: (_, child) => FAnimatedTheme(
+      builder: (_, child) => FTheme(
         data: ui.pbThemeLight,
-        child: FToaster(child: child!),
+        child: DefaultTextStyle(
+          style: ui.pbThemeLight.typography.base,
+          child: FToaster(child: child!),
+        ),
       ),
       theme: ui.pbThemeLight.toApproximateMaterialTheme(),
       routerConfig: router,

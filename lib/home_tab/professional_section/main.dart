@@ -15,8 +15,7 @@ class ProfessionalSubtab extends ConsumerWidget {
         children: [
           FHeader.nested(
             titleAlignment: Alignment.centerLeft,
-            style: (style) =>
-                style.copyWith(padding: EdgeInsets.symmetric(vertical: 0)),
+            style: .delta(padding: .value(EdgeInsets.zero)),
             title: Text(
               'home.professional'.tr(),
               style: context.theme.typography.xl,

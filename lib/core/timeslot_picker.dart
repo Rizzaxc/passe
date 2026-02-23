@@ -20,6 +20,7 @@ Future<Timeslot?> showTimeslotPicker({
     builder: (context) => Container(
       decoration: BoxDecoration(
         color: context.theme.colors.background,
+        borderRadius: BorderRadius.circular(24),
         border: Border.symmetric(
           horizontal: BorderSide(color: context.theme.colors.border),
         ),
@@ -40,7 +41,6 @@ Future<Timeslot?> showTimeslotPicker({
             ),
             const SizedBox(height: 16),
             FButton(
-              style: FButtonStyle.primary(),
               onPress: () => Navigator.of(context).pop(selectedTimeslot),
               // child: Text('OK'),
               child: const Icon(FIcons.check),
