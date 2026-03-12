@@ -29,4 +29,4 @@ const _$NetworkCategoryEnumMap = {
   NetworkCategory.company: 'company',
 };
 
-const _$CityEnumMap = {City.hochiminh: 1, City.hanoi: 2};
+const _$CityEnumMap = {City.none: 0, City.hochiminh: 1, City.hanoi: 2};

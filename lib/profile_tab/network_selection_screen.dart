@@ -102,7 +102,7 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                               if (!success && context.mounted) {
                                 showFToast(
                                   context: context,
-                                  
+
                                   title: Text('profile.networkMaxReached'.tr()),
                                   alignment: .bottomCenter,
                                 );
@@ -125,8 +125,8 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                       Expanded(
                         child: Text(
                           'profile.selectedNetworks'.tr(),
-                          style: context.theme.typography.xs.copyWith(
-                            color: context.theme.colors.mutedForeground,
+                          style: context.theme.typography.base.copyWith(
+                            fontWeight: .bold
                           ),
                         ),
                       ),

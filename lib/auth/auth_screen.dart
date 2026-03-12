@@ -56,7 +56,7 @@ class _AuthFormState extends ConsumerState<AuthForm> {
             .signInWithPassword(email: email, password: pass);
       } catch (e) {
         if (!context.mounted) return;
-        String message = 'error_generic';
+        String message = 'errorGeneric';
 
         if (e is AuthException && e.statusCode == '400') {
           message = 'auth.credentialsInvalid';
@@ -81,7 +81,7 @@ class _AuthFormState extends ConsumerState<AuthForm> {
             .signUpWithPassword(email: email, password: pass);
       } catch (e) {
         if (!context.mounted) return;
-        String message = 'error_generic';
+        String message = 'errorGeneric';
         if (e is AuthException && e.statusCode == '422') {
           message = 'auth.userAlreadyRegistered';
         }

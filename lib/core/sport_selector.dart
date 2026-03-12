@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'icon/main.dart';
 import 'model/enum.dart';
 import 'state/selected_sport_state.dart';
 
@@ -12,22 +11,6 @@ enum Notification { all, direct, nothing }
 class SportSelector extends ConsumerWidget {
   const SportSelector({super.key});
 
-  static Widget _getSportIcon(Sport sport, {double size = 12}) {
-    switch (sport) {
-      case Sport.soccer:
-        return SportIcons.soccer(size: size);
-      case Sport.basketball:
-        return SportIcons.basketball(size: size);
-      case Sport.badminton:
-        return SportIcons.badminton(size: size);
-      case Sport.tennis:
-        return SportIcons.tennis(size: size);
-      case Sport.pickleball:
-        return SportIcons.pickleball(size: size);
-      case Sport.others:
-        return const Icon(Icons.question_mark, size: 24);
-    }
-  }
 
 
   @override
@@ -54,7 +37,7 @@ class SportSelector extends ConsumerWidget {
                   for (final sport in Sport.values.where((s) => s != Sport.others))
                     FButton(
                       variant: .outline,
-                      prefix: _getSportIcon(sport),
+                      prefix: sport.getIcon(),
                       onPress: () {
                         ref.read(selectedSportStateProvider.notifier).change(sport);
                         Navigator.of(dialogContext).pop();
@@ -82,7 +65,7 @@ class SportSelector extends ConsumerWidget {
                   .map((sport) {
                 final isSelected = sport == selectedSport;
                 return FItem(
-                  prefix: _getSportIcon(sport),
+                  prefix: sport.getIcon(),
                   title: Text(sport.getLocalizedName(context)),
                   details: isSelected ? const Icon(FIcons.check) : null,
                   selected: isSelected,
@@ -97,7 +80,7 @@ class SportSelector extends ConsumerWidget {
           builder: (context, controller, child) {
             popoverController = controller;
             return FHeaderAction(
-              icon: _getSportIcon(selectedSport),
+              icon: selectedSport.getIcon(),
               onPress: controller.toggle,
             );
           },

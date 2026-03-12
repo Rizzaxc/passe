@@ -459,15 +459,6 @@ class ProfileController extends _$ProfileController {
     }
   }
 
-  void updateSportProfile(String sportId, SportProfile sportProfile) {
-    final updatedSports = Map<String, SportProfile>.from(state.details.sport!);
-    updatedSports[sportId] = sportProfile;
-
-    state = state.copyWith(
-      details: state.details.copyWith(sport: updatedSports),
-    );
-  }
-
   void resetPlaytime() {
     final user = ref.read(authControllerProvider).value;
     final originalPlaytime = user?.details?.playtime;

@@ -200,11 +200,62 @@
     "specificLocation": "Specific Location",
     "specificLocationHint": "Enter a specific location",
     "playtime": "Playtime",
+    "playtimeShort": "Playtime",
     "dayOfWeek": "Day of Week",
     "timeSlot": "Time Slot",
     "setTimeslot": "Set Timeslot",
     "maxParticipants": "Maximum Participants",
     "participantCount": "{count} participants"
+  },
+  "soccer": {
+    "position": {
+      "label": "Position",
+      "outfield": "Outfield",
+      "keeper": "Goalkeeper"
+    },
+    "pitch": {
+      "label": "Pitch Format",
+      "futsal": "Futsal",
+      "5v5": "5-a-side",
+      "7v7": "7-a-side"
+    }
+  },
+  "racketSport": {
+    "dominantHand": {
+      "label": "Dominant Hand",
+      "left": "Left",
+      "right": "Right"
+    },
+    "discipline": {
+      "label": "Discipline",
+      "singles": "Singles",
+      "doubles": "Doubles"
+    }
+  },
+
+  "basketball": {
+    "position": {
+      "label": "Position",
+      "guard": "Guard",
+      "forward": "Forward",
+      "center": "Center"
+    },
+    "pitch": {
+      "label": "Court Type",
+      "indoor": "Indoor",
+      "outdoor": "Outdoor"
+    }
+  },
+  "elo": {
+    "label": "Elo"
+  },
+  "eloSeed": {
+    "label": "Skill Level",
+    "description": "Used to seed your initial matchmaking. Play with others to update your Elo.",
+    "beginner": "Beginner",
+    "casual": "Casual",
+    "tryhard": "Tryhard",
+    "lockedHint": "Elo seed is locked after first commit"
   },
   "sport": {
     "others": "Others",
@@ -269,6 +320,9 @@
     "gender": "Gender",
     "ageGroup": "Age Group",
     "location": "Location",
+    "locationCity": "City",
+    "locationDistrict": "District",
+    "locationDistrictHint": "Pick up to 3 districts",
     "playtime": "Playtime",
     "sportProfile": "{} Profile",
     "noSportProfile": "No sport information provided",
@@ -278,7 +332,6 @@
     "industryLabel": "Industry",
     "networkLabel": "Network",
     "industryAndNetworkLabel": "Industry & Network",
-    "playtimeLabel": "Playtime",
     "networkSelectionTitle": "Select Networks",
     "networkSearchHint": "Search by name for schools/ universities/ companies",
     "selectedNetworks": "Selected Networks",

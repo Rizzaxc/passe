@@ -29,6 +29,58 @@ class FilterWidget extends ConsumerWidget {
   }
 }
 
+class _DistrictSelect extends StatelessWidget {
+  final City city;
+  final Set<District> selected;
+  final void Function(Set<District>) onChanged;
+
+  const _DistrictSelect({
+    required this.city,
+    required this.selected,
+    required this.onChanged,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final allDistricts = VietnamLocationData.instance.getDistrictsByCity(city);
+    final groups = <VietnamDistrictType, List<District>>{};
+    for (final d in allDistricts) {
+      groups.putIfAbsent(d.type, () => []).add(d);
+    }
+
+    return FMultiSelect<District>.rich(
+      label: Text(context.tr('homeTab.filter.district')),
+      hint: Text(context.tr('homeTab.filter.any')),
+      format: (d) => Text(d.getLocalizedFullName(context)),
+      keepHint: false,
+      control: FMultiValueControl.managed(
+        initial: selected,
+        onChange: onChanged,
+      ),
+      children: [
+        for (final entry in groups.entries)
+          FSelectSection<District>.rich(
+            label: Text(context.tr('district.${entry.key.name}')),
+            children: (entry.value.toList()
+                  ..sort((a, b) {
+                    final aScore = selected.contains(a) ? 0 : 1;
+                    final bScore = selected.contains(b) ? 0 : 1;
+                    return aScore.compareTo(bScore);
+                  }))
+                .map(
+                  (d) => FSelectItem<District>(
+                    title: Text(d.getLocalizedFullName(context)),
+                    value: d,
+                  ),
+                )
+                .toList(),
+          ),
+      ],
+    );
+  }
+}
+
 class FilterSheet extends ConsumerStatefulWidget {
   const FilterSheet({super.key});
 
@@ -89,11 +141,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
               Column(
                 spacing: 8,
                 children: [
-                  FSelectMenuTile<City>.fromMap(
-                    {
-                      for (var city in City.values)
-                        city.getLocalizedName(context): city,
-                    },
+                  FSelect<City>.rich(
                     label: Row(
                       spacing: 2,
                       crossAxisAlignment: .end,
@@ -102,57 +150,31 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                         Text(context.tr('homeTab.filter.location')),
                       ],
                     ),
-                    title: Text(context.tr('homeTab.filter.city')),
-                    selectControl: FMultiValueControl.lifted(
-                      value: {filter.city},
+                    hint: context.tr('homeTab.filter.city'),
+                    format: (city) => city.getLocalizedName(context),
+                    autoHide: true,
+                    control: FSelectControl.lifted(
+                      value: filter.city,
                       onChange: (city) {
-                        if (city.isEmpty) return;
-                        notifier.setCity(city.last);
+                        if (city != null) notifier.setCity(city);
                       },
                     ),
-                    detailsBuilder: (context, city, _) =>
-                        Text(city.first.getLocalizedName(context)),
+                    children: [
+                      FSelectItem<City>(
+                        title: Text(City.hochiminh.getLocalizedName(context)),
+                        value: City.hochiminh,
+                      ),
+                      FSelectItem<City>(
+                        title: Text(City.hanoi.getLocalizedName(context)),
+                        value: City.hanoi,
+                      ),
+                    ],
                   ),
-                  FSelectMenuTile<District>.fromMap(
-                    {
-                      ...{
-                        for (var d
-                            in VietnamLocationData.instance.getDistrictsByCity(
-                              filter.city,
-                            ))
-                          if (filter.districts.contains(d))
-                            d.getLocalizedFullName(context): d,
-                      },
-                      ...{
-                        for (var d
-                            in VietnamLocationData.instance.getDistrictsByCity(
-                              filter.city,
-                            ))
-                          if (!filter.districts.contains(d))
-                            d.getLocalizedFullName(context): d,
-                      },
-                    },
-                    style: .delta(tileStyle: .delta(backgroundColor: .delta([.all(context.theme.colors.background)]))),
-                    maxHeight: 200,
-                    label: null,
-                    title: Text(context.tr('homeTab.filter.district')),
-                    selectControl: FMultiValueControl.lifted(
-                      value: filter.districts,
-                      onChange: (districts) => notifier.setDistricts(districts),
-                    ),
-                    detailsBuilder: (context, districts, _) {
-                      if (districts.isEmpty) {
-                        return Text(context.tr('homeTab.filter.any'));
-                      }
-                      if (districts.length == 1) {
-                        return Text(
-                          districts.first.getLocalizedFullName(context),
-                        );
-                      }
-                      return Text(
-                        '${districts.last.getLocalizedFullName(context)}++',
-                      );
-                    },
+                  _DistrictSelect(
+                    key: ValueKey(filter.city),
+                    city: filter.city,
+                    selected: filter.districts,
+                    onChanged: (districts) => notifier.setDistricts(districts),
                   ),
                 ],
               ),
@@ -161,117 +183,184 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
               Column(
                 spacing: 8,
                 children: [
-                  Row(
-                    spacing: 2,
-                    crossAxisAlignment: .end,
-                    children: [
-                      const Icon(FIcons.calendarDays),
-                      Text(
-                        context.tr('homeTab.filter.schedule'),
-                        style: context.theme.typography.base.copyWith(
-                          fontWeight: FontWeight.bold,
+                  Builder(builder: (context) {
+                    final fieldStyle =
+                        context.theme.multiSelectStyle.fieldStyle;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: fieldStyle.labelPadding,
+                          child: DefaultTextStyle.merge(
+                            style: fieldStyle.labelTextStyle.resolve({}),
+                            child: Row(
+                              spacing: 2,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                const Icon(Icons.calendar_month),
+                                Text(context.tr('homeTab.filter.schedule')),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: 8,
-                    children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final timeslot in filter.schedule)
-                            GestureDetector(
-                              onTap: () {
-                                final updated = [...filter.schedule];
-                                updated.remove(timeslot);
-                                notifier.setSchedule(updated);
-                              },
-                              child: FBadge(
-                                variant: .outline,
-                                child: Row(
-                                  crossAxisAlignment: .center,
-                                  spacing: 4,
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: context.theme.colors.card,
+                            border: Border.all(
+                              color: context.theme.colors.border,
+                              width: context.theme.style.borderWidth,
+                            ),
+                            borderRadius: context.theme.style.borderRadius,
+                          ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: Padding(
+                              padding: const EdgeInsetsDirectional.fromSTEB(
+                                  10, 0, 8, 0),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 6),
+                                child: Wrap(
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  spacing: fieldStyle.spacing,
+                                  runSpacing: fieldStyle.runSpacing,
                                   children: [
-                                    Text(
-                                      '${timeslot.dayChunk.getShortName(context)} ${timeslot.dayOfWeek.getShortName(context)}',
-                                    ),
-                                    Icon(
-                                      FIcons.x,
-                                      size: 12,
-                                      color:
-                                          context.theme.colors.destructive,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      Row(
-                        spacing: 8,
-                        children: [
-                          Expanded(
-                            child: FSelectMenuTile<DayChunk>.fromMap(
-                              {
-                                for (var chunk in DayChunk.values)
-                                  chunk.getFullName(context): chunk,
-                              },
-                              title: Text(
-                                _pendingDayChunk.getFullName(context),
-                              ),
-                              selectControl: FMultiValueControl.lifted(
-                                value: {_pendingDayChunk},
-                                onChange: (chunks) {
-                                  if (chunks.isEmpty) return;
-                                  setState(
-                                    () => _pendingDayChunk = chunks.last,
-                                  );
-                                },
+                                    if (filter.schedule.isEmpty)
+                                      Padding(
+                                        padding: const EdgeInsetsDirectional
+                                            .fromSTEB(4, 4, 0, 4),
+                                        child: Text(
+                                          context.tr('homeTab.filter.any'),
+                                          style: context.theme.typography.sm
+                                              .copyWith(
+                                            color: context
+                                                .theme.colors.mutedForeground,
+                                          ),
+                                        ),
+                                      ),
+                                      for (final timeslot in filter.schedule)
+                                        GestureDetector(
+                                          onTap: () {
+                                            final updated = [
+                                              ...filter.schedule
+                                            ];
+                                            updated.remove(timeslot);
+                                            notifier.setSchedule(updated);
+                                          },
+                                          child: DecoratedBox(
+                                            decoration: BoxDecoration(
+                                              borderRadius: context
+                                                  .theme.style.borderRadius,
+                                              color: context
+                                                  .theme.colors.secondary,
+                                            ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 4,
+                                                      horizontal: 8),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                spacing: 4,
+                                                children: [
+                                                  Text(
+                                                    '${timeslot.dayChunk.getShortName(context)} ${timeslot.dayOfWeek.getShortName(context)}',
+                                                    style: context
+                                                        .theme.typography.sm
+                                                        .copyWith(
+                                                      color: context.theme
+                                                          .colors
+                                                          .secondaryForeground,
+                                                    ),
+                                                  ),
+                                                  IconTheme(
+                                                    data: IconThemeData(
+                                                      color: context.theme
+                                                          .colors.mutedForeground,
+                                                      size: 15,
+                                                    ),
+                                                    child:
+                                                        const Icon(FIcons.x),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                               ),
                             ),
                           ),
-                          Expanded(
-                            child: FSelectMenuTile<DayOfWeek>.fromMap(
-                              {
-                                for (var day in DayOfWeek.values)
-                                  day.getFullName(context): day,
-                              },
-                              maxHeight: 200,
-                              title: Text(
-                                _pendingDayOfWeek.getFullName(context),
-                              ),
-                              selectControl: FMultiValueControl.lifted(
-                                value: {_pendingDayOfWeek},
-                                onChange: (days) {
-                                  if (days.isEmpty) return;
-                                  setState(() => _pendingDayOfWeek = days.last);
-                                },
-                              ),
-                            ),
-                          ),
-                          FButton.icon(
-                            variant: .ghost,
-                            onPress: () {
-                              final timeslot = Timeslot(
-                                _pendingDayOfWeek,
-                                _pendingDayChunk,
-                              );
-                              final updated = [...filter.schedule];
-                              if (!updated.contains(timeslot)) {
-                                updated.add(timeslot);
-                                notifier.setSchedule(updated);
+                        ),
+                      ],
+                    );
+                  }),
+                  Row(
+                    spacing: 8,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: FSelect<DayChunk>.rich(
+                          hint: _pendingDayChunk.getFullName(context),
+                          format: (chunk) => chunk.getFullName(context),
+                          autoHide: true,
+                          control: FSelectControl.lifted(
+                            value: _pendingDayChunk,
+                            onChange: (chunk) {
+                              if (chunk != null) {
+                                setState(() => _pendingDayChunk = chunk);
                               }
                             },
-                            child: const Icon(FIcons.plus),
                           ),
-                        ],
+                          children: [
+                            for (final chunk in DayChunk.values)
+                              FSelectItem<DayChunk>(
+                                title: Text(chunk.getFullName(context)),
+                                value: chunk,
+                              ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: FSelect<DayOfWeek>.rich(
+                          hint: _pendingDayOfWeek.getFullName(context),
+                          format: (day) => day.getFullName(context),
+                          autoHide: true,
+                          control: FSelectControl.lifted(
+                            value: _pendingDayOfWeek,
+                            onChange: (day) {
+                              if (day != null) {
+                                setState(() => _pendingDayOfWeek = day);
+                              }
+                            },
+                          ),
+                          children: [
+                            for (final day in DayOfWeek.values)
+                              FSelectItem<DayOfWeek>(
+                                title: Text(day.getFullName(context)),
+                                value: day,
+                              ),
+                          ],
+                        ),
+                      ),
+                      FButton.icon(
+                        variant: .ghost,
+                        onPress: () {
+                          final timeslot = Timeslot(
+                            _pendingDayOfWeek,
+                            _pendingDayChunk,
+                          );
+                          final updated = [...filter.schedule];
+                          if (!updated.contains(timeslot)) {
+                            updated.add(timeslot);
+                            notifier.setSchedule(updated);
+                          }
+                        },
+                        child: const Icon(FIcons.plus),
                       ),
                     ],
                   ),
-
                 ],
               ),
               FButton(

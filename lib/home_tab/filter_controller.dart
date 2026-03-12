@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../auth/auth_controller.dart';
 import '../core/model/enum.dart';
 import '../core/model/timeslot.dart';
+import '../core/model/user_location.dart';
 
 part 'filter_controller.g.dart';
 
@@ -39,7 +40,19 @@ class FilterState extends _$FilterState {
   FilterData build() {
     final user = ref.read(authControllerProvider).value;
     final playtime = user?.details?.playtime ?? [];
-    return FilterData(city: City.hochiminh, schedule: List.of(playtime));
+    final location = user?.details?.location;
+
+    final city = (location?.city != null && location!.city != City.none)
+        ? location.city!
+        : City.hochiminh;
+
+    final districts = location?.districts
+            .map((id) => VietnamLocationData.instance.findDistrictById(id))
+            .whereType<District>()
+            .toSet() ??
+        {};
+
+    return FilterData(city: city, districts: districts, schedule: List.of(playtime));
   }
 
   void setFilter(String value) {

@@ -8,7 +8,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../auth/auth_controller.dart';
 import '../core/model/enum.dart';
 import '../core/model/user_details.dart';
-import '../core/model/user_location.dart';
 import '../core/sport_selector.dart';
 import '../core/state/selected_sport_state.dart';
 import '../notification/notification_icon_button.dart';
@@ -19,13 +18,11 @@ import 'change_username_screen.dart';
 import 'guest_profile_view.dart';
 import 'industry_selection_screen.dart';
 import 'network_selection_screen.dart';
+import 'location_selection_screen.dart';
 import 'playtime_selection_screen.dart';
 import 'profile_controller.dart';
-import 'sport_profile/badminton.dart';
-import 'sport_profile/basketball.dart';
-import 'sport_profile/pickleball.dart';
-import 'sport_profile/soccer.dart';
-import 'sport_profile/tennis.dart';
+import 'sport_profile/sport_profile_controller.dart';
+import 'sport_profile/sport_profile_screen.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -68,16 +65,44 @@ class ProfileTab extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 // Section 4: Sport-Specific Info
-                _buildSportInfoSection(context, ref, profileState.details),
+                _buildSportInfoSection(context, ref),
                 const SizedBox(height: 24),
 
                 // Commit Button
                 FButton(
                   onPress: () async {
                     try {
-                      await ref
-                          .read(profileControllerProvider.notifier)
-                          .commit();
+                      final sport = ref
+                          .read(selectedSportStateProvider)
+                          .asData
+                          ?.value;
+                      await Future.wait([
+                        ref
+                            .read(profileControllerProvider.notifier)
+                            .commit(),
+                        if (sport != null && sport != Sport.others)
+                          switch (sport) {
+                            Sport.soccer => ref
+                                .read(soccerProfileControllerProvider.notifier)
+                                .commit(),
+                            Sport.basketball => ref
+                                .read(basketballProfileControllerProvider
+                                    .notifier)
+                                .commit(),
+                            Sport.badminton => ref
+                                .read(
+                                    badmintonProfileControllerProvider.notifier)
+                                .commit(),
+                            Sport.tennis => ref
+                                .read(tennisProfileControllerProvider.notifier)
+                                .commit(),
+                            Sport.pickleball => ref
+                                .read(pickleballProfileControllerProvider
+                                    .notifier)
+                                .commit(),
+                            Sport.others => Future.value(),
+                          },
+                      ]);
                     } catch (e) {
                       if (!context.mounted) return;
                       showFToast(
@@ -292,17 +317,19 @@ class ProfileTab extends ConsumerWidget {
         ),
         FTile(
           title: Text('profile.location'.tr()),
-          details: Text(
-            details.location != null
-                ? _formatLocation(details.location!)
-                : 'notSet'.tr(),
-            style: TextStyle(
-              color: (details.location != null)
-                  ? context.theme.colors.primary
-                  : context.theme.colors.mutedForeground,
+          details: _isLocationSet(details)
+              ? const Icon(FIcons.chevronRight)
+              : Text(
+                  'notSet'.tr(),
+                  style: TextStyle(
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ),
+          onPress: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const LocationSelectionScreen(),
             ),
           ),
-          onPress: () {},
         ),
         FTile(
           title: Text('profile.playtime'.tr()),
@@ -389,43 +416,29 @@ class ProfileTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildSportInfoSection(
-    BuildContext context,
-    WidgetRef ref,
-    UserDetails details,
-  ) {
-    final selectedSportAsync = ref.watch(selectedSportStateProvider);
+  Widget _buildSportInfoSection(BuildContext context, WidgetRef ref) {
+    final sportAsync = ref.watch(selectedSportStateProvider);
+    final sport = sportAsync.maybeWhen(data: (s) => s, orElse: () => Sport.others);
+    final sportName = sport.getLocalizedName(context);
 
-    return selectedSportAsync.when(
-      data: (sport) {
-        return switch (sport) {
-          Sport.soccer => SoccerProfile(details: details),
-          Sport.basketball => BasketballProfile(details: details),
-          Sport.badminton => BadmintonProfile(details: details),
-          Sport.tennis => TennisProfile(details: details),
-          Sport.pickleball => PickleballProfile(details: details),
-          Sport.others => const SizedBox.shrink(),
-        };
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(child: Text('Error: $error')),
+    return FTileGroup(
+      children: [
+        FTile(
+          prefix: sport.getIcon(size: 8),
+          title: Text('profile.sportProfile'.tr(args: [sportName])),
+          suffix: const Icon(FIcons.chevronRight),
+          onPress: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const SportProfileScreen(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  String _formatLocation(UserLocation location) {
-    if (location.city == null) return 'N/A';
-
-    try {
-      final city = location.city!;
-      final districts = location.districts;
-
-      if (districts.isNotEmpty) {
-        return '${city.name} - ${districts.join(", ")}';
-      }
-
-      return city.name;
-    } catch (e) {
-      return 'N/A';
-    }
+  bool _isLocationSet(UserDetails details) {
+    final city = details.location?.city;
+    return city != null && city != City.none;
   }
 }

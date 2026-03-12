@@ -85,7 +85,7 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
                 control: FTextFieldControl.managed(
                   controller: _usernameController,
                 ),
-                suffixBuilder: (context, _, __) => Padding(
+                suffixBuilder: (context, _, _) => Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Text(

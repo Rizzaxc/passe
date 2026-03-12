@@ -17,7 +17,7 @@ class PlaytimeSelectionScreen extends ConsumerWidget {
 
     return FScaffold(
       header: FHeader(
-        title: Text('profile.playtime'.tr()),
+        title: Text('profile.playtimeShort'.tr()),
         suffixes: [
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],

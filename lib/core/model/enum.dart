@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:health/health.dart';
 import 'package:json_annotation/json_annotation.dart';
 
+import '../icon/main.dart';
+
 enum Sport {
   others(null),
   soccer(HealthWorkoutActivityType.SOCCER),
@@ -20,6 +22,15 @@ enum Sport {
   String getLocalizedName(BuildContext context) {
     return context.tr('sport.$name');
   }
+
+  Widget getIcon({double size = 12}) => switch (this) {
+        Sport.soccer => SportIcons.soccer(size: size),
+        Sport.basketball => SportIcons.basketball(size: size),
+        Sport.badminton => SportIcons.badminton(size: size),
+        Sport.tennis => SportIcons.tennis(size: size),
+        Sport.pickleball => SportIcons.pickleball(size: size),
+        Sport.others => Icon(Icons.question_mark, size: size),
+      };
 
   static List<String> getAllLocalizedNames(BuildContext context) {
     return Sport.values.map((e) => e.getLocalizedName(context)).toList();
@@ -675,6 +686,96 @@ enum Gender {
   static List<String> getAllLocalizedName(BuildContext context) {
     return Gender.values.map((each) => each.getLocalizedName(context)).toList();
   }
+}
+
+@JsonEnum()
+enum SoccerPosition {
+  @JsonValue('outfield')
+  outfield('soccer.position.outfield'),
+  @JsonValue('keeper')
+  keeper('soccer.position.keeper');
+
+  final String intlKey;
+  const SoccerPosition(this.intlKey);
+  String getLocalizedName(BuildContext context) => context.tr(intlKey);
+}
+
+@JsonEnum()
+enum SoccerPitch {
+  @JsonValue('futsal')
+  futsal('soccer.pitch.futsal'),
+  @JsonValue('5v5')
+  fiveASide('soccer.pitch.5v5'),
+  @JsonValue('7v7')
+  sevenASide('soccer.pitch.7v7');
+
+  final String intlKey;
+  const SoccerPitch(this.intlKey);
+  String getLocalizedName(BuildContext context) => context.tr(intlKey);
+}
+
+@JsonEnum()
+enum DominantHand {
+  @JsonValue('left')
+  left('racketSport.dominantHand.left'),
+  @JsonValue('right')
+  right('racketSport.dominantHand.right');
+
+  final String intlKey;
+  const DominantHand(this.intlKey);
+  String getLocalizedName(BuildContext context) => context.tr(intlKey);
+}
+
+@JsonEnum()
+enum RacketDiscipline {
+  @JsonValue('singles')
+  singles('racketSport.discipline.singles'),
+  @JsonValue('doubles')
+  doubles('racketSport.discipline.doubles');
+
+  final String intlKey;
+  const RacketDiscipline(this.intlKey);
+  String getLocalizedName(BuildContext context) => context.tr(intlKey);
+}
+
+@JsonEnum()
+enum BasketballPosition {
+  @JsonValue('guard')
+  guard('basketball.position.guard'),
+  @JsonValue('forward')
+  forward('basketball.position.forward'),
+  @JsonValue('center')
+  center('basketball.position.center');
+
+  final String intlKey;
+  const BasketballPosition(this.intlKey);
+  String getLocalizedName(BuildContext context) => context.tr(intlKey);
+}
+
+@JsonEnum()
+enum BasketballPitch {
+  @JsonValue('indoor')
+  indoor('basketball.pitch.indoor'),
+  @JsonValue('outdoor')
+  outdoor('basketball.pitch.outdoor');
+
+  final String intlKey;
+  const BasketballPitch(this.intlKey);
+  String getLocalizedName(BuildContext context) => context.tr(intlKey);
+}
+
+@JsonEnum()
+enum EloSeed {
+  @JsonValue('beginner')
+  beginner('eloSeed.beginner'),
+  @JsonValue('casual')
+  casual('eloSeed.casual'),
+  @JsonValue('tryhard')
+  tryhard('eloSeed.tryhard');
+
+  final String intlKey;
+  const EloSeed(this.intlKey);
+  String getLocalizedName(BuildContext context) => context.tr(intlKey);
 }
 
 // Do not change order

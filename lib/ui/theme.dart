@@ -1,10 +1,10 @@
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pubox/ui/button_styles.dart';
 
 import 'select_menu_tile_style.dart';
+import 'select_style.dart';
 import 'tabs_style.dart';
 
 // ignore_for_file: avoid_redundant_argument_values
@@ -52,6 +52,7 @@ FThemeData get pbThemeLight {
     ),
     tabsStyle: tabsStyle(colors: colors, typography: typography, style: style),
     selectMenuTileStyle: CustomFSelectMenuTileStyle.selectMenuTileStyle(colors: colors, typography: typography, style: style),
+    selectStyle: selectStyle(colors: colors, typography: typography, style: style),
     extensions: [PuboxColors(green: pbGreen, blue: pbBlue)],
   );
 }
@@ -88,6 +89,7 @@ FThemeData get pbThemeDark {
     colors: colors,
     typography: typography,
     style: style,
+    selectStyle: selectStyle(colors: colors, typography: typography, style: style),
     extensions: [PuboxColors(green: pbGreen, blue: pbBlue)],
   );
 }
@@ -119,6 +121,7 @@ FTypography _typography({
   required FColors colors,
   String defaultFontFamily = 'Bitter',
 }) => FTypography(
+  defaultFontFamily: defaultFontFamily,
   xs: TextStyle(
     color: colors.foreground,
     fontFamily: defaultFontFamily,

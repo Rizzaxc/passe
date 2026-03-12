@@ -13,13 +13,14 @@ User will choose a "context sport" (frontend variable). The app will help them
 find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
 
 4 Main Tabs:
-- Home: split into 4 subtabs
+- Home: split into 4 subtabs. they share a filter
     - Teammates: find people/ lobbies to play with
     - Challengers: put up your lobby for challengers or look for them
     - Neutrals: hire coaches, referees, etc for your sport
     - Locations: find available venues according to criteria
 - Manage:
-    - the user's schedule
+    - the user's schedule as a calendar view (links to activities)
+    - ongoing courses with a coach
     - their lobbies' activities: view, accept/ reject play invite, split bill, inspect history etc
 - Health: integrate with user's wearables
     - capture data during activities
@@ -36,12 +37,16 @@ find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
 - If a feature involves multiple screens, make a folder in each screen
 - Generic, omni-present features or models go into /core
 - Avoid nesting, prefer a flat folder structure
+- UI is built with forui package. Custom widgets are in /ui and prefix named with P
 - Use Riverpod for state management. Avoid using Provider
 - App-level model is created with freezed. persisted in json form. app state persistence key is _stateKey (mostly for riverpod providers)
 - If an entity has db id and its app model is enum, use the db value as the enum value
 - Use JsonEnum whenever possible
 - Use SharedPreferences to persist important app states
 - Use Vietnamese for UI/ messages but do not translate jargon
+
+- Whenever editing table user->details json schema, provide the migration script
+- Use snake_case and singular form for table names and columns
 
 ## Internationalization
 The app supports English and Vietnamese. Translations are stored in JSON files in the `assets/translations` directory

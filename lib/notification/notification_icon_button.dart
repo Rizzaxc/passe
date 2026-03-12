@@ -9,7 +9,7 @@ class NotificationIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return FButton.icon(
       variant: .ghost,
-      child: const Icon(FIcons.bell),
+      child: const Icon(FIcons.bell, size: 20,),
       onPress: () => const NotificationRoute().push(context),
     );
   }

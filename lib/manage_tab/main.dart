@@ -21,7 +21,7 @@ class ManageTab extends StatefulWidget {
 
   static const manageSections = <FTabEntry>[
     FTabEntry(
-      child: ScheduleSubtab(),
+      child: ScheduleSection(),
       label: Icon(FIcons.calendarDays),
     ),
     FTabEntry(

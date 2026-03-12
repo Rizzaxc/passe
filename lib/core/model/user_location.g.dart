@@ -19,4 +19,4 @@ Map<String, dynamic> _$UserLocationToJson(_UserLocation instance) =>
       'districts': instance.districts,
     };
 
-const _$CityEnumMap = {City.hochiminh: 1, City.hanoi: 2};
+const _$CityEnumMap = {City.none: 0, City.hochiminh: 1, City.hanoi: 2};

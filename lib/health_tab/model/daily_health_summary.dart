@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:json_annotation/json_annotation.dart';
 
 part 'daily_health_summary.freezed.dart';
 part 'daily_health_summary.g.dart';

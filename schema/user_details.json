@@ -26,56 +26,8 @@
         }
       }
     },
-    "sport": {
-      "description": "Sport profile for the user",
-      "type": "object",
-      "properties": {
-        "1": {
-          "title": "Soccer",
-          "type": "object",
-          "properties": {
-            "skill": {
-              "type": "integer"
-            }
-          }
-        },
-        "2": {
-          "title": "Basketball",
-          "type": "object",
-          "properties": {
-            "skill": {
-              "type": "integer"
-            }
-          }
-        },
-        "3": {
-          "title": "Badminton",
-          "type": "object",
-          "properties": {
-            "skill": {
-              "type": "integer"
-            }
-          }
-        },
-        "4": {
-          "title": "Tennis",
-          "type": "object",
-          "properties": {
-            "skill": {
-              "type": "integer"
-            }
-          }
-        },
-        "5": {
-          "title": "Pickleball",
-          "type": "object",
-          "properties": {
-            "skill": {
-              "type": "integer"
-            }
-          }
-        }
-      }
+    "generatedAvatar": {
+      "type": "string"
     }
   }
 }

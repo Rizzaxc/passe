@@ -4,14 +4,14 @@ import 'package:forui/forui.dart';
 
 import '../../ui/calendar.dart';
 
-class ScheduleSubtab extends StatefulWidget {
-  const ScheduleSubtab({super.key});
+class ScheduleSection extends StatefulWidget {
+  const ScheduleSection({super.key});
 
   @override
-  State<ScheduleSubtab> createState() => _ScheduleSubtabState();
+  State<ScheduleSection> createState() => _ScheduleSectionState();
 }
 
-class _ScheduleSubtabState extends State<ScheduleSubtab> {
+class _ScheduleSectionState extends State<ScheduleSection> {
   DateTime _selectedDate = DateTime.now();
 
   @override
@@ -25,6 +25,7 @@ class _ScheduleSubtabState extends State<ScheduleSubtab> {
 
     return ListView(
       shrinkWrap: true,
+      padding: EdgeInsets.zero,
       children: [
         PCalendar(
           start: yesterday,

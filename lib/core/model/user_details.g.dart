@@ -6,12 +6,6 @@ part of 'user_details.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_SportProfile _$SportProfileFromJson(Map json) =>
-    _SportProfile(skill: (json['skill'] as num?)?.toInt());
-
-Map<String, dynamic> _$SportProfileToJson(_SportProfile instance) =>
-    <String, dynamic>{'skill': ?instance.skill};
-
 _UserDetails _$UserDetailsFromJson(Map json) => _UserDetails(
   gender: $enumDecodeNullable(_$GenderEnumMap, json['gender']),
   ageGroup: $enumDecodeNullable(_$AgeGroupEnumMap, json['ageGroup']),
@@ -23,12 +17,6 @@ _UserDetails _$UserDetailsFromJson(Map json) => _UserDetails(
       : UserLocation.fromJson(
           Map<String, dynamic>.from(json['location'] as Map),
         ),
-  sport: (json['sport'] as Map?)?.map(
-    (k, e) => MapEntry(
-      k as String,
-      SportProfile.fromJson(Map<String, dynamic>.from(e as Map)),
-    ),
-  ),
   generatedAvatar: json['generatedAvatar'] as String?,
 );
 
@@ -38,7 +26,6 @@ Map<String, dynamic> _$UserDetailsToJson(_UserDetails instance) =>
       'ageGroup': ?_$AgeGroupEnumMap[instance.ageGroup],
       'playtime': ?instance.playtime?.map((e) => e.toJson()).toList(),
       'location': ?instance.location?.toJson(),
-      'sport': ?instance.sport?.map((k, e) => MapEntry(k, e.toJson())),
       'generatedAvatar': ?instance.generatedAvatar,
     };
 
