@@ -10,6 +10,7 @@ import 'auth/welcome_screen.dart';
 import 'core/model/pubox_user.dart';
 import 'home_tab/main.dart';
 import 'main.dart';
+import 'manage_tab/lobby_section/lobby_detail_page.dart';
 import 'manage_tab/main.dart';
 import 'health_tab/main.dart';
 import 'notification/main.dart';
@@ -154,7 +155,12 @@ class NotificationRoute extends GoRouteData with $NotificationRoute {
           path: '/manage',
           routes: [
             TypedGoRoute<ManageScheduleRoute>(path: 'schedule'),
-            TypedGoRoute<ManageLobbyRoute>(path: 'lobby'),
+            TypedGoRoute<ManageLobbyRoute>(
+              path: 'lobby',
+              routes: [
+                TypedGoRoute<LobbyDetailRoute>(path: ':id'),
+              ],
+            ),
           ],
         ),
       ],
@@ -243,6 +249,19 @@ class ManageRoute extends GoRouteData with $ManageRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       const ManageTab();
+}
+
+@immutable
+class LobbyDetailRoute extends GoRouteData with $LobbyDetailRoute {
+  final String id;
+  // ignore: library_private_types_in_public_api
+  final String? $extra;
+
+  const LobbyDetailRoute({required this.id, this.$extra});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      LobbyDetailPage(lobbyId: id, lobbyName: $extra);
 }
 
 @immutable

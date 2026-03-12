@@ -6,6 +6,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../auth/auth_controller.dart';
 import '../../core/model/enum.dart';
 import '../../core/model/lobby.dart';
+import '../../core/model/location.dart';
 import '../../core/model/timeslot.dart';
 import '../../core/state/selected_sport_state.dart';
 
@@ -16,8 +17,9 @@ part 'lobby_controller.g.dart';
 abstract class LobbyFormState with _$LobbyFormState {
   const factory LobbyFormState({
     required Lobby lobby,
-    @Default(false) bool isNew,
     @Default(false) bool isSaving,
+    // non-null when the user is entering a custom address (free-text mode)
+    Map<String, String?>? freeAddress,
   }) = _LobbyFormState;
 }
 
@@ -31,14 +33,18 @@ class UserLobbiesController extends _$UserLobbiesController {
     final user = ref.watch(authControllerProvider).value;
     if (user == null || user.id == null) return [];
 
+    final sport = ref.watch(selectedSportStateProvider).value;
+    if (sport == null) return [];
+
     try {
       final response = await supabase
-          .from('lobby')
-          .select()
-          .eq('captain_id', user.id!);
+          .from('lobby_member')
+          .select('lobby!inner(id, name, searchable_id, sport_id)')
+          .eq('user_id', user.id!)
+          .eq('lobby.sport_id', sport.index);
 
       return (response as List)
-          .map((data) => Lobby.fromJson(data as Map<String, dynamic>))
+          .map((row) => Lobby.fromJson(row['lobby'] as Map<String, dynamic>))
           .toList();
     } catch (e, st) {
       talker.handle(e, st, 'Error fetching user lobbies');
@@ -59,36 +65,13 @@ class LobbyFormController extends _$LobbyFormController {
 
   @override
   LobbyFormState build(String? lobbyId) {
-    if (lobbyId == null) {
-      final sport = ref.read(selectedSportStateProvider).value ?? Sport.soccer;
-      return LobbyFormState(
-        lobby: Lobby(name: '', sport: sport),
-        isNew: true,
-      );
-    }
-
-    _loadLobby(lobbyId);
-    return LobbyFormState(
-      lobby: Lobby(name: '', sport: Sport.soccer),
-      isNew: false,
-    );
+    final sport = ref.read(selectedSportStateProvider).value ?? Sport.soccer;
+    return LobbyFormState(lobby: Lobby(name: '', sport: sport));
   }
 
-  Future<void> _loadLobby(String lobbyId) async {
-    try {
-      final response = await supabase
-          .from('lobby')
-          .select()
-          .eq('id', lobbyId)
-          .single();
 
-      state = LobbyFormState(
-        lobby: Lobby.fromJson(response),
-        isNew: false,
-      );
-    } catch (e, st) {
-      talker.handle(e, st, 'Error fetching lobby');
-    }
+  void updateFreeAddress(Map<String, String?>? addr) {
+    state = state.copyWith(freeAddress: addr);
   }
 
   void updateDraft({
@@ -99,6 +82,11 @@ class LobbyFormController extends _$LobbyFormController {
     LobbyDetails? details,
     String? homeGround,
   }) {
+    if (playtime != null) {
+      while (playtime.length > 3) {
+        playtime.removeAt(0);
+      }
+    }
     state = state.copyWith(
       lobby: state.lobby.copyWith(
         name: name ?? state.lobby.name,
@@ -106,22 +94,37 @@ class LobbyFormController extends _$LobbyFormController {
         visibility: visibility ?? state.lobby.visibility,
         playtime: playtime ?? state.lobby.playtime,
         details: details ?? state.lobby.details,
-        homeGround: homeGround ?? state.lobby.homeGround,
+        homeGround: homeGround != null
+            ? (homeGround.isEmpty ? null : homeGround)
+            : state.lobby.homeGround,
       ),
     );
   }
 
+  static const _absent = Object();
+
   void updateDetails({
-    AgeGroup? ageGroup,
-    int? skill,
+    Object? ageGroup = _absent,
+    Object? skill = _absent,
   }) {
     final current = state.lobby.details ?? const LobbyDetails();
     updateDraft(
       details: current.copyWith(
-        ageGroup: ageGroup ?? current.ageGroup,
-        skill: skill ?? current.skill,
+        ageGroup: ageGroup == _absent ? current.ageGroup : ageGroup as AgeGroup?,
+        skill: skill == _absent ? current.skill : skill as int?,
       ),
     );
+  }
+
+  Future<List<Location>> searchHomeGround(String query) async {
+    if (query.length < 8) return [];
+
+    final response = await supabase
+        .rpc('search_locations', params: {'search_term': query});
+
+    return (response as List)
+        .map((e) => Location.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<Lobby> commit() async {
@@ -133,38 +136,38 @@ class LobbyFormController extends _$LobbyFormController {
     state = state.copyWith(isSaving: true);
 
     try {
-      final lobbyData = {
-        'name': state.lobby.name,
-        'sport_id': state.lobby.sport.index,
-        'visibility': state.lobby.visibility.name,
+      // Always use the RPC so the captain is added as first member atomically.
+      // For geocoded locations pass p_home_ground_id; for free-text pass address fields.
+      final params = <String, dynamic>{
+        'p_name': state.lobby.name,
+        'p_sport_id': state.lobby.sport.index,
+        'p_visibility': state.lobby.visibility.name,
         if (state.lobby.playtime != null)
-          'playtime': state.lobby.playtime!.map((t) => t.toJson()).toList(),
+          'p_playtime': state.lobby.playtime!.map((t) => t.toJson()).toList(),
         if (state.lobby.details != null)
-          'details': state.lobby.details!.toJson(),
-        if (state.lobby.homeGround != null)
-          'home_ground': state.lobby.homeGround,
+          'p_details': state.lobby.details!.toJson(),
       };
 
-      Map<String, dynamic> response;
-      if (state.isNew) {
-        response = await supabase
-            .from('lobby')
-            .insert({
-              'captain_id': user.id,
-              ...lobbyData,
-            })
-            .select()
-            .single();
-      } else {
-        response = await supabase
-            .from('lobby')
-            .update(lobbyData)
-            .eq('id', state.lobby.id!)
-            .select()
-            .single();
+      final fa = state.freeAddress;
+      if (fa != null) {
+        // free-text mode: create a new location row from the supplied fields
+        if ((fa['locationName'] ?? '').isNotEmpty)
+          params['p_location_name'] = fa['locationName'];
+        if ((fa['streetNumber'] ?? '').isNotEmpty)
+          params['p_street_number'] = fa['streetNumber'];
+        if ((fa['streetName'] ?? '').isNotEmpty)
+          params['p_street_name'] = fa['streetName'];
+        if ((fa['district'] ?? '').isNotEmpty)
+          params['p_district'] = fa['district'];
+        if ((fa['city'] ?? '').isNotEmpty)
+          params['p_city'] = fa['city'];
+      } else if (state.lobby.homeGround != null) {
+        // geocoded mode: reference an existing location by UUID
+        params['p_home_ground_id'] = state.lobby.homeGround;
       }
 
-      final lobby = Lobby.fromJson(response);
+      final response = await supabase.rpc('create_lobby_with_location', params: params);
+      final lobby = Lobby.fromJson(response as Map<String, dynamic>);
       ref.invalidate(userLobbiesControllerProvider);
       return lobby;
     } catch (e, st) {

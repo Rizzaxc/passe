@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../core/icon/main.dart';
-import '../../core/model/enum.dart';
 import '../../core/model/lobby.dart';
+import '../../router.dart';
 import 'lobby_controller.dart';
 import 'lobby_form_sheet.dart';
 
@@ -38,11 +37,16 @@ class LobbySubtab extends ConsumerWidget {
             child: FButton(
               variant: .outline,
               prefix: const Icon(FIcons.plus),
-              onPress: () => showLobbyFormSheet(
-                context: context,
-                ref: ref,
-                lobbyId: null,
-              ),
+              onPress: () async {
+                final lobby = await showLobbyFormSheet(
+                  context: context,
+                  ref: ref,
+                  lobbyId: null,
+                );
+                if (lobby?.id != null && context.mounted) {
+                  LobbyDetailRoute(id: lobby!.id!, $extra: lobby.name).go(context);
+                }
+              },
               child: Text('lobby.create'.tr()),
             ),
           );
@@ -91,11 +95,16 @@ class _EmptyState extends ConsumerWidget {
             const SizedBox(height: 24),
             FButton(
               prefix: const Icon(FIcons.plus),
-              onPress: () => showLobbyFormSheet(
-                context: context,
-                ref: ref,
-                lobbyId: null,
-              ),
+              onPress: () async {
+                final lobby = await showLobbyFormSheet(
+                  context: context,
+                  ref: ref,
+                  lobbyId: null,
+                );
+                if (lobby?.id != null && context.mounted) {
+                  LobbyDetailRoute(id: lobby!.id!, $extra: lobby.name).go(context);
+                }
+              },
               child: Text('lobby.create'.tr()),
             ),
           ],
@@ -123,7 +132,7 @@ class _LobbyCard extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              _getSportIcon(lobby.sport),
+              lobby.sport.getIcon(size: 24),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -156,20 +165,4 @@ class _LobbyCard extends ConsumerWidget {
     );
   }
 
-  Widget _getSportIcon(Sport sport) {
-    switch (sport) {
-      case Sport.soccer:
-        return SportIcons.soccer(size: 24);
-      case Sport.basketball:
-        return SportIcons.basketball(size: 24);
-      case Sport.badminton:
-        return SportIcons.badminton(size: 24);
-      case Sport.tennis:
-        return SportIcons.tennis(size: 24);
-      case Sport.pickleball:
-        return SportIcons.pickleball(size: 24);
-      case Sport.others:
-        return const Icon(Icons.question_mark, size: 24);
-    }
-  }
 }

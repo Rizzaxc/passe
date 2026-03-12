@@ -182,6 +182,25 @@
       }
     }
   },
+  "lobby": {
+    "create": "Create Lobby",
+    "edit": "Edit Lobby",
+    "nameRequired": "Lobby name is required",
+    "nameTooShort": "Name must be at least 3 characters",
+    "ageGroup": "Age Group",
+    "saveButton": "Save",
+    "saveFailed": "Failed to save lobby",
+    "emptyTitle": "No lobbies yet",
+    "emptyMessage": "Create a lobby to start playing with others",
+    "visibility": {
+      "private": "Private",
+      "privateDescription": "Invite only",
+      "discoverable": "Discoverable",
+      "discoverableDescription": "Searchable by ID",
+      "public": "Public",
+      "publicDescription": "Open to everyone"
+    }
+  },
   "createLobby": {
     "title": "Create Lobby",
     "create": "Create",
@@ -197,6 +216,15 @@
     "private": "Private",
     "privateDescription": "Only people with the link can join",
     "homeGround": "Home Ground",
+    "homeGroundHint": "Search by venue name...",
+    "homeGroundFreeHint": "Enter venue name or address...",
+    "homeGroundFreeTextMode": "Enter manually",
+    "homeGroundSearchMode": "Search venues",
+    "homeGroundSearchPrompt": "Type to search for a venue",
+    "streetNumber": "St. number",
+    "streetName": "Street name",
+    "district": "District",
+    "city": "City",
     "specificLocation": "Specific Location",
     "specificLocationHint": "Enter a specific location",
     "playtime": "Playtime",

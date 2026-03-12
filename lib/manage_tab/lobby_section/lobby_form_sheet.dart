@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import '../../core/model/enum.dart';
 import '../../core/model/lobby.dart';
 import '../../core/model/timeslot.dart';
+import '../../ui/main.dart';
+import 'home_ground_selector.dart';
 import 'lobby_controller.dart';
 
 Future<Lobby?> showLobbyFormSheet({
@@ -17,7 +21,7 @@ Future<Lobby?> showLobbyFormSheet({
     context: context,
     side: .btt,
     useSafeArea: true,
-    mainAxisMaxRatio: 3/4,
+    mainAxisMaxRatio: 0.9,
     useRootNavigator: true,
     builder: (context) => LobbyFormSheet(lobbyId: lobbyId),
   );
@@ -57,14 +61,16 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
   @override
   Widget build(BuildContext context) {
     final formState = ref.watch(lobbyFormControllerProvider(widget.lobbyId));
-    final notifier = ref.read(lobbyFormControllerProvider(widget.lobbyId).notifier);
+    final notifier =
+        ref.read(lobbyFormControllerProvider(widget.lobbyId).notifier);
     final lobby = formState.lobby;
 
     return FSheets(
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: context.theme.colors.background,
+          borderRadius: BorderRadius.circular(32),
           border: Border.symmetric(
             horizontal: BorderSide(color: context.theme.colors.border),
           ),
@@ -75,133 +81,81 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
             controller: _scrollController,
             primary: false,
             child: Column(
-              spacing: 8,
+              spacing: 16,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header
-                Text(
-                  formState.isNew ? 'lobby.create'.tr() : 'lobby.edit'.tr(),
-                  style: context.theme.typography.xl.copyWith(
-                    fontWeight: FontWeight.bold,
+
+                // Name
+                FTextFormField(
+                  hint: 'createLobby.lobbyNameHint'.tr(),
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  control: FTextFieldControl.managed(
+                    controller: _nameController,
+                    onChange: (value) =>
+                        notifier.updateDraft(name: value.text),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'lobby.nameRequired'.tr();
+                    }
+                    if (value.length < 3) {
+                      return 'lobby.nameTooShort'.tr();
+                    }
+                    return null;
+                  },
                 ),
 
-                // Row 1: Name + Sport
-                Row(
-                  spacing: 12,
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: FTextFormField(
-                        label: Text('lobby.name'.tr()),
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        control: FTextFieldControl.managed(
-                          controller: _nameController,
-                          onChange: (value) => notifier.updateDraft(name: value.text),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'lobby.nameRequired'.tr();
-                          }
-                          if (value.length < 3) {
-                            return 'lobby.nameTooShort'.tr();
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    Expanded(
-                      child: FSelectMenuTile<Sport>.fromMap(
-                        {
-                          for (var sport in Sport.values.where((s) => s != Sport.others))
-                            sport.getLocalizedName(context): sport,
-                        },
-                        title: Text(lobby.sport.getLocalizedName(context)),
-                        label: Text('lobby.sport'.tr()),
-                        selectControl: FMultiValueControl.lifted(
-                          value: {lobby.sport},
-                          onChange: (sports) {
-                            if (sports.isEmpty) return;
-                            notifier.updateDraft(sport: sports.last);
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+
+                // Visibility
+                PSegmentedButton<LobbyVisibility>(
+                  label: Text('createLobby.visibility'.tr()),
+                  values: LobbyVisibility.values,
+                  selected: lobby.visibility,
+                  format: (v) => Text(v.getLocalizedName(context)),
+                  description: (v) =>
+                      'lobby.visibility.${v.name}Description'.tr(),
+                  onChange: (v) {
+                    if (v != null) notifier.updateDraft(visibility: v);
+                  },
                 ),
 
-                // Row 2: Visibility
-                FSlider(
-                  label: Text('lobby.visibility.label'.tr()),
-                  description: Text(
-                    'lobby.visibility.${lobby.visibility.name}.description'.tr(),
-                  ),
-                  tooltipControls: const FSliderTooltipControls.disabled(),
-                  control: FSliderControl.managedDiscrete(
-                    initial: FSliderValue(max: lobby.visibility.index / (LobbyVisibility.values.length - 1)),
-                    onChange: (value) {
-                      final index = (value.max * (LobbyVisibility.values.length - 1)).round();
-                      notifier.updateDraft(visibility: LobbyVisibility.values[index]);
-                    },
-                  ),
-                  marks: [
-                    for (var i = 0; i < LobbyVisibility.values.length; i++)
-                      FSliderMark(
-                        value: i / (LobbyVisibility.values.length - 1),
-                        label: Text(
-                          LobbyVisibility.values[i].getLocalizedName(context),
-                          style: context.theme.typography.sm,
-                        ),
-                      ),
-                  ],
+
+                // Age Group
+                PSegmentedButton<AgeGroup>(
+                  label: Text('lobby.ageGroup'.tr()),
+                  values: AgeGroup.values,
+                  selected: lobby.details?.ageGroup,
+                  format: (ag) => Icon(switch (ag) {
+                    AgeGroup.student => FontAwesomeIcons.graduationCap,
+                    AgeGroup.mature => FontAwesomeIcons.briefcase,
+                    AgeGroup.middleAge => FontAwesomeIcons.wineGlass,
+                  }),
+                  description: (ag) => ag.getLocalizedName(context),
+                  onChange: (ag) => notifier.updateDetails(ageGroup: ag),
+                  deselectable: true,
                 ),
 
-                // Row 3: Skill (stub) + Age Group
-                Row(
-                  spacing: 12,
-                  children: [
-                    Expanded(
-                      child: FTile(
-                        title: Text('lobby.skill'.tr()),
-                        subtitle: Text('lobby.skillStub'.tr()),
-                        enabled: false,
-                      ),
-                    ),
-                    Expanded(
-                      child: FSelectMenuTile<AgeGroup>.fromMap(
-                        {
-                          for (var ageGroup in AgeGroup.values)
-                            ageGroup.getLocalizedName(context): ageGroup,
-                        },
-                        title: Text(
-                          lobby.details?.ageGroup?.getLocalizedName(context) ??
-                              'lobby.anyAgeGroup'.tr(),
-                        ),
-                        label: Text('lobby.ageGroup'.tr()),
-                        selectControl: FMultiValueControl.lifted(
-                          value: lobby.details?.ageGroup != null
-                              ? {lobby.details!.ageGroup!}
-                              : {},
-                          onChange: (ageGroups) {
-                            notifier.updateDetails(
-                              ageGroup: ageGroups.isEmpty ? null : ageGroups.last,
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+
+                // Home Ground
+                HomeGroundField(
+                  value: lobby.homeGround,
+                  onChanged: (v) => notifier.updateDraft(homeGround: v),
+                  onFreeAddressChanged: notifier.updateFreeAddress,
                 ),
 
-                // Row 4: Timeslot selection
+
+                // Playtime
                 _TimeslotSection(
                   playtime: lobby.playtime ?? [],
                   pendingDayChunk: _pendingDayChunk,
                   pendingDayOfWeek: _pendingDayOfWeek,
-                  onDayChunkChanged: (chunk) => setState(() => _pendingDayChunk = chunk),
-                  onDayOfWeekChanged: (day) => setState(() => _pendingDayOfWeek = day),
+                  onDayChunkChanged: (chunk) =>
+                      setState(() => _pendingDayChunk = chunk),
+                  onDayOfWeekChanged: (day) =>
+                      setState(() => _pendingDayOfWeek = day),
                   onAdd: () {
-                    final timeslot = Timeslot(_pendingDayOfWeek, _pendingDayChunk);
+                    final timeslot =
+                        Timeslot(_pendingDayOfWeek, _pendingDayChunk);
                     final updated = <Timeslot>[...(lobby.playtime ?? [])];
                     if (!updated.contains(timeslot)) {
                       updated.add(timeslot);
@@ -215,16 +169,6 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
                   },
                 ),
 
-                // Row 5: Home ground (stub for now)
-                FTile(
-                  title: Text('lobby.homeGround'.tr()),
-                  subtitle: Text(
-                    lobby.homeGround ?? 'lobby.homeGroundStub'.tr(),
-                  ),
-                  suffix: const Icon(FIcons.mapPin),
-                  enabled: false,
-                ),
-
                 // Save button
                 FButton(
                   onPress: formState.isSaving ? null : () => _onSave(context),
@@ -234,11 +178,7 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(
-                          formState.isNew
-                              ? 'lobby.createButton'.tr()
-                              : 'lobby.saveButton'.tr(),
-                        ),
+                      : Text('createLobby.create'.tr()),
                 ),
 
                 const SizedBox(height: 16),
@@ -293,87 +233,137 @@ class _TimeslotSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fieldStyle = context.theme.multiSelectStyle.fieldStyle;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 8,
       children: [
-        Row(
-          spacing: 2,
-          crossAxisAlignment: .end,
-          children: [
-            const Icon(FIcons.calendarDays),
-            Text(
-              'lobby.playtime'.tr(),
-              style: context.theme.typography.base.copyWith(
-                fontWeight: FontWeight.bold,
-                color: context.theme.colors.primary,
+        Padding(
+          padding: fieldStyle.labelPadding,
+          child: DefaultTextStyle.merge(
+            style: fieldStyle.labelTextStyle.resolve({}),
+            child: Text('createLobby.playtime'.tr()),
+          ),
+        ),
+
+        // Chips container
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: context.theme.colors.card,
+            border: Border.all(
+              color: context.theme.colors.border,
+              width: context.theme.style.borderWidth,
+            ),
+            borderRadius: context.theme.style.borderRadius,
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(10, 0, 8, 0),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: fieldStyle.spacing,
+                  runSpacing: fieldStyle.runSpacing,
+                  children: [
+                    if (playtime.isEmpty)
+                      Padding(
+                        padding:
+                            const EdgeInsetsDirectional.fromSTEB(4, 4, 0, 4),
+                        child: Text(
+                          'homeTab.filter.any'.tr(),
+                          style: context.theme.typography.sm.copyWith(
+                            color: context.theme.colors.mutedForeground,
+                          ),
+                        ),
+                      ),
+                    for (final timeslot in playtime)
+                      GestureDetector(
+                        onTap: () => onRemove(timeslot),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: context.theme.style.borderRadius,
+                            color: context.theme.colors.secondary,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 4, horizontal: 8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: 4,
+                              children: [
+                                Text(
+                                  '${timeslot.dayChunk.getShortName(context)} ${timeslot.dayOfWeek.getShortName(context)}',
+                                  style: context.theme.typography.sm.copyWith(
+                                    color: context
+                                        .theme.colors.secondaryForeground,
+                                  ),
+                                ),
+                                IconTheme(
+                                  data: IconThemeData(
+                                    color:
+                                        context.theme.colors.mutedForeground,
+                                    size: 15,
+                                  ),
+                                  child: const Icon(FIcons.x),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
-        if (playtime.isNotEmpty)
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final timeslot in playtime)
-                GestureDetector(
-                  onTap: () => onRemove(timeslot),
-                  child: FBadge(
-                    variant: .secondary,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      spacing: 4,
-                      children: [
-                        Text(
-                          '${timeslot.dayChunk.getShortName(context)} ${timeslot.dayOfWeek.getShortName(context)}',
-                          style: context.theme.typography.base,
-                        ),
-                        Icon(
-                          FIcons.x,
-                          size: 12,
-                          color: context.theme.colors.mutedForeground,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
           ),
+        ),
+
+        // Pickers row
         Row(
           spacing: 8,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
-              child: FSelectMenuTile<DayChunk>.fromMap(
-                {
-                  for (var chunk in DayChunk.values)
-                    chunk.getFullName(context): chunk,
-                },
-                title: Text(pendingDayChunk.getFullName(context)),
-                selectControl: FMultiValueControl.lifted(
-                  value: {pendingDayChunk},
-                  onChange: (chunks) {
-                    if (chunks.isEmpty) return;
-                    onDayChunkChanged(chunks.last);
+              child: FSelect<DayChunk>.rich(
+                hint: pendingDayChunk.getFullName(context),
+                format: (chunk) => chunk.getFullName(context),
+                autoHide: true,
+                control: FSelectControl.lifted(
+                  value: pendingDayChunk,
+                  onChange: (chunk) {
+                    if (chunk != null) onDayChunkChanged(chunk);
                   },
                 ),
+                children: [
+                  for (final chunk in DayChunk.values)
+                    FSelectItem<DayChunk>(
+                      title: Text(chunk.getFullName(context)),
+                      value: chunk,
+                    ),
+                ],
               ),
             ),
             Expanded(
-              child: FSelectMenuTile<DayOfWeek>.fromMap(
-                {
-                  for (var day in DayOfWeek.values)
-                    day.getFullName(context): day,
-                },
-                maxHeight: 200,
-                title: Text(pendingDayOfWeek.getFullName(context)),
-                selectControl: FMultiValueControl.lifted(
-                  value: {pendingDayOfWeek},
-                  onChange: (days) {
-                    if (days.isEmpty) return;
-                    onDayOfWeekChanged(days.last);
+              child: FSelect<DayOfWeek>.rich(
+                hint: pendingDayOfWeek.getFullName(context),
+                format: (day) => day.getFullName(context),
+                autoHide: true,
+                control: FSelectControl.lifted(
+                  value: pendingDayOfWeek,
+                  onChange: (day) {
+                    if (day != null) onDayOfWeekChanged(day);
                   },
                 ),
+                children: [
+                  for (final day in DayOfWeek.values)
+                    FSelectItem<DayOfWeek>(
+                      title: Text(day.getFullName(context)),
+                      value: day,
+                    ),
+                ],
               ),
             ),
             FButton.icon(

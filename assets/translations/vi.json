@@ -187,6 +187,25 @@
       }
     }
   },
+  "lobby": {
+    "create": "Tạo Lobby",
+    "edit": "Chỉnh Sửa Lobby",
+    "nameRequired": "Tên lobby là bắt buộc",
+    "nameTooShort": "Tên phải có ít nhất 3 ký tự",
+    "ageGroup": "Nhóm Tuổi",
+    "saveButton": "Lưu",
+    "saveFailed": "Lưu lobby thất bại",
+    "emptyTitle": "Chưa có lobby nào",
+    "emptyMessage": "Tạo lobby để bắt đầu chơi cùng người khác",
+    "visibility": {
+      "private": "Nội Bộ",
+      "privateDescription": "Không hiện trên search hay matchmaking. Người ngoài cần phải được mời",
+      "discoverable": "Mặc Định",
+      "discoverableDescription": "Hiện trên search và matchmaking. Người ngoài có thể xin gia nhập",
+      "public": "Công Khai",
+      "publicDescription": "Hiện trên trang chủ"
+    }
+  },
   "createLobby": {
     "title": "Tạo Lobby",
     "create": "Tạo",
@@ -198,10 +217,18 @@
     "sportLocked": "Không thể thay đổi môn thể thao",
     "visibility": "Độ Riêng tư",
     "public": "Công Khai",
-    "publicDescription": "Bất kỳ ai cũng có thể tìm và tham gia phòng của bạn",
+    "publicDescription": "Hiện trên trang chủ",
     "private": "Nội Bộ",
-    "privateDescription": "Chỉ những người có đường dẫn mới có thể tham gia",
+    "privateDescription": "Không hiện trên search hay matchmaking. Cần phải được mời",
     "homeGround": "Sân Nhà",
+    "homeGroundHint": "Tìm theo tên địa điểm/ địa chỉ...",
+    "homeGroundFreeHint": "Nhập trực tiếp tên địa điểm/ địa chỉ...",
+    "homeGroundFreeTextMode": "Nhập thủ công",
+    "homeGroundSearchMode": "Tìm kiếm địa điểm",
+    "streetNumber": "Số nhà",
+    "streetName": "Tên đường",
+    "district": "Quận/Huyện",
+    "city": "Thành phố",
     "specificLocation": "Địa Điểm Cụ Thể",
     "specificLocationHint": "Nhập địa điểm cụ thể",
     "playtime": "Thời Gian Chơi",
@@ -231,7 +258,7 @@
       "right": "Tay Phải"
     },
     "discipline": {
-      "label": "Thể Thức",
+      "label": "Theer Thức",
       "singles": "Đơn",
       "doubles": "Đôi"
     }

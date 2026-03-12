@@ -14,7 +14,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LobbyFormState {
 
- Lobby get lobby; bool get isNew; bool get isSaving;
+ Lobby get lobby; bool get isSaving;// non-null when the user is entering a custom address (free-text mode)
+ Map<String, String?>? get freeAddress;
 /// Create a copy of LobbyFormState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +26,16 @@ $LobbyFormStateCopyWith<LobbyFormState> get copyWith => _$LobbyFormStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isNew, isNew) || other.isNew == isNew)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other.freeAddress, freeAddress));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,lobby,isNew,isSaving);
+int get hashCode => Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(freeAddress));
 
 @override
 String toString() {
-  return 'LobbyFormState(lobby: $lobby, isNew: $isNew, isSaving: $isSaving)';
+  return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, freeAddress: $freeAddress)';
 }
 
 
@@ -45,7 +46,7 @@ abstract mixin class $LobbyFormStateCopyWith<$Res>  {
   factory $LobbyFormStateCopyWith(LobbyFormState value, $Res Function(LobbyFormState) _then) = _$LobbyFormStateCopyWithImpl;
 @useResult
 $Res call({
- Lobby lobby, bool isNew, bool isSaving
+ Lobby lobby, bool isSaving, Map<String, String?>? freeAddress
 });
 
 
@@ -62,12 +63,12 @@ class _$LobbyFormStateCopyWithImpl<$Res>
 
 /// Create a copy of LobbyFormState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? lobby = null,Object? isNew = null,Object? isSaving = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? lobby = null,Object? isSaving = null,Object? freeAddress = freezed,}) {
   return _then(_self.copyWith(
 lobby: null == lobby ? _self.lobby : lobby // ignore: cast_nullable_to_non_nullable
-as Lobby,isNew: null == isNew ? _self.isNew : isNew // ignore: cast_nullable_to_non_nullable
-as bool,isSaving: null == isSaving ? _self.isSaving : isSaving // ignore: cast_nullable_to_non_nullable
-as bool,
+as Lobby,isSaving: null == isSaving ? _self.isSaving : isSaving // ignore: cast_nullable_to_non_nullable
+as bool,freeAddress: freezed == freeAddress ? _self.freeAddress : freeAddress // ignore: cast_nullable_to_non_nullable
+as Map<String, String?>?,
   ));
 }
 /// Create a copy of LobbyFormState
@@ -161,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Lobby lobby,  bool isNew,  bool isSaving)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Lobby lobby,  bool isSaving,  Map<String, String?>? freeAddress)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LobbyFormState() when $default != null:
-return $default(_that.lobby,_that.isNew,_that.isSaving);case _:
+return $default(_that.lobby,_that.isSaving,_that.freeAddress);case _:
   return orElse();
 
 }
@@ -182,10 +183,10 @@ return $default(_that.lobby,_that.isNew,_that.isSaving);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Lobby lobby,  bool isNew,  bool isSaving)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Lobby lobby,  bool isSaving,  Map<String, String?>? freeAddress)  $default,) {final _that = this;
 switch (_that) {
 case _LobbyFormState():
-return $default(_that.lobby,_that.isNew,_that.isSaving);case _:
+return $default(_that.lobby,_that.isSaving,_that.freeAddress);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +203,10 @@ return $default(_that.lobby,_that.isNew,_that.isSaving);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Lobby lobby,  bool isNew,  bool isSaving)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Lobby lobby,  bool isSaving,  Map<String, String?>? freeAddress)?  $default,) {final _that = this;
 switch (_that) {
 case _LobbyFormState() when $default != null:
-return $default(_that.lobby,_that.isNew,_that.isSaving);case _:
+return $default(_that.lobby,_that.isSaving,_that.freeAddress);case _:
   return null;
 
 }
@@ -217,12 +218,22 @@ return $default(_that.lobby,_that.isNew,_that.isSaving);case _:
 
 
 class _LobbyFormState implements LobbyFormState {
-  const _LobbyFormState({required this.lobby, this.isNew = false, this.isSaving = false});
+  const _LobbyFormState({required this.lobby, this.isSaving = false, final  Map<String, String?>? freeAddress}): _freeAddress = freeAddress;
   
 
 @override final  Lobby lobby;
-@override@JsonKey() final  bool isNew;
 @override@JsonKey() final  bool isSaving;
+// non-null when the user is entering a custom address (free-text mode)
+ final  Map<String, String?>? _freeAddress;
+// non-null when the user is entering a custom address (free-text mode)
+@override Map<String, String?>? get freeAddress {
+  final value = _freeAddress;
+  if (value == null) return null;
+  if (_freeAddress is EqualUnmodifiableMapView) return _freeAddress;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(value);
+}
+
 
 /// Create a copy of LobbyFormState
 /// with the given fields replaced by the non-null parameter values.
@@ -234,16 +245,16 @@ _$LobbyFormStateCopyWith<_LobbyFormState> get copyWith => __$LobbyFormStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isNew, isNew) || other.isNew == isNew)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other._freeAddress, _freeAddress));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,lobby,isNew,isSaving);
+int get hashCode => Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(_freeAddress));
 
 @override
 String toString() {
-  return 'LobbyFormState(lobby: $lobby, isNew: $isNew, isSaving: $isSaving)';
+  return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, freeAddress: $freeAddress)';
 }
 
 
@@ -254,7 +265,7 @@ abstract mixin class _$LobbyFormStateCopyWith<$Res> implements $LobbyFormStateCo
   factory _$LobbyFormStateCopyWith(_LobbyFormState value, $Res Function(_LobbyFormState) _then) = __$LobbyFormStateCopyWithImpl;
 @override @useResult
 $Res call({
- Lobby lobby, bool isNew, bool isSaving
+ Lobby lobby, bool isSaving, Map<String, String?>? freeAddress
 });
 
 
@@ -271,12 +282,12 @@ class __$LobbyFormStateCopyWithImpl<$Res>
 
 /// Create a copy of LobbyFormState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? lobby = null,Object? isNew = null,Object? isSaving = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? lobby = null,Object? isSaving = null,Object? freeAddress = freezed,}) {
   return _then(_LobbyFormState(
 lobby: null == lobby ? _self.lobby : lobby // ignore: cast_nullable_to_non_nullable
-as Lobby,isNew: null == isNew ? _self.isNew : isNew // ignore: cast_nullable_to_non_nullable
-as bool,isSaving: null == isSaving ? _self.isSaving : isSaving // ignore: cast_nullable_to_non_nullable
-as bool,
+as Lobby,isSaving: null == isSaving ? _self.isSaving : isSaving // ignore: cast_nullable_to_non_nullable
+as bool,freeAddress: freezed == freeAddress ? _self._freeAddress : freeAddress // ignore: cast_nullable_to_non_nullable
+as Map<String, String?>?,
   ));
 }
 

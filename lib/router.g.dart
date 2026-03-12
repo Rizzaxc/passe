@@ -151,6 +151,12 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
             GoRouteData.$route(
               path: 'lobby',
               factory: $ManageLobbyRoute._fromState,
+              routes: [
+                GoRouteData.$route(
+                  path: ':id',
+                  factory: $LobbyDetailRoute._fromState,
+                ),
+              ],
             ),
           ],
         ),
@@ -354,6 +360,34 @@ mixin $ManageLobbyRoute on GoRouteData {
 
   @override
   void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $LobbyDetailRoute on GoRouteData {
+  static LobbyDetailRoute _fromState(GoRouterState state) => LobbyDetailRoute(
+    id: state.pathParameters['id']!,
+    $extra: state.extra as String?,
+  );
+
+  LobbyDetailRoute get _self => this as LobbyDetailRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/manage/lobby/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location, extra: _self.$extra);
+
+  @override
+  Future<T?> push<T>(BuildContext context) =>
+      context.push<T>(location, extra: _self.$extra);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location, extra: _self.$extra);
+
+  @override
+  void replace(BuildContext context) =>
+      context.replace(location, extra: _self.$extra);
 }
 
 mixin $HealthRoute on GoRouteData {
