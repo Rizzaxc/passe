@@ -204,6 +204,15 @@
       "discoverableDescription": "Hiện trên search và matchmaking. Người ngoài có thể xin gia nhập",
       "public": "Công Khai",
       "publicDescription": "Hiện trên trang chủ"
+    },
+    "detail": {
+      "members": "Thành Viên",
+      "noMembers": "Chưa có thành viên",
+      "upcoming": "Sắp Diễn Ra",
+      "noUpcoming": "Chưa có buổi chơi nào",
+      "scheduleEvent": "Lên Lịch",
+      "history": "Lịch Sử",
+      "noHistory": "Chưa có lịch sử"
     }
   },
   "createLobby": {

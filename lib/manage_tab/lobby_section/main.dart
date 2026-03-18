@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../core/model/lobby.dart';
 import '../../router.dart';
 import 'lobby_controller.dart';
 import 'lobby_form_sheet.dart';
@@ -18,20 +17,20 @@ class LobbySubtab extends ConsumerWidget {
     return lobbiesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, st) => Center(child: Text('errorGeneric'.tr())),
-      data: (lobbies) => _buildContent(context, ref, lobbies),
+      data: (items) => _buildContent(context, ref, items),
     );
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref, List<Lobby> lobbies) {
-    if (lobbies.isEmpty) {
+  Widget _buildContent(BuildContext context, WidgetRef ref, List<LobbyListItem> items) {
+    if (items.isEmpty) {
       return _EmptyState();
     }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: lobbies.length + 1,
+      itemCount: items.length + 1,
       itemBuilder: (context, index) {
-        if (index == lobbies.length) {
+        if (index == items.length) {
           return Padding(
             padding: const EdgeInsets.only(top: 16),
             child: FButton(
@@ -52,10 +51,10 @@ class LobbySubtab extends ConsumerWidget {
           );
         }
 
-        final lobby = lobbies[index];
+        final item = items[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: _LobbyCard(lobby: lobby),
+          child: _LobbyCard(item: item),
         );
       },
     );
@@ -115,19 +114,19 @@ class _EmptyState extends ConsumerWidget {
 }
 
 class _LobbyCard extends ConsumerWidget {
-  final Lobby lobby;
+  final LobbyListItem item;
 
-  const _LobbyCard({required this.lobby});
+  const _LobbyCard({required this.item});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final lobby = item.lobby;
     return FCard(
       child: FTappable(
-        onPress: () => showLobbyFormSheet(
-          context: context,
-          ref: ref,
-          lobbyId: lobby.id,
-        ),
+        onPress: () => LobbyDetailRoute(
+          id: lobby.id!,
+          $extra: lobby.name,
+        ).go(context),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -145,11 +144,27 @@ class _LobbyCard extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      lobby.sport.getLocalizedName(context),
-                      style: context.theme.typography.sm.copyWith(
-                        color: context.theme.colors.mutedForeground,
-                      ),
+                    Row(
+                      spacing: 8,
+                      children: [
+                        Text(
+                          lobby.sport.getLocalizedName(context),
+                          style: context.theme.typography.sm.copyWith(
+                            color: context.theme.colors.mutedForeground,
+                          ),
+                        ),
+                        Icon(
+                          FIcons.users,
+                          size: 12,
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                        Text(
+                          '${item.memberCount}',
+                          style: context.theme.typography.sm.copyWith(
+                            color: context.theme.colors.mutedForeground,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -164,5 +179,4 @@ class _LobbyCard extends ConsumerWidget {
       ),
     );
   }
-
 }

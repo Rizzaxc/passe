@@ -199,6 +199,15 @@
       "discoverableDescription": "Searchable by ID",
       "public": "Public",
       "publicDescription": "Open to everyone"
+    },
+    "detail": {
+      "members": "Members",
+      "noMembers": "No members yet",
+      "upcoming": "Upcoming",
+      "noUpcoming": "No upcoming sessions",
+      "scheduleEvent": "Schedule",
+      "history": "Play History",
+      "noHistory": "No past sessions"
     }
   },
   "createLobby": {

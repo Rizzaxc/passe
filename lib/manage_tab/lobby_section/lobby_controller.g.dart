@@ -13,7 +13,7 @@ part of 'lobby_controller.dart';
 final userLobbiesControllerProvider = UserLobbiesControllerProvider._();
 
 final class UserLobbiesControllerProvider
-    extends $AsyncNotifierProvider<UserLobbiesController, List<Lobby>> {
+    extends $AsyncNotifierProvider<UserLobbiesController, List<LobbyListItem>> {
   UserLobbiesControllerProvider._()
     : super(
         from: null,
@@ -36,17 +36,17 @@ final class UserLobbiesControllerProvider
 String _$userLobbiesControllerHash() =>
     r'9c1f857c7429b03d8ec26af1edfdef03e1793d86';
 
-abstract class _$UserLobbiesController extends $AsyncNotifier<List<Lobby>> {
-  FutureOr<List<Lobby>> build();
+abstract class _$UserLobbiesController extends $AsyncNotifier<List<LobbyListItem>> {
+  FutureOr<List<LobbyListItem>> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<List<Lobby>>, List<Lobby>>;
+    final ref = this.ref as $Ref<AsyncValue<List<LobbyListItem>>, List<LobbyListItem>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<List<Lobby>>, List<Lobby>>,
-              AsyncValue<List<Lobby>>,
+              AnyNotifier<AsyncValue<List<LobbyListItem>>, List<LobbyListItem>>,
+              AsyncValue<List<LobbyListItem>>,
               Object?,
               Object?
             >;

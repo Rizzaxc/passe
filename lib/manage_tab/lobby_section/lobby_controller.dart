@@ -23,33 +23,55 @@ abstract class LobbyFormState with _$LobbyFormState {
   }) = _LobbyFormState;
 }
 
+class LobbyListItem {
+  final Lobby lobby;
+  final int memberCount;
+
+  const LobbyListItem({required this.lobby, required this.memberCount});
+}
+
 @riverpod
 class UserLobbiesController extends _$UserLobbiesController {
   final supabase = Supabase.instance.client;
-  final talker = Talker();
 
   @override
-  Future<List<Lobby>> build() async {
+  Future<List<LobbyListItem>> build() async {
     final user = ref.watch(authControllerProvider).value;
     if (user == null || user.id == null) return [];
 
     final sport = ref.watch(selectedSportStateProvider).value;
     if (sport == null) return [];
 
-    try {
-      final response = await supabase
-          .from('lobby_member')
-          .select('lobby!inner(id, name, searchable_id, sport_id)')
-          .eq('user_id', user.id!)
-          .eq('lobby.sport_id', sport.index);
+    final memberRows = await supabase
+        .from('lobby_member')
+        .select('lobby!inner(id, name, searchable_id, sport_id)')
+        .eq('user_id', user.id!)
+        .eq('lobby.sport_id', sport.index);
 
-      return (response as List)
-          .map((row) => Lobby.fromJson(row['lobby'] as Map<String, dynamic>))
-          .toList();
-    } catch (e, st) {
-      talker.handle(e, st, 'Error fetching user lobbies');
-      return [];
+    final lobbies = (memberRows as List)
+        .map((row) => Lobby.fromJson(row['lobby'] as Map<String, dynamic>))
+        .toList();
+
+    if (lobbies.isEmpty) return [];
+
+    final lobbyIds = lobbies.map((l) => l.id!).toList();
+    final countRows = await supabase
+        .from('lobby_member')
+        .select('lobby_id')
+        .inFilter('lobby_id', lobbyIds);
+
+    final countMap = <String, int>{};
+    for (final row in countRows as List) {
+      final id = row['lobby_id'] as String;
+      countMap[id] = (countMap[id] ?? 0) + 1;
     }
+
+    return lobbies
+        .map((lobby) => LobbyListItem(
+              lobby: lobby,
+              memberCount: countMap[lobby.id] ?? 0,
+            ))
+        .toList();
   }
 
   Future<void> delete(String lobbyId) async {
