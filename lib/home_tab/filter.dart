@@ -185,22 +185,20 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 children: [
                   Builder(builder: (context) {
                     final fieldStyle =
-                        context.theme.multiSelectStyle.fieldStyle;
+                        context.theme.multiSelectStyle.fieldStyles.md;
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 8,
                       children: [
-                        Padding(
-                          padding: fieldStyle.labelPadding,
-                          child: DefaultTextStyle.merge(
-                            style: fieldStyle.labelTextStyle.resolve({}),
-                            child: Row(
-                              spacing: 2,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                const Icon(Icons.calendar_month),
-                                Text(context.tr('homeTab.filter.schedule')),
-                              ],
-                            ),
+                        DefaultTextStyle.merge(
+                          style: context.theme.typography.sm.copyWith(fontWeight: .bold),
+                          child: Row(
+                            spacing: 2,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Icon(Icons.calendar_month),
+                              Text(context.tr('homeTab.filter.schedule')),
+                            ],
                           ),
                         ),
                         DecoratedBox(
@@ -210,7 +208,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                               color: context.theme.colors.border,
                               width: context.theme.style.borderWidth,
                             ),
-                            borderRadius: context.theme.style.borderRadius,
+                            borderRadius: context.theme.style.borderRadius.md,
                           ),
                           child: SizedBox(
                             width: double.infinity,
@@ -250,7 +248,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                                           child: DecoratedBox(
                                             decoration: BoxDecoration(
                                               borderRadius: context
-                                                  .theme.style.borderRadius,
+                                                  .theme.style.borderRadius.md,
                                               color: context
                                                   .theme.colors.secondary,
                                             ),

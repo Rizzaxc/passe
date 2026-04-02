@@ -190,6 +190,8 @@
   "lobby": {
     "create": "Tạo Lobby",
     "edit": "Chỉnh Sửa Lobby",
+    "leader": "Đội trưởng",
+    "noActivity": "Chưa có lịch chơi",
     "nameRequired": "Tên lobby là bắt buộc",
     "nameTooShort": "Tên phải có ít nhất 3 ký tự",
     "ageGroup": "Nhóm Tuổi",
@@ -213,7 +215,11 @@
       "scheduleEvent": "Lên Lịch",
       "history": "Lịch Sử",
       "noHistory": "Chưa có lịch sử"
-    }
+    },
+    "scheduleActivity": "Lên lịch",
+    "lookingForActivity": "Chưa có buổi chơi",
+    "searchIDCopied": "Đã sao chép SearchID",
+    "searchIDExplanation": "Người chơi khác có thể dùng SearchID ở filter trang chủ để tìm thấy Lobby của bạn"
   },
   "createLobby": {
     "title": "Tạo Lobby",

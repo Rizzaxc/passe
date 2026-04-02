@@ -43,6 +43,7 @@ FThemeData get pbThemeLight {
 
   return FThemeData(
     colors: colors,
+    touch: true,
     typography: typography,
     style: style,
     buttonStyles: buttonStyles(
@@ -87,6 +88,7 @@ FThemeData get pbThemeDark {
 
   return FThemeData(
     colors: colors,
+    touch: true,
     typography: typography,
     style: style,
     selectStyle: selectStyle(colors: colors, typography: typography, style: style),
@@ -134,7 +136,7 @@ FTypography _typography({
     fontSize: 14,
     height: 1.25,
   ),
-  base: TextStyle(
+  md: TextStyle(
     color: colors.foreground,
     fontFamily: defaultFontFamily,
     fontSize: 16,
@@ -198,9 +200,11 @@ FTypography _typography({
 
 FStyle _style({required FColors colors, required FTypography typography}) =>
     FStyle(
+      sizes: FSizes.inherit(touch: true),
       formFieldStyle: FFormFieldStyle.inherit(
         colors: colors,
         typography: typography,
+        touch: true,
       ),
       focusedOutlineStyle: FFocusedOutlineStyle(
         color: colors.primary,
@@ -208,7 +212,7 @@ FStyle _style({required FColors colors, required FTypography typography}) =>
       ),
       iconStyle: IconThemeData(color: colors.primary, size: 24),
       tappableStyle: FTappableStyle(),
-      borderRadius: const FLerpBorderRadius.all(Radius.circular(12), min: 24),
+      borderRadius: const FBorderRadius(md: BorderRadius.all(Radius.circular(12))),
       borderWidth: 1,
       pagePadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       shadow: const [

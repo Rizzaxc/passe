@@ -185,7 +185,7 @@ class _SuggestionDropdown<T> extends StatelessWidget {
     return DecoratedBox(
         decoration: BoxDecoration(
           color: colors.card,
-          borderRadius: style.borderRadius,
+          borderRadius: style.borderRadius.md,
           border: Border.all(color: colors.border, width: style.borderWidth),
           boxShadow: style.shadow,
         ),

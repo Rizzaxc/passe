@@ -185,6 +185,8 @@
   "lobby": {
     "create": "Create Lobby",
     "edit": "Edit Lobby",
+    "leader": "Leader",
+    "noActivity": "No upcoming activity",
     "nameRequired": "Lobby name is required",
     "nameTooShort": "Name must be at least 3 characters",
     "ageGroup": "Age Group",
@@ -208,7 +210,11 @@
       "scheduleEvent": "Schedule",
       "history": "Play History",
       "noHistory": "No past sessions"
-    }
+    },
+    "scheduleActivity": "Schedule",
+    "lookingForActivity": "No upcoming session",
+    "searchIDCopied": "Lobby SearchID copied to clipboard",
+    "searchIDExplanation": "Other players can use this ID to join your lobby using the home screen filter."
   },
   "createLobby": {
     "title": "Create Lobby",

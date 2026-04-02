@@ -45,7 +45,13 @@ class ProfileTab extends ConsumerWidget {
             return const GuestProfileView();
           }
 
-          return SingleChildScrollView(
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(authControllerProvider);
+              await ref.read(authControllerProvider.future);
+            },
+            child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -107,6 +113,8 @@ class ProfileTab extends ConsumerWidget {
                       if (!context.mounted) return;
                       showFToast(
                         context: context,
+                        icon: const Icon(FIcons.circleX),
+                        variant: .destructive,
                         title: Text('error'.tr()),
                         description: Text('errorGeneric'.tr()),
                         alignment: .bottomCenter,
@@ -117,6 +125,7 @@ class ProfileTab extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -190,6 +199,8 @@ class ProfileTab extends ConsumerWidget {
                     if (!context.mounted) return;
                     showFToast(
                       context: context,
+                      icon: const Icon(FIcons.circleX),
+                      variant: .destructive,
                       title: Text('profile.uploadFailed'.tr()),
                       alignment: .bottomCenter,
                     );
@@ -242,6 +253,7 @@ class ProfileTab extends ConsumerWidget {
           onPress: () {
             showFToast(
               context: context,
+              icon: const Icon(FIcons.logOut),
               title: Text('profile.confirmLogout'.tr()),
               duration: const Duration(milliseconds: 1500),
               alignment: .bottomCenter,

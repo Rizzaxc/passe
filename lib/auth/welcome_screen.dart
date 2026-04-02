@@ -111,7 +111,7 @@ class _IntroPage extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             description,
-            style: context.theme.typography.base.copyWith(
+            style: context.theme.typography.md.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
             textAlign: TextAlign.center,

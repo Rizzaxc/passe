@@ -34,7 +34,7 @@ class PlaytimeSelectionScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(32.0),
                   child: Text(
                     'profile.playtimeExplanation'.tr(),
-                    style: context.theme.typography.base.copyWith(
+                    style: context.theme.typography.md.copyWith(
                       color: context.theme.colors.mutedForeground,
                     ),
                   ),

@@ -5,7 +5,7 @@ import '../core/sport_selector.dart';
 import '../home_tab/filter.dart';
 import '../router.dart';
 import '../ui/main.dart';
-import 'lobby_section/main.dart';
+import 'lobby_section/feed/main.dart';
 import 'schedule_section/main.dart';
 
 class ManageTab extends StatefulWidget {
@@ -58,6 +58,7 @@ class _ManageTabState extends State<ManageTab> with SingleTickerProviderStateMix
         ],
       ),
       child: FTabs(
+        expands: true,
         children: ManageTab.manageSections,
       ),
     );

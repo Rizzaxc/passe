@@ -43,14 +43,14 @@ class PSegmentedButton<T> extends StatelessWidget {
   static const _padding = 4.0;
 
   FButtonStyleDelta _styleDelta(BuildContext context, bool isSelected) {
-    final r = context.theme.style.borderRadius;
+    final r = context.theme.style.borderRadius.md;
     final innerRadius = Radius.circular(
       (r.topLeft.x - _padding).clamp(0.0, double.infinity),
     );
     return .delta(
       decoration: .delta([
         .all(
-          .delta(
+          .boxDelta(
             color: isSelected
                 ? context.theme.colors.background
                 : Colors.transparent,
@@ -58,12 +58,14 @@ class PSegmentedButton<T> extends StatelessWidget {
           ),
         ),
       ]),
+      contentStyle: .delta(
+        padding: .value(const EdgeInsets.symmetric(horizontal: 10, vertical: 6)),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final fieldStyle = context.theme.selectStyle.fieldStyle;
     final colors = context.theme.colors;
     final style = context.theme.style;
 
@@ -102,7 +104,7 @@ class PSegmentedButton<T> extends StatelessWidget {
     final track = DecoratedBox(
       decoration: BoxDecoration(
         color: colors.muted,
-        borderRadius: style.borderRadius,
+        borderRadius: style.borderRadius.md,
         border: Border.all(color: colors.muted),
       ),
       child: Padding(
@@ -120,18 +122,17 @@ class PSegmentedButton<T> extends StatelessWidget {
       spacing: 4,
       children: [
         if (label != null)
-          Padding(
-            padding: fieldStyle.labelPadding,
-            child: DefaultTextStyle.merge(
-              style: fieldStyle.labelTextStyle.resolve({}),
-              child: label!,
-            ),
+          DefaultTextStyle.merge(
+            style: context.theme.typography.sm.copyWith(fontWeight: .bold),
+            child: label!,
           ),
         track,
         Padding(
           padding: const EdgeInsetsDirectional.only(start: 2),
           child: Text(
-            selectedDesc,
+            '$selectedDesc\n',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: context.theme.typography.xs.copyWith(
               color: colors.mutedForeground,
             ),

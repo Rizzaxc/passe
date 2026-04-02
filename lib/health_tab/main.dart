@@ -85,24 +85,32 @@ class _HealthTabState extends ConsumerState<HealthTab> {
           const SportSelector(),
         ],
       ),
-      child: healthStatus.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Text('health.error'.tr()),
-        ),
-        data: (status) {
-          if (status == HealthLinkStatus.notLinked) {
-            return const HealthNotLinkedView();
-          }
-
-          return FTabs(
-            control: FTabControl.lifted(
-              index: _currentIndex,
-              onChange: _onTabChanged,
-            ),
-            children: _buildTabEntries(),
-          );
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(healthControllerProvider);
+          await ref.read(healthControllerProvider.future);
         },
+        child: healthStatus.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [Center(child: Text('health.error'.tr()))],
+          ),
+          data: (status) {
+            if (status == HealthLinkStatus.notLinked) {
+              return const HealthNotLinkedView();
+            }
+
+            return FTabs(
+              expands: true,
+              control: FTabControl.lifted(
+                index: _currentIndex,
+                onChange: _onTabChanged,
+              ),
+              children: _buildTabEntries(),
+            );
+          },
+        ),
       ),
     );
   }

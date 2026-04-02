@@ -1,11 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../core/model/enum.dart';
-import '../../core/model/location.dart';
-import '../../ui/search_field.dart';
+import '../../../core/model/enum.dart';
+import '../../../core/model/location.dart';
+import '../../../ui/search_field.dart';
 import 'lobby_controller.dart';
 
 /// Typeahead field for selecting a named PoI.
@@ -43,11 +43,13 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController();
-    _nameCtrl = TextEditingController();
+    _controller = TextEditingController()..addListener(_onControllerChanged);
+    _nameCtrl = TextEditingController()..addListener(_onControllerChanged);
     _streetNumberCtrl = TextEditingController();
     _streetNameCtrl = TextEditingController();
   }
+
+  void _onControllerChanged() => setState(() {});
 
   @override
   void dispose() {
@@ -131,7 +133,12 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
           Stack(
             children: [
               FTextField(
-                label: Text('createLobby.homeGround'.tr()),
+                label: Text(
+                  'createLobby.homeGround'.tr(),
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: .bold,
+                  ),
+                ),
                 hint: 'createLobby.homeGroundFreeHint'.tr(),
                 prefixBuilder: (context, style, states) => Padding(
                   padding: const EdgeInsets.fromLTRB(8, 4, 0, 4),
@@ -142,7 +149,7 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
                   onChange: notify,
                 ),
               ),
-              _modeToggleIcon(context),
+              if (_nameCtrl.text.isEmpty) _modeToggleIcon(context),
             ],
           ),
           // Row 2: Street number + street name
@@ -221,7 +228,7 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
     }
 
     if (_selected != null) {
-      final fieldStyle = context.theme.textFieldStyle;
+      final fieldStyle = context.theme.textFieldStyles.md;
       final locAddr = [
         _selected!.streetNumber?.toString(),
         _selected!.streetName,
@@ -236,7 +243,10 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
             padding: fieldStyle.labelPadding,
             child: DefaultTextStyle.merge(
               style: fieldStyle.labelTextStyle.resolve({}),
-              child: Text('createLobby.homeGround'.tr()),
+              child: Text(
+                'createLobby.homeGround'.tr(),
+                style: context.theme.typography.sm.copyWith(fontWeight: .bold),
+              ),
             ),
           ),
           FTileGroup(
@@ -272,7 +282,10 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
     return Stack(
       children: [
         PSearchField<Location>(
-          label: Text('createLobby.homeGround'.tr()),
+          label: Text(
+            'createLobby.homeGround'.tr(),
+            style: context.theme.typography.sm.copyWith(fontWeight: .bold),
+          ),
           hint: 'createLobby.homeGroundHint'.tr(),
           controller: _controller,
           suggestionsBuilder: lobbyFormController.searchHomeGround,
@@ -311,7 +324,7 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
             );
           },
         ),
-        _modeToggleIcon(context),
+        if (_controller.text.isEmpty) _modeToggleIcon(context),
       ],
     );
   }
@@ -341,10 +354,7 @@ class _SingleDistrictSelect extends StatelessWidget {
       hint: context.tr('createLobby.district'),
       format: (d) => d.getLocalizedFullName(context),
       autoHide: true,
-      control: FSelectControl.lifted(
-        value: selected,
-        onChange: onChanged,
-      ),
+      control: FSelectControl.lifted(value: selected, onChange: onChanged),
       children: [
         for (final entry in groups.entries)
           FSelectSection<District>.rich(

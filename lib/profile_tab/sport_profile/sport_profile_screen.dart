@@ -74,6 +74,8 @@ class SportProfileScreen extends ConsumerWidget {
                   if (!context.mounted) return;
                   showFToast(
                     context: context,
+                    icon: const Icon(FIcons.circleX),
+                    variant: .destructive,
                     title: Text('error'.tr()),
                     description: Text('errorGeneric'.tr()),
                     alignment: .bottomCenter,

@@ -63,6 +63,8 @@ class _AuthFormState extends ConsumerState<AuthForm> {
         }
         showFToast(
           context: context,
+          icon: const Icon(FIcons.circleX),
+          variant: .destructive,
           title: Text('auth.loginFailed'.tr()),
           description: Text(message.tr()),
           alignment: .bottomCenter,
@@ -87,6 +89,8 @@ class _AuthFormState extends ConsumerState<AuthForm> {
         }
         showFToast(
           context: context,
+          icon: const Icon(FIcons.circleX),
+          variant: .destructive,
           title: Text('auth.signUpFailed'.tr()),
           description: Text(message.tr()),
           alignment: .bottomCenter,
@@ -165,6 +169,8 @@ class SocialAuthSection extends ConsumerWidget {
         if (!context.mounted) return;
         showFToast(
           context: context,
+          icon: const Icon(FIcons.circleX),
+          variant: .destructive,
           title: Text(errorTitle),
           description: Text('errorGeneric'.tr()),
           alignment: .bottomCenter,
@@ -176,10 +182,9 @@ class SocialAuthSection extends ConsumerWidget {
     const contentWidth = 200.0;
 
     Widget buildRow({
-      required IconData icon,
+      required Widget icon,
       required String label,
       required VoidCallback onTap,
-      Color? iconColor,
     }) {
       final buttonStyle = context.theme.buttonStyles.outline.base;
 
@@ -199,10 +204,10 @@ class SocialAuthSection extends ConsumerWidget {
             children: [
               SizedBox(
                 width: iconBoxWidth,
-                child: Icon(icon, color: iconColor),
+                child: icon,
               ),
               const SizedBox(width: 16),
-              Text(label, style: context.theme.typography.base,),
+              Text(label, style: context.theme.typography.md,),
             ],
           ),
         ),
@@ -219,18 +224,16 @@ class SocialAuthSection extends ConsumerWidget {
           spacing: 8,
           children: [
             buildRow(
-              icon: FontAwesomeIcons.google,
+              icon: FaIcon(FontAwesomeIcons.google, color: const Color(0xFF4285F4)),
               label: 'auth.googleContinue'.tr(),
-              iconColor: const Color(0xFF4285F4),
               onTap: () => handleAuthAction(
                 () => ref.read(authControllerProvider.notifier).signInWithGoogle(),
                 'auth.googleLoginFailed'.tr(),
               ),
             ),
             buildRow(
-              icon: FontAwesomeIcons.apple,
+              icon: FaIcon(FontAwesomeIcons.apple, color: context.theme.colors.foreground),
               label: 'auth.appleContinue'.tr(),
-              iconColor: context.theme.colors.foreground,
               onTap: () => handleAuthAction(
                 () => ref.read(authControllerProvider.notifier).signInWithApple(),
                 'auth.appleLoginFailed'.tr(),
@@ -238,7 +241,7 @@ class SocialAuthSection extends ConsumerWidget {
             ),
             if (showGuestOption)
               buildRow(
-                icon: FIcons.forward,
+                icon: Icon(FIcons.forward),
                 label: 'auth.guestContinue'.tr(),
                 onTap: () => handleAuthAction(
                   () => ref.read(authControllerProvider.notifier).continueAsGuest(),

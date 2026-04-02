@@ -38,18 +38,18 @@ class AgeGroupSelectionScreen extends ConsumerWidget {
           ),
           children: <FSelectTile<AgeGroup>>[
             FSelectTile.suffix(
-              prefix: Icon(FontAwesomeIcons.graduationCap),
+              prefix: FaIcon(FontAwesomeIcons.graduationCap),
               title: Text(AgeGroup.student.getLocalizedName(context)),
               value: AgeGroup.student,
             ),
             FSelectTile.suffix(
-              prefix: Icon(FontAwesomeIcons.briefcase),
+              prefix: FaIcon(FontAwesomeIcons.briefcase),
 
               title: Text(AgeGroup.mature.getLocalizedName(context)),
               value: AgeGroup.mature,
             ),
             FSelectTile.suffix(
-              prefix: Icon(FontAwesomeIcons.wineGlass),
+              prefix: FaIcon(FontAwesomeIcons.wineGlass),
 
               title: Text(AgeGroup.middleAge.getLocalizedName(context)),
               value: AgeGroup.middleAge,

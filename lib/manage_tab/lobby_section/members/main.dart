@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../ui/empty_section_placeholder.dart';
 import 'controller.dart';
 
 class MembersSection extends ConsumerWidget {
@@ -39,13 +40,8 @@ class _MembersRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (members.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Text(
-          'lobby.detail.noMembers'.tr(),
-          style: context.theme.typography.sm
-              .copyWith(color: context.theme.colors.mutedForeground),
-        ),
+      return PEmptySectionPlaceholder(
+        subtitle: 'lobby.detail.noMembers'.tr(),
       );
     }
 
@@ -80,7 +76,7 @@ class _MemberChip extends StatelessWidget {
             member.username.isNotEmpty
                 ? member.username[0].toUpperCase()
                 : '?',
-            style: context.theme.typography.base.copyWith(
+            style: context.theme.typography.md.copyWith(
               color: context.theme.colors.secondaryForeground,
               fontWeight: FontWeight.w600,
             ),

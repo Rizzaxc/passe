@@ -103,7 +103,7 @@ class Pubox extends HookConsumerWidget {
       builder: (_, child) => FTheme(
         data: ui.pbThemeLight,
         child: DefaultTextStyle(
-          style: ui.pbThemeLight.typography.base,
+          style: ui.pbThemeLight.typography.md,
           child: FToaster(child: child!),
         ),
       ),

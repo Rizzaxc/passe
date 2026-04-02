@@ -15,7 +15,7 @@ FTabsStyle tabsStyle({
 }) => FTabsStyle(
   decoration: BoxDecoration(
     border: .all(color: colors.muted),
-    borderRadius: style.borderRadius,
+    borderRadius: style.borderRadius.md,
     color: colors.muted,
   ),
   labelTextStyle: .from(
@@ -30,7 +30,7 @@ FTabsStyle tabsStyle({
   ),
   indicatorDecoration: BoxDecoration(
     color: colors.background,
-    borderRadius: style.borderRadius,
+    borderRadius: style.borderRadius.md,
   ),
   focusedOutlineStyle: style.focusedOutlineStyle,
   padding: const .all(4),

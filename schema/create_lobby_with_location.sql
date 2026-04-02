@@ -30,7 +30,7 @@ AS $$
 DECLARE
   v_user_id    uuid;
   v_loc_id     uuid;
-  v_lobby_id   text;
+  v_lobby_id   uuid;
   v_result     jsonb;
 BEGIN
   v_user_id := auth.uid();
@@ -41,8 +41,8 @@ BEGIN
   IF p_home_ground_id IS NOT NULL THEN
     -- use the existing geocoded location directly
     v_loc_id := p_home_ground_id;
-  ELSE
-    -- insert a new free-text location
+  ELSIF p_location_name IS NOT NULL OR p_street_name IS NOT NULL OR p_city IS NOT NULL THEN
+    -- insert a new free-text location only when at least one field is provided
     INSERT INTO public.location (name, street_number, street_name, district, city)
     VALUES (
       NULLIF(TRIM(COALESCE(p_location_name, '')), ''),
@@ -52,6 +52,7 @@ BEGIN
       NULLIF(p_city,          '')
     )
     RETURNING id INTO v_loc_id;
+  -- else v_loc_id remains NULL → lobby created without a home ground
   END IF;
 
   INSERT INTO public.lobby (name, sport_id, visibility, playtime, details, home_ground, captain_id)
@@ -68,7 +69,7 @@ BEGIN
 
   -- add captain as first member
   INSERT INTO public.lobby_member (user_id, lobby_id)
-  VALUES (v_user_id, v_lobby_id::uuid)
+  VALUES (v_user_id, v_lobby_id)
   ON CONFLICT DO NOTHING;
 
   SELECT row_to_json(l)::jsonb INTO v_result

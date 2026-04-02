@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../../ui/calendar.dart';
+import '../../ui/empty_section_placeholder.dart';
 
 class ScheduleSection extends StatefulWidget {
   const ScheduleSection({super.key});
@@ -47,41 +48,15 @@ class _ScheduleBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (selectedDate == null) {
-      return Padding(
-        padding: const EdgeInsets.all(32),
-        child: Text(
-          'manageTab.schedule.selectDate'.tr(),
-          textAlign: TextAlign.center,
-        ),
+      return PEmptySectionPlaceholder(
+        subtitle: 'manageTab.schedule.selectDate'.tr(),
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            FIcons.calendar,
-            size: 48,
-            color: context.theme.colors.mutedForeground,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            DateFormat.yMMMMd().format(selectedDate!),
-            style: context.theme.typography.lg.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'manageTab.schedule.stub'.tr(),
-            style: context.theme.typography.base.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
-        ],
-      ),
+    return PEmptySectionPlaceholder(
+      hero: Icon(FIcons.calendar, size: 48, color: context.theme.colors.mutedForeground),
+      title: DateFormat.yMMMMd().format(selectedDate!),
+      subtitle: 'manageTab.schedule.stub'.tr(),
     );
   }
 }

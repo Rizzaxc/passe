@@ -5,10 +5,10 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import '../../core/model/enum.dart';
-import '../../core/model/lobby.dart';
-import '../../core/model/timeslot.dart';
-import '../../ui/main.dart';
+import '../../../core/model/enum.dart';
+import '../../../core/model/lobby.dart';
+import '../../../core/model/timeslot.dart';
+import '../../../ui/main.dart';
 import 'home_ground_selector.dart';
 import 'lobby_controller.dart';
 
@@ -125,7 +125,7 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
                   label: Text('lobby.ageGroup'.tr()),
                   values: AgeGroup.values,
                   selected: lobby.details?.ageGroup,
-                  format: (ag) => Icon(switch (ag) {
+                  format: (ag) => FaIcon(switch (ag) {
                     AgeGroup.student => FontAwesomeIcons.graduationCap,
                     AgeGroup.mature => FontAwesomeIcons.briefcase,
                     AgeGroup.middleAge => FontAwesomeIcons.wineGlass,
@@ -204,6 +204,8 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
       if (!context.mounted) return;
       showFToast(
         context: context,
+        icon: const Icon(FIcons.circleX),
+        variant: .destructive,
         title: Text('lobby.saveFailed'.tr()),
         description: Text('errorGeneric'.tr()),
         alignment: .bottomCenter,
@@ -233,18 +235,15 @@ class _TimeslotSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fieldStyle = context.theme.multiSelectStyle.fieldStyle;
+    final fieldStyle = context.theme.multiSelectStyle.fieldStyles.md;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 8,
       children: [
-        Padding(
-          padding: fieldStyle.labelPadding,
-          child: DefaultTextStyle.merge(
-            style: fieldStyle.labelTextStyle.resolve({}),
-            child: Text('createLobby.playtime'.tr()),
-          ),
+        Text(
+          'createLobby.playtime'.tr(),
+          style: context.theme.typography.sm.copyWith(fontWeight: .bold),
         ),
 
         // Chips container
@@ -255,7 +254,7 @@ class _TimeslotSection extends StatelessWidget {
               color: context.theme.colors.border,
               width: context.theme.style.borderWidth,
             ),
-            borderRadius: context.theme.style.borderRadius,
+            borderRadius: context.theme.style.borderRadius.md,
           ),
           child: SizedBox(
             width: double.infinity,
@@ -284,7 +283,8 @@ class _TimeslotSection extends StatelessWidget {
                         onTap: () => onRemove(timeslot),
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            borderRadius: context.theme.style.borderRadius,
+                            // TODO: check
+                            borderRadius: context.theme.style.borderRadius.md,
                             color: context.theme.colors.secondary,
                           ),
                           child: Padding(

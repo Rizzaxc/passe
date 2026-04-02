@@ -122,7 +122,7 @@ class _TimeslotPickerState extends State<TimeslotPicker> {
                         (chunk) => Center(
                           child: Text(
                             chunk.getFullName(context),
-                            style: context.theme.typography.base,
+                            style: context.theme.typography.md,
                           ),
                         ),
                       )
@@ -171,7 +171,7 @@ class _TimeslotPickerState extends State<TimeslotPicker> {
                         (day) => Center(
                           child: Text(
                             day.getFullName(context),
-                            style: context.theme.typography.base,
+                            style: context.theme.typography.md,
                           ),
                         ),
                       )

@@ -33,25 +33,28 @@ class _HomeTabState extends ConsumerState<HomeTab>
 
   static const _sections = [
     (
-      icon: CupertinoIcons.person_2_fill,
       titleKey: 'home.teammate',
       child: TeammateSubtab(),
     ),
     (
-      icon: FontAwesomeIcons.fireFlameCurved,
       titleKey: 'home.challenger',
       child: ChallengerSubtab(),
     ),
     (
-      icon: FontAwesomeIcons.flagCheckered,
       titleKey: 'home.professional',
       child: ProfessionalSubtab(),
     ),
     (
-      icon: FontAwesomeIcons.locationDot,
       titleKey: 'home.location',
       child: LocationSubtab(),
     ),
+  ];
+
+  static const _icons = [
+    Icon(CupertinoIcons.person_2_fill),
+    FaIcon(FontAwesomeIcons.fireFlameCurved),
+    FaIcon(FontAwesomeIcons.flagCheckered),
+    FaIcon(FontAwesomeIcons.locationDot),
   ];
 
   @override
@@ -71,7 +74,7 @@ class _HomeTabState extends ConsumerState<HomeTab>
       final section = _sections[index];
 
       return FTabEntry(
-        label: Icon(section.icon, key: const ValueKey('icon')),
+        label: KeyedSubtree(key: const ValueKey('icon'), child: _icons[index]),
         child: section.child,
       );
     });

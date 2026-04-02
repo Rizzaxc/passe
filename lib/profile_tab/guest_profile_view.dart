@@ -30,7 +30,7 @@ class GuestProfileView extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'profile.guestMessage'.tr(),
-            style: context.theme.typography.base.copyWith(
+            style: context.theme.typography.md.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
             textAlign: TextAlign.center,

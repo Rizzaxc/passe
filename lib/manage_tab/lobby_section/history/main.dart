@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../core/model/activity.dart';
+import '../../../ui/empty_section_placeholder.dart';
 import 'controller.dart';
 
 class HistorySection extends ConsumerWidget {
@@ -22,14 +23,8 @@ class HistorySection extends ConsumerWidget {
         child: Text('errorGeneric'.tr()),
       ),
       data: (activities) => activities.isEmpty
-          ? Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'lobby.detail.noHistory'.tr(),
-                style: context.theme.typography.sm.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
-              ),
+          ? PEmptySectionPlaceholder(
+              subtitle: 'lobby.detail.noHistory'.tr(),
             )
           : Column(
               children: activities

@@ -98,7 +98,7 @@ class _PDualButtonState extends State<PDualButton> {
     }
 
     return .delta(
-      decoration: .delta([.all(.delta(borderRadius: radius))]),
+      decoration: .delta([.all(.boxDelta(borderRadius: radius))]),
     );
   }
 
@@ -108,7 +108,7 @@ class _PDualButtonState extends State<PDualButton> {
       Expanded(
         flex: widget.flex,
         child: FButton(
-          variant: widget.firstVariant,
+          variant: widget.firstVariant ?? .primary,
           style: _styleDelta(true),
           onPress: _isProcessing ? null : _handleFirstPressed,
           child: widget.firstChild,
@@ -122,7 +122,7 @@ class _PDualButtonState extends State<PDualButton> {
       Expanded(
         flex: 100 - widget.flex,
         child: FButton(
-          variant: widget.secondVariant,
+          variant: widget.secondVariant ?? .primary,
           style: _styleDelta(false),
           onPress: _isProcessing ? null : _handleSecondPressed,
           child: widget.secondChild,

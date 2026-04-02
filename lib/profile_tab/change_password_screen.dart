@@ -38,6 +38,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       if (!mounted) return;
       showFToast(
         context: context,
+        icon: const Icon(FIcons.circleCheck),
         title: Text('profile.passwordChanged'.tr()),
         alignment: .bottomCenter,
       );
@@ -46,6 +47,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       if (!mounted) return;
       showFToast(
         context: context,
+        icon: const Icon(FIcons.circleX),
+        variant: .destructive,
         title: Text('error'.tr()),
         description: Text('errorGeneric'.tr()),
         alignment: .bottomCenter,

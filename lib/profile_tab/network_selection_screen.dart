@@ -60,7 +60,7 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                                   .toggleCity(city),
                               child: FBadge(
                                 variant: searchState.cityFilters.contains(city)
-                                    ? null
+                                    ? .primary
                                     : .outline,
                                 child: Text(city.getLocalizedName(context)),
                               ),
@@ -72,7 +72,7 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                                   .toggleCategory(category),
                               child: FBadge(
                                 variant: searchState.categoryFilters.contains(category)
-                                    ? null
+                                    ? .primary
                                     : .outline,
                                 child: Text(category.getLocalizedName(context)),
                               ),
@@ -102,7 +102,7 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                               if (!success && context.mounted) {
                                 showFToast(
                                   context: context,
-
+                                  icon: const Icon(FIcons.triangleAlert),
                                   title: Text('profile.networkMaxReached'.tr()),
                                   alignment: .bottomCenter,
                                 );
@@ -125,7 +125,7 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                       Expanded(
                         child: Text(
                           'profile.selectedNetworks'.tr(),
-                          style: context.theme.typography.base.copyWith(
+                          style: context.theme.typography.md.copyWith(
                             fontWeight: .bold
                           ),
                         ),
@@ -164,7 +164,7 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                                     : null,
                               ),
                               suffix: FBadge(
-                                variant: network.isAlumni ? .outline : null,
+                                variant: network.isAlumni ? .outline : .primary,
                                 child: Text(
                                   network.isAlumni
                                       ? 'profile.alumni'.tr()

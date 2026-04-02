@@ -57,8 +57,8 @@ FSelectStyle selectStyle({
   required FTypography typography,
   required FStyle style,
 }) => FSelectStyle(
-  fieldStyle: .inherit(colors: colors, typography: typography, style: style),
-  searchStyle: .inherit(colors: colors, typography: typography, style: style),
-  contentStyle: .inherit(colors: colors, typography: typography, style: style),
+  fieldStyles: .inherit(colors: colors, typography: typography, style: style, touch: true),
+  searchStyle: .inherit(colors: colors, typography: typography, style: style, touch: true),
+  contentStyle: .inherit(colors: colors, typography: typography, style: style, touch: true),
   emptyTextStyle: typography.sm,
 );

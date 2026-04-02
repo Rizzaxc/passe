@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'history/main.dart';
-import 'lobby_form_sheet.dart';
+import 'feed/lobby_form_sheet.dart';
 import 'members/controller.dart';
 import 'members/main.dart';
 import 'upcoming/main.dart';
@@ -24,7 +24,7 @@ class LobbyDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final memberCount = ref
         .watch(lobbyMembersControllerProvider(lobbyId))
-        .valueOrNull
+        .value
         ?.length;
 
     return FScaffold(

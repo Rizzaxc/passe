@@ -3,12 +3,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
-import '../../auth/auth_controller.dart';
-import '../../core/model/enum.dart';
-import '../../core/model/lobby.dart';
-import '../../core/model/location.dart';
-import '../../core/model/timeslot.dart';
-import '../../core/state/selected_sport_state.dart';
+import '../../../auth/auth_controller.dart';
+import '../../../core/model/enum.dart';
+import '../../../core/model/lobby.dart';
+import '../../../core/model/location.dart';
+import '../../../core/model/timeslot.dart';
+import '../../../core/state/selected_sport_state.dart';
 
 part 'lobby_controller.freezed.dart';
 part 'lobby_controller.g.dart';
@@ -26,13 +26,16 @@ abstract class LobbyFormState with _$LobbyFormState {
 class LobbyListItem {
   final Lobby lobby;
   final int memberCount;
+  final DateTime? nextActivity; // TODO: populate from schedule
+  final String? homeGroundName;
 
-  const LobbyListItem({required this.lobby, required this.memberCount});
+  const LobbyListItem({required this.lobby, required this.memberCount, this.nextActivity, this.homeGroundName});
 }
 
 @riverpod
 class UserLobbiesController extends _$UserLobbiesController {
   final supabase = Supabase.instance.client;
+  final talker = Talker();
 
   @override
   Future<List<LobbyListItem>> build() async {
@@ -42,17 +45,34 @@ class UserLobbiesController extends _$UserLobbiesController {
     final sport = ref.watch(selectedSportStateProvider).value;
     if (sport == null) return [];
 
-    final memberRows = await supabase
-        .from('lobby_member')
-        .select('lobby!inner(id, name, searchable_id, sport_id)')
-        .eq('user_id', user.id!)
-        .eq('lobby.sport_id', sport.index);
+    final lobbyRows = await supabase
+        .from('lobby')
+        .select('id, name, searchable_id, sport_id, captain_id, home_ground, location(name), lobby_member!inner(user_id)')
+        .eq('sport_id', sport.index)
+        .eq('lobby_member.user_id', user.id!);
 
-    final lobbies = (memberRows as List)
-        .map((row) => Lobby.fromJson(row['lobby'] as Map<String, dynamic>))
+    talker.log(lobbyRows, logLevel: .debug);
+
+    final lobbies = (lobbyRows as List)
+        .map((row) {
+          final data = Map<String, dynamic>.from(row as Map)
+            ..remove('lobby_member')
+            ..remove('location');
+          return Lobby.fromJson(data);
+        })
         .toList();
 
     if (lobbies.isEmpty) return [];
+
+    final homeGroundNames = <String, String>{};
+    for (final row in lobbyRows as List) {
+      final id = (row as Map)['id'] as String?;
+      final loc = row['location'];
+      if (id != null && loc is Map) {
+        final locName = loc['name'] as String?;
+        if (locName != null) homeGroundNames[id] = locName;
+      }
+    }
 
     final lobbyIds = lobbies.map((l) => l.id!).toList();
     final countRows = await supabase
@@ -70,6 +90,7 @@ class UserLobbiesController extends _$UserLobbiesController {
         .map((lobby) => LobbyListItem(
               lobby: lobby,
               memberCount: countMap[lobby.id] ?? 0,
+              homeGroundName: homeGroundNames[lobby.id],
             ))
         .toList();
   }

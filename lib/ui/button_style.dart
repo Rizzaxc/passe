@@ -14,12 +14,12 @@ FButtonStyle buttonStyle({
 }) => FButtonStyle(
   decoration: .from(
     BoxDecoration(
-      borderRadius: style.borderRadius,
+      borderRadius: style.borderRadius.md,
       color: color,
     ),
     variants: {
-      [.disabled]: .delta(color: colors.disable(color)),
-      [.hovered, .pressed]: .delta(color: colors.hover(color)),
+      [.disabled]: .boxDelta(color: colors.disable(color)),
+      [.hovered, .pressed]: .boxDelta(color: colors.hover(color)),
     },
   ),
   focusedOutlineStyle: style.focusedOutlineStyle,
@@ -45,7 +45,7 @@ FButtonContentStyle _buttonContentStyle({
   required Color disabled,
 }) => FButtonContentStyle(
   textStyle: .from(
-    typography.base.copyWith(
+    typography.md.copyWith(
       color: enabled,
       fontWeight: FontWeight.w500,
       height: 1,

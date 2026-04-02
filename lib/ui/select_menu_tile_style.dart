@@ -67,7 +67,7 @@ extension CustomFSelectMenuTileStyle on Never {
       typography: typography,
     );
     return .new(
-      menuStyle: .inherit(colors: colors, style: style, typography: typography),
+      menuStyle: .inherit(colors: colors, style: style, typography: typography, touch: true),
       tileStyle: .inherit(colors: colors, typography: typography, style: style).copyWith(
         backgroundColor: .delta([.all(colors.background)]),
       ),
@@ -87,12 +87,12 @@ extension CustomFSelectMenuTileStyle on Never {
   }) => .new(
     decoration: BoxDecoration(
       border: .all(color: colors.border, width: style.borderWidth),
-      borderRadius: style.borderRadius,
+      borderRadius: style.borderRadius.md,
     ),
     dividerColor: .all(colors.border),
     dividerWidth: style.borderWidth,
     labelTextStyle: FVariants.from(
-      typography.base.copyWith(
+      typography.md.copyWith(
         color:
             style.formFieldStyle.labelTextStyle.base.color ?? colors.foreground,
         fontWeight: .w600,
@@ -101,10 +101,10 @@ extension CustomFSelectMenuTileStyle on Never {
         [.disabled]: .delta(color: colors.disable(colors.foreground)),
       },
     ),
-    tileStyles: FVariants.from(
-      .inherit(colors: colors, typography: typography, style: style).copyWith(
+    tileStyles: FTileStyles(FVariants.from(
+      FTileStyle.inherit(colors: colors, typography: typography, style: style).copyWith(
         decoration: .delta([
-          .all(const .delta(border: null, borderRadius: null)),
+          .all(const .shapeDelta(shape: RoundedSuperellipseBorder())),
         ]),
       ),
       variants: {
@@ -124,7 +124,7 @@ extension CustomFSelectMenuTileStyle on Never {
           ),
         ),
       },
-    ),
+    )),
     descriptionTextStyle: style.formFieldStyle.descriptionTextStyle.apply([
       .all(
         .delta(fontSize: typography.xs.fontSize, height: typography.xs.height),
@@ -180,7 +180,8 @@ extension CustomFSelectMenuTileStyle on Never {
           [.disabled]: .delta(color: disabledMutedForeground),
         },
       ),
-      padding: const .directional(start: 11, top: 7.5, bottom: 7.5, end: 6),
+      suffixedPadding: const EdgeInsetsDirectional.only(start: 11, top: 7.5, bottom: 7.5, end: 6),
+      unsuffixedPadding: const EdgeInsetsDirectional.only(start: 11, top: 7.5, bottom: 7.5, end: 6),
       prefixIconSpacing: 10,
       titleSpacing: 3,
       middleSpacing: 4,
@@ -206,7 +207,7 @@ extension CustomFSelectMenuTileStyle on Never {
         [.disabled]: typography.sm.copyWith(color: colors.disable(color)),
       },
     ),
-    padding: const .directional(start: 15, top: 7.5, bottom: 7.5, end: 10),
+    padding: const EdgeInsetsDirectional.only(start: 15, top: 7.5, bottom: 7.5, end: 10),
     prefixIconSpacing: 10,
   );
 }

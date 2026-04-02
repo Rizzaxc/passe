@@ -43,6 +43,8 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
       if (!mounted) return;
       showFToast(
         context: context,
+        icon: const Icon(FIcons.circleX),
+        variant: .destructive,
         title: Text('profile.usernameTaken'.tr()),
         alignment: .bottomCenter,
       );
@@ -50,6 +52,8 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
       if (!mounted) return;
       showFToast(
         context: context,
+        icon: const Icon(FIcons.circleX),
+        variant: .destructive,
         title: Text('error'.tr()),
         description: Text('errorGeneric'.tr()),
         alignment: .bottomCenter,
