@@ -57,10 +57,16 @@ class LobbySubtab extends ConsumerWidget {
                     title: 'manageTab.lobby.empty.title'.tr(),
                     subtitle: 'manageTab.lobby.empty.message'.tr(),
                   )
-                : ListView.separated(
-                    padding: EdgeInsets.symmetric(vertical: 4),
+                : GridView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          childAspectRatio: 0.85,
+                        ),
                     itemCount: lobbies.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, index) =>
                         _LobbyCard(item: lobbies[index]),
                   ),
@@ -191,6 +197,33 @@ class _LobbyCard extends ConsumerWidget {
   }
 }
 
+class _LobbyAvatar extends StatelessWidget {
+  final String name;
+
+  const _LobbyAvatar({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        color: context.theme.colors.secondary,
+        borderRadius: context.theme.style.borderRadius.md,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: context.theme.typography.xl2.copyWith(
+          fontWeight: FontWeight.bold,
+          color: context.theme.colors.primary,
+        ),
+      ),
+    );
+  }
+}
+
 class _ActionButtons extends StatelessWidget {
   final Lobby lobby;
 
@@ -232,29 +265,3 @@ class _ActionButtons extends StatelessWidget {
   }
 }
 
-class _LobbyAvatar extends StatelessWidget {
-  final String name;
-
-  const _LobbyAvatar({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        color: context.theme.colors.secondary,
-        shape: BoxShape.circle,
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        initial,
-        style: context.theme.typography.xl.copyWith(
-          fontWeight: .bold,
-          color: context.theme.colors.secondaryForeground,
-        ),
-      ),
-    );
-  }
-}

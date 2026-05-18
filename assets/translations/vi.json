@@ -110,10 +110,24 @@
       "retry": "Thử lại"
     },
     "teammate": {
-      "title": "Đồng đội"
+      "title": "Đồng đội",
+      "join": "Xin Vào",
+      "sent": "Đã Gửi"
     },
     "challenger": {
-      "title": "Đối thủ"
+      "title": "Đối thủ",
+      "challenge": "Thách Đấu",
+      "empty": {
+        "title": "Không có đối thủ nào",
+        "message": "Thử điều chỉnh filter hoặc quay lại sau"
+      }
+    },
+    "location": {
+      "viewMap": "Xem Bản Đồ",
+      "empty": {
+        "title": "Không tìm thấy địa điểm",
+        "message": "Thử nhập từ khoá hoặc điều chỉnh filter"
+      }
     },
     "professional": {
       "title": "Trung lập",

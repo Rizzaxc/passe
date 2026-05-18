@@ -13,7 +13,7 @@ part of 'feed_controller.dart';
 final challengerFeedProvider = ChallengerFeedProvider._();
 
 final class ChallengerFeedProvider
-    extends $AsyncNotifierProvider<ChallengerFeed, List<Map<String, dynamic>>> {
+    extends $AsyncNotifierProvider<ChallengerFeed, List<LobbyFeedItem>> {
   ChallengerFeedProvider._()
     : super(
         from: null,
@@ -35,26 +35,22 @@ final class ChallengerFeedProvider
 
 String _$challengerFeedHash() => r'a3ca2a5755a520cc00c48228f00068c98bcafe8b';
 
-abstract class _$ChallengerFeed
-    extends $AsyncNotifier<List<Map<String, dynamic>>> {
-  FutureOr<List<Map<String, dynamic>>> build();
+abstract class _$ChallengerFeed extends $AsyncNotifier<List<LobbyFeedItem>> {
+  FutureOr<List<LobbyFeedItem>> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final ref =
         this.ref
-            as $Ref<
-              AsyncValue<List<Map<String, dynamic>>>,
-              List<Map<String, dynamic>>
-            >;
+            as $Ref<AsyncValue<List<LobbyFeedItem>>, List<LobbyFeedItem>>;
     final element =
         ref.element
             as $ClassProviderElement<
               AnyNotifier<
-                AsyncValue<List<Map<String, dynamic>>>,
-                List<Map<String, dynamic>>
+                AsyncValue<List<LobbyFeedItem>>,
+                List<LobbyFeedItem>
               >,
-              AsyncValue<List<Map<String, dynamic>>>,
+              AsyncValue<List<LobbyFeedItem>>,
               Object?,
               Object?
             >;

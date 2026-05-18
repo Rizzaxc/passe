@@ -2,8 +2,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+
 import '../../ui/main.dart';
 import '../filter.dart';
+import '../lobby_feed_card.dart';
 import 'feed_controller.dart';
 
 class ChallengerSubtab extends ConsumerWidget {
@@ -27,17 +29,17 @@ class ChallengerSubtab extends ConsumerWidget {
             },
             child: feed.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => ListView(
+              error: (_, __) => ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  Center(
-                    child: Text(
-                      e.toString(),
-                      style: context.theme.typography.sm.copyWith(
-                        color: context.theme.colors.destructive,
-                      ),
-                      textAlign: TextAlign.center,
+                  PEmptySectionPlaceholder(
+                    hero: Icon(
+                      FIcons.searchX,
+                      size: 64,
+                      color: context.theme.colors.mutedForeground,
                     ),
+                    title: 'homeTab.empty.title'.tr(),
+                    subtitle: 'homeTab.empty.message'.tr(),
                   ),
                 ],
               ),
@@ -46,18 +48,33 @@ class ChallengerSubtab extends ConsumerWidget {
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
                         PEmptySectionPlaceholder(
-                          hero: Icon(FIcons.searchX, size: 64, color: context.theme.colors.mutedForeground),
+                          hero: Icon(
+                            FIcons.searchX,
+                            size: 64,
+                            color: context.theme.colors.mutedForeground,
+                          ),
                           title: 'homeTab.empty.title'.tr(),
                           subtitle: 'homeTab.empty.message'.tr(),
                         ),
                       ],
                     )
-                  : ListView.builder(
+                  : ListView.separated(
                       physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(vertical: 4),
                       itemCount: items.length,
-                      itemBuilder: (context, index) => ListTile(
-                        title: Text(items[index].toString()),
-                      ),
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        return LobbyFeedCard(
+                          item: item,
+                          action: FButton(
+                            size: .sm,
+                            variant: .secondary,
+                            onPress: null, // TODO: challenge flow pending lobby_challenge table
+                            child: Text('homeTab.challenger.challenge'.tr()),
+                          ),
+                        );
+                      },
                     ),
             ),
           ),

@@ -13,7 +13,7 @@ part of 'feed_controller.dart';
 final locationFeedProvider = LocationFeedProvider._();
 
 final class LocationFeedProvider
-    extends $AsyncNotifierProvider<LocationFeed, List<Map<String, dynamic>>> {
+    extends $AsyncNotifierProvider<LocationFeed, List<Location>> {
   LocationFeedProvider._()
     : super(
         from: null,
@@ -35,26 +35,18 @@ final class LocationFeedProvider
 
 String _$locationFeedHash() => r'c84a97b07135ae0c26509b022daf44239cbb8ea1';
 
-abstract class _$LocationFeed
-    extends $AsyncNotifier<List<Map<String, dynamic>>> {
-  FutureOr<List<Map<String, dynamic>>> build();
+abstract class _$LocationFeed extends $AsyncNotifier<List<Location>> {
+  FutureOr<List<Location>> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final ref =
-        this.ref
-            as $Ref<
-              AsyncValue<List<Map<String, dynamic>>>,
-              List<Map<String, dynamic>>
-            >;
+        this.ref as $Ref<AsyncValue<List<Location>>, List<Location>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<
-                AsyncValue<List<Map<String, dynamic>>>,
-                List<Map<String, dynamic>>
-              >,
-              AsyncValue<List<Map<String, dynamic>>>,
+              AnyNotifier<AsyncValue<List<Location>>, List<Location>>,
+              AsyncValue<List<Location>>,
               Object?,
               Object?
             >;

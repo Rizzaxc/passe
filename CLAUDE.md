@@ -60,3 +60,101 @@ The app supports English and Vietnamese. Translations are stored in JSON files i
 
 Make sure to keep the English industry names as keys exactly as they appear in the database and provide the Vietnamese
 translations as values.
+
+---
+
+## Feature Design Notes
+
+### Schema
+
+- `schema/pubox.sql` is a live dump of the current DB. Do not edit it — re-dump to update.
+- Migration scripts (new tables/columns/functions) go in separate files under `schema/`.
+- Supabase returns `numeric` columns as `String` in Dart JSON — parse carefully with `double.tryParse`.
+- Playtime is stored in DB as a JSON array of `{dayOfWeek: "mon", dayChunk: "night"}` objects,
+  matching `Timeslot.toJson()`. The `Timeslot.listFromJson/listToJson` static helpers are for the
+  dict format `{"mon": ["night"]}` used by filter RPC functions.
+
+### Home Tab
+
+All 4 subtabs share the same `FilterData` (city, districts, schedule timeslots, search term).
+
+#### Teammate subtab
+
+- Shows **lobbies** looking for more players, matched to the current user.
+- Data comes from the `home_teammate_lobby_data` Postgres function (already exists).
+  Params: `p_sport_id`, `p_timeslots` (user's schedule as jsonb dict), `p_city` (city cluster id),
+  `p_districts` (array of district ids), `p_page_size`, `p_page_number`.
+- Returns: `id, name, homeground_name, playtime, details, visibility, timeslot_compat_score, profile_compat_score`.
+- `profile_compat_score` (0–5) is computed by `calculate_profile_compat_score` — shared networks,
+  industries, skill level proximity etc.
+- **Action**: "Xin vào" — creates a row in `lobby_befriend_record` with `interaction_type = 'request'`,
+  `target_lobby_id = lobby.id`. On accepted, the trigger adds the user as a lobby member.
+- Dart model: `LobbyFeedItem` — plain class (not freezed), manual `fromJson`. Fields:
+  `id, name, homegroundName, playtime (List<Timeslot>), details (LobbyDetails?), visibility,
+  timeslotCompatScore (int), profileCompatScore (double), memberCount (int?)`.
+
+#### Challenger subtab
+
+- Shows lobbies that are **open to being challenged** (team vs team).
+- Requires `open_to_challengers boolean DEFAULT false NOT NULL` column on the `lobby` table.
+  Migration: `schema/challenger_support.sql`.
+- Data comes from `home_challenger_lobby_data` Postgres function (in same migration file).
+  Params: `p_sport_id`, `p_city`, `p_districts`, `p_page_size`, `p_page_number` (no timeslot filter).
+  Returns same shape as teammate feed plus `member_count`; excludes the user's own lobbies.
+- **Challenge interaction uses a SEPARATE table** — do NOT use `lobby_befriend_record`, which is
+  for user↔lobby and user↔user pairing only. A `lobby_challenge` table needs to be designed
+  (initiator_lobby_id, target_lobby_id, status, proposed details etc.). Handshake flow is TBD.
+- Until the challenge table is designed, the "Thách đấu" action button is a disabled placeholder.
+- Dart model: reuses `LobbyFeedItem` (the `memberCount` field is populated here).
+
+#### Professional (Neutral) subtab
+
+- Shows coaches and referees offering services for the selected sport.
+- Queried directly from `professional` table (no location filter — professionals are not
+  geographically bound in the current schema). Filter: `sports` array contains the sport id.
+- Order by `average_rating DESC`.
+- Booking flow is TBD (either app currency "đá" or out-of-band + session scheduling only).
+- Dart model: `ProfessionalFeedItem` — plain class, manual `fromJson`. Fields:
+  `id, displayName, role (ProfessionalRole), bio, sports (List<int>), experienceYears,
+  averageRating (double), reviewCount (int), isVerified (bool)`.
+- `ProfessionalRole` enum (`coach`, `referee`) lives in `core/model/enum.dart`.
+
+#### Location subtab
+
+- Shows venues/courts from the `location` table, filtered by `city_cluster` and `district`.
+- Informational only for now — no booking or map integration yet.
+- If `FilterData.search` is non-empty, use `search_locations(search_term)` RPC.
+  Otherwise query `location` directly with city_cluster + district filters.
+- Dart model: reuses the existing `Location` freezed model in `core/model/location.dart`.
+
+### Lobby Befriend System (`lobby_befriend_record`)
+
+Three interaction types:
+- `request`: a user asks to join an existing lobby → on accept, trigger adds user as member.
+- `invite`: a lobby captain invites a user → on accept, trigger adds user as member.
+- `pair`: two individual users agree to play together → on accept, trigger creates a new lobby with
+  both as members and the initiator as captain.
+
+A before-insert trigger auto-accepts reciprocal request/invite pairs and enforces uniqueness.
+
+### Challenger System (to be designed)
+
+Separate from `lobby_befriend_record`. Needs a new `lobby_challenge` table with at minimum:
+`id, initiator_lobby_id, target_lobby_id, sport_id, status (enum), proposed_time?, created_at, updated_at`.
+The handshake (accept/decline/counter-propose) is TBD.
+
+### Activity & Currency System
+
+- Anyone in a lobby can propose a play session (activity). The lobby captain can veto or edit.
+- Once enough members confirm, the activity becomes official.
+- Confirming an activity costs "đá" (rocks) — the app's internal currency.
+- "đá" also handles bill splitting after sessions.
+- Currency system is not yet in the DB schema; needs to be designed.
+
+### Notifications
+
+- Push notifications (FCM/APNs) for important events: challenger confirmation, activity
+  confirmation, pro session reminders.
+- Use a **flag system**: each feature that wants push notifs opts in explicitly (not automatic).
+  This allows incremental rollout as features are implemented.
+- Infrastructure (FCM setup, device token storage) is not yet configured.

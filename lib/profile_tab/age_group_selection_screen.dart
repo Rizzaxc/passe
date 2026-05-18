@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import '../../core/model/enum.dart';
+import '../core/model/enum.dart';
 import 'profile_controller.dart';
 
 class AgeGroupSelectionScreen extends ConsumerWidget {

@@ -111,7 +111,24 @@
       "retry": "Retry"
     },
     "teammate": {
-      "title": "Teammates"
+      "title": "Teammates",
+      "join": "Join",
+      "sent": "Sent"
+    },
+    "challenger": {
+      "title": "Challengers",
+      "challenge": "Challenge",
+      "empty": {
+        "title": "No challengers found",
+        "message": "Try adjusting your filters or check back later"
+      }
+    },
+    "location": {
+      "viewMap": "View Map",
+      "empty": {
+        "title": "No venues found",
+        "message": "Try searching by name or adjusting filters"
+      }
     },
     "professional": {
       "title": "Professionals",

@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:health/health.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 import '../icon/main.dart';
 
@@ -811,4 +812,15 @@ enum Industry {
         .map((each) => each.getLocalizedName(context))
         .toList();
   }
+}
+
+@JsonEnum()
+enum ProfessionalRole {
+  @JsonValue('coach')
+  coach,
+  @JsonValue('referee')
+  referee;
+
+  String getLocalizedName(BuildContext context) =>
+      context.tr('homeTab.professional.role.$name');
 }
