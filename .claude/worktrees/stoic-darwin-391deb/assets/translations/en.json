@@ -1,0 +1,451 @@
+{
+  "timeslot": {
+    "dayOfWeek": {
+      "label": "Day Of Week",
+      "everyday": "Everyday",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday",
+      "even": "Mon-Wed-Fri",
+      "odd": "Tue-Thu-Sat",
+      "weekend": "Weekend",
+      "shortName": {
+        "everyday": "All",
+        "monday": "Mon",
+        "tuesday": "Tue",
+        "wednesday": "Wed",
+        "thursday": "Thu",
+        "friday": "Fri",
+        "saturday": "Sat",
+        "sunday": "Sun",
+        "even": "M-W-F",
+        "odd": "T-Th-Sa",
+        "weekend": "Wkn"
+      }
+    },
+    "dayChunk": {
+      "label": "Time Range",
+      "early": "Early (4am-9am)",
+      "midday": "Midday (9am-2pm)",
+      "noon": "Afternoon (2pm-6pm)",
+      "night": "Evening (6pm-12am)",
+      "shortName": {
+        "early": "Early",
+        "midday": "Midday",
+        "noon": "Afternoon",
+        "night": "Evening"
+      }
+    }
+  },
+  "gender": {
+    "male": "Male",
+    "female": "Female"
+  },
+  "ageGroup": {
+    "student": "Student",
+    "mature": "Mature",
+    "middleAge": "Middle Age"
+  },
+  "industry": {
+    "agriculture": "Agriculture",
+    "construction": "Construction",
+    "culinaryTourism": "Culinary & Tourism",
+    "educationAcademia": "Education & Academia",
+    "energy": "Energy",
+    "entertainmentContentCreation": "Entertainment & Content Creation",
+    "fashionBeauty": "Fashion & Beauty",
+    "financeConsulting": "Finance & Consulting",
+    "government": "Government",
+    "healthcare": "Healthcare",
+    "legalServices": "Legal Services",
+    "manufacturing": "Manufacturing",
+    "mediaCommunications": "Media & Communications",
+    "nonprofitCharity": "Non-profit & Charity",
+    "realEstate": "Real Estate",
+    "retailOnlineCommerce": "Retail & Online Commerce",
+    "technology": "Technology",
+    "transportation": "Transportation"
+  },
+  "networkCategory": {
+    "highSchool": "High School",
+    "giftedHighSchool": "Gifted High School",
+    "university": "University",
+    "company": "Company"
+  },
+  "city": {
+    "hochiminh": "Ho Chi Minh City",
+    "hanoi": "Hanoi"
+  },
+  "district": {
+    "urban": "District",
+    "rural": "District",
+    "township": "Town",
+    "city": "City"
+  },
+  "homeTab": {
+    "title": "Home",
+    "filter": {
+      "location": "Location",
+      "time": "Time",
+      "weekdayLabel": "Weekday",
+      "dayChunkLabel": "Day Chunk",
+      "search": "Search",
+      "searchHint": "Enter keyword/ SearchID...",
+      "city": "City",
+      "district": "District",
+      "any": "Any",
+      "schedule": "Schedule",
+      "scheduleHint": "Leave blank",
+      "close": "Close"
+    },
+    "empty": {
+      "title": "No results found",
+      "message": "Try adjusting your filters or check back later"
+    },
+    "error": {
+      "title": "Error loading teammates",
+      "retry": "Retry"
+    },
+    "teammate": {
+      "title": "Teammates"
+    },
+    "professional": {
+      "title": "Professionals",
+      "filter": {
+        "all": "All",
+        "coach": "Coach",
+        "referee": "Referee"
+      },
+      "empty": {
+        "title": "No professionals found",
+        "message": "Try adjusting your filters or check back later"
+      },
+      "book": "Book",
+      "experience": "{years} years experience",
+      "reviews": "{count} reviews",
+      "role": {
+        "coach": "Coach",
+        "referee": "Referee"
+      },
+      "booking": {
+        "title": "Book Session",
+        "confirm": "Confirm Booking",
+        "selectService": "Select Service",
+        "selectDate": "Select Date",
+        "selectTime": "Select Time",
+        "noSlots": "No available time slots for this date",
+        "notes": "Additional Notes",
+        "notesHint": "Add any special requests or notes...",
+        "summary": "Booking Summary",
+        "service": "Service",
+        "date": "Date",
+        "time": "Time",
+        "total": "Total",
+        "success": "Booking confirmed successfully!",
+        "error": "Failed to book session. Please try again."
+      },
+      "details": {
+        "bio": "Bio"
+      }
+    }
+  },
+  "manageTab": {
+    "title": "Manage",
+    "schedule": {
+      "title": "Schedule",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "participants": "{count} participants",
+      "selectDate": "Select a date to view schedule",
+      "stub": "Schedule content coming soon",
+      "empty": {
+        "title": "No appointments scheduled",
+        "message": "Your upcoming appointments will appear here"
+      }
+    },
+    "lobby": {
+      "title": "Lobbies",
+      "participants": "{current}/{max} players",
+      "scheduledFor": "Scheduled for {time}",
+      "createNew": "Create New Lobby",
+      "createFirst": "Create Your First Lobby",
+      "navigate": "Navigate to Lobby",
+      "navigateMessage": "Opening {lobbyTitle} lobby...",
+      "createMessage": "Lobby creation coming soon!",
+      "empty": {
+        "title": "No lobbies found",
+        "message": "Create a lobby to start playing with others"
+      }
+    }
+  },
+  "lobby": {
+    "create": "Create Lobby",
+    "edit": "Edit Lobby",
+    "leader": "Leader",
+    "noActivity": "No upcoming activity",
+    "nameRequired": "Lobby name is required",
+    "nameTooShort": "Name must be at least 3 characters",
+    "ageGroup": "Age Group",
+    "saveButton": "Save",
+    "saveFailed": "Failed to save lobby",
+    "emptyTitle": "No lobbies yet",
+    "emptyMessage": "Create a lobby to start playing with others",
+    "visibility": {
+      "private": "Private",
+      "privateDescription": "Invite only",
+      "discoverable": "Discoverable",
+      "discoverableDescription": "Searchable by ID",
+      "public": "Public",
+      "publicDescription": "Open to everyone"
+    },
+    "detail": {
+      "members": "Members",
+      "noMembers": "No members yet",
+      "upcoming": "Upcoming",
+      "noUpcoming": "No upcoming sessions",
+      "scheduleEvent": "Schedule",
+      "history": "Play History",
+      "noHistory": "No past sessions"
+    },
+    "scheduleActivity": "Schedule",
+    "lookingForActivity": "No upcoming session",
+    "searchIDCopied": "Lobby SearchID copied to clipboard",
+    "searchIDExplanation": "Other players can use this ID to join your lobby using the home screen filter."
+  },
+  "createLobby": {
+    "title": "Create Lobby",
+    "create": "Create",
+    "lobbyName": "Lobby Name",
+    "lobbyNameHint": "Enter a name for your lobby",
+    "description": "Description",
+    "descriptionHint": "Describe your lobby (optional)",
+    "sport": "Sport",
+    "sportLocked": "Sport selection is locked",
+    "visibility": "Visibility",
+    "public": "Public",
+    "publicDescription": "Anyone can find and join your lobby",
+    "private": "Private",
+    "privateDescription": "Only people with the link can join",
+    "homeGround": "Home Ground",
+    "homeGroundHint": "Search by venue name...",
+    "homeGroundFreeHint": "Enter venue name or address...",
+    "homeGroundFreeTextMode": "Enter manually",
+    "homeGroundSearchMode": "Search venues",
+    "homeGroundSearchPrompt": "Type to search for a venue",
+    "streetNumber": "St. number",
+    "streetName": "Street name",
+    "district": "District",
+    "city": "City",
+    "specificLocation": "Specific Location",
+    "specificLocationHint": "Enter a specific location",
+    "playtime": "Playtime",
+    "playtimeShort": "Playtime",
+    "dayOfWeek": "Day of Week",
+    "timeSlot": "Time Slot",
+    "setTimeslot": "Set Timeslot",
+    "maxParticipants": "Maximum Participants",
+    "participantCount": "{count} participants"
+  },
+  "soccer": {
+    "position": {
+      "label": "Position",
+      "outfield": "Outfield",
+      "keeper": "Goalkeeper"
+    },
+    "pitch": {
+      "label": "Pitch Format",
+      "futsal": "Futsal",
+      "5v5": "5-a-side",
+      "7v7": "7-a-side"
+    }
+  },
+  "racketSport": {
+    "dominantHand": {
+      "label": "Dominant Hand",
+      "left": "Left",
+      "right": "Right"
+    },
+    "discipline": {
+      "label": "Discipline",
+      "singles": "Singles",
+      "doubles": "Doubles"
+    }
+  },
+
+  "basketball": {
+    "position": {
+      "label": "Position",
+      "guard": "Guard",
+      "forward": "Forward",
+      "center": "Center"
+    },
+    "pitch": {
+      "label": "Court Type",
+      "indoor": "Indoor",
+      "outdoor": "Outdoor"
+    }
+  },
+  "elo": {
+    "label": "Elo"
+  },
+  "eloSeed": {
+    "label": "Skill Level",
+    "description": "Used to seed your initial matchmaking. Play with others to update your Elo.",
+    "beginner": "Beginner",
+    "casual": "Casual",
+    "tryhard": "Tryhard",
+    "lockedHint": "Elo seed is locked after first commit"
+  },
+  "sport": {
+    "others": "Others",
+    "soccer": "Soccer",
+    "basketball": "Basketball",
+    "badminton": "Badminton",
+    "tennis": "Tennis",
+    "pickleball": "Pickleball",
+    "selectSport": "Please select a sport",
+    "othersAlertDescription": "Please select a specific sport to see relevant content."
+  },
+  "notSet": "Not set",
+  "done": "Done",
+  "error": "Error",
+  "errorGeneric": "Something went wrong. Please try again later.",
+  "auth": {
+    "welcome": "Welcome",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "emailEmpty": "Please enter your email",
+    "emailInvalid": "Please enter a valid email address",
+    "passwordEmpty": "Please enter your password",
+    "passwordLength": "Password must be at least 8 characters long",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "loginFailed": "Login Failed",
+    "signUpFailed": "Sign Up Failed",
+    "googleContinue": "Continue with Google",
+    "appleContinue": "Continue with Apple",
+    "guestContinue": "Continue as Guest",
+    "googleLoginFailed": "Google Login Failed",
+    "appleLoginFailed": "Apple Login Failed",
+    "guestLoginFailed": "Guest Login Failed",
+    "credentialsInvalid": "Invalid email or password",
+    "userAlreadyRegistered": "This email is already registered"
+  },
+  "nav": {
+    "home": "Home",
+    "manage": "Manage",
+    "health": "Health",
+    "profile": "Profile"
+  },
+  "home": {
+    "teammate": "Teammates",
+    "challenger": "Challengers",
+    "professional": "Professionals",
+    "location": "Locations"
+  },
+  "manage": {
+    "schedule": "Schedule Content",
+    "lobby": "Lobby Content"
+  },
+  "profile": {
+    "content": "Profile Content",
+    "logout": "Logout",
+    "accountInfo": "Account Info",
+    "username": "Username",
+    "email": "Email",
+    "changePassword": "Change Password",
+    "generalInfo": "General Info",
+    "noGeneralInfo": "No general information provided",
+    "gender": "Gender",
+    "ageGroup": "Age Group",
+    "location": "Location",
+    "locationCity": "City",
+    "locationDistrict": "District",
+    "locationDistrictHint": "Pick up to 3 districts",
+    "playtime": "Playtime",
+    "sportProfile": "{} Profile",
+    "noSportProfile": "No sport information provided",
+    "commit": "Commit",
+    "genderLabel": "Gender",
+    "ageGroupLabel": "Age Group",
+    "industryLabel": "Industry",
+    "networkLabel": "Network",
+    "industryAndNetworkLabel": "Industry & Network",
+    "networkSelectionTitle": "Select Networks",
+    "networkSearchHint": "Search by name for schools/ universities/ companies",
+    "selectedNetworks": "Selected Networks",
+    "noNetworksFound": "No networks found matching the search criteria",
+    "industrySelectionTitle": "Select Industries",
+    "networkFeatureExplanation": "Choose at most 2 schools/ universities/ companies that you were or are a part of. Passe will connect you with people who share your networks.",
+    "industryFeatureExplanation": "Choose at most 2 industries that you work in. Passe will connect you with people who share your industries.",
+    "sportFeatureExplanation": "Update your skill level to find better matches and connect with people who share your passion for sports.",
+    "profileFeatureExplanation": "Fill in your profile will help Passe connect you more effectively.",
+    "emptyNetwork": "No networks selected. Add your schools or companies to connect with others.",
+    "emptyIndustry": "No industries selected. Add your industries to find professional connections.",
+    "emptySportProfile": "Sport profile not set. Update your skill level to find better matches.",
+    "changeUsername": "Change Username",
+    "newUsername": "New Username",
+    "confirmUsername": "Confirm Username",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordChanged": "Password changed successfully",
+    "usernameMismatch": "Usernames do not match",
+    "usernameInvalidChars": "Username can only contain letters and numbers",
+    "usernameTaken": "This username is already taken",
+    "confirmLogout": "Confirm Logout?",
+    "alumni": "Alumni",
+    "currentMember": "Current Member",
+    "toggleAlumniStatus": "Toggle Alumni Status",
+    "randomizeAvatar": "Randomize",
+    "removeAvatar": "Remove",
+    "uploadPhoto": "Upload Photo",
+    "uploadFailed": "Failed to upload photo",
+    "networkMaxReached": "Maximum 2 networks. Remove one first."
+  },
+  "health": {
+    "title": "Health",
+    "notLinked": {
+      "title": "Connect Your Health Data",
+      "description": "Link Apple Health or Google Fit to track your fitness metrics, monitor activity trends, and earn achievements.",
+      "linkButton": "Link Health Service",
+      "notAvailableIOS": "Health services are not available. Please run on a physical device with the Health app installed.",
+      "notAvailableAndroid": "Health Connect is not available. Please install Health Connect from the Play Store."
+    },
+    "userHealth": {
+      "title": "User Health",
+      "content": "View your health metrics and trends"
+    },
+    "activityData": {
+      "title": "Activity",
+      "content": "Track your per-activity statistics"
+    },
+    "achievements": {
+      "title": "Achievements",
+      "content": "View your goals and achievements"
+    },
+    "error": "Something went wrong. Please try again."
+  },
+  "welcome": {
+    "skip": "Skip",
+    "next": "Next",
+    "getStarted": "Get Started",
+    "page1": {
+      "title": "Connect with community",
+      "description": "Find teammates and opponents that match your skill level and schedule"
+    },
+    "page2": {
+      "title": "Manage your games",
+      "description": "Create and join game sessions, track your appointments easily"
+    },
+    "page3": {
+      "title": "Improve your skills",
+      "description": "Track your progress, connect with coaches and improve your performance"
+    }
+  }
+}

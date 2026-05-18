@@ -67,7 +67,7 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
 
     return FSheets(
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.viewInsetsOf(context).bottom),
         decoration: BoxDecoration(
           color: context.theme.colors.background,
           borderRadius: BorderRadius.circular(32),

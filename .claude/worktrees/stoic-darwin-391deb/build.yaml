@@ -1,0 +1,11 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          # This ensures nulls are stripped from the JSON output by default
+          include_if_null: false
+
+          # Optional: useful defaults often paired with this
+          explicit_to_json: true
+          any_map: true

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Freeform data for user profile",
+  "type": "object",
+  "properties": {
+    "gender": {
+      "type": "string"
+    },
+    "ageGroup": {
+      "type": "string"
+    },
+    "playtime": {
+      "type": "array"
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "city": {
+          "type": "integer"
+        },
+        "districts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "generatedAvatar": {
+      "type": "string"
+    }
+  }
+}

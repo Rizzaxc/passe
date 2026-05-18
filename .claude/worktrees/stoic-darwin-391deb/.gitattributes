@@ -1,0 +1,3 @@
+# Hide generated code from diffs (still committed)
+*.g.dart -diff linguist-generated
+*.freezed.dart -diff linguist-generated

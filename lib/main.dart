@@ -19,6 +19,8 @@ import 'logger/observer.dart';
 import 'router.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   LicenseRegistry.addLicense(() async* {
     final license = await rootBundle.loadString('assets/google_fonts/OFL.txt');
     yield LicenseEntryWithLineBreaks(['google_fonts'], license);
@@ -36,7 +38,6 @@ Future<void> main() async {
   final supabaseAnonKey = dotenv.env['SUPABASE_PUBLIC_KEY']!;
   await Supabase.initialize(url: supabaseURL, anonKey: supabaseAnonKey);
 
-  WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
 
   final sentryDSN = dotenv.env['SENTRY_DSN']!;

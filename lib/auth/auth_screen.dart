@@ -14,9 +14,10 @@ class AuthScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FScaffold(
+      resizeToAvoidBottomInset: false,
       header: FHeader(title: Text('auth.welcome'.tr())),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -193,7 +194,7 @@ class SocialAuthSection extends ConsumerWidget {
         builder: (context, variants, child) => DecoratedBox(
           decoration: buttonStyle.decoration.resolve(variants),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             child: Center(child: child),
           ),
         ),

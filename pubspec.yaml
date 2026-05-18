@@ -41,7 +41,7 @@ dependencies:
   crypto: ^3.0.6
   email_validator: ^3.0.0
   google_sign_in: ^7.2.0
-  sign_in_with_apple: ^7.0.1
+  sign_in_with_apple: ^8.0.0
   dynamic_color: ^1.7.0
   connectivity_plus: ^7.0.0
   health: ^13.2.1
@@ -49,7 +49,7 @@ dependencies:
   location: ^8.0.0
   async: ^2.12.0
   easy_localization: ^3.0.7+1
-  flutter_typeahead: ^5.2.0
+  flutter_typeahead: ^6.0.0
   video_player: ^2.10.0
   diacritic: ^0.1.6
   avatar_plus: ^0.0.5
@@ -65,7 +65,7 @@ dependencies:
   freezed_annotation: ^3.1.0
   talker_riverpod_logger: ^5.1.5
   talker_flutter: ^5.1.5
-  forui: ^0.20.4
+  forui: ^0.21.3
   riverpod: ^3.2.0
   hooks: ^1.0.0
 

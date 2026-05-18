@@ -69,6 +69,7 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
         ref.watch(authControllerProvider).value?.tagNumber ?? '0000';
 
     return FScaffold(
+      resizeToAvoidBottomInset: false,
       header: FHeader(
         title: Text('profile.changeUsername'.tr()),
         suffixes: [
@@ -76,7 +77,7 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
         ],
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
         child: Form(
           key: _formKey,
           child: Column(

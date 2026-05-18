@@ -61,6 +61,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return FScaffold(
+      resizeToAvoidBottomInset: false,
       header: FHeader(
         title: Text('profile.changePassword'.tr()),
         suffixes: [
@@ -68,7 +69,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         ],
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
         child: Form(
           key: _formKey,
           child: Column(
