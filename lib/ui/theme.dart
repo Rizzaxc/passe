@@ -123,7 +123,7 @@ FTypography _typography({
   required FColors colors,
   String defaultFontFamily = 'Bitter',
 }) => FTypography(
-  defaultFontFamily: defaultFontFamily,
+  fontFamily: defaultFontFamily,
   xs: TextStyle(
     color: colors.foreground,
     fontFamily: defaultFontFamily,

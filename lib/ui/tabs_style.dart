@@ -21,7 +21,7 @@ FTabsStyle tabsStyle({
   labelTextStyle: .from(
     typography.sm.copyWith(
       fontWeight: .w500,
-      fontFamily: typography.defaultFontFamily,
+      fontFamily: FTypography.defaultFontFamily,
       color: pbBlue,
     ),
     variants: {

@@ -91,6 +91,7 @@ extension CustomFSelectMenuTileStyle on Never {
     ),
     dividerColor: .all(colors.border),
     dividerWidth: style.borderWidth,
+    slidePressHapticFeedback: style.hapticFeedback.selectionClick,
     labelTextStyle: FVariants.from(
       typography.md.copyWith(
         color:
