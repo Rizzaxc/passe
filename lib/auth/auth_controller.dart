@@ -126,7 +126,7 @@ class AuthController extends _$AuthController {
       await supabase.auth.signInWithPassword(
         email: email,
         password: password,
-      );
+      ).timeout(const Duration(seconds: 5));
       // Let the auth listener update the state; no manual state setting here.
       return null;
     } catch (e, st) {
@@ -142,7 +142,7 @@ class AuthController extends _$AuthController {
         OAuthProvider.google,
         // You may configure redirectTo if needed for web/desktop
         // redirectTo: kIsWeb ? 'http://localhost:3000' : null,
-      );
+      ).timeout(const Duration(seconds: 5));
       // State will be updated via the auth listener
     } on AuthException catch (e, st) {
       talker.handle(e, st);
@@ -160,7 +160,7 @@ class AuthController extends _$AuthController {
     try {
       await supabase.auth.signInWithOAuth(
         OAuthProvider.apple,
-      );
+      ).timeout(const Duration(seconds: 5));
       // State will be updated via the auth listener
     } on AuthException catch (e, st) {
       talker.handle(e, st);
@@ -184,7 +184,7 @@ class AuthController extends _$AuthController {
         email: email,
         password: password,
         data: data,
-      );
+      ).timeout(const Duration(seconds: 5));
       // After sign up, depending on email confirmation settings, there might be no session.
       if (supabase.auth.currentSession == null) {
         // No session yet (e.g., email confirmation required). Keep state null.
@@ -196,7 +196,7 @@ class AuthController extends _$AuthController {
       if (!initialized) {
         // Initialization did not complete in time;
         // nullify the session and signal retry.
-        await supabase.auth.signOut();
+        await supabase.auth.signOut().timeout(const Duration(seconds: 5));
         throw TimeoutException(
           'Account initialization did not complete in time. Please try logging in.',
         );
@@ -219,7 +219,7 @@ class AuthController extends _$AuthController {
   Future<void> signOut() async {
     state = const AsyncValue.loading();
     try {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut().timeout(const Duration(seconds: 5));
     } on AuthException catch (e, st) {
       talker.handle(e, st);
       state = AsyncValue.error(e, st);
@@ -239,7 +239,8 @@ class AuthController extends _$AuthController {
         .from('user')
         .select('username, tag_number, details')
         .eq('id', user.id)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 5));
 
     if (data == null || data.isEmpty) {
       return null;
@@ -281,7 +282,8 @@ class AuthController extends _$AuthController {
         .select('id')
         .eq('username', newUsername)
         .eq('tag_number', currentTag)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 5));
 
     if (existing != null && existing['id'] != userId) {
       throw const UsernameTakenException();
@@ -290,7 +292,9 @@ class AuthController extends _$AuthController {
     try {
       await supabase
           .from('user')
-          .update({'username': newUsername}).eq('id', userId);
+          .update({'username': newUsername})
+          .eq('id', userId)
+          .timeout(const Duration(seconds: 5));
     } on PostgrestException catch (e, st) {
       talker.handle(e, st);
       // unique constraint violation from DB race condition
@@ -305,7 +309,9 @@ class AuthController extends _$AuthController {
 
   Future<void> changePassword(String newPassword) async {
     try {
-      await supabase.auth.updateUser(UserAttributes(password: newPassword));
+      await supabase.auth
+          .updateUser(UserAttributes(password: newPassword))
+          .timeout(const Duration(seconds: 5));
     } on AuthException catch (e, st) {
       talker.handle(e, st);
       rethrow;
@@ -327,7 +333,8 @@ class AuthController extends _$AuthController {
         .from('user')
         .select()
         .eq('id', supabase.auth.currentUser!.id)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 5));
     return (data != null && data.isNotEmpty);
   }
 

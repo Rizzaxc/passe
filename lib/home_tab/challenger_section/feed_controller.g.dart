@@ -33,7 +33,7 @@ final class ChallengerFeedProvider
   ChallengerFeed create() => ChallengerFeed();
 }
 
-String _$challengerFeedHash() => r'a3ca2a5755a520cc00c48228f00068c98bcafe8b';
+String _$challengerFeedHash() => r'40fc9736b55bb9876b463bc01729581eb4dcc6d7';
 
 abstract class _$ChallengerFeed extends $AsyncNotifier<List<LobbyFeedItem>> {
   FutureOr<List<LobbyFeedItem>> build();
@@ -41,15 +41,11 @@ abstract class _$ChallengerFeed extends $AsyncNotifier<List<LobbyFeedItem>> {
   @override
   void runBuild() {
     final ref =
-        this.ref
-            as $Ref<AsyncValue<List<LobbyFeedItem>>, List<LobbyFeedItem>>;
+        this.ref as $Ref<AsyncValue<List<LobbyFeedItem>>, List<LobbyFeedItem>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<
-                AsyncValue<List<LobbyFeedItem>>,
-                List<LobbyFeedItem>
-              >,
+              AnyNotifier<AsyncValue<List<LobbyFeedItem>>, List<LobbyFeedItem>>,
               AsyncValue<List<LobbyFeedItem>>,
               Object?,
               Object?

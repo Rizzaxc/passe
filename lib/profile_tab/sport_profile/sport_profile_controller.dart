@@ -29,7 +29,8 @@ class SoccerProfileController extends _$SoccerProfileController {
           .from('soccer_profile')
           .select()
           .eq('user_id', userId)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 5));
       if (response != null) {
         final profile = SoccerProfile.fromJson(response);
         state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
@@ -51,7 +52,7 @@ class SoccerProfileController extends _$SoccerProfileController {
       await _supabase.from('soccer_profile').upsert({
         'user_id': user!.id!,
         ...state.profile.toJson(),
-      });
+      }).timeout(const Duration(seconds: 5));
       if (state.profile.eloSeed != null) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
@@ -87,7 +88,8 @@ class BasketballProfileController extends _$BasketballProfileController {
           .from('basketball_profile')
           .select()
           .eq('user_id', userId)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 5));
       if (response != null) {
         final profile = BasketballProfile.fromJson(response);
         state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
@@ -109,7 +111,7 @@ class BasketballProfileController extends _$BasketballProfileController {
       await _supabase.from('basketball_profile').upsert({
         'user_id': user!.id!,
         ...state.profile.toJson(),
-      });
+      }).timeout(const Duration(seconds: 5));
       if (state.profile.eloSeed != null) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
@@ -145,7 +147,8 @@ class BadmintonProfileController extends _$BadmintonProfileController {
           .from('badminton_profile')
           .select()
           .eq('user_id', userId)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 5));
       if (response != null) {
         final profile = BadmintonProfile.fromJson(response);
         state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
@@ -167,7 +170,7 @@ class BadmintonProfileController extends _$BadmintonProfileController {
       await _supabase.from('badminton_profile').upsert({
         'user_id': user!.id!,
         ...state.profile.toJson(),
-      });
+      }).timeout(const Duration(seconds: 5));
       if (state.profile.eloSeed != null) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
@@ -200,7 +203,8 @@ class TennisProfileController extends _$TennisProfileController {
           .from('tennis_profile')
           .select()
           .eq('user_id', userId)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 5));
       if (response != null) {
         final profile = TennisProfile.fromJson(response);
         state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
@@ -222,7 +226,7 @@ class TennisProfileController extends _$TennisProfileController {
       await _supabase.from('tennis_profile').upsert({
         'user_id': user!.id!,
         ...state.profile.toJson(),
-      });
+      }).timeout(const Duration(seconds: 5));
       if (state.profile.eloSeed != null) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
@@ -258,7 +262,8 @@ class PickleballProfileController extends _$PickleballProfileController {
           .from('pickleball_profile')
           .select()
           .eq('user_id', userId)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 5));
       if (response != null) {
         final profile = PickleballProfile.fromJson(response);
         state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
@@ -280,7 +285,7 @@ class PickleballProfileController extends _$PickleballProfileController {
       await _supabase.from('pickleball_profile').upsert({
         'user_id': user!.id!,
         ...state.profile.toJson(),
-      });
+      }).timeout(const Duration(seconds: 5));
       if (state.profile.eloSeed != null) {
         state = (profile: state.profile, eloSeedLocked: true);
       }

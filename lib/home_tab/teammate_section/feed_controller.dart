@@ -1,3 +1,4 @@
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,7 +15,7 @@ class TeammateFeed extends _$TeammateFeed {
   @override
   Future<List<LobbyFeedItem>> build() async {
     final filter = ref.watch(filterStateProvider);
-    final sport = ref.watch(selectedSportStateProvider).value;
+    final sport = ref.watch(selectedSportStateProvider.select((v) => v.value));
     if (sport == null) return [];
 
     final timeslots = Timeslot.listToJson(filter.schedule);
@@ -30,7 +31,7 @@ class TeammateFeed extends _$TeammateFeed {
         'p_page_size': 20,
         'p_page_number': 1,
       },
-    );
+    ).timeout(const Duration(seconds: 5));
 
     return (response as List)
         .map((e) => LobbyFeedItem.fromJson(e as Map<String, dynamic>))
@@ -51,7 +52,7 @@ class RequestedLobbyIds extends _$RequestedLobbyIds {
         if (user?.id != null) 'user_id': user!.id,
         'target_lobby_id': lobbyId,
         'interaction_type': 'request',
-      });
+      }).timeout(const Duration(seconds: 5));
     } catch (e) {
       state = state.difference({lobbyId});
       rethrow;

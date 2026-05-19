@@ -6,6 +6,7 @@ part of 'controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(LobbyUpcomingController)
@@ -28,15 +29,30 @@ final class LobbyUpcomingControllerProvider
   String debugGetCreateSourceHash() => _$lobbyUpcomingControllerHash();
 
   @override
-  String toString() => r'lobbyUpcomingControllerProvider($argument)';
+  String toString() {
+    return r'lobbyUpcomingControllerProvider'
+        ''
+        '($argument)';
+  }
 
   @$internal
   @override
   LobbyUpcomingController create() => LobbyUpcomingController();
+
+  @override
+  bool operator ==(Object other) {
+    return other is LobbyUpcomingControllerProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
 String _$lobbyUpcomingControllerHash() =>
-    r'0000000000000000000000000000000000000000';
+    r'5604d4f37531f5350243ff8af71c53c2b87fac7d';
 
 final class LobbyUpcomingControllerFamily extends $Family
     with
@@ -44,7 +60,7 @@ final class LobbyUpcomingControllerFamily extends $Family
           LobbyUpcomingController,
           AsyncValue<List<Activity>>,
           List<Activity>,
-          List<Activity>,
+          FutureOr<List<Activity>>,
           String
         > {
   LobbyUpcomingControllerFamily._()
@@ -63,7 +79,8 @@ final class LobbyUpcomingControllerFamily extends $Family
   String toString() => r'lobbyUpcomingControllerProvider';
 }
 
-abstract class _$LobbyUpcomingController extends $AsyncNotifier<List<Activity>> {
+abstract class _$LobbyUpcomingController
+    extends $AsyncNotifier<List<Activity>> {
   late final _$args = ref.$arg as String;
   String get lobbyId => _$args;
 
@@ -72,11 +89,14 @@ abstract class _$LobbyUpcomingController extends $AsyncNotifier<List<Activity>> 
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<List<Activity>>, List<Activity>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<Activity>>, List<Activity>>,
-        AsyncValue<List<Activity>>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<Activity>>, List<Activity>>,
+              AsyncValue<List<Activity>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, () => build(_$args));
   }
 }

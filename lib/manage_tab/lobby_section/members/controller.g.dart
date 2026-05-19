@@ -6,13 +6,15 @@ part of 'controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(LobbyMembersController)
 final lobbyMembersControllerProvider = LobbyMembersControllerFamily._();
 
 final class LobbyMembersControllerProvider
-    extends $AsyncNotifierProvider<LobbyMembersController, List<LobbyMemberInfo>> {
+    extends
+        $AsyncNotifierProvider<LobbyMembersController, List<LobbyMemberInfo>> {
   LobbyMembersControllerProvider._({
     required LobbyMembersControllerFamily super.from,
     required String super.argument,
@@ -28,15 +30,30 @@ final class LobbyMembersControllerProvider
   String debugGetCreateSourceHash() => _$lobbyMembersControllerHash();
 
   @override
-  String toString() => r'lobbyMembersControllerProvider($argument)';
+  String toString() {
+    return r'lobbyMembersControllerProvider'
+        ''
+        '($argument)';
+  }
 
   @$internal
   @override
   LobbyMembersController create() => LobbyMembersController();
+
+  @override
+  bool operator ==(Object other) {
+    return other is LobbyMembersControllerProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
 String _$lobbyMembersControllerHash() =>
-    r'0000000000000000000000000000000000000000';
+    r'80b7efddf8dbd829f47c870a6d59d78145e3bc43';
 
 final class LobbyMembersControllerFamily extends $Family
     with
@@ -44,7 +61,7 @@ final class LobbyMembersControllerFamily extends $Family
           LobbyMembersController,
           AsyncValue<List<LobbyMemberInfo>>,
           List<LobbyMemberInfo>,
-          List<LobbyMemberInfo>,
+          FutureOr<List<LobbyMemberInfo>>,
           String
         > {
   LobbyMembersControllerFamily._()
@@ -73,12 +90,19 @@ abstract class _$LobbyMembersController
   @override
   void runBuild() {
     final ref =
-        this.ref as $Ref<AsyncValue<List<LobbyMemberInfo>>, List<LobbyMemberInfo>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<LobbyMemberInfo>>, List<LobbyMemberInfo>>,
-        AsyncValue<List<LobbyMemberInfo>>,
-        Object?,
-        Object?>;
+        this.ref
+            as $Ref<AsyncValue<List<LobbyMemberInfo>>, List<LobbyMemberInfo>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<List<LobbyMemberInfo>>,
+                List<LobbyMemberInfo>
+              >,
+              AsyncValue<List<LobbyMemberInfo>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, () => build(_$args));
   }
 }

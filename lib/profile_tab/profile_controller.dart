@@ -88,7 +88,7 @@ class NetworkSearchController extends _$NetworkSearchController {
       final response = await supabase.rpc(
         'search_networks_unaccent',
         params: params,
-      );
+      ).timeout(const Duration(seconds: 5));
 
       state = state.copyWith(
         isLoading: false,
@@ -128,7 +128,8 @@ class NetworkController extends _$NetworkController {
       final response = await supabase
           .from('user_network')
           .select('alumni, network(id, name, category, city)')
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .timeout(const Duration(seconds: 5));
 
       final networks = (response as List).map((data) {
         final networkData = data['network'] as Map<String, dynamic>;
@@ -186,7 +187,7 @@ class NetworkController extends _$NetworkController {
     final userId = supabase.auth.currentUser!.id;
 
     try {
-      await supabase.from('user_network').delete().eq('user_id', userId);
+      await supabase.from('user_network').delete().eq('user_id', userId).timeout(const Duration(seconds: 5));
       if (state.isNotEmpty) {
         await supabase.from('user_network').insert(
               state
@@ -196,7 +197,7 @@ class NetworkController extends _$NetworkController {
                         'alumni': network.isAlumni,
                       })
                   .toList(),
-            );
+            ).timeout(const Duration(seconds: 5));
       }
     } catch (e, st) {
       Talker().handle(e, st, 'Error committing user networks');
@@ -227,7 +228,8 @@ class IndustryController extends _$IndustryController {
       final response = await supabase
           .from('user_industry')
           .select('industry_id')
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .timeout(const Duration(seconds: 5));
 
       final industries = (response as List).map((data) {
         final industryId = data['industry_id'] as int;
@@ -267,7 +269,7 @@ class IndustryController extends _$IndustryController {
     final userId = supabase.auth.currentUser!.id;
 
     try {
-      await supabase.from('user_industry').delete().eq('user_id', userId);
+      await supabase.from('user_industry').delete().eq('user_id', userId).timeout(const Duration(seconds: 5));
       if (state.isNotEmpty) {
         await supabase.from('user_industry').insert(
               state
@@ -276,7 +278,7 @@ class IndustryController extends _$IndustryController {
                         'industry_id': industry.index,
                       })
                   .toList(),
-            );
+            ).timeout(const Duration(seconds: 5));
       }
     } catch (e, st) {
       Talker().handle(e, st, 'Error committing user industries');
@@ -401,7 +403,10 @@ class ProfileController extends _$ProfileController {
       if (oldGeneratedAvatar == '' && newGeneratedAvatar != '' && newGeneratedAvatar != null) {
         try {
           final path = '${user.id}.jpg';
-          await supabase.storage.from('user_avatar').remove([path]);
+          await supabase.storage
+              .from('user_avatar')
+              .remove([path])
+              .timeout(const Duration(seconds: 5));
         } catch (e, st) {
           talker.handle(e, st, 'Failed to remove avatar from storage');
         }
@@ -417,7 +422,7 @@ class ProfileController extends _$ProfileController {
                 path,
                 bytes,
                 fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
-              );
+              ).timeout(const Duration(seconds: 5));
         } catch (e, st) {
           talker.handle(e, st, 'Failed to upload avatar to storage');
           // If upload fails, we might want to revert to a generated avatar
@@ -438,7 +443,7 @@ class ProfileController extends _$ProfileController {
         supabase.from('user').update({
           'username': state.username,
           'details': updatedDetails.toJson(),
-        }).eq('id', user.id!),
+        }).eq('id', user.id!).timeout(const Duration(seconds: 5)),
 
         // 3. Sync networks (user_network table)
         ref.read(networkControllerProvider.notifier).commit(),
@@ -473,7 +478,7 @@ class ProfileController extends _$ProfileController {
         UserAttributes(
           password: newPassword,
         ),
-      );
+      ).timeout(const Duration(seconds: 5));
     } on AuthException catch (e, st) {
       talker.handle(e, st);
       rethrow;

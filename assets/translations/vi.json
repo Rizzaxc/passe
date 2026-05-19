@@ -292,7 +292,6 @@
       "doubles": "Đôi"
     }
   },
-
   "basketball": {
     "position": {
       "label": "Vị Trí",
@@ -446,7 +445,18 @@
       "title": "Thành tựu",
       "content": "Xem mục tiêu và thành tựu của bạn"
     },
-    "error": "Đã xảy ra lỗi. Vui lòng thử lại."
+    "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "trend": {
+      "title": "Xu hướng",
+      "period": "30 ngày qua",
+      "statCalories": "calo/buổi",
+      "statHeartRate": "nhịp tim TB",
+      "statDistance": "quãng đường"
+    },
+    "activity": {
+      "title": "Hoạt động",
+      "summary": "3 buổi tuần này — cường độ trung bình."
+    }
   },
   "welcome": {
     "skip": "Bỏ qua",

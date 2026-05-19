@@ -34,14 +34,16 @@ final class UserLobbiesControllerProvider
 }
 
 String _$userLobbiesControllerHash() =>
-    r'9c1f857c7429b03d8ec26af1edfdef03e1793d86';
+    r'61069c80423eb7feaabf136d0d65914b825bedc8';
 
-abstract class _$UserLobbiesController extends $AsyncNotifier<List<LobbyListItem>> {
+abstract class _$UserLobbiesController
+    extends $AsyncNotifier<List<LobbyListItem>> {
   FutureOr<List<LobbyListItem>> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<List<LobbyListItem>>, List<LobbyListItem>>;
+    final ref =
+        this.ref as $Ref<AsyncValue<List<LobbyListItem>>, List<LobbyListItem>>;
     final element =
         ref.element
             as $ClassProviderElement<
@@ -104,7 +106,7 @@ final class LobbyFormControllerProvider
 }
 
 String _$lobbyFormControllerHash() =>
-    r'7d55d59d79f73cb0bf948be25ee4694ccbd532f6';
+    r'f25b47c72904d8a61baaea82e167045759649a36';
 
 final class LobbyFormControllerFamily extends $Family
     with

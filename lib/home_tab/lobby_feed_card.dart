@@ -5,120 +5,258 @@ import '../core/model/lobby.dart';
 import '../core/model/lobby_feed_item.dart';
 import '../ui/theme.dart';
 
+enum _Tier { high, mid, low }
+
 class LobbyFeedCard extends StatelessWidget {
   final LobbyFeedItem item;
   final Widget action;
+  final bool showCompat;
 
-  const LobbyFeedCard({super.key, required this.item, required this.action});
+  const LobbyFeedCard({
+    super.key,
+    required this.item,
+    required this.action,
+    this.showCompat = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final score = item.profileCompatScore;
+    final tier = score >= 3.5
+        ? _Tier.high
+        : score >= 2.0
+            ? _Tier.mid
+            : _Tier.low;
+    final sliverColor = showCompat && score > 0
+        ? (tier == _Tier.high
+            ? const Color(0xFF16a34a)
+            : tier == _Tier.mid
+                ? const Color(0xFFd97706)
+                : colors.muted)
+        : colors.muted;
 
-    return FCard(
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.card,
+        border: Border.all(color: colors.border),
+        borderRadius: context.theme.style.borderRadius.md,
+        boxShadow: context.theme.style.shadow,
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 8,
         children: [
-          // Name + compat score
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  item.name,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colors.primary,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 10,
+              children: [
+                // Name + member count
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.name,
+                        style: context.theme.typography.sm.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (item.memberCount != null) ...[
+                      const SizedBox(width: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '${item.memberCount}',
+                            style: context.theme.typography.lg.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: colors.primary,
+                              height: 1,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            'thành viên',
+                            style: TextStyle(
+                              fontFamily: context.theme.typography.xs.fontFamily,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: colors.mutedForeground,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
-              ),
-              if (item.profileCompatScore > 0) ...[
-                const SizedBox(width: 8),
-                _CompatBadge(score: item.profileCompatScore),
-              ],
-            ],
-          ),
 
-          // Member count + homeground
-          Row(
-            spacing: 4,
-            children: [
-              Icon(FIcons.users, size: 12, color: colors.mutedForeground),
-              Text(
-                '${item.memberCount ?? 0}',
-                style: context.theme.typography.sm
-                    .copyWith(color: colors.mutedForeground),
-              ),
-              if (item.homegroundName != null) ...[
-                const SizedBox(width: 2),
-                Icon(FIcons.mapPin, size: 12, color: colors.mutedForeground),
-                Expanded(
-                  child: Text(
-                    item.homegroundName!,
-                    style: context.theme.typography.sm
-                        .copyWith(color: colors.mutedForeground),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                // Visibility + homeground + timeslots
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 8,
+                  children: [
+                    Row(
+                      spacing: 8,
+                      children: [
+                        _VisibilityIcon(visibility: item.visibility),
+                        if (item.homegroundName != null)
+                          Expanded(
+                            child: Row(
+                              spacing: 4,
+                              children: [
+                                Icon(
+                                  FIcons.mapPin,
+                                  size: 12,
+                                  color: colors.mutedForeground,
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    item.homegroundName!,
+                                    style: context.theme.typography.xs.copyWith(
+                                      color: colors.mutedForeground,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                    if (item.playtime.isNotEmpty)
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: item.playtime.take(3).map((ts) {
+                          return _TimeslotChip(
+                            label:
+                                '${ts.dayChunk.getShortName(context)} ${ts.dayOfWeek.getShortName(context)}',
+                          );
+                        }).toList(),
+                      ),
+                  ],
+                ),
+
+                // Compat section
+                if (showCompat && score > 0) ...[
+                  FDivider(),
+                  _CompatSection(score: score, tier: tier),
+                ],
+
+                FDivider(),
+
+                // CTA
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: action,
                 ),
               ],
-            ],
-          ),
-
-          // Timeslot chips
-          if (item.playtime.isNotEmpty)
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: item.playtime.take(3).map((ts) {
-                return _TimeslotChip(
-                  label:
-                      '${ts.dayChunk.getShortName(context)} ${ts.dayOfWeek.getShortName(context)}',
-                );
-              }).toList(),
             ),
-
-          FDivider(),
-
-          // Visibility + action
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _VisibilityChip(visibility: item.visibility),
-              action,
-            ],
           ),
+          // Bottom tier sliver
+          SizedBox(height: 4, child: ColoredBox(color: sliverColor)),
         ],
       ),
     );
   }
 }
 
-class _CompatBadge extends StatelessWidget {
+class _CompatSection extends StatelessWidget {
   final double score;
+  final _Tier tier;
 
-  const _CompatBadge({required this.score});
+  const _CompatSection({required this.score, required this.tier});
 
   @override
   Widget build(BuildContext context) {
-    final color = score >= 3.5
-        ? const Color(0xFF22C55E)
-        : score >= 2
-            ? const Color(0xFFF59E0B)
-            : context.theme.colors.mutedForeground;
+    final colors = context.theme.colors;
+    final scoreBg = tier == _Tier.high
+        ? const Color(0xFF16a34a)
+        : tier == _Tier.mid
+            ? const Color(0xFFd97706)
+            : colors.secondary;
+    final scoreFg =
+        tier == _Tier.low ? colors.mutedForeground : Colors.white;
+
     return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 2,
       children: [
-        Icon(Icons.star_rounded, size: 12, color: color),
-        Text(
-          score.toStringAsFixed(1),
-          style: context.theme.typography.xs.copyWith(
-            color: color,
-            fontWeight: FontWeight.w600,
+        Row(
+          spacing: 4,
+          children: [
+            Text(
+              'Phù Hợp Với Bạn',
+              style: TextStyle(
+                fontFamily: context.theme.typography.xs.fontFamily,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: colors.mutedForeground,
+                letterSpacing: 0.7,
+              ),
+            ),
+            Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                color: colors.muted,
+                borderRadius: BorderRadius.circular(7),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                'i',
+                style: TextStyle(
+                  fontFamily: context.theme.typography.xs.fontFamily,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: colors.mutedForeground,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const Spacer(),
+        Container(
+          padding: const EdgeInsets.fromLTRB(9, 4, 9, 4),
+          decoration: BoxDecoration(
+            color: scoreBg,
+            borderRadius: BorderRadius.circular(9999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                score.toStringAsFixed(1),
+                style: TextStyle(
+                  fontFamily: context.theme.typography.xs.fontFamily,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: scoreFg,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(width: 3),
+              Text(
+                '/ 5',
+                style: TextStyle(
+                  fontFamily: context.theme.typography.xs.fontFamily,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: scoreFg.withValues(alpha: 0.85),
+                  height: 1,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -139,43 +277,45 @@ class _TimeslotChip extends StatelessWidget {
         borderRadius: context.theme.style.borderRadius.sm,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        child: Text(
-          label,
-          style: context.theme.typography.xs.copyWith(
-            color: context.theme.colors.secondaryForeground,
-          ),
+        padding: const EdgeInsets.fromLTRB(8, 5, 8, 5),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 4,
+          children: [
+            Icon(
+              Icons.schedule_rounded,
+              size: 11,
+              color: context.theme.colors.mutedForeground,
+            ),
+            Text(
+              label,
+              style: context.theme.typography.xs.copyWith(
+                fontWeight: FontWeight.w500,
+                color: context.theme.colors.secondaryForeground,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _VisibilityChip extends StatelessWidget {
+class _VisibilityIcon extends StatelessWidget {
   final LobbyVisibility visibility;
 
-  const _VisibilityChip({required this.visibility});
+  const _VisibilityIcon({required this.visibility});
 
   @override
   Widget build(BuildContext context) {
-    final isPublic = visibility == LobbyVisibility.public;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: isPublic
-            ? pbBlue.withValues(alpha: 0.12)
-            : context.theme.colors.secondary,
-        borderRadius: context.theme.style.borderRadius.sm,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        child: Text(
-          visibility.getLocalizedName(context),
-          style: context.theme.typography.xs.copyWith(
-            color: isPublic ? pbBlue : context.theme.colors.mutedForeground,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
+    final color = visibility == LobbyVisibility.public
+        ? pbBlue
+        : context.theme.colors.mutedForeground;
+    final icon = switch (visibility) {
+      LobbyVisibility.public => Icons.language_rounded,
+      LobbyVisibility.discoverable => Icons.search_rounded,
+      LobbyVisibility.private => Icons.lock_outline_rounded,
+    };
+    return Icon(icon, size: 14, color: color);
   }
 }

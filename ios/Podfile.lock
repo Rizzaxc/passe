@@ -58,11 +58,11 @@ PODS:
   - permission_handler_apple (9.3.0):
     - Flutter
   - PromisesObjC (2.4.0)
-  - Sentry/HybridSDK (8.58.1)
-  - sentry_flutter (9.19.0):
+  - Sentry/HybridSDK (8.58.2)
+  - sentry_flutter (9.20.0):
     - Flutter
     - FlutterMacOS
-    - Sentry/HybridSDK (= 8.58.1)
+    - Sentry/HybridSDK (= 8.58.2)
   - share_plus (0.0.1):
     - Flutter
   - shared_preferences_foundation (0.0.1):
@@ -166,13 +166,13 @@ SPEC CHECKSUMS:
   package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
   permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  Sentry: 958d9619ceccf6abb8c4736003fa336dac1a80a7
-  sentry_flutter: 9bde8d71f013f0e807c424017de923f0ee489e9a
+  Sentry: de29b881e83bd91cf99a927f82f1fd86bfb39db2
+  sentry_flutter: aafdf112550e9550972852e71f44994bd4239254
   share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
   shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6
   sign_in_with_apple: fb98447f3dfb81e2926945ea43a8c9c7205eaca9
   url_launcher_ios: bb13df5870e8c4234ca12609d04010a21be43dfa
-  video_player_avfoundation: 7993f492ae0bd77edaea24d9dc051d8bb2cd7c86
+  video_player_avfoundation: e54d03b3b19f64f2c557354f72ce538387541ba6
 
 PODFILE CHECKSUM: bae4dd9e1d5a38d982e3af8b8013b89d8981a3b8
 

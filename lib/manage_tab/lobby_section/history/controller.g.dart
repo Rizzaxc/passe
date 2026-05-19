@@ -6,6 +6,7 @@ part of 'controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(LobbyHistoryController)
@@ -28,15 +29,30 @@ final class LobbyHistoryControllerProvider
   String debugGetCreateSourceHash() => _$lobbyHistoryControllerHash();
 
   @override
-  String toString() => r'lobbyHistoryControllerProvider($argument)';
+  String toString() {
+    return r'lobbyHistoryControllerProvider'
+        ''
+        '($argument)';
+  }
 
   @$internal
   @override
   LobbyHistoryController create() => LobbyHistoryController();
+
+  @override
+  bool operator ==(Object other) {
+    return other is LobbyHistoryControllerProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
 String _$lobbyHistoryControllerHash() =>
-    r'0000000000000000000000000000000000000000';
+    r'bcd7d94b70acd5f262d8934953fbf8604a73f1a3';
 
 final class LobbyHistoryControllerFamily extends $Family
     with
@@ -44,7 +60,7 @@ final class LobbyHistoryControllerFamily extends $Family
           LobbyHistoryController,
           AsyncValue<List<Activity>>,
           List<Activity>,
-          List<Activity>,
+          FutureOr<List<Activity>>,
           String
         > {
   LobbyHistoryControllerFamily._()
@@ -72,11 +88,14 @@ abstract class _$LobbyHistoryController extends $AsyncNotifier<List<Activity>> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<List<Activity>>, List<Activity>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<Activity>>, List<Activity>>,
-        AsyncValue<List<Activity>>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<Activity>>, List<Activity>>,
+              AsyncValue<List<Activity>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, () => build(_$args));
   }
 }

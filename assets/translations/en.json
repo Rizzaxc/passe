@@ -292,7 +292,6 @@
       "doubles": "Doubles"
     }
   },
-
   "basketball": {
     "position": {
       "label": "Position",
@@ -446,7 +445,18 @@
       "title": "Achievements",
       "content": "View your goals and achievements"
     },
-    "error": "Something went wrong. Please try again."
+    "error": "Something went wrong. Please try again.",
+    "trend": {
+      "title": "Trend",
+      "period": "Last 30 days",
+      "statCalories": "cal/session",
+      "statHeartRate": "avg heart rate",
+      "statDistance": "distance"
+    },
+    "activity": {
+      "title": "Activity",
+      "summary": "3 sessions this week — moderate intensity."
+    }
   },
   "welcome": {
     "skip": "Skip",

@@ -8,7 +8,6 @@ import '../../../auth/auth_controller.dart';
 import '../../../core/model/lobby.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
-import 'lobby_card_activity_slot.dart';
 import 'lobby_controller.dart';
 import 'lobby_form_sheet.dart';
 
@@ -57,16 +56,10 @@ class LobbySubtab extends ConsumerWidget {
                     title: 'manageTab.lobby.empty.title'.tr(),
                     subtitle: 'manageTab.lobby.empty.message'.tr(),
                   )
-                : GridView.builder(
+                : ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 4),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                          childAspectRatio: 0.85,
-                        ),
                     itemCount: lobbies.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, index) =>
                         _LobbyCard(item: lobbies[index]),
                   ),
@@ -91,105 +84,116 @@ class _LobbyCard extends ConsumerWidget {
         currentUserId != null &&
         lobby.captainId != null &&
         lobby.captainId == currentUserId;
+    final initial =
+        lobby.name.isNotEmpty ? lobby.name[0].toUpperCase() : '?';
+    final sliverColor = isLeader ? colors.primary : colors.muted;
 
-    return FCard(
-      child: FTappable(
-        onPress: lobby.id != null
-            ? () => LobbyDetailRoute(
-                id: lobby.id!,
-                $extra: lobby.name,
-              ).go(context)
-            : null,
+    return FTappable(
+      onPress: lobby.id != null
+          ? () => LobbyDetailRoute(id: lobby.id!, $extra: lobby.name).go(context)
+          : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.card,
+          border: Border.all(color: colors.border),
+          borderRadius: context.theme.style.borderRadius.md,
+          boxShadow: context.theme.style.shadow,
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top: info left, avatar right
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 4,
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 10,
+                children: [
+                  // Avatar + name + meta
+                  Row(
+                    spacing: 12,
                     children: [
-                      Row(
-                        spacing: 4,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              lobby.name,
-                              style: context.theme.typography.lg.copyWith(
-                                fontWeight: .w600,
-                                color: context.theme.colors.primary,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: colors.secondary,
+                          borderRadius: context.theme.style.borderRadius.md,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          initial,
+                          style: TextStyle(
+                            fontFamily: context.theme.typography.xl2.fontFamily,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: colors.primary,
+                            height: 1,
                           ),
-                          if (isLeader)
-                            Icon(FIcons.crown, size: 14, color: colors.primary),
-                        ],
+                        ),
                       ),
-
-                      Row(
-                        spacing: 4,
-                        children: [
-                          Icon(
-                            FIcons.users,
-                            size: 12,
-                            color: colors.mutedForeground,
-                          ),
-                          Text(
-                            '${item.memberCount}',
-                            style: context.theme.typography.sm.copyWith(
-                              color: colors.mutedForeground,
-                            ),
-                          ),
-                          if (item.homeGroundName != null) ...[
-                            Icon(
-                              FIcons.mapPin,
-                              size: 12,
-                              color: colors.mutedForeground,
-                            ),
-                            Flexible(
-                              child: Text(
-                                item.homeGroundName!,
-                                style: context.theme.typography.sm.copyWith(
-                                  color: colors.mutedForeground,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 4,
+                          children: [
+                            Row(
+                              spacing: 4,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    lobby.name,
+                                    style: context.theme.typography.sm.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.primary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                                if (isLeader)
+                                  Icon(FIcons.crown, size: 13, color: colors.mutedForeground),
+                              ],
+                            ),
+                            Row(
+                              spacing: 4,
+                              children: [
+                                Icon(FIcons.users, size: 12, color: colors.mutedForeground),
+                                Text(
+                                  '${item.memberCount}',
+                                  style: context.theme.typography.xs.copyWith(
+                                    color: colors.mutedForeground,
+                                  ),
+                                ),
+                                if (item.homeGroundName != null) ...[
+                                  Icon(FIcons.mapPin, size: 12, color: colors.mutedForeground),
+                                  Flexible(
+                                    child: Text(
+                                      item.homeGroundName!,
+                                      style: context.theme.typography.xs.copyWith(
+                                        color: colors.mutedForeground,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
-                        ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                _LobbyAvatar(name: lobby.name),
-              ],
-            ),
 
-            // Separator
-            FDivider(),
+                  FDivider(),
 
-            // Bottom: activity slot left, actions right
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: .spaceBetween,
-                children: [
-                  LobbyCardActivitySlot(
-                    nextActivity: item.nextActivity,
-                    isLeader: isLeader,
-                  ),
-                  _ActionButtons(lobby: lobby),
+                  _CardActions(lobby: lobby, isLeader: isLeader, nextActivity: item.nextActivity),
                 ],
               ),
             ),
+            // Bottom sliver
+            SizedBox(height: 4, child: ColoredBox(color: sliverColor)),
           ],
         ),
       ),
@@ -197,51 +201,53 @@ class _LobbyCard extends ConsumerWidget {
   }
 }
 
-class _LobbyAvatar extends StatelessWidget {
-  final String name;
-
-  const _LobbyAvatar({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    return Container(
-      width: 52,
-      height: 52,
-      decoration: BoxDecoration(
-        color: context.theme.colors.secondary,
-        borderRadius: context.theme.style.borderRadius.md,
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        initial,
-        style: context.theme.typography.xl2.copyWith(
-          fontWeight: FontWeight.bold,
-          color: context.theme.colors.primary,
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionButtons extends StatelessWidget {
+class _CardActions extends StatelessWidget {
   final Lobby lobby;
+  final bool isLeader;
+  final DateTime? nextActivity;
 
-  const _ActionButtons({required this.lobby});
+  const _CardActions({required this.lobby, required this.isLeader, this.nextActivity});
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+
+    Widget? activityLabel;
+    if (nextActivity != null) {
+      final formatted = DateFormat('EEE, d MMM · HH:mm').format(nextActivity!);
+      activityLabel = Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 4,
+        children: [
+          Icon(FIcons.check, size: 13, color: colors.primary),
+          Text(
+            formatted,
+            style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+          ),
+        ],
+      );
+    }
+
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
+        if (activityLabel != null) ...[
+          activityLabel,
+          const Spacer(),
+        ] else
+          const Spacer(),
+        if (isLeader)
+          FButton.icon(
+            size: .xs,
+            variant: .ghost,
+            onPress: () => showFToast(context: context, title: Text('TODO')),
+            child: Icon(FIcons.calendarPlus, size: 16, color: pbBlue),
+          ),
         FButton.icon(
           size: .xs,
           variant: .ghost,
           onPress: lobby.searchableId != null
               ? () async {
-                  await Clipboard.setData(
-                    ClipboardData(text: lobby.searchableId!),
-                  );
+                  await Clipboard.setData(ClipboardData(text: lobby.searchableId!));
                   if (!context.mounted) return;
                   showFToast(
                     context: context,
@@ -255,13 +261,14 @@ class _ActionButtons extends StatelessWidget {
           child: Icon(FIcons.copy, size: 16, color: pbBlue),
         ),
         FButton.icon(
-          variant: .ghost,
           size: .xs,
-          onPress: null, // TODO: invite API
+          variant: .ghost,
+          onPress: null,
           child: Icon(FIcons.userPlus, size: 16, color: pbBlue),
         ),
       ],
     );
   }
 }
+
 

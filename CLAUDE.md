@@ -50,6 +50,7 @@ find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
 - Use JsonEnum whenever possible
 - Use SharedPreferences to persist important app states
 - Use Vietnamese for UI/ messages but do not translate jargon
+- Every Supabase RPC call and async data-load function must have a `.timeout(const Duration(seconds: 5))` — no exceptions
 
 - Whenever editing table user->details json schema, provide the migration script
 - Use snake_case and singular form for table names and columns

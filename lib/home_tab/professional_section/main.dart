@@ -9,271 +9,441 @@ import '../../ui/main.dart';
 import '../filter.dart';
 import 'feed_controller.dart';
 
+// ─── Mock data (visual preview while backend is wired) ─────────
+
+const _kMockCoaches = <ProfessionalFeedItem>[
+  ProfessionalFeedItem(
+    id: 'mock-c-1',
+    displayName: 'Nguyễn Minh',
+    role: ProfessionalRole.coach,
+    bio: 'Hơn 10 năm huấn luyện đội tuyển trẻ Q.10.',
+    sports: [3],
+    experienceYears: 12,
+    averageRating: 4.8,
+    reviewCount: 67,
+    isVerified: true,
+  ),
+  ProfessionalFeedItem(
+    id: 'mock-c-2',
+    displayName: 'Trần Quốc Bảo',
+    role: ProfessionalRole.coach,
+    bio: 'Cựu VĐV cấp tỉnh, chuyên kỹ thuật cơ bản.',
+    sports: [3],
+    experienceYears: 8,
+    averageRating: 4.6,
+    reviewCount: 42,
+    isVerified: true,
+  ),
+  ProfessionalFeedItem(
+    id: 'mock-c-3',
+    displayName: 'Lê Thị Hương',
+    role: ProfessionalRole.coach,
+    bio: 'HLV nữ giàu kinh nghiệm, dạy nhóm và 1-1.',
+    sports: [3],
+    experienceYears: 6,
+    averageRating: 4.9,
+    reviewCount: 38,
+    isVerified: false,
+  ),
+  ProfessionalFeedItem(
+    id: 'mock-c-4',
+    displayName: 'Phạm Văn Đức',
+    role: ProfessionalRole.coach,
+    bio: 'Phong cách tấn công nhanh, phù hợp trung-cao.',
+    sports: [3],
+    experienceYears: 15,
+    averageRating: 4.7,
+    reviewCount: 91,
+    isVerified: true,
+  ),
+  ProfessionalFeedItem(
+    id: 'mock-c-5',
+    displayName: 'Hoàng Anh Tuấn',
+    role: ProfessionalRole.coach,
+    bio: 'Cựu tuyển trường, dạy chiến thuật đôi.',
+    sports: [3],
+    experienceYears: 4,
+    averageRating: 4.5,
+    reviewCount: 19,
+    isVerified: false,
+  ),
+];
+
+const _kMockReferees = <ProfessionalFeedItem>[
+  ProfessionalFeedItem(
+    id: 'mock-r-1',
+    displayName: 'Đỗ Hoàng Long',
+    role: ProfessionalRole.referee,
+    bio: 'Trọng tài cấp quốc gia, hơn 200 trận chính.',
+    sports: [3],
+    experienceYears: 14,
+    averageRating: 4.9,
+    reviewCount: 112,
+    isVerified: true,
+  ),
+  ProfessionalFeedItem(
+    id: 'mock-r-2',
+    displayName: 'Vũ Minh Khoa',
+    role: ProfessionalRole.referee,
+    bio: 'Trọng tài giải phong trào, công minh, sòng phẳng.',
+    sports: [3],
+    experienceYears: 7,
+    averageRating: 4.7,
+    reviewCount: 56,
+    isVerified: true,
+  ),
+  ProfessionalFeedItem(
+    id: 'mock-r-3',
+    displayName: 'Nguyễn Thanh Tùng',
+    role: ProfessionalRole.referee,
+    bio: 'Trọng tài trẻ, sẵn sàng cho giải nội bộ.',
+    sports: [3],
+    experienceYears: 3,
+    averageRating: 4.6,
+    reviewCount: 24,
+    isVerified: false,
+  ),
+  ProfessionalFeedItem(
+    id: 'mock-r-4',
+    displayName: 'Bùi Quang Hải',
+    role: ProfessionalRole.referee,
+    bio: 'Chuyên giải đôi nam nữ, di chuyển linh hoạt.',
+    sports: [3],
+    experienceYears: 9,
+    averageRating: 4.8,
+    reviewCount: 73,
+    isVerified: true,
+  ),
+  ProfessionalFeedItem(
+    id: 'mock-r-5',
+    displayName: 'Trịnh Văn Cường',
+    role: ProfessionalRole.referee,
+    bio: 'Trọng tài chính giải nội bộ doanh nghiệp.',
+    sports: [3],
+    experienceYears: 5,
+    averageRating: 4.4,
+    reviewCount: 31,
+    isVerified: false,
+  ),
+];
+
+// ─── Subtab root ───────────────────────────────────────────────
+
 class ProfessionalSubtab extends ConsumerWidget {
   const ProfessionalSubtab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final feed = ref.watch(professionalFeedProvider);
-    final roleFilter = ref.watch(professionalRoleFilterProvider);
 
-    return Column(
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(professionalFeedProvider);
+        await ref.read(professionalFeedProvider.future);
+      },
+      child: feed.when(
+        loading: () => const _Sections(
+          coaches: _kMockCoaches,
+          referees: _kMockReferees,
+          isMock: true,
+        ),
+        error: (_, _) => const _Sections(
+          coaches: _kMockCoaches,
+          referees: _kMockReferees,
+          isMock: true,
+        ),
+        data: (items) {
+          final coaches = items
+              .where((p) => p.role == ProfessionalRole.coach)
+              .toList();
+          final referees = items
+              .where((p) => p.role == ProfessionalRole.referee)
+              .toList();
+          final empty = coaches.isEmpty && referees.isEmpty;
+          return _Sections(
+            coaches: empty ? _kMockCoaches : coaches,
+            referees: empty ? _kMockReferees : referees,
+            isMock: empty,
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ─── Two vertically stacked sections ───────────────────────────
+
+class _Sections extends StatelessWidget {
+  final List<ProfessionalFeedItem> coaches;
+  final List<ProfessionalFeedItem> referees;
+  final bool isMock;
+
+  const _Sections({
+    required this.coaches,
+    required this.referees,
+    required this.isMock,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       children: [
-        PSectionHeader(
-          title: 'home.professional'.tr(),
+        _Section(
+          title: 'homeTab.professional.filter.coach'.tr(),
+          items: coaches,
+          isMock: isMock,
           suffix: const FilterWidget(),
         ),
-        const SizedBox(height: 8),
-        _RoleFilterBar(),
-        const SizedBox(height: 8),
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(professionalFeedProvider);
-              await ref.read(professionalFeedProvider.future);
-            },
-            child: feed.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  PEmptySectionPlaceholder(
-                    hero: Icon(
-                      FIcons.searchX,
-                      size: 64,
-                      color: context.theme.colors.mutedForeground,
-                    ),
-                    title: 'homeTab.professional.empty.title'.tr(),
-                    subtitle: 'homeTab.professional.empty.message'.tr(),
-                  ),
-                ],
-              ),
-              data: (items) {
-                final filtered = roleFilter == null
-                    ? items
-                    : items.where((p) => p.role == roleFilter).toList();
-                return filtered.isEmpty
-                    ? ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          PEmptySectionPlaceholder(
-                            hero: Icon(
-                              FIcons.searchX,
-                              size: 64,
-                              color: context.theme.colors.mutedForeground,
-                            ),
-                            title: 'homeTab.professional.empty.title'.tr(),
-                            subtitle: 'homeTab.professional.empty.message'.tr(),
-                          ),
-                        ],
-                      )
-                    : ListView.separated(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) =>
-                            _ProfessionalCard(item: filtered[index]),
-                      );
-              },
-            ),
-          ),
+        const SizedBox(height: 24),
+        _Section(
+          title: 'homeTab.professional.filter.referee'.tr(),
+          items: referees,
+          isMock: isMock,
         ),
+        const SizedBox(height: 16),
       ],
     );
   }
 }
 
-class _RoleFilterBar extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selected = ref.watch(professionalRoleFilterProvider);
-    final notifier = ref.read(professionalRoleFilterProvider.notifier);
+// A single section: clickable title + horizontally scrolling row of cards
+class _Section extends StatelessWidget {
+  final String title;
+  final List<ProfessionalFeedItem> items;
+  final bool isMock;
+  final Widget? suffix;
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        spacing: 8,
-        children: [
-          _FilterChip(
-            label: 'homeTab.professional.filter.all'.tr(),
-            selected: selected == null,
-            onTap: () => notifier.set(null),
-          ),
-          _FilterChip(
-            label: 'homeTab.professional.filter.coach'.tr(),
-            selected: selected == ProfessionalRole.coach,
-            onTap: () => notifier.set(ProfessionalRole.coach),
-          ),
-          _FilterChip(
-            label: 'homeTab.professional.filter.referee'.tr(),
-            selected: selected == ProfessionalRole.referee,
-            onTap: () => notifier.set(ProfessionalRole.referee),
-          ),
-        ],
+  const _Section({
+    required this.title,
+    required this.items,
+    required this.isMock,
+    this.suffix,
+  });
+
+  void _openSheet(BuildContext context) {
+    showFSheet(
+      context: context,
+      useRootNavigator: true,
+      side: .btt,
+      mainAxisMaxRatio: 0.9,
+      builder: (_) => _ProfessionalSheet(
+        title: title,
+        items: items,
+        isMock: isMock,
       ),
     );
   }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected
-              ? context.theme.colors.primary
-              : context.theme.colors.secondary,
-          borderRadius: BorderRadius.circular(100),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            FTappable(
+              onPress: items.isEmpty ? null : () => _openSheet(context),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 4,
+                ),
+                child: Text(
+                  title,
+                  style: context.theme.typography.xl2.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const Spacer(),
+            ?suffix,
+          ],
         ),
-        child: Text(
-          label,
-          style: context.theme.typography.sm.copyWith(
-            color: selected
-                ? context.theme.colors.primaryForeground
-                : context.theme.colors.secondaryForeground,
-            fontWeight: FontWeight.w500,
+        const SizedBox(height: 10),
+        if (items.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Text(
+              'homeTab.professional.empty.message'.tr(),
+              textAlign: TextAlign.center,
+              style: context.theme.typography.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 332,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.zero,
+              itemCount: items.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, i) => _ProfessionalCard(
+                item: items[i],
+                isMock: isMock,
+              ),
+            ),
           ),
-        ),
-      ),
+      ],
     );
   }
 }
 
+// ─── Testimonial-style card (avatar-prominent) ─────────────────
+
 class _ProfessionalCard extends StatelessWidget {
   final ProfessionalFeedItem item;
+  final bool isMock;
 
-  const _ProfessionalCard({required this.item});
+  const _ProfessionalCard({required this.item, this.isMock = false});
+
+  String get _initials {
+    final cleaned = item.displayName
+        .replaceAll(
+          RegExp(r'^(hlv|coach|trọng tài)\s+', caseSensitive: false),
+          '',
+        )
+        .trim();
+    final parts = cleaned.split(RegExp(r'\s+'));
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final isCoach = item.role == ProfessionalRole.coach;
+    final accent = isCoach ? colors.primary : pbBlue;
 
-    return FCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 6,
-        children: [
-          // Name + verified + role badge
-          Row(
+    return SizedBox(
+      width: 300,
+      child: FCard(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: Row(
-                  spacing: 4,
+              // Prominent avatar
+              Center(
+                child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    Flexible(
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: accent,
+                        boxShadow: [
+                          BoxShadow(
+                            color: accent.withValues(alpha: 0.28),
+                            blurRadius: 14,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
                       child: Text(
-                        item.displayName,
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colors.primary,
+                        _initials,
+                        style: TextStyle(
+                          fontFamily: context.theme.typography.xl2.fontFamily,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w700,
+                          color: colors.primaryForeground,
+                          height: 1,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (item.isVerified)
-                      Icon(FIcons.badgeCheck, size: 14, color: pbBlue),
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: colors.card,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            FIcons.badgeCheck,
+                            size: 20,
+                            color: pbBlue,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              _RoleBadge(role: item.role),
-            ],
-          ),
-
-          // Rating + reviews
-          Row(
-            spacing: 4,
-            children: [
-              const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
+              const SizedBox(height: 12),
+              // Name
               Text(
-                item.averageRating.toStringAsFixed(1),
+                item.displayName,
                 style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              // Rating
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.star_rounded,
+                    size: 14,
+                    color: Color(0xFFF59E0B),
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    item.averageRating.toStringAsFixed(1),
+                    style: context.theme.typography.sm.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '(${item.reviewCount})',
+                    style: context.theme.typography.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Bio (testimonial quote) — fixed height, no flex
+              SizedBox(
+                height: 64,
+                child: Text(
+                  item.bio == null || item.bio!.isEmpty
+                      ? ''
+                      : '"${item.bio!}"',
+                  style: context.theme.typography.sm.copyWith(
+                    color: colors.mutedForeground,
+                    fontStyle: FontStyle.italic,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text(
-                'homeTab.professional.reviews'
-                    .tr(namedArgs: {'count': '${item.reviewCount}'}),
-                style: context.theme.typography.sm.copyWith(
-                  color: colors.mutedForeground,
-                ),
+              const SizedBox(height: 8),
+              FButton(
+                size: .sm,
+                variant: .secondary,
+                onPress: isMock ? null : () {},
+                child: Text('homeTab.professional.book'.tr()),
               ),
             ],
-          ),
-
-          // Experience
-          if (item.experienceYears != null)
-            Text(
-              'homeTab.professional.experience'
-                  .tr(namedArgs: {'years': '${item.experienceYears}'}),
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-
-          // Bio snippet
-          if (item.bio != null && item.bio!.isNotEmpty)
-            Text(
-              item.bio!,
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-
-          FDivider(),
-
-          Align(
-            alignment: Alignment.centerRight,
-            child: FButton(
-              size: .sm,
-              variant: .secondary,
-              onPress: null, // TODO: booking flow TBD
-              child: Text('homeTab.professional.book'.tr()),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RoleBadge extends StatelessWidget {
-  final ProfessionalRole role;
-
-  const _RoleBadge({required this.role});
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: pbBlue.withValues(alpha: 0.12),
-        borderRadius: context.theme.style.borderRadius.sm,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        child: Text(
-          role.getLocalizedName(context),
-          style: context.theme.typography.xs.copyWith(
-            color: pbBlue,
-            fontWeight: FontWeight.w500,
           ),
         ),
       ),
@@ -281,3 +451,361 @@ class _RoleBadge extends StatelessWidget {
   }
 }
 
+// ─── "See all" sheet ───────────────────────────────────────────
+
+class _ProfessionalSheet extends StatefulWidget {
+  final String title;
+  final List<ProfessionalFeedItem> items;
+  final bool isMock;
+
+  const _ProfessionalSheet({
+    required this.title,
+    required this.items,
+    required this.isMock,
+  });
+
+  @override
+  State<_ProfessionalSheet> createState() => _ProfessionalSheetState();
+}
+
+class _ProfessionalSheetState extends State<_ProfessionalSheet> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FSheets(
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: context.theme.colors.background,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.symmetric(
+            horizontal: BorderSide(color: context.theme.colors.border),
+          ),
+        ),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          primary: false,
+          child: Column(
+            spacing: 16,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: context.theme.typography.xl2.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  FButton.icon(
+                    variant: .ghost,
+                    onPress: () => Navigator.of(context).pop(),
+                    child: const Icon(FIcons.x),
+                  ),
+                ],
+              ),
+              for (final item in widget.items)
+                _SheetRow(item: item, isMock: widget.isMock),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Sheet row — surfaces full info: bio, sports, experience, verification
+class _SheetRow extends StatelessWidget {
+  final ProfessionalFeedItem item;
+  final bool isMock;
+
+  const _SheetRow({required this.item, required this.isMock});
+
+  String get _initials {
+    final cleaned = item.displayName
+        .replaceAll(
+          RegExp(r'^(hlv|coach|trọng tài)\s+', caseSensitive: false),
+          '',
+        )
+        .trim();
+    final parts = cleaned.split(RegExp(r'\s+'));
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final isCoach = item.role == ProfessionalRole.coach;
+    final accent = isCoach ? colors.primary : pbBlue;
+
+    return FCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header: avatar + name + stats
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 14,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: accent,
+                      boxShadow: [
+                        BoxShadow(
+                          color: accent.withValues(alpha: 0.22),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      _initials,
+                      style: TextStyle(
+                        fontFamily: context.theme.typography.xl2.fontFamily,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: colors.primaryForeground,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                  if (item.isVerified)
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: colors.card,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          FIcons.badgeCheck,
+                          size: 18,
+                          color: pbBlue,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 6,
+                  children: [
+                    Text(
+                      item.displayName,
+                      style: context.theme.typography.lg.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 4,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 16,
+                              color: Color(0xFFF59E0B),
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              item.averageRating.toStringAsFixed(1),
+                              style: context.theme.typography.sm.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '(${item.reviewCount} đánh giá)',
+                              style: context.theme.typography.sm.copyWith(
+                                color: colors.mutedForeground,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (item.experienceYears != null)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                FIcons.briefcaseBusiness,
+                                size: 13,
+                                color: colors.mutedForeground,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${item.experienceYears} năm kinh nghiệm',
+                                style: context.theme.typography.sm.copyWith(
+                                  color: colors.mutedForeground,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Verified chip
+          if (item.isVerified) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: pbBlue.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 4,
+                  children: [
+                    Icon(FIcons.badgeCheck, size: 12, color: pbBlue),
+                    Text(
+                      'Đã xác minh',
+                      style: context.theme.typography.xs.copyWith(
+                        color: pbBlue,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+
+          // Sports
+          if (item.sports.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Môn',
+              style: context.theme.typography.xs.copyWith(
+                color: colors.mutedForeground,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final sportIdx in item.sports)
+                  _SportChip(
+                    sport: sportIdx >= 0 && sportIdx < Sport.values.length
+                        ? Sport.values[sportIdx]
+                        : Sport.others,
+                  ),
+              ],
+            ),
+          ],
+
+          // Full bio
+          if (item.bio != null && item.bio!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Giới thiệu',
+              style: context.theme.typography.xs.copyWith(
+                color: colors.mutedForeground,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              item.bio!,
+              style: context.theme.typography.sm.copyWith(
+                color: colors.foreground,
+                height: 1.5,
+              ),
+            ),
+          ],
+
+          // Actions
+          const SizedBox(height: 14),
+          Row(
+            spacing: 8,
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: .outline,
+                  onPress: isMock ? null : () {},
+                  child: const Text('Xem Hồ Sơ'),
+                ),
+              ),
+              Expanded(
+                child: FButton(
+                  onPress: isMock ? null : () {},
+                  child: Text('homeTab.professional.book'.tr()),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SportChip extends StatelessWidget {
+  final Sport sport;
+
+  const _SportChip({required this.sport});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: colors.secondary,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 5,
+        children: [
+          sport.getIcon(size: 12),
+          Text(
+            sport.getLocalizedName(context),
+            style: context.theme.typography.xs.copyWith(
+              color: colors.secondaryForeground,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -97,7 +97,8 @@ class HealthController extends _$HealthController {
           .from('user_health_link')
           .select()
           .eq('user_id', userId)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 5));
 
       if (response != null) {
         // User has linked before, verify permissions
@@ -159,7 +160,7 @@ class HealthController extends _$HealthController {
         'user_id': userId,
         'platform': platform.dbValue,
         'linked_at': DateTime.now().toIso8601String(),
-      });
+      }).timeout(const Duration(seconds: 5));
 
       // Cache locally
       final prefs = UserPreferences.instance;
@@ -182,7 +183,8 @@ class HealthController extends _$HealthController {
         await _supabase
             .from('user_health_link')
             .delete()
-            .eq('user_id', userId);
+            .eq('user_id', userId)
+            .timeout(const Duration(seconds: 5));
       }
 
       await _clearLinkStatus();
@@ -209,7 +211,8 @@ class HealthController extends _$HealthController {
           .from('user_health_link')
           .select()
           .eq('user_id', userId)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 5));
 
       if (response == null) return null;
       return UserHealthLink.fromJson(response);
@@ -227,7 +230,8 @@ class HealthController extends _$HealthController {
       await _supabase
           .from('user_health_link')
           .update({'last_sync_at': DateTime.now().toIso8601String()})
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .timeout(const Duration(seconds: 5));
     } catch (e) {
       // Silent fail for sync timestamp update
     }

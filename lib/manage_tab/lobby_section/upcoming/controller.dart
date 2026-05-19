@@ -24,7 +24,8 @@ class LobbyUpcomingController extends _$LobbyUpcomingController {
         .eq('user_id', user.id!)
         .gte('start_time', now.toIso8601String())
         .order('start_time', ascending: true)
-        .limit(3);
+        .limit(3)
+        .timeout(const Duration(seconds: 5));
 
     return (response as List)
         .map((e) => Activity.fromJson(e as Map<String, dynamic>))

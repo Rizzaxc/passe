@@ -24,7 +24,8 @@ class LobbyHistoryController extends _$LobbyHistoryController {
         .eq('user_id', user.id!)
         .lt('start_time', now.toIso8601String())
         .order('start_time', ascending: false)
-        .limit(10);
+        .limit(10)
+        .timeout(const Duration(seconds: 5));
 
     return (response as List)
         .map((e) => Activity.fromJson(e as Map<String, dynamic>))

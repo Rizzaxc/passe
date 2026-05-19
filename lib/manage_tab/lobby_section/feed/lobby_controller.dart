@@ -49,7 +49,8 @@ class UserLobbiesController extends _$UserLobbiesController {
         .from('lobby')
         .select('id, name, searchable_id, sport_id, captain_id, home_ground, location(name), lobby_member!inner(user_id)')
         .eq('sport_id', sport.index)
-        .eq('lobby_member.user_id', user.id!);
+        .eq('lobby_member.user_id', user.id!)
+        .timeout(const Duration(seconds: 5));
 
     talker.log(lobbyRows, logLevel: .debug);
 
@@ -78,7 +79,8 @@ class UserLobbiesController extends _$UserLobbiesController {
     final countRows = await supabase
         .from('lobby_member')
         .select('lobby_id')
-        .inFilter('lobby_id', lobbyIds);
+        .inFilter('lobby_id', lobbyIds)
+        .timeout(const Duration(seconds: 5));
 
     final countMap = <String, int>{};
     for (final row in countRows as List) {
@@ -96,7 +98,7 @@ class UserLobbiesController extends _$UserLobbiesController {
   }
 
   Future<void> delete(String lobbyId) async {
-    await supabase.from('lobby').delete().eq('id', lobbyId);
+    await supabase.from('lobby').delete().eq('id', lobbyId).timeout(const Duration(seconds: 5));
     ref.invalidateSelf();
   }
 }
@@ -163,7 +165,8 @@ class LobbyFormController extends _$LobbyFormController {
     if (query.length < 8) return [];
 
     final response = await supabase
-        .rpc('search_locations', params: {'search_term': query});
+        .rpc('search_locations', params: {'search_term': query})
+        .timeout(const Duration(seconds: 5));
 
     return (response as List)
         .map((e) => Location.fromJson(e as Map<String, dynamic>))
@@ -209,7 +212,7 @@ class LobbyFormController extends _$LobbyFormController {
         params['p_home_ground_id'] = state.lobby.homeGround;
       }
 
-      final response = await supabase.rpc('create_lobby_with_location', params: params);
+      final response = await supabase.rpc('create_lobby_with_location', params: params).timeout(const Duration(seconds: 5));
       final lobby = Lobby.fromJson(response as Map<String, dynamic>);
       ref.invalidate(userLobbiesControllerProvider);
       return lobby;

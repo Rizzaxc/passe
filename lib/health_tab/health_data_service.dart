@@ -261,7 +261,7 @@ class HealthDataService extends _$HealthDataService {
     await _supabase.from('activity_health_metrics').upsert(
       metrics.toJson(),
       onConflict: 'user_id,activity_id',
-    );
+    ).timeout(const Duration(seconds: 5));
   }
 
   /// Save HR samples in batch
@@ -278,7 +278,7 @@ class HealthDataService extends _$HealthDataService {
           'timestamp': s.timestamp.toIso8601String(),
           'bpm': s.bpm,
         }).toList(),
-      );
+      ).timeout(const Duration(seconds: 5));
     }
   }
 
@@ -287,7 +287,7 @@ class HealthDataService extends _$HealthDataService {
     await _supabase.from('daily_health_summary').upsert(
       summary.toJson(),
       onConflict: 'user_id,date',
-    );
+    ).timeout(const Duration(seconds: 5));
   }
 
   // Helper methods

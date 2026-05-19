@@ -1,3 +1,4 @@
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,7 +13,7 @@ class ChallengerFeed extends _$ChallengerFeed {
   @override
   Future<List<LobbyFeedItem>> build() async {
     final filter = ref.watch(filterStateProvider);
-    final sport = ref.watch(selectedSportStateProvider).value;
+    final sport = ref.watch(selectedSportStateProvider.select((v) => v.value));
     if (sport == null) return [];
 
     final districtIds = filter.districts.map((d) => d.id).toList();
@@ -26,7 +27,7 @@ class ChallengerFeed extends _$ChallengerFeed {
         'p_page_size': 20,
         'p_page_number': 1,
       },
-    );
+    ).timeout(const Duration(seconds: 5));
 
     return (response as List)
         .map((e) => LobbyFeedItem.fromJson(e as Map<String, dynamic>))

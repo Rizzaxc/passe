@@ -67,6 +67,7 @@ class ChallengerSubtab extends ConsumerWidget {
                         final item = items[index];
                         return LobbyFeedCard(
                           item: item,
+                          showCompat: false,
                           action: FButton(
                             size: .sm,
                             variant: .secondary,

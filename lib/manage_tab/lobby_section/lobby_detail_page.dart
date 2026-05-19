@@ -1,16 +1,20 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'history/main.dart';
-import 'feed/lobby_form_sheet.dart';
+import '../../auth/auth_controller.dart';
+import '../../core/model/lobby.dart';
+import 'activity/main.dart';
+import 'history/view.dart';
+import 'lobby_detail_controller.dart';
+import 'lobby_info_sheet.dart';
 import 'members/controller.dart';
-import 'members/main.dart';
-import 'upcoming/main.dart';
 
-class LobbyDetailPage extends ConsumerWidget {
+const _crimson = Color(0xFFDC143C);
+const _crimsonTint = Color(0xFFFFEBED);
+
+class LobbyDetailPage extends ConsumerStatefulWidget {
   final String lobbyId;
   final String? lobbyName;
 
@@ -21,96 +25,268 @@ class LobbyDetailPage extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final memberCount = ref
-        .watch(lobbyMembersControllerProvider(lobbyId))
-        .value
-        ?.length;
+  ConsumerState<LobbyDetailPage> createState() => _LobbyDetailPageState();
+}
 
-    return FScaffold(
-      header: FHeader(
-        title: Text(lobbyName ?? lobbyId),
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FIcons.pencil),
-            onPress: () => showLobbyFormSheet(
-              context: context,
-              ref: ref,
-              lobbyId: lobbyId,
+class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  // Activity state (mock)
+  final bool _hasActivity = true;
+  String _myRsvp = 'going';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final infoAsync = ref.watch(lobbyDetailControllerProvider(widget.lobbyId));
+    final membersAsync =
+        ref.watch(lobbyMembersControllerProvider(widget.lobbyId));
+    final currentUserId = ref.watch(authControllerProvider).value?.id;
+    final colors = context.theme.colors;
+
+    final lobbyName =
+        infoAsync.value?.lobby.name ?? widget.lobbyName ?? '';
+    final memberCount = membersAsync.value?.length;
+    final isLeader = currentUserId != null &&
+        infoAsync.value?.lobby.captainId == currentUserId;
+    final sport = infoAsync.value?.lobby.sport;
+
+    return Scaffold(
+      backgroundColor: colors.background,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Custom header
+            _LobbyHeader(
+              lobbyName: lobbyName,
+              memberCount: memberCount,
+              isLeader: isLeader,
+              lobby: infoAsync.value?.lobby,
+              onBack: () => context.pop(),
+              onInfoTap: () {
+                if (infoAsync.value != null) {
+                  showLobbyInfoSheet(context, infoAsync.value!,
+                      widget.lobbyId);
+                }
+              },
             ),
-          ),
-          FHeaderAction.back(onPress: () => context.pop()),
-        ],
+
+            // Tabs
+            _LobbyTabBar(controller: _tabController),
+
+            // Tab content
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  ActivityTab(
+                    lobbyId: widget.lobbyId,
+                    isLeader: isLeader,
+                    sport: sport,
+                    hasActivity: _hasActivity,
+                    myRsvp: _myRsvp,
+                    onRsvpChanged: (v) => setState(() => _myRsvp = v),
+                  ),
+                  const HistoryView(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-      child: CustomScrollView(
-        slivers: [
-          // ── Members ───────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              title: 'lobby.detail.members'.tr(),
-              count: memberCount,
+    );
+  }
+}
+
+// ─── Header ────────────────────────────────────────────────────
+
+class _LobbyHeader extends StatelessWidget {
+  final String lobbyName;
+  final int? memberCount;
+  final bool isLeader;
+  final Lobby? lobby;
+  final VoidCallback onBack;
+  final VoidCallback onInfoTap;
+
+  const _LobbyHeader({
+    required this.lobbyName,
+    required this.memberCount,
+    required this.isLeader,
+    required this.lobby,
+    required this.onBack,
+    required this.onInfoTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final initial =
+        lobbyName.isNotEmpty ? lobbyName[0].toUpperCase() : '?';
+
+    return Container(
+      color: colors.background,
+      padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+      child: Row(
+        children: [
+          // Back button
+          IconButton(
+            onPressed: onBack,
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 20,
+              color: colors.secondaryForeground,
+            ),
+            padding: const EdgeInsets.all(6),
+          ),
+
+          // Letter avatar
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: _crimsonTint,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: colors.border),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              initial,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: _crimson,
+                height: 1.0,
+              ),
             ),
           ),
-          SliverToBoxAdapter(child: MembersSection(lobbyId: lobbyId)),
+          const SizedBox(width: 8),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-          // ── Upcoming ──────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _SectionHeader(title: 'lobby.detail.upcoming'.tr()),
+          // Name + subtitle
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        lobbyName,
+                        style: const TextStyle(
+                          fontSize: 16.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF09090B),
+                          letterSpacing: -0.2,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isLeader) ...[
+                      const SizedBox(width: 5),
+                      Icon(
+                        FIcons.crown,
+                        size: 13,
+                        color: colors.mutedForeground,
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 1),
+                Row(
+                  children: [
+                    if (lobby?.sport != null) ...[
+                      lobby!.sport.getIcon(size: 11),
+                      const SizedBox(width: 3),
+                    ],
+                    if (memberCount != null) ...[
+                      Text(
+                        '$memberCount TV',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w500,
+                          color: colors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
           ),
-          SliverToBoxAdapter(child: UpcomingSection(lobbyId: lobbyId)),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-          // ── History ───────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _SectionHeader(title: 'lobby.detail.history'.tr()),
+          // Search
+          IconButton(
+            onPressed: () {},
+            icon: Icon(Icons.search_rounded,
+                size: 20, color: colors.secondaryForeground),
+            padding: const EdgeInsets.all(7),
+            constraints:
+                const BoxConstraints(minWidth: 34, minHeight: 34),
           ),
-          SliverToBoxAdapter(child: HistorySection(lobbyId: lobbyId)),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 32)),
+          // Burger menu → info sheet
+          IconButton(
+            onPressed: onInfoTap,
+            icon: Icon(Icons.more_horiz_rounded,
+                size: 20, color: colors.secondaryForeground),
+            padding: const EdgeInsets.all(7),
+            constraints:
+                const BoxConstraints(minWidth: 34, minHeight: 34),
+          ),
         ],
       ),
     );
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final int? count;
+// ─── Tab bar ────────────────────────────────────────────────────
 
-  const _SectionHeader({required this.title, this.count});
+class _LobbyTabBar extends StatelessWidget {
+  final TabController controller;
+  const _LobbyTabBar({required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Row(
-        spacing: 8,
-        children: [
-          Text(
-            title,
-            style: context.theme.typography.lg
-                .copyWith(fontWeight: FontWeight.w600),
-          ),
-          if (count != null)
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: context.theme.colors.secondary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                child: Text(
-                  '$count',
-                  style: context.theme.typography.sm.copyWith(
-                    color: context.theme.colors.secondaryForeground,
-                  ),
-                ),
-              ),
-            ),
+    final colors = context.theme.colors;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.background,
+        border: Border(bottom: BorderSide(color: colors.border)),
+      ),
+      child: TabBar(
+        controller: controller,
+        labelColor: colors.foreground,
+        unselectedLabelColor: colors.mutedForeground,
+        labelStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+        indicatorColor: _crimson,
+        indicatorWeight: 2,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        tabs: const [
+          Tab(height: 40, text: 'Hoạt động'),
+          Tab(height: 40, text: 'Lịch sử'),
         ],
       ),
     );

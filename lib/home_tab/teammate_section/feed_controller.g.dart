@@ -33,7 +33,7 @@ final class TeammateFeedProvider
   TeammateFeed create() => TeammateFeed();
 }
 
-String _$teammateFeedHash() => r'65895f7a3db67e3a9806776008f595e9bcadf386';
+String _$teammateFeedHash() => r'd8c78ea049c63cba7f027567f5644a6b16ff1f35';
 
 abstract class _$TeammateFeed extends $AsyncNotifier<List<LobbyFeedItem>> {
   FutureOr<List<LobbyFeedItem>> build();
@@ -41,15 +41,11 @@ abstract class _$TeammateFeed extends $AsyncNotifier<List<LobbyFeedItem>> {
   @override
   void runBuild() {
     final ref =
-        this.ref
-            as $Ref<AsyncValue<List<LobbyFeedItem>>, List<LobbyFeedItem>>;
+        this.ref as $Ref<AsyncValue<List<LobbyFeedItem>>, List<LobbyFeedItem>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<
-                AsyncValue<List<LobbyFeedItem>>,
-                List<LobbyFeedItem>
-              >,
+              AnyNotifier<AsyncValue<List<LobbyFeedItem>>, List<LobbyFeedItem>>,
               AsyncValue<List<LobbyFeedItem>>,
               Object?,
               Object?
@@ -81,6 +77,7 @@ final class RequestedLobbyIdsProvider
   @override
   RequestedLobbyIds create() => RequestedLobbyIds();
 
+  /// {@macro riverpod.override_with_value}
   Override overrideWithValue(Set<String> value) {
     return $ProviderOverride(
       origin: this,
@@ -89,7 +86,7 @@ final class RequestedLobbyIdsProvider
   }
 }
 
-String _$requestedLobbyIdsHash() => r'requestedLobbyIds_manual_placeholder';
+String _$requestedLobbyIdsHash() => r'6ebf78dfbee91fc00be4a799ff2d2998d53947cb';
 
 abstract class _$RequestedLobbyIds extends $Notifier<Set<String>> {
   Set<String> build();

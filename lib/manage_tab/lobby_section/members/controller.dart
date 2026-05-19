@@ -24,7 +24,8 @@ class LobbyMembersController extends _$LobbyMembersController {
     final response = await supabase
         .from('lobby_member')
         .select('user_id, user!inner(username, tag_number)')
-        .eq('lobby_id', lobbyId);
+        .eq('lobby_id', lobbyId)
+        .timeout(const Duration(seconds: 5));
 
     return (response as List).map((row) {
       final u = row['user'] as Map<String, dynamic>;
