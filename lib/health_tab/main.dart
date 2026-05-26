@@ -4,7 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../core/sport_selector.dart';
-import '../home_tab/filter.dart';
+import '../currency/da_appbar_button.dart';
 import '../ui/main.dart';
 import 'achievements_section/main.dart';
 import 'activity_data_section/main.dart';
@@ -59,18 +59,10 @@ class _HealthTabState extends ConsumerState<HealthTab> {
   }
 
   List<FTabEntry> _buildTabEntries() {
-    return List.generate(_sections.length, (index) {
-      final section = _sections[index];
-      final isSelected = _currentIndex == index;
-
-      return FTabEntry(
-        label: Icon(
-          section.icon,
-          key: const ValueKey('icon'),
-        ),
-        child: section.child,
-      );
-    });
+    return _sections.map((section) => FTabEntry(
+      label: Icon(section.icon, key: const ValueKey('icon')),
+      child: section.child,
+    )).toList();
   }
 
   @override
@@ -81,6 +73,7 @@ class _HealthTabState extends ConsumerState<HealthTab> {
       header: FHeader(
         title: Text('health.title'.tr()),
         suffixes: [
+          const DaAppbarButton(),
           const NotificationIconButton(),
           const SportSelector(),
         ],
@@ -103,6 +96,7 @@ class _HealthTabState extends ConsumerState<HealthTab> {
 
             return FTabs(
               expands: true,
+              contentPhysics: const NeverScrollableScrollPhysics(),
               control: FTabControl.lifted(
                 index: _currentIndex,
                 onChange: _onTabChanged,

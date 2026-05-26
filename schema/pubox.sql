@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict rSeuXR7QvxLE7Axc27sXTs5cOuPcSgsHMIKBmyhzanjBvmPWTbCgq4gkM4Af42B
+\restrict f7ZtHH0wzfJNfX86kYqrFexNcVQOm54pn9gza56JI0RZl6SHOdkQnhsNCcEbB6f
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.9 (Homebrew)
@@ -83,6 +83,30 @@ CREATE TYPE public.lobby_befriend_status AS ENUM (
     'accepted',
     'declined',
     'cancelled'
+);
+
+
+--
+-- Name: lobby_feed_item_kind; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.lobby_feed_item_kind AS ENUM (
+    'update',
+    'personal',
+    'system',
+    'poll',
+    'photo'
+);
+
+
+--
+-- Name: lobby_match_result; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.lobby_match_result AS ENUM (
+    'win',
+    'loss',
+    'practice'
 );
 
 
@@ -712,6 +736,118 @@ $$;
 
 
 --
+-- Name: lobby_feed_data(uuid, integer, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.lobby_feed_data(p_lobby_id uuid, p_page_size integer DEFAULT 50, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone) RETURNS TABLE(id uuid, author_id uuid, author_username character varying, kind public.lobby_feed_item_kind, payload jsonb, created_at timestamp with time zone, poll_tallies jsonb)
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+    RETURN QUERY
+        SELECT fi.id,
+               fi.author_id,
+               u.username                             AS author_username,
+               fi.kind,
+               fi.payload,
+               fi.created_at,
+               -- Poll tallies: {option_index: count, …}. Null for non-polls.
+               CASE WHEN fi.kind = 'poll' THEN
+                   (SELECT jsonb_object_agg(option_index::text, c)
+                    FROM (
+                        SELECT option_index, COUNT(*) AS c
+                        FROM public.lobby_feed_poll_vote v
+                        WHERE v.feed_item_id = fi.id
+                        GROUP BY option_index
+                    ) t)
+               END                                    AS poll_tallies
+        FROM public.lobby_feed_item fi
+                 LEFT JOIN public."user" u ON u.id = fi.author_id
+        WHERE fi.lobby_id = p_lobby_id
+          AND (p_before IS NULL OR fi.created_at < p_before)
+        ORDER BY fi.created_at DESC
+        LIMIT p_page_size;
+END;
+$$;
+
+
+--
+-- Name: lobby_match_history_data(uuid, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.lobby_match_history_data(p_lobby_id uuid, p_page_size integer DEFAULT 50, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, activity_id uuid, opponent_lobby_id uuid, opponent_name text, opponent_tag text, result public.lobby_match_result, sets jsonb, mvp_username character varying, note text, venue_label text, played_at timestamp with time zone, duration_label text, member_usernames text[], referee_booking_id uuid, referee_name text)
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+    RETURN QUERY
+        SELECT m.id,
+               m.activity_id,
+               m.opponent_lobby_id,
+               ol.name                                AS opponent_name,
+               m.opponent_tag,
+               m.result,
+               m.sets,
+               u.username                             AS mvp_username,
+               m.note,
+               m.venue_label,
+               m.played_at,
+               m.duration_label,
+               ARRAY(
+                   SELECT mu.username
+                   FROM public.lobby_member lm
+                            JOIN public."user" mu ON mu.id = lm.user_id
+                   WHERE lm.lobby_id = m.lobby_id
+               )                                      AS member_usernames,
+               m.referee_booking_id,
+               ref.display_name                       AS referee_name
+        FROM public.lobby_match m
+                 LEFT JOIN public.lobby ol ON ol.id = m.opponent_lobby_id
+                 LEFT JOIN public."user" u ON u.id = m.mvp_user_id
+                 LEFT JOIN public.professional_booking rb
+                     ON rb.id = m.referee_booking_id
+                 LEFT JOIN public.professional ref
+                     ON ref.id = rb.professional_id
+        WHERE m.lobby_id = p_lobby_id
+        ORDER BY m.played_at DESC
+        LIMIT p_page_size OFFSET (p_page_number - 1) * p_page_size;
+END;
+$$;
+
+
+--
+-- Name: lobby_match_referee_role_check(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.lobby_match_referee_role_check() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+    booked_role public.professional_role;
+BEGIN
+    IF NEW.referee_booking_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT p.professional_role
+        INTO booked_role
+        FROM public.professional_booking pb
+                 JOIN public.professional p ON p.id = pb.professional_id
+        WHERE pb.id = NEW.referee_booking_id;
+
+    IF booked_role IS DISTINCT FROM 'referee' THEN
+        RAISE EXCEPTION
+            'lobby_match.referee_booking_id must reference a booking whose professional is a referee (got: %)',
+            booked_role;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+--
 -- Name: nanoid(integer, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1204,6 +1340,86 @@ CREATE TABLE public.lobby_befriend_record (
     CONSTRAINT befriend_record_pair_conditions CHECK (((interaction_type <> 'pair'::public.lobby_befriend_interaction) OR ((target_user_id IS NOT NULL) AND (target_lobby_id IS NULL) AND (initiator_user_id <> target_user_id)))),
     CONSTRAINT befriend_record_request_conditions CHECK (((interaction_type <> 'request'::public.lobby_befriend_interaction) OR ((target_user_id IS NULL) AND (target_lobby_id IS NOT NULL))))
 );
+
+
+--
+-- Name: lobby_feed_item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lobby_feed_item (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    lobby_id uuid NOT NULL,
+    author_id uuid,
+    kind public.lobby_feed_item_kind NOT NULL,
+    payload jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT lobby_feed_item_payload_shape CHECK ((((kind = 'update'::public.lobby_feed_item_kind) AND (payload ? 'title'::text) AND (payload ? 'kind'::text) AND (payload ? 'tone'::text) AND (payload ? 'fields'::text)) OR ((kind = 'personal'::public.lobby_feed_item_kind) AND (payload ? 'action_kind'::text)) OR ((kind = 'system'::public.lobby_feed_item_kind) AND (payload ? 'text'::text)) OR ((kind = 'poll'::public.lobby_feed_item_kind) AND (payload ? 'question'::text) AND (payload ? 'options'::text)) OR ((kind = 'photo'::public.lobby_feed_item_kind) AND (payload ? 'storage_path'::text))))
+);
+
+
+--
+-- Name: TABLE lobby_feed_item; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.lobby_feed_item IS 'Action-stream entries for a lobby''s activity tab. Payload shape varies by kind — see CHECK constraint and lib/manage_tab/lobby_section/activity/feed.dart for the canonical schemas.';
+
+
+--
+-- Name: lobby_feed_poll_vote; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lobby_feed_poll_vote (
+    feed_item_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    option_index integer NOT NULL,
+    voted_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT lobby_feed_poll_vote_option_index_check CHECK ((option_index >= 0))
+);
+
+
+--
+-- Name: TABLE lobby_feed_poll_vote; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.lobby_feed_poll_vote IS 'Member votes against a feed-item poll. option_index points into the payload.options array of the parent lobby_feed_item.';
+
+
+--
+-- Name: lobby_match; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lobby_match (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    lobby_id uuid NOT NULL,
+    activity_id uuid,
+    opponent_lobby_id uuid,
+    opponent_tag text NOT NULL,
+    result public.lobby_match_result NOT NULL,
+    sets jsonb,
+    mvp_user_id uuid,
+    note text,
+    venue_label text NOT NULL,
+    played_at timestamp with time zone NOT NULL,
+    duration_label text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    referee_booking_id uuid,
+    CONSTRAINT lobby_match_referee_required_for_challenge CHECK (((opponent_lobby_id IS NULL) OR (referee_booking_id IS NOT NULL))),
+    CONSTRAINT lobby_match_sets_only_when_decided CHECK ((((result = 'practice'::public.lobby_match_result) AND (sets IS NULL)) OR (result <> 'practice'::public.lobby_match_result)))
+);
+
+
+--
+-- Name: TABLE lobby_match; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.lobby_match IS 'Recorded match results for a lobby. sets is a JSON array of [us, them] tuples; venue_label / duration_label are denormalised copies for fast list rendering.';
+
+
+--
+-- Name: COLUMN lobby_match.referee_booking_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lobby_match.referee_booking_id IS 'FK to the professional_booking that hired the referee for this match. Required for challenge matches (see lobby_match_referee_required_for_challenge). RESTRICT on delete because the booking row is the historical record of the hire — deleting it would orphan the audit trail.';
 
 
 --
@@ -1721,6 +1937,30 @@ ALTER TABLE ONLY public.lobby_befriend_record
 
 
 --
+-- Name: lobby_feed_item lobby_feed_item_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_feed_item
+    ADD CONSTRAINT lobby_feed_item_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lobby_feed_poll_vote lobby_feed_poll_vote_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_feed_poll_vote
+    ADD CONSTRAINT lobby_feed_poll_vote_pkey PRIMARY KEY (feed_item_id, user_id);
+
+
+--
+-- Name: lobby_match lobby_match_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_match
+    ADD CONSTRAINT lobby_match_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: lobby_member lobby_member_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2223,6 +2463,20 @@ CREATE INDEX idx_user_network_user_id ON public.user_network USING btree (user_i
 
 
 --
+-- Name: lobby_feed_item_lobby_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX lobby_feed_item_lobby_idx ON public.lobby_feed_item USING btree (lobby_id, created_at DESC);
+
+
+--
+-- Name: lobby_match_lobby_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX lobby_match_lobby_idx ON public.lobby_match USING btree (lobby_id, played_at DESC);
+
+
+--
 -- Name: network_name_lower_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2304,6 +2558,13 @@ CREATE TRIGGER lobby_befriend_accepted_trigger AFTER UPDATE ON public.lobby_befr
 --
 
 CREATE TRIGGER lobby_befriend_record_before_insert BEFORE INSERT ON public.lobby_befriend_record FOR EACH ROW EXECUTE FUNCTION public.lobby_befriend_record_before_insert_trigger_fn();
+
+
+--
+-- Name: lobby_match lobby_match_referee_role_check; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lobby_match_referee_role_check BEFORE INSERT OR UPDATE OF referee_booking_id ON public.lobby_match FOR EACH ROW EXECUTE FUNCTION public.lobby_match_referee_role_check();
 
 
 --
@@ -2471,11 +2732,83 @@ ALTER TABLE ONLY public.lobby
 
 
 --
+-- Name: lobby_feed_item lobby_feed_item_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_feed_item
+    ADD CONSTRAINT lobby_feed_item_author_id_fkey FOREIGN KEY (author_id) REFERENCES public."user"(id) ON DELETE SET NULL;
+
+
+--
+-- Name: lobby_feed_item lobby_feed_item_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_feed_item
+    ADD CONSTRAINT lobby_feed_item_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_feed_poll_vote lobby_feed_poll_vote_feed_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_feed_poll_vote
+    ADD CONSTRAINT lobby_feed_poll_vote_feed_item_id_fkey FOREIGN KEY (feed_item_id) REFERENCES public.lobby_feed_item(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_feed_poll_vote lobby_feed_poll_vote_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_feed_poll_vote
+    ADD CONSTRAINT lobby_feed_poll_vote_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
 -- Name: lobby lobby_home_ground_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby
     ADD CONSTRAINT lobby_home_ground_fkey FOREIGN KEY (home_ground) REFERENCES public.location(id);
+
+
+--
+-- Name: lobby_match lobby_match_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_match
+    ADD CONSTRAINT lobby_match_activity_id_fkey FOREIGN KEY (activity_id) REFERENCES public.activity(id) ON DELETE SET NULL;
+
+
+--
+-- Name: lobby_match lobby_match_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_match
+    ADD CONSTRAINT lobby_match_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_match lobby_match_mvp_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_match
+    ADD CONSTRAINT lobby_match_mvp_user_id_fkey FOREIGN KEY (mvp_user_id) REFERENCES public."user"(id) ON DELETE SET NULL;
+
+
+--
+-- Name: lobby_match lobby_match_opponent_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_match
+    ADD CONSTRAINT lobby_match_opponent_lobby_id_fkey FOREIGN KEY (opponent_lobby_id) REFERENCES public.lobby(id) ON DELETE SET NULL;
+
+
+--
+-- Name: lobby_match lobby_match_referee_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_match
+    ADD CONSTRAINT lobby_match_referee_booking_id_fkey FOREIGN KEY (referee_booking_id) REFERENCES public.professional_booking(id) ON DELETE RESTRICT;
 
 
 --
@@ -3295,5 +3628,5 @@ CREATE POLICY "users manage own tennis profile" ON public.tennis_profile USING (
 -- PostgreSQL database dump complete
 --
 
-\unrestrict rSeuXR7QvxLE7Axc27sXTs5cOuPcSgsHMIKBmyhzanjBvmPWTbCgq4gkM4Af42B
+\unrestrict f7ZtHH0wzfJNfX86kYqrFexNcVQOm54pn9gza56JI0RZl6SHOdkQnhsNCcEbB6f
 

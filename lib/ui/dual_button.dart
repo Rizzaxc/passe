@@ -30,6 +30,13 @@ class PDualButton extends StatefulWidget {
   final Axis axis;
   final int flex;
 
+  /// When true, buttons size to their content instead of using
+  /// [Expanded] flex shares. Use this when embedding the widget in a
+  /// content-sized slot (e.g. a section-header suffix) where the
+  /// default `Expanded` children inside a `MainAxisSize.min` Row would
+  /// fail flex resolution.
+  final bool compact;
+
   const PDualButton({
     required this.firstChild,
     required this.secondChild,
@@ -39,6 +46,7 @@ class PDualButton extends StatefulWidget {
     this.secondVariant,
     this.axis = Axis.horizontal,
     this.flex = 50,
+    this.compact = false,
     super.key,
   });
 
@@ -102,32 +110,33 @@ class _PDualButtonState extends State<PDualButton> {
     );
   }
 
+  Widget _wrapFlex(Widget child, int flex) =>
+      widget.compact ? child : Expanded(flex: flex, child: child);
+
   @override
   Widget build(BuildContext context) {
+    final firstBtn = FButton(
+      variant: widget.firstVariant ?? .primary,
+      style: _styleDelta(true),
+      onPress: _isProcessing ? null : _handleFirstPressed,
+      child: widget.firstChild,
+    );
+
+    final secondBtn = FButton(
+      variant: widget.secondVariant ?? .primary,
+      style: _styleDelta(false),
+      onPress: _isProcessing ? null : _handleSecondPressed,
+      child: widget.secondChild,
+    );
+
     final children = [
-      Expanded(
-        flex: widget.flex,
-        child: FButton(
-          variant: widget.firstVariant ?? .primary,
-          style: _styleDelta(true),
-          onPress: _isProcessing ? null : _handleFirstPressed,
-          child: widget.firstChild,
-        ),
-      ),
+      _wrapFlex(firstBtn, widget.flex),
       SizedBox(
         width: widget.axis == Axis.horizontal ? 1 : null,
         height: widget.axis == Axis.vertical ? 1 : null,
-        child: const FDivider(),
+        child: FDivider(axis: widget.axis == Axis.horizontal ? .vertical : .horizontal),
       ),
-      Expanded(
-        flex: 100 - widget.flex,
-        child: FButton(
-          variant: widget.secondVariant ?? .primary,
-          style: _styleDelta(false),
-          onPress: _isProcessing ? null : _handleSecondPressed,
-          child: widget.secondChild,
-        ),
-      ),
+      _wrapFlex(secondBtn, 100 - widget.flex),
     ];
 
     return widget.axis == Axis.horizontal

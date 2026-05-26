@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../../../../ui/sheet.dart';
 import '../../../../ui/theme.dart';
 
 const _crimson = Color(0xFFDC143C);
@@ -141,7 +142,6 @@ class ChatTriggerBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: BoxDecoration(
-        color: colors.card,
         border: Border(top: BorderSide(color: colors.border)),
       ),
       child: Row(
@@ -165,17 +165,16 @@ class ChatTriggerBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Pill input (tappable, opens overlay)
+          // Field-style trigger (tappable, opens overlay)
           Expanded(
             child: GestureDetector(
               onTap: onOpen,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(14, 7, 6, 7),
+                padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
                 decoration: BoxDecoration(
-                  color: colors.background,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                      color: colors.border.withValues(alpha: 0.7)),
+                  color: colors.secondary,
+                  borderRadius: context.theme.style.borderRadius.md,
+                  border: Border.all(color: colors.border),
                 ),
                 child: Row(
                   children: [
@@ -184,18 +183,17 @@ class ChatTriggerBar extends StatelessWidget {
                         isLeader
                             ? 'Bạn muốn đăng gì cho lobby?'
                             : 'Bạn muốn đăng gì?',
-                        style: TextStyle(
-                          fontSize: 13,
+                        style: context.theme.typography.sm.copyWith(
                           fontStyle: FontStyle.italic,
                           color: colors.mutedForeground,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     Container(
-                      width: 26,
-                      height: 26,
+                      width: 28,
+                      height: 28,
                       decoration: const BoxDecoration(
                         color: _crimson,
                         shape: BoxShape.circle,
@@ -214,40 +212,118 @@ class ChatTriggerBar extends StatelessWidget {
   }
 }
 
-// ─── Action picker overlay ─────────────────────────────────────
+// ─── Action picker sheet ───────────────────────────────────────
 
-class ActionPickerOverlay extends StatelessWidget {
+/// Opens the action picker as a proper modal sheet on the root
+/// navigator — sharing the app's standard PSheet chrome. The old
+/// implementation rendered the picker as a `Positioned.fill` overlay
+/// inside the activity tab's `Stack`, which meant it lived under a
+/// child navigator and never dimmed the appbar / tab bar properly.
+void showActionPickerSheet(
+  BuildContext context, {
+  required bool isLeader,
+  required bool hasActivity,
+}) {
+  showPSheet(
+    context: context,
+    padding: EdgeInsets.zero,
+    builder: (_) => _ActionPickerSheet(
+      isLeader: isLeader,
+      hasActivity: hasActivity,
+    ),
+  );
+}
+
+class _ActionPickerSheet extends StatelessWidget {
   final bool isLeader;
   final bool hasActivity;
-  final VoidCallback onClose;
 
-  const ActionPickerOverlay({
-    super.key,
+  const _ActionPickerSheet({
     required this.isLeader,
     required this.hasActivity,
-    required this.onClose,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    final colors = context.theme.colors;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Backdrop
-        GestureDetector(
-          onTap: onClose,
-          child: Container(
-            color: Colors.black.withValues(alpha: 0.45),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 18, 14, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              PSheetTitle(
+                label: 'Đăng hoạt động',
+                trailing: FButton.icon(
+                  variant: .ghost,
+                  onPress: () => Navigator.of(context).pop(),
+                  child: const Icon(FIcons.x),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  'Chọn một hành động để đăng vào feed của lobby',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: colors.mutedForeground,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        // Sheet
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: _ActionPickerSheet(
-            isLeader: isLeader,
-            hasActivity: hasActivity,
-            onClose: onClose,
+        Divider(color: colors.border.withValues(alpha: 0.5), height: 1),
+        // Actions
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasActivity) ...[
+                  const SizedBox(height: 8),
+                  PSheetSectionLabel(
+                    label: 'Cá nhân',
+                    trailing: _SectionDescription('Cập nhật trạng thái của bạn'),
+                  ),
+                  const SizedBox(height: 6),
+                  _ActionGroup(actions: _personalActions),
+                ],
+                if (isLeader) ...[
+                  const SizedBox(height: 14),
+                  PSheetSectionLabel(
+                    label: 'Đội trưởng',
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          FIcons.crown,
+                          size: 11,
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                        const SizedBox(width: 6),
+                        _SectionDescription('Chỉ đội trưởng'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _ActionGroup(actions: _captainActions),
+                ],
+                const SizedBox(height: 14),
+                PSheetSectionLabel(
+                  label: 'Khác',
+                  trailing:
+                      _SectionDescription('Mọi thành viên đều đăng được'),
+                ),
+                const SizedBox(height: 6),
+                _ActionGroup(actions: _sharedActions),
+              ],
+            ),
           ),
         ),
       ],
@@ -255,182 +331,22 @@ class ActionPickerOverlay extends StatelessWidget {
   }
 }
 
-class _ActionPickerSheet extends StatelessWidget {
-  final bool isLeader;
-  final bool hasActivity;
-  final VoidCallback onClose;
+/// Right-aligned italic helper text that pairs with [PSheetSectionLabel]
+/// inside the action-picker sheet. Kept slightly smaller and more muted
+/// than the label so the eye lands on the label first.
+class _SectionDescription extends StatelessWidget {
+  final String text;
 
-  const _ActionPickerSheet({
-    required this.isLeader,
-    required this.hasActivity,
-    required this.onClose,
-  });
+  const _SectionDescription(this.text);
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border(top: BorderSide(color: colors.border)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x2F140C04),
-            blurRadius: 50,
-            offset: Offset(0, -20),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colors.muted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-          ),
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Đăng hoạt động',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF09090B),
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'Chọn một hành động để đăng vào feed của lobby',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: colors.mutedForeground,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: onClose,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: colors.secondary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(FIcons.x,
-                        size: 16, color: colors.secondaryForeground),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(color: colors.border.withValues(alpha: 0.5), height: 1),
-          // Actions
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.55,
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (hasActivity) ...[
-                    const SizedBox(height: 8),
-                    _SectionHeader(
-                      label: 'Cá nhân',
-                      description: 'Cập nhật trạng thái của bạn',
-                    ),
-                    _ActionGroup(actions: _personalActions),
-                  ],
-                  if (isLeader) ...[
-                    const SizedBox(height: 14),
-                    _SectionHeader(
-                      label: 'Đội trưởng',
-                      description: 'Chỉ đội trưởng',
-                      showCrown: true,
-                    ),
-                    _ActionGroup(actions: _captainActions),
-                  ],
-                  const SizedBox(height: 14),
-                  _SectionHeader(
-                    label: 'Khác',
-                    description: 'Mọi thành viên đều đăng được',
-                  ),
-                  _ActionGroup(actions: _sharedActions),
-                  SizedBox(height: MediaQuery.of(context).padding.bottom),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String label;
-  final String description;
-  final bool showCrown;
-
-  const _SectionHeader({
-    required this.label,
-    required this.description,
-    this.showCrown = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),
-      child: Row(
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: colors.mutedForeground,
-              letterSpacing: 0.7,
-            ),
-          ),
-          if (showCrown) ...[
-            const SizedBox(width: 4),
-            Icon(FIcons.crown, size: 10, color: colors.mutedForeground),
-          ],
-          const Spacer(),
-          Text(
-            description,
-            style: TextStyle(
-              fontSize: 10,
-              fontStyle: FontStyle.italic,
-              color: colors.mutedForeground.withValues(alpha: 0.6),
-            ),
-          ),
-        ],
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 10,
+        fontStyle: FontStyle.italic,
+        color: context.theme.colors.mutedForeground.withValues(alpha: 0.6),
       ),
     );
   }

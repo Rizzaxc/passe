@@ -7,13 +7,20 @@ import 'package:talker_flutter/talker_flutter.dart';
 import 'auth/auth_controller.dart';
 import 'auth/auth_screen.dart';
 import 'auth/welcome_screen.dart';
+import 'core/model/professional_feed_item.dart';
 import 'core/model/pubox_user.dart';
+import 'currency/wallet_home_screen.dart';
+import 'currency/wallet_intro_screen.dart';
+import 'currency/wallet_purchase_history_screen.dart';
+import 'currency/wallet_spending_history_screen.dart';
+import 'currency/wallet_topup_screen.dart';
 import 'home_tab/main.dart';
 import 'main.dart';
 import 'manage_tab/lobby_section/lobby_detail_page.dart';
 import 'manage_tab/main.dart';
 import 'health_tab/main.dart';
 import 'notification/main.dart';
+import 'professional/main.dart';
 import 'profile_tab/main.dart';
 import 'splash/main.dart';
 
@@ -132,6 +139,80 @@ class NotificationRoute extends GoRouteData with $NotificationRoute {
   Widget build(BuildContext context, GoRouterState state) {
     return const NotificationPage();
   }
+}
+
+/// Đá in-app currency wallet — entry point pushed from the appbar pill.
+@TypedGoRoute<WalletHomeRoute>(path: '/wallet')
+@immutable
+class WalletHomeRoute extends GoRouteData with $WalletHomeRoute {
+  const WalletHomeRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const WalletHomeScreen();
+}
+
+@TypedGoRoute<WalletIntroRoute>(path: '/wallet/intro')
+@immutable
+class WalletIntroRoute extends GoRouteData with $WalletIntroRoute {
+  const WalletIntroRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const WalletIntroScreen();
+}
+
+@TypedGoRoute<WalletPurchaseHistoryRoute>(path: '/wallet/purchase')
+@immutable
+class WalletPurchaseHistoryRoute extends GoRouteData
+    with $WalletPurchaseHistoryRoute {
+  const WalletPurchaseHistoryRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const WalletPurchaseHistoryScreen();
+}
+
+@TypedGoRoute<WalletSpendingHistoryRoute>(path: '/wallet/spending')
+@immutable
+class WalletSpendingHistoryRoute extends GoRouteData
+    with $WalletSpendingHistoryRoute {
+  const WalletSpendingHistoryRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const WalletSpendingHistoryScreen();
+}
+
+@TypedGoRoute<WalletTopupRoute>(path: '/wallet/topup')
+@immutable
+class WalletTopupRoute extends GoRouteData with $WalletTopupRoute {
+  const WalletTopupRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const WalletTopupScreen();
+}
+
+/// Coach / referee profile detail.
+///
+/// Not part of the main tab navigation — only reachable as a push
+/// destination from discovery flows (home professional feed, manage
+/// coaching links, search, notifications). Pass a [ProfessionalFeedItem]
+/// as `$extra` when available to skip the network round-trip.
+@TypedGoRoute<ProfessionalDetailRoute>(path: '/professional/:id')
+@immutable
+class ProfessionalDetailRoute extends GoRouteData
+    with $ProfessionalDetailRoute {
+  final String id;
+  // ignore: library_private_types_in_public_api
+  final ProfessionalFeedItem? $extra;
+
+  const ProfessionalDetailRoute({required this.id, this.$extra});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ProfessionalDetailPage(id: id, initialItem: $extra);
 }
 
 @TypedStatefulShellRoute<MainRoute>(

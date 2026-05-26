@@ -5,7 +5,6 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../auth/auth_controller.dart';
-import '../../../core/model/lobby.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
 import 'lobby_controller.dart';
@@ -109,9 +108,10 @@ class _LobbyCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 spacing: 10,
                 children: [
-                  // Avatar + name + meta
+                  // Avatar + name column
                   Row(
                     spacing: 12,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
                         width: 48,
@@ -137,49 +137,90 @@ class _LobbyCard extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           spacing: 4,
                           children: [
+                            // Name + crown | member count (top-right)
                             Row(
-                              spacing: 4,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
-                                  child: Text(
-                                    lobby.name,
-                                    style: context.theme.typography.sm.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: colors.primary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  child: Row(
+                                    spacing: 4,
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          lobby.name,
+                                          style: context.theme.typography.sm
+                                              .copyWith(
+                                                fontWeight: FontWeight.w600,
+                                                color: colors.primary,
+                                                fontSize: 15,
+                                              ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (isLeader)
+                                        Icon(
+                                          FIcons.crown,
+                                          size: 13,
+                                          color: colors.mutedForeground,
+                                        ),
+                                    ],
                                   ),
                                 ),
-                                if (isLeader)
-                                  Icon(FIcons.crown, size: 13, color: colors.mutedForeground),
+                                const SizedBox(width: 8),
+                                Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      '${item.memberCount}',
+                                      style: context.theme.typography.lg
+                                          .copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: colors.primary,
+                                            height: 1,
+                                          ),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      'thành viên',
+                                      style: TextStyle(
+                                        fontFamily: context
+                                            .theme.typography.xs.fontFamily,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                        color: colors.mutedForeground,
+                                        letterSpacing: 0.4,
+                                        height: 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
-                            Row(
-                              spacing: 4,
-                              children: [
-                                Icon(FIcons.users, size: 12, color: colors.mutedForeground),
-                                Text(
-                                  '${item.memberCount}',
-                                  style: context.theme.typography.xs.copyWith(
+                            // Homeground
+                            if (item.homeGroundName != null)
+                              Row(
+                                spacing: 4,
+                                children: [
+                                  Icon(
+                                    FIcons.mapPin,
+                                    size: 12,
                                     color: colors.mutedForeground,
                                   ),
-                                ),
-                                if (item.homeGroundName != null) ...[
-                                  Icon(FIcons.mapPin, size: 12, color: colors.mutedForeground),
                                   Flexible(
                                     child: Text(
                                       item.homeGroundName!,
-                                      style: context.theme.typography.xs.copyWith(
-                                        color: colors.mutedForeground,
-                                      ),
+                                      style: context.theme.typography.xs
+                                          .copyWith(
+                                            color: colors.mutedForeground,
+                                          ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
-                              ],
-                            ),
+                              ),
                           ],
                         ),
                       ),
@@ -188,7 +229,90 @@ class _LobbyCard extends ConsumerWidget {
 
                   FDivider(),
 
-                  _CardActions(lobby: lobby, isLeader: isLeader, nextActivity: item.nextActivity),
+                  // Activity label (left) + small ghost action buttons (right)
+                  Row(
+                    children: [
+                      // Activity state
+                      if (item.nextActivity != null) ...[
+                        Icon(
+                          FIcons.calendar,
+                          size: 12,
+                          color: colors.mutedForeground,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            DateFormat('EEE, d MMM · HH:mm').format(
+                              item.nextActivity!,
+                            ),
+                            style: TextStyle(
+                              fontFamily:
+                                  context.theme.typography.xs.fontFamily,
+                              fontSize: 11,
+                              color: colors.mutedForeground,
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ] else
+                        Expanded(
+                          child: Text(
+                            'lobby.noActivity'.tr(),
+                            style: TextStyle(
+                              fontFamily:
+                                  context.theme.typography.xs.fontFamily,
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                              color: colors.mutedForeground,
+                              height: 1.2,
+                            ),
+                          ),
+                        ),
+                      // Action buttons
+                      if (isLeader)
+                        FButton.icon(
+                          size: .xs,
+                          variant: .ghost,
+                          onPress: () =>
+                              showFToast(context: context, title: Text('TODO')),
+                          child: Icon(
+                            FIcons.calendarPlus,
+                            size: 16,
+                            color: pbBlue,
+                          ),
+                        ),
+                      FButton.icon(
+                        size: .xs,
+                        variant: .ghost,
+                        onPress: lobby.searchableId != null
+                            ? () async {
+                                await Clipboard.setData(
+                                  ClipboardData(text: lobby.searchableId!),
+                                );
+                                if (!context.mounted) return;
+                                showFToast(
+                                  context: context,
+                                  icon: const Icon(FIcons.info),
+                                  title: Text('lobby.searchIDCopied'.tr()),
+                                  description: Text(
+                                    'lobby.searchIDExplanation'.tr(),
+                                  ),
+                                  alignment: .bottomCenter,
+                                );
+                              }
+                            : null,
+                        child: Icon(FIcons.copy, size: 16, color: pbBlue),
+                      ),
+                      FButton.icon(
+                        size: .xs,
+                        variant: .ghost,
+                        onPress: null,
+                        child: Icon(FIcons.userPlus, size: 16, color: pbBlue),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -200,75 +324,3 @@ class _LobbyCard extends ConsumerWidget {
     );
   }
 }
-
-class _CardActions extends StatelessWidget {
-  final Lobby lobby;
-  final bool isLeader;
-  final DateTime? nextActivity;
-
-  const _CardActions({required this.lobby, required this.isLeader, this.nextActivity});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-
-    Widget? activityLabel;
-    if (nextActivity != null) {
-      final formatted = DateFormat('EEE, d MMM · HH:mm').format(nextActivity!);
-      activityLabel = Row(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 4,
-        children: [
-          Icon(FIcons.check, size: 13, color: colors.primary),
-          Text(
-            formatted,
-            style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
-          ),
-        ],
-      );
-    }
-
-    return Row(
-      children: [
-        if (activityLabel != null) ...[
-          activityLabel,
-          const Spacer(),
-        ] else
-          const Spacer(),
-        if (isLeader)
-          FButton.icon(
-            size: .xs,
-            variant: .ghost,
-            onPress: () => showFToast(context: context, title: Text('TODO')),
-            child: Icon(FIcons.calendarPlus, size: 16, color: pbBlue),
-          ),
-        FButton.icon(
-          size: .xs,
-          variant: .ghost,
-          onPress: lobby.searchableId != null
-              ? () async {
-                  await Clipboard.setData(ClipboardData(text: lobby.searchableId!));
-                  if (!context.mounted) return;
-                  showFToast(
-                    context: context,
-                    icon: Icon(FIcons.info),
-                    title: Text('lobby.searchIDCopied'.tr()),
-                    description: Text('lobby.searchIDExplanation'.tr()),
-                    alignment: .bottomCenter,
-                  );
-                }
-              : null,
-          child: Icon(FIcons.copy, size: 16, color: pbBlue),
-        ),
-        FButton.icon(
-          size: .xs,
-          variant: .ghost,
-          onPress: null,
-          child: Icon(FIcons.userPlus, size: 16, color: pbBlue),
-        ),
-      ],
-    );
-  }
-}
-
-

@@ -10,6 +10,7 @@ import '../core/model/enum.dart';
 import '../core/model/user_details.dart';
 import '../core/sport_selector.dart';
 import '../core/state/selected_sport_state.dart';
+import '../currency/da_appbar_button.dart';
 import '../notification/notification_icon_button.dart';
 import '../ui/main.dart';
 import 'age_group_selection_screen.dart';
@@ -37,7 +38,11 @@ class ProfileTab extends ConsumerWidget {
     return FScaffold(
       header: FHeader(
         title: Text('nav.profile'.tr()),
-        suffixes: [const NotificationIconButton(), const SportSelector()],
+        suffixes: [
+          const DaAppbarButton(),
+          const NotificationIconButton(),
+          const SportSelector(),
+        ],
       ),
       child: userAsync.when(
         data: (user) {

@@ -231,7 +231,9 @@
     "scheduleActivity": "Schedule",
     "lookingForActivity": "No upcoming session",
     "searchIDCopied": "Lobby SearchID copied to clipboard",
-    "searchIDExplanation": "Other players can use this ID to join your lobby using the home screen filter."
+    "searchIDExplanation": "Other players can use this ID to join your lobby using the home screen filter.",
+    "shareId": "Share ID",
+    "invite": "Invite"
   },
   "createLobby": {
     "title": "Create Lobby",
@@ -352,7 +354,7 @@
     "userAlreadyRegistered": "This email is already registered"
   },
   "nav": {
-    "home": "Home",
+    "home": "Discover",
     "manage": "Manage",
     "health": "Health",
     "profile": "Profile"

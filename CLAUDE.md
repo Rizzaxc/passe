@@ -42,6 +42,11 @@ find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
 - Avoid nesting, prefer a flat folder structure
 - UI is built with forui package. Custom widgets are in /ui and prefix named with P. ALWAYS check this package before
   building UI to avoid reinventing the wheel
+- Bottom sheets MUST use `showPSheet` / `PSheet` from `lib/ui/sheet.dart` — never call `showFSheet` or hand-roll the
+  `FSheets` + `Container` chrome directly. The wrapper enforces the project's standard silhouette (32-px radius, side
+  borders only, keyboard-aware bottom padding). Pass `maxHeightRatio: 1.0` for info-style sheets that may grow to the
+  full screen; the default `0.9` covers everything else. Sheet content should be just the inner widgets (e.g. a
+  `SingleChildScrollView` + `Column`) — no outer `FSheets` or padded container
 - Use Riverpod for state management. Avoid using Provider
 - Every feed-like screen implements scroll to refresh. Scroll to refresh is recommended in general. Prefer to ask not to include instead of ignoring it
 - App-level model is created with freezed. persisted in json form. app state persistence key is _stateKey (mostly for

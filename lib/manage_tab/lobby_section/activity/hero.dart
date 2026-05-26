@@ -1,9 +1,13 @@
 // Pinned activity hero — empty state and expanded state
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
 
 import '../../../../core/model/enum.dart';
+import '../../../../ui/dual_button.dart';
 import '../../../../ui/theme.dart';
+import '../invite_challenge_sheet.dart';
+import '../schedule_activity_sheet.dart';
 
 // ─── Color tokens ──────────────────────────────────────────────
 const _crimson = Color(0xFFDC143C);
@@ -16,30 +20,40 @@ const _orange = Color(0xFFF97316);
 
 // ─── Entry point ───────────────────────────────────────────────
 
-class ActivityHero extends StatelessWidget {
+class ActivityHero extends StatefulWidget {
+  final String lobbyId;
   final Sport? sport;
   final bool hasActivity;
   final bool isLeader;
-  final String myRsvp; // 'going' | 'maybe' | 'out'
-  final ValueChanged<String> onRsvpChanged;
 
   const ActivityHero({
     super.key,
+    required this.lobbyId,
     required this.sport,
     required this.hasActivity,
     required this.isLeader,
-    required this.myRsvp,
-    required this.onRsvpChanged,
   });
 
   @override
+  State<ActivityHero> createState() => _ActivityHeroState();
+}
+
+class _ActivityHeroState extends State<ActivityHero> {
+  // Local RSVP selection. There's no RSVP table yet — this is a
+  // self-managed UI state so the control still feels live in the
+  // design. Lift back out to a controller once the schema lands.
+  String _myRsvp = 'going';
+
+  @override
   Widget build(BuildContext context) {
-    if (!hasActivity) return _HeroEmpty(isLeader: isLeader);
+    if (!widget.hasActivity) {
+      return _HeroEmpty(lobbyId: widget.lobbyId, isLeader: widget.isLeader);
+    }
     return _HeroExpanded(
-      sport: sport,
-      isLeader: isLeader,
-      myRsvp: myRsvp,
-      onRsvpChanged: onRsvpChanged,
+      sport: widget.sport,
+      isLeader: widget.isLeader,
+      myRsvp: _myRsvp,
+      onRsvpChanged: (v) => setState(() => _myRsvp = v),
     );
   }
 }
@@ -47,32 +61,37 @@ class ActivityHero extends StatelessWidget {
 // ─── Empty state ───────────────────────────────────────────────
 
 class _HeroEmpty extends StatelessWidget {
+  final String lobbyId;
   final bool isLeader;
-  const _HeroEmpty({required this.isLeader});
+
+  const _HeroEmpty({required this.lobbyId, required this.isLeader});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
-      child: CustomPaint(
-        painter: _DashedBorderPainter(
-          color: colors.border,
-          radius: 12,
+      // 4-px horizontal inset matches FTabs' internal padding so the
+      // card edge lines up with the tab pill edge (the FTabs widget
+      // itself is wrapped by Padding(horizontal: 14) at the page level).
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.circular(12),
+          // Solid border instead of a hand-painted dashed one — the
+          // dashed painter produced visibly stepped corners at this
+          // width because the dash spacing didn't divide evenly around
+          // the perimeter and used butt caps on the rounded arcs.
+          border: Border.all(color: colors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -110,28 +129,20 @@ class _HeroEmpty extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               if (isLeader)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _CTAButton(
-                        icon: Icons.calendar_month_outlined,
-                        label: 'Lên Lịch Buổi Chơi',
-                        color: _crimson,
-                        textColor: const Color(0xFFFFF1F2),
-                        onTap: () {},
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _CTAButton(
-                        icon: Icons.flag_outlined,
-                        label: 'Mời Thách Đấu',
-                        color: pbBlue,
-                        textColor: Colors.white,
-                        onTap: () {},
-                      ),
-                    ),
-                  ],
+                PDualButton(
+                  onFirstPressed: () =>
+                      showScheduleActivitySheet(context, lobbyId),
+                  onSecondPressed: () =>
+                      showInviteChallengeSheet(context, lobbyId),
+                  firstChild: const _CTALabel(
+                    icon: Icon(Icons.calendar_month_outlined, size: 20),
+                    label: 'Lên Lịch Buổi Chơi',
+                  ),
+                  secondChild: const _CTALabel(
+                    // Match the icon used in Discover ▸ Challenger.
+                    icon: FaIcon(FontAwesomeIcons.fireFlameCurved, size: 20),
+                    label: 'Mời Thách Đấu',
+                  ),
                 )
               else
                 GestureDetector(
@@ -164,52 +175,44 @@ class _HeroEmpty extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }
 
-class _CTAButton extends StatelessWidget {
-  final IconData icon;
+/// Stacked icon + label used inside the empty hero's PDualButton.
+///
+/// Each half of the dual button gets one of these; the underlying
+/// FButton sizes itself to fit, giving the two CTAs the same tall
+/// silhouette the design called for.
+class _CTALabel extends StatelessWidget {
+  final Widget icon;
   final String label;
-  final Color color;
-  final Color textColor;
-  final VoidCallback onTap;
 
-  const _CTAButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.textColor,
-    required this.onTap,
-  });
+  const _CTALabel({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 20, color: textColor),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: textColor,
-                height: 1.2,
-              ),
-              textAlign: TextAlign.center,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconTheme.merge(
+            data: const IconThemeData(color: Color(0xFFFFF1F2)),
+            child: icon,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFFFF1F2),
+              height: 1.2,
             ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
@@ -235,7 +238,8 @@ class _HeroExpanded extends StatelessWidget {
     final colors = context.theme.colors;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+      // See _HeroEmpty above — 4-px inset aligns with tab pill edges.
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
       child: Container(
         decoration: BoxDecoration(
           color: colors.card,
@@ -871,48 +875,3 @@ class _CourtPainter extends CustomPainter {
   bool shouldRepaint(_CourtPainter old) => old.sport != sport;
 }
 
-// ─── Dashed border painter ─────────────────────────────────────
-
-class _DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double radius;
-
-  const _DashedBorderPainter({required this.color, required this.radius});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    const dashLen = 6.0;
-    const gapLen = 4.0;
-
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Radius.circular(radius),
-      ));
-
-    for (final metric in path.computeMetrics()) {
-      var distance = 0.0;
-      var draw = true;
-      while (distance < metric.length) {
-        final len = draw ? dashLen : gapLen;
-        if (draw) {
-          canvas.drawPath(
-            metric.extractPath(distance, distance + len),
-            paint,
-          );
-        }
-        distance += len;
-        draw = !draw;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedBorderPainter old) =>
-      old.color != color || old.radius != radius;
-}

@@ -233,7 +233,9 @@
     "scheduleActivity": "Lên lịch",
     "lookingForActivity": "Chưa có buổi chơi",
     "searchIDCopied": "Đã sao chép SearchID",
-    "searchIDExplanation": "Người chơi khác có thể dùng SearchID ở filter trang chủ để tìm thấy Lobby của bạn"
+    "searchIDExplanation": "Người chơi khác có thể dùng SearchID ở filter trang chủ để tìm thấy Lobby của bạn",
+    "shareId": "Chia sẻ ID",
+    "invite": "Mời vào"
   },
   "createLobby": {
     "title": "Tạo Lobby",
@@ -352,7 +354,7 @@
     "userAlreadyRegistered": "Email này đã được đăng ký"
   },
   "nav": {
-    "home": "Home",
+    "home": "Discover",
     "manage": "Manage",
     "health": "Health",
     "profile": "Profile"

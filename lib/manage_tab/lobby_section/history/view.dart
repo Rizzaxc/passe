@@ -1,149 +1,68 @@
 // Match history tab — stats header + filter pills + match cards
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import 'match.dart';
+import 'match_history_controller.dart';
 
 const _crimson = Color(0xFFDC143C);
 const _green = Color(0xFF959D54);
 const _greenTint = Color(0xFFEEF2E4);
 const _orange = Color(0xFFF97316);
 
-// ─── Mock history data ──────────────────────────────────────────
-
-class _Match {
-  final String id;
-  final String date;
-  final String when;
-  final String? opponent;
-  final String opponentTag;
-  final String result; // 'win' | 'loss' | 'practice'
-  final List<(int, int)>? sets; // (us, them)
-  final String? mvp;
-  final String venue;
-  final List<String> members;
-  final String? note;
-
-  const _Match({
-    required this.id,
-    required this.date,
-    required this.when,
-    this.opponent,
-    required this.opponentTag,
-    required this.result,
-    this.sets,
-    this.mvp,
-    required this.venue,
-    required this.members,
-    this.note,
-  });
-}
-
-const _mockHistory = [
-  _Match(
-    id: 'm-1',
-    date: 'T7, 14/5',
-    when: '18:00 – 20:00',
-    opponent: 'Lobby Fire',
-    opponentTag: 'thách đấu',
-    result: 'win',
-    sets: [(21, 15), (19, 21), (21, 17)],
-    mvp: 'Minh',
-    venue: 'NTĐ Bách Khoa · Sân 3',
-    members: ['Trang', 'An', 'Long', 'Minh'],
-  ),
-  _Match(
-    id: 'm-2',
-    date: 'T7, 7/5',
-    when: '18:00 – 20:00',
-    opponent: 'Lobby Aces',
-    opponentTag: 'thách đấu',
-    result: 'loss',
-    sets: [(18, 21), (21, 19), (14, 21)],
-    mvp: 'An',
-    venue: 'NTĐ Bách Khoa · Sân 2',
-    members: ['Trang', 'An', 'Long', 'Phúc'],
-  ),
-  _Match(
-    id: 'm-3',
-    date: 'T4, 4/5',
-    when: '19:00 – 21:00',
-    opponent: null,
-    opponentTag: 'tập nội bộ',
-    result: 'practice',
-    venue: 'NTĐ Bách Khoa · Sân 3',
-    members: ['Trang', 'An', 'Minh', 'Long', 'Phúc'],
-    note: '2 set giao hữu nội bộ',
-  ),
-  _Match(
-    id: 'm-4',
-    date: 'T7, 30/4',
-    when: '17:00 – 19:00',
-    opponent: 'Lobby Smash District 1',
-    opponentTag: 'thách đấu',
-    result: 'win',
-    sets: [(21, 18), (21, 14)],
-    mvp: 'Trang',
-    venue: 'Sân Phú Thọ · Sân 5',
-    members: ['Trang', 'An', 'Long', 'Minh'],
-  ),
-  _Match(
-    id: 'm-5',
-    date: 'T7, 23/4',
-    when: '18:30 – 20:30',
-    opponent: 'Lobby Drop Shot',
-    opponentTag: 'thách đấu',
-    result: 'loss',
-    sets: [(19, 21), (21, 23)],
-    mvp: 'Long',
-    venue: 'NTĐ Bách Khoa · Sân 3',
-    members: ['Trang', 'An', 'Long', 'Minh', 'Lan'],
-  ),
-];
-
-// Computed stats
-final _wins = _mockHistory.where((h) => h.result == 'win').length;
-final _losses = _mockHistory.where((h) => h.result == 'loss').length;
-final _total = _wins + _losses;
-final _winRate = _total > 0 ? (_wins * 100 ~/ _total) : 0;
+enum _HistoryFilter { all, challenge, practice, win, loss }
 
 // ─── History view ───────────────────────────────────────────────
 
-class HistoryView extends StatefulWidget {
-  const HistoryView({super.key});
+class HistoryView extends ConsumerStatefulWidget {
+  final String lobbyId;
+
+  const HistoryView({super.key, required this.lobbyId});
 
   @override
-  State<HistoryView> createState() => _HistoryViewState();
+  ConsumerState<HistoryView> createState() => _HistoryViewState();
 }
 
-class _HistoryViewState extends State<HistoryView> {
-  int _filterIndex = 0;
+class _HistoryViewState extends ConsumerState<HistoryView> {
+  _HistoryFilter _filter = _HistoryFilter.all;
 
-  List<_Match> get _filtered {
-    return switch (_filterIndex) {
-      1 => _mockHistory
-          .where((h) => h.opponentTag == 'thách đấu')
-          .toList(),
-      2 => _mockHistory.where((h) => h.result == 'practice').toList(),
-      3 => _mockHistory.where((h) => h.result == 'win').toList(),
-      4 => _mockHistory.where((h) => h.result == 'loss').toList(),
-      _ => _mockHistory,
+  List<LobbyMatch> _applyFilter(List<LobbyMatch> matches) {
+    return switch (_filter) {
+      _HistoryFilter.challenge =>
+        matches.where((h) => h.opponentTag == 'thách đấu').toList(),
+      _HistoryFilter.practice => matches.where((h) => h.isPractice).toList(),
+      _HistoryFilter.win => matches.where((h) => h.isWin).toList(),
+      _HistoryFilter.loss => matches.where((h) => h.isLoss).toList(),
+      _HistoryFilter.all => matches,
     };
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final filtered = _filtered;
+    final matchesAsync =
+        ref.watch(lobbyMatchHistoryControllerProvider(widget.lobbyId));
+    final matches = matchesAsync.value ?? const <LobbyMatch>[];
+    final stats = LobbyMatchStats.from(matches);
+    final filtered = _applyFilter(matches);
 
     return RefreshIndicator(
-      onRefresh: () async {},
+      onRefresh: () async {
+        ref.invalidate(lobbyMatchHistoryControllerProvider(widget.lobbyId));
+        await ref.read(
+          lobbyMatchHistoryControllerProvider(widget.lobbyId).future,
+        );
+      },
       child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          // Stats card
+          // Stats card — 4-px horizontal inset (FTabs is already wrapped
+          // by Padding(horizontal: 14) at the page level) so the card edge
+          // lines up with the tab pill edge.
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
-              child: _StatsCard(colors: colors),
+              padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
+              child: _StatsCard(stats: stats),
             ),
           ),
 
@@ -154,45 +73,50 @@ class _HistoryViewState extends State<HistoryView> {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                itemCount: 5,
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                itemCount: _HistoryFilter.values.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 6),
-                itemBuilder: (_, i) => _FilterPill(
-                  label: const [
-                    'Tất cả',
-                    'Thách đấu',
-                    'Tập nội bộ',
-                    'Thắng',
-                    'Thua',
-                  ][i],
-                  active: _filterIndex == i,
-                  onTap: () => setState(() => _filterIndex = i),
-                ),
+                itemBuilder: (_, i) {
+                  final f = _HistoryFilter.values[i];
+                  return _FilterPill(
+                    label: _filterLabel(f),
+                    active: _filter == f,
+                    onTap: () => setState(() => _filter = f),
+                  );
+                },
               ),
             ),
           ),
 
           // Match cards
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(14, 4, 14, 20),
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 20),
             sliver: SliverList.separated(
               itemCount: filtered.length,
               separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, i) =>
-                  _HistoryCard(match: filtered[i]),
+              itemBuilder: (context, i) => _HistoryCard(match: filtered[i]),
             ),
           ),
         ],
       ),
     );
   }
+
+  static String _filterLabel(_HistoryFilter f) => switch (f) {
+        _HistoryFilter.all => 'Tất cả',
+        _HistoryFilter.challenge => 'Thách đấu',
+        _HistoryFilter.practice => 'Tập nội bộ',
+        _HistoryFilter.win => 'Thắng',
+        _HistoryFilter.loss => 'Thua',
+      };
 }
 
 // ─── Stats card ────────────────────────────────────────────────
 
 class _StatsCard extends StatelessWidget {
-  final dynamic colors;
-  const _StatsCard({required this.colors});
+  final LobbyMatchStats stats;
+
+  const _StatsCard({required this.stats});
 
   @override
   Widget build(BuildContext context) {
@@ -234,22 +158,22 @@ class _StatsCard extends StatelessWidget {
                     spacing: 14,
                     children: [
                       _HStat(
-                        value: '${_mockHistory.length}',
+                        value: '${stats.total}',
                         label: 'trận',
                         color: c.foreground,
                       ),
                       _HStat(
-                        value: '$_wins',
+                        value: '${stats.wins}',
                         label: 'thắng',
                         color: _green,
                       ),
                       _HStat(
-                        value: '$_losses',
+                        value: '${stats.losses}',
                         label: 'thua',
                         color: _orange,
                       ),
                       _HStat(
-                        value: '$_winRate%',
+                        value: '${stats.winRate}%',
                         label: 'win rate',
                         color: _crimson,
                       ),
@@ -362,15 +286,16 @@ class _FilterPill extends StatelessWidget {
 // ─── Match card ────────────────────────────────────────────────
 
 class _HistoryCard extends StatelessWidget {
-  final _Match match;
+  final LobbyMatch match;
+
   const _HistoryCard({required this.match});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final isWin = match.result == 'win';
-    final isLoss = match.result == 'loss';
-    final isPractice = match.result == 'practice';
+    final isWin = match.isWin;
+    final isLoss = match.isLoss;
+    final isPractice = match.isPractice;
 
     final Color stripBg = isWin
         ? _greenTint
@@ -417,7 +342,9 @@ class _HistoryCard extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  isPractice ? Icons.groups_outlined : Icons.emoji_events_outlined,
+                  isPractice
+                      ? Icons.groups_outlined
+                      : Icons.emoji_events_outlined,
                   size: 12,
                   color: stripFg,
                 ),
@@ -484,7 +411,9 @@ class _HistoryCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w800,
-                                color: isWin ? _green : colors.secondaryForeground,
+                                color: isWin
+                                    ? _green
+                                    : colors.secondaryForeground,
                                 letterSpacing: -0.5,
                                 height: 1.0,
                               ),
@@ -497,7 +426,8 @@ class _HistoryCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color: colors.mutedForeground.withValues(alpha: 0.5),
+                          color:
+                              colors.mutedForeground.withValues(alpha: 0.5),
                           letterSpacing: 0.7,
                         ),
                       ),
@@ -520,7 +450,9 @@ class _HistoryCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w800,
-                                color: isLoss ? _orange : colors.secondaryForeground,
+                                color: isLoss
+                                    ? _orange
+                                    : colors.secondaryForeground,
                                 letterSpacing: -0.5,
                                 height: 1.0,
                               ),

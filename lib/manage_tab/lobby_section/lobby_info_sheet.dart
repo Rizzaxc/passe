@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../core/model/lobby.dart';
+import '../../ui/sheet.dart';
 import 'lobby_detail_controller.dart';
 import 'members/controller.dart';
 
@@ -16,10 +17,9 @@ void showLobbyInfoSheet(
   LobbyDetailInfo info,
   String lobbyId,
 ) {
-  showFSheet(
+  showPSheet(
     context: context,
-    useRootNavigator: true,
-    side: .btt,
+    maxHeightRatio: 1.0,
     builder: (_) => _LobbyInfoSheet(info: info, lobbyId: lobbyId),
   );
 }
@@ -58,40 +58,20 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
       LobbyVisibility.public => 'Công Khai',
     };
 
-    return FSheets(
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: colors.background,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.symmetric(
-            horizontal: BorderSide(color: colors.border),
-          ),
-        ),
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          primary: false,
-          child: Column(
-            spacing: 18,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header row
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Thông tin lobby',
-                      style: context.theme.typography.xl2.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  FButton.icon(
-                    variant: .ghost,
-                    onPress: () => Navigator.of(context).pop(),
-                    child: const Icon(FIcons.x),
-                  ),
-                ],
+    return SingleChildScrollView(
+      controller: _scrollController,
+      primary: false,
+      child: Column(
+        spacing: 18,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+              PSheetTitle(
+                label: 'Thông tin lobby',
+                trailing: FButton.icon(
+                  variant: .ghost,
+                  onPress: () => Navigator.of(context).pop(),
+                  child: const Icon(FIcons.x),
+                ),
               ),
 
               // Lobby info card
@@ -255,10 +235,10 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _SectionLabel(
+                  PSheetSectionLabel(
                     label:
                         'Thành viên${membersAsync.value != null ? " · ${membersAsync.value!.length}" : ""}',
-                    action: _SectionActionButton(
+                    trailing: _SectionActionButton(
                       icon: FIcons.userPlus,
                       label: 'Mời',
                       onTap: () {},
@@ -315,7 +295,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _SectionLabel(label: 'Cài đặt'),
+                  const PSheetSectionLabel(label: 'Cài đặt'),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
@@ -370,10 +350,8 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                 ],
               ),
 
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }
@@ -401,37 +379,6 @@ class _VisTag extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: Color(0xFF3090F2),
         ),
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String label;
-  final Widget? action;
-
-  const _SectionLabel({required this.label, this.action});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: context.theme.colors.mutedForeground,
-              letterSpacing: 0.7,
-            ),
-          ),
-          if (action != null) ...[
-            const SizedBox(width: 8),
-            action!,
-          ],
-        ],
       ),
     );
   }

@@ -12,14 +12,21 @@ class PSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: Text(
             title,
-            style: context.theme.typography.xl2.copyWith(fontWeight: .bold),
+            // height: 1.0 collapses the title's line-box to the glyph
+            // height so it visually centers with the suffix button
+            // (and matches the professional subtab's title alignment).
+            style: context.theme.typography.xl2.copyWith(
+              fontWeight: .bold,
+              height: 1.0,
+            ),
           ),
         ),
-        if (suffix != null) suffix!,
+        ?suffix,
       ],
     );
   }

@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../core/sport_selector.dart';
+import '../currency/da_appbar_button.dart';
 import '../ui/main.dart';
 import 'challenger_section/main.dart';
 import 'filter.dart';
@@ -85,10 +86,15 @@ class _HomeTabState extends ConsumerState<HomeTab>
     return FScaffold(
       header: FHeader(
         title: Text('nav.home'.tr()),
-        suffixes: [const NotificationIconButton(), const SportSelector()],
+        suffixes: [
+          const DaAppbarButton(),
+          const NotificationIconButton(),
+          const SportSelector(),
+        ],
       ),
       child: FTabs(
         expands: true,
+        contentPhysics: const NeverScrollableScrollPhysics(),
         control: FTabControl.lifted(
           index: _currentIndex,
           onChange: _onTabChanged,

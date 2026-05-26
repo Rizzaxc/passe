@@ -17,13 +17,9 @@ Future<Lobby?> showLobbyFormSheet({
   required WidgetRef ref,
   String? lobbyId,
 }) {
-  return showFSheet<Lobby>(
+  return showPSheet<Lobby>(
     context: context,
-    side: .btt,
-    useSafeArea: true,
-    mainAxisMaxRatio: 0.9,
-    useRootNavigator: true,
-    builder: (context) => LobbyFormSheet(lobbyId: lobbyId),
+    builder: (_) => LobbyFormSheet(lobbyId: lobbyId),
   );
 }
 
@@ -65,22 +61,12 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
         ref.read(lobbyFormControllerProvider(widget.lobbyId).notifier);
     final lobby = formState.lobby;
 
-    return FSheets(
-      child: Container(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.viewInsetsOf(context).bottom),
-        decoration: BoxDecoration(
-          color: context.theme.colors.background,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.symmetric(
-            horizontal: BorderSide(color: context.theme.colors.border),
-          ),
-        ),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            primary: false,
-            child: Column(
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        primary: false,
+        child: Column(
               spacing: 16,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -181,10 +167,8 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
                       : Text('createLobby.create'.tr()),
                 ),
 
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
+            const SizedBox(height: 16),
+          ],
         ),
       ),
     );

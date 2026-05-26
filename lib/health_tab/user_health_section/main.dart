@@ -11,7 +11,7 @@ class UserHealthSubtab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       children: const [
         _TrendCard(),
         SizedBox(height: 12),

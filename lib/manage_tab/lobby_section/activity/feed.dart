@@ -14,11 +14,195 @@ const _orange = Color(0xFFF97316);
 const _amber = Color(0xFFC58A1A);
 
 // ─── Feed item sealed hierarchy ─────────────────────────────────
+//
+// Items carry SEMANTIC kinds (PersonalActionKind, UpdateKind, FeedTone),
+// not presentation values. The renderers below resolve a kind to the
+// design's color / icon vocabulary. This keeps the DB row schema stable
+// across design changes — see schema/lobby_feed_and_match.sql.
+
+/// Captain-update categories (left half of the update card).
+///
+/// `db` is the string stored in `lobby_feed_item.payload.kind`.
+enum UpdateKind {
+  scheduled('scheduled', Icons.calendar_month_outlined),
+  coachBooked('coach_booked', Icons.school_outlined),
+  refereeBooked('referee_booked', Icons.sports_score_outlined),
+  rescheduled('rescheduled', Icons.update_outlined),
+  venueChanged('venue_changed', Icons.swap_horiz_outlined),
+  other('other', Icons.campaign_outlined);
+
+  final String db;
+  final IconData icon;
+
+  const UpdateKind(this.db, this.icon);
+
+  static UpdateKind fromDb(String? raw) => UpdateKind.values.firstWhere(
+        (k) => k.db == raw,
+        orElse: () => UpdateKind.other,
+      );
+}
+
+/// Personal-action categories. Mirrors the picker catalog in
+/// `trigger_bar.dart` — every id the user can pick has an entry here.
+enum PersonalActionKind {
+  comeEarly(
+      'come_early', 'Đến sớm khởi động', FeedTone.amber,
+      Icons.local_fire_department_outlined),
+  late('late', 'Đến muộn', FeedTone.crimson, Icons.access_time_rounded),
+  bringGear(
+      'bring_gear', 'Mang thêm gear', FeedTone.green,
+      Icons.sports_tennis_outlined),
+  needLift(
+      'need_lift', 'Cần đi nhờ', FeedTone.blue,
+      Icons.directions_car_outlined),
+  offerLift(
+      'offer_lift', 'Cho đi nhờ', FeedTone.blue,
+      Icons.directions_car_outlined),
+  paid(
+      'paid', 'Đã chuyển tiền sân', FeedTone.green,
+      Icons.account_balance_wallet_outlined),
+  skip('skip', 'Vắng buổi này', FeedTone.crimson, Icons.close_rounded),
+  cheer(
+      'cheer', 'Tăng động năng lượng', FeedTone.neutral,
+      Icons.emoji_emotions_outlined);
+
+  final String db;
+  final String label;
+  final FeedTone tone;
+  final IconData icon;
+
+  const PersonalActionKind(this.db, this.label, this.tone, this.icon);
+
+  static PersonalActionKind fromDb(String? raw) =>
+      PersonalActionKind.values.firstWhere(
+        (k) => k.db == raw,
+        orElse: () => PersonalActionKind.cheer,
+      );
+}
+
+/// Soft palette tones used by update cards, personal cards and chip
+/// tags. Each tone resolves to a foreground + background colour pair.
+enum FeedTone {
+  crimson(_crimson, _crimsonTint),
+  green(pbGreen, _greenTint),
+  amber(_amber, _amberTint),
+  blue(pbBlue, _blueTint),
+  neutral(Color(0xFF52525B), Color(0xFFF4F4F5));
+
+  final Color fg;
+  final Color bg;
+
+  const FeedTone(this.fg, this.bg);
+
+  static FeedTone fromDb(String? raw) => FeedTone.values.firstWhere(
+        (t) => t.name == raw,
+        orElse: () => FeedTone.neutral,
+      );
+}
+
+/// Single reaction tally on a personal card (e.g. `(emoji: '👍', count: 3)`).
+class FeedReaction {
+  final String emoji;
+  final int count;
+
+  const FeedReaction({required this.emoji, required this.count});
+
+  factory FeedReaction.fromJson(Map<String, dynamic> j) => FeedReaction(
+        emoji: j['emoji'] as String,
+        count: (j['count'] as num).toInt(),
+      );
+
+  String get display => '$emoji $count';
+}
 
 sealed class FeedItem {
   const FeedItem();
+
+  /// Parse a row returned by the `lobby_feed_data` RPC into a concrete
+  /// `FeedItem`. `pollTallies` is an inline `{option_index: count}` map
+  /// emitted by the RPC for poll rows; the function pulls option labels
+  /// from the row's own payload to assemble the `(label, votes)` tuples
+  /// the renderer expects.
+  static FeedItem fromRow(Map<String, dynamic> row) {
+    final kind = row['kind'] as String;
+    final payload = row['payload'] as Map<String, dynamic>;
+    final author = (row['author_username'] as String?) ?? '';
+    final time = _formatHm(DateTime.parse(row['created_at'] as String));
+
+    switch (kind) {
+      case 'update':
+        return UpdateItem(
+          author: author,
+          time: time,
+          title: payload['title'] as String,
+          kind: UpdateKind.fromDb(payload['kind'] as String?),
+          tone: FeedTone.fromDb(payload['tone'] as String?),
+          fields: (payload['fields'] as List)
+              .map<(String, String)>(
+                  (f) => ((f as List)[0] as String, f[1] as String))
+              .toList(),
+          ctaLabel: payload['cta_label'] as String?,
+        );
+
+      case 'personal':
+        final rawReactions = payload['reactions'] as List?;
+        return PersonalItem(
+          author: author,
+          time: time,
+          action: PersonalActionKind.fromDb(payload['action_kind'] as String?),
+          detail: payload['detail'] as String?,
+          reactions: rawReactions
+              ?.map((r) => FeedReaction.fromJson(r as Map<String, dynamic>))
+              .toList(),
+        );
+
+      case 'system':
+        return SystemItem(
+          text: payload['text'] as String,
+          hasApprove: (payload['has_approve'] as bool?) ?? false,
+        );
+
+      case 'poll':
+        final tallies = (row['poll_tallies'] as Map?) ?? const {};
+        final options = (payload['options'] as List).indexed
+            .map<(String, int)>((entry) {
+          final (i, raw) = entry;
+          final label = (raw as Map<String, dynamic>)['label'] as String;
+          final count = (tallies['$i'] as num?)?.toInt() ?? 0;
+          return (label, count);
+        }).toList();
+        return PollItem(
+          id: row['id'] as String,
+          author: author,
+          time: time,
+          question: payload['question'] as String,
+          options: options,
+          totalMembers: (payload['total_members'] as num).toInt(),
+          deadline: (payload['deadline'] as String?) ?? '',
+        );
+
+      case 'photo':
+        return PhotoItem(
+          author: author,
+          time: time,
+          storagePath: payload['storage_path'] as String,
+          caption: payload['caption'] as String?,
+        );
+
+      default:
+        throw StateError('Unknown lobby feed kind: $kind');
+    }
+  }
 }
 
+String _formatHm(DateTime t) {
+  final local = t.toLocal();
+  final h = local.hour.toString().padLeft(2, '0');
+  final m = local.minute.toString().padLeft(2, '0');
+  return '$h:$m';
+}
+
+/// Synthetic divider injected client-side between days. Never persisted.
 final class DayDivItem extends FeedItem {
   final String label;
   const DayDivItem(this.label);
@@ -28,15 +212,15 @@ final class UpdateItem extends FeedItem {
   final String author;
   final String time;
   final String title;
-  final IconData icon;
-  final String tone; // 'crimson' | 'blue' | 'green' | 'amber'
+  final UpdateKind kind;
+  final FeedTone tone;
   final List<(String, String)> fields;
   final String? ctaLabel;
   const UpdateItem({
     required this.author,
     required this.time,
     required this.title,
-    required this.icon,
+    required this.kind,
     required this.tone,
     required this.fields,
     this.ctaLabel,
@@ -46,19 +230,13 @@ final class UpdateItem extends FeedItem {
 final class PersonalItem extends FeedItem {
   final String author;
   final String time;
-  final String actionLabel;
-  final Color actionColor;
-  final Color actionBg;
-  final IconData actionIcon;
+  final PersonalActionKind action;
   final String? detail;
-  final List<String>? reactions;
+  final List<FeedReaction>? reactions;
   const PersonalItem({
     required this.author,
     required this.time,
-    required this.actionLabel,
-    required this.actionColor,
-    required this.actionBg,
-    required this.actionIcon,
+    required this.action,
     this.detail,
     this.reactions,
   });
@@ -71,6 +249,7 @@ final class SystemItem extends FeedItem {
 }
 
 final class PollItem extends FeedItem {
+  final String id;
   final String author;
   final String time;
   final String question;
@@ -78,6 +257,7 @@ final class PollItem extends FeedItem {
   final int totalMembers;
   final String deadline;
   const PollItem({
+    required this.id,
     required this.author,
     required this.time,
     required this.question,
@@ -90,114 +270,15 @@ final class PollItem extends FeedItem {
 final class PhotoItem extends FeedItem {
   final String author;
   final String time;
+  final String storagePath;
   final String? caption;
-  const PhotoItem({required this.author, required this.time, this.caption});
+  const PhotoItem({
+    required this.author,
+    required this.time,
+    required this.storagePath,
+    this.caption,
+  });
 }
-
-// ─── Mock feed data ─────────────────────────────────────────────
-
-final List<FeedItem> kMockFeed = [
-  const DayDivItem('Hôm qua'),
-
-  UpdateItem(
-    author: 'Trang', time: '08:50',
-    title: 'Đã lên lịch buổi mới',
-    icon: Icons.calendar_month_outlined,
-    tone: 'crimson',
-    fields: const [
-      ('Thời gian', 'T7, 21/5 · 18:00 – 20:00'),
-      ('Sân', 'NTĐ Bách Khoa · Sân 3'),
-      ('Chi phí', '80k/người · Đôi nam nữ'),
-    ],
-  ),
-
-  PersonalItem(
-    author: 'An', time: '09:14',
-    actionLabel: 'Mang thêm gear',
-    actionColor: pbGreen,
-    actionBg: _greenTint,
-    actionIcon: Icons.sports_tennis_outlined,
-    detail: '+1 ống cầu Yonex',
-    reactions: const ['👍 3'],
-  ),
-
-  const SystemItem(text: 'Lan đã xin vào lobby.', hasApprove: true),
-
-  PersonalItem(
-    author: 'Long', time: '09:30',
-    actionLabel: 'Đến sớm khởi động',
-    actionColor: _amber,
-    actionBg: _amberTint,
-    actionIcon: Icons.local_fire_department_outlined,
-    detail: '17:30 ra trước khởi động',
-    reactions: const ['🔥 2'],
-  ),
-
-  PersonalItem(
-    author: 'Lan', time: '09:38',
-    actionLabel: 'Cần đi nhờ',
-    actionColor: pbBlue,
-    actionBg: _blueTint,
-    actionIcon: Icons.directions_car_outlined,
-    detail: 'Từ Q.1 — ai cùng tuyến cho đi nhờ',
-  ),
-
-  PersonalItem(
-    author: 'Minh', time: '09:42',
-    actionLabel: 'Cho đi nhờ',
-    actionColor: pbBlue,
-    actionBg: _blueTint,
-    actionIcon: Icons.directions_car_outlined,
-    detail: 'Xe oto, đi từ Q.3 lúc 17:00',
-    reactions: const ['🤝 1'],
-  ),
-
-  UpdateItem(
-    author: 'Trang', time: '10:02',
-    title: 'Đã đặt HLV',
-    icon: Icons.school_outlined,
-    tone: 'green',
-    fields: const [
-      ('HLV', 'Nguyễn Minh · ★ 4.8'),
-      ('Khi nào', 'T7, 28/5 · 14:00 – 16:00'),
-      ('Chi phí', '200k/người · 3/6 đăng ký'),
-    ],
-    ctaLabel: 'Tham Gia',
-  ),
-
-  PollItem(
-    author: 'Trang', time: '12:40',
-    question: 'Tuần sau dời từ 18h → 19h được không?',
-    options: const [
-      ('Được, 19h hợp lý hơn', 4),
-      ('18h như cũ luôn', 1),
-    ],
-    totalMembers: 6,
-    deadline: 'Hết bình chọn T6',
-  ),
-
-  const PhotoItem(author: 'An', time: '11:05', caption: 'Sân tối nay sáng đẹp ghê'),
-
-  const DayDivItem('Hôm nay'),
-
-  PersonalItem(
-    author: 'Phúc', time: '08:12',
-    actionLabel: 'Vắng buổi này',
-    actionColor: _crimson,
-    actionBg: _crimsonTint,
-    actionIcon: Icons.close_rounded,
-    detail: 'Đi công tác Đà Nẵng',
-  ),
-
-  PersonalItem(
-    author: 'Minh', time: '14:14',
-    actionLabel: 'Đã chuyển tiền sân',
-    actionColor: pbGreen,
-    actionBg: _greenTint,
-    actionIcon: Icons.account_balance_wallet_outlined,
-    detail: '80k vào tài khoản Trang',
-  ),
-];
 
 // ─── Feed item widget router ────────────────────────────────────
 
@@ -349,8 +430,10 @@ class _PersonalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final fg = item.action.tone.fg;
+    final bg = item.action.tone.bg;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+      padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,10 +445,9 @@ class _PersonalCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: item.actionBg,
+                color: bg,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                    color: item.actionColor.withValues(alpha: 0.25)),
+                border: Border.all(color: fg.withValues(alpha: 0.25)),
               ),
               child: Row(
                 children: [
@@ -375,11 +457,9 @@ class _PersonalCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(7),
-                      border: Border.all(
-                          color: item.actionColor.withValues(alpha: 0.3)),
+                      border: Border.all(color: fg.withValues(alpha: 0.3)),
                     ),
-                    child: Icon(item.actionIcon,
-                        size: 14, color: item.actionColor),
+                    child: Icon(item.action.icon, size: 14, color: fg),
                   ),
                   const SizedBox(width: 9),
                   Expanded(
@@ -387,11 +467,11 @@ class _PersonalCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.actionLabel,
+                          item.action.label,
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,
-                            color: item.actionColor,
+                            color: fg,
                           ),
                         ),
                         if (item.detail != null) ...[
@@ -430,7 +510,7 @@ class _PersonalCard extends StatelessWidget {
                             color: colors.border.withValues(alpha: 0.8)),
                       ),
                       child: Text(
-                        r,
+                        r.display,
                         style: const TextStyle(
                             fontSize: 11, fontWeight: FontWeight.w600),
                       ),
@@ -454,11 +534,11 @@ class _UpdateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final fgColor = _toneFg(item.tone);
-    final bgColor = _toneBg(item.tone);
+    final fgColor = item.tone.fg;
+    final bgColor = item.tone.bg;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+      padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -490,7 +570,7 @@ class _UpdateCard extends StatelessWidget {
                     color: bgColor,
                     child: Row(
                       children: [
-                        Icon(item.icon, size: 13, color: fgColor),
+                        Icon(item.kind.icon, size: 13, color: fgColor),
                         const SizedBox(width: 6),
                         Text(
                           item.title.toUpperCase(),
@@ -576,19 +656,6 @@ class _UpdateCard extends StatelessWidget {
     );
   }
 
-  static Color _toneFg(String tone) => switch (tone) {
-        'crimson' => _crimson,
-        'blue' => pbBlue,
-        'green' => pbGreen,
-        _ => _amber,
-      };
-
-  static Color _toneBg(String tone) => switch (tone) {
-        'crimson' => _crimsonTint,
-        'blue' => _blueTint,
-        'green' => _greenTint,
-        _ => _amberTint,
-      };
 }
 
 // ─── System event (join request etc.) ─────────────────────────
@@ -601,7 +668,7 @@ class _SystemEvent extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Container(
-      margin: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+      margin: const EdgeInsets.fromLTRB(4, 6, 4, 0),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBF0),
@@ -698,7 +765,7 @@ class _PollCardState extends State<_PollCard> {
         (_voted != null ? 1 : 0);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+      padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -897,7 +964,7 @@ class _PhotoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+      padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

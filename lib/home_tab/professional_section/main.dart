@@ -208,8 +208,8 @@ class _Sections extends StatelessWidget {
   }
 }
 
-// A single section: clickable title + horizontally scrolling row of cards
-class _Section extends StatelessWidget {
+// A single section: clickable title + carousel (PageView) of cards + dots
+class _Section extends StatefulWidget {
   final String title;
   final List<ProfessionalFeedItem> items;
   final bool isMock;
@@ -222,71 +222,167 @@ class _Section extends StatelessWidget {
     this.suffix,
   });
 
-  void _openSheet(BuildContext context) {
-    showFSheet(
+  @override
+  State<_Section> createState() => _SectionState();
+}
+
+class _SectionState extends State<_Section> {
+  static const double _viewportFraction = 0.92;
+  // Fraction of the viewport width the user must drag past the last
+  // card. Scales with screen size — 18% of a 390-wide phone is ~70 px,
+  // 18% of a 600-wide tablet is ~108 px, etc.
+  static const double _overscrollFraction = 0.18;
+
+  late final PageController _controller =
+      PageController(viewportFraction: _viewportFraction);
+  int _page = 0;
+  bool _sheetOpening = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openSheet() async {
+    if (_sheetOpening) return;
+    _sheetOpening = true;
+    await showFSheet<void>(
       context: context,
       useRootNavigator: true,
       side: .btt,
       mainAxisMaxRatio: 0.9,
       builder: (_) => _ProfessionalSheet(
-        title: title,
-        items: items,
-        isMock: isMock,
+        title: widget.title,
+        items: widget.items,
+        isMock: widget.isMock,
       ),
     );
+    if (mounted) _sheetOpening = false;
+  }
+
+  bool _onScroll(ScrollNotification n) {
+    // Only count position updates that came from an active user drag —
+    // a fling settle overshoots past `maxScrollExtent` too, but its
+    // ScrollUpdateNotifications carry `dragDetails == null`.
+    if (n is! ScrollUpdateNotification || n.dragDetails == null) return false;
+
+    final m = n.metrics;
+    final overscroll = m.pixels - m.maxScrollExtent;
+    final threshold = m.viewportDimension * _overscrollFraction;
+    if (overscroll > threshold && !_sheetOpening) {
+      _openSheet();
+    }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    // height: 1.0 collapses the line box to the glyph height, so the
+    // icon and text bounding boxes are the same size — center alignment
+    // in the Row then produces actual visual centering instead of
+    // sitting both items on the line's baseline.
+    final titleStyle = context.theme.typography.xl2.copyWith(
+      fontWeight: FontWeight.bold,
+      height: 1.0,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
             FTappable(
-              onPress: items.isEmpty ? null : () => _openSheet(context),
+              onPress: widget.items.isEmpty ? null : _openSheet,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 4,
                   vertical: 4,
                 ),
-                child: Text(
-                  title,
-                  style: context.theme.typography.xl2.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(widget.title, style: titleStyle),
+                    const SizedBox(width: 4),
+                    Icon(
+                      FIcons.chevronRight,
+                      size: titleStyle.fontSize,
+                      color: colors.mutedForeground,
+                    ),
+                  ],
                 ),
               ),
             ),
             const Spacer(),
-            ?suffix,
+            ?widget.suffix,
           ],
         ),
         const SizedBox(height: 10),
-        if (items.isEmpty)
+        if (widget.items.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Text(
               'homeTab.professional.empty.message'.tr(),
               textAlign: TextAlign.center,
               style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
+                color: colors.mutedForeground,
               ),
             ),
           )
-        else
+        else ...[
           SizedBox(
             height: 332,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.zero,
-              itemCount: items.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
-              itemBuilder: (context, i) => _ProfessionalCard(
-                item: items[i],
-                isMock: isMock,
+            child: NotificationListener<ScrollNotification>(
+              onNotification: _onScroll,
+              child: PageView.builder(
+                controller: _controller,
+                physics: const BouncingScrollPhysics(),
+                padEnds: false,
+                itemCount: widget.items.length,
+                onPageChanged: (i) => setState(() => _page = i),
+                itemBuilder: (context, i) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: _ProfessionalCard(
+                    item: widget.items[i],
+                    isMock: widget.isMock,
+                  ),
+                ),
               ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _PageDots(count: widget.items.length, active: _page),
+        ],
+      ],
+    );
+  }
+}
+
+class _PageDots extends StatelessWidget {
+  final int count;
+  final int active;
+
+  const _PageDots({required this.count, required this.active});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < count; i++)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: i == active ? 20 : 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: i == active
+                  ? colors.primary
+                  : colors.border,
+              borderRadius: BorderRadius.circular(999),
             ),
           ),
       ],
@@ -321,11 +417,9 @@ class _ProfessionalCard extends StatelessWidget {
     final isCoach = item.role == ProfessionalRole.coach;
     final accent = isCoach ? colors.primary : pbBlue;
 
-    return SizedBox(
-      width: 300,
-      child: FCard(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
+    return FCard(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -446,7 +540,6 @@ class _ProfessionalCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }

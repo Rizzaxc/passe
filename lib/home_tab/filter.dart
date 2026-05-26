@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../core/model/enum.dart';
 import '../core/model/timeslot.dart';
 import '../ui/search_field.dart';
+import '../ui/sheet.dart';
 import 'filter_controller.dart';
 
 export 'filter_controller.dart' show FilterData, filterStateProvider;
@@ -17,11 +18,9 @@ class FilterWidget extends ConsumerWidget {
     return FButton.icon(
       variant: .ghost,
       onPress: () {
-        showFSheet(
+        showPSheet(
           context: context,
-          useRootNavigator: true,
-          builder: (context) => const FilterSheet(),
-          side: .btt,
+          builder: (_) => const FilterSheet(),
         );
       },
       child: Icon(FIcons.listFilter),
@@ -50,8 +49,10 @@ class _DistrictSelect extends StatelessWidget {
     }
 
     return FMultiSelect<District>.rich(
-      label: Text(context.tr('homeTab.filter.district')),
-      hint: Text(context.tr('homeTab.filter.any')),
+      // No inline label — the section label "Địa Điểm" above the
+      // city + district pair already groups them. The district name is
+      // surfaced as the empty-state placeholder instead.
+      hint: Text(context.tr('homeTab.filter.district')),
       format: (d) => Text(d.getLocalizedFullName(context)),
       keepHint: false,
       control: FMultiValueControl.managed(
@@ -114,42 +115,36 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     final filter = ref.watch(filterStateProvider);
     final notifier = ref.read(filterStateProvider.notifier);
 
-    return FSheets(
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: context.theme.colors.background,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.symmetric(
-            horizontal: BorderSide(color: context.theme.colors.border),
-          ),
-        ),
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          primary: false,
-          child: Column(
-            spacing: 32,
+    return SingleChildScrollView(
+      controller: _scrollController,
+      primary: false,
+      child: Column(
+            spacing: 20,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Search section
-              PSearchField(
-                hint: context.tr('homeTab.filter.searchHint'),
-                controller: _searchController,
-                onChange: (value) => notifier.setFilter(value),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  PSheetSectionLabel(label: context.tr('homeTab.filter.search')),
+                  const SizedBox(height: 8),
+                  PSearchField(
+                    hint: context.tr('homeTab.filter.searchHint'),
+                    controller: _searchController,
+                    onChange: (value) => notifier.setFilter(value),
+                  ),
+                ],
               ),
 
               // Location section
               Column(
-                spacing: 8,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  PSheetSectionLabel(
+                    label: context.tr('homeTab.filter.location'),
+                  ),
+                  const SizedBox(height: 8),
                   FSelect<City>.rich(
-                    label: Row(
-                      spacing: 2,
-                      crossAxisAlignment: .end,
-                      children: [
-                        const Icon(Icons.location_city),
-                        Text(context.tr('homeTab.filter.location')),
-                      ],
-                    ),
                     hint: context.tr('homeTab.filter.city'),
                     format: (city) => city.getLocalizedName(context),
                     autoHide: true,
@@ -170,6 +165,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
                   _DistrictSelect(
                     key: ValueKey(filter.city),
                     city: filter.city,
@@ -181,8 +177,12 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
               // Schedule section
               Column(
-                spacing: 8,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  PSheetSectionLabel(
+                    label: context.tr('homeTab.filter.schedule'),
+                  ),
+                  const SizedBox(height: 8),
                   Builder(builder: (context) {
                     final fieldStyle =
                         context.theme.multiSelectStyle.fieldStyles.md;
@@ -190,17 +190,6 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       spacing: 8,
                       children: [
-                        DefaultTextStyle.merge(
-                          style: context.theme.typography.sm.copyWith(fontWeight: .bold),
-                          child: Row(
-                            spacing: 2,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              const Icon(Icons.calendar_month),
-                              Text(context.tr('homeTab.filter.schedule')),
-                            ],
-                          ),
-                        ),
                         DecoratedBox(
                           decoration: BoxDecoration(
                             color: context.theme.colors.card,
@@ -294,9 +283,18 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                       ],
                     );
                   }),
+                  // Same gap the Location section uses between its city
+                  // and district fields, so the picker row visually
+                  // separates from the selected-timeslot chip strip
+                  // above it.
+                  const SizedBox(height: 8),
                   Row(
                     spacing: 8,
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    // .center keeps the ghost add-button vertically
+                    // centred on the field row — `.end` anchored it to
+                    // the bottom, which both looked slightly off and let
+                    // the pressed-state highlight bleed below the row.
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
                         child: FSelect<DayChunk>.rich(
@@ -368,8 +366,6 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
               const SizedBox(height: 8,)
             ],
           ),
-        ),
-      ),
     );
   }
 }

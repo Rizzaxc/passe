@@ -71,8 +71,7 @@ class LobbyFeedCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Row(
                         mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             '${item.memberCount}',
@@ -91,6 +90,7 @@ class LobbyFeedCard extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                               color: colors.mutedForeground,
                               letterSpacing: 0.4,
+                              height: 1,
                             ),
                           ),
                         ],

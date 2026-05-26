@@ -11,6 +11,12 @@ List<RouteBase> get $appRoutes => [
   $authRoute,
   $welcomeRoute,
   $notificationRoute,
+  $walletHomeRoute,
+  $walletIntroRoute,
+  $walletPurchaseHistoryRoute,
+  $walletSpendingHistoryRoute,
+  $walletTopupRoute,
+  $professionalDetailRoute,
   $mainRoute,
 ];
 
@@ -107,6 +113,168 @@ mixin $NotificationRoute on GoRouteData {
 
   @override
   void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $walletHomeRoute =>
+    GoRouteData.$route(path: '/wallet', factory: $WalletHomeRoute._fromState);
+
+mixin $WalletHomeRoute on GoRouteData {
+  static WalletHomeRoute _fromState(GoRouterState state) =>
+      const WalletHomeRoute();
+
+  @override
+  String get location => GoRouteData.$location('/wallet');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $walletIntroRoute => GoRouteData.$route(
+  path: '/wallet/intro',
+  factory: $WalletIntroRoute._fromState,
+);
+
+mixin $WalletIntroRoute on GoRouteData {
+  static WalletIntroRoute _fromState(GoRouterState state) =>
+      const WalletIntroRoute();
+
+  @override
+  String get location => GoRouteData.$location('/wallet/intro');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $walletPurchaseHistoryRoute => GoRouteData.$route(
+  path: '/wallet/purchase',
+  factory: $WalletPurchaseHistoryRoute._fromState,
+);
+
+mixin $WalletPurchaseHistoryRoute on GoRouteData {
+  static WalletPurchaseHistoryRoute _fromState(GoRouterState state) =>
+      const WalletPurchaseHistoryRoute();
+
+  @override
+  String get location => GoRouteData.$location('/wallet/purchase');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $walletSpendingHistoryRoute => GoRouteData.$route(
+  path: '/wallet/spending',
+  factory: $WalletSpendingHistoryRoute._fromState,
+);
+
+mixin $WalletSpendingHistoryRoute on GoRouteData {
+  static WalletSpendingHistoryRoute _fromState(GoRouterState state) =>
+      const WalletSpendingHistoryRoute();
+
+  @override
+  String get location => GoRouteData.$location('/wallet/spending');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $walletTopupRoute => GoRouteData.$route(
+  path: '/wallet/topup',
+  factory: $WalletTopupRoute._fromState,
+);
+
+mixin $WalletTopupRoute on GoRouteData {
+  static WalletTopupRoute _fromState(GoRouterState state) =>
+      const WalletTopupRoute();
+
+  @override
+  String get location => GoRouteData.$location('/wallet/topup');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $professionalDetailRoute => GoRouteData.$route(
+  path: '/professional/:id',
+  factory: $ProfessionalDetailRoute._fromState,
+);
+
+mixin $ProfessionalDetailRoute on GoRouteData {
+  static ProfessionalDetailRoute _fromState(GoRouterState state) =>
+      ProfessionalDetailRoute(
+        id: state.pathParameters['id']!,
+        $extra: state.extra as ProfessionalFeedItem?,
+      );
+
+  ProfessionalDetailRoute get _self => this as ProfessionalDetailRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/professional/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location, extra: _self.$extra);
+
+  @override
+  Future<T?> push<T>(BuildContext context) =>
+      context.push<T>(location, extra: _self.$extra);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location, extra: _self.$extra);
+
+  @override
+  void replace(BuildContext context) =>
+      context.replace(location, extra: _self.$extra);
 }
 
 RouteBase get $mainRoute => StatefulShellRouteData.$route(

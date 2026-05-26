@@ -23,7 +23,11 @@ FThemeData get pbThemeLight {
     foreground: Color(0xFF09090B),
     primary: Color(0xFFDC143C),
     primaryForeground: Color(0xFFFFF1F2),
-    secondary: Color(0xFFF4F4F5),
+    // Bumped from zinc-100 (#F4F4F5) — at that value secondary was
+    // visually identical to both the warm bg (#F4F5EE) and to white,
+    // so chips / pills / spend-row kind tints disappeared. Zinc-200
+    // is one step up: readable on white without going chunky.
+    secondary: Color(0xFFE4E4E7),
     secondaryForeground: Color(0xFF18181B),
     muted: Color(0xFFE5E7EB),
     mutedForeground: Color(0xFF71717A),
