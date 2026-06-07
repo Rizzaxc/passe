@@ -48,7 +48,7 @@ Future<void> main() async {
   };
 
   final talker = Talker(
-    observer: PasseTalkerObserver(env),
+    observer: PasseTalkerObserver(),
     logger: TalkerLogger(
       settings: TalkerLoggerSettings(
         level: env == envLocal ? LogLevel.debug : LogLevel.verbose,
@@ -62,7 +62,9 @@ Future<void> main() async {
 
   await SentryFlutter.init(
     (options) {
-      options.dsn = sentryDSN;
+      // An empty DSN tells the SDK to no-op (see Sentry._setDefaultConfiguration),
+      // which keeps local dev's build/hot-reload errors out of the issue feed.
+      options.dsn = env == envLocal ? '' : sentryDSN;
       options.tracesSampleRate = sampleRates[env];
       options.profilesSampleRate = 1.0;
       options.environment = env;

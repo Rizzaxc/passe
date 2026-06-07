@@ -67,13 +67,18 @@ GoRouter router(Ref ref) {
     routes: $appRoutes,
     redirect: (context, state) {
       final isSplash = state.uri.path == const SplashRoute().location;
-      // Password-recovery screens are part of the unauthenticated flow and must
-      // stay reachable: `/reset-password` is matched by path only because it
-      // carries an `?email=` query.
+      // Password-recovery screens carry their own flag: unlike the rest of
+      // the auth flow, guests must be able to reach them too — the "Forgot
+      // password?" link is only ever shown from the embedded form in
+      // GuestProfileView, so without this carve-out a guest could never get
+      // past the redirect below to actually use it.
+      // (`/reset-password` is matched by path only because it carries an
+      // `?email=` query.)
+      final isPasswordRecoveryFlow = state.uri.path == const ForgotPasswordRoute().location ||
+          state.uri.path == '/reset-password';
       final isAuthFlow = state.uri.path == const AuthRoute().location ||
           state.uri.path == const WelcomeRoute().location ||
-          state.uri.path == const ForgotPasswordRoute().location ||
-          state.uri.path == '/reset-password';
+          isPasswordRecoveryFlow;
       switch (user.value) {
         case AsyncError():
           if (isAuthFlow) return null;
@@ -86,8 +91,8 @@ GoRouter router(Ref ref) {
           return null;
         case AsyncData(value: final user):
           if (user!.isGuest) {
-            if (isSplash) return HomeRoute().location;
-            if (isAuthFlow) return HomeRoute().location;
+            if (isPasswordRecoveryFlow) return null;
+            if (isSplash || isAuthFlow) return HomeRoute().location;
             return null;
           }
 

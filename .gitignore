@@ -50,3 +50,6 @@ app.*.map.json
 .claude/worktrees/
 # Environment secrets
 .env
+
+# Secrets
+/secret/*

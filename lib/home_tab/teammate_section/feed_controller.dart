@@ -49,7 +49,7 @@ class RequestedLobbyIds extends _$RequestedLobbyIds {
     try {
       final user = ref.read(authControllerProvider).value;
       await Supabase.instance.client.from('lobby_befriend_record').insert({
-        if (user?.id != null) 'user_id': user!.id,
+        if (user?.id != null) 'initiator_user_id': user!.id,
         'target_lobby_id': lobbyId,
         'interaction_type': 'request',
       }).timeout(const Duration(seconds: 5));

@@ -344,6 +344,7 @@
         "signUp": "Sign Up",
         "loginFailed": "Login Failed",
         "signUpFailed": "Sign Up Failed",
+        "orDivider": "or",
         "googleContinue": "Continue with Google",
         "appleContinue": "Continue with Apple",
         "guestContinue": "Continue as Guest",

@@ -247,11 +247,9 @@ class _SectionState extends State<_Section> {
   Future<void> _openSheet() async {
     if (_sheetOpening) return;
     _sheetOpening = true;
-    await showFSheet<void>(
+    await showPSheet<void>(
       context: context,
-      useRootNavigator: true,
-      side: .btt,
-      mainAxisMaxRatio: 0.9,
+      maxHeightRatio: 0.9,
       builder: (_) => _ProfessionalSheet(
         title: widget.title,
         items: widget.items,
@@ -572,45 +570,33 @@ class _ProfessionalSheetState extends State<_ProfessionalSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return FSheets(
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: context.theme.colors.background,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.symmetric(
-            horizontal: BorderSide(color: context.theme.colors.border),
-          ),
-        ),
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          primary: false,
-          child: Column(
-            spacing: 16,
+    return SingleChildScrollView(
+      controller: _scrollController,
+      primary: false,
+      child: Column(
+        spacing: 16,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      widget.title,
-                      style: context.theme.typography.xl2.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+              Expanded(
+                child: Text(
+                  widget.title,
+                  style: context.theme.typography.xl2.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-                  FButton.icon(
-                    variant: .ghost,
-                    onPress: () => Navigator.of(context).pop(),
-                    child: const Icon(FIcons.x),
-                  ),
-                ],
+                ),
               ),
-              for (final item in widget.items)
-                _SheetRow(item: item, isMock: widget.isMock),
-              const SizedBox(height: 8),
+              FButton.icon(
+                variant: .ghost,
+                onPress: () => Navigator.of(context).pop(),
+                child: const Icon(FIcons.x),
+              ),
             ],
           ),
-        ),
+          for (final item in widget.items)
+            _SheetRow(item: item, isMock: widget.isMock),
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }

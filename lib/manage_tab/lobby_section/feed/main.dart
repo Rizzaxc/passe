@@ -55,12 +55,19 @@ class LobbySubtab extends ConsumerWidget {
                     title: 'manageTab.lobby.empty.title'.tr(),
                     subtitle: 'manageTab.lobby.empty.message'.tr(),
                   )
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    itemCount: lobbies.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) =>
-                        _LobbyCard(item: lobbies[index]),
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(userLobbiesControllerProvider);
+                      await ref.read(userLobbiesControllerProvider.future);
+                    },
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      itemCount: lobbies.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) =>
+                          _LobbyCard(item: lobbies[index]),
+                    ),
                   ),
           ),
         ),

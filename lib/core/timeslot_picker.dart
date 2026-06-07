@@ -1,6 +1,6 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import '../ui/sheet.dart';
 import 'model/enum.dart';
 import 'model/timeslot.dart';
 
@@ -11,43 +11,24 @@ Future<Timeslot?> showTimeslotPicker({
 }) async {
   Timeslot? selectedTimeslot = initialTimeslot;
 
-  return showFSheet<Timeslot>(
+  return showPSheet<Timeslot>(
     context: context,
-    useSafeArea: true,
-    useRootNavigator: true,
-    constraints: BoxConstraints(minWidth: double.infinity),
-    side: .btt,
-    builder: (context) => Container(
-      decoration: BoxDecoration(
-        color: context.theme.colors.background,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.symmetric(
-          horizontal: BorderSide(color: context.theme.colors.border),
+    builder: (context) => Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TimeslotPicker(
+          initialTimeslot: initialTimeslot,
+          onChanged: (timeslot) {
+            selectedTimeslot = timeslot;
+          },
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: TimeslotPicker(
-                initialTimeslot: initialTimeslot,
-                onChanged: (timeslot) {
-                  selectedTimeslot = timeslot;
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-            FButton(
-              onPress: () => Navigator.of(context).pop(selectedTimeslot),
-              // child: Text('OK'),
-              child: const Icon(FIcons.check),
-            ),
-          ],
+        const SizedBox(height: 16),
+        FButton(
+          onPress: () => Navigator.of(context).pop(selectedTimeslot),
+          child: const Icon(FIcons.check),
         ),
-      ),
+      ],
     ),
   );
 }

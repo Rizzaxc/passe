@@ -40,8 +40,28 @@ class GuestProfileView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const AuthForm(),
+                // Mirror the welcome flow's hierarchy: social sign-in is the
+                // default, expected path (shown big, up front), email/password
+                // is the secondary fallback below an "or" divider.
                 const SocialAuthSection(showGuestOption: false),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'auth.orDivider'.tr(),
+                        style: context.theme.typography.sm.copyWith(
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const AuthForm(),
               ],
             ),
           ),

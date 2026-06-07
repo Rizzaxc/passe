@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
@@ -219,6 +220,18 @@ class AuthController extends _$AuthController {
   /// verify the token wasn't replayed. Session propagation matches
   /// [signInWithGoogle].
   Future<void> signInWithApple() async {
+    // Native `getAppleIDCredential` is only meaningful on Apple platforms —
+    // on Android/other platforms it requires `webAuthenticationOptions`
+    // (the OAuth/web flow), which Supabase explicitly advises against
+    // pairing with `signInWithIdToken`. Guard it out here so the button
+    // (also hidden on those platforms in `SocialAuthSection`) can never be
+    // reached via some other path either.
+    if (!Platform.isIOS && !Platform.isMacOS) {
+      throw const AuthException(
+        'Sign in with Apple is only available on iOS and macOS.',
+      );
+    }
+
     try {
       final rawNonce = _generateRawNonce();
       final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();

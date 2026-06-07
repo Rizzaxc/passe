@@ -22,6 +22,13 @@ class UserPreferences {
   ///
   /// If the user is logged in, this returns their user ID.
   /// Otherwise, it returns the guest prefix.
+  ///
+  /// Sanctioned exception to the "never read `auth.currentUser` directly" rule
+  /// (the other being `AuthController`). `UserPreferences` is a synchronous
+  /// singleton that `AuthController` itself depends on to cache the user, so it
+  /// cannot route through `currentUserIdProvider` (which is async and needs a
+  /// `ref`) without creating a dependency cycle. The raw getter is read-only
+  /// here and only used to namespace SharedPreferences keys.
   String get _userPrefix {
     final user = supabase.auth.currentUser;
     return user?.id ?? _guestPrefix;

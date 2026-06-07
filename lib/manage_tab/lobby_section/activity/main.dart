@@ -50,15 +50,24 @@ class ActivityTab extends ConsumerWidget {
         ),
         Expanded(
           // Chat-anchored: newest message at the bottom (initial view),
-          // scroll up to reveal older messages.
-          child: ListView(
-            reverse: true,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            children: [
-              // Children laid out bottom-up: index 0 sits at the bottom.
-              for (final item in feed.reversed)
-                FeedItemWidget(item: item),
-            ],
+          // scroll up to reveal older messages. Pull-down (from the top of
+          // the reversed list) refetches the feed + pinned activity.
+          child: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(lobbyFeedControllerProvider(lobbyId));
+              ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
+              await ref.read(lobbyFeedControllerProvider(lobbyId).future);
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              reverse: true,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              children: [
+                // Children laid out bottom-up: index 0 sits at the bottom.
+                for (final item in feed.reversed)
+                  FeedItemWidget(item: item),
+              ],
+            ),
           ),
         ),
         ChatTriggerBar(
