@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict f7ZtHH0wzfJNfX86kYqrFexNcVQOm54pn9gza56JI0RZl6SHOdkQnhsNCcEbB6f
+\restrict JOwmkov8MW2zBOd27rqiadHRXT4iMCnKrdeslTpbfc4pHXU3J8FAay1KTX2ZRp2
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.9 (Homebrew)
@@ -375,55 +375,51 @@ CREATE FUNCTION public.create_lobby_with_location(p_name text, p_sport_id intege
     SET search_path TO 'public', 'extensions'
     AS $$
 DECLARE
-  v_user_id    uuid;
-  v_loc_id     uuid;
-  v_lobby_id   uuid;
-  v_result     jsonb;
+    v_user_id  uuid;
+    v_loc_id   uuid;
+    v_lobby_id uuid;
+    v_result   jsonb;
 BEGIN
-  v_user_id := auth.uid();
-  IF v_user_id IS NULL THEN
-    RAISE EXCEPTION 'Not authenticated';
-  END IF;
+    v_user_id := auth.uid();
+    IF v_user_id IS NULL THEN
+        RAISE EXCEPTION 'Not authenticated';
+    END IF;
 
-  IF p_home_ground_id IS NOT NULL THEN
-    -- use the existing geocoded location directly
-    v_loc_id := p_home_ground_id;
-  ELSIF p_location_name IS NOT NULL OR p_street_name IS NOT NULL OR p_city IS NOT NULL THEN
-    -- insert a new free-text location only when at least one field is provided
-    INSERT INTO public.location (name, street_number, street_name, district, city)
+    IF p_home_ground_id IS NOT NULL THEN
+        v_loc_id := p_home_ground_id;
+    ELSIF p_location_name IS NOT NULL OR p_street_name IS NOT NULL OR p_city IS NOT NULL THEN
+        INSERT INTO public.location (name, street_number, street_name, district, city)
+        VALUES (
+            NULLIF(TRIM(COALESCE(p_location_name, '')), ''),
+            NULLIF(p_street_number, '')::integer,
+            NULLIF(p_street_name,   ''),
+            NULLIF(p_district,      ''),
+            NULLIF(p_city,          '')
+        )
+        RETURNING id INTO v_loc_id;
+    END IF;
+
+    INSERT INTO public.lobby (name, sport_id, visibility, playtime, details, home_ground, captain_id)
     VALUES (
-      NULLIF(TRIM(COALESCE(p_location_name, '')), ''),
-      NULLIF(p_street_number, '')::integer,
-      NULLIF(p_street_name,   ''),
-      NULLIF(p_district,      ''),
-      NULLIF(p_city,          '')
+        p_name,
+        p_sport_id,
+        p_visibility::public.lobby_visibility,
+        p_playtime,
+        p_details,
+        v_loc_id,
+        v_user_id
     )
-    RETURNING id INTO v_loc_id;
-  -- else v_loc_id remains NULL → lobby created without a home ground
-  END IF;
+    RETURNING id INTO v_lobby_id;
 
-  INSERT INTO public.lobby (name, sport_id, visibility, playtime, details, home_ground, captain_id)
-  VALUES (
-    p_name,
-    p_sport_id,
-    p_visibility::public.lobby_visibility,
-    p_playtime,
-    p_details,
-    v_loc_id,
-    v_user_id
-  )
-  RETURNING id INTO v_lobby_id;
+    -- Captain → lobby_member is handled by the lobby_add_captain_as_member
+    -- AFTER INSERT trigger.
 
-  -- add captain as first member
-  INSERT INTO public.lobby_member (user_id, lobby_id)
-  VALUES (v_user_id, v_lobby_id)
-  ON CONFLICT DO NOTHING;
+    SELECT row_to_json(l)::jsonb
+        INTO v_result
+        FROM public.lobby l
+        WHERE l.id = v_lobby_id;
 
-  SELECT row_to_json(l)::jsonb INTO v_result
-  FROM public.lobby l
-  WHERE l.id = v_lobby_id;
-
-  RETURN v_result;
+    RETURN v_result;
 END;
 $$;
 
@@ -563,6 +559,55 @@ $_$;
 
 
 --
+-- Name: lobby_add_captain_as_member(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.lobby_add_captain_as_member() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    INSERT INTO public.lobby_member (user_id, lobby_id)
+    VALUES (NEW.captain_id, NEW.id)
+    ON CONFLICT (user_id, lobby_id) DO NOTHING;
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: lobby_before_delete(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.lobby_before_delete() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_other_members int;
+BEGIN
+    SELECT COUNT(*)
+        INTO v_other_members
+        FROM public.lobby_member
+        WHERE lobby_id = OLD.id
+          AND user_id <> OLD.captain_id;
+
+    IF v_other_members > 0 THEN
+        RAISE EXCEPTION
+            'Cannot delete lobby % while % other member(s) remain — they must leave first',
+            OLD.id, v_other_members;
+    END IF;
+
+    -- Whitelist the captain-leave check for the cascade that's about
+    -- to run on lobby_member. `true` makes the setting tx-local.
+    PERFORM set_config('app.lobby_being_deleted', OLD.id::text, true);
+
+    RETURN OLD;
+END;
+$$;
+
+
+--
 -- Name: lobby_befriend_accepted_trigger_fn(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -571,56 +616,44 @@ CREATE FUNCTION public.lobby_befriend_accepted_trigger_fn() RETURNS trigger
     SET search_path TO ''
     AS $$
 DECLARE
-    new_lobby_id       UUID;
-    initiator_username TEXT;
-    target_username    TEXT;
-    lobby_name         TEXT;
-    sport_id           BIGINT;
+    new_lobby_id       uuid;
+    initiator_username text;
+    target_username    text;
+    lobby_name         text;
+    sport_id           bigint;
 BEGIN
-    -- Only process when status changes to 'accepted'
     IF NEW.status = 'accepted' AND (OLD.status IS NULL OR OLD.status != 'accepted') THEN
 
-        -- Handle 'request' interaction type (user requesting to join lobby)
+        -- 'request' / 'invite' add the relevant user to an existing lobby.
         IF NEW.interaction_type = 'request' AND NEW.target_lobby_id IS NOT NULL THEN
             INSERT INTO public.lobby_member (user_id, lobby_id)
             VALUES (NEW.initiator_user_id, NEW.target_lobby_id)
-            ON CONFLICT DO NOTHING; -- Prevent duplicate memberships
+            ON CONFLICT DO NOTHING;
 
-        -- Handle 'invite' interaction type (lobby inviting user to join)
         ELSIF NEW.interaction_type = 'invite' AND NEW.target_user_id IS NOT NULL THEN
             INSERT INTO public.lobby_member (user_id, lobby_id)
             VALUES (NEW.target_user_id, NEW.target_lobby_id)
-            ON CONFLICT DO NOTHING; -- Prevent duplicate memberships
+            ON CONFLICT DO NOTHING;
 
-        -- Handle 'pair' interaction type (mutual connection between users)
+        -- 'pair' creates a brand-new lobby. The captain (initiator) is
+        -- joined automatically by lobby_add_captain_as_member; we only
+        -- need to add the OTHER user.
         ELSIF NEW.interaction_type = 'pair' AND NEW.target_user_id IS NOT NULL THEN
-            -- Get sport_id from details column
             IF NEW.details ? 'sport_id' THEN
-                sport_id := (NEW.details ->> 'sport_id')::BIGINT;
+                sport_id := (NEW.details ->> 'sport_id')::bigint;
 
-                -- Get usernames for lobby name
-                SELECT username
-                INTO initiator_username
-                FROM public."user"
-                WHERE id = NEW.initiator_user_id;
-
-                SELECT username
-                INTO target_username
-                FROM public."user"
-                WHERE id = NEW.target_user_id;
-
-                -- Create lobby name combining usernames
+                SELECT username INTO initiator_username
+                    FROM public."user" WHERE id = NEW.initiator_user_id;
+                SELECT username INTO target_username
+                    FROM public."user" WHERE id = NEW.target_user_id;
                 lobby_name := initiator_username || ' & ' || target_username;
 
-                -- Create new lobby with initiator as captain
                 INSERT INTO public.lobby (captain_id, name, sport_id)
                 VALUES (NEW.initiator_user_id, lobby_name, sport_id)
                 RETURNING id INTO new_lobby_id;
 
-                -- Add both users as lobby members
                 INSERT INTO public.lobby_member (user_id, lobby_id)
-                VALUES (NEW.initiator_user_id, new_lobby_id),
-                       (NEW.target_user_id, new_lobby_id)
+                VALUES (NEW.target_user_id, new_lobby_id)
                 ON CONFLICT DO NOTHING;
             END IF;
         END IF;
@@ -843,6 +876,47 @@ BEGIN
     END IF;
 
     RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: lobby_member_prevent_captain_leave(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.lobby_member_prevent_captain_leave() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_captain_id     uuid;
+    v_being_deleted  text;
+BEGIN
+    SELECT captain_id
+        INTO v_captain_id
+        FROM public.lobby
+        WHERE id = OLD.lobby_id;
+
+    -- Lobby is already gone (e.g. a different cascade path) — let the
+    -- delete through.
+    IF v_captain_id IS NULL THEN
+        RETURN OLD;
+    END IF;
+
+    -- Non-captain leaving: always OK.
+    IF v_captain_id <> OLD.user_id THEN
+        RETURN OLD;
+    END IF;
+
+    -- Captain leaving: only allowed when the lobby itself is being
+    -- deleted in this same transaction (signal set by lobby_before_delete).
+    v_being_deleted := current_setting('app.lobby_being_deleted', true);
+    IF v_being_deleted = OLD.lobby_id::text THEN
+        RETURN OLD;
+    END IF;
+
+    RAISE EXCEPTION
+        'Captain cannot leave lobby % — transfer captaincy first', OLD.lobby_id;
 END;
 $$;
 
@@ -2547,6 +2621,20 @@ CREATE TRIGGER basketball_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.
 
 
 --
+-- Name: lobby lobby_add_captain_as_member; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lobby_add_captain_as_member AFTER INSERT ON public.lobby FOR EACH ROW EXECUTE FUNCTION public.lobby_add_captain_as_member();
+
+
+--
+-- Name: lobby lobby_before_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lobby_before_delete BEFORE DELETE ON public.lobby FOR EACH ROW EXECUTE FUNCTION public.lobby_before_delete();
+
+
+--
 -- Name: lobby_befriend_record lobby_befriend_accepted_trigger; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -2565,6 +2653,13 @@ CREATE TRIGGER lobby_befriend_record_before_insert BEFORE INSERT ON public.lobby
 --
 
 CREATE TRIGGER lobby_match_referee_role_check BEFORE INSERT OR UPDATE OF referee_booking_id ON public.lobby_match FOR EACH ROW EXECUTE FUNCTION public.lobby_match_referee_role_check();
+
+
+--
+-- Name: lobby_member lobby_member_prevent_captain_leave; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lobby_member_prevent_captain_leave BEFORE DELETE ON public.lobby_member FOR EACH ROW EXECUTE FUNCTION public.lobby_member_prevent_captain_leave();
 
 
 --
@@ -2816,7 +2911,7 @@ ALTER TABLE ONLY public.lobby_match
 --
 
 ALTER TABLE ONLY public.lobby_member
-    ADD CONSTRAINT lobby_member_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id);
+    ADD CONSTRAINT lobby_member_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
 
 
 --
@@ -3019,6 +3114,53 @@ CREATE POLICY "Additional users can see bookings they are part of" ON public.boo
 
 
 --
+-- Name: lobby_feed_item Author or captain can delete a feed item; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Author or captain can delete a feed item" ON public.lobby_feed_item FOR DELETE TO authenticated USING (((author_id = ( SELECT auth.uid() AS uid)) OR (EXISTS ( SELECT 1
+   FROM public.lobby l
+  WHERE ((l.id = lobby_feed_item.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid)))))));
+
+
+--
+-- Name: lobby_match Captain can delete their lobby's matches; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Captain can delete their lobby's matches" ON public.lobby_match FOR DELETE TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.lobby l
+  WHERE ((l.id = lobby_match.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid))))));
+
+
+--
+-- Name: lobby_match Captain can edit their lobby's matches; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Captain can edit their lobby's matches" ON public.lobby_match FOR UPDATE TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.lobby l
+  WHERE ((l.id = lobby_match.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid)))))) WITH CHECK ((EXISTS ( SELECT 1
+   FROM public.lobby l
+  WHERE ((l.id = lobby_match.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid))))));
+
+
+--
+-- Name: lobby_feed_item Captain can post updates and polls; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Captain can post updates and polls" ON public.lobby_feed_item FOR INSERT TO authenticated WITH CHECK (((author_id = ( SELECT auth.uid() AS uid)) AND (kind = ANY (ARRAY['update'::public.lobby_feed_item_kind, 'poll'::public.lobby_feed_item_kind])) AND (EXISTS ( SELECT 1
+   FROM public.lobby l
+  WHERE ((l.id = lobby_feed_item.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid)))))));
+
+
+--
+-- Name: lobby_match Captain can record matches for their lobby; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Captain can record matches for their lobby" ON public.lobby_match FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
+   FROM public.lobby l
+  WHERE ((l.id = lobby_match.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid))))));
+
+
+--
 -- Name: booking_additional_users Client can manage additional users for their bookings; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -3179,6 +3321,52 @@ CREATE POLICY "Lobby membership deletion policy" ON public.lobby_member FOR DELE
 
 
 --
+-- Name: lobby_feed_poll_vote Members can cast a vote in their lobby's polls; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Members can cast a vote in their lobby's polls" ON public.lobby_feed_poll_vote FOR INSERT TO authenticated WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1
+   FROM public.lobby_feed_item fi
+  WHERE ((fi.id = lobby_feed_poll_vote.feed_item_id) AND (fi.kind = 'poll'::public.lobby_feed_item_kind) AND (fi.lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)))))));
+
+
+--
+-- Name: lobby_feed_item Members can post personal or photo items; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Members can post personal or photo items" ON public.lobby_feed_item FOR INSERT TO authenticated WITH CHECK (((author_id = ( SELECT auth.uid() AS uid)) AND (lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)) AND (kind = ANY (ARRAY['personal'::public.lobby_feed_item_kind, 'photo'::public.lobby_feed_item_kind]))));
+
+
+--
+-- Name: lobby_feed_item Members can read feed items in their lobby; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Members can read feed items in their lobby" ON public.lobby_feed_item FOR SELECT TO authenticated USING ((lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)));
+
+
+--
+-- Name: lobby_feed_poll_vote Members can read poll votes in their lobby; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Members can read poll votes in their lobby" ON public.lobby_feed_poll_vote FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.lobby_feed_item fi
+  WHERE ((fi.id = lobby_feed_poll_vote.feed_item_id) AND (fi.lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids))))));
+
+
+--
+-- Name: lobby_match Members of either lobby can read the match; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Members of either lobby can read the match" ON public.lobby_match FOR SELECT TO authenticated USING (((lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)) OR ((opponent_lobby_id IS NOT NULL) AND (opponent_lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)))));
+
+
+--
+-- Name: lobby_feed_poll_vote Users can change their own vote; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can change their own vote" ON public.lobby_feed_poll_vote FOR UPDATE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
 -- Name: lobby_befriend_record Users can create befriend records with restrictions; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -3273,6 +3461,13 @@ CREATE POLICY "Users can insert their own health metrics" ON public.activity_hea
 --
 
 CREATE POLICY "Users can insert their own rows" ON public.user_network FOR INSERT TO authenticated WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
+
+
+--
+-- Name: lobby_feed_poll_vote Users can retract their own vote; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can retract their own vote" ON public.lobby_feed_poll_vote FOR DELETE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -3467,6 +3662,24 @@ ALTER TABLE public.lobby ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lobby_befriend_record ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: lobby_feed_item; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.lobby_feed_item ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lobby_feed_poll_vote; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.lobby_feed_poll_vote ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lobby_match; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.lobby_match ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: lobby_member; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -3628,5 +3841,5 @@ CREATE POLICY "users manage own tennis profile" ON public.tennis_profile USING (
 -- PostgreSQL database dump complete
 --
 
-\unrestrict f7ZtHH0wzfJNfX86kYqrFexNcVQOm54pn9gza56JI0RZl6SHOdkQnhsNCcEbB6f
+\unrestrict JOwmkov8MW2zBOd27rqiadHRXT4iMCnKrdeslTpbfc4pHXU3J8FAay1KTX2ZRp2
 

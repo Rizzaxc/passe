@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/model/enum.dart';
 import '../../../core/model/location.dart';
@@ -18,12 +19,20 @@ class HomeGroundField extends ConsumerStatefulWidget {
   final ValueChanged<Map<String, String?>?> onFreeAddressChanged;
   final String? lobbyId;
 
+  /// When set, the picker hides its outer "Sân Nhà" label and shows
+  /// this glyph as the in-field prefix instead. Use this when the
+  /// surrounding sheet already has a section title (e.g. "Khi nào & ở
+  /// đâu" on the activity-scheduling sheet), so a separate label
+  /// would be redundant.
+  final IconData? prefixIcon;
+
   const HomeGroundField({
     super.key,
     required this.value,
     required this.onChanged,
     required this.onFreeAddressChanged,
     this.lobbyId,
+    this.prefixIcon,
   });
 
   @override
@@ -47,7 +56,47 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
     _nameCtrl = TextEditingController()..addListener(_onControllerChanged);
     _streetNumberCtrl = TextEditingController();
     _streetNameCtrl = TextEditingController();
+    _hydrateFromValue();
   }
+
+  @override
+  void didUpdateWidget(covariant HomeGroundField old) {
+    super.didUpdateWidget(old);
+    // Re-hydrate if the caller pushed a new id in (e.g. the lobby
+    // controller's data landed after first build).
+    if (widget.value != old.value && _selected == null && !_freeTextMode) {
+      _hydrateFromValue();
+    }
+  }
+
+  /// Look up the location row identified by `widget.value` so the
+  /// picker can render it as already-selected on first paint. The
+  /// previous behavior was to ignore the prop entirely and force the
+  /// user to re-search even when they were just defaulting to the
+  /// lobby's existing home ground.
+  Future<void> _hydrateFromValue() async {
+    final id = widget.value;
+    if (id == null || id.isEmpty) return;
+
+    try {
+      final row = await Supabase.instance.client
+          .from('location')
+          .select()
+          .eq('id', id)
+          .maybeSingle()
+          .timeout(const Duration(seconds: 5));
+      if (!mounted || row == null) return;
+      setState(() => _selected = Location.fromJson(row));
+    } catch (_) {
+      // Soft-fail — the picker just stays in its search state, the
+      // user can re-pick. We don't want this to crash the host sheet.
+    }
+  }
+
+  /// Whether the picker renders its own "Sân Nhà" label above the
+  /// field. False when the caller has supplied a [prefixIcon], on the
+  /// assumption the surrounding section title is doing the labelling.
+  bool get _showOuterLabel => widget.prefixIcon == null;
 
   void _onControllerChanged() => setState(() {});
 
@@ -133,16 +182,17 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
           Stack(
             children: [
               FTextField(
-                label: Text(
-                  'createLobby.homeGround'.tr(),
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: .bold,
-                  ),
-                ),
+                label: _showOuterLabel
+                    ? Text(
+                        'createLobby.homeGround'.tr(),
+                        style: context.theme.typography.sm
+                            .copyWith(fontWeight: .bold),
+                      )
+                    : null,
                 hint: 'createLobby.homeGroundFreeHint'.tr(),
                 prefixBuilder: (context, style, states) => Padding(
                   padding: const EdgeInsets.fromLTRB(8, 4, 0, 4),
-                  child: const Icon(FIcons.pencil),
+                  child: Icon(widget.prefixIcon ?? FIcons.pencil),
                 ),
                 control: FTextFieldControl.managed(
                   controller: _nameCtrl,
@@ -239,19 +289,24 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 4,
         children: [
-          Padding(
-            padding: fieldStyle.labelPadding,
-            child: DefaultTextStyle.merge(
-              style: fieldStyle.labelTextStyle.resolve({}),
-              child: Text(
-                'createLobby.homeGround'.tr(),
-                style: context.theme.typography.sm.copyWith(fontWeight: .bold),
+          if (_showOuterLabel)
+            Padding(
+              padding: fieldStyle.labelPadding,
+              child: DefaultTextStyle.merge(
+                style: fieldStyle.labelTextStyle.resolve({}),
+                child: Text(
+                  'createLobby.homeGround'.tr(),
+                  style: context.theme.typography.sm
+                      .copyWith(fontWeight: .bold),
+                ),
               ),
             ),
-          ),
           FTileGroup(
             children: [
               FTile(
+                prefix: widget.prefixIcon != null
+                    ? Icon(widget.prefixIcon)
+                    : null,
                 title: Text(_selected!.name),
                 subtitle: locAddr.isNotEmpty ? Text(locAddr) : null,
                 suffix: Row(
@@ -282,10 +337,14 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
     return Stack(
       children: [
         PSearchField<Location>(
-          label: Text(
-            'createLobby.homeGround'.tr(),
-            style: context.theme.typography.sm.copyWith(fontWeight: .bold),
-          ),
+          label: _showOuterLabel
+              ? Text(
+                  'createLobby.homeGround'.tr(),
+                  style: context.theme.typography.sm
+                      .copyWith(fontWeight: .bold),
+                )
+              : null,
+          prefixIcon: widget.prefixIcon,
           hint: 'createLobby.homeGroundHint'.tr(),
           controller: _controller,
           suggestionsBuilder: lobbyFormController.searchHomeGround,

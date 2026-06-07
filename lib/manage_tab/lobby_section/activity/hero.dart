@@ -2,12 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/model/enum.dart';
 import '../../../../ui/dual_button.dart';
 import '../../../../ui/theme.dart';
 import '../invite_challenge_sheet.dart';
 import '../schedule_activity_sheet.dart';
+import 'confirmation_controller.dart';
 
 // ─── Color tokens ──────────────────────────────────────────────
 const _crimson = Color(0xFFDC143C);
@@ -20,8 +22,9 @@ const _orange = Color(0xFFF97316);
 
 // ─── Entry point ───────────────────────────────────────────────
 
-class ActivityHero extends StatefulWidget {
+class ActivityHero extends ConsumerWidget {
   final String lobbyId;
+  final String? activityId;
   final Sport? sport;
   final bool hasActivity;
   final bool isLeader;
@@ -29,31 +32,33 @@ class ActivityHero extends StatefulWidget {
   const ActivityHero({
     super.key,
     required this.lobbyId,
+    required this.activityId,
     required this.sport,
     required this.hasActivity,
     required this.isLeader,
   });
 
   @override
-  State<ActivityHero> createState() => _ActivityHeroState();
-}
-
-class _ActivityHeroState extends State<ActivityHero> {
-  // Local RSVP selection. There's no RSVP table yet — this is a
-  // self-managed UI state so the control still feels live in the
-  // design. Lift back out to a controller once the schema lands.
-  String _myRsvp = 'going';
-
-  @override
-  Widget build(BuildContext context) {
-    if (!widget.hasActivity) {
-      return _HeroEmpty(lobbyId: widget.lobbyId, isLeader: widget.isLeader);
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!hasActivity || activityId == null) {
+      return _HeroEmpty(lobbyId: lobbyId, isLeader: isLeader);
     }
+
+    // Member-confirmation state for the current user + activity-level
+    // confirmation roll-up. "Có Mặt" maps to a confirmation row; the
+    // other RSVP states are local-only personal indicators that don't
+    // touch the DB until we model attendance vs. confirmation
+    // separately.
+    final status = ref
+        .watch(activityConfirmationControllerProvider(activityId!))
+        .value;
+
     return _HeroExpanded(
-      sport: widget.sport,
-      isLeader: widget.isLeader,
-      myRsvp: _myRsvp,
-      onRsvpChanged: (v) => setState(() => _myRsvp = v),
+      lobbyId: lobbyId,
+      activityId: activityId!,
+      sport: sport,
+      isLeader: isLeader,
+      status: status,
     );
   }
 }
@@ -220,21 +225,23 @@ class _CTALabel extends StatelessWidget {
 
 // ─── Expanded state ────────────────────────────────────────────
 
-class _HeroExpanded extends StatelessWidget {
+class _HeroExpanded extends ConsumerWidget {
+  final String lobbyId;
+  final String activityId;
   final Sport? sport;
   final bool isLeader;
-  final String myRsvp;
-  final ValueChanged<String> onRsvpChanged;
+  final ActivityConfirmationStatus? status;
 
   const _HeroExpanded({
+    required this.lobbyId,
+    required this.activityId,
     required this.sport,
     required this.isLeader,
-    required this.myRsvp,
-    required this.onRsvpChanged,
+    required this.status,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
 
     return Padding(
@@ -400,55 +407,39 @@ class _HeroExpanded extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      // RSVP avatars + summary
+                      // Confirmation summary — status from the
+                      // ActivityConfirmationController. While loading
+                      // we render the avatar strip with no count so
+                      // the layout doesn't pop.
                       Row(
                         children: [
                           const _RsvpAvatarRow(),
                           const SizedBox(width: 10),
-                          Expanded(
-                            child: Text.rich(
-                              TextSpan(children: const [
-                                TextSpan(
-                                  text: '4 có mặt',
-                                  style: TextStyle(
-                                    color: _green,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 11.5,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: ' · ',
-                                  style: TextStyle(fontSize: 11.5),
-                                ),
-                                TextSpan(
-                                  text: '1 có thể',
-                                  style: TextStyle(
-                                    color: _amber,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 11.5,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: ' · ',
-                                  style: TextStyle(fontSize: 11.5),
-                                ),
-                                TextSpan(
-                                  text: '1 vắng',
-                                  style: TextStyle(
-                                    color: _orange,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 11.5,
-                                  ),
-                                ),
-                              ]),
-                            ),
-                          ),
+                          Expanded(child: _ConfirmationSummary(status: status)),
                         ],
                       ),
                       const SizedBox(height: 10),
-                      // RSVP segmented control
+                      // RSVP segmented control — "Có Mặt" is the only
+                      // state that touches the DB right now (insert a
+                      // confirmation row). "Có Thể" / "Vắng" are local
+                      // declarations until we model attendance vs.
+                      // confirmation separately.
                       _RsvpControl(
-                          value: myRsvp, onChange: onRsvpChanged),
+                        value: (status?.meConfirmed ?? false)
+                            ? 'going'
+                            : 'out',
+                        onChange: (v) {
+                          final notifier = ref.read(
+                            activityConfirmationControllerProvider(activityId)
+                                .notifier,
+                          );
+                          if (v == 'going') {
+                            notifier.confirm(activityId);
+                          } else {
+                            notifier.retract(activityId);
+                          }
+                        },
+                      ),
                       const SizedBox(height: 12),
                       // Quick actions
                       Row(
@@ -578,6 +569,58 @@ class _RsvpAvatar extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// ─── Confirmation summary text ─────────────────────────────────
+
+/// Renders the "N có mặt … X người để chính thức" copy next to the
+/// avatar strip. When [status] is null (still loading) we show nothing
+/// to avoid flicker; when there's no threshold we just show the count.
+class _ConfirmationSummary extends StatelessWidget {
+  final ActivityConfirmationStatus? status;
+
+  const _ConfirmationSummary({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final s = status;
+    if (s == null) return const SizedBox.shrink();
+
+    final spans = <TextSpan>[
+      TextSpan(
+        text: '${s.confirmedCount} có mặt',
+        style: const TextStyle(
+          color: _green,
+          fontWeight: FontWeight.w700,
+          fontSize: 11.5,
+        ),
+      ),
+    ];
+
+    if (s.threshold != null && !s.activityConfirmed) {
+      // Threshold exists and we haven't hit it yet — show progress.
+      final remaining = s.threshold! - s.confirmedCount;
+      spans.add(TextSpan(
+        text: ' · cần thêm $remaining để chính thức',
+        style: TextStyle(
+          color: colors.mutedForeground,
+          fontSize: 11.5,
+        ),
+      ));
+    } else if (s.activityConfirmed) {
+      spans.add(const TextSpan(
+        text: ' · chính thức',
+        style: TextStyle(
+          color: _green,
+          fontWeight: FontWeight.w700,
+          fontSize: 11.5,
+        ),
+      ));
+    }
+
+    return Text.rich(TextSpan(children: spans));
   }
 }
 

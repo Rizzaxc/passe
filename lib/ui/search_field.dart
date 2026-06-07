@@ -17,6 +17,12 @@ class PSearchField<T> extends StatefulWidget {
   final TextEditingController controller;
   final ValueChanged<String>? onChange;
 
+  /// Optional override for the prefix icon. Defaults to a magnifier
+  /// (the "this is a search field" affordance). Callers that want the
+  /// field to read as a typed picker (location, person, …) can pass
+  /// their own glyph here.
+  final IconData? prefixIcon;
+
   // Typeahead
   final Future<List<T>> Function(String query)? suggestionsBuilder;
   final Widget Function(BuildContext context, T item) formatSuggestion;
@@ -29,6 +35,7 @@ class PSearchField<T> extends StatefulWidget {
     this.label,
     required this.controller,
     this.onChange,
+    this.prefixIcon,
     this.suggestionsBuilder,
     this.formatSuggestion = _defaultFormat,
     this.displayStringForOption,
@@ -110,7 +117,9 @@ class _PSearchFieldState<T> extends State<PSearchField<T>> {
       autocorrect: false,
       prefixBuilder: (context, style, states) => Padding(
         padding: const EdgeInsets.fromLTRB(8, 4, 0, 4),
-        child: Icon(_loading ? Icons.hourglass_empty : Icons.search),
+        child: Icon(_loading
+            ? Icons.hourglass_empty
+            : (widget.prefixIcon ?? Icons.search)),
       ),
       suffixBuilder: (context, style, states) {
         if (widget.controller.text.isEmpty) return const SizedBox.shrink();

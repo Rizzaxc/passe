@@ -27,7 +27,8 @@ class ActivityTab extends ConsumerWidget {
     // hero's expanded vs. empty branch keys off this flag.
     final upcoming =
         ref.watch(lobbyUpcomingActivityControllerProvider(lobbyId));
-    final hasActivity = upcoming.value != null;
+    final upcomingActivity = upcoming.value;
+    final hasActivity = upcomingActivity != null;
     // The chat-style action feed. Empty while loading / on error — the
     // hero still renders so the screen isn't blank.
     final feed =
@@ -42,6 +43,7 @@ class ActivityTab extends ConsumerWidget {
         // matter how far the user scrolls into older messages.
         ActivityHero(
           lobbyId: lobbyId,
+          activityId: upcomingActivity?.activity.id,
           sport: sport,
           hasActivity: hasActivity,
           isLeader: isLeader,

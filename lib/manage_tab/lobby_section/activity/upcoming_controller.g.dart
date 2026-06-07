@@ -14,7 +14,7 @@ final lobbyUpcomingActivityControllerProvider =
     LobbyUpcomingActivityControllerFamily._();
 
 final class LobbyUpcomingActivityControllerProvider
-    extends $AsyncNotifierProvider<LobbyUpcomingActivityController, Activity?> {
+    extends $AsyncNotifierProvider<LobbyUpcomingActivityController, UpcomingActivity?> {
   LobbyUpcomingActivityControllerProvider._({
     required LobbyUpcomingActivityControllerFamily super.from,
     required String super.argument,
@@ -59,9 +59,9 @@ final class LobbyUpcomingActivityControllerFamily extends $Family
     with
         $ClassFamilyOverride<
           LobbyUpcomingActivityController,
-          AsyncValue<Activity?>,
-          Activity?,
-          FutureOr<Activity?>,
+          AsyncValue<UpcomingActivity?>,
+          UpcomingActivity?,
+          FutureOr<UpcomingActivity?>,
           String
         > {
   LobbyUpcomingActivityControllerFamily._()
@@ -81,20 +81,20 @@ final class LobbyUpcomingActivityControllerFamily extends $Family
 }
 
 abstract class _$LobbyUpcomingActivityController
-    extends $AsyncNotifier<Activity?> {
+    extends $AsyncNotifier<UpcomingActivity?> {
   late final _$args = ref.$arg as String;
   String get lobbyId => _$args;
 
-  FutureOr<Activity?> build(String lobbyId);
+  FutureOr<UpcomingActivity?> build(String lobbyId);
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<Activity?>, Activity?>;
+    final ref = this.ref as $Ref<AsyncValue<UpcomingActivity?>, UpcomingActivity?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<Activity?>, Activity?>,
-              AsyncValue<Activity?>,
+              AnyNotifier<AsyncValue<UpcomingActivity?>, UpcomingActivity?>,
+              AsyncValue<UpcomingActivity?>,
               Object?,
               Object?
             >;

@@ -40,14 +40,6 @@ CREATE TRIGGER lobby_add_captain_as_member
     EXECUTE FUNCTION public.lobby_add_captain_as_member();
 
 
--- One-shot backfill: any pre-trigger lobby whose captain isn't a member
--- gets fixed up here. Idempotent via the unique (user_id, lobby_id).
-INSERT INTO public.lobby_member (user_id, lobby_id)
-SELECT l.captain_id, l.id
-FROM public.lobby l
-ON CONFLICT (user_id, lobby_id) DO NOTHING;
-
-
 -- ─── (2) Captain can't leave while still captain ───────────────
 --
 -- The check has to coexist with lobby deletion (which cascades to
