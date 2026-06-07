@@ -94,7 +94,7 @@ final class NetworkControllerProvider
   }
 }
 
-String _$networkControllerHash() => r'665046351acf1cf2459f74f9075546800c4d0cc0';
+String _$networkControllerHash() => r'0e7725f0bba55784ba19b652fb14b8dc2291d7a8';
 
 abstract class _$NetworkController extends $Notifier<List<Network>> {
   List<Network> build();
@@ -147,7 +147,7 @@ final class IndustryControllerProvider
 }
 
 String _$industryControllerHash() =>
-    r'd97556a3047424d5180dda940491a7bcc337acfb';
+    r'5c48af6b0b94fc9713482229fd2e04217552a1ec';
 
 abstract class _$IndustryController extends $Notifier<List<Industry>> {
   List<Industry> build();

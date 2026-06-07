@@ -10,11 +10,26 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
-import '../core/model/pubox_user.dart';
+import '../core/model/passe_user.dart';
 import '../core/model/user_details.dart';
 import '../core/user_preferences.dart';
 
 part 'auth_controller.g.dart';
+
+/// Single source of truth for the signed-in user's id.
+///
+/// ALWAYS read the current identity through this provider (or
+/// [authControllerProvider] for the full [PasseUser]) — never reach for
+/// `Supabase.instance.client.auth.currentUser` directly. The raw Supabase
+/// getter bypasses the guest model and the offline cache, and it does not
+/// trigger a rebuild when auth state changes.
+///
+/// Returns `null` for guests and signed-out states, so existing
+/// `if (userId == null) return;` guards keep working unchanged.
+@riverpod
+String? currentUserId(Ref ref) {
+  return ref.watch(authControllerProvider).value?.id;
+}
 
 class UsernameTakenException implements Exception {
   const UsernameTakenException();
@@ -49,7 +64,7 @@ class AuthController extends _$AuthController {
   UserPreferences get _userPrefs => UserPreferences.instance;
 
   @override
-  Future<PuboxUser?> build() async {
+  Future<PasseUser?> build() async {
     // 1. Setup Auth Subscription
     final authSubscription = supabase.auth.onAuthStateChange.listen((data) async {
       final event = data.event;
@@ -67,6 +82,14 @@ class AuthController extends _$AuthController {
             return await _loadFromStorage();
           }
         });
+      } else if (event == AuthChangeEvent.passwordRecovery) {
+        // A recovery session is now active (the user verified the reset OTP)
+        // but they haven't chosen a new password yet. Intentionally do NOT
+        // publish a signed-in state here — that would let the router navigate
+        // away from the reset screen mid-flow. The reset screen completes the
+        // flow with updateUser(), whose `userUpdated` event (handled above)
+        // then refreshes state and lets the router proceed. See
+        // ResetPasswordScreen.
       } else if (event == AuthChangeEvent.signedOut) {
         // Clear state
         state = const AsyncValue.loading();
@@ -94,7 +117,7 @@ class AuthController extends _$AuthController {
     return _loadFromStorage();
   }
 
-  Future<PuboxUser?> _loadFromStorage() async {
+  Future<PasseUser?> _loadFromStorage() async {
     final savedAtMs = await _userPrefs.getInt(_stateSavedAtKey);
     if (savedAtMs == null) {
       // No timestamp => treat cache as unsafe/stale.
@@ -115,7 +138,7 @@ class AuthController extends _$AuthController {
     if (jsonifiedString == null) return null;
 
     final Map<String, dynamic> json = jsonDecode(jsonifiedString);
-    return PuboxUser.fromJson(json);
+    return PasseUser.fromJson(json);
   }
 
   Future<void> _saveToStorage() async {
@@ -133,7 +156,7 @@ class AuthController extends _$AuthController {
   // Auth API wrappers
   // --------------------
 
-  Future<PuboxUser?> signInWithPassword({
+  Future<PasseUser?> signInWithPassword({
     required String email,
     required String password,
   }) async {
@@ -248,7 +271,7 @@ class AuthController extends _$AuthController {
     ).join();
   }
 
-  Future<PuboxUser?> signUpWithPassword({
+  Future<PasseUser?> signUpWithPassword({
     required String email,
     required String password,
     Map<String, dynamic>? data,
@@ -260,32 +283,23 @@ class AuthController extends _$AuthController {
         password: password,
         data: data,
       ).timeout(const Duration(seconds: 5));
-      // After sign up, depending on email confirmation settings, there might be no session.
+
+      // Depending on the project's email-confirmation setting there may be no
+      // session yet. Keep state null; the user confirms then signs in later.
       if (supabase.auth.currentSession == null) {
-        // No session yet (e.g., email confirmation required). Keep state null.
         return null;
       }
 
-      // Wait for project-level initiation
-      final initialized = await _waitForInitialization();
-      if (!initialized) {
-        // Initialization did not complete in time;
-        // nullify the session and signal retry.
-        await supabase.auth.signOut().timeout(const Duration(seconds: 5));
-        throw TimeoutException(
-          'Account initialization did not complete in time. Please try logging in.',
-        );
-      }
-
+      // The `public.user` row is created by the `new_user_created_trigger_fn`
+      // AFTER INSERT trigger on `auth.users`, which executes inside the signup
+      // transaction. So the moment we hold a session the row is already
+      // committed — no polling / retry handshake is needed. (The
+      // onAuthStateChange listener also fires `signedIn` and refreshes state;
+      // we load here as well so the return value is populated for the caller.)
       final user = await _loadFromServer();
       state = AsyncValue.data(user);
       return user;
-    } on TimeoutException catch (e, st) {
-      // A deliberate timeout to allow the UI to prompt retry
-      talker.handle(e, st);
-      rethrow;
     } catch (e, st) {
-      // report the exception
       talker.handle(e, st);
       rethrow;
     }
@@ -306,7 +320,7 @@ class AuthController extends _$AuthController {
     }
   }
 
-  Future<PuboxUser?> _loadFromServer() async {
+  Future<PasseUser?> _loadFromServer() async {
     final user = supabase.auth.currentUser;
     if (user == null) return null;
 
@@ -330,7 +344,7 @@ class AuthController extends _$AuthController {
     final details =
         detailsMap is Map<String, dynamic> ? UserDetails.fromJson(detailsMap) : null;
 
-    return PuboxUser(
+    return PasseUser(
       id: user.id,
       username: username ?? 'Guest',
       tagNumber: tagNumber ?? '0000',
@@ -340,7 +354,7 @@ class AuthController extends _$AuthController {
   }
 
   Future<void> continueAsGuest() async {
-    state = const AsyncValue.data(PuboxUser());
+    state = const AsyncValue.data(PasseUser());
   }
 
   Future<void> changeUsername(String newUsername) async {
@@ -398,28 +412,51 @@ class AuthController extends _$AuthController {
     state = await AsyncValue.guard(() => _loadFromServer());
   }
 
-  Future<bool> hasInitialized() async {
-    if (supabase.auth.currentSession == null) return false;
-    final data = await supabase
-        .from('user')
-        .select()
-        .eq('id', supabase.auth.currentUser!.id)
-        .maybeSingle()
-        .timeout(const Duration(seconds: 5));
-    return (data != null && data.isNotEmpty);
+  // --------------------
+  // Password recovery (OTP flow)
+  // --------------------
+
+  /// Step 1: email the user a recovery code.
+  ///
+  /// Supabase sends the project's "Reset Password" email; the template must
+  /// expose the `{{ .Token }}` (6-digit OTP) for [resetPasswordWithOtp] to
+  /// work. We don't pass `redirectTo` — this is a code flow, not a deep link.
+  ///
+  /// Resolves without error even for unknown emails (Supabase does not reveal
+  /// whether the address exists), so the UI can show a neutral confirmation.
+  Future<void> sendPasswordResetCode(String email) async {
+    try {
+      await supabase.auth
+          .resetPasswordForEmail(email)
+          .timeout(const Duration(seconds: 5));
+    } on AuthException catch (e, st) {
+      talker.handle(e, st);
+      rethrow;
+    }
   }
 
-  // Waits until the project-level user row exists (created by a DB proc/trigger)
-  // or the timeout elapses. Returns true if initialized within the timeout.
-  Future<bool> _waitForInitialization({
-    Duration timeout = const Duration(seconds: 10),
-    Duration interval = const Duration(milliseconds: 250),
+  /// Step 2: verify the recovery [token] and set [newPassword] in one shot.
+  ///
+  /// `verifyOTP` establishes a short-lived recovery session (fires
+  /// `passwordRecovery`, which the listener deliberately ignores), then
+  /// `updateUser` changes the password and fires `userUpdated`, which the
+  /// listener turns into a signed-in state so the router navigates onward.
+  Future<void> resetPasswordWithOtp({
+    required String email,
+    required String token,
+    required String newPassword,
   }) async {
-    final start = DateTime.now();
-    while (DateTime.now().difference(start) < timeout) {
-      if (await hasInitialized()) return true;
-      await Future.delayed(interval);
+    try {
+      await supabase.auth
+          .verifyOTP(type: OtpType.recovery, email: email, token: token)
+          .timeout(const Duration(seconds: 5));
+
+      await supabase.auth
+          .updateUser(UserAttributes(password: newPassword))
+          .timeout(const Duration(seconds: 5));
+    } on AuthException catch (e, st) {
+      talker.handle(e, st);
+      rethrow;
     }
-    return await hasInitialized();
   }
 }

@@ -1,4 +1,4 @@
-# pubox
+# passe
 
 Next gen casual sport portal
 
@@ -40,7 +40,7 @@ find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
 - If a feature involves multiple screens, make a folder in each screen
 - Generic, omni-present features or models go into /core
 - Avoid nesting, prefer a flat folder structure
-- UI is built with forui package. Custom widgets are in /ui and prefix named with P. ALWAYS check this package before
+- UI is built with forui package. Custom widgets are in /ui and prefix named with P. ALWAYS check this package before. Documentation starting point is at ./forui_llms.txt
   building UI to avoid reinventing the wheel
 - Bottom sheets MUST use `showPSheet` / `PSheet` from `lib/ui/sheet.dart` — never call `showFSheet` or hand-roll the
   `FSheets` + `Container` chrome directly. The wrapper enforces the project's standard silhouette (32-px radius, side
@@ -48,6 +48,13 @@ find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
   full screen; the default `0.9` covers everything else. Sheet content should be just the inner widgets (e.g. a
   `SingleChildScrollView` + `Column`) — no outer `FSheets` or padded container
 - Use Riverpod for state management. Avoid using Provider
+- For the signed-in user's identity, read `currentUserIdProvider` (or `authControllerProvider` for the full
+  `PasseUser`) — NEVER `Supabase.instance.client.auth.currentUser` directly. The raw getter bypasses the guest model
+  and offline cache and won't rebuild dependents on auth change. `currentUserIdProvider` returns `null` for guests /
+  signed-out, so `if (userId == null) return;` guards keep working. (Server-side RLS still uses `auth.uid()`; this is
+  about the client identity source of truth.)
+- Interactive auth flows (native Google/Apple sign-in) are the one exception to the 5s-timeout rule below — they're
+  gated on the user, not a background RPC, so they must NOT be wrapped in `.timeout`.
 - Every feed-like screen implements scroll to refresh. Scroll to refresh is recommended in general. Prefer to ask not to include instead of ignoring it
 - App-level model is created with freezed. persisted in json form. app state persistence key is _stateKey (mostly for
   riverpod providers)
@@ -73,7 +80,7 @@ translations as values.
 
 ### Schema
 
-- `schema/pubox.sql` is a live dump of the current DB. Do not edit it — re-dump to update.
+- `schema/passe.sql` is a live dump of the current DB. Do not edit it — re-dump to update.
 - Migration scripts (new tables/columns/functions) go in separate files under `schema/`.
 - Supabase returns `numeric` columns as `String` in Dart JSON — parse carefully with `double.tryParse`.
 - Playtime is stored in DB as a JSON array of `{dayOfWeek: "mon", dayChunk: "night"}` objects,

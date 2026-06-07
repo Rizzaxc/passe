@@ -48,7 +48,7 @@ Future<void> main() async {
   };
 
   final talker = Talker(
-    observer: PuboxTalkerObserver(env),
+    observer: PasseTalkerObserver(env),
     logger: TalkerLogger(
       settings: TalkerLoggerSettings(
         level: env == envLocal ? LogLevel.debug : LogLevel.verbose,
@@ -84,22 +84,22 @@ Future<void> main() async {
           supportedLocales: const [Locale('vi'), Locale('en')],
           path: 'assets/translations',
           startLocale: const Locale('vi'),
-          child: const Pubox(),
+          child: const Passe(),
         ),
       ),
     ),
   );
 }
 
-class Pubox extends HookConsumerWidget {
-  const Pubox({super.key});
+class Passe extends HookConsumerWidget {
+  const Passe({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'Pubox',
+      title: 'Passe',
       restorationScopeId: 'app',
       builder: (_, child) => FTheme(
         data: ui.pbThemeLight,

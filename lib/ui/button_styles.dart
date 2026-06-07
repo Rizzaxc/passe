@@ -6,7 +6,7 @@ import 'theme.dart';
 // ignore_for_file: unnecessary_ignore
 // ignore_for_file: avoid_redundant_argument_values
 
-/// Extension on FButtonStyle to add Pubox accent color styles
+/// Extension on FButtonStyle to add Passe accent color styles
 extension FButtonStyleExtension on FButtonStyle {
   /// Accent blue button style using pbBlue color
   static FButtonStyle accentBlueStyle(FButtonStyle base) {

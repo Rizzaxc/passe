@@ -1,4 +1,4 @@
-package pubox.vn.pubox
+package passe.vn.passe
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,8 +1,8 @@
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:talker/talker.dart';
 
-class PuboxTalkerObserver extends TalkerObserver {
-  PuboxTalkerObserver(this.env);
+class PasseTalkerObserver extends TalkerObserver {
+  PasseTalkerObserver(this.env);
   final String env;
   @override
   void onError(TalkerError err) {

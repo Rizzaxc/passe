@@ -17,7 +17,7 @@
 --
 -- All policies use auth.uid() through `( SELECT auth.uid() )` to let
 -- Postgres cache the value for the query (matches the style already in
--- pubox.sql). `get_my_lobby_ids()` is a SECURITY DEFINER helper that
+-- passe.sql). `get_my_lobby_ids()` is a SECURITY DEFINER helper that
 -- short-circuits the membership check.
 -- ============================================================================
 

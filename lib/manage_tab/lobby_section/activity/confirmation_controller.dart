@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../auth/auth_controller.dart';
+
 part 'confirmation_controller.g.dart';
 
 /// Snapshot of an activity's confirmation state — the four numbers the
@@ -63,7 +65,7 @@ class ActivityConfirmationController
   /// Member confirmation — caller commits to attending. Idempotent via
   /// the `(activity_id, user_id)` primary key on activity_confirmation.
   Future<void> confirm(String activityId) async {
-    final userId = supabase.auth.currentUser?.id;
+    final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
     await supabase
@@ -77,7 +79,7 @@ class ActivityConfirmationController
   /// Retract a previous confirmation. The DELETE policy lets a user
   /// only delete their own row; the WHERE clause keeps that aligned.
   Future<void> retract(String activityId) async {
-    final userId = supabase.auth.currentUser?.id;
+    final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
     await supabase

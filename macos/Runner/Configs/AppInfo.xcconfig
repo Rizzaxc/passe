@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = pubox
+PRODUCT_NAME = passe
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = pubox.vn.pubox
+PRODUCT_BUNDLE_IDENTIFIER = passe.vn.passe
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 pubox.vn. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 passe.vn. All rights reserved.

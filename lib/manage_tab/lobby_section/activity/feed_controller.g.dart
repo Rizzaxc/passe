@@ -8,12 +8,30 @@ part of 'feed_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Activity-tab feed (chat-style action stream) for a lobby.
+///
+/// Backed by `lobby_feed_item` via the `lobby_feed_data` RPC, which
+/// resolves the author username and aggregates poll-vote tallies in a
+/// single round-trip. Day dividers (`DayDivItem`) are computed
+/// client-side from the row timestamps.
 
 @ProviderFor(LobbyFeedController)
 final lobbyFeedControllerProvider = LobbyFeedControllerFamily._();
 
+/// Activity-tab feed (chat-style action stream) for a lobby.
+///
+/// Backed by `lobby_feed_item` via the `lobby_feed_data` RPC, which
+/// resolves the author username and aggregates poll-vote tallies in a
+/// single round-trip. Day dividers (`DayDivItem`) are computed
+/// client-side from the row timestamps.
 final class LobbyFeedControllerProvider
     extends $AsyncNotifierProvider<LobbyFeedController, List<FeedItem>> {
+  /// Activity-tab feed (chat-style action stream) for a lobby.
+  ///
+  /// Backed by `lobby_feed_item` via the `lobby_feed_data` RPC, which
+  /// resolves the author username and aggregates poll-vote tallies in a
+  /// single round-trip. Day dividers (`DayDivItem`) are computed
+  /// client-side from the row timestamps.
   LobbyFeedControllerProvider._({
     required LobbyFeedControllerFamily super.from,
     required String super.argument,
@@ -50,7 +68,15 @@ final class LobbyFeedControllerProvider
   }
 }
 
-String _$lobbyFeedControllerHash() => r'feed-controller-hand-rolled';
+String _$lobbyFeedControllerHash() =>
+    r'6a8990cb1376a392ca85b654e0dfc17923b46695';
+
+/// Activity-tab feed (chat-style action stream) for a lobby.
+///
+/// Backed by `lobby_feed_item` via the `lobby_feed_data` RPC, which
+/// resolves the author username and aggregates poll-vote tallies in a
+/// single round-trip. Day dividers (`DayDivItem`) are computed
+/// client-side from the row timestamps.
 
 final class LobbyFeedControllerFamily extends $Family
     with
@@ -70,12 +96,26 @@ final class LobbyFeedControllerFamily extends $Family
         isAutoDispose: true,
       );
 
+  /// Activity-tab feed (chat-style action stream) for a lobby.
+  ///
+  /// Backed by `lobby_feed_item` via the `lobby_feed_data` RPC, which
+  /// resolves the author username and aggregates poll-vote tallies in a
+  /// single round-trip. Day dividers (`DayDivItem`) are computed
+  /// client-side from the row timestamps.
+
   LobbyFeedControllerProvider call(String lobbyId) =>
       LobbyFeedControllerProvider._(argument: lobbyId, from: this);
 
   @override
   String toString() => r'lobbyFeedControllerProvider';
 }
+
+/// Activity-tab feed (chat-style action stream) for a lobby.
+///
+/// Backed by `lobby_feed_item` via the `lobby_feed_data` RPC, which
+/// resolves the author username and aggregates poll-vote tallies in a
+/// single round-trip. Day dividers (`DayDivItem`) are computed
+/// client-side from the row timestamps.
 
 abstract class _$LobbyFeedController extends $AsyncNotifier<List<FeedItem>> {
   late final _$args = ref.$arg as String;

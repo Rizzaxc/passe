@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "pubox.vn.pubox"
+    namespace = "passe.vn.passe"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "pubox.vn.pubox"
+        applicationId = "passe.vn.passe"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // minSdk 26 required for Health Connect

@@ -4,6 +4,7 @@ import 'package:health/health.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../auth/auth_controller.dart';
 import '../core/user_preferences.dart';
 import 'model/user_health_link.dart';
 
@@ -90,7 +91,7 @@ class HealthController extends _$HealthController {
   /// Check backend for existing health link
   Future<HealthLinkStatus> _checkBackendLinkStatus() async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = ref.read(currentUserIdProvider);
       if (userId == null) return HealthLinkStatus.notLinked;
 
       final response = await _supabase
@@ -150,7 +151,7 @@ class HealthController extends _$HealthController {
           : HealthPlatform.healthConnect;
 
       // Save to backend
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = ref.read(currentUserIdProvider);
       if (userId == null) {
         state = AsyncError('User not authenticated', StackTrace.current);
         return;
@@ -178,7 +179,7 @@ class HealthController extends _$HealthController {
     state = const AsyncLoading();
 
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = ref.read(currentUserIdProvider);
       if (userId != null) {
         await _supabase
             .from('user_health_link')
@@ -204,7 +205,7 @@ class HealthController extends _$HealthController {
   /// Get the current health link info
   Future<UserHealthLink?> getHealthLink() async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = ref.read(currentUserIdProvider);
       if (userId == null) return null;
 
       final response = await _supabase
@@ -224,7 +225,7 @@ class HealthController extends _$HealthController {
   /// Update last sync timestamp
   Future<void> updateLastSync() async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = ref.read(currentUserIdProvider);
       if (userId == null) return;
 
       await _supabase

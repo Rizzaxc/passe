@@ -183,8 +183,8 @@ class NetworkController extends _$NetworkController {
   }
 
   Future<void> commit() async {
-    if (supabase.auth.currentUser == null) return;
-    final userId = supabase.auth.currentUser!.id;
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
 
     try {
       await supabase.from('user_network').delete().eq('user_id', userId).timeout(const Duration(seconds: 5));
@@ -265,8 +265,8 @@ class IndustryController extends _$IndustryController {
   }
 
   Future<void> commit() async {
-    if (supabase.auth.currentUser == null) return;
-    final userId = supabase.auth.currentUser!.id;
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
 
     try {
       await supabase.from('user_industry').delete().eq('user_id', userId).timeout(const Duration(seconds: 5));

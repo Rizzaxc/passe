@@ -1,480 +1,499 @@
 {
-  "timeslot": {
-    "dayOfWeek": {
-      "label": "Ngày Trong Tuần",
-      "everyday": "Hàng Ngày",
-      "monday": "Thứ 2",
-      "tuesday": "Thứ 3",
-      "wednesday": "Thứ 4",
-      "thursday": "Thứ 5",
-      "friday": "Thứ 6",
-      "saturday": "Thứ 7",
-      "sunday": "Chủ Nhật",
-      "even": "T2-T4-T6",
-      "odd": "T3-T5-T7",
-      "weekend": "Cuối Tuần",
-      "shortName": {
-        "everyday": "HN",
-        "monday": "T2",
-        "tuesday": "T3",
-        "wednesday": "T4",
-        "thursday": "T5",
-        "friday": "T6",
-        "saturday": "T7",
-        "sunday": "CN",
-        "even": "246",
-        "odd": "357",
-        "weekend": "CT"
-      }
+    "timeslot": {
+        "dayOfWeek": {
+            "label": "Ngày Trong Tuần",
+            "everyday": "Hàng Ngày",
+            "monday": "Thứ 2",
+            "tuesday": "Thứ 3",
+            "wednesday": "Thứ 4",
+            "thursday": "Thứ 5",
+            "friday": "Thứ 6",
+            "saturday": "Thứ 7",
+            "sunday": "Chủ Nhật",
+            "even": "T2-T4-T6",
+            "odd": "T3-T5-T7",
+            "weekend": "Cuối Tuần",
+            "shortName": {
+                "everyday": "HN",
+                "monday": "T2",
+                "tuesday": "T3",
+                "wednesday": "T4",
+                "thursday": "T5",
+                "friday": "T6",
+                "saturday": "T7",
+                "sunday": "CN",
+                "even": "246",
+                "odd": "357",
+                "weekend": "CT"
+            }
+        },
+        "dayChunk": {
+            "label": "Khoảng Giờ",
+            "early": "Sáng (4h-9h)",
+            "midday": "Trưa (9h-14h)",
+            "noon": "Chiều (14h-18h)",
+            "night": "Tối (18h-24h)",
+            "shortName": {
+                "early": "Sáng",
+                "midday": "Trưa",
+                "noon": "Chiều",
+                "night": "Tối"
+            }
+        }
     },
-    "dayChunk": {
-      "label": "Khoảng Giờ",
-      "early": "Sáng (4h-9h)",
-      "midday": "Trưa (9h-14h)",
-      "noon": "Chiều (14h-18h)",
-      "night": "Tối (18h-24h)",
-      "shortName": {
-        "early": "Sáng",
-        "midday": "Trưa",
-        "noon": "Chiều",
-        "night": "Tối"
-      }
-    }
-  },
-  "gender": {
-    "male": "Nam",
-    "female": "Nữ"
-  },
-  "ageGroup": {
-    "student": "Học Sinh & Sinh Viên",
-    "mature": "Trưởng Thành",
-    "middleAge": "Trung Niên"
-  },
-  "industry": {
-    "agriculture": "Nông Nghiệp",
-    "construction": "Xây Dựng",
-    "culinaryTourism": "Ẩm Thực & Du Lịch",
-    "educationAcademia": "Giáo Dục & Nghiên Cứu",
-    "energy": "Năng Lượng",
-    "entertainmentContentCreation": "Giải Trí & Sáng Tạo Nội Dung",
-    "fashionBeauty": "Thời Trang & Sắc Đẹp",
-    "financeConsulting": "Finance & Consulting",
-    "government": "Hành Chính Chính Phủ",
-    "healthcare": "Y Tế",
-    "legalServices": "Luật",
-    "manufacturing": "Sản Xuất",
-    "mediaCommunications": "Báo Chí & Media",
-    "nonprofitCharity": "Non-profit & Từ Thiện",
-    "realEstate": "Bất Động Sản",
-    "retailOnlineCommerce": "Bán Lẻ & TMĐT",
-    "technology": "Công Nghệ",
-    "transportation": "Vận Tải"
-  },
-  "networkCategory": {
-    "highSchool": "THPT",
-    "giftedHighSchool": "THPT Chuyên",
-    "university": "Đại Học",
-    "company": "Công Ty"
-  },
-  "city": {
-    "hochiminh": "Tp Hồ Chí Minh",
-    "hanoi": "Hà Nội"
-  },
-  "district": {
-    "urban": "Quận",
-    "rural": "Huyện",
-    "township": "Thị xã",
-    "city": "Thành phố"
-  },
-  "homeTab": {
-    "filter": {
-      "location": "Địa điểm",
-      "time": "Thời gian",
-      "weekdayLabel": "Thứ trong tuần",
-      "dayChunkLabel": "Buổi",
-      "search": "Tìm kiếm",
-      "searchHint": "Nhập từ khoá/ SearchID...",
-      "city": "Thành phố",
-      "district": "Quận/ Huyện",
-      "any": "Tất cả",
-      "schedule": "Thời gian",
-      "scheduleHint": "Để trống",
-      "close": "Đóng"
+    "gender": {
+        "male": "Nam",
+        "female": "Nữ"
     },
-    "empty": {
-      "title": "Không có kết quả phù hợp",
-      "message": "Xin điều chỉnh filter hoặc quay lại sau"
+    "ageGroup": {
+        "student": "Học Sinh & Sinh Viên",
+        "mature": "Trưởng Thành",
+        "middleAge": "Trung Niên"
     },
-    "error": {
-      "title": "Lỗi tải dữ liệu",
-      "retry": "Thử lại"
+    "industry": {
+        "agriculture": "Nông Nghiệp",
+        "construction": "Xây Dựng",
+        "culinaryTourism": "Ẩm Thực & Du Lịch",
+        "educationAcademia": "Giáo Dục & Nghiên Cứu",
+        "energy": "Năng Lượng",
+        "entertainmentContentCreation": "Giải Trí & Sáng Tạo Nội Dung",
+        "fashionBeauty": "Thời Trang & Sắc Đẹp",
+        "financeConsulting": "Finance & Consulting",
+        "government": "Hành Chính Chính Phủ",
+        "healthcare": "Y Tế",
+        "legalServices": "Luật",
+        "manufacturing": "Sản Xuất",
+        "mediaCommunications": "Báo Chí & Media",
+        "nonprofitCharity": "Non-profit & Từ Thiện",
+        "realEstate": "Bất Động Sản",
+        "retailOnlineCommerce": "Bán Lẻ & TMĐT",
+        "technology": "Công Nghệ",
+        "transportation": "Vận Tải"
     },
-    "teammate": {
-      "title": "Đồng đội",
-      "join": "Xin Vào",
-      "sent": "Đã Gửi"
+    "networkCategory": {
+        "highSchool": "THPT",
+        "giftedHighSchool": "THPT Chuyên",
+        "university": "Đại Học",
+        "company": "Công Ty"
     },
-    "challenger": {
-      "title": "Đối thủ",
-      "challenge": "Thách Đấu",
-      "empty": {
-        "title": "Không có đối thủ nào",
-        "message": "Thử điều chỉnh filter hoặc quay lại sau"
-      }
+    "city": {
+        "hochiminh": "Tp Hồ Chí Minh",
+        "hanoi": "Hà Nội"
     },
-    "location": {
-      "viewMap": "Xem Bản Đồ",
-      "empty": {
-        "title": "Không tìm thấy địa điểm",
-        "message": "Thử nhập từ khoá hoặc điều chỉnh filter"
-      }
+    "district": {
+        "urban": "Quận",
+        "rural": "Huyện",
+        "township": "Thị xã",
+        "city": "Thành phố"
     },
-    "professional": {
-      "title": "Trung lập",
-      "filter": {
-        "all": "Tất Cả",
-        "coach": "Huấn Luyện Viên",
-        "referee": "Trọng Tài"
-      },
-      "empty": {
-        "title": "Không tìm thấy chuyên gia",
-        "message": "Thử điều chỉnh bộ lọc hoặc quay lại sau"
-      },
-      "book": "Đặt Lịch",
-      "experience": "{years} năm kinh nghiệm",
-      "reviews": "{count} đánh giá",
-      "role": {
-        "coach": "Huấn Luyện Viên",
-        "referee": "Trọng Tài"
-      },
-      "booking": {
-        "title": "Đặt Lịch Hẹn",
-        "confirm": "Xác Nhận Đặt Lịch",
-        "selectService": "Chọn Dịch Vụ",
-        "selectDate": "Chọn Ngày",
-        "selectTime": "Chọn Giờ",
-        "noSlots": "Không có khung giờ trống cho ngày này",
-        "notes": "Ghi Chú Thêm",
-        "notesHint": "Thêm yêu cầu đặc biệt hoặc ghi chú...",
-        "summary": "Tóm Tắt Đặt Lịch",
-        "service": "Dịch Vụ",
-        "date": "Ngày",
-        "time": "Giờ",
-        "total": "Tổng Cộng",
-        "success": "Đặt lịch thành công!",
-        "error": "Đặt lịch thất bại. Vui lòng thử lại."
-      },
-      "details": {
-        "bio": "Tiểu Sử"
-      }
+    "homeTab": {
+        "filter": {
+            "location": "Địa điểm",
+            "time": "Thời gian",
+            "weekdayLabel": "Thứ trong tuần",
+            "dayChunkLabel": "Buổi",
+            "search": "Tìm kiếm",
+            "searchHint": "Nhập từ khoá/ SearchID...",
+            "city": "Thành phố",
+            "district": "Quận/ Huyện",
+            "any": "Tất cả",
+            "schedule": "Thời gian",
+            "scheduleHint": "Để trống",
+            "close": "Đóng"
+        },
+        "empty": {
+            "title": "Không có kết quả phù hợp",
+            "message": "Xin điều chỉnh filter hoặc quay lại sau"
+        },
+        "error": {
+            "title": "Lỗi tải dữ liệu",
+            "retry": "Thử lại"
+        },
+        "teammate": {
+            "title": "Đồng đội",
+            "join": "Xin Vào",
+            "sent": "Đã Gửi"
+        },
+        "challenger": {
+            "title": "Đối thủ",
+            "challenge": "Thách Đấu",
+            "empty": {
+                "title": "Không có đối thủ nào",
+                "message": "Thử điều chỉnh filter hoặc quay lại sau"
+            }
+        },
+        "location": {
+            "viewMap": "Xem Bản Đồ",
+            "empty": {
+                "title": "Không tìm thấy địa điểm",
+                "message": "Thử nhập từ khoá hoặc điều chỉnh filter"
+            }
+        },
+        "professional": {
+            "title": "Trung lập",
+            "filter": {
+                "all": "Tất Cả",
+                "coach": "Huấn Luyện Viên",
+                "referee": "Trọng Tài"
+            },
+            "empty": {
+                "title": "Không tìm thấy chuyên gia",
+                "message": "Thử điều chỉnh bộ lọc hoặc quay lại sau"
+            },
+            "book": "Đặt Lịch",
+            "experience": "{years} năm kinh nghiệm",
+            "reviews": "{count} đánh giá",
+            "role": {
+                "coach": "Huấn Luyện Viên",
+                "referee": "Trọng Tài"
+            },
+            "booking": {
+                "title": "Đặt Lịch Hẹn",
+                "confirm": "Xác Nhận Đặt Lịch",
+                "selectService": "Chọn Dịch Vụ",
+                "selectDate": "Chọn Ngày",
+                "selectTime": "Chọn Giờ",
+                "noSlots": "Không có khung giờ trống cho ngày này",
+                "notes": "Ghi Chú Thêm",
+                "notesHint": "Thêm yêu cầu đặc biệt hoặc ghi chú...",
+                "summary": "Tóm Tắt Đặt Lịch",
+                "service": "Dịch Vụ",
+                "date": "Ngày",
+                "time": "Giờ",
+                "total": "Tổng Cộng",
+                "success": "Đặt lịch thành công!",
+                "error": "Đặt lịch thất bại. Vui lòng thử lại."
+            },
+            "details": {
+                "bio": "Tiểu Sử"
+            }
+        },
+        "venue": {
+            "title": "Sân tập & Tụ Điểm"
+        }
     },
-    "venue": {
-      "title": "Sân tập & Tụ Điểm"
-    }
-  },
-  "manageTab": {
-    "title": "Quản Lý",
-    "schedule": {
-      "title": "Thời gian biểu",
-      "today": "Hôm nay",
-      "tomorrow": "Ngày mai",
-      "participants": "{count} người tham gia",
-      "selectDate": "Chọn ngày để xem lịch",
-      "stub": "Nội dung lịch trình sắp có",
-      "empty": {
-        "title": "Không có lịch hẹn",
-        "message": "Các cuộc hẹn sắp tới sẽ hiển thị ở đây"
-      }
+    "manageTab": {
+        "title": "Quản Lý",
+        "schedule": {
+            "title": "Thời gian biểu",
+            "today": "Hôm nay",
+            "tomorrow": "Ngày mai",
+            "participants": "{count} người tham gia",
+            "selectDate": "Chọn ngày để xem lịch",
+            "stub": "Nội dung lịch trình sắp có",
+            "empty": {
+                "title": "Không có lịch hẹn",
+                "message": "Các cuộc hẹn sắp tới sẽ hiển thị ở đây"
+            }
+        },
+        "lobby": {
+            "title": "Lobby",
+            "participants": "{current}/{max} người chơi",
+            "scheduledFor": "Đã lên lịch cho {time}",
+            "createNew": "Tạo Lobby Mới",
+            "createFirst": "Tạo Lobby Đầu Tiên",
+            "navigate": "Vào Phòng Chơi",
+            "navigateMessage": "Đang mở phòng {lobbyTitle}...",
+            "createMessage": "Tính năng tạo lobby sắp ra mắt!",
+            "empty": {
+                "title": "Không tìm thấy lobby",
+                "message": "Tạo lobby để bắt đầu chơi với người khác"
+            }
+        }
     },
     "lobby": {
-      "title": "Lobby",
-      "participants": "{current}/{max} người chơi",
-      "scheduledFor": "Đã lên lịch cho {time}",
-      "createNew": "Tạo Lobby Mới",
-      "createFirst": "Tạo Lobby Đầu Tiên",
-      "navigate": "Vào Phòng Chơi",
-      "navigateMessage": "Đang mở phòng {lobbyTitle}...",
-      "createMessage": "Tính năng tạo lobby sắp ra mắt!",
-      "empty": {
-        "title": "Không tìm thấy lobby",
-        "message": "Tạo lobby để bắt đầu chơi với người khác"
-      }
+        "create": "Tạo Lobby",
+        "edit": "Chỉnh Sửa Lobby",
+        "leader": "Đội trưởng",
+        "noActivity": "Chưa có lịch chơi",
+        "nameRequired": "Tên lobby là bắt buộc",
+        "nameTooShort": "Tên phải có ít nhất 3 ký tự",
+        "ageGroup": "Nhóm Tuổi",
+        "saveButton": "Lưu",
+        "saveFailed": "Lưu lobby thất bại",
+        "emptyTitle": "Chưa có lobby nào",
+        "emptyMessage": "Tạo lobby để bắt đầu chơi cùng người khác",
+        "visibility": {
+            "private": "Nội Bộ",
+            "privateDescription": "Không hiện trên search hay matchmaking. Người ngoài cần phải được mời",
+            "discoverable": "Mặc Định",
+            "discoverableDescription": "Hiện trên search và matchmaking. Người ngoài có thể xin gia nhập",
+            "public": "Công Khai",
+            "publicDescription": "Hiện trên trang chủ"
+        },
+        "detail": {
+            "members": "Thành Viên",
+            "noMembers": "Chưa có thành viên",
+            "upcoming": "Sắp Diễn Ra",
+            "noUpcoming": "Chưa có buổi chơi nào",
+            "scheduleEvent": "Lên Lịch",
+            "history": "Lịch Sử",
+            "noHistory": "Chưa có lịch sử"
+        },
+        "scheduleActivity": "Lên lịch",
+        "lookingForActivity": "Chưa có buổi chơi",
+        "searchIDCopied": "Đã sao chép SearchID",
+        "searchIDExplanation": "Người chơi khác có thể dùng SearchID ở filter trang chủ để tìm thấy Lobby của bạn",
+        "shareId": "Chia sẻ ID",
+        "invite": "Mời vào"
+    },
+    "createLobby": {
+        "title": "Tạo Lobby",
+        "create": "Tạo",
+        "lobbyName": "Tên Lobby",
+        "lobbyNameHint": "Nhập tên cho Lobby của bạn",
+        "description": "Mô Tả",
+        "descriptionHint": "Mô tả phòng chơi của bạn (không bắt buộc)",
+        "sport": "Môn Thể Thao",
+        "sportLocked": "Không thể thay đổi môn thể thao",
+        "visibility": "Độ Riêng tư",
+        "public": "Công Khai",
+        "publicDescription": "Hiện trên trang chủ",
+        "private": "Nội Bộ",
+        "privateDescription": "Không hiện trên search hay matchmaking. Cần phải được mời",
+        "homeGround": "Sân Nhà",
+        "homeGroundHint": "Tìm theo tên địa điểm/ địa chỉ...",
+        "homeGroundFreeHint": "Nhập trực tiếp tên địa điểm/ địa chỉ...",
+        "homeGroundFreeTextMode": "Nhập thủ công",
+        "homeGroundSearchMode": "Tìm kiếm địa điểm",
+        "streetNumber": "Số nhà",
+        "streetName": "Tên đường",
+        "district": "Quận/Huyện",
+        "city": "Thành phố",
+        "specificLocation": "Địa Điểm Cụ Thể",
+        "specificLocationHint": "Nhập địa điểm cụ thể",
+        "playtime": "Thời Gian Chơi",
+        "dayOfWeek": "Ngày Trong Tuần",
+        "timeSlot": "Khung Giờ",
+        "setTimeslot": "Đặt Khung Giờ",
+        "maxParticipants": "Số Người Tham Gia Tối Đa",
+        "participantCount": "{count} người tham gia"
+    },
+    "soccer": {
+        "position": {
+            "label": "Vị Trí",
+            "outfield": "Cầu Thủ Sân",
+            "keeper": "Thủ Môn"
+        },
+        "pitch": {
+            "label": "Loại Sân",
+            "futsal": "Futsal",
+            "5v5": "Sân 5",
+            "7v7": "Sân 7"
+        }
+    },
+    "racketSport": {
+        "dominantHand": {
+            "label": "Tay Thuận",
+            "left": "Tay Trái",
+            "right": "Tay Phải"
+        },
+        "discipline": {
+            "label": "Theer Thức",
+            "singles": "Đơn",
+            "doubles": "Đôi"
+        }
+    },
+    "basketball": {
+        "position": {
+            "label": "Vị Trí",
+            "guard": "Guard",
+            "forward": "Forward",
+            "center": "Center"
+        },
+        "pitch": {
+            "label": "Loại Sân",
+            "indoor": "Trong Nhà",
+            "outdoor": "Ngoài Trời"
+        }
+    },
+    "elo": {
+        "label": "Elo"
+    },
+    "eloSeed": {
+        "label": "Trình Độ",
+        "description": "Dùng để xếp hạng ban đầu. Chơi cùng người khác để cập nhật Elo.",
+        "beginner": "Tập Chơi",
+        "casual": "Biết Chơi",
+        "tryhard": "Tryhard",
+        "lockedHint": "Trình độ ban đầu đã được lưu"
+    },
+    "sport": {
+        "others": "Khác",
+        "soccer": "Bóng Đá",
+        "basketball": "Bóng Rổ",
+        "badminton": "Cầu Lông",
+        "tennis": "Tennis",
+        "pickleball": "Pickleball",
+        "sportNotSelected": "Chọn Môn thể thao",
+        "othersAlertDescription": "Bạn cần chọn một môn thể thao để xem các nội dung phù hợp. Bấm vào biểu tượng ở góc phải màn hình để điều chỉnh."
+    },
+    "notSet": "Chưa Thiết Lập",
+    "done": "Xong",
+    "error": "Lỗi",
+    "errorGeneric": "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+    "auth": {
+        "welcome": "Welcome",
+        "emailLabel": "Email",
+        "passwordLabel": "Mật khẩu",
+        "emailEmpty": "Vui lòng nhập email của bạn",
+        "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ",
+        "passwordEmpty": "Vui lòng nhập mật khẩu của bạn",
+        "passwordLength": "Mật khẩu phải dài ít nhất 8 ký tự",
+        "signIn": "Đăng nhập",
+        "signUp": "Đăng ký",
+        "loginFailed": "Đăng nhập thất bại",
+        "signUpFailed": "Đăng ký thất bại",
+        "googleContinue": "Tiếp tục với Google",
+        "appleContinue": "Tiếp tục với Apple",
+        "guestContinue": "Tạm Skip Đăng nhập",
+        "googleLoginFailed": "Đăng nhập Google thất bại",
+        "appleLoginFailed": "Đăng nhập Apple thất bại",
+        "guestLoginFailed": "Đăng nhập Khách thất bại",
+        "credentialsInvalid": "Email hoặc mật khẩu không đúng",
+        "userAlreadyRegistered": "Email này đã được đăng ký",
+        "forgotPassword": "Quên mật khẩu?",
+        "forgotPasswordTitle": "Đặt lại mật khẩu",
+        "forgotPasswordInstruction": "Nhập email của bạn, chúng tôi sẽ gửi mã 6 số để đặt lại mật khẩu.",
+        "sendResetCode": "Gửi mã",
+        "resetCodeSent": "Đã gửi mã",
+        "resetCodeSentDescription": "Kiểm tra email để lấy mã đặt lại gồm 6 số.",
+        "resetPasswordTitle": "Mật khẩu mới",
+        "resetPasswordInstruction": "Nhập mã đã gửi tới {} và chọn mật khẩu mới.",
+        "otpLabel": "Mã đặt lại",
+        "otpEmpty": "Vui lòng nhập mã",
+        "otpInvalid": "Mã phải gồm 6 số",
+        "newPasswordLabel": "Mật khẩu mới",
+        "confirmPasswordLabel": "Xác nhận mật khẩu",
+        "passwordMismatch": "Mật khẩu không khớp",
+        "resetPassword": "Đặt lại mật khẩu",
+        "passwordResetSuccess": "Đặt lại mật khẩu thành công",
+        "resetFailed": "Đặt lại thất bại",
+        "otpInvalidOrExpired": "Mã không hợp lệ hoặc đã hết hạn",
+        "resetEmailFailed": "Không thể gửi mã đặt lại"
+    },
+    "nav": {
+        "home": "Discover",
+        "manage": "Manage",
+        "health": "Health",
+        "profile": "Profile"
+    },
+    "home": {
+        "teammate": "Đồng đội",
+        "challenger": "Đối thủ",
+        "professional": "HLV & Trọng Tài",
+        "location": "Địa điểm"
+    },
+    "manage": {
+        "schedule": "Lịch trình",
+        "lobby": "Lobby"
+    },
+    "profile": {
+        "guestTitle": "Bạn chưa đăng nhập",
+        "guestMessage": "Đăng nhập để thiết lập hồ sơ, tạo lịch, tìm kiếm đồng đội và đối thủ xứng tầm!",
+        "logout": "Đăng xuất",
+        "accountInfo": "Thông tin tài khoản",
+        "username": "Username",
+        "email": "Email",
+        "changePassword": "Đổi mật khẩu",
+        "generalInfo": "Thông tin chung",
+        "noGeneralInfo": "Chưa cung cấp thông tin chung",
+        "gender": "Giới tính",
+        "ageGroup": "Nhóm tuổi",
+        "location": "Địa điểm",
+        "locationCity": "Thành phố",
+        "locationDistrict": "Quận/ Huyện",
+        "locationDistrictHint": "Chọn tối đa 3 quận/ huyện",
+        "playtime": "Khung giờ thường chơi",
+        "playtimeShort": "Khung giờ",
+        "sportProfile": "Hồ sơ {}",
+        "noSportProfile": "Chưa cung cấp thông tin thể thao",
+        "commit": "Lưu thay đổi",
+        "genderLabel": "Giới Tính",
+        "ageGroupLabel": "Nhóm Tuổi",
+        "industryAndNetworkLabel": "Ngành Nghề & Network",
+        "industryLabel": "Ngành Nghề",
+        "networkLabel": "Network",
+        "networkSearchHint": "Tìm theo tên trường học/ tổ chức/ công ty",
+        "selectedNetworks": "Đã Chọn",
+        "noNetworksFound": "Không tìm thấy network nào theo từ khoá",
+        "networkFeatureExplanation": "Bạn chưa chọn tổ chức nào. Chọn tối đa 2 trường học/ tổ chức/ công ty bạn đã hoặc đang là thành viên. Passe sẽ kết nối bạn đến những người cùng network.",
+        "industryFeatureExplanation": "Chọn tối đa 2 ngạch bạn đang làm việc. Passe sẽ kết nối bạn đến những người cùng ngành nghề.",
+        "sportFeatureExplanation": "Cập nhật trình độ để tìm đối thủ phù hợp và kết nối với những người có cùng đam mê thể thao.",
+        "profileFeatureExplanation": "Điền profile để Passe giúp bạn kết nối với người khác tốt hơn.",
+        "emptyNetwork": "Chưa chọn network. Thêm trường học hoặc công ty để kết nối với người khác.",
+        "emptyIndustry": "Chưa chọn ngành nghề. Thêm ngành nghề để tìm kiếm các kết nối chuyên nghiệp.",
+        "emptySportProfile": "Chưa thiết lập hồ sơ thể thao. Cập nhật trình độ để tìm đối thủ phù hợp.",
+        "changeUsername": "Đổi Username",
+        "newUsername": "Username Mới",
+        "confirmUsername": "Xác nhận Username",
+        "newPassword": "Mật khẩu mới",
+        "confirmPassword": "Xác nhận mật khẩu",
+        "passwordMismatch": "Mật khẩu không khớp",
+        "passwordTooShort": "Mật khẩu phải dài ít nhất 8 ký tự",
+        "passwordChanged": "Đổi mật khẩu thành công",
+        "usernameMismatch": "Username không khớp",
+        "usernameInvalidChars": "Username chỉ được chứa chữ cái và số",
+        "usernameTaken": "Username này đã được sử dụng",
+        "confirmLogout": "Bấm giữ để đăng xuất",
+        "alumni": "Cựu Thành viên",
+        "currentMember": "Thành viên hiện tại",
+        "toggleAlumniStatus": "Đổi trạng thái thành viên",
+        "randomizeAvatar": "Ngẫu nhiên",
+        "removeAvatar": "Gỡ bỏ",
+        "uploadPhoto": "Tải ảnh lên",
+        "uploadFailed": "Tải ảnh thất bại",
+        "networkMaxReached": "Tối đa 2 tổ chức. Hãy xoá bớt 1 trước."
+    },
+    "health": {
+        "title": "Health",
+        "notLinked": {
+            "title": "Kết nối Dữ liệu Sức khỏe",
+            "description": "Liên kết Apple Health hoặc Google Fit để theo dõi xu hướng sức khỏe, chỉ số trong hoạt động và gặt hái mục tiêu.",
+            "linkButton": "Kết nối Health",
+            "notAvailableIOS": "Dịch vụ sức khỏe không khả dụng. Vui lòng chạy trên thiết bị thật có cài đặt ứng dụng Health.",
+            "notAvailableAndroid": "Health Connect không khả dụng. Vui lòng cài đặt Health Connect từ Play Store."
+        },
+        "userHealth": {
+            "title": "Xu hướng",
+            "content": "Xem chỉ số chung và xu hướng sức khỏe của bạn"
+        },
+        "activityData": {
+            "title": "Hoạt động",
+            "content": "Theo dõi chỉ số trong hoạt động của bạn"
+        },
+        "achievements": {
+            "title": "Thành tựu",
+            "content": "Xem mục tiêu và thành tựu của bạn"
+        },
+        "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
+        "trend": {
+            "title": "Xu hướng",
+            "period": "30 ngày qua",
+            "statCalories": "calo/buổi",
+            "statHeartRate": "nhịp tim TB",
+            "statDistance": "quãng đường"
+        },
+        "activity": {
+            "title": "Hoạt động",
+            "summary": "3 buổi tuần này — cường độ trung bình."
+        }
+    },
+    "welcome": {
+        "skip": "Bỏ qua",
+        "next": "Tiếp",
+        "getStarted": "Bắt đầu",
+        "page1": {
+            "title": "Kết nối cộng đồng",
+            "description": "Tìm kiếm đồng đội và đối thủ phù hợp với trình độ và lịch trình của bạn"
+        },
+        "page2": {
+            "title": "Quản lý lịch chơi",
+            "description": "Tạo và tham gia các buổi chơi, theo dõi lịch hẹn dễ dàng"
+        },
+        "page3": {
+            "title": "Nâng cao kỹ năng",
+            "description": "Theo dõi tiến bộ, kết nối với huấn luyện viên và cải thiện phong độ"
+        }
     }
-  },
-  "lobby": {
-    "create": "Tạo Lobby",
-    "edit": "Chỉnh Sửa Lobby",
-    "leader": "Đội trưởng",
-    "noActivity": "Chưa có lịch chơi",
-    "nameRequired": "Tên lobby là bắt buộc",
-    "nameTooShort": "Tên phải có ít nhất 3 ký tự",
-    "ageGroup": "Nhóm Tuổi",
-    "saveButton": "Lưu",
-    "saveFailed": "Lưu lobby thất bại",
-    "emptyTitle": "Chưa có lobby nào",
-    "emptyMessage": "Tạo lobby để bắt đầu chơi cùng người khác",
-    "visibility": {
-      "private": "Nội Bộ",
-      "privateDescription": "Không hiện trên search hay matchmaking. Người ngoài cần phải được mời",
-      "discoverable": "Mặc Định",
-      "discoverableDescription": "Hiện trên search và matchmaking. Người ngoài có thể xin gia nhập",
-      "public": "Công Khai",
-      "publicDescription": "Hiện trên trang chủ"
-    },
-    "detail": {
-      "members": "Thành Viên",
-      "noMembers": "Chưa có thành viên",
-      "upcoming": "Sắp Diễn Ra",
-      "noUpcoming": "Chưa có buổi chơi nào",
-      "scheduleEvent": "Lên Lịch",
-      "history": "Lịch Sử",
-      "noHistory": "Chưa có lịch sử"
-    },
-    "scheduleActivity": "Lên lịch",
-    "lookingForActivity": "Chưa có buổi chơi",
-    "searchIDCopied": "Đã sao chép SearchID",
-    "searchIDExplanation": "Người chơi khác có thể dùng SearchID ở filter trang chủ để tìm thấy Lobby của bạn",
-    "shareId": "Chia sẻ ID",
-    "invite": "Mời vào"
-  },
-  "createLobby": {
-    "title": "Tạo Lobby",
-    "create": "Tạo",
-    "lobbyName": "Tên Lobby",
-    "lobbyNameHint": "Nhập tên cho Lobby của bạn",
-    "description": "Mô Tả",
-    "descriptionHint": "Mô tả phòng chơi của bạn (không bắt buộc)",
-    "sport": "Môn Thể Thao",
-    "sportLocked": "Không thể thay đổi môn thể thao",
-    "visibility": "Độ Riêng tư",
-    "public": "Công Khai",
-    "publicDescription": "Hiện trên trang chủ",
-    "private": "Nội Bộ",
-    "privateDescription": "Không hiện trên search hay matchmaking. Cần phải được mời",
-    "homeGround": "Sân Nhà",
-    "homeGroundHint": "Tìm theo tên địa điểm/ địa chỉ...",
-    "homeGroundFreeHint": "Nhập trực tiếp tên địa điểm/ địa chỉ...",
-    "homeGroundFreeTextMode": "Nhập thủ công",
-    "homeGroundSearchMode": "Tìm kiếm địa điểm",
-    "streetNumber": "Số nhà",
-    "streetName": "Tên đường",
-    "district": "Quận/Huyện",
-    "city": "Thành phố",
-    "specificLocation": "Địa Điểm Cụ Thể",
-    "specificLocationHint": "Nhập địa điểm cụ thể",
-    "playtime": "Thời Gian Chơi",
-    "dayOfWeek": "Ngày Trong Tuần",
-    "timeSlot": "Khung Giờ",
-    "setTimeslot": "Đặt Khung Giờ",
-    "maxParticipants": "Số Người Tham Gia Tối Đa",
-    "participantCount": "{count} người tham gia"
-  },
-  "soccer": {
-    "position": {
-      "label": "Vị Trí",
-      "outfield": "Cầu Thủ Sân",
-      "keeper": "Thủ Môn"
-    },
-    "pitch": {
-      "label": "Loại Sân",
-      "futsal": "Futsal",
-      "5v5": "Sân 5",
-      "7v7": "Sân 7"
-    }
-  },
-  "racketSport": {
-    "dominantHand": {
-      "label": "Tay Thuận",
-      "left": "Tay Trái",
-      "right": "Tay Phải"
-    },
-    "discipline": {
-      "label": "Theer Thức",
-      "singles": "Đơn",
-      "doubles": "Đôi"
-    }
-  },
-  "basketball": {
-    "position": {
-      "label": "Vị Trí",
-      "guard": "Guard",
-      "forward": "Forward",
-      "center": "Center"
-    },
-    "pitch": {
-      "label": "Loại Sân",
-      "indoor": "Trong Nhà",
-      "outdoor": "Ngoài Trời"
-    }
-  },
-  "elo": {
-    "label": "Elo"
-  },
-  "eloSeed": {
-    "label": "Trình Độ",
-    "description": "Dùng để xếp hạng ban đầu. Chơi cùng người khác để cập nhật Elo.",
-    "beginner": "Tập Chơi",
-    "casual": "Biết Chơi",
-    "tryhard": "Tryhard",
-    "lockedHint": "Trình độ ban đầu đã được lưu"
-  },
-  "sport": {
-    "others": "Khác",
-    "soccer": "Bóng Đá",
-    "basketball": "Bóng Rổ",
-    "badminton": "Cầu Lông",
-    "tennis": "Tennis",
-    "pickleball": "Pickleball",
-    "sportNotSelected": "Chọn Môn thể thao",
-    "othersAlertDescription": "Bạn cần chọn một môn thể thao để xem các nội dung phù hợp. Bấm vào biểu tượng ở góc phải màn hình để điều chỉnh."
-  },
-  "notSet": "Chưa Thiết Lập",
-  "done": "Xong",
-  "error": "Lỗi",
-  "errorGeneric": "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
-  "auth": {
-    "welcome": "Welcome",
-    "emailLabel": "Email",
-    "passwordLabel": "Mật khẩu",
-    "emailEmpty": "Vui lòng nhập email của bạn",
-    "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ",
-    "passwordEmpty": "Vui lòng nhập mật khẩu của bạn",
-    "passwordLength": "Mật khẩu phải dài ít nhất 8 ký tự",
-    "signIn": "Đăng nhập",
-    "signUp": "Đăng ký",
-    "loginFailed": "Đăng nhập thất bại",
-    "signUpFailed": "Đăng ký thất bại",
-    "googleContinue": "Tiếp tục với Google",
-    "appleContinue": "Tiếp tục với Apple",
-    "guestContinue": "Tạm Skip Đăng nhập",
-    "googleLoginFailed": "Đăng nhập Google thất bại",
-    "appleLoginFailed": "Đăng nhập Apple thất bại",
-    "guestLoginFailed": "Đăng nhập Khách thất bại",
-    "credentialsInvalid": "Email hoặc mật khẩu không đúng",
-    "userAlreadyRegistered": "Email này đã được đăng ký"
-  },
-  "nav": {
-    "home": "Discover",
-    "manage": "Manage",
-    "health": "Health",
-    "profile": "Profile"
-  },
-  "home": {
-    "teammate": "Đồng đội",
-    "challenger": "Đối thủ",
-    "professional": "HLV & Trọng Tài",
-    "location": "Địa điểm"
-  },
-  "manage": {
-    "schedule": "Lịch trình",
-    "lobby": "Lobby"
-  },
-  "profile": {
-    "guestTitle": "Bạn chưa đăng nhập",
-    "guestMessage": "Đăng nhập để thiết lập hồ sơ, tạo lịch, tìm kiếm đồng đội và đối thủ xứng tầm!",
-    "logout": "Đăng xuất",
-    "accountInfo": "Thông tin tài khoản",
-    "username": "Username",
-    "email": "Email",
-    "changePassword": "Đổi mật khẩu",
-    "generalInfo": "Thông tin chung",
-    "noGeneralInfo": "Chưa cung cấp thông tin chung",
-    "gender": "Giới tính",
-    "ageGroup": "Nhóm tuổi",
-    "location": "Địa điểm",
-    "locationCity": "Thành phố",
-    "locationDistrict": "Quận/ Huyện",
-    "locationDistrictHint": "Chọn tối đa 3 quận/ huyện",
-    "playtime": "Khung giờ thường chơi",
-    "playtimeShort": "Khung giờ",
-    "sportProfile": "Hồ sơ {}",
-    "noSportProfile": "Chưa cung cấp thông tin thể thao",
-    "commit": "Lưu thay đổi",
-    "genderLabel": "Giới Tính",
-    "ageGroupLabel": "Nhóm Tuổi",
-    "industryAndNetworkLabel": "Ngành Nghề & Network",
-    "industryLabel": "Ngành Nghề",
-    "networkLabel": "Network",
-    "networkSearchHint": "Tìm theo tên trường học/ tổ chức/ công ty",
-    "selectedNetworks": "Đã Chọn",
-    "noNetworksFound": "Không tìm thấy network nào theo từ khoá",
-    "networkFeatureExplanation": "Bạn chưa chọn tổ chức nào. Chọn tối đa 2 trường học/ tổ chức/ công ty bạn đã hoặc đang là thành viên. Pubox sẽ kết nối bạn đến những người cùng network.",
-    "industryFeatureExplanation": "Chọn tối đa 2 ngạch bạn đang làm việc. Pubox sẽ kết nối bạn đến những người cùng ngành nghề.",
-    "sportFeatureExplanation": "Cập nhật trình độ để tìm đối thủ phù hợp và kết nối với những người có cùng đam mê thể thao.",
-    "profileFeatureExplanation": "Điền profile để Pubox giúp bạn kết nối với người khác tốt hơn.",
-    "emptyNetwork": "Chưa chọn network. Thêm trường học hoặc công ty để kết nối với người khác.",
-    "emptyIndustry": "Chưa chọn ngành nghề. Thêm ngành nghề để tìm kiếm các kết nối chuyên nghiệp.",
-    "emptySportProfile": "Chưa thiết lập hồ sơ thể thao. Cập nhật trình độ để tìm đối thủ phù hợp.",
-    "changeUsername": "Đổi Username",
-    "newUsername": "Username Mới",
-    "confirmUsername": "Xác nhận Username",
-    "newPassword": "Mật khẩu mới",
-    "confirmPassword": "Xác nhận mật khẩu",
-    "passwordMismatch": "Mật khẩu không khớp",
-    "passwordTooShort": "Mật khẩu phải dài ít nhất 8 ký tự",
-    "passwordChanged": "Đổi mật khẩu thành công",
-    "usernameMismatch": "Username không khớp",
-    "usernameInvalidChars": "Username chỉ được chứa chữ cái và số",
-    "usernameTaken": "Username này đã được sử dụng",
-    "confirmLogout": "Bấm giữ để đăng xuất",
-    "alumni": "Cựu Thành viên",
-    "currentMember": "Thành viên hiện tại",
-    "toggleAlumniStatus": "Đổi trạng thái thành viên",
-    "randomizeAvatar": "Ngẫu nhiên",
-    "removeAvatar": "Gỡ bỏ",
-    "uploadPhoto": "Tải ảnh lên",
-    "uploadFailed": "Tải ảnh thất bại",
-    "networkMaxReached": "Tối đa 2 tổ chức. Hãy xoá bớt 1 trước."
-  },
-  "health": {
-    "title": "Health",
-    "notLinked": {
-      "title": "Kết nối Dữ liệu Sức khỏe",
-      "description": "Liên kết Apple Health hoặc Google Fit để theo dõi xu hướng sức khỏe, chỉ số trong hoạt động và gặt hái mục tiêu.",
-      "linkButton": "Kết nối Health",
-      "notAvailableIOS": "Dịch vụ sức khỏe không khả dụng. Vui lòng chạy trên thiết bị thật có cài đặt ứng dụng Health.",
-      "notAvailableAndroid": "Health Connect không khả dụng. Vui lòng cài đặt Health Connect từ Play Store."
-    },
-    "userHealth": {
-      "title": "Xu hướng",
-      "content": "Xem chỉ số chung và xu hướng sức khỏe của bạn"
-    },
-    "activityData": {
-      "title": "Hoạt động",
-      "content": "Theo dõi chỉ số trong hoạt động của bạn"
-    },
-    "achievements": {
-      "title": "Thành tựu",
-      "content": "Xem mục tiêu và thành tựu của bạn"
-    },
-    "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
-    "trend": {
-      "title": "Xu hướng",
-      "period": "30 ngày qua",
-      "statCalories": "calo/buổi",
-      "statHeartRate": "nhịp tim TB",
-      "statDistance": "quãng đường"
-    },
-    "activity": {
-      "title": "Hoạt động",
-      "summary": "3 buổi tuần này — cường độ trung bình."
-    }
-  },
-  "welcome": {
-    "skip": "Bỏ qua",
-    "next": "Tiếp",
-    "getStarted": "Bắt đầu",
-    "page1": {
-      "title": "Kết nối cộng đồng",
-      "description": "Tìm kiếm đồng đội và đối thủ phù hợp với trình độ và lịch trình của bạn"
-    },
-    "page2": {
-      "title": "Quản lý lịch chơi",
-      "description": "Tạo và tham gia các buổi chơi, theo dõi lịch hẹn dễ dàng"
-    },
-    "page3": {
-      "title": "Nâng cao kỹ năng",
-      "description": "Theo dõi tiến bộ, kết nối với huấn luyện viên và cải thiện phong độ"
-    }
-  }
 }

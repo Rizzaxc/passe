@@ -8,17 +8,41 @@ part of 'confirmation_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Activity-level + member-level confirmation for one activity row.
+///
+/// The notifier reads through the `activity_confirmation_status` RPC
+/// (single round-trip) and writes by inserting / deleting the caller's
+/// row in `activity_confirmation`. After every write it re-reads — the
+/// status flip from "X of Y confirmed" → "official" needs to land in
+/// the same render frame, so we don't bother with optimistic local
+/// math.
 
 @ProviderFor(ActivityConfirmationController)
 final activityConfirmationControllerProvider =
     ActivityConfirmationControllerFamily._();
 
+/// Activity-level + member-level confirmation for one activity row.
+///
+/// The notifier reads through the `activity_confirmation_status` RPC
+/// (single round-trip) and writes by inserting / deleting the caller's
+/// row in `activity_confirmation`. After every write it re-reads — the
+/// status flip from "X of Y confirmed" → "official" needs to land in
+/// the same render frame, so we don't bother with optimistic local
+/// math.
 final class ActivityConfirmationControllerProvider
     extends
         $AsyncNotifierProvider<
           ActivityConfirmationController,
           ActivityConfirmationStatus
         > {
+  /// Activity-level + member-level confirmation for one activity row.
+  ///
+  /// The notifier reads through the `activity_confirmation_status` RPC
+  /// (single round-trip) and writes by inserting / deleting the caller's
+  /// row in `activity_confirmation`. After every write it re-reads — the
+  /// status flip from "X of Y confirmed" → "official" needs to land in
+  /// the same render frame, so we don't bother with optimistic local
+  /// math.
   ActivityConfirmationControllerProvider._({
     required ActivityConfirmationControllerFamily super.from,
     required String super.argument,
@@ -57,7 +81,16 @@ final class ActivityConfirmationControllerProvider
 }
 
 String _$activityConfirmationControllerHash() =>
-    r'activity-confirmation-hand-rolled';
+    r'1ab61d2bf6b45bd77ebf45b3c75f95b218b6b70a';
+
+/// Activity-level + member-level confirmation for one activity row.
+///
+/// The notifier reads through the `activity_confirmation_status` RPC
+/// (single round-trip) and writes by inserting / deleting the caller's
+/// row in `activity_confirmation`. After every write it re-reads — the
+/// status flip from "X of Y confirmed" → "official" needs to land in
+/// the same render frame, so we don't bother with optimistic local
+/// math.
 
 final class ActivityConfirmationControllerFamily extends $Family
     with
@@ -77,6 +110,15 @@ final class ActivityConfirmationControllerFamily extends $Family
         isAutoDispose: true,
       );
 
+  /// Activity-level + member-level confirmation for one activity row.
+  ///
+  /// The notifier reads through the `activity_confirmation_status` RPC
+  /// (single round-trip) and writes by inserting / deleting the caller's
+  /// row in `activity_confirmation`. After every write it re-reads — the
+  /// status flip from "X of Y confirmed" → "official" needs to land in
+  /// the same render frame, so we don't bother with optimistic local
+  /// math.
+
   ActivityConfirmationControllerProvider call(String activityId) =>
       ActivityConfirmationControllerProvider._(
         argument: activityId,
@@ -86,6 +128,15 @@ final class ActivityConfirmationControllerFamily extends $Family
   @override
   String toString() => r'activityConfirmationControllerProvider';
 }
+
+/// Activity-level + member-level confirmation for one activity row.
+///
+/// The notifier reads through the `activity_confirmation_status` RPC
+/// (single round-trip) and writes by inserting / deleting the caller's
+/// row in `activity_confirmation`. After every write it re-reads — the
+/// status flip from "X of Y confirmed" → "official" needs to land in
+/// the same render frame, so we don't bother with optimistic local
+/// math.
 
 abstract class _$ActivityConfirmationController
     extends $AsyncNotifier<ActivityConfirmationStatus> {

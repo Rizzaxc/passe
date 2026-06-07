@@ -13,7 +13,7 @@
     <uses-permission android:name="android.permission.health.READ_EXERCISE"/>
 
     <application
-        android:label="pubox"
+        android:label="Passe"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -8,17 +8,29 @@ part of 'match_history_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Played-match history for a lobby — wins, losses, practice sessions.
+///
+/// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
+/// which resolves the opponent lobby name, MVP username and current
+/// member usernames in one round-trip.
 
 @ProviderFor(LobbyMatchHistoryController)
 final lobbyMatchHistoryControllerProvider =
     LobbyMatchHistoryControllerFamily._();
 
+/// Played-match history for a lobby — wins, losses, practice sessions.
+///
+/// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
+/// which resolves the opponent lobby name, MVP username and current
+/// member usernames in one round-trip.
 final class LobbyMatchHistoryControllerProvider
     extends
-        $AsyncNotifierProvider<
-          LobbyMatchHistoryController,
-          List<LobbyMatch>
-        > {
+        $AsyncNotifierProvider<LobbyMatchHistoryController, List<LobbyMatch>> {
+  /// Played-match history for a lobby — wins, losses, practice sessions.
+  ///
+  /// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
+  /// which resolves the opponent lobby name, MVP username and current
+  /// member usernames in one round-trip.
   LobbyMatchHistoryControllerProvider._({
     required LobbyMatchHistoryControllerFamily super.from,
     required String super.argument,
@@ -57,7 +69,13 @@ final class LobbyMatchHistoryControllerProvider
 }
 
 String _$lobbyMatchHistoryControllerHash() =>
-    r'match-history-hand-rolled';
+    r'0bc4e09333ab5987ee831343610217f55ea96386';
+
+/// Played-match history for a lobby — wins, losses, practice sessions.
+///
+/// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
+/// which resolves the opponent lobby name, MVP username and current
+/// member usernames in one round-trip.
 
 final class LobbyMatchHistoryControllerFamily extends $Family
     with
@@ -77,12 +95,24 @@ final class LobbyMatchHistoryControllerFamily extends $Family
         isAutoDispose: true,
       );
 
+  /// Played-match history for a lobby — wins, losses, practice sessions.
+  ///
+  /// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
+  /// which resolves the opponent lobby name, MVP username and current
+  /// member usernames in one round-trip.
+
   LobbyMatchHistoryControllerProvider call(String lobbyId) =>
       LobbyMatchHistoryControllerProvider._(argument: lobbyId, from: this);
 
   @override
   String toString() => r'lobbyMatchHistoryControllerProvider';
 }
+
+/// Played-match history for a lobby — wins, losses, practice sessions.
+///
+/// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
+/// which resolves the opponent lobby name, MVP username and current
+/// member usernames in one round-trip.
 
 abstract class _$LobbyMatchHistoryController
     extends $AsyncNotifier<List<LobbyMatch>> {
@@ -93,7 +123,8 @@ abstract class _$LobbyMatchHistoryController
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<List<LobbyMatch>>, List<LobbyMatch>>;
+    final ref =
+        this.ref as $Ref<AsyncValue<List<LobbyMatch>>, List<LobbyMatch>>;
     final element =
         ref.element
             as $ClassProviderElement<

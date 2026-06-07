@@ -1,7 +1,7 @@
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pubox/ui/button_styles.dart';
+import 'package:passe/ui/button_styles.dart';
 
 import 'select_menu_tile_style.dart';
 import 'select_style.dart';
@@ -58,12 +58,12 @@ FThemeData get pbThemeLight {
     tabsStyle: tabsStyle(colors: colors, typography: typography, style: style),
     selectMenuTileStyle: CustomFSelectMenuTileStyle.selectMenuTileStyle(colors: colors, typography: typography, style: style),
     selectStyle: selectStyle(colors: colors, typography: typography, style: style),
-    extensions: [PuboxColors(green: pbGreen, blue: pbBlue)],
+    extensions: [PasseColors(green: pbGreen, blue: pbBlue)],
   );
 }
 
-extension PuboxColorExtension on FThemeData {
-  PuboxColors get brand => extension<PuboxColors>();
+extension PasseColorExtension on FThemeData {
+  PasseColors get brand => extension<PasseColors>();
 }
 
 FThemeData get pbThemeDark {
@@ -96,27 +96,27 @@ FThemeData get pbThemeDark {
     typography: typography,
     style: style,
     selectStyle: selectStyle(colors: colors, typography: typography, style: style),
-    extensions: [PuboxColors(green: pbGreen, blue: pbBlue)],
+    extensions: [PasseColors(green: pbGreen, blue: pbBlue)],
   );
 }
 
-class PuboxColors extends ThemeExtension<PuboxColors> {
+class PasseColors extends ThemeExtension<PasseColors> {
   final Color green;
   final Color blue;
 
-  const PuboxColors({required this.green, required this.blue});
+  const PasseColors({required this.green, required this.blue});
 
   @override
-  PuboxColors copyWith({Color? green, Color? blue}) =>
-      PuboxColors(green: green ?? this.green, blue: blue ?? this.blue);
+  PasseColors copyWith({Color? green, Color? blue}) =>
+      PasseColors(green: green ?? this.green, blue: blue ?? this.blue);
 
   @override
-  PuboxColors lerp(PuboxColors? other, double t) {
-    if (other is! PuboxColors) {
+  PasseColors lerp(PasseColors? other, double t) {
+    if (other is! PasseColors) {
       return this;
     }
 
-    return PuboxColors(
+    return PasseColors(
       green: Color.lerp(green, other.green, t)!,
       blue: Color.lerp(blue, other.blue, t)!,
     );

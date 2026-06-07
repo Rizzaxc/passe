@@ -6,9 +6,11 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import 'auth/auth_controller.dart';
 import 'auth/auth_screen.dart';
+import 'auth/forgot_password_screen.dart';
+import 'auth/reset_password_screen.dart';
 import 'auth/welcome_screen.dart';
 import 'core/model/professional_feed_item.dart';
-import 'core/model/pubox_user.dart';
+import 'core/model/passe_user.dart';
 import 'currency/wallet_home_screen.dart';
 import 'currency/wallet_intro_screen.dart';
 import 'currency/wallet_purchase_history_screen.dart';
@@ -35,12 +37,12 @@ final supabase = Supabase.instance.client;
 GoRouter router(Ref ref) {
   final talker = Talker();
 
-  final user = ValueNotifier<AsyncValue<PuboxUser?>>(const AsyncLoading());
+  final user = ValueNotifier<AsyncValue<PasseUser?>>(const AsyncLoading());
   ref.onDispose(user.dispose);
 
   // Only update the listenable when there's a meaningful auth state change
   // (logged in vs logged out), not on every AsyncValue change
-  PuboxUser? previousUser;
+  PasseUser? previousUser;
   bool isFirstUpdate = true;
   ref.listen(authControllerProvider, (_, next) {
     final currentUser = next.value;
@@ -65,8 +67,13 @@ GoRouter router(Ref ref) {
     routes: $appRoutes,
     redirect: (context, state) {
       final isSplash = state.uri.path == const SplashRoute().location;
+      // Password-recovery screens are part of the unauthenticated flow and must
+      // stay reachable: `/reset-password` is matched by path only because it
+      // carries an `?email=` query.
       final isAuthFlow = state.uri.path == const AuthRoute().location ||
-          state.uri.path == const WelcomeRoute().location;
+          state.uri.path == const WelcomeRoute().location ||
+          state.uri.path == const ForgotPasswordRoute().location ||
+          state.uri.path == '/reset-password';
       switch (user.value) {
         case AsyncError():
           if (isAuthFlow) return null;
@@ -128,6 +135,31 @@ class WelcomeRoute extends GoRouteData with $WelcomeRoute {
   Widget build(BuildContext context, GoRouterState state) {
     return const WelcomeScreen();
   }
+}
+
+/// Password recovery — step 1: request a reset code by email.
+@TypedGoRoute<ForgotPasswordRoute>(path: '/forgot-password')
+@immutable
+class ForgotPasswordRoute extends GoRouteData with $ForgotPasswordRoute {
+  const ForgotPasswordRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const ForgotPasswordScreen();
+}
+
+/// Password recovery — step 2: verify the OTP and set a new password.
+/// `email` is carried as a query parameter (`?email=...`).
+@TypedGoRoute<ResetPasswordRoute>(path: '/reset-password')
+@immutable
+class ResetPasswordRoute extends GoRouteData with $ResetPasswordRoute {
+  final String email;
+
+  const ResetPasswordRoute({required this.email});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ResetPasswordScreen(email: email);
 }
 
 @TypedGoRoute<NotificationRoute>(path: '/notifications')

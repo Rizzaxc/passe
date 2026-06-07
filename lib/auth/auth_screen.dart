@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
+import '../router.dart';
 import '../ui/main.dart';
 import 'auth_controller.dart';
 
@@ -139,7 +140,20 @@ class _AuthFormState extends ConsumerState<AuthForm> {
               return null;
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FTappable(
+              onPress: () => const ForgotPasswordRoute().push<void>(context),
+              child: Text(
+                'auth.forgotPassword'.tr(),
+                style: context.theme.typography.sm.copyWith(
+                  color: context.theme.colors.primary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           PDualButton(
             firstChild: Text(
               'auth.signIn'.tr(),

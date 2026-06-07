@@ -10,6 +10,8 @@ List<RouteBase> get $appRoutes => [
   $splashRoute,
   $authRoute,
   $welcomeRoute,
+  $forgotPasswordRoute,
+  $resetPasswordRoute,
   $notificationRoute,
   $walletHomeRoute,
   $walletIntroRoute,
@@ -74,6 +76,63 @@ mixin $WelcomeRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/welcome');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $forgotPasswordRoute => GoRouteData.$route(
+  path: '/forgot-password',
+  factory: $ForgotPasswordRoute._fromState,
+);
+
+mixin $ForgotPasswordRoute on GoRouteData {
+  static ForgotPasswordRoute _fromState(GoRouterState state) =>
+      const ForgotPasswordRoute();
+
+  @override
+  String get location => GoRouteData.$location('/forgot-password');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $resetPasswordRoute => GoRouteData.$route(
+  path: '/reset-password',
+  factory: $ResetPasswordRoute._fromState,
+);
+
+mixin $ResetPasswordRoute on GoRouteData {
+  static ResetPasswordRoute _fromState(GoRouterState state) =>
+      ResetPasswordRoute(email: state.uri.queryParameters['email']!);
+
+  ResetPasswordRoute get _self => this as ResetPasswordRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/reset-password',
+    queryParams: {'email': _self.email},
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -707,4 +766,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'22839587972316e019d98fc7c0f306b15a70d005';
+String _$routerHash() => r'21c077c88c387cae042d80eef5c958b011fea9d2';

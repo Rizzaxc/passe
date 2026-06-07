@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:vector_graphics/vector_graphics.dart';
 
-class PuboxIcons {
+class PasseIcons {
   static const age = SvgPicture(AssetBytesLoader('./assets/icons/age.svg.vec'));
 
   static const suitcase =
@@ -76,26 +76,26 @@ class PuboxIcons {
 class SportIcons {
   static SizedBox soccer({double size = 16}) {
     return SizedBox.fromSize(
-        size: Size.fromRadius(size), child: PuboxIcons.soccer);
+        size: Size.fromRadius(size), child: PasseIcons.soccer);
   }
 
   static SizedBox basketball({double size = 16}) {
     return SizedBox.fromSize(
-        size: Size.fromRadius(size), child: PuboxIcons.basketball);
+        size: Size.fromRadius(size), child: PasseIcons.basketball);
   }
 
   static SizedBox tennis({double size = 16}) {
     return SizedBox.fromSize(
-        size: Size.fromRadius(size), child: PuboxIcons.tennis);
+        size: Size.fromRadius(size), child: PasseIcons.tennis);
   }
 
   static SizedBox badminton({double size = 16}) {
     return SizedBox.fromSize(
-        size: Size.fromRadius(size), child: PuboxIcons.badminton);
+        size: Size.fromRadius(size), child: PasseIcons.badminton);
   }
 
   static SizedBox pickleball({double size = 16}) {
     return SizedBox.fromSize(
-        size: Size.fromRadius(size), child: PuboxIcons.pickleball);
+        size: Size.fromRadius(size), child: PasseIcons.pickleball);
   }
 }

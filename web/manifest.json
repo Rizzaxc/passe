@@ -1,6 +1,6 @@
 {
-    "name": "pubox",
-    "short_name": "pubox",
+    "name": "Passe",
+    "short_name": "Passe",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
