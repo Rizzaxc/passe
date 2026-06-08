@@ -11,6 +11,10 @@ import '../ui/theme.dart';
 /// Anything above it is "at least an ok fit"; at or below it is a poor fit.
 const double _fitScoreFloor = 2.5;
 
+/// Vibrant green for the FitScore badge/sliver when the fit is at least "ok".
+/// (Brighter than the muted brand olive `pbGreen`, for a stronger signal.)
+const Color _fitGreen = Color(0xFF16A34A);
+
 class LobbyFeedCard extends StatelessWidget {
   final LobbyFeedItem item;
   final Widget action;
@@ -29,7 +33,7 @@ class LobbyFeedCard extends StatelessWidget {
     final score = item.profileCompatScore;
     final isGoodFit = score > _fitScoreFloor;
     final sliverColor = showCompat && score > 0
-        ? (isGoodFit ? pbGreen : colors.muted)
+        ? (isGoodFit ? _fitGreen : colors.muted)
         : colors.muted;
 
     return Container(
@@ -197,7 +201,7 @@ class LobbyFeedCard extends StatelessWidget {
                         ],
                       ),
                       if (showCompat && score > 0)
-                        _FitScoreVibes(item: item, score: score),
+                        _FitScoreVibes(item: item),
                     ],
                   ),
                 ],
@@ -229,7 +233,7 @@ class _ScoreBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final scoreBg = isGoodFit ? pbGreen : colors.secondary;
+    final scoreBg = isGoodFit ? _fitGreen : colors.secondary;
     final scoreFg = isGoodFit ? Colors.white : colors.mutedForeground;
 
     return Container(
@@ -306,90 +310,61 @@ class _FavorabilityBadge extends StatelessWidget {
 
 class _FitScoreVibes extends StatelessWidget {
   final LobbyFeedItem item;
-  final double score;
 
-  const _FitScoreVibes({required this.item, required this.score});
+  const _FitScoreVibes({required this.item});
 
-  List<Widget> _buildVibes(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    if (item.matchFactors.isEmpty) return const SizedBox.shrink();
+
+    // Each real factor code → (label, icon, foreground). The chip background is
+    // the foreground at 8% opacity. Unknown codes are skipped.
+    (String, IconData, Color)? specFor(String code) => switch (code) {
+          'skill' => ('Trình độ phù hợp', FIcons.trophy, const Color(0xFFD97706)),
+          'network' => ('Chung mạng lưới', FIcons.users, const Color(0xFF059669)),
+          'industry' => ('Cùng ngành nghề', FIcons.briefcase, const Color(0xFF0D9488)),
+          'age' => ('Cùng nhóm tuổi', FIcons.cake, const Color(0xFF7C3AED)),
+          'gender' => ('Thân thiện với nữ', FIcons.venus, const Color(0xFFDB2777)),
+          'playtime' => ('Lịch chơi khớp', FIcons.calendar, pbBlue),
+          'location' => ('Vị trí thuận tiện', FIcons.mapPin, colors.primary),
+          _ => null,
+        };
+
     final chips = <Widget>[];
-
-    // Semantic palettes: skill (amber), network (emerald), playtime (brand
-    // blue), location (primary red). Soft translucent bg + solid fg.
-    const skillBg = Color(0x14F59E0B); // 0xFFF59E0B @ 8%
-    const skillFg = Color(0xFFD97706);
-    const networkBg = Color(0x1410B981); // 0xFF10B981 @ 8%
-    const networkFg = Color(0xFF059669);
-    final playtimeBg = pbBlue.withValues(alpha: 0.08);
-    const playtimeFg = pbBlue;
-    final locationBg = colors.primary.withValues(alpha: 0.08);
-    final locationFg = colors.primary;
-
-    Widget buildChip(String label, IconData icon, Color bg, Color fg) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 3,
-          children: [
-            Icon(
-              icon,
-              size: 9,
-              color: fg,
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: context.theme.typography.xs.fontFamily,
-                fontSize: 9,
-                fontWeight: FontWeight.w600,
-                color: fg,
+    for (final code in item.matchFactors) {
+      final spec = specFor(code);
+      if (spec == null) continue;
+      final (label, icon, fg) = spec;
+      chips.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: fg.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 3,
+            children: [
+              Icon(icon, size: 9, color: fg),
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: context.theme.typography.xs.fontFamily,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
-    if (item.lobbyMmr == null) {
-      if (score >= 3.5) {
-        chips.add(buildChip('Trình độ phù hợp', FIcons.trophy, skillBg, skillFg));
-      }
-      if (score >= 2.0) {
-        chips.add(buildChip('Chung mạng lưới', FIcons.users, networkBg, networkFg));
-      }
-      if (item.timeslotCompatScore >= 4) {
-        chips.add(buildChip('Lịch chơi khớp', FIcons.calendar, playtimeBg, playtimeFg));
-      }
-    } else {
-      if (score >= 2.0) {
-        chips.add(buildChip('Chung mạng lưới', FIcons.users, networkBg, networkFg));
-      }
-      if (score >= 3.0) {
-        chips.add(buildChip('Lịch chơi khớp', FIcons.calendar, playtimeBg, playtimeFg));
-      }
-      if (item.homegroundName != null && score >= 2.5) {
-        chips.add(buildChip('Vị trí thuận tiện', FIcons.mapPin, locationBg, locationFg));
-      }
-    }
-
-    return chips;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final vibes = _buildVibes(context);
-    if (vibes.isEmpty) return const SizedBox.shrink();
-
-    return Wrap(
-      spacing: 6,
-      runSpacing: 4,
-      children: vibes,
-    );
+    if (chips.isEmpty) return const SizedBox.shrink();
+    return Wrap(spacing: 6, runSpacing: 4, children: chips);
   }
 }
 

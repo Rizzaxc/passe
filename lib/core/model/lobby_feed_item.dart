@@ -11,6 +11,11 @@ class LobbyFeedItem {
   final LobbyVisibility visibility;
   final int timeslotCompatScore;
   final double profileCompatScore;
+
+  /// Real matched-factor codes from the RPC (network/industry/skill/age/
+  /// gender/playtime/location), used to render the FitScore "vibe" chips.
+  final List<String> matchFactors;
+
   final int? memberCount;
 
   /// Challenger feed only: this lobby's cached MMR.
@@ -28,6 +33,7 @@ class LobbyFeedItem {
     required this.visibility,
     required this.timeslotCompatScore,
     required this.profileCompatScore,
+    this.matchFactors = const [],
     this.memberCount,
     this.lobbyMmr,
     this.favorability,
@@ -56,6 +62,9 @@ class LobbyFeedItem {
       timeslotCompatScore: (json['timeslot_compat_score'] as num?)?.toInt() ?? 0,
       profileCompatScore:
           double.tryParse(json['profile_compat_score']?.toString() ?? '') ?? 0,
+      matchFactors: json['match_factors'] is List
+          ? (json['match_factors'] as List).whereType<String>().toList()
+          : const [],
       memberCount: (json['member_count'] as num?)?.toInt(),
       lobbyMmr: (json['lobby_mmr'] as num?)?.toInt(),
       favorability:

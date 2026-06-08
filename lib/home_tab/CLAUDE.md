@@ -51,7 +51,9 @@ freezed) — edit them by hand, no build_runner.
   Params: `p_sport_id`, `p_timeslots` (user's schedule as jsonb dict — `Timeslot.listToJson`),
   `p_city` (city cluster id), `p_districts` (array of district ids), `p_page_size`, `p_page_number`.
 - Returns: `id, name, homeground_name, playtime, details, visibility, timeslot_compat_score,
-  profile_compat_score`.
+  profile_compat_score, match_factors` (the last is a `text[]` of the real contributing factor
+  codes — `network/industry/skill/age/gender/playtime/location` — that the card's FitScore "vibe"
+  chips render directly instead of guessing from the score).
 - `profile_compat_score` is computed by `calculate_profile_compat_score` and lives in the band
   **[2.5, 5]**: 2.5 is the neutral "ok fit" floor (no shared signal — *not* a poor match), 5 is a
   fully-aligned match. Signals: shared/active networks, shared industry (fallback), skill-level
@@ -62,7 +64,7 @@ freezed) — edit them by hand, no build_runner.
   state lives in `RequestedLobbyIdsProvider` (a `Set<String>`), rolled back on failure.
 - Model: `LobbyFeedItem` — `id, name, homegroundName, playtime (List<Timeslot>),
   details (LobbyDetails?), visibility, timeslotCompatScore (int), profileCompatScore (double),
-  memberCount (int?)`.
+  matchFactors (List<String>), memberCount (int?)`.
 
 ### Challenger subtab
 
