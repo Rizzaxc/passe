@@ -17,19 +17,6 @@ class TeammateSubtab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final feed = ref.watch(teammateFeedProvider);
 
-    // Seed the requested-set from the server's pending requests whenever the
-    // feed (re)loads, so the "Đã gửi" + Undo CTA persists across sessions.
-    ref.listen(teammateFeedProvider, (_, next) {
-      next.whenData((items) {
-        ref.read(requestedLobbyIdsProvider.notifier).sync(
-              items
-                  .where((i) => i.alreadyRequested)
-                  .map((i) => i.id)
-                  .toSet(),
-            );
-      });
-    });
-
     return Column(
       children: [
         PSectionHeader(
@@ -72,8 +59,9 @@ class TeammateSubtab extends ConsumerWidget {
 
 class _JoinButton extends ConsumerWidget {
   final String lobbyId;
+  final bool alreadyRequested;
 
-  const _JoinButton({required this.lobbyId});
+  const _JoinButton({required this.lobbyId, required this.alreadyRequested});
 
   void _onError(BuildContext context, Object e, StackTrace st, String log) {
     Talker().handle(e, st, log);
@@ -89,7 +77,9 @@ class _JoinButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final requested = ref.watch(requestedLobbyIdsProvider).contains(lobbyId);
+    final requested = ref.watch(
+      joinRequestStateProvider.select((m) => m[lobbyId] ?? alreadyRequested),
+    );
 
     // Once requested, the CTA becomes a "sent" indicator plus an undo button
     // that cancels the pending join request.
@@ -112,7 +102,7 @@ class _JoinButton extends ConsumerWidget {
             onPress: () async {
               try {
                 await ref
-                    .read(requestedLobbyIdsProvider.notifier)
+                    .read(joinRequestStateProvider.notifier)
                     .unrequest(lobbyId);
               } catch (e, st) {
                 if (context.mounted) {
@@ -131,7 +121,7 @@ class _JoinButton extends ConsumerWidget {
       variant: .primary,
       onPress: () async {
         try {
-          await ref.read(requestedLobbyIdsProvider.notifier).request(lobbyId);
+          await ref.read(joinRequestStateProvider.notifier).request(lobbyId);
         } catch (e, st) {
           if (context.mounted) {
             _onError(context, e, st, 'Lobby join request failed');
@@ -159,7 +149,10 @@ class _LobbyList extends ConsumerWidget {
         final item = items[index];
         return LobbyFeedCard(
           item: item,
-          action: _JoinButton(lobbyId: item.id),
+          action: _JoinButton(
+            lobbyId: item.id,
+            alreadyRequested: item.alreadyRequested,
+          ),
         );
       },
     );

@@ -54,51 +54,69 @@ abstract class _$TeammateFeed extends $AsyncNotifier<List<LobbyFeedItem>> {
   }
 }
 
-@ProviderFor(RequestedLobbyIds)
-final requestedLobbyIdsProvider = RequestedLobbyIdsProvider._();
+/// Per-lobby, in-session override of the join-request state. The feed row's
+/// `alreadyRequested` (from the server) is the baseline; an entry here takes
+/// precedence (`true` = just requested, `false` = just undone). `keepAlive` so
+/// an optimistic toggle isn't lost if the list briefly stops watching.
 
-final class RequestedLobbyIdsProvider
-    extends $NotifierProvider<RequestedLobbyIds, Set<String>> {
-  RequestedLobbyIdsProvider._()
+@ProviderFor(JoinRequestState)
+final joinRequestStateProvider = JoinRequestStateProvider._();
+
+/// Per-lobby, in-session override of the join-request state. The feed row's
+/// `alreadyRequested` (from the server) is the baseline; an entry here takes
+/// precedence (`true` = just requested, `false` = just undone). `keepAlive` so
+/// an optimistic toggle isn't lost if the list briefly stops watching.
+final class JoinRequestStateProvider
+    extends $NotifierProvider<JoinRequestState, Map<String, bool>> {
+  /// Per-lobby, in-session override of the join-request state. The feed row's
+  /// `alreadyRequested` (from the server) is the baseline; an entry here takes
+  /// precedence (`true` = just requested, `false` = just undone). `keepAlive` so
+  /// an optimistic toggle isn't lost if the list briefly stops watching.
+  JoinRequestStateProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'requestedLobbyIdsProvider',
-        isAutoDispose: true,
+        name: r'joinRequestStateProvider',
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$requestedLobbyIdsHash();
+  String debugGetCreateSourceHash() => _$joinRequestStateHash();
 
   @$internal
   @override
-  RequestedLobbyIds create() => RequestedLobbyIds();
+  JoinRequestState create() => JoinRequestState();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Set<String> value) {
+  Override overrideWithValue(Map<String, bool> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Set<String>>(value),
+      providerOverride: $SyncValueProvider<Map<String, bool>>(value),
     );
   }
 }
 
-String _$requestedLobbyIdsHash() => r'd7f35792279610fe4fdb080c2cf62d8657c05f82';
+String _$joinRequestStateHash() => r'e9d1aa2de3b8418265a99dcfe20b871a8de040ae';
 
-abstract class _$RequestedLobbyIds extends $Notifier<Set<String>> {
-  Set<String> build();
+/// Per-lobby, in-session override of the join-request state. The feed row's
+/// `alreadyRequested` (from the server) is the baseline; an entry here takes
+/// precedence (`true` = just requested, `false` = just undone). `keepAlive` so
+/// an optimistic toggle isn't lost if the list briefly stops watching.
+
+abstract class _$JoinRequestState extends $Notifier<Map<String, bool>> {
+  Map<String, bool> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final ref = this.ref as $Ref<Map<String, bool>, Map<String, bool>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<Set<String>, Set<String>>,
-              Set<String>,
+              AnyNotifier<Map<String, bool>, Map<String, bool>>,
+              Map<String, bool>,
               Object?,
               Object?
             >;

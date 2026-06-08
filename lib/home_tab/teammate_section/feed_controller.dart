@@ -39,35 +39,55 @@ class TeammateFeed extends _$TeammateFeed {
   }
 }
 
-@riverpod
-class RequestedLobbyIds extends _$RequestedLobbyIds {
+/// Per-lobby, in-session override of the join-request state. The feed row's
+/// `alreadyRequested` (from the server) is the baseline; an entry here takes
+/// precedence (`true` = just requested, `false` = just undone). `keepAlive` so
+/// an optimistic toggle isn't lost if the list briefly stops watching.
+@Riverpod(keepAlive: true)
+class JoinRequestState extends _$JoinRequestState {
   @override
-  Set<String> build() => {};
+  Map<String, bool> build() => {};
+
+  void _set(String lobbyId, bool? value) {
+    final next = {...state};
+    if (value == null) {
+      next.remove(lobbyId);
+    } else {
+      next[lobbyId] = value;
+    }
+    state = next;
+  }
+
+  /// Whether the lobby should render as "requested" given the server baseline.
+  bool isRequested(String lobbyId, {required bool serverPending}) =>
+      state[lobbyId] ?? serverPending;
 
   Future<void> request(String lobbyId) async {
-    state = {...state, lobbyId};
+    final previous = state[lobbyId];
+    _set(lobbyId, true);
     try {
-      final user = ref.read(authControllerProvider).value;
+      final userId = ref.read(authControllerProvider).value?.id;
       await Supabase.instance.client.from('lobby_befriend_record').insert({
-        if (user?.id != null) 'initiator_user_id': user!.id,
+        'initiator_user_id': ?userId,
         'target_lobby_id': lobbyId,
         'interaction_type': 'request',
       }).timeout(const Duration(seconds: 5));
     } catch (e) {
-      state = state.difference({lobbyId});
+      _set(lobbyId, previous);
       rethrow;
     }
   }
 
-  /// Cancels a pending join request (the "undo" CTA). Optimistically clears the
-  /// lobby from the requested set, then flips the befriend record to
-  /// `cancelled` (there is no DELETE policy, but the initiator may UPDATE its
-  /// own record; the insert trigger's dup-check ignores `cancelled`, so the
-  /// lobby becomes re-requestable). Re-adds to the set on failure.
+  /// Cancels a pending join request (the "undo" CTA). Optimistically marks the
+  /// lobby not-requested, then flips the befriend record to `cancelled` — there
+  /// is no DELETE policy, but the initiator may UPDATE its own record, and the
+  /// insert trigger's dup-check ignores `cancelled`, so the lobby becomes
+  /// re-requestable. Rolls back the override on failure.
   Future<void> unrequest(String lobbyId) async {
     final userId = ref.read(authControllerProvider).value?.id;
     if (userId == null) return;
-    state = state.difference({lobbyId});
+    final previous = state[lobbyId];
+    _set(lobbyId, false);
     try {
       await Supabase.instance.client
           .from('lobby_befriend_record')
@@ -78,20 +98,8 @@ class RequestedLobbyIds extends _$RequestedLobbyIds {
           .eq('status', 'pending')
           .timeout(const Duration(seconds: 5));
     } catch (e) {
-      state = {...state, lobbyId};
+      _set(lobbyId, previous);
       rethrow;
     }
-  }
-
-  /// Replaces the set with the lobby ids the server reports as having a pending
-  /// request (`already_requested`). Called when the feed (re)loads so the
-  /// "sent" state survives restarts. The feed only re-emits on refresh — never
-  /// on request/unrequest — so in-session optimistic changes are never clobbered.
-  void sync(Set<String> serverPending) {
-    if (state.length == serverPending.length &&
-        state.containsAll(serverPending)) {
-      return;
-    }
-    state = serverPending;
   }
 }

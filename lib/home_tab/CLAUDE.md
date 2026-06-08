@@ -69,13 +69,14 @@ freezed) — edit them by hand, no build_runner.
 - **Action**: "Xin vào" → inserts a `lobby_befriend_record` with `interaction_type = 'request'`,
   `target_lobby_id = lobby.id`. On accept, a trigger adds the user as a lobby member.
 - **Request state** (`schema/teammate_request_state.sql`): the feed **hides lobbies the user was
-  `declined` from**, and returns `already_requested` (a `pending` request exists). `RequestedLobbyIds`
-  (a `Set<String>`) is the single source for the "sent" CTA — it's optimistically updated on
-  request/undo and **seeded from `already_requested`** via `ref.listen` in `TeammateSubtab` so the
-  state survives restarts. Once requested the CTA shows "Đã gửi" + an **Undo** button; undo flips the
-  record to `status='cancelled'` (no DELETE policy exists — the initiator UPDATEs it; the insert
-  trigger's dup-check ignores `cancelled`, so the lobby becomes joinable again). `accepted` requests
-  drop out via membership (`get_my_lobby_ids()`).
+  `declined` from**, and returns `already_requested` (a `pending` request exists), which is the
+  **baseline** for the "sent" CTA so it persists across restarts with no client seeding. The
+  `JoinRequestState` notifier (`Map<String,bool>`, `keepAlive`) holds per-lobby *session overrides*
+  that take precedence over the baseline (`true`=just requested, `false`=just undone) — the button
+  reads `override[id] ?? item.alreadyRequested`. Once requested the CTA shows "Đã gửi" + an **Undo**
+  button; undo flips the record to `status='cancelled'` (no DELETE policy exists — the initiator
+  UPDATEs it; the insert trigger's dup-check ignores `cancelled`, so the lobby becomes joinable
+  again). `accepted` requests drop out via membership (`get_my_lobby_ids()`).
 - Model: `LobbyFeedItem` — `id, name, homegroundName, playtime (List<Timeslot>),
   details (LobbyDetails?), visibility, timeslotCompatScore (int), profileCompatScore (double),
   matchFactors (List<String>), alreadyRequested (bool), memberCount (int?)`.
