@@ -17,6 +17,12 @@ sport) and the same shared `FilterData`. Each feed returns `[]` when no sport is
   `Home*Route` classes in `router.dart`).
 - `filter.dart` / `filter_controller.dart` — the **shared filter** across all four subtabs.
 - `lobby_feed_card.dart` — `LobbyFeedCard`, the shared card for the lobby-shaped subtabs.
+  **Design rule: the teammate and challenger cards must stay visually identical** — same name,
+  member-count badge, homeground, playtime/vibe chips, FitScore. The *only* permitted differences
+  are (a) the **MMR block** (`lobbyMmr` + favorability, challenger-only) and (b) the **CTA** passed
+  via `action`. Keep both feeds returning the same columns (incl. `member_count`) so the card
+  renders consistently. Teammate CTA: "Xin vào" → once requested, shows a "Đã gửi" indicator + an
+  **undo** button (`RequestedLobbyIds.unrequest`). Challenger CTA: "Thách đấu" (disabled placeholder).
 - `teammate_section/`, `challenger_section/`, `professional_section/`, `location_section/` — one
   `main.dart` (UI) + `feed_controller.dart` (`@riverpod` data) each.
 
@@ -50,10 +56,11 @@ freezed) — edit them by hand, no build_runner.
 - Data: `home_teammate_lobby_data` Postgres function (already exists).
   Params: `p_sport_id`, `p_timeslots` (user's schedule as jsonb dict — `Timeslot.listToJson`),
   `p_city` (city cluster id), `p_districts` (array of district ids), `p_page_size`, `p_page_number`.
-- Returns: `id, name, homeground_name, playtime, details, visibility, timeslot_compat_score,
-  profile_compat_score, match_factors` (the last is a `text[]` of the real contributing factor
-  codes — `network/industry/skill/age/gender/playtime/location` — that the card's FitScore "vibe"
-  chips render directly instead of guessing from the score).
+- Returns: `id, name, homeground_name, playtime, details, visibility, member_count,
+  timeslot_compat_score, profile_compat_score, match_factors` (`match_factors` is a `text[]` of the
+  real contributing factor codes — `network/industry/skill/age/gender/playtime/location` — that the
+  card's FitScore "vibe" chips render directly instead of guessing from the score). `member_count`
+  was added so teammate cards show the same top-right member badge as challenger.
 - `profile_compat_score` is computed by `calculate_profile_compat_score` and lives in the band
   **[2.5, 5]**: 2.5 is the neutral "ok fit" floor (no shared signal — *not* a poor match), 5 is a
   fully-aligned match. Signals: shared/active networks, shared industry (fallback), skill-level

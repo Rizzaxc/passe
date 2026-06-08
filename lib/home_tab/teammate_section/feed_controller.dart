@@ -58,4 +58,25 @@ class RequestedLobbyIds extends _$RequestedLobbyIds {
       rethrow;
     }
   }
+
+  /// Cancels a pending join request (the "undo" CTA). Optimistically clears the
+  /// lobby from the requested set, then deletes the befriend record; re-adds it
+  /// on failure so the UI stays truthful.
+  Future<void> unrequest(String lobbyId) async {
+    final userId = ref.read(authControllerProvider).value?.id;
+    if (userId == null) return;
+    state = state.difference({lobbyId});
+    try {
+      await Supabase.instance.client
+          .from('lobby_befriend_record')
+          .delete()
+          .eq('initiator_user_id', userId)
+          .eq('target_lobby_id', lobbyId)
+          .eq('interaction_type', 'request')
+          .timeout(const Duration(seconds: 5));
+    } catch (e) {
+      state = {...state, lobbyId};
+      rethrow;
+    }
+  }
 }

@@ -112,7 +112,8 @@
         "teammate": {
             "title": "Đồng đội",
             "join": "Xin Vào",
-            "sent": "Đã Gửi"
+            "sent": "Đã Gửi",
+            "undo": "Hoàn Tác"
         },
         "challenger": {
             "title": "Đối thủ",

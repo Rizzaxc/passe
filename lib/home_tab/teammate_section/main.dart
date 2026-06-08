@@ -62,38 +62,70 @@ class _JoinButton extends ConsumerWidget {
 
   const _JoinButton({required this.lobbyId});
 
+  void _onError(BuildContext context, Object e, StackTrace st, String log) {
+    Talker().handle(e, st, log);
+    showFToast(
+      context: context,
+      icon: const Icon(FIcons.circleX),
+      variant: .destructive,
+      title: Text('error'.tr()),
+      description: Text('errorGeneric'.tr()),
+      alignment: .bottomCenter,
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final requested = ref.watch(requestedLobbyIdsProvider).contains(lobbyId);
 
-    return FButton(
-      size: .sm,
-      variant: requested ? .secondary : .primary,
-      onPress: requested
-          ? null
-          : () async {
+    // Once requested, the CTA becomes a "sent" indicator plus an undo button
+    // that cancels the pending join request.
+    if (requested) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 8,
+        children: [
+          Text(
+            'homeTab.teammate.sent'.tr(),
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          FButton(
+            size: .sm,
+            variant: .outline,
+            prefix: const Icon(FIcons.undo2),
+            onPress: () async {
               try {
                 await ref
                     .read(requestedLobbyIdsProvider.notifier)
-                    .request(lobbyId);
+                    .unrequest(lobbyId);
               } catch (e, st) {
-                Talker().handle(e, st, 'Lobby join request failed');
-                if (!context.mounted) return;
-                showFToast(
-                  context: context,
-                  icon: const Icon(FIcons.circleX),
-                  variant: .destructive,
-                  title: Text('error'.tr()),
-                  description: Text('errorGeneric'.tr()),
-                  alignment: .bottomCenter,
-                );
+                if (context.mounted) {
+                  _onError(context, e, st, 'Lobby join cancel failed');
+                }
               }
             },
-      child: Text(
-        requested
-            ? 'homeTab.teammate.sent'.tr()
-            : 'homeTab.teammate.join'.tr(),
-      ),
+            child: Text('homeTab.teammate.undo'.tr()),
+          ),
+        ],
+      );
+    }
+
+    return FButton(
+      size: .sm,
+      variant: .primary,
+      onPress: () async {
+        try {
+          await ref.read(requestedLobbyIdsProvider.notifier).request(lobbyId);
+        } catch (e, st) {
+          if (context.mounted) {
+            _onError(context, e, st, 'Lobby join request failed');
+          }
+        }
+      },
+      child: Text('homeTab.teammate.join'.tr()),
     );
   }
 }

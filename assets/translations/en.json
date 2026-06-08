@@ -113,7 +113,8 @@
         "teammate": {
             "title": "Teammates",
             "join": "Join",
-            "sent": "Sent"
+            "sent": "Sent",
+            "undo": "Undo"
         },
         "challenger": {
             "title": "Challengers",
