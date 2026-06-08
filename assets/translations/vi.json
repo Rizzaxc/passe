@@ -117,6 +117,12 @@
         "challenger": {
             "title": "Đối thủ",
             "challenge": "Thách Đấu",
+            "mmr": "MMR",
+            "favorability": {
+                "underdog": "Cửa dưới",
+                "even": "Cân sức",
+                "favored": "Cửa trên"
+            },
             "empty": {
                 "title": "Không có đối thủ nào",
                 "message": "Thử điều chỉnh filter hoặc quay lại sau"

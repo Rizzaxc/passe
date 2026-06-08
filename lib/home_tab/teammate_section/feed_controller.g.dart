@@ -86,7 +86,7 @@ final class RequestedLobbyIdsProvider
   }
 }
 
-String _$requestedLobbyIdsHash() => r'6ebf78dfbee91fc00be4a799ff2d2998d53947cb';
+String _$requestedLobbyIdsHash() => r'd7f35792279610fe4fdb080c2cf62d8657c05f82';
 
 abstract class _$RequestedLobbyIds extends $Notifier<Set<String>> {
   Set<String> build();

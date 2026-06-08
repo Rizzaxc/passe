@@ -118,6 +118,12 @@
         "challenger": {
             "title": "Challengers",
             "challenge": "Challenge",
+            "mmr": "MMR",
+            "favorability": {
+                "underdog": "Underdog",
+                "even": "Even",
+                "favored": "Favored"
+            },
             "empty": {
                 "title": "No challengers found",
                 "message": "Try adjusting your filters or check back later"

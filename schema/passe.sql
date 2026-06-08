@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict JOwmkov8MW2zBOd27rqiadHRXT4iMCnKrdeslTpbfc4pHXU3J8FAay1KTX2ZRp2
+\restrict OCm24IbHFXAWlMRZINeNAzc0TC6c4MQ9VkK4hoZ3Na3l2uPXLB9Thb1vfdQbYe3
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.9 (Homebrew)
@@ -25,13 +25,26 @@ SET row_security = off;
 
 CREATE SCHEMA public;
 
-
 --
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON SCHEMA public IS 'standard public schema';
 
+--
+-- Name: activity_payment_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.activity_payment_type AS ENUM (
+    'manual',
+    'da'
+);
+
+--
+-- Name: TYPE activity_payment_type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.activity_payment_type IS 'How prepayment for a scheduled activity is collected: ''manual'' = out-of-band (cash / bank transfer organised by the captain); ''da'' = held by the app via the Đá ledger.';
 
 --
 -- Name: country; Type: TYPE; Schema: public; Owner: -
@@ -41,7 +54,6 @@ CREATE TYPE public.country AS ENUM (
     'VN'
 );
 
-
 --
 -- Name: gender; Type: TYPE; Schema: public; Owner: -
 --
@@ -50,7 +62,6 @@ CREATE TYPE public.gender AS ENUM (
     'M',
     'F'
 );
-
 
 --
 -- Name: health_platform; Type: TYPE; Schema: public; Owner: -
@@ -62,7 +73,6 @@ CREATE TYPE public.health_platform AS ENUM (
     'health_connect'
 );
 
-
 --
 -- Name: lobby_befriend_interaction; Type: TYPE; Schema: public; Owner: -
 --
@@ -72,7 +82,6 @@ CREATE TYPE public.lobby_befriend_interaction AS ENUM (
     'invite',
     'pair'
 );
-
 
 --
 -- Name: lobby_befriend_status; Type: TYPE; Schema: public; Owner: -
@@ -84,7 +93,6 @@ CREATE TYPE public.lobby_befriend_status AS ENUM (
     'declined',
     'cancelled'
 );
-
 
 --
 -- Name: lobby_feed_item_kind; Type: TYPE; Schema: public; Owner: -
@@ -98,7 +106,6 @@ CREATE TYPE public.lobby_feed_item_kind AS ENUM (
     'photo'
 );
 
-
 --
 -- Name: lobby_match_result; Type: TYPE; Schema: public; Owner: -
 --
@@ -109,7 +116,6 @@ CREATE TYPE public.lobby_match_result AS ENUM (
     'practice'
 );
 
-
 --
 -- Name: lobby_visibility; Type: TYPE; Schema: public; Owner: -
 --
@@ -119,7 +125,6 @@ CREATE TYPE public.lobby_visibility AS ENUM (
     'discoverable',
     'public'
 );
-
 
 --
 -- Name: professional_booking_status; Type: TYPE; Schema: public; Owner: -
@@ -134,7 +139,6 @@ CREATE TYPE public.professional_booking_status AS ENUM (
     'completed'
 );
 
-
 --
 -- Name: professional_role; Type: TYPE; Schema: public; Owner: -
 --
@@ -144,6 +148,76 @@ CREATE TYPE public.professional_role AS ENUM (
     'referee'
 );
 
+--
+-- Name: activity_confirmation_status(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.activity_confirmation_status(p_activity_id uuid) RETURNS TABLE(confirmed_count integer, threshold integer, me_confirmed boolean, activity_confirmed boolean)
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_threshold int;
+    v_count     int;
+    v_me        boolean;
+BEGIN
+    SELECT a.confirmation_threshold INTO v_threshold
+        FROM public.activity a
+        WHERE a.id = p_activity_id;
+
+    SELECT COUNT(*)::int INTO v_count
+        FROM public.activity_confirmation
+        WHERE activity_id = p_activity_id;
+
+    SELECT EXISTS(
+        SELECT 1
+            FROM public.activity_confirmation
+            WHERE activity_id = p_activity_id
+              AND user_id = auth.uid()
+    ) INTO v_me;
+
+    RETURN QUERY SELECT
+        v_count,
+        v_threshold,
+        v_me,
+        (v_threshold IS NULL OR v_count >= v_threshold);
+END;
+$$;
+
+--
+-- Name: activity_is_confirmed(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.activity_is_confirmed(p_activity_id uuid) RETURNS boolean
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_threshold int;
+    v_count     int;
+BEGIN
+    SELECT a.confirmation_threshold INTO v_threshold
+        FROM public.activity a
+        WHERE a.id = p_activity_id;
+
+    -- Activity doesn't exist — treat as not confirmed rather than NULL
+    -- so callers don't have to handle three-valued logic.
+    IF NOT FOUND THEN
+        RETURN false;
+    END IF;
+
+    -- No threshold = always confirmed once scheduled.
+    IF v_threshold IS NULL THEN
+        RETURN true;
+    END IF;
+
+    SELECT COUNT(*) INTO v_count
+        FROM public.activity_confirmation
+        WHERE activity_id = p_activity_id;
+
+    RETURN v_count >= v_threshold;
+END;
+$$;
 
 --
 -- Name: calculate_profile_compat_score(uuid, uuid, bigint); Type: FUNCTION; Schema: public; Owner: -
@@ -324,7 +398,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: calculate_timeslot_compat_score(jsonb, jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -364,7 +437,6 @@ BEGIN
     RETURN total_score;
 END;
 $$;
-
 
 --
 -- Name: create_lobby_with_location(text, integer, text, jsonb, jsonb, uuid, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
@@ -423,6 +495,126 @@ BEGIN
 END;
 $$;
 
+--
+-- Name: fn_lobby_playtime_keys(jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) RETURNS text[]
+    LANGUAGE sql IMMUTABLE
+    SET search_path TO ''
+    AS $$
+    SELECT COALESCE(array_agg(DISTINCT base_day || ':' || chunk), '{}')
+    FROM (
+        SELECT
+            elem->>'dayChunk' AS chunk,
+            unnest(CASE elem->>'dayOfWeek'
+                       WHEN 'all' THEN ARRAY['mon','tue','wed','thu','fri','sat','sun']
+                       WHEN 'mwf' THEN ARRAY['mon','wed','fri']
+                       WHEN 'tts' THEN ARRAY['tue','thu','sat']
+                       WHEN 'wkn' THEN ARRAY['sat','sun']
+                       ELSE ARRAY[elem->>'dayOfWeek']
+                   END) AS base_day
+        FROM jsonb_array_elements(
+                 CASE WHEN jsonb_typeof(COALESCE(p_playtime, '[]'::jsonb)) = 'array'
+                      THEN p_playtime ELSE '[]'::jsonb END
+             ) AS elem
+        WHERE elem->>'dayChunk' IS NOT NULL AND elem->>'dayOfWeek' IS NOT NULL
+    ) expanded;
+$$;
+
+--
+-- Name: fn_lobby_recompute_stats(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_lobby_recompute_stats(p_lobby_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_sport      text;
+    v_mmr        integer;
+    v_count      integer;
+    v_net        bigint[];
+    v_active_net bigint[];
+    v_ind        integer[];
+BEGIN
+    SELECT public.fn_sport_name(l.sport_id) INTO v_sport
+    FROM public.lobby l WHERE l.id = p_lobby_id;
+
+    SELECT count(*)::integer INTO v_count
+    FROM public.lobby_member WHERE lobby_id = p_lobby_id;
+
+    WITH member_elo AS (
+        SELECT COALESCE(MAX(ur.elo), 1000) AS elo
+        FROM public.lobby_member lm
+        LEFT JOIN public.user_rating ur
+            ON ur.user_id = lm.user_id AND ur.sport = v_sport
+        WHERE lm.lobby_id = p_lobby_id
+        GROUP BY lm.user_id
+    ),
+    top_n AS (SELECT elo FROM member_elo ORDER BY elo DESC LIMIT 5)
+    SELECT COALESCE(ROUND(AVG(elo))::integer, 1000) INTO v_mmr FROM top_n;
+
+    SELECT COALESCE(array_agg(DISTINCT un.network_id), '{}')
+    INTO v_net
+    FROM public.lobby_member lm
+    JOIN public.user_network un ON un.user_id = lm.user_id
+    WHERE lm.lobby_id = p_lobby_id;
+
+    SELECT COALESCE(array_agg(DISTINCT un.network_id), '{}')
+    INTO v_active_net
+    FROM public.lobby_member lm
+    JOIN public.user_network un ON un.user_id = lm.user_id
+    WHERE lm.lobby_id = p_lobby_id AND NOT un.alumni;
+
+    SELECT COALESCE(array_agg(DISTINCT ui.industry_id), '{}')
+    INTO v_ind
+    FROM public.lobby_member lm
+    JOIN public.user_industry ui ON ui.user_id = lm.user_id
+    WHERE lm.lobby_id = p_lobby_id;
+
+    UPDATE public.lobby
+       SET mmr                = v_mmr,
+           member_count       = v_count,
+           network_ids        = v_net,
+           active_network_ids = v_active_net,
+           industry_ids       = v_ind
+     WHERE id = p_lobby_id;
+END;
+$$;
+
+--
+-- Name: fn_playtime_to_dict(jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_playtime_to_dict(p_playtime jsonb) RETURNS jsonb
+    LANGUAGE sql IMMUTABLE
+    SET search_path TO ''
+    AS $$
+    SELECT COALESCE(jsonb_object_agg(base_day, chunks), '{}'::jsonb)
+    FROM (
+        SELECT
+            base_day,
+            jsonb_agg(DISTINCT chunk) AS chunks
+        FROM (
+            SELECT
+                elem->>'dayChunk' AS chunk,
+                unnest(CASE elem->>'dayOfWeek'
+                           WHEN 'all' THEN ARRAY['mon','tue','wed','thu','fri','sat','sun']
+                           WHEN 'mwf' THEN ARRAY['mon','wed','fri']
+                           WHEN 'tts' THEN ARRAY['tue','thu','sat']
+                           WHEN 'wkn' THEN ARRAY['sat','sun']
+                           ELSE ARRAY[elem->>'dayOfWeek']
+                       END) AS base_day
+            FROM jsonb_array_elements(
+                     CASE WHEN jsonb_typeof(COALESCE(p_playtime, '[]'::jsonb)) = 'array'
+                          THEN p_playtime ELSE '[]'::jsonb END
+                 ) AS elem
+            WHERE elem->>'dayChunk' IS NOT NULL AND elem->>'dayOfWeek' IS NOT NULL
+        ) expanded
+        GROUP BY base_day
+    ) grouped;
+$$;
 
 --
 -- Name: fn_seed_initial_elo(); Type: FUNCTION; Schema: public; Owner: -
@@ -469,6 +661,23 @@ begin
 end;
 $$;
 
+--
+-- Name: fn_sport_name(bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_sport_name(p_sport_id bigint) RETURNS text
+    LANGUAGE sql IMMUTABLE
+    SET search_path TO ''
+    AS $$
+    SELECT CASE p_sport_id
+               WHEN 1 THEN 'soccer'
+               WHEN 2 THEN 'basketball'
+               WHEN 3 THEN 'badminton'
+               WHEN 4 THEN 'tennis'
+               WHEN 5 THEN 'pickleball'
+               ELSE NULL
+           END;
+$$;
 
 --
 -- Name: get_my_lobby_ids(); Type: FUNCTION; Schema: public; Owner: -
@@ -480,7 +689,6 @@ CREATE FUNCTION public.get_my_lobby_ids() RETURNS SETOF uuid
     AS $$
   SELECT lobby_id FROM public.lobby_member WHERE user_id = auth.uid();
 $$;
-
 
 --
 -- Name: get_popular_networks(integer); Type: FUNCTION; Schema: public; Owner: -
@@ -501,12 +709,108 @@ ORDER BY COUNT(un.user_id) DESC, n.name
 LIMIT limit_count;
 $$;
 
+--
+-- Name: home_challenger_lobby_data(uuid, bigint, integer, character varying[], integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_mmr_window integer DEFAULT 200, p_page_size integer DEFAULT 10, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, name text, homeground_name text, playtime jsonb, details jsonb, visibility public.lobby_visibility, member_count integer, lobby_mmr integer, favorability text, profile_compat_score numeric)
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+    c_home_adv  constant integer := 50;  -- home-court edge applied to the OPPONENT (away team disadvantaged)
+    c_w_compat  constant numeric := 0.6;
+    c_w_even    constant numeric := 0.4;
+    v_mmr     integer;
+    v_net     bigint[];
+    v_active  bigint[];
+    v_ind     integer[];
+    v_pt      text[];
+    v_lat     double precision;
+    v_lon     double precision;
+    v_window  integer := p_mmr_window;
+    v_cnt     integer;
+BEGIN
+    SELECT l.mmr, l.network_ids, l.active_network_ids, l.industry_ids, l.playtime_keys, loc.lat, loc.lon
+      INTO v_mmr, v_net, v_active, v_ind, v_pt, v_lat, v_lon
+      FROM public.lobby l
+      LEFT JOIN public.location loc ON l.home_ground = loc.id
+     WHERE l.id = p_context_lobby_id;
+    v_mmr := COALESCE(v_mmr, 1000);
+
+    SELECT count(*) INTO v_cnt
+      FROM public.lobby l
+      JOIN public.location loc ON l.home_ground = loc.id
+     WHERE l.sport_id = p_sport_id AND l.open_to_challengers AND l.visibility <> 'private'
+       AND loc.city_cluster = p_city AND l.id <> p_context_lobby_id
+       AND l.id NOT IN (SELECT public.get_my_lobby_ids())
+       AND l.mmr BETWEEN v_mmr - v_window AND v_mmr + v_window;
+    IF v_cnt < p_page_size THEN
+        v_window := v_window * 2;
+        SELECT count(*) INTO v_cnt
+          FROM public.lobby l
+          JOIN public.location loc ON l.home_ground = loc.id
+         WHERE l.sport_id = p_sport_id AND l.open_to_challengers AND l.visibility <> 'private'
+           AND loc.city_cluster = p_city AND l.id <> p_context_lobby_id
+           AND l.id NOT IN (SELECT public.get_my_lobby_ids())
+           AND l.mmr BETWEEN v_mmr - v_window AND v_mmr + v_window;
+        IF v_cnt < p_page_size THEN
+            v_window := 1000000;
+        END IF;
+    END IF;
+
+    RETURN QUERY
+    WITH candidate AS (
+        SELECT
+            l.id, l.name, loc.name AS homeground_name, l.playtime, l.details, l.visibility,
+            l.member_count, l.mmr AS cand_mmr,
+            l.network_ids, l.active_network_ids, l.industry_ids, l.playtime_keys,
+            loc.district, loc.lat, loc.lon
+        FROM public.lobby l
+        JOIN public.location loc ON l.home_ground = loc.id
+        WHERE l.sport_id = p_sport_id AND l.open_to_challengers AND l.visibility <> 'private'
+          AND loc.city_cluster = p_city AND l.id <> p_context_lobby_id
+          AND l.id NOT IN (SELECT public.get_my_lobby_ids())
+          AND l.mmr BETWEEN v_mmr - v_window AND v_mmr + v_window
+    ),
+    scored AS (
+        SELECT
+            c.*,
+            1.0 / (1.0 + power(10.0, ((c.cand_mmr + c_home_adv - v_mmr)::numeric / 400.0))) AS away_expected,
+            (
+                (CASE WHEN c.network_ids && v_net THEN 3 ELSE 0 END)
+              + (CASE WHEN c.active_network_ids && v_active THEN 2 ELSE 0 END)
+              + LEAST(2, cardinality(ARRAY(
+                    SELECT unnest(c.playtime_keys) INTERSECT SELECT unnest(v_pt))))
+              + (CASE WHEN (c.district = ANY(p_districts))
+                        OR (v_lat IS NOT NULL AND c.lat IS NOT NULL
+                            AND abs(c.lat - v_lat) + abs(c.lon - v_lon) < 0.1)
+                      THEN 1 ELSE 0 END)
+              + (CASE WHEN c.industry_ids && v_ind THEN 1 ELSE 0 END)
+            )::numeric AS compat_raw
+        FROM candidate c
+    )
+    SELECT
+        s.id, s.name::text, s.homeground_name::text, s.playtime, s.details, s.visibility,
+        s.member_count, s.cand_mmr AS lobby_mmr,
+        CASE WHEN s.away_expected > 0.55 THEN 'favored'
+             WHEN s.away_expected < 0.45 THEN 'underdog'
+             ELSE 'even' END AS favorability,
+        (1.0 + (s.compat_raw / 9.0) * 4.0) AS profile_compat_score
+    FROM scored s
+    ORDER BY (
+        c_w_compat * (((1.0 + (s.compat_raw / 9.0) * 4.0) - 1.0) / 4.0)
+      + c_w_even * (1.0 - 2.0 * abs(s.away_expected - 0.5))
+    ) DESC
+    LIMIT p_page_size OFFSET (p_page_number - 1) * p_page_size;
+END;
+$$;
 
 --
 -- Name: home_teammate_lobby_data(bigint, jsonb, integer, character varying[], integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_page_size integer DEFAULT 10, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, name character varying, homeground_name character varying, playtime jsonb, details jsonb, visibility public.lobby_visibility, timeslot_compat_score integer, profile_compat_score numeric)
+CREATE FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_page_size integer DEFAULT 10, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, name text, homeground_name text, playtime jsonb, details jsonb, visibility public.lobby_visibility, timeslot_compat_score integer, profile_compat_score numeric)
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
@@ -514,8 +818,8 @@ BEGIN
     RETURN QUERY
         SELECT
             l.id,
-            l.name,
-            loc.name AS homeground_name,
+            l.name::text,
+            loc.name::text AS homeground_name,
             l.playtime,
             l.details,
             l.visibility,
@@ -526,7 +830,7 @@ BEGIN
                 JOIN
             public.location loc ON l.home_ground = loc.id
                 CROSS JOIN LATERAL (
-                SELECT public.calculate_timeslot_compat_score(p_timeslots, l.playtime) AS ts_score
+                SELECT public.calculate_timeslot_compat_score(p_timeslots, public.fn_playtime_to_dict(l.playtime)) AS ts_score
                 ) ts
                 CROSS JOIN LATERAL (
                 SELECT public.calculate_profile_compat_score(auth.uid(), l.id, l.sport_id) AS profile_score
@@ -536,7 +840,7 @@ BEGIN
           AND l.visibility != 'private'
           AND loc.city_cluster = p_city
           AND loc.district = ANY(p_districts)
-          AND ts.ts_score >= 4
+          AND (p_timeslots = '{}'::jsonb OR ts.ts_score >= 4)
         ORDER BY
             profile_compat_score DESC,
             timeslot_compat_score DESC
@@ -544,7 +848,6 @@ BEGIN
             OFFSET (p_page_number - 1) * p_page_size;
 END;
 $$;
-
 
 --
 -- Name: immutable_unaccent(text); Type: FUNCTION; Schema: public; Owner: -
@@ -556,7 +859,6 @@ CREATE FUNCTION public.immutable_unaccent(text) RETURNS text
     AS $_$
 SELECT extensions.unaccent($1)
 $_$;
-
 
 --
 -- Name: lobby_add_captain_as_member(); Type: FUNCTION; Schema: public; Owner: -
@@ -573,7 +875,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-
 
 --
 -- Name: lobby_before_delete(); Type: FUNCTION; Schema: public; Owner: -
@@ -605,7 +906,6 @@ BEGIN
     RETURN OLD;
 END;
 $$;
-
 
 --
 -- Name: lobby_befriend_accepted_trigger_fn(); Type: FUNCTION; Schema: public; Owner: -
@@ -662,7 +962,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-
 
 --
 -- Name: lobby_befriend_record_before_insert_trigger_fn(); Type: FUNCTION; Schema: public; Owner: -
@@ -767,7 +1066,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: lobby_feed_data(uuid, integer, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -802,7 +1100,6 @@ BEGIN
         LIMIT p_page_size;
 END;
 $$;
-
 
 --
 -- Name: lobby_match_history_data(uuid, integer, integer); Type: FUNCTION; Schema: public; Owner: -
@@ -847,7 +1144,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: lobby_match_referee_role_check(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -878,7 +1174,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-
 
 --
 -- Name: lobby_member_prevent_captain_leave(); Type: FUNCTION; Schema: public; Owner: -
@@ -920,7 +1215,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: nanoid(integer, text); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -930,7 +1224,6 @@ CREATE FUNCTION public.nanoid(size integer DEFAULT 10, alphabet text DEFAULT '01
     AS $$
     SELECT extensions.nanoid(size, alphabet);
 $$;
-
 
 --
 -- Name: new_user_created_trigger_fn(); Type: FUNCTION; Schema: public; Owner: -
@@ -947,7 +1240,6 @@ begin
     return new;
 end;
 $$;
-
 
 --
 -- Name: professional_booking_review_updated_trigger_fn(); Type: FUNCTION; Schema: public; Owner: -
@@ -991,7 +1283,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: search_locations(text); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -1031,7 +1322,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: search_networks_unaccent(text, integer); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -1063,7 +1353,6 @@ ORDER BY
 LIMIT result_limit;
 $$;
 
-
 --
 -- Name: search_networks_unaccent(text, integer, bigint[], text[]); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -1094,6 +1383,92 @@ ORDER BY
 LIMIT result_limit;
 $$;
 
+--
+-- Name: trg_lobby_member_recompute(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_lobby_member_recompute() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        PERFORM public.fn_lobby_recompute_stats(OLD.lobby_id);
+        RETURN OLD;
+    ELSIF TG_OP = 'UPDATE' THEN
+        IF NEW.lobby_id IS DISTINCT FROM OLD.lobby_id THEN
+            PERFORM public.fn_lobby_recompute_stats(OLD.lobby_id);
+        END IF;
+        PERFORM public.fn_lobby_recompute_stats(NEW.lobby_id);
+        RETURN NEW;
+    ELSE
+        PERFORM public.fn_lobby_recompute_stats(NEW.lobby_id);
+        RETURN NEW;
+    END IF;
+END;
+$$;
+
+--
+-- Name: trg_lobby_playtime_keys(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_lobby_playtime_keys() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+    NEW.playtime_keys := public.fn_lobby_playtime_keys(NEW.playtime);
+    RETURN NEW;
+END;
+$$;
+
+--
+-- Name: trg_user_affiliation_recompute(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_user_affiliation_recompute() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    r record;
+    v_user uuid := COALESCE(NEW.user_id, OLD.user_id);
+BEGIN
+    FOR r IN
+        SELECT lobby_id FROM public.lobby_member WHERE user_id = v_user
+    LOOP
+        PERFORM public.fn_lobby_recompute_stats(r.lobby_id);
+    END LOOP;
+    RETURN COALESCE(NEW, OLD);
+END;
+$$;
+
+--
+-- Name: trg_user_rating_recompute(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_user_rating_recompute() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    r record;
+BEGIN
+    IF TG_OP = 'UPDATE' AND NOT (OLD.elo IS DISTINCT FROM NEW.elo) THEN
+        RETURN NEW;
+    END IF;
+    FOR r IN
+        SELECT lm.lobby_id
+        FROM public.lobby_member lm
+        JOIN public.lobby l ON l.id = lm.lobby_id
+        WHERE lm.user_id = NEW.user_id
+          AND public.fn_sport_name(l.sport_id) = NEW.sport
+    LOOP
+        PERFORM public.fn_lobby_recompute_stats(r.lobby_id);
+    END LOOP;
+    RETURN NEW;
+END;
+$$;
 
 --
 -- Name: vietnamese; Type: TEXT SEARCH CONFIGURATION; Schema: public; Owner: -
@@ -1159,7 +1534,6 @@ ALTER TEXT SEARCH CONFIGURATION public.vietnamese
 ALTER TEXT SEARCH CONFIGURATION public.vietnamese
     ADD MAPPING FOR uint WITH simple;
 
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -1177,13 +1551,11 @@ CREATE TABLE public.achievement (
     repeatable boolean DEFAULT false NOT NULL
 );
 
-
 --
 -- Name: TABLE achievement; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.achievement IS 'activities for users to earn XP and level up';
-
 
 --
 -- Name: activity; Type: TABLE; Schema: public; Owner: -
@@ -1198,10 +1570,20 @@ CREATE TABLE public.activity (
     lobby_id uuid,
     professional_booking_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    location_id uuid,
+    prepayment_required boolean DEFAULT false NOT NULL,
+    payment_type public.activity_payment_type,
+    prepayment_amount numeric(10,2),
+    confirmation_threshold integer,
+    confirmation_deadline timestamp with time zone,
+    recurrence_day_of_week smallint,
+    CONSTRAINT activity_confirmation_deadline_validity CHECK (((confirmation_deadline IS NULL) OR (confirmation_deadline < start_time))),
+    CONSTRAINT activity_confirmation_threshold_validity CHECK (((confirmation_threshold IS NULL) OR (confirmation_threshold > 0))),
+    CONSTRAINT activity_prepayment_terms_validity CHECK ((((prepayment_required = false) AND (payment_type IS NULL) AND (prepayment_amount IS NULL)) OR ((prepayment_required = true) AND (payment_type IS NOT NULL) AND (prepayment_amount IS NOT NULL) AND (prepayment_amount > (0)::numeric)))),
+    CONSTRAINT activity_recurrence_day_validity CHECK (((recurrence_day_of_week IS NULL) OR ((recurrence_day_of_week >= 0) AND (recurrence_day_of_week <= 6)))),
     CONSTRAINT activity_source_exclusivity CHECK ((NOT ((lobby_id IS NOT NULL) AND (professional_booking_id IS NOT NULL)))),
     CONSTRAINT activity_time_validity CHECK (((end_time IS NULL) OR (end_time > start_time)))
 );
-
 
 --
 -- Name: TABLE activity; Type: COMMENT; Schema: public; Owner: -
@@ -1209,6 +1591,47 @@ CREATE TABLE public.activity (
 
 COMMENT ON TABLE public.activity IS 'User activity sessions - can be linked to lobby or professional booking';
 
+--
+-- Name: COLUMN activity.location_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.activity.location_id IS 'Where the session is held. App defaults this to the lobby''s home_ground when creating an activity.';
+
+--
+-- Name: COLUMN activity.confirmation_threshold; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.activity.confirmation_threshold IS 'Minimum confirmed members for the activity to be "official". NULL = no threshold.';
+
+--
+-- Name: COLUMN activity.confirmation_deadline; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.activity.confirmation_deadline IS 'Cutoff for accepting confirmations. NULL = no cutoff. Form defaults this to 2 days before start_time; auto-off when the session is less than 2 days out.';
+
+--
+-- Name: COLUMN activity.recurrence_day_of_week; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.activity.recurrence_day_of_week IS 'Weekly recurrence anchor (0=Mon … 6=Sun, ISO ordering). NULL = one-off. Recurrence is virtual — occurrences aren''t materialised; the app derives next-occurrence from start_time + this day.';
+
+--
+-- Name: activity_confirmation; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.activity_confirmation (
+    activity_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    confirmed_at timestamp with time zone DEFAULT now() NOT NULL,
+    deposit_da integer DEFAULT 0 NOT NULL,
+    CONSTRAINT activity_confirmation_deposit_da_check CHECK ((deposit_da >= 0))
+);
+
+--
+-- Name: TABLE activity_confirmation; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.activity_confirmation IS 'Members who have committed to attending an activity. Row count is compared against activity.confirmation_threshold to determine whether the session is "official". deposit_da records the Đá held when activity.payment_type = ''da''.';
 
 --
 -- Name: activity_health_metrics; Type: TABLE; Schema: public; Owner: -
@@ -1239,13 +1662,11 @@ CREATE TABLE public.activity_health_metrics (
     CONSTRAINT heart_rate_validity CHECK ((((avg_heart_rate IS NULL) OR ((avg_heart_rate >= 30) AND (avg_heart_rate <= 250))) AND ((max_heart_rate IS NULL) OR ((max_heart_rate >= 30) AND (max_heart_rate <= 250))) AND ((min_heart_rate IS NULL) OR ((min_heart_rate >= 30) AND (min_heart_rate <= 250)))))
 );
 
-
 --
 -- Name: TABLE activity_health_metrics; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.activity_health_metrics IS 'Aggregated health metrics for user activities';
-
 
 --
 -- Name: activity_hr_sample; Type: TABLE; Schema: public; Owner: -
@@ -1259,13 +1680,11 @@ CREATE TABLE public.activity_hr_sample (
     CONSTRAINT hr_sample_bpm_validity CHECK (((bpm >= 30) AND (bpm <= 250)))
 );
 
-
 --
 -- Name: TABLE activity_hr_sample; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.activity_hr_sample IS 'Raw heart rate samples during activities - enables HR curve reconstruction and detailed analysis';
-
 
 --
 -- Name: activity_hr_sample_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -1280,7 +1699,6 @@ ALTER TABLE public.activity_hr_sample ALTER COLUMN id ADD GENERATED ALWAYS AS ID
     CACHE 1
 );
 
-
 --
 -- Name: badminton_profile; Type: TABLE; Schema: public; Owner: -
 --
@@ -1293,7 +1711,6 @@ CREATE TABLE public.badminton_profile (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
-
 
 --
 -- Name: basketball_profile; Type: TABLE; Schema: public; Owner: -
@@ -1308,7 +1725,6 @@ CREATE TABLE public.basketball_profile (
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
 --
 -- Name: booking_additional_users; Type: TABLE; Schema: public; Owner: -
 --
@@ -1317,7 +1733,6 @@ CREATE TABLE public.booking_additional_users (
     booking_id uuid NOT NULL,
     user_id uuid NOT NULL
 );
-
 
 --
 -- Name: daily_health_summary; Type: TABLE; Schema: public; Owner: -
@@ -1341,13 +1756,11 @@ CREATE TABLE public.daily_health_summary (
     CONSTRAINT resting_hr_validity CHECK (((resting_heart_rate IS NULL) OR ((resting_heart_rate >= 30) AND (resting_heart_rate <= 150))))
 );
 
-
 --
 -- Name: TABLE daily_health_summary; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.daily_health_summary IS 'Daily health metrics for long-term trend analysis';
-
 
 --
 -- Name: industry; Type: TABLE; Schema: public; Owner: -
@@ -1357,7 +1770,6 @@ CREATE TABLE public.industry (
     id integer NOT NULL,
     name character varying(128) NOT NULL
 );
-
 
 --
 -- Name: industry_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -1371,13 +1783,11 @@ CREATE SEQUENCE public.industry_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
 --
 -- Name: industry_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.industry_id_seq OWNED BY public.industry.id;
-
 
 --
 -- Name: lobby; Type: TABLE; Schema: public; Owner: -
@@ -1392,9 +1802,15 @@ CREATE TABLE public.lobby (
     playtime jsonb,
     details jsonb,
     home_ground uuid,
-    visibility public.lobby_visibility DEFAULT 'discoverable'::public.lobby_visibility
+    visibility public.lobby_visibility DEFAULT 'discoverable'::public.lobby_visibility,
+    open_to_challengers boolean DEFAULT false NOT NULL,
+    mmr integer DEFAULT 1000 NOT NULL,
+    member_count integer DEFAULT 0 NOT NULL,
+    network_ids bigint[] DEFAULT '{}'::bigint[] NOT NULL,
+    active_network_ids bigint[] DEFAULT '{}'::bigint[] NOT NULL,
+    industry_ids integer[] DEFAULT '{}'::integer[] NOT NULL,
+    playtime_keys text[] DEFAULT '{}'::text[] NOT NULL
 );
-
 
 --
 -- Name: lobby_befriend_record; Type: TABLE; Schema: public; Owner: -
@@ -1415,7 +1831,6 @@ CREATE TABLE public.lobby_befriend_record (
     CONSTRAINT befriend_record_request_conditions CHECK (((interaction_type <> 'request'::public.lobby_befriend_interaction) OR ((target_user_id IS NULL) AND (target_lobby_id IS NOT NULL))))
 );
 
-
 --
 -- Name: lobby_feed_item; Type: TABLE; Schema: public; Owner: -
 --
@@ -1430,13 +1845,11 @@ CREATE TABLE public.lobby_feed_item (
     CONSTRAINT lobby_feed_item_payload_shape CHECK ((((kind = 'update'::public.lobby_feed_item_kind) AND (payload ? 'title'::text) AND (payload ? 'kind'::text) AND (payload ? 'tone'::text) AND (payload ? 'fields'::text)) OR ((kind = 'personal'::public.lobby_feed_item_kind) AND (payload ? 'action_kind'::text)) OR ((kind = 'system'::public.lobby_feed_item_kind) AND (payload ? 'text'::text)) OR ((kind = 'poll'::public.lobby_feed_item_kind) AND (payload ? 'question'::text) AND (payload ? 'options'::text)) OR ((kind = 'photo'::public.lobby_feed_item_kind) AND (payload ? 'storage_path'::text))))
 );
 
-
 --
 -- Name: TABLE lobby_feed_item; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.lobby_feed_item IS 'Action-stream entries for a lobby''s activity tab. Payload shape varies by kind — see CHECK constraint and lib/manage_tab/lobby_section/activity/feed.dart for the canonical schemas.';
-
 
 --
 -- Name: lobby_feed_poll_vote; Type: TABLE; Schema: public; Owner: -
@@ -1450,13 +1863,11 @@ CREATE TABLE public.lobby_feed_poll_vote (
     CONSTRAINT lobby_feed_poll_vote_option_index_check CHECK ((option_index >= 0))
 );
 
-
 --
 -- Name: TABLE lobby_feed_poll_vote; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.lobby_feed_poll_vote IS 'Member votes against a feed-item poll. option_index points into the payload.options array of the parent lobby_feed_item.';
-
 
 --
 -- Name: lobby_match; Type: TABLE; Schema: public; Owner: -
@@ -1481,20 +1892,17 @@ CREATE TABLE public.lobby_match (
     CONSTRAINT lobby_match_sets_only_when_decided CHECK ((((result = 'practice'::public.lobby_match_result) AND (sets IS NULL)) OR (result <> 'practice'::public.lobby_match_result)))
 );
 
-
 --
 -- Name: TABLE lobby_match; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.lobby_match IS 'Recorded match results for a lobby. sets is a JSON array of [us, them] tuples; venue_label / duration_label are denormalised copies for fast list rendering.';
 
-
 --
 -- Name: COLUMN lobby_match.referee_booking_id; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.lobby_match.referee_booking_id IS 'FK to the professional_booking that hired the referee for this match. Required for challenge matches (see lobby_match_referee_required_for_challenge). RESTRICT on delete because the booking row is the historical record of the hire — deleting it would orphan the audit trail.';
-
 
 --
 -- Name: lobby_member; Type: TABLE; Schema: public; Owner: -
@@ -1506,13 +1914,11 @@ CREATE TABLE public.lobby_member (
     lobby_id uuid NOT NULL
 );
 
-
 --
 -- Name: TABLE lobby_member; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.lobby_member IS 'join table between user and lobby';
-
 
 --
 -- Name: lobby_member_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -1526,7 +1932,6 @@ ALTER TABLE public.lobby_member ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDEN
     NO MAXVALUE
     CACHE 1
 );
-
 
 --
 -- Name: location; Type: TABLE; Schema: public; Owner: -
@@ -1547,20 +1952,17 @@ CREATE TABLE public.location (
     city_cluster bigint
 );
 
-
 --
 -- Name: COLUMN location.lat; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.location.lat IS 'latitude';
 
-
 --
 -- Name: COLUMN location.lon; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.location.lon IS 'longitude';
-
 
 --
 -- Name: network; Type: TABLE; Schema: public; Owner: -
@@ -1575,13 +1977,11 @@ CREATE TABLE public.network (
     CONSTRAINT network_category_check CHECK ((category = ANY (ARRAY['high school'::text, 'gifted high school'::text, 'university'::text, 'company'::text])))
 );
 
-
 --
 -- Name: TABLE network; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.network IS 'entities/ organizations that users may share';
-
 
 --
 -- Name: network_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -1596,7 +1996,6 @@ ALTER TABLE public.network ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY 
     CACHE 1
 );
 
-
 --
 -- Name: pickleball_profile; Type: TABLE; Schema: public; Owner: -
 --
@@ -1609,7 +2008,6 @@ CREATE TABLE public.pickleball_profile (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
-
 
 --
 -- Name: professional; Type: TABLE; Schema: public; Owner: -
@@ -1636,7 +2034,6 @@ CREATE TABLE public.professional (
     CONSTRAINT professional_sports_check CHECK ((array_length(sports, 1) > 0))
 );
 
-
 --
 -- Name: professional_booking; Type: TABLE; Schema: public; Owner: -
 --
@@ -1661,7 +2058,6 @@ CREATE TABLE public.professional_booking (
     CONSTRAINT professional_booking_status_check CHECK ((status <> 'completed'::public.professional_booking_status))
 );
 
-
 --
 -- Name: professional_booking_review; Type: TABLE; Schema: public; Owner: -
 --
@@ -1675,7 +2071,6 @@ CREATE TABLE public.professional_booking_review (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT professional_booking_review_rating_check CHECK (((rating >= 0.5) AND (rating <= 5.0) AND ((rating * (2)::numeric) = floor((rating * (2)::numeric)))))
 );
-
 
 --
 -- Name: professional_service; Type: TABLE; Schema: public; Owner: -
@@ -1698,7 +2093,6 @@ CREATE TABLE public.professional_service (
     CONSTRAINT professional_service_min_duration_minutes_check CHECK ((min_duration_minutes > 0))
 );
 
-
 --
 -- Name: soccer_profile; Type: TABLE; Schema: public; Owner: -
 --
@@ -1712,7 +2106,6 @@ CREATE TABLE public.soccer_profile (
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
 --
 -- Name: sport; Type: TABLE; Schema: public; Owner: -
 --
@@ -1721,7 +2114,6 @@ CREATE TABLE public.sport (
     id bigint NOT NULL,
     name text NOT NULL
 );
-
 
 --
 -- Name: sport_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -1736,7 +2128,6 @@ ALTER TABLE public.sport ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
     CACHE 1
 );
 
-
 --
 -- Name: supported_city_cluster; Type: TABLE; Schema: public; Owner: -
 --
@@ -1746,7 +2137,6 @@ CREATE TABLE public.supported_city_cluster (
     country public.country DEFAULT 'VN'::public.country NOT NULL,
     name text NOT NULL
 );
-
 
 --
 -- Name: supported_city_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -1761,7 +2151,6 @@ ALTER TABLE public.supported_city_cluster ALTER COLUMN id ADD GENERATED BY DEFAU
     CACHE 1
 );
 
-
 --
 -- Name: tennis_profile; Type: TABLE; Schema: public; Owner: -
 --
@@ -1774,7 +2163,6 @@ CREATE TABLE public.tennis_profile (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
-
 
 --
 -- Name: user; Type: TABLE; Schema: public; Owner: -
@@ -1806,7 +2194,6 @@ CREATE TABLE public."user" (
     CONSTRAINT user_username_alphanumeric CHECK (((username)::text ~ '^[a-zA-Z0-9]+$'::text))
 );
 
-
 --
 -- Name: user_health_link; Type: TABLE; Schema: public; Owner: -
 --
@@ -1818,13 +2205,11 @@ CREATE TABLE public.user_health_link (
     last_sync_at timestamp with time zone
 );
 
-
 --
 -- Name: TABLE user_health_link; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.user_health_link IS 'Tracks user health service (Apple Health/Google Fit) linking status';
-
 
 --
 -- Name: user_industry; Type: TABLE; Schema: public; Owner: -
@@ -1836,13 +2221,11 @@ CREATE TABLE public.user_industry (
     industry_id integer
 );
 
-
 --
 -- Name: TABLE user_industry; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.user_industry IS 'join table for `user` and `industry`';
-
 
 --
 -- Name: user_industry_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -1857,7 +2240,6 @@ ALTER TABLE public.user_industry ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDE
     CACHE 1
 );
 
-
 --
 -- Name: user_network; Type: TABLE; Schema: public; Owner: -
 --
@@ -1869,13 +2251,11 @@ CREATE TABLE public.user_network (
     alumni boolean DEFAULT true NOT NULL
 );
 
-
 --
 -- Name: TABLE user_network; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.user_network IS 'join table for `user` and `network`';
-
 
 --
 -- Name: user_network_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -1889,7 +2269,6 @@ ALTER TABLE public.user_network ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDEN
     NO MAXVALUE
     CACHE 1
 );
-
 
 --
 -- Name: user_rating; Type: TABLE; Schema: public; Owner: -
@@ -1906,13 +2285,11 @@ CREATE TABLE public.user_rating (
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
 --
 -- Name: industry id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.industry ALTER COLUMN id SET DEFAULT nextval('public.industry_id_seq'::regclass);
-
 
 --
 -- Name: achievement achievement_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1921,6 +2298,12 @@ ALTER TABLE ONLY public.industry ALTER COLUMN id SET DEFAULT nextval('public.ind
 ALTER TABLE ONLY public.achievement
     ADD CONSTRAINT achievement_pkey PRIMARY KEY (id);
 
+--
+-- Name: activity_confirmation activity_confirmation_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity_confirmation
+    ADD CONSTRAINT activity_confirmation_pkey PRIMARY KEY (activity_id, user_id);
 
 --
 -- Name: activity_health_metrics activity_health_metrics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1929,14 +2312,12 @@ ALTER TABLE ONLY public.achievement
 ALTER TABLE ONLY public.activity_health_metrics
     ADD CONSTRAINT activity_health_metrics_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: activity_health_metrics activity_health_metrics_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_health_metrics
     ADD CONSTRAINT activity_health_metrics_unique UNIQUE (user_id, activity_id);
-
 
 --
 -- Name: activity_hr_sample activity_hr_sample_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1945,14 +2326,12 @@ ALTER TABLE ONLY public.activity_health_metrics
 ALTER TABLE ONLY public.activity_hr_sample
     ADD CONSTRAINT activity_hr_sample_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: activity activity_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity
     ADD CONSTRAINT activity_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: badminton_profile badminton_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1961,14 +2340,12 @@ ALTER TABLE ONLY public.activity
 ALTER TABLE ONLY public.badminton_profile
     ADD CONSTRAINT badminton_profile_pkey PRIMARY KEY (user_id);
 
-
 --
 -- Name: basketball_profile basketball_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.basketball_profile
     ADD CONSTRAINT basketball_profile_pkey PRIMARY KEY (user_id);
-
 
 --
 -- Name: booking_additional_users booking_additional_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1977,14 +2354,12 @@ ALTER TABLE ONLY public.basketball_profile
 ALTER TABLE ONLY public.booking_additional_users
     ADD CONSTRAINT booking_additional_users_pkey PRIMARY KEY (booking_id, user_id);
 
-
 --
 -- Name: daily_health_summary daily_health_summary_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.daily_health_summary
     ADD CONSTRAINT daily_health_summary_pkey PRIMARY KEY (user_id, date);
-
 
 --
 -- Name: industry industry_name_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1993,14 +2368,12 @@ ALTER TABLE ONLY public.daily_health_summary
 ALTER TABLE ONLY public.industry
     ADD CONSTRAINT industry_name_key UNIQUE (name);
 
-
 --
 -- Name: industry industry_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.industry
     ADD CONSTRAINT industry_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: lobby_befriend_record lobby_befriend_record_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2009,14 +2382,12 @@ ALTER TABLE ONLY public.industry
 ALTER TABLE ONLY public.lobby_befriend_record
     ADD CONSTRAINT lobby_befriend_record_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: lobby_feed_item lobby_feed_item_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_feed_item
     ADD CONSTRAINT lobby_feed_item_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: lobby_feed_poll_vote lobby_feed_poll_vote_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2025,14 +2396,12 @@ ALTER TABLE ONLY public.lobby_feed_item
 ALTER TABLE ONLY public.lobby_feed_poll_vote
     ADD CONSTRAINT lobby_feed_poll_vote_pkey PRIMARY KEY (feed_item_id, user_id);
 
-
 --
 -- Name: lobby_match lobby_match_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_match
     ADD CONSTRAINT lobby_match_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: lobby_member lobby_member_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2041,14 +2410,12 @@ ALTER TABLE ONLY public.lobby_match
 ALTER TABLE ONLY public.lobby_member
     ADD CONSTRAINT lobby_member_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: lobby_member lobby_member_user_lobby_uniq; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_member
     ADD CONSTRAINT lobby_member_user_lobby_uniq UNIQUE (user_id, lobby_id);
-
 
 --
 -- Name: lobby lobby_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2057,14 +2424,12 @@ ALTER TABLE ONLY public.lobby_member
 ALTER TABLE ONLY public.lobby
     ADD CONSTRAINT lobby_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: location location_external_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.location
     ADD CONSTRAINT location_external_id_key UNIQUE (external_id);
-
 
 --
 -- Name: location location_full_address_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2073,14 +2438,12 @@ ALTER TABLE ONLY public.location
 ALTER TABLE ONLY public.location
     ADD CONSTRAINT location_full_address_key UNIQUE (full_address);
 
-
 --
 -- Name: location location_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.location
     ADD CONSTRAINT location_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: network network_name_city_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2089,14 +2452,12 @@ ALTER TABLE ONLY public.location
 ALTER TABLE ONLY public.network
     ADD CONSTRAINT network_name_city_key UNIQUE (name, city);
 
-
 --
 -- Name: network network_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.network
     ADD CONSTRAINT network_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: pickleball_profile pickleball_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2105,14 +2466,12 @@ ALTER TABLE ONLY public.network
 ALTER TABLE ONLY public.pickleball_profile
     ADD CONSTRAINT pickleball_profile_pkey PRIMARY KEY (user_id);
 
-
 --
 -- Name: professional_booking professional_booking_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking
     ADD CONSTRAINT professional_booking_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: professional_booking_review professional_booking_review_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2121,14 +2480,12 @@ ALTER TABLE ONLY public.professional_booking
 ALTER TABLE ONLY public.professional_booking_review
     ADD CONSTRAINT professional_booking_review_pkey PRIMARY KEY (booking_id);
 
-
 --
 -- Name: professional professional_linked_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional
     ADD CONSTRAINT professional_linked_user_id_key UNIQUE (linked_user_id);
-
 
 --
 -- Name: professional professional_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2137,14 +2494,12 @@ ALTER TABLE ONLY public.professional
 ALTER TABLE ONLY public.professional
     ADD CONSTRAINT professional_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: professional_service professional_service_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_service
     ADD CONSTRAINT professional_service_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: soccer_profile soccer_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2153,14 +2508,12 @@ ALTER TABLE ONLY public.professional_service
 ALTER TABLE ONLY public.soccer_profile
     ADD CONSTRAINT soccer_profile_pkey PRIMARY KEY (user_id);
 
-
 --
 -- Name: sport sport_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sport
     ADD CONSTRAINT sport_name_key UNIQUE (name);
-
 
 --
 -- Name: sport sport_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2169,14 +2522,12 @@ ALTER TABLE ONLY public.sport
 ALTER TABLE ONLY public.sport
     ADD CONSTRAINT sport_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: supported_city_cluster supported_city_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.supported_city_cluster
     ADD CONSTRAINT supported_city_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: tennis_profile tennis_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2185,14 +2536,12 @@ ALTER TABLE ONLY public.supported_city_cluster
 ALTER TABLE ONLY public.tennis_profile
     ADD CONSTRAINT tennis_profile_pkey PRIMARY KEY (user_id);
 
-
 --
 -- Name: user_health_link user_health_link_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_health_link
     ADD CONSTRAINT user_health_link_pkey PRIMARY KEY (user_id);
-
 
 --
 -- Name: user_industry user_industry_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2201,14 +2550,12 @@ ALTER TABLE ONLY public.user_health_link
 ALTER TABLE ONLY public.user_industry
     ADD CONSTRAINT user_industry_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: user_network user_network_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_network
     ADD CONSTRAINT user_network_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: user user_pk; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2217,14 +2564,12 @@ ALTER TABLE ONLY public.user_network
 ALTER TABLE ONLY public."user"
     ADD CONSTRAINT user_pk UNIQUE (username, tag_number);
 
-
 --
 -- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."user"
     ADD CONSTRAINT user_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: user_rating user_rating_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2233,7 +2578,6 @@ ALTER TABLE ONLY public."user"
 ALTER TABLE ONLY public.user_rating
     ADD CONSTRAINT user_rating_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: user_rating user_rating_user_id_sport_format_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
@@ -2241,6 +2585,11 @@ ALTER TABLE ONLY public.user_rating
 ALTER TABLE ONLY public.user_rating
     ADD CONSTRAINT user_rating_user_id_sport_format_key UNIQUE (user_id, sport, format);
 
+--
+-- Name: activity_confirmation_user_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activity_confirmation_user_idx ON public.activity_confirmation USING btree (user_id);
 
 --
 -- Name: basketball_profile_pitch_idx; Type: INDEX; Schema: public; Owner: -
@@ -2248,13 +2597,11 @@ ALTER TABLE ONLY public.user_rating
 
 CREATE INDEX basketball_profile_pitch_idx ON public.basketball_profile USING gin (pitch);
 
-
 --
 -- Name: basketball_profile_position_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX basketball_profile_position_idx ON public.basketball_profile USING gin ("position");
-
 
 --
 -- Name: idx_activity_health_metrics_activity_id; Type: INDEX; Schema: public; Owner: -
@@ -2262,13 +2609,11 @@ CREATE INDEX basketball_profile_position_idx ON public.basketball_profile USING 
 
 CREATE INDEX idx_activity_health_metrics_activity_id ON public.activity_health_metrics USING btree (activity_id);
 
-
 --
 -- Name: idx_activity_health_metrics_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_activity_health_metrics_user_id ON public.activity_health_metrics USING btree (user_id);
-
 
 --
 -- Name: idx_activity_hr_sample_activity_timestamp; Type: INDEX; Schema: public; Owner: -
@@ -2276,13 +2621,11 @@ CREATE INDEX idx_activity_health_metrics_user_id ON public.activity_health_metri
 
 CREATE INDEX idx_activity_hr_sample_activity_timestamp ON public.activity_hr_sample USING btree (activity_id, "timestamp");
 
-
 --
 -- Name: idx_activity_sport_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_activity_sport_id ON public.activity USING btree (sport_id);
-
 
 --
 -- Name: idx_activity_start_time; Type: INDEX; Schema: public; Owner: -
@@ -2290,13 +2633,11 @@ CREATE INDEX idx_activity_sport_id ON public.activity USING btree (sport_id);
 
 CREATE INDEX idx_activity_start_time ON public.activity USING btree (start_time);
 
-
 --
 -- Name: idx_activity_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_activity_user_id ON public.activity USING btree (user_id);
-
 
 --
 -- Name: idx_booking_additional_users_booking_id; Type: INDEX; Schema: public; Owner: -
@@ -2304,13 +2645,11 @@ CREATE INDEX idx_activity_user_id ON public.activity USING btree (user_id);
 
 CREATE INDEX idx_booking_additional_users_booking_id ON public.booking_additional_users USING btree (booking_id);
 
-
 --
 -- Name: idx_booking_additional_users_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_booking_additional_users_user_id ON public.booking_additional_users USING btree (user_id);
-
 
 --
 -- Name: idx_bookings_client_user_id; Type: INDEX; Schema: public; Owner: -
@@ -2318,13 +2657,11 @@ CREATE INDEX idx_booking_additional_users_user_id ON public.booking_additional_u
 
 CREATE INDEX idx_bookings_client_user_id ON public.professional_booking USING btree (client_user_id);
 
-
 --
 -- Name: idx_bookings_professional_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_bookings_professional_id ON public.professional_booking USING btree (professional_id);
-
 
 --
 -- Name: idx_bookings_service_id; Type: INDEX; Schema: public; Owner: -
@@ -2332,13 +2669,11 @@ CREATE INDEX idx_bookings_professional_id ON public.professional_booking USING b
 
 CREATE INDEX idx_bookings_service_id ON public.professional_booking USING btree (service_id);
 
-
 --
 -- Name: idx_bookings_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_bookings_status ON public.professional_booking USING btree (status);
-
 
 --
 -- Name: idx_daily_health_summary_user_date; Type: INDEX; Schema: public; Owner: -
@@ -2346,13 +2681,11 @@ CREATE INDEX idx_bookings_status ON public.professional_booking USING btree (sta
 
 CREATE INDEX idx_daily_health_summary_user_date ON public.daily_health_summary USING btree (user_id, date DESC);
 
-
 --
 -- Name: idx_listed_professionals_is_verified; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_listed_professionals_is_verified ON public.professional USING btree (is_verified);
-
 
 --
 -- Name: idx_listed_professionals_linked_user_id; Type: INDEX; Schema: public; Owner: -
@@ -2360,13 +2693,11 @@ CREATE INDEX idx_listed_professionals_is_verified ON public.professional USING b
 
 CREATE INDEX idx_listed_professionals_linked_user_id ON public.professional USING btree (linked_user_id) WHERE (linked_user_id IS NOT NULL);
 
-
 --
 -- Name: idx_listed_professionals_role; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_listed_professionals_role ON public.professional USING btree (professional_role);
-
 
 --
 -- Name: idx_lobby_befriend_record_initiator; Type: INDEX; Schema: public; Owner: -
@@ -2374,13 +2705,11 @@ CREATE INDEX idx_listed_professionals_role ON public.professional USING btree (p
 
 CREATE INDEX idx_lobby_befriend_record_initiator ON public.lobby_befriend_record USING btree (initiator_user_id);
 
-
 --
 -- Name: idx_lobby_befriend_record_interaction_type; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_befriend_record_interaction_type ON public.lobby_befriend_record USING btree (interaction_type);
-
 
 --
 -- Name: idx_lobby_befriend_record_status; Type: INDEX; Schema: public; Owner: -
@@ -2388,13 +2717,11 @@ CREATE INDEX idx_lobby_befriend_record_interaction_type ON public.lobby_befriend
 
 CREATE INDEX idx_lobby_befriend_record_status ON public.lobby_befriend_record USING btree (status);
 
-
 --
 -- Name: idx_lobby_befriend_record_target_lobby; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_befriend_record_target_lobby ON public.lobby_befriend_record USING btree (target_lobby_id);
-
 
 --
 -- Name: idx_lobby_befriend_record_target_user; Type: INDEX; Schema: public; Owner: -
@@ -2402,13 +2729,11 @@ CREATE INDEX idx_lobby_befriend_record_target_lobby ON public.lobby_befriend_rec
 
 CREATE INDEX idx_lobby_befriend_record_target_user ON public.lobby_befriend_record USING btree (target_user_id);
 
-
 --
 -- Name: idx_lobby_captain_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_captain_id ON public.lobby USING btree (captain_id);
-
 
 --
 -- Name: idx_lobby_home_ground; Type: INDEX; Schema: public; Owner: -
@@ -2416,13 +2741,11 @@ CREATE INDEX idx_lobby_captain_id ON public.lobby USING btree (captain_id);
 
 CREATE INDEX idx_lobby_home_ground ON public.lobby USING btree (home_ground);
 
-
 --
 -- Name: idx_lobby_member_lobby_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_member_lobby_id ON public.lobby_member USING btree (lobby_id);
-
 
 --
 -- Name: idx_lobby_member_user_id; Type: INDEX; Schema: public; Owner: -
@@ -2430,13 +2753,11 @@ CREATE INDEX idx_lobby_member_lobby_id ON public.lobby_member USING btree (lobby
 
 CREATE INDEX idx_lobby_member_user_id ON public.lobby_member USING btree (user_id);
 
-
 --
 -- Name: idx_lobby_sport_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_sport_id ON public.lobby USING btree (sport_id);
-
 
 --
 -- Name: idx_location_city_cluster; Type: INDEX; Schema: public; Owner: -
@@ -2444,13 +2765,11 @@ CREATE INDEX idx_lobby_sport_id ON public.lobby USING btree (sport_id);
 
 CREATE INDEX idx_location_city_cluster ON public.location USING btree (city_cluster);
 
-
 --
 -- Name: idx_location_full_address_trgm; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_location_full_address_trgm ON public.location USING gin (public.immutable_unaccent(lower(full_address)) extensions.gin_trgm_ops);
-
 
 --
 -- Name: idx_location_name_trgm; Type: INDEX; Schema: public; Owner: -
@@ -2458,13 +2777,11 @@ CREATE INDEX idx_location_full_address_trgm ON public.location USING gin (public
 
 CREATE INDEX idx_location_name_trgm ON public.location USING gin (public.immutable_unaccent(lower(name)) extensions.gin_trgm_ops);
 
-
 --
 -- Name: idx_network_city; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_network_city ON public.network USING btree (city);
-
 
 --
 -- Name: idx_professional_booking_location_id; Type: INDEX; Schema: public; Owner: -
@@ -2472,13 +2789,11 @@ CREATE INDEX idx_network_city ON public.network USING btree (city);
 
 CREATE INDEX idx_professional_booking_location_id ON public.professional_booking USING btree (location_id);
 
-
 --
 -- Name: idx_professional_review_professional_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_professional_review_professional_id ON public.professional_booking_review USING btree (professional_id);
-
 
 --
 -- Name: idx_professional_review_reviewer_user_id; Type: INDEX; Schema: public; Owner: -
@@ -2486,13 +2801,11 @@ CREATE INDEX idx_professional_review_professional_id ON public.professional_book
 
 CREATE INDEX idx_professional_review_reviewer_user_id ON public.professional_booking_review USING btree (reviewer_user_id);
 
-
 --
 -- Name: idx_professional_services_is_active; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_professional_services_is_active ON public.professional_service USING btree (is_active);
-
 
 --
 -- Name: idx_professional_services_listed_professional_id; Type: INDEX; Schema: public; Owner: -
@@ -2500,13 +2813,11 @@ CREATE INDEX idx_professional_services_is_active ON public.professional_service 
 
 CREATE INDEX idx_professional_services_listed_professional_id ON public.professional_service USING btree (professional_id);
 
-
 --
 -- Name: idx_professional_services_sport_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_professional_services_sport_id ON public.professional_service USING btree (sport_id);
-
 
 --
 -- Name: idx_user_industry_industry_id; Type: INDEX; Schema: public; Owner: -
@@ -2514,13 +2825,11 @@ CREATE INDEX idx_professional_services_sport_id ON public.professional_service U
 
 CREATE INDEX idx_user_industry_industry_id ON public.user_industry USING btree (industry_id);
 
-
 --
 -- Name: idx_user_industry_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_user_industry_user_id ON public.user_industry USING btree (user_id);
-
 
 --
 -- Name: idx_user_network_network_id; Type: INDEX; Schema: public; Owner: -
@@ -2528,13 +2837,11 @@ CREATE INDEX idx_user_industry_user_id ON public.user_industry USING btree (user
 
 CREATE INDEX idx_user_network_network_id ON public.user_network USING btree (network_id);
 
-
 --
 -- Name: idx_user_network_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_user_network_user_id ON public.user_network USING btree (user_id);
-
 
 --
 -- Name: lobby_feed_item_lobby_idx; Type: INDEX; Schema: public; Owner: -
@@ -2542,13 +2849,17 @@ CREATE INDEX idx_user_network_user_id ON public.user_network USING btree (user_i
 
 CREATE INDEX lobby_feed_item_lobby_idx ON public.lobby_feed_item USING btree (lobby_id, created_at DESC);
 
-
 --
 -- Name: lobby_match_lobby_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX lobby_match_lobby_idx ON public.lobby_match USING btree (lobby_id, played_at DESC);
 
+--
+-- Name: lobby_open_challenger_mmr_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX lobby_open_challenger_mmr_idx ON public.lobby USING btree (sport_id, mmr) WHERE open_to_challengers;
 
 --
 -- Name: network_name_lower_idx; Type: INDEX; Schema: public; Owner: -
@@ -2556,13 +2867,11 @@ CREATE INDEX lobby_match_lobby_idx ON public.lobby_match USING btree (lobby_id, 
 
 CREATE INDEX network_name_lower_idx ON public.network USING btree (lower(name) text_pattern_ops);
 
-
 --
 -- Name: network_name_partial_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX network_name_partial_idx ON public.network USING btree (name text_pattern_ops);
-
 
 --
 -- Name: network_name_trgm_idx; Type: INDEX; Schema: public; Owner: -
@@ -2570,13 +2879,11 @@ CREATE INDEX network_name_partial_idx ON public.network USING btree (name text_p
 
 CREATE INDEX network_name_trgm_idx ON public.network USING gin (lower(name) extensions.gin_trgm_ops);
 
-
 --
 -- Name: network_name_unaccent_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX network_name_unaccent_idx ON public.network USING btree (public.immutable_unaccent(lower(name)) text_pattern_ops);
-
 
 --
 -- Name: network_name_unaccent_trgm_idx; Type: INDEX; Schema: public; Owner: -
@@ -2584,13 +2891,11 @@ CREATE INDEX network_name_unaccent_idx ON public.network USING btree (public.imm
 
 CREATE INDEX network_name_unaccent_trgm_idx ON public.network USING gin (public.immutable_unaccent(lower(name)) extensions.gin_trgm_ops);
 
-
 --
 -- Name: soccer_profile_pitch_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX soccer_profile_pitch_idx ON public.soccer_profile USING gin (pitch);
-
 
 --
 -- Name: soccer_profile_position_idx; Type: INDEX; Schema: public; Owner: -
@@ -2598,13 +2903,11 @@ CREATE INDEX soccer_profile_pitch_idx ON public.soccer_profile USING gin (pitch)
 
 CREATE INDEX soccer_profile_position_idx ON public.soccer_profile USING gin ("position");
 
-
 --
 -- Name: user_rating_user_sport_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX user_rating_user_sport_idx ON public.user_rating USING btree (user_id, sport);
-
 
 --
 -- Name: badminton_profile badminton_elo_seed; Type: TRIGGER; Schema: public; Owner: -
@@ -2612,13 +2915,11 @@ CREATE INDEX user_rating_user_sport_idx ON public.user_rating USING btree (user_
 
 CREATE TRIGGER badminton_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.badminton_profile FOR EACH ROW EXECUTE FUNCTION public.fn_seed_initial_elo();
 
-
 --
 -- Name: basketball_profile basketball_elo_seed; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER basketball_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.basketball_profile FOR EACH ROW EXECUTE FUNCTION public.fn_seed_initial_elo();
-
 
 --
 -- Name: lobby lobby_add_captain_as_member; Type: TRIGGER; Schema: public; Owner: -
@@ -2626,13 +2927,11 @@ CREATE TRIGGER basketball_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.
 
 CREATE TRIGGER lobby_add_captain_as_member AFTER INSERT ON public.lobby FOR EACH ROW EXECUTE FUNCTION public.lobby_add_captain_as_member();
 
-
 --
 -- Name: lobby lobby_before_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER lobby_before_delete BEFORE DELETE ON public.lobby FOR EACH ROW EXECUTE FUNCTION public.lobby_before_delete();
-
 
 --
 -- Name: lobby_befriend_record lobby_befriend_accepted_trigger; Type: TRIGGER; Schema: public; Owner: -
@@ -2640,13 +2939,11 @@ CREATE TRIGGER lobby_before_delete BEFORE DELETE ON public.lobby FOR EACH ROW EX
 
 CREATE TRIGGER lobby_befriend_accepted_trigger AFTER UPDATE ON public.lobby_befriend_record FOR EACH ROW EXECUTE FUNCTION public.lobby_befriend_accepted_trigger_fn();
 
-
 --
 -- Name: lobby_befriend_record lobby_befriend_record_before_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER lobby_befriend_record_before_insert BEFORE INSERT ON public.lobby_befriend_record FOR EACH ROW EXECUTE FUNCTION public.lobby_befriend_record_before_insert_trigger_fn();
-
 
 --
 -- Name: lobby_match lobby_match_referee_role_check; Type: TRIGGER; Schema: public; Owner: -
@@ -2654,13 +2951,23 @@ CREATE TRIGGER lobby_befriend_record_before_insert BEFORE INSERT ON public.lobby
 
 CREATE TRIGGER lobby_match_referee_role_check BEFORE INSERT OR UPDATE OF referee_booking_id ON public.lobby_match FOR EACH ROW EXECUTE FUNCTION public.lobby_match_referee_role_check();
 
-
 --
 -- Name: lobby_member lobby_member_prevent_captain_leave; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER lobby_member_prevent_captain_leave BEFORE DELETE ON public.lobby_member FOR EACH ROW EXECUTE FUNCTION public.lobby_member_prevent_captain_leave();
 
+--
+-- Name: lobby_member lobby_member_recompute_stats; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lobby_member_recompute_stats AFTER INSERT OR DELETE OR UPDATE ON public.lobby_member FOR EACH ROW EXECUTE FUNCTION public.trg_lobby_member_recompute();
+
+--
+-- Name: lobby lobby_playtime_keys_biu; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lobby_playtime_keys_biu BEFORE INSERT OR UPDATE OF playtime ON public.lobby FOR EACH ROW EXECUTE FUNCTION public.trg_lobby_playtime_keys();
 
 --
 -- Name: pickleball_profile pickleball_elo_seed; Type: TRIGGER; Schema: public; Owner: -
@@ -2668,13 +2975,11 @@ CREATE TRIGGER lobby_member_prevent_captain_leave BEFORE DELETE ON public.lobby_
 
 CREATE TRIGGER pickleball_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.pickleball_profile FOR EACH ROW EXECUTE FUNCTION public.fn_seed_initial_elo();
 
-
 --
 -- Name: professional_booking_review professional_review_stats_trigger; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER professional_review_stats_trigger AFTER INSERT OR DELETE OR UPDATE ON public.professional_booking_review FOR EACH ROW EXECUTE FUNCTION public.professional_booking_review_updated_trigger_fn();
-
 
 --
 -- Name: soccer_profile soccer_elo_seed; Type: TRIGGER; Schema: public; Owner: -
@@ -2682,13 +2987,29 @@ CREATE TRIGGER professional_review_stats_trigger AFTER INSERT OR DELETE OR UPDAT
 
 CREATE TRIGGER soccer_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.soccer_profile FOR EACH ROW EXECUTE FUNCTION public.fn_seed_initial_elo();
 
-
 --
 -- Name: tennis_profile tennis_elo_seed; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER tennis_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.tennis_profile FOR EACH ROW EXECUTE FUNCTION public.fn_seed_initial_elo();
 
+--
+-- Name: user_industry user_industry_recompute_lobby; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER user_industry_recompute_lobby AFTER INSERT OR DELETE OR UPDATE ON public.user_industry FOR EACH ROW EXECUTE FUNCTION public.trg_user_affiliation_recompute();
+
+--
+-- Name: user_network user_network_recompute_lobby; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER user_network_recompute_lobby AFTER INSERT OR DELETE OR UPDATE ON public.user_network FOR EACH ROW EXECUTE FUNCTION public.trg_user_affiliation_recompute();
+
+--
+-- Name: user_rating user_rating_recompute_lobby; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER user_rating_recompute_lobby AFTER INSERT OR UPDATE OF elo ON public.user_rating FOR EACH ROW EXECUTE FUNCTION public.trg_user_rating_recompute();
 
 --
 -- Name: achievement achievement_sport_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2697,6 +3018,19 @@ CREATE TRIGGER tennis_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.tenn
 ALTER TABLE ONLY public.achievement
     ADD CONSTRAINT achievement_sport_fkey FOREIGN KEY (sport) REFERENCES public.sport(id);
 
+--
+-- Name: activity_confirmation activity_confirmation_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity_confirmation
+    ADD CONSTRAINT activity_confirmation_activity_id_fkey FOREIGN KEY (activity_id) REFERENCES public.activity(id) ON DELETE CASCADE;
+
+--
+-- Name: activity_confirmation activity_confirmation_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity_confirmation
+    ADD CONSTRAINT activity_confirmation_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
 --
 -- Name: activity_health_metrics activity_health_metrics_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2705,14 +3039,12 @@ ALTER TABLE ONLY public.achievement
 ALTER TABLE ONLY public.activity_health_metrics
     ADD CONSTRAINT activity_health_metrics_activity_id_fkey FOREIGN KEY (activity_id) REFERENCES public.activity(id) ON DELETE CASCADE;
 
-
 --
 -- Name: activity_health_metrics activity_health_metrics_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_health_metrics
     ADD CONSTRAINT activity_health_metrics_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
-
 
 --
 -- Name: activity_hr_sample activity_hr_sample_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2721,7 +3053,6 @@ ALTER TABLE ONLY public.activity_health_metrics
 ALTER TABLE ONLY public.activity_hr_sample
     ADD CONSTRAINT activity_hr_sample_activity_id_fkey FOREIGN KEY (activity_id) REFERENCES public.activity(id) ON DELETE CASCADE;
 
-
 --
 -- Name: activity activity_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
@@ -2729,6 +3060,12 @@ ALTER TABLE ONLY public.activity_hr_sample
 ALTER TABLE ONLY public.activity
     ADD CONSTRAINT activity_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE SET NULL;
 
+--
+-- Name: activity activity_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity
+    ADD CONSTRAINT activity_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.location(id) ON DELETE SET NULL;
 
 --
 -- Name: activity activity_professional_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2737,14 +3074,12 @@ ALTER TABLE ONLY public.activity
 ALTER TABLE ONLY public.activity
     ADD CONSTRAINT activity_professional_booking_id_fkey FOREIGN KEY (professional_booking_id) REFERENCES public.professional_booking(id) ON DELETE SET NULL;
 
-
 --
 -- Name: activity activity_sport_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity
     ADD CONSTRAINT activity_sport_id_fkey FOREIGN KEY (sport_id) REFERENCES public.sport(id);
-
 
 --
 -- Name: activity activity_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2753,14 +3088,12 @@ ALTER TABLE ONLY public.activity
 ALTER TABLE ONLY public.activity
     ADD CONSTRAINT activity_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
-
 --
 -- Name: badminton_profile badminton_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.badminton_profile
     ADD CONSTRAINT badminton_profile_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
-
 
 --
 -- Name: basketball_profile basketball_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2769,14 +3102,12 @@ ALTER TABLE ONLY public.badminton_profile
 ALTER TABLE ONLY public.basketball_profile
     ADD CONSTRAINT basketball_profile_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
-
 --
 -- Name: booking_additional_users booking_additional_users_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.booking_additional_users
     ADD CONSTRAINT booking_additional_users_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.professional_booking(id) ON DELETE CASCADE;
-
 
 --
 -- Name: booking_additional_users booking_additional_users_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2785,14 +3116,12 @@ ALTER TABLE ONLY public.booking_additional_users
 ALTER TABLE ONLY public.booking_additional_users
     ADD CONSTRAINT booking_additional_users_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
-
 --
 -- Name: daily_health_summary daily_health_summary_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.daily_health_summary
     ADD CONSTRAINT daily_health_summary_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
-
 
 --
 -- Name: lobby_befriend_record lobby_befriend_record_initiator_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2801,14 +3130,12 @@ ALTER TABLE ONLY public.daily_health_summary
 ALTER TABLE ONLY public.lobby_befriend_record
     ADD CONSTRAINT lobby_befriend_record_initiator_user_id_fkey FOREIGN KEY (initiator_user_id) REFERENCES public."user"(id) ON UPDATE CASCADE;
 
-
 --
 -- Name: lobby_befriend_record lobby_befriend_record_target_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_befriend_record
     ADD CONSTRAINT lobby_befriend_record_target_lobby_id_fkey FOREIGN KEY (target_lobby_id) REFERENCES public.lobby(id) ON UPDATE CASCADE;
-
 
 --
 -- Name: lobby_befriend_record lobby_befriend_record_target_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2817,14 +3144,12 @@ ALTER TABLE ONLY public.lobby_befriend_record
 ALTER TABLE ONLY public.lobby_befriend_record
     ADD CONSTRAINT lobby_befriend_record_target_user_id_fkey FOREIGN KEY (target_user_id) REFERENCES public."user"(id) ON UPDATE CASCADE;
 
-
 --
 -- Name: lobby lobby_captain_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby
     ADD CONSTRAINT lobby_captain_id_fkey FOREIGN KEY (captain_id) REFERENCES public."user"(id) ON UPDATE CASCADE;
-
 
 --
 -- Name: lobby_feed_item lobby_feed_item_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2833,14 +3158,12 @@ ALTER TABLE ONLY public.lobby
 ALTER TABLE ONLY public.lobby_feed_item
     ADD CONSTRAINT lobby_feed_item_author_id_fkey FOREIGN KEY (author_id) REFERENCES public."user"(id) ON DELETE SET NULL;
 
-
 --
 -- Name: lobby_feed_item lobby_feed_item_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_feed_item
     ADD CONSTRAINT lobby_feed_item_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
-
 
 --
 -- Name: lobby_feed_poll_vote lobby_feed_poll_vote_feed_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2849,14 +3172,12 @@ ALTER TABLE ONLY public.lobby_feed_item
 ALTER TABLE ONLY public.lobby_feed_poll_vote
     ADD CONSTRAINT lobby_feed_poll_vote_feed_item_id_fkey FOREIGN KEY (feed_item_id) REFERENCES public.lobby_feed_item(id) ON DELETE CASCADE;
 
-
 --
 -- Name: lobby_feed_poll_vote lobby_feed_poll_vote_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_feed_poll_vote
     ADD CONSTRAINT lobby_feed_poll_vote_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
-
 
 --
 -- Name: lobby lobby_home_ground_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2865,14 +3186,12 @@ ALTER TABLE ONLY public.lobby_feed_poll_vote
 ALTER TABLE ONLY public.lobby
     ADD CONSTRAINT lobby_home_ground_fkey FOREIGN KEY (home_ground) REFERENCES public.location(id);
 
-
 --
 -- Name: lobby_match lobby_match_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_match
     ADD CONSTRAINT lobby_match_activity_id_fkey FOREIGN KEY (activity_id) REFERENCES public.activity(id) ON DELETE SET NULL;
-
 
 --
 -- Name: lobby_match lobby_match_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2881,14 +3200,12 @@ ALTER TABLE ONLY public.lobby_match
 ALTER TABLE ONLY public.lobby_match
     ADD CONSTRAINT lobby_match_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
 
-
 --
 -- Name: lobby_match lobby_match_mvp_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_match
     ADD CONSTRAINT lobby_match_mvp_user_id_fkey FOREIGN KEY (mvp_user_id) REFERENCES public."user"(id) ON DELETE SET NULL;
-
 
 --
 -- Name: lobby_match lobby_match_opponent_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2897,14 +3214,12 @@ ALTER TABLE ONLY public.lobby_match
 ALTER TABLE ONLY public.lobby_match
     ADD CONSTRAINT lobby_match_opponent_lobby_id_fkey FOREIGN KEY (opponent_lobby_id) REFERENCES public.lobby(id) ON DELETE SET NULL;
 
-
 --
 -- Name: lobby_match lobby_match_referee_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_match
     ADD CONSTRAINT lobby_match_referee_booking_id_fkey FOREIGN KEY (referee_booking_id) REFERENCES public.professional_booking(id) ON DELETE RESTRICT;
-
 
 --
 -- Name: lobby_member lobby_member_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2913,14 +3228,12 @@ ALTER TABLE ONLY public.lobby_match
 ALTER TABLE ONLY public.lobby_member
     ADD CONSTRAINT lobby_member_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
 
-
 --
 -- Name: lobby_member lobby_member_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_member
     ADD CONSTRAINT lobby_member_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
-
 
 --
 -- Name: lobby lobby_sport_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2929,14 +3242,12 @@ ALTER TABLE ONLY public.lobby_member
 ALTER TABLE ONLY public.lobby
     ADD CONSTRAINT lobby_sport_id_fkey FOREIGN KEY (sport_id) REFERENCES public.sport(id);
 
-
 --
 -- Name: location location_city_cluster_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.location
     ADD CONSTRAINT location_city_cluster_fkey FOREIGN KEY (city_cluster) REFERENCES public.supported_city_cluster(id);
-
 
 --
 -- Name: network network_city_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2945,14 +3256,12 @@ ALTER TABLE ONLY public.location
 ALTER TABLE ONLY public.network
     ADD CONSTRAINT network_city_fkey FOREIGN KEY (city) REFERENCES public.supported_city_cluster(id);
 
-
 --
 -- Name: pickleball_profile pickleball_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.pickleball_profile
     ADD CONSTRAINT pickleball_profile_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
-
 
 --
 -- Name: professional_booking professional_booking_client_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2961,14 +3270,12 @@ ALTER TABLE ONLY public.pickleball_profile
 ALTER TABLE ONLY public.professional_booking
     ADD CONSTRAINT professional_booking_client_user_id_fkey FOREIGN KEY (client_user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
-
 --
 -- Name: professional_booking professional_booking_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking
     ADD CONSTRAINT professional_booking_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.location(id);
-
 
 --
 -- Name: professional_booking professional_booking_professional_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2977,14 +3284,12 @@ ALTER TABLE ONLY public.professional_booking
 ALTER TABLE ONLY public.professional_booking
     ADD CONSTRAINT professional_booking_professional_id_fkey FOREIGN KEY (professional_id) REFERENCES public.professional(id);
 
-
 --
 -- Name: professional_booking_review professional_booking_review_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking_review
     ADD CONSTRAINT professional_booking_review_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.professional_booking(id) ON DELETE RESTRICT;
-
 
 --
 -- Name: professional_booking_review professional_booking_review_professional_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2993,14 +3298,12 @@ ALTER TABLE ONLY public.professional_booking_review
 ALTER TABLE ONLY public.professional_booking_review
     ADD CONSTRAINT professional_booking_review_professional_id_fkey FOREIGN KEY (professional_id) REFERENCES public.professional(id) ON DELETE CASCADE;
 
-
 --
 -- Name: professional_booking_review professional_booking_review_reviewer_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking_review
     ADD CONSTRAINT professional_booking_review_reviewer_user_id_fkey FOREIGN KEY (reviewer_user_id) REFERENCES public."user"(id) ON DELETE RESTRICT;
-
 
 --
 -- Name: professional_booking professional_booking_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -3009,14 +3312,12 @@ ALTER TABLE ONLY public.professional_booking_review
 ALTER TABLE ONLY public.professional_booking
     ADD CONSTRAINT professional_booking_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.professional_service(id);
 
-
 --
 -- Name: professional professional_linked_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional
     ADD CONSTRAINT professional_linked_user_id_fkey FOREIGN KEY (linked_user_id) REFERENCES public."user"(id) ON DELETE SET NULL;
-
 
 --
 -- Name: professional_service professional_service_professional_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -3025,14 +3326,12 @@ ALTER TABLE ONLY public.professional
 ALTER TABLE ONLY public.professional_service
     ADD CONSTRAINT professional_service_professional_id_fkey FOREIGN KEY (professional_id) REFERENCES public.professional(id) ON DELETE CASCADE;
 
-
 --
 -- Name: professional_service professional_service_sport_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_service
     ADD CONSTRAINT professional_service_sport_id_fkey FOREIGN KEY (sport_id) REFERENCES public.sport(id);
-
 
 --
 -- Name: soccer_profile soccer_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -3041,14 +3340,12 @@ ALTER TABLE ONLY public.professional_service
 ALTER TABLE ONLY public.soccer_profile
     ADD CONSTRAINT soccer_profile_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
-
 --
 -- Name: tennis_profile tennis_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tennis_profile
     ADD CONSTRAINT tennis_profile_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
-
 
 --
 -- Name: user_health_link user_health_link_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -3057,14 +3354,12 @@ ALTER TABLE ONLY public.tennis_profile
 ALTER TABLE ONLY public.user_health_link
     ADD CONSTRAINT user_health_link_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
-
 --
 -- Name: user user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."user"
     ADD CONSTRAINT user_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON UPDATE CASCADE;
-
 
 --
 -- Name: user_industry user_industry_industry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -3073,14 +3368,12 @@ ALTER TABLE ONLY public."user"
 ALTER TABLE ONLY public.user_industry
     ADD CONSTRAINT user_industry_industry_id_fkey FOREIGN KEY (industry_id) REFERENCES public.industry(id);
 
-
 --
 -- Name: user_industry user_industry_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_industry
     ADD CONSTRAINT user_industry_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
-
 
 --
 -- Name: user_network user_network_network_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -3089,14 +3382,12 @@ ALTER TABLE ONLY public.user_industry
 ALTER TABLE ONLY public.user_network
     ADD CONSTRAINT user_network_network_id_fkey FOREIGN KEY (network_id) REFERENCES public.network(id);
 
-
 --
 -- Name: user_network user_network_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_network
     ADD CONSTRAINT user_network_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
-
 
 --
 -- Name: user_rating user_rating_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -3105,13 +3396,11 @@ ALTER TABLE ONLY public.user_network
 ALTER TABLE ONLY public.user_rating
     ADD CONSTRAINT user_rating_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
-
 --
 -- Name: booking_additional_users Additional users can see bookings they are part of; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Additional users can see bookings they are part of" ON public.booking_additional_users FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
-
 
 --
 -- Name: lobby_feed_item Author or captain can delete a feed item; Type: POLICY; Schema: public; Owner: -
@@ -3121,7 +3410,6 @@ CREATE POLICY "Author or captain can delete a feed item" ON public.lobby_feed_it
    FROM public.lobby l
   WHERE ((l.id = lobby_feed_item.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid)))))));
 
-
 --
 -- Name: lobby_match Captain can delete their lobby's matches; Type: POLICY; Schema: public; Owner: -
 --
@@ -3129,7 +3417,6 @@ CREATE POLICY "Author or captain can delete a feed item" ON public.lobby_feed_it
 CREATE POLICY "Captain can delete their lobby's matches" ON public.lobby_match FOR DELETE TO authenticated USING ((EXISTS ( SELECT 1
    FROM public.lobby l
   WHERE ((l.id = lobby_match.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid))))));
-
 
 --
 -- Name: lobby_match Captain can edit their lobby's matches; Type: POLICY; Schema: public; Owner: -
@@ -3141,7 +3428,6 @@ CREATE POLICY "Captain can edit their lobby's matches" ON public.lobby_match FOR
    FROM public.lobby l
   WHERE ((l.id = lobby_match.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid))))));
 
-
 --
 -- Name: lobby_feed_item Captain can post updates and polls; Type: POLICY; Schema: public; Owner: -
 --
@@ -3150,7 +3436,6 @@ CREATE POLICY "Captain can post updates and polls" ON public.lobby_feed_item FOR
    FROM public.lobby l
   WHERE ((l.id = lobby_feed_item.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid)))))));
 
-
 --
 -- Name: lobby_match Captain can record matches for their lobby; Type: POLICY; Schema: public; Owner: -
 --
@@ -3158,7 +3443,6 @@ CREATE POLICY "Captain can post updates and polls" ON public.lobby_feed_item FOR
 CREATE POLICY "Captain can record matches for their lobby" ON public.lobby_match FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
    FROM public.lobby l
   WHERE ((l.id = lobby_match.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid))))));
-
 
 --
 -- Name: booking_additional_users Client can manage additional users for their bookings; Type: POLICY; Schema: public; Owner: -
@@ -3170,7 +3454,6 @@ CREATE POLICY "Client can manage additional users for their bookings" ON public.
    FROM public.professional_booking pb
   WHERE ((pb.id = booking_additional_users.booking_id) AND (pb.client_user_id = ( SELECT auth.uid() AS uid))))));
 
-
 --
 -- Name: professional_booking_review Clients can create reviews for their completed bookings; Type: POLICY; Schema: public; Owner: -
 --
@@ -3179,13 +3462,11 @@ CREATE POLICY "Clients can create reviews for their completed bookings" ON publi
    FROM public.professional_booking pb
   WHERE ((pb.id = professional_booking_review.booking_id) AND (pb.client_user_id = ( SELECT auth.uid() AS uid)) AND (pb.status = 'completed'::public.professional_booking_status))))));
 
-
 --
 -- Name: professional_booking Clients can manage their own bookings; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Clients can manage their own bookings" ON public.professional_booking TO authenticated USING ((( SELECT auth.uid() AS uid) = client_user_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = client_user_id));
-
 
 --
 -- Name: lobby Enable insert for authenticated users only; Type: POLICY; Schema: public; Owner: -
@@ -3193,13 +3474,11 @@ CREATE POLICY "Clients can manage their own bookings" ON public.professional_boo
 
 CREATE POLICY "Enable insert for authenticated users only" ON public.lobby FOR INSERT TO authenticated WITH CHECK (true);
 
-
 --
 -- Name: industry Enable read access for all users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for all users" ON public.industry FOR SELECT USING (true);
-
 
 --
 -- Name: lobby Enable read access for all users; Type: POLICY; Schema: public; Owner: -
@@ -3207,13 +3486,11 @@ CREATE POLICY "Enable read access for all users" ON public.industry FOR SELECT U
 
 CREATE POLICY "Enable read access for all users" ON public.lobby FOR SELECT USING (true);
 
-
 --
 -- Name: location Enable read access for all users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for all users" ON public.location FOR SELECT USING (true);
-
 
 --
 -- Name: network Enable read access for all users; Type: POLICY; Schema: public; Owner: -
@@ -3221,13 +3498,11 @@ CREATE POLICY "Enable read access for all users" ON public.location FOR SELECT U
 
 CREATE POLICY "Enable read access for all users" ON public.network FOR SELECT USING (true);
 
-
 --
 -- Name: sport Enable read access for all users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for all users" ON public.sport FOR SELECT USING (true);
-
 
 --
 -- Name: supported_city_cluster Enable read access for all users; Type: POLICY; Schema: public; Owner: -
@@ -3235,13 +3510,11 @@ CREATE POLICY "Enable read access for all users" ON public.sport FOR SELECT USIN
 
 CREATE POLICY "Enable read access for all users" ON public.supported_city_cluster FOR SELECT USING (true);
 
-
 --
 -- Name: user_industry Enable read access for authenticated user; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for authenticated user" ON public.user_industry FOR SELECT TO authenticated USING (true);
-
 
 --
 -- Name: user Enable read access for authenticated users; Type: POLICY; Schema: public; Owner: -
@@ -3249,20 +3522,17 @@ CREATE POLICY "Enable read access for authenticated user" ON public.user_industr
 
 CREATE POLICY "Enable read access for authenticated users" ON public."user" FOR SELECT TO authenticated USING (true);
 
-
 --
 -- Name: user_network Enable read access for authenticated users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for authenticated users" ON public.user_network FOR SELECT TO authenticated USING (true);
 
-
 --
 -- Name: professional Enable read access for verified professional profiles; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for verified professional profiles" ON public.professional FOR SELECT TO anon USING ((is_verified = true));
-
 
 --
 -- Name: professional_service Enable read for active services by verified professionals; Type: POLICY; Schema: public; Owner: -
@@ -3272,13 +3542,11 @@ CREATE POLICY "Enable read for active services by verified professionals" ON pub
    FROM public.professional p
   WHERE ((p.id = professional_service.professional_id) AND (p.is_verified = true))))));
 
-
 --
 -- Name: user Enable user to update their own profile; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable user to update their own profile" ON public."user" FOR UPDATE TO authenticated USING ((( SELECT auth.uid() AS uid) = id)) WITH CHECK ((( SELECT auth.uid() AS uid) = id));
-
 
 --
 -- Name: professional_booking Linked professionals can manage their bookings; Type: POLICY; Schema: public; Owner: -
@@ -3290,7 +3558,6 @@ CREATE POLICY "Linked professionals can manage their bookings" ON public.profess
    FROM public.professional p
   WHERE ((p.id = professional_booking.professional_id) AND (p.linked_user_id = ( SELECT auth.uid() AS uid))))));
 
-
 --
 -- Name: professional_service Linked professionals can manage their own services; Type: POLICY; Schema: public; Owner: -
 --
@@ -3301,13 +3568,11 @@ CREATE POLICY "Linked professionals can manage their own services" ON public.pro
    FROM public.professional p
   WHERE ((p.id = professional_service.professional_id) AND (p.linked_user_id = ( SELECT auth.uid() AS uid))))));
 
-
 --
 -- Name: professional Linked users can manage their own professional profile; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Linked users can manage their own professional profile" ON public.professional TO authenticated USING ((( SELECT auth.uid() AS uid) = linked_user_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = linked_user_id));
-
 
 --
 -- Name: lobby_member Lobby membership deletion policy; Type: POLICY; Schema: public; Owner: -
@@ -3319,7 +3584,6 @@ CREATE POLICY "Lobby membership deletion policy" ON public.lobby_member FOR DELE
    FROM public.lobby
   WHERE ((lobby.id = lobby_member.lobby_id) AND (lobby.captain_id = ( SELECT auth.uid() AS uid))))))));
 
-
 --
 -- Name: lobby_feed_poll_vote Members can cast a vote in their lobby's polls; Type: POLICY; Schema: public; Owner: -
 --
@@ -3328,6 +3592,13 @@ CREATE POLICY "Members can cast a vote in their lobby's polls" ON public.lobby_f
    FROM public.lobby_feed_item fi
   WHERE ((fi.id = lobby_feed_poll_vote.feed_item_id) AND (fi.kind = 'poll'::public.lobby_feed_item_kind) AND (fi.lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)))))));
 
+--
+-- Name: activity_confirmation Members can confirm their own attendance; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Members can confirm their own attendance" ON public.activity_confirmation FOR INSERT TO authenticated WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1
+   FROM public.activity a
+  WHERE ((a.id = activity_confirmation.activity_id) AND (a.lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)))))));
 
 --
 -- Name: lobby_feed_item Members can post personal or photo items; Type: POLICY; Schema: public; Owner: -
@@ -3335,13 +3606,19 @@ CREATE POLICY "Members can cast a vote in their lobby's polls" ON public.lobby_f
 
 CREATE POLICY "Members can post personal or photo items" ON public.lobby_feed_item FOR INSERT TO authenticated WITH CHECK (((author_id = ( SELECT auth.uid() AS uid)) AND (lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)) AND (kind = ANY (ARRAY['personal'::public.lobby_feed_item_kind, 'photo'::public.lobby_feed_item_kind]))));
 
+--
+-- Name: activity_confirmation Members can read confirmations in their lobby; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Members can read confirmations in their lobby" ON public.activity_confirmation FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.activity a
+  WHERE ((a.id = activity_confirmation.activity_id) AND (a.lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids))))));
 
 --
 -- Name: lobby_feed_item Members can read feed items in their lobby; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Members can read feed items in their lobby" ON public.lobby_feed_item FOR SELECT TO authenticated USING ((lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)));
-
 
 --
 -- Name: lobby_feed_poll_vote Members can read poll votes in their lobby; Type: POLICY; Schema: public; Owner: -
@@ -3351,6 +3628,11 @@ CREATE POLICY "Members can read poll votes in their lobby" ON public.lobby_feed_
    FROM public.lobby_feed_item fi
   WHERE ((fi.id = lobby_feed_poll_vote.feed_item_id) AND (fi.lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids))))));
 
+--
+-- Name: activity_confirmation Members can retract their own confirmation; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Members can retract their own confirmation" ON public.activity_confirmation FOR DELETE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
 
 --
 -- Name: lobby_match Members of either lobby can read the match; Type: POLICY; Schema: public; Owner: -
@@ -3358,13 +3640,11 @@ CREATE POLICY "Members can read poll votes in their lobby" ON public.lobby_feed_
 
 CREATE POLICY "Members of either lobby can read the match" ON public.lobby_match FOR SELECT TO authenticated USING (((lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)) OR ((opponent_lobby_id IS NOT NULL) AND (opponent_lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)))));
 
-
 --
 -- Name: lobby_feed_poll_vote Users can change their own vote; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can change their own vote" ON public.lobby_feed_poll_vote FOR UPDATE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
-
 
 --
 -- Name: lobby_befriend_record Users can create befriend records with restrictions; Type: POLICY; Schema: public; Owner: -
@@ -3374,13 +3654,11 @@ CREATE POLICY "Users can create befriend records with restrictions" ON public.lo
    FROM public.lobby
   WHERE ((lobby.id = lobby_befriend_record.target_lobby_id) AND (lobby.visibility = 'private'::public.lobby_visibility))))))));
 
-
 --
 -- Name: activity Users can create their own activities; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can create their own activities" ON public.activity FOR INSERT TO authenticated WITH CHECK ((user_id = auth.uid()));
-
 
 --
 -- Name: activity_hr_sample Users can delete HR samples for their activities; Type: POLICY; Schema: public; Owner: -
@@ -3390,13 +3668,11 @@ CREATE POLICY "Users can delete HR samples for their activities" ON public.activ
    FROM public.activity a
   WHERE ((a.id = activity_hr_sample.activity_id) AND (a.user_id = auth.uid())))));
 
-
 --
 -- Name: activity Users can delete their own activities; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can delete their own activities" ON public.activity FOR DELETE TO authenticated USING ((user_id = auth.uid()));
-
 
 --
 -- Name: user_industry Users can delete their own data; Type: POLICY; Schema: public; Owner: -
@@ -3404,13 +3680,11 @@ CREATE POLICY "Users can delete their own activities" ON public.activity FOR DEL
 
 CREATE POLICY "Users can delete their own data" ON public.user_industry FOR DELETE TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id));
 
-
 --
 -- Name: user_health_link Users can delete their own health link; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can delete their own health link" ON public.user_health_link FOR DELETE TO authenticated USING ((user_id = auth.uid()));
-
 
 --
 -- Name: activity_health_metrics Users can delete their own health metrics; Type: POLICY; Schema: public; Owner: -
@@ -3418,13 +3692,11 @@ CREATE POLICY "Users can delete their own health link" ON public.user_health_lin
 
 CREATE POLICY "Users can delete their own health metrics" ON public.activity_health_metrics FOR DELETE TO authenticated USING ((user_id = auth.uid()));
 
-
 --
 -- Name: user_network Users can delete their own rows; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can delete their own rows" ON public.user_network FOR DELETE TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id));
-
 
 --
 -- Name: activity_hr_sample Users can insert HR samples for their activities; Type: POLICY; Schema: public; Owner: -
@@ -3434,13 +3706,11 @@ CREATE POLICY "Users can insert HR samples for their activities" ON public.activ
    FROM public.activity a
   WHERE ((a.id = activity_hr_sample.activity_id) AND (a.user_id = auth.uid())))));
 
-
 --
 -- Name: user_industry Users can insert their own data; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can insert their own data" ON public.user_industry FOR INSERT TO authenticated WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
-
 
 --
 -- Name: user_health_link Users can insert their own health link; Type: POLICY; Schema: public; Owner: -
@@ -3448,13 +3718,11 @@ CREATE POLICY "Users can insert their own data" ON public.user_industry FOR INSE
 
 CREATE POLICY "Users can insert their own health link" ON public.user_health_link FOR INSERT TO authenticated WITH CHECK ((user_id = auth.uid()));
 
-
 --
 -- Name: activity_health_metrics Users can insert their own health metrics; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can insert their own health metrics" ON public.activity_health_metrics FOR INSERT TO authenticated WITH CHECK ((user_id = auth.uid()));
-
 
 --
 -- Name: user_network Users can insert their own rows; Type: POLICY; Schema: public; Owner: -
@@ -3462,13 +3730,11 @@ CREATE POLICY "Users can insert their own health metrics" ON public.activity_hea
 
 CREATE POLICY "Users can insert their own rows" ON public.user_network FOR INSERT TO authenticated WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
 
-
 --
 -- Name: lobby_feed_poll_vote Users can retract their own vote; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can retract their own vote" ON public.lobby_feed_poll_vote FOR DELETE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
-
 
 --
 -- Name: lobby_member Users can see lobby members in shared lobbies; Type: POLICY; Schema: public; Owner: -
@@ -3476,13 +3742,11 @@ CREATE POLICY "Users can retract their own vote" ON public.lobby_feed_poll_vote 
 
 CREATE POLICY "Users can see lobby members in shared lobbies" ON public.lobby_member FOR SELECT TO authenticated USING ((lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)));
 
-
 --
 -- Name: activity Users can update their own activities; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can update their own activities" ON public.activity FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
-
 
 --
 -- Name: daily_health_summary Users can update their own daily summaries; Type: POLICY; Schema: public; Owner: -
@@ -3490,13 +3754,11 @@ CREATE POLICY "Users can update their own activities" ON public.activity FOR UPD
 
 CREATE POLICY "Users can update their own daily summaries" ON public.daily_health_summary FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
 
-
 --
 -- Name: user_health_link Users can update their own health link; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can update their own health link" ON public.user_health_link FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
-
 
 --
 -- Name: activity_health_metrics Users can update their own health metrics; Type: POLICY; Schema: public; Owner: -
@@ -3504,20 +3766,17 @@ CREATE POLICY "Users can update their own health link" ON public.user_health_lin
 
 CREATE POLICY "Users can update their own health metrics" ON public.activity_health_metrics FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
 
-
 --
 -- Name: user_network Users can update their own rows; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can update their own rows" ON public.user_network FOR UPDATE TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
 
-
 --
 -- Name: daily_health_summary Users can upsert their own daily summaries; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can upsert their own daily summaries" ON public.daily_health_summary FOR INSERT TO authenticated WITH CHECK ((user_id = auth.uid()));
-
 
 --
 -- Name: activity_hr_sample Users can view HR samples for their activities; Type: POLICY; Schema: public; Owner: -
@@ -3527,7 +3786,6 @@ CREATE POLICY "Users can view HR samples for their activities" ON public.activit
    FROM public.activity a
   WHERE ((a.id = activity_hr_sample.activity_id) AND (a.user_id = auth.uid())))));
 
-
 --
 -- Name: lobby_befriend_record Users can view befriend records; Type: POLICY; Schema: public; Owner: -
 --
@@ -3536,13 +3794,11 @@ CREATE POLICY "Users can view befriend records" ON public.lobby_befriend_record 
    FROM public.lobby_member
   WHERE (lobby_member.user_id = ( SELECT auth.uid() AS uid))))));
 
-
 --
 -- Name: activity Users can view their own activities; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can view their own activities" ON public.activity FOR SELECT TO authenticated USING ((user_id = auth.uid()));
-
 
 --
 -- Name: daily_health_summary Users can view their own daily summaries; Type: POLICY; Schema: public; Owner: -
@@ -3550,20 +3806,17 @@ CREATE POLICY "Users can view their own activities" ON public.activity FOR SELEC
 
 CREATE POLICY "Users can view their own daily summaries" ON public.daily_health_summary FOR SELECT TO authenticated USING ((user_id = auth.uid()));
 
-
 --
 -- Name: user_health_link Users can view their own health link; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can view their own health link" ON public.user_health_link FOR SELECT TO authenticated USING ((user_id = auth.uid()));
 
-
 --
 -- Name: activity_health_metrics Users can view their own health metrics; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can view their own health metrics" ON public.activity_health_metrics FOR SELECT TO authenticated USING ((user_id = auth.uid()));
-
 
 --
 -- Name: lobby_befriend_record Users involved can update befriend record status; Type: POLICY; Schema: public; Owner: -
@@ -3572,7 +3825,6 @@ CREATE POLICY "Users can view their own health metrics" ON public.activity_healt
 CREATE POLICY "Users involved can update befriend record status" ON public.lobby_befriend_record FOR UPDATE TO authenticated USING (((( SELECT auth.uid() AS uid) = initiator_user_id) OR (( SELECT auth.uid() AS uid) = target_user_id) OR ((target_lobby_id IS NOT NULL) AND (target_lobby_id IN ( SELECT lobby.id
    FROM public.lobby
   WHERE (lobby.captain_id = ( SELECT auth.uid() AS uid))))))) WITH CHECK (true);
-
 
 --
 -- Name: achievement; Type: ROW SECURITY; Schema: public; Owner: -
@@ -3585,6 +3837,12 @@ ALTER TABLE public.achievement ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.activity ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: activity_confirmation; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.activity_confirmation ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: activity_health_metrics; Type: ROW SECURITY; Schema: public; Owner: -
@@ -3604,7 +3862,6 @@ ALTER TABLE public.activity_hr_sample ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "badminton profiles are publicly readable" ON public.badminton_profile FOR SELECT USING (true);
 
-
 --
 -- Name: badminton_profile; Type: ROW SECURITY; Schema: public; Owner: -
 --
@@ -3616,7 +3873,6 @@ ALTER TABLE public.badminton_profile ENABLE ROW LEVEL SECURITY;
 --
 
 CREATE POLICY "basketball profiles are publicly readable" ON public.basketball_profile FOR SELECT USING (true);
-
 
 --
 -- Name: basketball_profile; Type: ROW SECURITY; Schema: public; Owner: -
@@ -3641,7 +3897,6 @@ ALTER TABLE public.daily_health_summary ENABLE ROW LEVEL SECURITY;
 --
 
 CREATE POLICY "elo ratings are publicly readable" ON public.user_rating FOR SELECT USING (true);
-
 
 --
 -- Name: industry; Type: ROW SECURITY; Schema: public; Owner: -
@@ -3703,7 +3958,6 @@ ALTER TABLE public.network ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "pickleball profiles are publicly readable" ON public.pickleball_profile FOR SELECT USING (true);
 
-
 --
 -- Name: pickleball_profile; Type: ROW SECURITY; Schema: public; Owner: -
 --
@@ -3752,7 +4006,6 @@ ALTER TABLE public.sport ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "sport profiles are publicly readable" ON public.soccer_profile FOR SELECT USING (true);
 
-
 --
 -- Name: supported_city_cluster; Type: ROW SECURITY; Schema: public; Owner: -
 --
@@ -3764,7 +4017,6 @@ ALTER TABLE public.supported_city_cluster ENABLE ROW LEVEL SECURITY;
 --
 
 CREATE POLICY "tennis profiles are publicly readable" ON public.tennis_profile FOR SELECT USING (true);
-
 
 --
 -- Name: tennis_profile; Type: ROW SECURITY; Schema: public; Owner: -
@@ -3808,13 +4060,11 @@ ALTER TABLE public.user_rating ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "users manage own badminton profile" ON public.badminton_profile USING ((auth.uid() = user_id));
 
-
 --
 -- Name: basketball_profile users manage own basketball profile; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "users manage own basketball profile" ON public.basketball_profile USING ((auth.uid() = user_id));
-
 
 --
 -- Name: pickleball_profile users manage own pickleball profile; Type: POLICY; Schema: public; Owner: -
@@ -3822,13 +4072,11 @@ CREATE POLICY "users manage own basketball profile" ON public.basketball_profile
 
 CREATE POLICY "users manage own pickleball profile" ON public.pickleball_profile USING ((auth.uid() = user_id));
 
-
 --
 -- Name: soccer_profile users manage own soccer profile; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "users manage own soccer profile" ON public.soccer_profile USING ((auth.uid() = user_id));
-
 
 --
 -- Name: tennis_profile users manage own tennis profile; Type: POLICY; Schema: public; Owner: -
@@ -3836,10 +4084,597 @@ CREATE POLICY "users manage own soccer profile" ON public.soccer_profile USING (
 
 CREATE POLICY "users manage own tennis profile" ON public.tennis_profile USING ((auth.uid() = user_id));
 
+--
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
+--
+
+GRANT USAGE ON SCHEMA public TO postgres;
+GRANT USAGE ON SCHEMA public TO anon;
+GRANT USAGE ON SCHEMA public TO authenticated;
+GRANT USAGE ON SCHEMA public TO service_role;
+
+--
+-- Name: FUNCTION activity_confirmation_status(p_activity_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.activity_confirmation_status(p_activity_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.activity_confirmation_status(p_activity_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.activity_confirmation_status(p_activity_id uuid) TO service_role;
+
+--
+-- Name: FUNCTION activity_is_confirmed(p_activity_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.activity_is_confirmed(p_activity_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.activity_is_confirmed(p_activity_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.activity_is_confirmed(p_activity_id uuid) TO service_role;
+
+--
+-- Name: FUNCTION calculate_profile_compat_score(p_user_id uuid, p_target_id uuid, p_sport_id bigint); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.calculate_profile_compat_score(p_user_id uuid, p_target_id uuid, p_sport_id bigint) TO anon;
+GRANT ALL ON FUNCTION public.calculate_profile_compat_score(p_user_id uuid, p_target_id uuid, p_sport_id bigint) TO authenticated;
+GRANT ALL ON FUNCTION public.calculate_profile_compat_score(p_user_id uuid, p_target_id uuid, p_sport_id bigint) TO service_role;
+
+--
+-- Name: FUNCTION calculate_timeslot_compat_score(source jsonb, target jsonb); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.calculate_timeslot_compat_score(source jsonb, target jsonb) TO anon;
+GRANT ALL ON FUNCTION public.calculate_timeslot_compat_score(source jsonb, target jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.calculate_timeslot_compat_score(source jsonb, target jsonb) TO service_role;
+
+--
+-- Name: FUNCTION create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text) TO anon;
+GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text) TO authenticated;
+GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text) TO service_role;
+
+--
+-- Name: FUNCTION fn_lobby_playtime_keys(p_playtime jsonb); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) TO anon;
+GRANT ALL ON FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) TO service_role;
+
+--
+-- Name: FUNCTION fn_lobby_recompute_stats(p_lobby_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.fn_lobby_recompute_stats(p_lobby_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_lobby_recompute_stats(p_lobby_id uuid) TO service_role;
+
+--
+-- Name: FUNCTION fn_playtime_to_dict(p_playtime jsonb); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.fn_playtime_to_dict(p_playtime jsonb) TO anon;
+GRANT ALL ON FUNCTION public.fn_playtime_to_dict(p_playtime jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.fn_playtime_to_dict(p_playtime jsonb) TO service_role;
+
+--
+-- Name: FUNCTION fn_seed_initial_elo(); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.fn_seed_initial_elo() TO anon;
+GRANT ALL ON FUNCTION public.fn_seed_initial_elo() TO authenticated;
+GRANT ALL ON FUNCTION public.fn_seed_initial_elo() TO service_role;
+
+--
+-- Name: FUNCTION fn_sport_name(p_sport_id bigint); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.fn_sport_name(p_sport_id bigint) TO anon;
+GRANT ALL ON FUNCTION public.fn_sport_name(p_sport_id bigint) TO authenticated;
+GRANT ALL ON FUNCTION public.fn_sport_name(p_sport_id bigint) TO service_role;
+
+--
+-- Name: FUNCTION get_my_lobby_ids(); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.get_my_lobby_ids() TO anon;
+GRANT ALL ON FUNCTION public.get_my_lobby_ids() TO authenticated;
+GRANT ALL ON FUNCTION public.get_my_lobby_ids() TO service_role;
+
+--
+-- Name: FUNCTION get_popular_networks(limit_count integer); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.get_popular_networks(limit_count integer) TO anon;
+GRANT ALL ON FUNCTION public.get_popular_networks(limit_count integer) TO authenticated;
+GRANT ALL ON FUNCTION public.get_popular_networks(limit_count integer) TO service_role;
+
+--
+-- Name: FUNCTION home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_mmr_window integer, p_page_size integer, p_page_number integer); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_mmr_window integer, p_page_size integer, p_page_number integer) TO anon;
+GRANT ALL ON FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_mmr_window integer, p_page_size integer, p_page_number integer) TO authenticated;
+GRANT ALL ON FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_mmr_window integer, p_page_size integer, p_page_number integer) TO service_role;
+
+--
+-- Name: FUNCTION home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_page_size integer, p_page_number integer); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_page_size integer, p_page_number integer) TO anon;
+GRANT ALL ON FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_page_size integer, p_page_number integer) TO authenticated;
+GRANT ALL ON FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_page_size integer, p_page_number integer) TO service_role;
+
+--
+-- Name: FUNCTION immutable_unaccent(text); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.immutable_unaccent(text) TO anon;
+GRANT ALL ON FUNCTION public.immutable_unaccent(text) TO authenticated;
+GRANT ALL ON FUNCTION public.immutable_unaccent(text) TO service_role;
+
+--
+-- Name: FUNCTION lobby_add_captain_as_member(); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.lobby_add_captain_as_member() TO anon;
+GRANT ALL ON FUNCTION public.lobby_add_captain_as_member() TO authenticated;
+GRANT ALL ON FUNCTION public.lobby_add_captain_as_member() TO service_role;
+
+--
+-- Name: FUNCTION lobby_before_delete(); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.lobby_before_delete() TO anon;
+GRANT ALL ON FUNCTION public.lobby_before_delete() TO authenticated;
+GRANT ALL ON FUNCTION public.lobby_before_delete() TO service_role;
+
+--
+-- Name: FUNCTION lobby_befriend_accepted_trigger_fn(); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.lobby_befriend_accepted_trigger_fn() TO anon;
+GRANT ALL ON FUNCTION public.lobby_befriend_accepted_trigger_fn() TO authenticated;
+GRANT ALL ON FUNCTION public.lobby_befriend_accepted_trigger_fn() TO service_role;
+
+--
+-- Name: FUNCTION lobby_befriend_record_before_insert_trigger_fn(); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.lobby_befriend_record_before_insert_trigger_fn() TO anon;
+GRANT ALL ON FUNCTION public.lobby_befriend_record_before_insert_trigger_fn() TO authenticated;
+GRANT ALL ON FUNCTION public.lobby_befriend_record_before_insert_trigger_fn() TO service_role;
+
+--
+-- Name: FUNCTION lobby_feed_data(p_lobby_id uuid, p_page_size integer, p_before timestamp with time zone); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.lobby_feed_data(p_lobby_id uuid, p_page_size integer, p_before timestamp with time zone) TO anon;
+GRANT ALL ON FUNCTION public.lobby_feed_data(p_lobby_id uuid, p_page_size integer, p_before timestamp with time zone) TO authenticated;
+GRANT ALL ON FUNCTION public.lobby_feed_data(p_lobby_id uuid, p_page_size integer, p_before timestamp with time zone) TO service_role;
+
+--
+-- Name: FUNCTION lobby_match_history_data(p_lobby_id uuid, p_page_size integer, p_page_number integer); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.lobby_match_history_data(p_lobby_id uuid, p_page_size integer, p_page_number integer) TO anon;
+GRANT ALL ON FUNCTION public.lobby_match_history_data(p_lobby_id uuid, p_page_size integer, p_page_number integer) TO authenticated;
+GRANT ALL ON FUNCTION public.lobby_match_history_data(p_lobby_id uuid, p_page_size integer, p_page_number integer) TO service_role;
+
+--
+-- Name: FUNCTION lobby_match_referee_role_check(); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.lobby_match_referee_role_check() TO anon;
+GRANT ALL ON FUNCTION public.lobby_match_referee_role_check() TO authenticated;
+GRANT ALL ON FUNCTION public.lobby_match_referee_role_check() TO service_role;
+
+--
+-- Name: FUNCTION lobby_member_prevent_captain_leave(); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.lobby_member_prevent_captain_leave() TO anon;
+GRANT ALL ON FUNCTION public.lobby_member_prevent_captain_leave() TO authenticated;
+GRANT ALL ON FUNCTION public.lobby_member_prevent_captain_leave() TO service_role;
+
+--
+-- Name: FUNCTION nanoid(size integer, alphabet text); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.nanoid(size integer, alphabet text) TO anon;
+GRANT ALL ON FUNCTION public.nanoid(size integer, alphabet text) TO authenticated;
+GRANT ALL ON FUNCTION public.nanoid(size integer, alphabet text) TO service_role;
+
+--
+-- Name: FUNCTION new_user_created_trigger_fn(); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.new_user_created_trigger_fn() TO anon;
+GRANT ALL ON FUNCTION public.new_user_created_trigger_fn() TO authenticated;
+GRANT ALL ON FUNCTION public.new_user_created_trigger_fn() TO service_role;
+
+--
+-- Name: FUNCTION professional_booking_review_updated_trigger_fn(); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.professional_booking_review_updated_trigger_fn() TO anon;
+GRANT ALL ON FUNCTION public.professional_booking_review_updated_trigger_fn() TO authenticated;
+GRANT ALL ON FUNCTION public.professional_booking_review_updated_trigger_fn() TO service_role;
+
+--
+-- Name: FUNCTION search_locations(search_term text); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.search_locations(search_term text) TO anon;
+GRANT ALL ON FUNCTION public.search_locations(search_term text) TO authenticated;
+GRANT ALL ON FUNCTION public.search_locations(search_term text) TO service_role;
+
+--
+-- Name: FUNCTION search_networks_unaccent(search_term text, result_limit integer); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer) TO anon;
+GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer) TO authenticated;
+GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer) TO service_role;
+
+--
+-- Name: FUNCTION search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]) TO anon;
+GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]) TO authenticated;
+GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]) TO service_role;
+
+--
+-- Name: FUNCTION trg_lobby_member_recompute(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.trg_lobby_member_recompute() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.trg_lobby_member_recompute() TO service_role;
+
+--
+-- Name: FUNCTION trg_lobby_playtime_keys(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.trg_lobby_playtime_keys() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.trg_lobby_playtime_keys() TO service_role;
+
+--
+-- Name: FUNCTION trg_user_affiliation_recompute(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.trg_user_affiliation_recompute() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.trg_user_affiliation_recompute() TO service_role;
+
+--
+-- Name: FUNCTION trg_user_rating_recompute(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.trg_user_rating_recompute() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.trg_user_rating_recompute() TO service_role;
+
+--
+-- Name: TABLE achievement; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.achievement TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.achievement TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.achievement TO service_role;
+
+--
+-- Name: TABLE activity; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.activity TO anon;
+GRANT ALL ON TABLE public.activity TO authenticated;
+GRANT ALL ON TABLE public.activity TO service_role;
+
+--
+-- Name: TABLE activity_confirmation; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.activity_confirmation TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.activity_confirmation TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.activity_confirmation TO service_role;
+
+--
+-- Name: TABLE activity_health_metrics; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.activity_health_metrics TO anon;
+GRANT ALL ON TABLE public.activity_health_metrics TO authenticated;
+GRANT ALL ON TABLE public.activity_health_metrics TO service_role;
+
+--
+-- Name: TABLE activity_hr_sample; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.activity_hr_sample TO anon;
+GRANT ALL ON TABLE public.activity_hr_sample TO authenticated;
+GRANT ALL ON TABLE public.activity_hr_sample TO service_role;
+
+--
+-- Name: SEQUENCE activity_hr_sample_id_seq; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON SEQUENCE public.activity_hr_sample_id_seq TO anon;
+GRANT ALL ON SEQUENCE public.activity_hr_sample_id_seq TO authenticated;
+GRANT ALL ON SEQUENCE public.activity_hr_sample_id_seq TO service_role;
+
+--
+-- Name: TABLE badminton_profile; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.badminton_profile TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.badminton_profile TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.badminton_profile TO service_role;
+
+--
+-- Name: TABLE basketball_profile; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.basketball_profile TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.basketball_profile TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.basketball_profile TO service_role;
+
+--
+-- Name: TABLE booking_additional_users; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.booking_additional_users TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.booking_additional_users TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.booking_additional_users TO service_role;
+
+--
+-- Name: TABLE daily_health_summary; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.daily_health_summary TO anon;
+GRANT ALL ON TABLE public.daily_health_summary TO authenticated;
+GRANT ALL ON TABLE public.daily_health_summary TO service_role;
+
+--
+-- Name: TABLE industry; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.industry TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.industry TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.industry TO service_role;
+
+--
+-- Name: SEQUENCE industry_id_seq; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON SEQUENCE public.industry_id_seq TO anon;
+GRANT ALL ON SEQUENCE public.industry_id_seq TO authenticated;
+GRANT ALL ON SEQUENCE public.industry_id_seq TO service_role;
+
+--
+-- Name: TABLE lobby; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby TO service_role;
+
+--
+-- Name: TABLE lobby_befriend_record; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_befriend_record TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_befriend_record TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_befriend_record TO service_role;
+
+--
+-- Name: TABLE lobby_feed_item; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_feed_item TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_feed_item TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_feed_item TO service_role;
+
+--
+-- Name: TABLE lobby_feed_poll_vote; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_feed_poll_vote TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_feed_poll_vote TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_feed_poll_vote TO service_role;
+
+--
+-- Name: TABLE lobby_match; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_match TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_match TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_match TO service_role;
+
+--
+-- Name: TABLE lobby_member; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_member TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_member TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_member TO service_role;
+
+--
+-- Name: SEQUENCE lobby_member_id_seq; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON SEQUENCE public.lobby_member_id_seq TO anon;
+GRANT ALL ON SEQUENCE public.lobby_member_id_seq TO authenticated;
+GRANT ALL ON SEQUENCE public.lobby_member_id_seq TO service_role;
+
+--
+-- Name: TABLE location; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.location TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.location TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.location TO service_role;
+
+--
+-- Name: TABLE network; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.network TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.network TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.network TO service_role;
+
+--
+-- Name: SEQUENCE network_id_seq; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON SEQUENCE public.network_id_seq TO anon;
+GRANT ALL ON SEQUENCE public.network_id_seq TO authenticated;
+GRANT ALL ON SEQUENCE public.network_id_seq TO service_role;
+
+--
+-- Name: TABLE pickleball_profile; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.pickleball_profile TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.pickleball_profile TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.pickleball_profile TO service_role;
+
+--
+-- Name: TABLE professional; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional TO service_role;
+
+--
+-- Name: TABLE professional_booking; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_booking TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_booking TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_booking TO service_role;
+
+--
+-- Name: TABLE professional_booking_review; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_booking_review TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_booking_review TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_booking_review TO service_role;
+
+--
+-- Name: TABLE professional_service; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_service TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_service TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_service TO service_role;
+
+--
+-- Name: TABLE soccer_profile; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.soccer_profile TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.soccer_profile TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.soccer_profile TO service_role;
+
+--
+-- Name: TABLE sport; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.sport TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.sport TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.sport TO service_role;
+
+--
+-- Name: SEQUENCE sport_id_seq; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON SEQUENCE public.sport_id_seq TO anon;
+GRANT ALL ON SEQUENCE public.sport_id_seq TO authenticated;
+GRANT ALL ON SEQUENCE public.sport_id_seq TO service_role;
+
+--
+-- Name: TABLE supported_city_cluster; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.supported_city_cluster TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.supported_city_cluster TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.supported_city_cluster TO service_role;
+
+--
+-- Name: SEQUENCE supported_city_id_seq; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON SEQUENCE public.supported_city_id_seq TO anon;
+GRANT ALL ON SEQUENCE public.supported_city_id_seq TO authenticated;
+GRANT ALL ON SEQUENCE public.supported_city_id_seq TO service_role;
+
+--
+-- Name: TABLE tennis_profile; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.tennis_profile TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.tennis_profile TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.tennis_profile TO service_role;
+
+--
+-- Name: TABLE "user"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public."user" TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public."user" TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public."user" TO service_role;
+
+--
+-- Name: TABLE user_health_link; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.user_health_link TO anon;
+GRANT ALL ON TABLE public.user_health_link TO authenticated;
+GRANT ALL ON TABLE public.user_health_link TO service_role;
+
+--
+-- Name: TABLE user_industry; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_industry TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_industry TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_industry TO service_role;
+
+--
+-- Name: SEQUENCE user_industry_id_seq; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON SEQUENCE public.user_industry_id_seq TO anon;
+GRANT ALL ON SEQUENCE public.user_industry_id_seq TO authenticated;
+GRANT ALL ON SEQUENCE public.user_industry_id_seq TO service_role;
+
+--
+-- Name: TABLE user_network; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_network TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_network TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_network TO service_role;
+
+--
+-- Name: SEQUENCE user_network_id_seq; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON SEQUENCE public.user_network_id_seq TO anon;
+GRANT ALL ON SEQUENCE public.user_network_id_seq TO authenticated;
+GRANT ALL ON SEQUENCE public.user_network_id_seq TO service_role;
+
+--
+-- Name: TABLE user_rating; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_rating TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_rating TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_rating TO service_role;
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict JOwmkov8MW2zBOd27rqiadHRXT4iMCnKrdeslTpbfc4pHXU3J8FAay1KTX2ZRp2
+\unrestrict OCm24IbHFXAWlMRZINeNAzc0TC6c4MQ9VkK4hoZ3Na3l2uPXLB9Thb1vfdQbYe3
 

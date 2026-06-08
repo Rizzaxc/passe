@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../core/model/enum.dart';
 import '../core/model/lobby.dart';
 import '../core/model/lobby_feed_item.dart';
 import '../ui/theme.dart';
@@ -147,6 +149,15 @@ class LobbyFeedCard extends StatelessWidget {
                   ],
                 ),
 
+                // Challenge stakes — challenger feed only (MMR + favorability)
+                if (item.lobbyMmr != null) ...[
+                  FDivider(),
+                  _ChallengeStakeRow(
+                    mmr: item.lobbyMmr!,
+                    favorability: item.favorability,
+                  ),
+                ],
+
                 // Compat section
                 if (showCompat && score > 0) ...[
                   FDivider(),
@@ -259,6 +270,68 @@ class _CompatSection extends StatelessWidget {
             ],
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _ChallengeStakeRow extends StatelessWidget {
+  final int mmr;
+  final ChallengeFavorability? favorability;
+
+  const _ChallengeStakeRow({required this.mmr, this.favorability});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final fav = favorability;
+    final (Color bg, Color fg) = switch (fav) {
+      ChallengeFavorability.favored => (const Color(0xFF16a34a), Colors.white),
+      ChallengeFavorability.even => (const Color(0xFFd97706), Colors.white),
+      ChallengeFavorability.underdog => (colors.secondary, colors.mutedForeground),
+      null => (colors.secondary, colors.mutedForeground),
+    };
+
+    return Row(
+      children: [
+        Text(
+          'homeTab.challenger.mmr'.tr(),
+          style: TextStyle(
+            fontFamily: context.theme.typography.xs.fontFamily,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: colors.mutedForeground,
+            letterSpacing: 0.7,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          '$mmr',
+          style: context.theme.typography.sm.copyWith(
+            fontWeight: FontWeight.w700,
+            color: colors.foreground,
+            height: 1,
+          ),
+        ),
+        const Spacer(),
+        if (fav != null)
+          Container(
+            padding: const EdgeInsets.fromLTRB(9, 4, 9, 4),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(9999),
+            ),
+            child: Text(
+              fav.getLocalizedName(context),
+              style: TextStyle(
+                fontFamily: context.theme.typography.xs.fontFamily,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: fg,
+                height: 1,
+              ),
+            ),
+          ),
       ],
     );
   }

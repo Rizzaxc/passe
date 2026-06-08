@@ -4,7 +4,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:health/health.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:json_annotation/json_annotation.dart';
 
 import '../icon/main.dart';
 
@@ -823,4 +822,30 @@ enum ProfessionalRole {
 
   String getLocalizedName(BuildContext context) =>
       context.tr('homeTab.professional.role.$name');
+}
+
+/// How a candidate challenger lobby stacks up against the context (away) lobby,
+/// derived server-side from the away-biased MMR gap. JsonValue strings match the
+/// `favorability` text returned by `home_challenger_lobby_data`.
+@JsonEnum()
+enum ChallengeFavorability {
+  @JsonValue('underdog')
+  underdog('homeTab.challenger.favorability.underdog'),
+  @JsonValue('even')
+  even('homeTab.challenger.favorability.even'),
+  @JsonValue('favored')
+  favored('homeTab.challenger.favorability.favored');
+
+  final String intlKey;
+  const ChallengeFavorability(this.intlKey);
+
+  String getLocalizedName(BuildContext context) => context.tr(intlKey);
+
+  static ChallengeFavorability? fromValue(String? value) {
+    if (value == null) return null;
+    for (final f in ChallengeFavorability.values) {
+      if (f.name == value) return f;
+    }
+    return null;
+  }
 }
