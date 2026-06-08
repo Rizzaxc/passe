@@ -16,6 +16,10 @@ class LobbyFeedItem {
   /// gender/playtime/location), used to render the FitScore "vibe" chips.
   final List<String> matchFactors;
 
+  /// Teammate feed only: the caller already has a *pending* join request to
+  /// this lobby. Used to seed the "Đã gửi" + Undo CTA state across sessions.
+  final bool alreadyRequested;
+
   final int? memberCount;
 
   /// Challenger feed only: this lobby's cached MMR.
@@ -34,6 +38,7 @@ class LobbyFeedItem {
     required this.timeslotCompatScore,
     required this.profileCompatScore,
     this.matchFactors = const [],
+    this.alreadyRequested = false,
     this.memberCount,
     this.lobbyMmr,
     this.favorability,
@@ -65,6 +70,7 @@ class LobbyFeedItem {
       matchFactors: json['match_factors'] is List
           ? (json['match_factors'] as List).whereType<String>().toList()
           : const [],
+      alreadyRequested: json['already_requested'] as bool? ?? false,
       memberCount: (json['member_count'] as num?)?.toInt(),
       lobbyMmr: (json['lobby_mmr'] as num?)?.toInt(),
       favorability:

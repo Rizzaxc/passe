@@ -17,6 +17,19 @@ class TeammateSubtab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final feed = ref.watch(teammateFeedProvider);
 
+    // Seed the requested-set from the server's pending requests whenever the
+    // feed (re)loads, so the "Đã gửi" + Undo CTA persists across sessions.
+    ref.listen(teammateFeedProvider, (_, next) {
+      next.whenData((items) {
+        ref.read(requestedLobbyIdsProvider.notifier).sync(
+              items
+                  .where((i) => i.alreadyRequested)
+                  .map((i) => i.id)
+                  .toSet(),
+            );
+      });
+    });
+
     return Column(
       children: [
         PSectionHeader(

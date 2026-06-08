@@ -57,7 +57,7 @@ freezed) — edit them by hand, no build_runner.
   Params: `p_sport_id`, `p_timeslots` (user's schedule as jsonb dict — `Timeslot.listToJson`),
   `p_city` (city cluster id), `p_districts` (array of district ids), `p_page_size`, `p_page_number`.
 - Returns: `id, name, homeground_name, playtime, details, visibility, member_count,
-  timeslot_compat_score, profile_compat_score, match_factors` (`match_factors` is a `text[]` of the
+  timeslot_compat_score, profile_compat_score, match_factors, already_requested` (`match_factors` is a `text[]` of the
   real contributing factor codes — `network/industry/skill/age/gender/playtime/location` — that the
   card's FitScore "vibe" chips render directly instead of guessing from the score). `member_count`
   was added so teammate cards show the same top-right member badge as challenger.
@@ -67,11 +67,18 @@ freezed) — edit them by hand, no build_runner.
   proximity, **age-group match**, and a **gender-comfort** bump (a female user matched with a female
   target / a lobby that has ≥1 female member). Latest redesign: `schema/fitscore_redesign.sql`.
 - **Action**: "Xin vào" → inserts a `lobby_befriend_record` with `interaction_type = 'request'`,
-  `target_lobby_id = lobby.id`. On accept, a trigger adds the user as a lobby member. Optimistic
-  state lives in `RequestedLobbyIdsProvider` (a `Set<String>`), rolled back on failure.
+  `target_lobby_id = lobby.id`. On accept, a trigger adds the user as a lobby member.
+- **Request state** (`schema/teammate_request_state.sql`): the feed **hides lobbies the user was
+  `declined` from**, and returns `already_requested` (a `pending` request exists). `RequestedLobbyIds`
+  (a `Set<String>`) is the single source for the "sent" CTA — it's optimistically updated on
+  request/undo and **seeded from `already_requested`** via `ref.listen` in `TeammateSubtab` so the
+  state survives restarts. Once requested the CTA shows "Đã gửi" + an **Undo** button; undo flips the
+  record to `status='cancelled'` (no DELETE policy exists — the initiator UPDATEs it; the insert
+  trigger's dup-check ignores `cancelled`, so the lobby becomes joinable again). `accepted` requests
+  drop out via membership (`get_my_lobby_ids()`).
 - Model: `LobbyFeedItem` — `id, name, homegroundName, playtime (List<Timeslot>),
   details (LobbyDetails?), visibility, timeslotCompatScore (int), profileCompatScore (double),
-  matchFactors (List<String>), memberCount (int?)`.
+  matchFactors (List<String>), alreadyRequested (bool), memberCount (int?)`.
 
 ### Challenger subtab
 
