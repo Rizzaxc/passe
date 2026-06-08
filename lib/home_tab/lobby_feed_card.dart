@@ -161,7 +161,7 @@ class LobbyFeedCard extends StatelessWidget {
                 // Compat section
                 if (showCompat && score > 0) ...[
                   FDivider(),
-                  _CompatSection(score: score, tier: tier),
+                  _FitScoreSection(item: item, score: score, tier: tier),
                 ],
 
                 FDivider(),
@@ -182,11 +182,77 @@ class LobbyFeedCard extends StatelessWidget {
   }
 }
 
-class _CompatSection extends StatelessWidget {
+class _FitScoreSection extends StatelessWidget {
+  final LobbyFeedItem item;
   final double score;
   final _Tier tier;
 
-  const _CompatSection({required this.score, required this.tier});
+  const _FitScoreSection({
+    required this.item,
+    required this.score,
+    required this.tier,
+  });
+
+  List<Widget> _buildVibes(BuildContext context) {
+    final colors = context.theme.colors;
+    final chips = <Widget>[];
+
+    Widget buildChip(String label, IconData icon) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: colors.secondary,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 4,
+          children: [
+            Icon(
+              icon,
+              size: 10,
+              color: colors.secondaryForeground,
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: context.theme.typography.xs.fontFamily,
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: colors.secondaryForeground,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (item.lobbyMmr == null) {
+      // Teammate Recommendation
+      if (score >= 3.5) {
+        chips.add(buildChip('Trình độ phù hợp', FIcons.trophy));
+      }
+      if (score >= 2.0) {
+        chips.add(buildChip('Chung mạng lưới', FIcons.users));
+      }
+      if (item.timeslotCompatScore >= 4) {
+        chips.add(buildChip('Lịch chơi khớp', FIcons.calendar));
+      }
+    } else {
+      // Challenger Recommendation
+      if (score >= 2.0) {
+        chips.add(buildChip('Chung mạng lưới', FIcons.users));
+      }
+      if (score >= 3.0) {
+        chips.add(buildChip('Lịch chơi khớp', FIcons.calendar));
+      }
+      if (item.homegroundName != null && score >= 2.5) {
+        chips.add(buildChip('Vị trí thuận tiện', FIcons.mapPin));
+      }
+    }
+
+    return chips;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -199,13 +265,16 @@ class _CompatSection extends StatelessWidget {
     final scoreFg =
         tier == _Tier.low ? colors.mutedForeground : Colors.white;
 
-    return Row(
+    final vibes = _buildVibes(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 8,
       children: [
         Row(
-          spacing: 4,
           children: [
             Text(
-              'Phù Hợp Với Bạn',
+              'FitScore',
               style: TextStyle(
                 fontFamily: context.theme.typography.xs.fontFamily,
                 fontSize: 10,
@@ -214,62 +283,50 @@ class _CompatSection extends StatelessWidget {
                 letterSpacing: 0.7,
               ),
             ),
+            const Spacer(),
             Container(
-              width: 14,
-              height: 14,
+              padding: const EdgeInsets.fromLTRB(9, 4, 9, 4),
               decoration: BoxDecoration(
-                color: colors.muted,
-                borderRadius: BorderRadius.circular(7),
+                color: scoreBg,
+                borderRadius: BorderRadius.circular(9999),
               ),
-              alignment: Alignment.center,
-              child: Text(
-                'i',
-                style: TextStyle(
-                  fontFamily: context.theme.typography.xs.fontFamily,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: colors.mutedForeground,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    score.toStringAsFixed(1),
+                    style: TextStyle(
+                      fontFamily: context.theme.typography.xs.fontFamily,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: scoreFg,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    '/ 5',
+                    style: TextStyle(
+                      fontFamily: context.theme.typography.xs.fontFamily,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: scoreFg.withValues(alpha: 0.85),
+                      height: 1,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.fromLTRB(9, 4, 9, 4),
-          decoration: BoxDecoration(
-            color: scoreBg,
-            borderRadius: BorderRadius.circular(9999),
+        if (vibes.isNotEmpty)
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: vibes,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                score.toStringAsFixed(1),
-                style: TextStyle(
-                  fontFamily: context.theme.typography.xs.fontFamily,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: scoreFg,
-                  height: 1,
-                ),
-              ),
-              const SizedBox(width: 3),
-              Text(
-                '/ 5',
-                style: TextStyle(
-                  fontFamily: context.theme.typography.xs.fontFamily,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: scoreFg.withValues(alpha: 0.85),
-                  height: 1,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
