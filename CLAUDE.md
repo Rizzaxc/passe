@@ -223,9 +223,12 @@ JSON — parse with `double.tryParse`. Complex reads go through Postgres functio
 - **Errors**: surface failures with `showFToast(... variant: .destructive ...)`; log via
   `Talker()` (`talker.handle(e, st)`), which also feeds Sentry off-`local`. Async data providers use
   `AsyncValue.guard` / `.when(loading/error/data:)`.
-- **Mock-data fallback**: several home feeds render hard-coded mock lists on loading/error/empty
-  state so the UI never looks broken while the backend is being wired up (e.g.
-  `teammate_section/main.dart` `_kMockLobbies`). Watch for an `isMock` flag that disables actions.
+- **Mock-data fallback**: the home feeds (teammate, challenger, professional) and the Manage
+  schedule read real data from the DB — loading shows a spinner, empty/error shows
+  `PEmptySectionPlaceholder` (schedule surfaces errors via a toast). Synthetic integration data
+  (`mocked_` lobbies/locations/pros, `mockeduser%` users) is seeded by `schema/mocked_seed.sql`.
+  The Manage **coaching** section is the one remaining hard-coded prototype — it has no backing
+  tables yet (`coaching_section/main.dart`).
 
 ## Internationalization
 

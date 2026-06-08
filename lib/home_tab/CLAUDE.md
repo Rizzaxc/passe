@@ -100,9 +100,9 @@ freezed) — edit them by hand, no build_runner.
 
 ## Gotchas
 
-- **Mock fallback**: `teammate_section/main.dart` renders `_kMockLobbies` on loading/error AND when
-  the real result is empty (`isMock: items.isEmpty`). The mock cards have a disabled join button.
-  Don't mistake the mock list for real data, and keep the `isMock` guard when editing.
+- **No mock fallback**: teammate, challenger and professional subtabs read real DB data — loading
+  shows a spinner, empty/error shows `PEmptySectionPlaceholder`. (Synthetic `mocked_` content is
+  seeded in the DB via `schema/mocked_seed.sql`, not hard-coded in the widgets.)
 - The "request to join" optimistic state lives in `RequestedLobbyIdsProvider` (a `Set<String>`),
   which rolls back on failure — it is **not** refetched from the server.
 - Every feed implements scroll-to-refresh via `RefreshIndicator` + `ref.invalidate(feedProvider)`
