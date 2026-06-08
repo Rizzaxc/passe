@@ -32,10 +32,10 @@ class ActivityConfirmationStatus {
 ///
 /// The notifier reads through the `activity_confirmation_status` RPC
 /// (single round-trip) and writes by inserting / deleting the caller's
-/// row in `activity_confirmation`. After every write it re-reads — the
-/// status flip from "X of Y confirmed" → "official" needs to land in
-/// the same render frame, so we don't bother with optimistic local
-/// math.
+/// row in `activity_confirmation`. Writes flip the local state
+/// **optimistically** (so the RSVP control reacts in the same frame),
+/// then reconcile against the server re-read; on failure the previous
+/// snapshot is restored.
 @riverpod
 class ActivityConfirmationController
     extends _$ActivityConfirmationController {
@@ -62,18 +62,48 @@ class ActivityConfirmationController
     );
   }
 
+  /// Local snapshot with `meConfirmed` toggled and the count nudged by
+  /// [delta] — used to flip the UI before the server round-trip.
+  ActivityConfirmationStatus _withSelf(
+    ActivityConfirmationStatus s,
+    bool confirmed,
+    int delta,
+  ) {
+    final count = (s.confirmedCount + delta).clamp(0, 1 << 30);
+    return ActivityConfirmationStatus(
+      confirmedCount: count,
+      threshold: s.threshold,
+      meConfirmed: confirmed,
+      activityConfirmed: s.threshold == null || count >= s.threshold!,
+    );
+  }
+
   /// Member confirmation — caller commits to attending. Idempotent via
-  /// the `(activity_id, user_id)` primary key on activity_confirmation.
+  /// the `(activity_id, user_id)` primary key; `ignoreDuplicates` makes
+  /// this an `ON CONFLICT DO NOTHING` insert so it never needs an UPDATE
+  /// RLS policy.
   Future<void> confirm(String activityId) async {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
-    await supabase
-        .from('activity_confirmation')
-        .upsert({'activity_id': activityId, 'user_id': userId})
-        .timeout(const Duration(seconds: 5));
+    final prev = state.value;
+    if (prev != null && !prev.meConfirmed) {
+      state = AsyncData(_withSelf(prev, true, 1)); // optimistic
+    }
 
-    state = AsyncData(await _fetch(activityId));
+    try {
+      await supabase
+          .from('activity_confirmation')
+          .upsert(
+            {'activity_id': activityId, 'user_id': userId},
+            ignoreDuplicates: true,
+          )
+          .timeout(const Duration(seconds: 5));
+      state = AsyncData(await _fetch(activityId)); // reconcile
+    } catch (_) {
+      if (prev != null) state = AsyncData(prev); // rollback
+      rethrow;
+    }
   }
 
   /// Retract a previous confirmation. The DELETE policy lets a user
@@ -82,13 +112,22 @@ class ActivityConfirmationController
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
-    await supabase
-        .from('activity_confirmation')
-        .delete()
-        .eq('activity_id', activityId)
-        .eq('user_id', userId)
-        .timeout(const Duration(seconds: 5));
+    final prev = state.value;
+    if (prev != null && prev.meConfirmed) {
+      state = AsyncData(_withSelf(prev, false, -1)); // optimistic
+    }
 
-    state = AsyncData(await _fetch(activityId));
+    try {
+      await supabase
+          .from('activity_confirmation')
+          .delete()
+          .eq('activity_id', activityId)
+          .eq('user_id', userId)
+          .timeout(const Duration(seconds: 5));
+      state = AsyncData(await _fetch(activityId)); // reconcile
+    } catch (_) {
+      if (prev != null) state = AsyncData(prev); // rollback
+      rethrow;
+    }
   }
 }
