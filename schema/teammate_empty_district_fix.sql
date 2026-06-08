@@ -1,10 +1,14 @@
 -- ============================================================================
 -- teammate_empty_district_fix.sql
 --
--- home_teammate_lobby_data hard-filtered `loc.district = ANY(p_districts)`, so an
--- empty district filter (the default — user picks a city but no district) matched
--- nothing. Make the district filter optional: empty/null p_districts ⇒ all
--- districts in the city cluster. Body is otherwise unchanged.
+-- Two fixes to home_teammate_lobby_data:
+-- 1. It hard-filtered `loc.district = ANY(p_districts)`, so an empty district
+--    filter (the default — user picks a city but no district) matched nothing.
+--    Make the district filter optional: empty/null p_districts ⇒ all districts
+--    in the city cluster.
+-- 2. It surfaced the user's OWN lobbies, and tapping "Xin vào" on one then hit
+--    the befriend trigger ("user is already a member of the target lobby").
+--    Exclude the caller's lobbies (mirrors home_challenger_lobby_data).
 --
 -- Apply with execute_sql / apply_migration. Idempotent (CREATE OR REPLACE).
 -- ============================================================================
@@ -49,6 +53,7 @@ BEGIN
             l.sport_id = p_sport_id
           AND l.visibility != 'private'
           AND loc.city_cluster = p_city
+          AND l.id NOT IN (SELECT public.get_my_lobby_ids())
           AND (p_districts IS NULL OR cardinality(p_districts) = 0 OR loc.district = ANY(p_districts))
           AND (p_timeslots = '{}'::jsonb OR ts.ts_score >= 4)
         ORDER BY

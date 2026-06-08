@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../core/model/lobby_feed_item.dart';
 import '../../ui/main.dart';
@@ -75,7 +76,8 @@ class _JoinButton extends ConsumerWidget {
                 await ref
                     .read(requestedLobbyIdsProvider.notifier)
                     .request(lobbyId);
-              } catch (_) {
+              } catch (e, st) {
+                Talker().handle(e, st, 'Lobby join request failed');
                 if (!context.mounted) return;
                 showFToast(
                   context: context,
