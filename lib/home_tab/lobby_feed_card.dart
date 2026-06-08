@@ -71,32 +71,27 @@ class LobbyFeedCard extends StatelessWidget {
                     ),
                     if (item.memberCount != null) ...[
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: colors.secondary,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          spacing: 3,
-                          children: [
-                            Icon(
-                              FIcons.users,
-                              size: 10,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        spacing: 4,
+                        children: [
+                          Text(
+                            '${item.memberCount}',
+                            style: context.theme.typography.lg.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: colors.primary,
+                              height: 1,
+                            ),
+                          ),
+                          Text(
+                            'thành viên',
+                            style: context.theme.typography.xs.copyWith(
                               color: colors.mutedForeground,
                             ),
-                            Text(
-                              '${item.memberCount}',
-                              style: TextStyle(
-                                fontFamily: context.theme.typography.xs.fontFamily,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: colors.mutedForeground,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
@@ -330,11 +325,22 @@ class _FitScoreVibes extends StatelessWidget {
     final colors = context.theme.colors;
     final chips = <Widget>[];
 
-    Widget buildChip(String label, IconData icon) {
+    // Semantic palettes: skill (amber), network (emerald), playtime (brand
+    // blue), location (primary red). Soft translucent bg + solid fg.
+    const skillBg = Color(0x14F59E0B); // 0xFFF59E0B @ 8%
+    const skillFg = Color(0xFFD97706);
+    const networkBg = Color(0x1410B981); // 0xFF10B981 @ 8%
+    const networkFg = Color(0xFF059669);
+    final playtimeBg = pbBlue.withValues(alpha: 0.08);
+    const playtimeFg = pbBlue;
+    final locationBg = colors.primary.withValues(alpha: 0.08);
+    final locationFg = colors.primary;
+
+    Widget buildChip(String label, IconData icon, Color bg, Color fg) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: colors.secondary,
+          color: bg,
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
@@ -344,7 +350,7 @@ class _FitScoreVibes extends StatelessWidget {
             Icon(
               icon,
               size: 9,
-              color: colors.secondaryForeground,
+              color: fg,
             ),
             Text(
               label,
@@ -352,7 +358,7 @@ class _FitScoreVibes extends StatelessWidget {
                 fontFamily: context.theme.typography.xs.fontFamily,
                 fontSize: 9,
                 fontWeight: FontWeight.w600,
-                color: colors.secondaryForeground,
+                color: fg,
               ),
             ),
           ],
@@ -361,13 +367,25 @@ class _FitScoreVibes extends StatelessWidget {
     }
 
     if (item.lobbyMmr == null) {
-      if (score >= 3.5) chips.add(buildChip('Trình độ phù hợp', FIcons.trophy));
-      if (score >= 2.0) chips.add(buildChip('Chung mạng lưới', FIcons.users));
-      if (item.timeslotCompatScore >= 4) chips.add(buildChip('Lịch chơi khớp', FIcons.calendar));
+      if (score >= 3.5) {
+        chips.add(buildChip('Trình độ phù hợp', FIcons.trophy, skillBg, skillFg));
+      }
+      if (score >= 2.0) {
+        chips.add(buildChip('Chung mạng lưới', FIcons.users, networkBg, networkFg));
+      }
+      if (item.timeslotCompatScore >= 4) {
+        chips.add(buildChip('Lịch chơi khớp', FIcons.calendar, playtimeBg, playtimeFg));
+      }
     } else {
-      if (score >= 2.0) chips.add(buildChip('Chung mạng lưới', FIcons.users));
-      if (score >= 3.0) chips.add(buildChip('Lịch chơi khớp', FIcons.calendar));
-      if (item.homegroundName != null && score >= 2.5) chips.add(buildChip('Vị trí thuận tiện', FIcons.mapPin));
+      if (score >= 2.0) {
+        chips.add(buildChip('Chung mạng lưới', FIcons.users, networkBg, networkFg));
+      }
+      if (score >= 3.0) {
+        chips.add(buildChip('Lịch chơi khớp', FIcons.calendar, playtimeBg, playtimeFg));
+      }
+      if (item.homegroundName != null && score >= 2.5) {
+        chips.add(buildChip('Vị trí thuận tiện', FIcons.mapPin, locationBg, locationFg));
+      }
     }
 
     return chips;
@@ -395,7 +413,7 @@ class _TimeslotChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.theme.colors.secondary,
+        color: pbBlue.withValues(alpha: 0.08),
         borderRadius: context.theme.style.borderRadius.sm,
       ),
       child: Padding(
@@ -404,17 +422,17 @@ class _TimeslotChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           spacing: 3,
           children: [
-            Icon(
+            const Icon(
               Icons.schedule_rounded,
               size: 10,
-              color: context.theme.colors.mutedForeground,
+              color: pbBlue,
             ),
             Text(
               label,
               style: context.theme.typography.xs.copyWith(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
-                color: context.theme.colors.secondaryForeground,
+                color: pbBlue,
               ),
             ),
           ],
