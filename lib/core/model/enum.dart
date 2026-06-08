@@ -824,6 +824,27 @@ enum ProfessionalRole {
       context.tr('homeTab.professional.role.$name');
 }
 
+/// A member's RSVP to an activity. Mirrors the `activity_attendance` Postgres
+/// enum stored in `activity_confirmation.attendance`. Only [going] counts
+/// toward the confirmation threshold.
+enum Attendance {
+  going('going'),
+  maybe('maybe'),
+  out('out');
+
+  final String value;
+
+  const Attendance(this.value);
+
+  static Attendance? fromValue(String? value) {
+    if (value == null) return null;
+    for (final a in Attendance.values) {
+      if (a.value == value) return a;
+    }
+    return null;
+  }
+}
+
 /// How a candidate challenger lobby stacks up against the context (away) lobby,
 /// derived server-side from the away-biased MMR gap. JsonValue strings match the
 /// `favorability` text returned by `home_challenger_lobby_data`.

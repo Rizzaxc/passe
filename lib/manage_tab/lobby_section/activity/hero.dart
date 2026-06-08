@@ -419,25 +419,22 @@ class _HeroExpanded extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      // RSVP segmented control — "Có Mặt" is the only
-                      // state that touches the DB right now (insert a
-                      // confirmation row). "Có Thể" / "Vắng" are local
-                      // declarations until we model attendance vs.
-                      // confirmation separately.
+                      // RSVP segmented control — going / maybe / out are all
+                      // persisted (activity_confirmation.attendance); only
+                      // "going" counts toward the confirmation threshold. No
+                      // segment is active until the member responds.
                       _RsvpControl(
-                        value: (status?.meConfirmed ?? false)
-                            ? 'going'
-                            : 'out',
+                        value: status?.myAttendance?.value ?? '',
                         onChange: (v) {
-                          final notifier = ref.read(
-                            activityConfirmationControllerProvider(activityId)
-                                .notifier,
-                          );
-                          if (v == 'going') {
-                            notifier.confirm(activityId);
-                          } else {
-                            notifier.retract(activityId);
-                          }
+                          final next = Attendance.fromValue(v);
+                          if (next == null) return;
+                          ref
+                              .read(
+                                activityConfirmationControllerProvider(
+                                  activityId,
+                                ).notifier,
+                              )
+                              .setAttendance(activityId, next);
                         },
                       ),
                       const SizedBox(height: 12),
@@ -598,6 +595,16 @@ class _ConfirmationSummary extends StatelessWidget {
         ),
       ),
     ];
+
+    if (s.maybeCount > 0) {
+      spans.add(TextSpan(
+        text: ' · ${s.maybeCount} có thể',
+        style: TextStyle(
+          color: colors.mutedForeground,
+          fontSize: 11.5,
+        ),
+      ));
+    }
 
     if (s.threshold != null && !s.activityConfirmed) {
       // Threshold exists and we haven't hit it yet — show progress.
