@@ -50,10 +50,10 @@ class LobbyFeedCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 10,
+              spacing: 8,
               children: [
                 // Name + member count
                 Row(
@@ -71,31 +71,32 @@ class LobbyFeedCard extends StatelessWidget {
                     ),
                     if (item.memberCount != null) ...[
                       const SizedBox(width: 8),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            '${item.memberCount}',
-                            style: context.theme.typography.lg.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: colors.primary,
-                              height: 1,
-                            ),
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            'thành viên',
-                            style: TextStyle(
-                              fontFamily: context.theme.typography.xs.fontFamily,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: colors.secondary,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          spacing: 3,
+                          children: [
+                            Icon(
+                              FIcons.users,
+                              size: 10,
                               color: colors.mutedForeground,
-                              letterSpacing: 0.4,
-                              height: 1,
                             ),
-                          ),
-                        ],
+                            Text(
+                              '${item.memberCount}',
+                              style: TextStyle(
+                                fontFamily: context.theme.typography.xs.fontFamily,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: colors.mutedForeground,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ],
@@ -104,20 +105,20 @@ class LobbyFeedCard extends StatelessWidget {
                 // Visibility + homeground + timeslots
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
+                  spacing: 6,
                   children: [
                     Row(
-                      spacing: 8,
+                      spacing: 6,
                       children: [
                         _VisibilityIcon(visibility: item.visibility),
                         if (item.homegroundName != null)
                           Expanded(
                             child: Row(
-                              spacing: 4,
+                              spacing: 3,
                               children: [
                                 Icon(
                                   FIcons.mapPin,
-                                  size: 12,
+                                  size: 11,
                                   color: colors.mutedForeground,
                                 ),
                                 Expanded(
@@ -125,6 +126,7 @@ class LobbyFeedCard extends StatelessWidget {
                                     item.homegroundName!,
                                     style: context.theme.typography.xs.copyWith(
                                       color: colors.mutedForeground,
+                                      fontSize: 11,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -149,19 +151,66 @@ class LobbyFeedCard extends StatelessWidget {
                   ],
                 ),
 
-                // Challenge stakes — challenger feed only (MMR + favorability)
-                if (item.lobbyMmr != null) ...[
+                // Combined Stake & FitScore footer
+                if ((item.lobbyMmr != null) || (showCompat && score > 0)) ...[
                   FDivider(),
-                  _ChallengeStakeRow(
-                    mmr: item.lobbyMmr!,
-                    favorability: item.favorability,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 6,
+                    children: [
+                      Row(
+                        children: [
+                          if (showCompat && score > 0)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: 6,
+                              children: [
+                                Text(
+                                  'FitScore',
+                                  style: TextStyle(
+                                    fontFamily: context.theme.typography.xs.fontFamily,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.mutedForeground,
+                                    letterSpacing: 0.7,
+                                  ),
+                                ),
+                                _ScoreBadge(score: score, tier: tier),
+                              ],
+                            ),
+                          const Spacer(),
+                          if (item.lobbyMmr != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: 6,
+                              children: [
+                                Text(
+                                  'homeTab.challenger.mmr'.tr(),
+                                  style: TextStyle(
+                                    fontFamily: context.theme.typography.xs.fontFamily,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.mutedForeground,
+                                    letterSpacing: 0.7,
+                                  ),
+                                ),
+                                Text(
+                                  '${item.lobbyMmr}',
+                                  style: context.theme.typography.xs.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: colors.foreground,
+                                  ),
+                                ),
+                                if (item.favorability != null)
+                                  _FavorabilityBadge(favorability: item.favorability!),
+                              ],
+                            ),
+                        ],
+                      ),
+                      if (showCompat && score > 0)
+                        _FitScoreVibes(item: item, score: score),
+                    ],
                   ),
-                ],
-
-                // Compat section
-                if (showCompat && score > 0) ...[
-                  FDivider(),
-                  _FitScoreSection(item: item, score: score, tier: tier),
                 ],
 
                 FDivider(),
@@ -182,16 +231,100 @@ class LobbyFeedCard extends StatelessWidget {
   }
 }
 
-class _FitScoreSection extends StatelessWidget {
-  final LobbyFeedItem item;
+class _ScoreBadge extends StatelessWidget {
   final double score;
   final _Tier tier;
 
-  const _FitScoreSection({
-    required this.item,
-    required this.score,
-    required this.tier,
-  });
+  const _ScoreBadge({required this.score, required this.tier});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final scoreBg = tier == _Tier.high
+        ? const Color(0xFF16a34a)
+        : tier == _Tier.mid
+            ? const Color(0xFFd97706)
+            : colors.secondary;
+    final scoreFg =
+        tier == _Tier.low ? colors.mutedForeground : Colors.white;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: scoreBg,
+        borderRadius: BorderRadius.circular(9999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(
+            score.toStringAsFixed(1),
+            style: TextStyle(
+              fontFamily: context.theme.typography.xs.fontFamily,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: scoreFg,
+              height: 1,
+            ),
+          ),
+          const SizedBox(width: 2),
+          Text(
+            '/ 5',
+            style: TextStyle(
+              fontFamily: context.theme.typography.xs.fontFamily,
+              fontSize: 8,
+              fontWeight: FontWeight.w500,
+              color: scoreFg.withValues(alpha: 0.85),
+              height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FavorabilityBadge extends StatelessWidget {
+  final ChallengeFavorability favorability;
+
+  const _FavorabilityBadge({required this.favorability});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final (Color bg, Color fg) = switch (favorability) {
+      ChallengeFavorability.favored => (const Color(0xFF16a34a), Colors.white),
+      ChallengeFavorability.even => (const Color(0xFFd97706), Colors.white),
+      ChallengeFavorability.underdog => (colors.secondary, colors.mutedForeground),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(9999),
+      ),
+      child: Text(
+        favorability.getLocalizedName(context),
+        style: TextStyle(
+          fontFamily: context.theme.typography.xs.fontFamily,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: fg,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+class _FitScoreVibes extends StatelessWidget {
+  final LobbyFeedItem item;
+  final double score;
+
+  const _FitScoreVibes({required this.item, required this.score});
 
   List<Widget> _buildVibes(BuildContext context) {
     final colors = context.theme.colors;
@@ -199,18 +332,18 @@ class _FitScoreSection extends StatelessWidget {
 
     Widget buildChip(String label, IconData icon) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
           color: colors.secondary,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          spacing: 4,
+          spacing: 3,
           children: [
             Icon(
               icon,
-              size: 10,
+              size: 9,
               color: colors.secondaryForeground,
             ),
             Text(
@@ -228,27 +361,13 @@ class _FitScoreSection extends StatelessWidget {
     }
 
     if (item.lobbyMmr == null) {
-      // Teammate Recommendation
-      if (score >= 3.5) {
-        chips.add(buildChip('Trình độ phù hợp', FIcons.trophy));
-      }
-      if (score >= 2.0) {
-        chips.add(buildChip('Chung mạng lưới', FIcons.users));
-      }
-      if (item.timeslotCompatScore >= 4) {
-        chips.add(buildChip('Lịch chơi khớp', FIcons.calendar));
-      }
+      if (score >= 3.5) chips.add(buildChip('Trình độ phù hợp', FIcons.trophy));
+      if (score >= 2.0) chips.add(buildChip('Chung mạng lưới', FIcons.users));
+      if (item.timeslotCompatScore >= 4) chips.add(buildChip('Lịch chơi khớp', FIcons.calendar));
     } else {
-      // Challenger Recommendation
-      if (score >= 2.0) {
-        chips.add(buildChip('Chung mạng lưới', FIcons.users));
-      }
-      if (score >= 3.0) {
-        chips.add(buildChip('Lịch chơi khớp', FIcons.calendar));
-      }
-      if (item.homegroundName != null && score >= 2.5) {
-        chips.add(buildChip('Vị trí thuận tiện', FIcons.mapPin));
-      }
+      if (score >= 2.0) chips.add(buildChip('Chung mạng lưới', FIcons.users));
+      if (score >= 3.0) chips.add(buildChip('Lịch chơi khớp', FIcons.calendar));
+      if (item.homegroundName != null && score >= 2.5) chips.add(buildChip('Vị trí thuận tiện', FIcons.mapPin));
     }
 
     return chips;
@@ -256,140 +375,13 @@ class _FitScoreSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final scoreBg = tier == _Tier.high
-        ? const Color(0xFF16a34a)
-        : tier == _Tier.mid
-            ? const Color(0xFFd97706)
-            : colors.secondary;
-    final scoreFg =
-        tier == _Tier.low ? colors.mutedForeground : Colors.white;
-
     final vibes = _buildVibes(context);
+    if (vibes.isEmpty) return const SizedBox.shrink();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 8,
-      children: [
-        Row(
-          children: [
-            Text(
-              'FitScore',
-              style: TextStyle(
-                fontFamily: context.theme.typography.xs.fontFamily,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: colors.mutedForeground,
-                letterSpacing: 0.7,
-              ),
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.fromLTRB(9, 4, 9, 4),
-              decoration: BoxDecoration(
-                color: scoreBg,
-                borderRadius: BorderRadius.circular(9999),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    score.toStringAsFixed(1),
-                    style: TextStyle(
-                      fontFamily: context.theme.typography.xs.fontFamily,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: scoreFg,
-                      height: 1,
-                    ),
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    '/ 5',
-                    style: TextStyle(
-                      fontFamily: context.theme.typography.xs.fontFamily,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: scoreFg.withValues(alpha: 0.85),
-                      height: 1,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        if (vibes.isNotEmpty)
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: vibes,
-          ),
-      ],
-    );
-  }
-}
-
-class _ChallengeStakeRow extends StatelessWidget {
-  final int mmr;
-  final ChallengeFavorability? favorability;
-
-  const _ChallengeStakeRow({required this.mmr, this.favorability});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final fav = favorability;
-    final (Color bg, Color fg) = switch (fav) {
-      ChallengeFavorability.favored => (const Color(0xFF16a34a), Colors.white),
-      ChallengeFavorability.even => (const Color(0xFFd97706), Colors.white),
-      ChallengeFavorability.underdog => (colors.secondary, colors.mutedForeground),
-      null => (colors.secondary, colors.mutedForeground),
-    };
-
-    return Row(
-      children: [
-        Text(
-          'homeTab.challenger.mmr'.tr(),
-          style: TextStyle(
-            fontFamily: context.theme.typography.xs.fontFamily,
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color: colors.mutedForeground,
-            letterSpacing: 0.7,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          '$mmr',
-          style: context.theme.typography.sm.copyWith(
-            fontWeight: FontWeight.w700,
-            color: colors.foreground,
-            height: 1,
-          ),
-        ),
-        const Spacer(),
-        if (fav != null)
-          Container(
-            padding: const EdgeInsets.fromLTRB(9, 4, 9, 4),
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(9999),
-            ),
-            child: Text(
-              fav.getLocalizedName(context),
-              style: TextStyle(
-                fontFamily: context.theme.typography.xs.fontFamily,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: fg,
-                height: 1,
-              ),
-            ),
-          ),
-      ],
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: vibes,
     );
   }
 }
@@ -407,19 +399,20 @@ class _TimeslotChip extends StatelessWidget {
         borderRadius: context.theme.style.borderRadius.sm,
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 5, 8, 5),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          spacing: 4,
+          spacing: 3,
           children: [
             Icon(
               Icons.schedule_rounded,
-              size: 11,
+              size: 10,
               color: context.theme.colors.mutedForeground,
             ),
             Text(
               label,
               style: context.theme.typography.xs.copyWith(
+                fontSize: 10,
                 fontWeight: FontWeight.w500,
                 color: context.theme.colors.secondaryForeground,
               ),
