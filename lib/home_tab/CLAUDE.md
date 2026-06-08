@@ -52,8 +52,11 @@ freezed) — edit them by hand, no build_runner.
   `p_city` (city cluster id), `p_districts` (array of district ids), `p_page_size`, `p_page_number`.
 - Returns: `id, name, homeground_name, playtime, details, visibility, timeslot_compat_score,
   profile_compat_score`.
-- `profile_compat_score` (0–5) is computed by `calculate_profile_compat_score` — shared networks,
-  industries, skill-level proximity etc.
+- `profile_compat_score` is computed by `calculate_profile_compat_score` and lives in the band
+  **[2.5, 5]**: 2.5 is the neutral "ok fit" floor (no shared signal — *not* a poor match), 5 is a
+  fully-aligned match. Signals: shared/active networks, shared industry (fallback), skill-level
+  proximity, **age-group match**, and a **gender-comfort** bump (a female user matched with a female
+  target / a lobby that has ≥1 female member). Latest redesign: `schema/fitscore_redesign.sql`.
 - **Action**: "Xin vào" → inserts a `lobby_befriend_record` with `interaction_type = 'request'`,
   `target_lobby_id = lobby.id`. On accept, a trigger adds the user as a lobby member. Optimistic
   state lives in `RequestedLobbyIdsProvider` (a `Set<String>`), rolled back on failure.

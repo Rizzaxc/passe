@@ -7,7 +7,9 @@ import '../core/model/lobby.dart';
 import '../core/model/lobby_feed_item.dart';
 import '../ui/theme.dart';
 
-enum _Tier { high, mid, low }
+/// Score floor of `calculate_profile_compat_score` — the neutral baseline.
+/// Anything above it is "at least an ok fit"; at or below it is a poor fit.
+const double _fitScoreFloor = 2.5;
 
 class LobbyFeedCard extends StatelessWidget {
   final LobbyFeedItem item;
@@ -25,17 +27,9 @@ class LobbyFeedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final score = item.profileCompatScore;
-    final tier = score >= 3.5
-        ? _Tier.high
-        : score >= 2.0
-            ? _Tier.mid
-            : _Tier.low;
+    final isGoodFit = score > _fitScoreFloor;
     final sliverColor = showCompat && score > 0
-        ? (tier == _Tier.high
-            ? const Color(0xFF16a34a)
-            : tier == _Tier.mid
-                ? const Color(0xFFd97706)
-                : colors.muted)
+        ? (isGoodFit ? pbGreen : colors.muted)
         : colors.muted;
 
     return Container(
@@ -170,7 +164,7 @@ class LobbyFeedCard extends StatelessWidget {
                                     letterSpacing: 0.7,
                                   ),
                                 ),
-                                _ScoreBadge(score: score, tier: tier),
+                                _ScoreBadge(score: score, isGoodFit: isGoodFit),
                               ],
                             ),
                           const Spacer(),
@@ -228,20 +222,15 @@ class LobbyFeedCard extends StatelessWidget {
 
 class _ScoreBadge extends StatelessWidget {
   final double score;
-  final _Tier tier;
+  final bool isGoodFit;
 
-  const _ScoreBadge({required this.score, required this.tier});
+  const _ScoreBadge({required this.score, required this.isGoodFit});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final scoreBg = tier == _Tier.high
-        ? const Color(0xFF16a34a)
-        : tier == _Tier.mid
-            ? const Color(0xFFd97706)
-            : colors.secondary;
-    final scoreFg =
-        tier == _Tier.low ? colors.mutedForeground : Colors.white;
+    final scoreBg = isGoodFit ? pbGreen : colors.secondary;
+    final scoreFg = isGoodFit ? Colors.white : colors.mutedForeground;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
