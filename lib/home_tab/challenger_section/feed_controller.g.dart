@@ -33,7 +33,7 @@ final class ChallengerFeedProvider
   ChallengerFeed create() => ChallengerFeed();
 }
 
-String _$challengerFeedHash() => r'40fc9736b55bb9876b463bc01729581eb4dcc6d7';
+String _$challengerFeedHash() => r'ad26fe6b8bcc9f75368d44c14f14200465c9c27f';
 
 abstract class _$ChallengerFeed extends $AsyncNotifier<List<LobbyFeedItem>> {
   FutureOr<List<LobbyFeedItem>> build();

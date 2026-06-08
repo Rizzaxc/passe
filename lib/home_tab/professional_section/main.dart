@@ -9,124 +9,6 @@ import '../../ui/main.dart';
 import '../filter.dart';
 import 'feed_controller.dart';
 
-// ─── Mock data (visual preview while backend is wired) ─────────
-
-const _kMockCoaches = <ProfessionalFeedItem>[
-  ProfessionalFeedItem(
-    id: 'mock-c-1',
-    displayName: 'Nguyễn Minh',
-    role: ProfessionalRole.coach,
-    bio: 'Hơn 10 năm huấn luyện đội tuyển trẻ Q.10.',
-    sports: [3],
-    experienceYears: 12,
-    averageRating: 4.8,
-    reviewCount: 67,
-    isVerified: true,
-  ),
-  ProfessionalFeedItem(
-    id: 'mock-c-2',
-    displayName: 'Trần Quốc Bảo',
-    role: ProfessionalRole.coach,
-    bio: 'Cựu VĐV cấp tỉnh, chuyên kỹ thuật cơ bản.',
-    sports: [3],
-    experienceYears: 8,
-    averageRating: 4.6,
-    reviewCount: 42,
-    isVerified: true,
-  ),
-  ProfessionalFeedItem(
-    id: 'mock-c-3',
-    displayName: 'Lê Thị Hương',
-    role: ProfessionalRole.coach,
-    bio: 'HLV nữ giàu kinh nghiệm, dạy nhóm và 1-1.',
-    sports: [3],
-    experienceYears: 6,
-    averageRating: 4.9,
-    reviewCount: 38,
-    isVerified: false,
-  ),
-  ProfessionalFeedItem(
-    id: 'mock-c-4',
-    displayName: 'Phạm Văn Đức',
-    role: ProfessionalRole.coach,
-    bio: 'Phong cách tấn công nhanh, phù hợp trung-cao.',
-    sports: [3],
-    experienceYears: 15,
-    averageRating: 4.7,
-    reviewCount: 91,
-    isVerified: true,
-  ),
-  ProfessionalFeedItem(
-    id: 'mock-c-5',
-    displayName: 'Hoàng Anh Tuấn',
-    role: ProfessionalRole.coach,
-    bio: 'Cựu tuyển trường, dạy chiến thuật đôi.',
-    sports: [3],
-    experienceYears: 4,
-    averageRating: 4.5,
-    reviewCount: 19,
-    isVerified: false,
-  ),
-];
-
-const _kMockReferees = <ProfessionalFeedItem>[
-  ProfessionalFeedItem(
-    id: 'mock-r-1',
-    displayName: 'Đỗ Hoàng Long',
-    role: ProfessionalRole.referee,
-    bio: 'Trọng tài cấp quốc gia, hơn 200 trận chính.',
-    sports: [3],
-    experienceYears: 14,
-    averageRating: 4.9,
-    reviewCount: 112,
-    isVerified: true,
-  ),
-  ProfessionalFeedItem(
-    id: 'mock-r-2',
-    displayName: 'Vũ Minh Khoa',
-    role: ProfessionalRole.referee,
-    bio: 'Trọng tài giải phong trào, công minh, sòng phẳng.',
-    sports: [3],
-    experienceYears: 7,
-    averageRating: 4.7,
-    reviewCount: 56,
-    isVerified: true,
-  ),
-  ProfessionalFeedItem(
-    id: 'mock-r-3',
-    displayName: 'Nguyễn Thanh Tùng',
-    role: ProfessionalRole.referee,
-    bio: 'Trọng tài trẻ, sẵn sàng cho giải nội bộ.',
-    sports: [3],
-    experienceYears: 3,
-    averageRating: 4.6,
-    reviewCount: 24,
-    isVerified: false,
-  ),
-  ProfessionalFeedItem(
-    id: 'mock-r-4',
-    displayName: 'Bùi Quang Hải',
-    role: ProfessionalRole.referee,
-    bio: 'Chuyên giải đôi nam nữ, di chuyển linh hoạt.',
-    sports: [3],
-    experienceYears: 9,
-    averageRating: 4.8,
-    reviewCount: 73,
-    isVerified: true,
-  ),
-  ProfessionalFeedItem(
-    id: 'mock-r-5',
-    displayName: 'Trịnh Văn Cường',
-    role: ProfessionalRole.referee,
-    bio: 'Trọng tài chính giải nội bộ doanh nghiệp.',
-    sports: [3],
-    experienceYears: 5,
-    averageRating: 4.4,
-    reviewCount: 31,
-    isVerified: false,
-  ),
-];
-
 // ─── Subtab root ───────────────────────────────────────────────
 
 class ProfessionalSubtab extends ConsumerWidget {
@@ -142,16 +24,8 @@ class ProfessionalSubtab extends ConsumerWidget {
         await ref.read(professionalFeedProvider.future);
       },
       child: feed.when(
-        loading: () => const _Sections(
-          coaches: _kMockCoaches,
-          referees: _kMockReferees,
-          isMock: true,
-        ),
-        error: (_, _) => const _Sections(
-          coaches: _kMockCoaches,
-          referees: _kMockReferees,
-          isMock: true,
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, _) => const _Sections(coaches: [], referees: []),
         data: (items) {
           final coaches = items
               .where((p) => p.role == ProfessionalRole.coach)
@@ -159,12 +33,7 @@ class ProfessionalSubtab extends ConsumerWidget {
           final referees = items
               .where((p) => p.role == ProfessionalRole.referee)
               .toList();
-          final empty = coaches.isEmpty && referees.isEmpty;
-          return _Sections(
-            coaches: empty ? _kMockCoaches : coaches,
-            referees: empty ? _kMockReferees : referees,
-            isMock: empty,
-          );
+          return _Sections(coaches: coaches, referees: referees);
         },
       ),
     );
@@ -176,12 +45,10 @@ class ProfessionalSubtab extends ConsumerWidget {
 class _Sections extends StatelessWidget {
   final List<ProfessionalFeedItem> coaches;
   final List<ProfessionalFeedItem> referees;
-  final bool isMock;
 
   const _Sections({
     required this.coaches,
     required this.referees,
-    required this.isMock,
   });
 
   @override
@@ -193,14 +60,12 @@ class _Sections extends StatelessWidget {
         _Section(
           title: 'homeTab.professional.filter.coach'.tr(),
           items: coaches,
-          isMock: isMock,
           suffix: const FilterWidget(),
         ),
         const SizedBox(height: 24),
         _Section(
           title: 'homeTab.professional.filter.referee'.tr(),
           items: referees,
-          isMock: isMock,
         ),
         const SizedBox(height: 16),
       ],
@@ -212,13 +77,11 @@ class _Sections extends StatelessWidget {
 class _Section extends StatefulWidget {
   final String title;
   final List<ProfessionalFeedItem> items;
-  final bool isMock;
   final Widget? suffix;
 
   const _Section({
     required this.title,
     required this.items,
-    required this.isMock,
     this.suffix,
   });
 
@@ -253,7 +116,6 @@ class _SectionState extends State<_Section> {
       builder: (_) => _ProfessionalSheet(
         title: widget.title,
         items: widget.items,
-        isMock: widget.isMock,
       ),
     );
     if (mounted) _sheetOpening = false;
@@ -342,10 +204,7 @@ class _SectionState extends State<_Section> {
                 onPageChanged: (i) => setState(() => _page = i),
                 itemBuilder: (context, i) => Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: _ProfessionalCard(
-                    item: widget.items[i],
-                    isMock: widget.isMock,
-                  ),
+                  child: _ProfessionalCard(item: widget.items[i]),
                 ),
               ),
             ),
@@ -392,9 +251,8 @@ class _PageDots extends StatelessWidget {
 
 class _ProfessionalCard extends StatelessWidget {
   final ProfessionalFeedItem item;
-  final bool isMock;
 
-  const _ProfessionalCard({required this.item, this.isMock = false});
+  const _ProfessionalCard({required this.item});
 
   String get _initials {
     final cleaned = item.displayName
@@ -532,7 +390,7 @@ class _ProfessionalCard extends StatelessWidget {
               FButton(
                 size: .sm,
                 variant: .secondary,
-                onPress: isMock ? null : () {},
+                onPress: () {},
                 child: Text('homeTab.professional.book'.tr()),
               ),
             ],
@@ -547,12 +405,10 @@ class _ProfessionalCard extends StatelessWidget {
 class _ProfessionalSheet extends StatefulWidget {
   final String title;
   final List<ProfessionalFeedItem> items;
-  final bool isMock;
 
   const _ProfessionalSheet({
     required this.title,
     required this.items,
-    required this.isMock,
   });
 
   @override
@@ -593,8 +449,7 @@ class _ProfessionalSheetState extends State<_ProfessionalSheet> {
               ),
             ],
           ),
-          for (final item in widget.items)
-            _SheetRow(item: item, isMock: widget.isMock),
+          for (final item in widget.items) _SheetRow(item: item),
           const SizedBox(height: 8),
         ],
       ),
@@ -605,9 +460,8 @@ class _ProfessionalSheetState extends State<_ProfessionalSheet> {
 // Sheet row — surfaces full info: bio, sports, experience, verification
 class _SheetRow extends StatelessWidget {
   final ProfessionalFeedItem item;
-  final bool isMock;
 
-  const _SheetRow({required this.item, required this.isMock});
+  const _SheetRow({required this.item});
 
   String get _initials {
     final cleaned = item.displayName
@@ -839,13 +693,13 @@ class _SheetRow extends StatelessWidget {
               Expanded(
                 child: FButton(
                   variant: .outline,
-                  onPress: isMock ? null : () {},
+                  onPress: () {},
                   child: const Text('Xem Hồ Sơ'),
                 ),
               ),
               Expanded(
                 child: FButton(
-                  onPress: isMock ? null : () {},
+                  onPress: () {},
                   child: Text('homeTab.professional.book'.tr()),
                 ),
               ),

@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../core/model/enum.dart';
 import '../core/model/lobby.dart';
 import '../core/model/lobby_feed_item.dart';
 import '../ui/theme.dart';
@@ -48,10 +50,10 @@ class LobbyFeedCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 10,
+              spacing: 8,
               children: [
                 // Name + member count
                 Row(
@@ -71,7 +73,9 @@ class LobbyFeedCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Row(
                         mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        spacing: 4,
                         children: [
                           Text(
                             '${item.memberCount}',
@@ -81,16 +85,10 @@ class LobbyFeedCard extends StatelessWidget {
                               height: 1,
                             ),
                           ),
-                          const SizedBox(width: 3),
                           Text(
                             'thành viên',
-                            style: TextStyle(
-                              fontFamily: context.theme.typography.xs.fontFamily,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
+                            style: context.theme.typography.xs.copyWith(
                               color: colors.mutedForeground,
-                              letterSpacing: 0.4,
-                              height: 1,
                             ),
                           ),
                         ],
@@ -102,20 +100,20 @@ class LobbyFeedCard extends StatelessWidget {
                 // Visibility + homeground + timeslots
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
+                  spacing: 6,
                   children: [
                     Row(
-                      spacing: 8,
+                      spacing: 6,
                       children: [
                         _VisibilityIcon(visibility: item.visibility),
                         if (item.homegroundName != null)
                           Expanded(
                             child: Row(
-                              spacing: 4,
+                              spacing: 3,
                               children: [
                                 Icon(
                                   FIcons.mapPin,
-                                  size: 12,
+                                  size: 11,
                                   color: colors.mutedForeground,
                                 ),
                                 Expanded(
@@ -123,6 +121,7 @@ class LobbyFeedCard extends StatelessWidget {
                                     item.homegroundName!,
                                     style: context.theme.typography.xs.copyWith(
                                       color: colors.mutedForeground,
+                                      fontSize: 11,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -147,10 +146,66 @@ class LobbyFeedCard extends StatelessWidget {
                   ],
                 ),
 
-                // Compat section
-                if (showCompat && score > 0) ...[
+                // Combined Stake & FitScore footer
+                if ((item.lobbyMmr != null) || (showCompat && score > 0)) ...[
                   FDivider(),
-                  _CompatSection(score: score, tier: tier),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 6,
+                    children: [
+                      Row(
+                        children: [
+                          if (showCompat && score > 0)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: 6,
+                              children: [
+                                Text(
+                                  'FitScore',
+                                  style: TextStyle(
+                                    fontFamily: context.theme.typography.xs.fontFamily,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.mutedForeground,
+                                    letterSpacing: 0.7,
+                                  ),
+                                ),
+                                _ScoreBadge(score: score, tier: tier),
+                              ],
+                            ),
+                          const Spacer(),
+                          if (item.lobbyMmr != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: 6,
+                              children: [
+                                Text(
+                                  'homeTab.challenger.mmr'.tr(),
+                                  style: TextStyle(
+                                    fontFamily: context.theme.typography.xs.fontFamily,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.mutedForeground,
+                                    letterSpacing: 0.7,
+                                  ),
+                                ),
+                                Text(
+                                  '${item.lobbyMmr}',
+                                  style: context.theme.typography.xs.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: colors.foreground,
+                                  ),
+                                ),
+                                if (item.favorability != null)
+                                  _FavorabilityBadge(favorability: item.favorability!),
+                              ],
+                            ),
+                        ],
+                      ),
+                      if (showCompat && score > 0)
+                        _FitScoreVibes(item: item, score: score),
+                    ],
+                  ),
                 ],
 
                 FDivider(),
@@ -171,11 +226,11 @@ class LobbyFeedCard extends StatelessWidget {
   }
 }
 
-class _CompatSection extends StatelessWidget {
+class _ScoreBadge extends StatelessWidget {
   final double score;
   final _Tier tier;
 
-  const _CompatSection({required this.score, required this.tier});
+  const _ScoreBadge({required this.score, required this.tier});
 
   @override
   Widget build(BuildContext context) {
@@ -188,78 +243,163 @@ class _CompatSection extends StatelessWidget {
     final scoreFg =
         tier == _Tier.low ? colors.mutedForeground : Colors.white;
 
-    return Row(
-      children: [
-        Row(
-          spacing: 4,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: scoreBg,
+        borderRadius: BorderRadius.circular(9999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(
+            score.toStringAsFixed(1),
+            style: TextStyle(
+              fontFamily: context.theme.typography.xs.fontFamily,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: scoreFg,
+              height: 1,
+            ),
+          ),
+          const SizedBox(width: 2),
+          Text(
+            '/ 5',
+            style: TextStyle(
+              fontFamily: context.theme.typography.xs.fontFamily,
+              fontSize: 8,
+              fontWeight: FontWeight.w500,
+              color: scoreFg.withValues(alpha: 0.85),
+              height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FavorabilityBadge extends StatelessWidget {
+  final ChallengeFavorability favorability;
+
+  const _FavorabilityBadge({required this.favorability});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final (Color bg, Color fg) = switch (favorability) {
+      ChallengeFavorability.favored => (const Color(0xFF16a34a), Colors.white),
+      ChallengeFavorability.even => (const Color(0xFFd97706), Colors.white),
+      ChallengeFavorability.underdog => (colors.secondary, colors.mutedForeground),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(9999),
+      ),
+      child: Text(
+        favorability.getLocalizedName(context),
+        style: TextStyle(
+          fontFamily: context.theme.typography.xs.fontFamily,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: fg,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+class _FitScoreVibes extends StatelessWidget {
+  final LobbyFeedItem item;
+  final double score;
+
+  const _FitScoreVibes({required this.item, required this.score});
+
+  List<Widget> _buildVibes(BuildContext context) {
+    final colors = context.theme.colors;
+    final chips = <Widget>[];
+
+    // Semantic palettes: skill (amber), network (emerald), playtime (brand
+    // blue), location (primary red). Soft translucent bg + solid fg.
+    const skillBg = Color(0x14F59E0B); // 0xFFF59E0B @ 8%
+    const skillFg = Color(0xFFD97706);
+    const networkBg = Color(0x1410B981); // 0xFF10B981 @ 8%
+    const networkFg = Color(0xFF059669);
+    final playtimeBg = pbBlue.withValues(alpha: 0.08);
+    const playtimeFg = pbBlue;
+    final locationBg = colors.primary.withValues(alpha: 0.08);
+    final locationFg = colors.primary;
+
+    Widget buildChip(String label, IconData icon, Color bg, Color fg) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 3,
           children: [
+            Icon(
+              icon,
+              size: 9,
+              color: fg,
+            ),
             Text(
-              'Phù Hợp Với Bạn',
+              label,
               style: TextStyle(
                 fontFamily: context.theme.typography.xs.fontFamily,
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
-                color: colors.mutedForeground,
-                letterSpacing: 0.7,
-              ),
-            ),
-            Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: colors.muted,
-                borderRadius: BorderRadius.circular(7),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'i',
-                style: TextStyle(
-                  fontFamily: context.theme.typography.xs.fontFamily,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: colors.mutedForeground,
-                ),
+                color: fg,
               ),
             ),
           ],
         ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.fromLTRB(9, 4, 9, 4),
-          decoration: BoxDecoration(
-            color: scoreBg,
-            borderRadius: BorderRadius.circular(9999),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                score.toStringAsFixed(1),
-                style: TextStyle(
-                  fontFamily: context.theme.typography.xs.fontFamily,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: scoreFg,
-                  height: 1,
-                ),
-              ),
-              const SizedBox(width: 3),
-              Text(
-                '/ 5',
-                style: TextStyle(
-                  fontFamily: context.theme.typography.xs.fontFamily,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: scoreFg.withValues(alpha: 0.85),
-                  height: 1,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+      );
+    }
+
+    if (item.lobbyMmr == null) {
+      if (score >= 3.5) {
+        chips.add(buildChip('Trình độ phù hợp', FIcons.trophy, skillBg, skillFg));
+      }
+      if (score >= 2.0) {
+        chips.add(buildChip('Chung mạng lưới', FIcons.users, networkBg, networkFg));
+      }
+      if (item.timeslotCompatScore >= 4) {
+        chips.add(buildChip('Lịch chơi khớp', FIcons.calendar, playtimeBg, playtimeFg));
+      }
+    } else {
+      if (score >= 2.0) {
+        chips.add(buildChip('Chung mạng lưới', FIcons.users, networkBg, networkFg));
+      }
+      if (score >= 3.0) {
+        chips.add(buildChip('Lịch chơi khớp', FIcons.calendar, playtimeBg, playtimeFg));
+      }
+      if (item.homegroundName != null && score >= 2.5) {
+        chips.add(buildChip('Vị trí thuận tiện', FIcons.mapPin, locationBg, locationFg));
+      }
+    }
+
+    return chips;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vibes = _buildVibes(context);
+    if (vibes.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: vibes,
     );
   }
 }
@@ -273,25 +413,26 @@ class _TimeslotChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.theme.colors.secondary,
+        color: pbBlue.withValues(alpha: 0.08),
         borderRadius: context.theme.style.borderRadius.sm,
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 5, 8, 5),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          spacing: 4,
+          spacing: 3,
           children: [
-            Icon(
+            const Icon(
               Icons.schedule_rounded,
-              size: 11,
-              color: context.theme.colors.mutedForeground,
+              size: 10,
+              color: pbBlue,
             ),
             Text(
               label,
               style: context.theme.typography.xs.copyWith(
+                fontSize: 10,
                 fontWeight: FontWeight.w500,
-                color: context.theme.colors.secondaryForeground,
+                color: pbBlue,
               ),
             ),
           ],

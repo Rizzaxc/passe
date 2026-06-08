@@ -3,28 +3,12 @@ import 'dart:math' show min;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../ui/main.dart';
+import 'controller.dart';
 
 // ─── Model ────────────────────────────────────────────────────────────────────
-
-class _ScheduleEvent {
-  final String title;
-  final String meta;
-  final _EventTone tone;
-  final TimeOfDay start;
-  final TimeOfDay end;
-
-  const _ScheduleEvent({
-    required this.title,
-    required this.meta,
-    required this.tone,
-    required this.start,
-    required this.end,
-  });
-}
-
-enum _EventTone { sport, coach }
 
 enum _ViewMode { timeline, cards }
 
@@ -80,48 +64,22 @@ String _dayLabel(DateTime date) {
   };
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
-final _mockEventsToday = [
-  _ScheduleEvent(
-    title: 'Chơi cầu lông cùng CLB Bách Khoa',
-    meta: 'NTĐ Bách Khoa · 4/8 người',
-    tone: _EventTone.sport,
-    start: const TimeOfDay(hour: 18, minute: 0),
-    end: const TimeOfDay(hour: 20, minute: 0),
-  ),
-];
-
-final _mockEventsTomorrow = [
-  _ScheduleEvent(
-    title: 'Buổi 3/10 — HLV Hữu Thắng',
-    meta: 'Khoá Smash cơ bản · NTĐ Bách Khoa',
-    tone: _EventTone.coach,
-    start: const TimeOfDay(hour: 7, minute: 30),
-    end: const TimeOfDay(hour: 9, minute: 0),
-  ),
-  _ScheduleEvent(
-    title: 'Thách đấu — Vĩnh Phú Smash',
-    meta: 'NTĐ Vĩnh Phú · TvT 5v5',
-    tone: _EventTone.sport,
-    start: const TimeOfDay(hour: 20, minute: 0),
-    end: const TimeOfDay(hour: 22, minute: 0),
-  ),
-];
-
 // ─── Root widget ──────────────────────────────────────────────────────────────
 
-class ScheduleSection extends StatefulWidget {
+class ScheduleSection extends ConsumerStatefulWidget {
   const ScheduleSection({super.key});
 
   @override
-  State<ScheduleSection> createState() => _ScheduleSectionState();
+  ConsumerState<ScheduleSection> createState() => _ScheduleSectionState();
 }
 
-class _ScheduleSectionState extends State<ScheduleSection> {
+class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
   DateTime _selectedDate = DateTime.now();
   _ViewMode _viewMode = _ViewMode.timeline;
   final ScrollController _scrollCtrl = ScrollController();
+
+  /// Events keyed by local date, from the latest provider value.
+  Map<DateTime, List<ScheduleEvent>> _eventsByDate = const {};
 
   @override
   void dispose() {
@@ -129,20 +87,14 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     super.dispose();
   }
 
+  List<ScheduleEvent> _eventsFor(DateTime date) =>
+      _eventsByDate[DateTime(date.year, date.month, date.day)] ?? const [];
+
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  List<_ScheduleEvent> _eventsFor(DateTime date) {
-    final now = DateTime.now();
-    if (_isSameDay(date, now)) return _mockEventsToday;
-    if (_isSameDay(date, now.add(const Duration(days: 1)))) {
-      return _mockEventsTomorrow;
-    }
-    return [];
-  }
-
   /// Hour at which the time grid starts; -1 = whole day is empty.
-  int _gridStartHour(List<_ScheduleEvent> events, bool isToday) {
+  int _gridStartHour(List<ScheduleEvent> events, bool isToday) {
     if (events.isEmpty) return -1;
     int boundaryHour = events.map((e) => e.start.hour).reduce(min);
     if (isToday) boundaryHour = min(boundaryHour, TimeOfDay.now().hour);
@@ -150,7 +102,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
   }
 
   /// True end of the empty leading range shown in collapsed/empty labels.
-  String _emptyRangeEnd(List<_ScheduleEvent> events, bool isToday) {
+  String _emptyRangeEnd(List<ScheduleEvent> events, bool isToday) {
     if (events.isEmpty) {
       return isToday ? _fmtTime(TimeOfDay.now()) : '24:00';
     }
@@ -171,6 +123,21 @@ class _ScheduleSectionState extends State<ScheduleSection> {
 
   @override
   Widget build(BuildContext context) {
+    // Surface load errors but keep the calendar usable.
+    ref.listen(scheduleEventsProvider, (_, next) {
+      if (next is AsyncError && context.mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FIcons.circleX),
+          variant: .destructive,
+          title: Text('error'.tr()),
+          description: Text('errorGeneric'.tr()),
+          alignment: .bottomCenter,
+        );
+      }
+    });
+    _eventsByDate = ref.watch(scheduleEventsProvider).value ?? const {};
+
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isPhone = screenWidth < context.theme.breakpoints.sm;
     final yesterday = DateTime.now().subtract(const Duration(days: 1));
@@ -215,7 +182,10 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         // ── Scrollable body ───────────────────────────────────────────
         Expanded(
           child: RefreshIndicator(
-            onRefresh: () async {},
+            onRefresh: () async {
+              ref.invalidate(scheduleEventsProvider);
+              await ref.read(scheduleEventsProvider.future);
+            },
             child: SingleChildScrollView(
               controller: _scrollCtrl,
               physics: const AlwaysScrollableScrollPhysics(),
@@ -252,7 +222,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
 // ─── Multi-day card list ──────────────────────────────────────────────────────
 
 class _MultiDayCardView extends StatelessWidget {
-  final List<_ScheduleEvent> Function(DateTime) eventsFor;
+  final List<ScheduleEvent> Function(DateTime) eventsFor;
 
   const _MultiDayCardView({required this.eventsFor});
 
@@ -269,7 +239,7 @@ class _MultiDayCardView extends StatelessWidget {
 
 class _DaySection extends StatelessWidget {
   final DateTime date;
-  final List<_ScheduleEvent> events;
+  final List<ScheduleEvent> events;
 
   const _DaySection({required this.date, required this.events});
 
@@ -427,14 +397,14 @@ class _CollapsedBlock extends StatelessWidget {
 // ─── Event row (card view) ────────────────────────────────────────────────────
 
 class _EventRow extends StatelessWidget {
-  final _ScheduleEvent event;
+  final ScheduleEvent event;
 
   const _EventRow({required this.event});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final accent = event.tone == _EventTone.sport ? colors.primary : pbBlue;
+    final accent = event.tone == ScheduleEventTone.sport ? colors.primary : pbBlue;
 
     return FTappable(
       onPress: () {},
@@ -543,7 +513,7 @@ class _TimeLabel extends StatelessWidget {
 // ─── Time grid ────────────────────────────────────────────────────────────────
 
 class _TimeGrid extends StatelessWidget {
-  final List<_ScheduleEvent> events;
+  final List<ScheduleEvent> events;
   final int startHour;
   final bool showNowIndicator;
 
@@ -563,7 +533,7 @@ class _TimeGrid extends StatelessWidget {
         .clamp(0.0, (_endHour - startHour) * hourHeight);
   }
 
-  double _blockHeight(_ScheduleEvent e) {
+  double _blockHeight(ScheduleEvent e) {
     final mins = (e.end.hour * 60 + e.end.minute) -
         (e.start.hour * 60 + e.start.minute);
     return (mins * hourHeight / 60).clamp(28.0, double.infinity);
@@ -671,14 +641,14 @@ class _TimeGrid extends StatelessWidget {
 // ─── Event block (timeline view) ──────────────────────────────────────────────
 
 class _EventBlock extends StatelessWidget {
-  final _ScheduleEvent event;
+  final ScheduleEvent event;
 
   const _EventBlock({required this.event});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final accent = event.tone == _EventTone.sport ? colors.primary : pbBlue;
+    final accent = event.tone == ScheduleEventTone.sport ? colors.primary : pbBlue;
 
     return FTappable(
       onPress: () {},

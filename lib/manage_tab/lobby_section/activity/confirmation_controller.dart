@@ -2,40 +2,43 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../auth/auth_controller.dart';
+import '../../../core/model/enum.dart';
 
 part 'confirmation_controller.g.dart';
 
-/// Snapshot of an activity's confirmation state — the four numbers the
-/// hero's RSVP control needs in one bundle.
+/// Snapshot of an activity's RSVP state — the numbers the hero's RSVP
+/// control needs in one bundle.
 ///
-/// `meConfirmed` = is the current user in the confirmation list (the
-/// "member confirmation" side).
+/// [myAttendance] is the current user's own RSVP (`null` = no response yet).
 ///
-/// `activityConfirmed` = does the activity itself count as official
-/// — either because [threshold] is null (fixed-schedule groups) or
-/// because [confirmedCount] >= [threshold].
+/// [activityConfirmed] = does the activity itself count as official —
+/// either because [threshold] is null (fixed-schedule groups) or because
+/// [confirmedCount] (the **going** tally only) >= [threshold]. `maybe` /
+/// `out` never count toward the threshold.
 class ActivityConfirmationStatus {
-  final int confirmedCount;
+  final int confirmedCount; // "going" only
+  final int maybeCount;
   final int? threshold;
-  final bool meConfirmed;
+  final Attendance? myAttendance;
   final bool activityConfirmed;
 
   const ActivityConfirmationStatus({
     required this.confirmedCount,
+    required this.maybeCount,
     required this.threshold,
-    required this.meConfirmed,
+    required this.myAttendance,
     required this.activityConfirmed,
   });
 }
 
-/// Activity-level + member-level confirmation for one activity row.
+/// Activity-level + member-level RSVP for one activity row.
 ///
 /// The notifier reads through the `activity_confirmation_status` RPC
-/// (single round-trip) and writes by inserting / deleting the caller's
-/// row in `activity_confirmation`. After every write it re-reads — the
-/// status flip from "X of Y confirmed" → "official" needs to land in
-/// the same render frame, so we don't bother with optimistic local
-/// math.
+/// (single round-trip) and writes by upserting the caller's row in
+/// `activity_confirmation` with the chosen [Attendance]. Writes flip the
+/// local state **optimistically** (so the RSVP control reacts in the same
+/// frame), then reconcile against the server re-read; on failure the
+/// previous snapshot is restored.
 @riverpod
 class ActivityConfirmationController
     extends _$ActivityConfirmationController {
@@ -56,39 +59,60 @@ class ActivityConfirmationController
     final row = (rows as List).first as Map<String, dynamic>;
     return ActivityConfirmationStatus(
       confirmedCount: (row['confirmed_count'] as num).toInt(),
+      maybeCount: (row['maybe_count'] as num).toInt(),
       threshold: (row['threshold'] as num?)?.toInt(),
-      meConfirmed: row['me_confirmed'] as bool,
+      myAttendance: Attendance.fromValue(row['my_attendance'] as String?),
       activityConfirmed: row['activity_confirmed'] as bool,
     );
   }
 
-  /// Member confirmation — caller commits to attending. Idempotent via
-  /// the `(activity_id, user_id)` primary key on activity_confirmation.
-  Future<void> confirm(String activityId) async {
-    final userId = ref.read(currentUserIdProvider);
-    if (userId == null) return;
-
-    await supabase
-        .from('activity_confirmation')
-        .upsert({'activity_id': activityId, 'user_id': userId})
-        .timeout(const Duration(seconds: 5));
-
-    state = AsyncData(await _fetch(activityId));
+  /// Local snapshot with the caller's RSVP changed to [next], adjusting the
+  /// going / maybe tallies — used to flip the UI before the server round-trip.
+  ActivityConfirmationStatus _withAttendance(
+    ActivityConfirmationStatus s,
+    Attendance next,
+  ) {
+    final wasGoing = s.myAttendance == Attendance.going;
+    final wasMaybe = s.myAttendance == Attendance.maybe;
+    final going = s.confirmedCount +
+        (next == Attendance.going ? 1 : 0) -
+        (wasGoing ? 1 : 0);
+    final maybe = s.maybeCount +
+        (next == Attendance.maybe ? 1 : 0) -
+        (wasMaybe ? 1 : 0);
+    return ActivityConfirmationStatus(
+      confirmedCount: going.clamp(0, 1 << 30),
+      maybeCount: maybe.clamp(0, 1 << 30),
+      threshold: s.threshold,
+      myAttendance: next,
+      activityConfirmed: s.threshold == null || going >= s.threshold!,
+    );
   }
 
-  /// Retract a previous confirmation. The DELETE policy lets a user
-  /// only delete their own row; the WHERE clause keeps that aligned.
-  Future<void> retract(String activityId) async {
+  /// Set the caller's RSVP. Upserts on the `(activity_id, user_id)` primary
+  /// key, so switching going ⇄ maybe ⇄ out updates the existing row.
+  Future<void> setAttendance(String activityId, Attendance attendance) async {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
-    await supabase
-        .from('activity_confirmation')
-        .delete()
-        .eq('activity_id', activityId)
-        .eq('user_id', userId)
-        .timeout(const Duration(seconds: 5));
+    final prev = state.value;
+    if (prev != null && prev.myAttendance != attendance) {
+      state = AsyncData(_withAttendance(prev, attendance)); // optimistic
+    }
 
-    state = AsyncData(await _fetch(activityId));
+    try {
+      await supabase
+          .from('activity_confirmation')
+          .upsert({
+            'activity_id': activityId,
+            'user_id': userId,
+            'attendance': attendance.value,
+          })
+          .timeout(const Duration(seconds: 5));
+      state = AsyncData(await _fetch(activityId)); // reconcile
+    } catch (_) {
+      if (prev != null) state = AsyncData(prev); // rollback
+      rethrow;
+    }
   }
 }

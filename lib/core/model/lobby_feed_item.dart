@@ -1,3 +1,4 @@
+import 'enum.dart';
 import 'lobby.dart';
 import 'timeslot.dart';
 
@@ -12,6 +13,12 @@ class LobbyFeedItem {
   final double profileCompatScore;
   final int? memberCount;
 
+  /// Challenger feed only: this lobby's cached MMR.
+  final int? lobbyMmr;
+
+  /// Challenger feed only: how the matchup leans for the context (away) lobby.
+  final ChallengeFavorability? favorability;
+
   const LobbyFeedItem({
     required this.id,
     required this.name,
@@ -22,6 +29,8 @@ class LobbyFeedItem {
     required this.timeslotCompatScore,
     required this.profileCompatScore,
     this.memberCount,
+    this.lobbyMmr,
+    this.favorability,
   });
 
   factory LobbyFeedItem.fromJson(Map<String, dynamic> json) {
@@ -48,6 +57,9 @@ class LobbyFeedItem {
       profileCompatScore:
           double.tryParse(json['profile_compat_score']?.toString() ?? '') ?? 0,
       memberCount: (json['member_count'] as num?)?.toInt(),
+      lobbyMmr: (json['lobby_mmr'] as num?)?.toInt(),
+      favorability:
+          ChallengeFavorability.fromValue(json['favorability'] as String?),
     );
   }
 }
