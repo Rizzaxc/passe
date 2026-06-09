@@ -34,7 +34,11 @@ user grants health permissions, every subtab is replaced by the "not linked" CTA
   (`HealthMetric` enum + `DashboardMetrics`, a locally-persisted customizable visible set).
 - `activity_data_section/` — recap list + detected-workouts inbox (`main.dart`), `recap_sheet.dart`
   (per-activity HR-curve detail), `zone_bar.dart` (3-zone stacked bar).
-- `achievements_section/` — still a hard-coded placeholder (gamification deferred).
+- `achievements_section/` — the gamification screen (see **Gamification** below):
+  `main.dart` (level header + badges grouped by progress state), `badge_card.dart`
+  (tier-icon card), `celebration_sheet.dart` (post-sync unlock/level-up sheet),
+  `achievements_controller.dart` (read providers + celebration/unseen state), and
+  `model/` (`achievement_progress`, `level_summary`, `achievement_celebration`).
 - `model/` — freezed models: `user_health_link` (+ `maxHeartRate`/`lt1Bpm`/`lt2Bpm`),
   `daily_health_summary`, `activity_health_metrics` (3 zone fields + `dismissed` tombstone),
   `activity_health_row` (recap view model), `hr_sample` (all generated; edit source + build_runner).
@@ -62,6 +66,44 @@ Capture is sport-agnostic; only the recap-list display filters by the context sp
 `linkHealthService()` calls `_health.configure()` + `requestAuthorization()`, then upserts
 `user_health_link` (`platform`, `linked_at`) and caches locally. Platform is `appleHealth` on iOS,
 `healthConnect` elsewhere.
+
+## Gamification (achievements + XP/level)
+
+Health-only, **global** fitness level (cap 50). Schema/RPCs in
+`schema/achievement_gamification.sql`; catalog in `schema/achievement_seed.sql`
+(both applied via MCP — **re-dump `passe.sql`** when you next can).
+
+- **Criteria are data, not code.** Each `achievement.criteria` jsonb is a constrained
+  rule `{source, agg, metric, window, threshold, comparator?, row_min?, session_min?}`
+  interpreted by one SQL function. Add/tune a badge = `INSERT`/`UPDATE` a row in the
+  seed (keyed by the stable `code` slug) — no Dart change. CHECK-constrained vocabulary:
+  `source ∈ daily|activity|special`, `agg ∈ sum|count|max|session_streak|special`,
+  `window ∈ day|week|month|all_time` (calendar only — no rolling). `repeatable ⇒
+  window ∈ {week,month}`.
+- **`session_load`** is a *virtual* metric = 3-zone TRIMP `(easy + 2·mod + 3·hard)/60`,
+  computed inline from `activity_health_metrics` zone seconds — the intensity-fair
+  spine for hard/streak badges. No column.
+- **Evaluator is the sole mutator.** `evaluate_achievements(uid)` (SECURITY DEFINER) runs
+  at the end of `syncNow()` *only* — health data only changes on sync. It persists
+  unlocks to `user_achievement` (`ON CONFLICT DO NOTHING`, keyed by `period_key`), banks
+  `xp_granted` (a **snapshot** of `xp_reward`, so retuning the catalog never rewrites
+  history), recomputes `user.xp`/`user.level`, and returns the newly-unlocked payload.
+  RLS gives clients **no** write path anywhere.
+- **Curve lives only in SQL**: `C(L)=25·L·(L−1)`, cap 50. `user_level_summary` returns
+  `{level, xp_total, current_floor, next_floor}`; the client renders the bar, never the
+  formula. **Only ratchet the constant (25) *down*** — raising it de-levels users.
+- **Read path is cheap**: `achievement_progress(uid)` computes per-badge state
+  (`in_progress`/`earned_period`/`done`/`not_started`) for display; pull-to-refresh
+  invalidates the read providers, **never** `syncNow()`.
+- **Backfill floor**: achievements only count data since `greatest(user.created_at,
+  now()−90d)`, so a new user can't farm pre-app watch history; repeatable badges only
+  ever evaluate the current calendar period.
+- **Surfacing**: sync → toast + trophy-tab dot (`unseenAchievementsProvider`, persisted)
+  + a pending `AchievementCelebrationController` payload the subtab shows as a `PSheet`
+  on entry. **TODO(notifications)**: replace the launch-sync toast with a push
+  notification once that system exists (the dot→sheet flow stays).
+- v1 is **sport-agnostic** (`sport=NULL`); the back half of the level cap (25→50) is the
+  reserved runway for a future competitive achievement track.
 
 ## Gotchas
 

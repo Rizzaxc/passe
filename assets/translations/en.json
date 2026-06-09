@@ -479,7 +479,26 @@
         },
         "achievements": {
             "title": "Achievements",
-            "content": "View your goals and achievements"
+            "empty": "No achievements yet. Sync your wearable to start earning XP.",
+            "inProgress": "In progress",
+            "earned": "Unlocked",
+            "locked": "Not started",
+            "earnedPeriod": "Completed this period · resets next",
+            "levelLabel": "FITNESS LEVEL",
+            "level": "Level {level}",
+            "xpTotal": "{xp} XP",
+            "maxed": "Max level reached",
+            "toNext": "{current} / {total} XP to next level",
+            "toast": {
+                "levelUp": "⬆️ Level up!",
+                "unlocked": "🏆 {count} new achievement(s) unlocked"
+            },
+            "celebrate": {
+                "title": "New achievements",
+                "levelTitle": "Level up!",
+                "unlocked": "Unlocked",
+                "dismiss": "Nice!"
+            }
         },
         "error": "Something went wrong. Please try again.",
         "metric": {

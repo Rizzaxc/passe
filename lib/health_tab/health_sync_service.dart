@@ -4,6 +4,8 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/model/activity.dart';
+import 'achievements_section/achievements_controller.dart';
+import 'achievements_section/model/achievement_celebration.dart';
 import 'health_controller.dart';
 import 'health_data_controller.dart';
 import 'health_data_service.dart';
@@ -17,11 +19,15 @@ class HealthSyncResult {
   final int daysSynced;
   final int activitiesCaptured;
   final bool skipped; // true when not linked / no permission / guest
+  final int achievementsUnlocked;
+  final bool leveledUp;
 
   const HealthSyncResult({
     this.daysSynced = 0,
     this.activitiesCaptured = 0,
     this.skipped = false,
+    this.achievementsUnlocked = 0,
+    this.leveledUp = false,
   });
 }
 
@@ -56,12 +62,23 @@ class HealthSyncController extends _$HealthSyncController {
       final daysSynced = await _syncDailySummaries(userId);
       final captured = await _captureActivities(userId, thresholds);
 
+      // Fresh health data has landed — re-evaluate achievements. The evaluator
+      // is the sole mutator of XP/level; it returns the newly-unlocked badges.
+      final celebration = await _evaluateAchievements(userId);
+
       // Refresh the read model so open subtabs reflect the new rows.
       ref.invalidate(dailyHealthTrendProvider);
       ref.invalidate(activityHealthListProvider);
       ref.invalidate(detectedWorkoutsProvider);
+      ref.invalidate(achievementProgressListProvider);
+      ref.invalidate(levelSummaryProvider);
 
-      return HealthSyncResult(daysSynced: daysSynced, activitiesCaptured: captured);
+      return HealthSyncResult(
+        daysSynced: daysSynced,
+        activitiesCaptured: captured,
+        achievementsUnlocked: celebration?.unlocked.length ?? 0,
+        leveledUp: celebration?.leveledUp ?? false,
+      );
     } catch (e, st) {
       _talker.handle(e, st, 'Health sync failed');
       rethrow;
@@ -133,6 +150,33 @@ class HealthSyncController extends _$HealthSyncController {
       captured++;
     }
     return captured;
+  }
+
+  /// Re-run the achievement evaluator after fresh data lands. Persists unlocks
+  /// + banks XP server-side; on the client it stashes the celebration payload
+  /// (consumed by the achievements subtab) and lights the unseen dot.
+  ///
+  /// TODO(notifications): once the push-notification system exists, replace the
+  /// launch-sync toast with a push notification for the unlock/level-up event;
+  /// the in-app dot → celebration-sheet flow stays.
+  Future<AchievementCelebration?> _evaluateAchievements(String userId) async {
+    try {
+      final res = await _supabase
+          .rpc('evaluate_achievements', params: {'p_user_id': userId})
+          .timeout(const Duration(seconds: 5));
+      if (res is! Map) return null;
+      final celebration =
+          AchievementCelebration.fromRpc(Map<String, dynamic>.from(res));
+      if (!celebration.isEmpty) {
+        ref.read(achievementCelebrationControllerProvider.notifier).show(celebration);
+        await ref.read(unseenAchievementsProvider.notifier).mark();
+      }
+      return celebration;
+    } catch (e, st) {
+      // Never let achievement evaluation fail the whole sync.
+      _talker.handle(e, st, 'Achievement evaluation failed');
+      return null;
+    }
   }
 
   /// Attach a detected (unconfirmed) workout: read its window and persist

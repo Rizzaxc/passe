@@ -479,7 +479,26 @@
         },
         "achievements": {
             "title": "Thành tựu",
-            "content": "Xem mục tiêu và thành tựu của bạn"
+            "empty": "Chưa có thành tựu nào. Đồng bộ thiết bị đeo để bắt đầu tích XP.",
+            "inProgress": "Đang tiến hành",
+            "earned": "Đã mở khóa",
+            "locked": "Chưa bắt đầu",
+            "earnedPeriod": "Hoàn thành kỳ này · làm mới kỳ sau",
+            "levelLabel": "CẤP ĐỘ THỂ CHẤT",
+            "level": "Cấp {level}",
+            "xpTotal": "{xp} XP",
+            "maxed": "Đã đạt cấp tối đa",
+            "toNext": "{current} / {total} XP để lên cấp",
+            "toast": {
+                "levelUp": "⬆️ Lên cấp!",
+                "unlocked": "🏆 Mở khóa {count} thành tựu mới"
+            },
+            "celebrate": {
+                "title": "Thành tựu mới",
+                "levelTitle": "Lên cấp!",
+                "unlocked": "Đã mở khóa",
+                "dismiss": "Tuyệt!"
+            }
         },
         "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
         "metric": {

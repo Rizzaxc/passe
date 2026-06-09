@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../core/sport_selector.dart';
 import '../currency/da_appbar_button.dart';
 import '../ui/main.dart';
+import 'achievements_section/achievements_controller.dart';
 import 'achievements_section/main.dart';
 import 'activity_data_section/main.dart';
 import 'health_controller.dart';
@@ -59,17 +60,24 @@ class _HealthTabState extends ConsumerState<HealthTab> {
     });
   }
 
-  List<FTabEntry> _buildTabEntries() {
-    return _sections.map((section) => FTabEntry(
-      label: Icon(section.icon, key: const ValueKey('icon')),
-      child: section.child,
-    )).toList();
+  List<FTabEntry> _buildTabEntries({required bool hasUnseenAchievements}) {
+    return [
+      for (final section in _sections)
+        FTabEntry(
+          label: section.icon == FIcons.trophy && hasUnseenAchievements
+              ? _DottedIcon(icon: section.icon)
+              : Icon(section.icon, key: const ValueKey('icon')),
+          child: section.child,
+        ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
     final healthStatus = ref.watch(healthControllerProvider);
     final isLinked = healthStatus.value == HealthLinkStatus.linked;
+    final hasUnseenAchievements =
+        ref.watch(unseenAchievementsProvider).value ?? false;
 
     return FScaffold(
       header: FHeader(
@@ -113,10 +121,41 @@ class _HealthTabState extends ConsumerState<HealthTab> {
               index: _currentIndex,
               onChange: _onTabChanged,
             ),
-            children: _buildTabEntries(),
+            children:
+                _buildTabEntries(hasUnseenAchievements: hasUnseenAchievements),
           );
         },
       ),
+    );
+  }
+}
+
+/// A tab icon with an unread dot in the top-right (newly-unlocked achievements).
+class _DottedIcon extends StatelessWidget {
+  final IconData icon;
+  const _DottedIcon({required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      key: const ValueKey('icon'),
+      children: [
+        Icon(icon),
+        Positioned(
+          right: -3,
+          top: -3,
+          child: Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: pbBlue,
+              shape: BoxShape.circle,
+              border: Border.all(color: context.theme.colors.background, width: 1.5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -149,6 +188,16 @@ class _SyncButton extends ConsumerWidget {
                           'activities': '${result.activitiesCaptured}',
                         })),
                 );
+                // Celebrate any unlock/level-up from this sync.
+                if (result.leveledUp) {
+                  showFToast(context: context, title: Text('health.achievements.toast.levelUp'.tr()));
+                } else if (result.achievementsUnlocked > 0) {
+                  showFToast(
+                    context: context,
+                    title: Text('health.achievements.toast.unlocked'
+                        .tr(namedArgs: {'count': '${result.achievementsUnlocked}'})),
+                  );
+                }
               } catch (_) {
                 if (context.mounted) {
                   showFToast(context: context, title: Text('health.sync.failed'.tr()));

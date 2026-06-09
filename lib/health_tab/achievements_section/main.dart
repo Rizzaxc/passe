@@ -1,72 +1,157 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../ui/theme.dart';
+import '../../ui/main.dart';
+import 'achievements_controller.dart';
+import 'badge_card.dart';
+import 'celebration_sheet.dart';
+import 'model/achievement_progress.dart';
+import 'model/level_summary.dart';
 
-class AchievementsSubtab extends StatelessWidget {
+class AchievementsSubtab extends ConsumerStatefulWidget {
   const AchievementsSubtab({super.key});
 
-  static const _achievements = [
-    _Achievement(
-      title: 'Người chơi tích cực',
-      detail: '12 hoạt động tháng này',
-      progress: 0.80,
-    ),
-    _Achievement(
-      title: 'Đồng đội tin cậy',
-      detail: '5 lobby đã ghép thành',
-      progress: 1.0,
-    ),
-    _Achievement(
-      title: 'Champion',
-      detail: '3/10 trận thắng',
-      progress: 0.30,
-    ),
-    _Achievement(
-      title: 'Xã giao vui vẻ',
-      detail: '8/20 người bạn mới',
-      progress: 0.40,
-    ),
-  ];
+  @override
+  ConsumerState<AchievementsSubtab> createState() => _AchievementsSubtabState();
+}
+
+class _AchievementsSubtabState extends ConsumerState<AchievementsSubtab> {
+  @override
+  void initState() {
+    super.initState();
+    // Entering the tab clears the unseen dot and surfaces any pending
+    // celebration (set by the most recent sync).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(unseenAchievementsProvider.notifier).clear();
+      final celebration = ref.read(achievementCelebrationControllerProvider);
+      if (celebration != null && !celebration.isEmpty) {
+        ref.read(achievementCelebrationControllerProvider.notifier).clear();
+        showPSheet(
+          context: context,
+          maxHeightRatio: 0.9,
+          builder: (_) => CelebrationSheet(celebration: celebration),
+        );
+      }
+    });
+  }
+
+  /// progress ↓, then tier (difficulty × consistency) ↑ (easier first), then xp ↓.
+  int _compare(AchievementProgress a, AchievementProgress b) {
+    final p = b.progress.compareTo(a.progress);
+    if (p != 0) return p;
+    final t = a.tier.compareTo(b.tier);
+    if (t != 0) return t;
+    return b.xpReward.compareTo(a.xpReward);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      itemCount: _achievements.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, index) =>
-          _AchievementCard(achievement: _achievements[index]),
+    final badges = ref.watch(achievementProgressListProvider);
+    final level = ref.watch(levelSummaryProvider);
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(achievementProgressListProvider);
+        ref.invalidate(levelSummaryProvider);
+        await ref.read(achievementProgressListProvider.future);
+      },
+      child: badges.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, _) => ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(child: Text('health.error'.tr())),
+            ),
+          ],
+        ),
+        data: (list) {
+          if (list.isEmpty) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                PEmptySectionPlaceholder(
+                    subtitle: 'health.achievements.empty'.tr()),
+              ],
+            );
+          }
+
+          final inProgress = list
+              .where((b) => b.state == AchievementState.inProgress)
+              .toList()
+            ..sort(_compare);
+          final earned = list.where((b) => b.isEarned).toList()..sort(_compare);
+          final notStarted = list
+              .where((b) => b.state == AchievementState.notStarted)
+              .toList()
+            ..sort(_compare);
+
+          return ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            children: [
+              _LevelHeader(summary: level.value),
+              const SizedBox(height: 16),
+              ..._section('health.achievements.inProgress'.tr(), inProgress),
+              ..._section('health.achievements.earned'.tr(), earned),
+              ..._section('health.achievements.locked'.tr(), notStarted),
+            ],
+          );
+        },
+      ),
     );
+  }
+
+  List<Widget> _section(String title, List<AchievementProgress> items) {
+    if (items.isEmpty) return const [];
+    return [
+      PSectionHeader(title: title, suffix: _CountChip(count: items.length)),
+      const SizedBox(height: 10),
+      for (final b in items) ...[BadgeCard(badge: b), const SizedBox(height: 10)],
+      const SizedBox(height: 8),
+    ];
   }
 }
 
-class _Achievement {
-  final String title;
-  final String detail;
-  final double progress; // 0.0 – 1.0
-
-  const _Achievement({
-    required this.title,
-    required this.detail,
-    required this.progress,
-  });
-}
-
-class _AchievementCard extends StatelessWidget {
-  final _Achievement achievement;
-
-  const _AchievementCard({required this.achievement});
+class _CountChip extends StatelessWidget {
+  final int count;
+  const _CountChip({required this.count});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final isComplete = achievement.progress >= 1.0;
-    final barColor = isComplete ? pbGreen : const Color(0xFF959D54);
-    final pct = (achievement.progress * 100).round();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: colors.secondary,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '$count',
+        style: context.theme.typography.xs
+            .copyWith(color: colors.mutedForeground, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}
+
+// ─── Level header ─────────────────────────────────────────────────────────────
+
+class _LevelHeader extends StatelessWidget {
+  final LevelSummary? summary;
+  const _LevelHeader({required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final s = summary;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: colors.card,
         border: Border.all(color: colors.border),
@@ -75,69 +160,76 @@ class _AchievementCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 10,
+        spacing: 12,
         children: [
           Row(
-            spacing: 10,
+            spacing: 14,
             children: [
-              // Badge icon
               Container(
-                width: 36,
-                height: 36,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  color: pbGreen.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(9),
+                  color: pbBlue.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 alignment: Alignment.center,
-                child: Icon(FIcons.badgeCheck, size: 20, color: pbGreen),
+                child: Icon(FIcons.trophy, color: pbBlue, size: 26),
               ),
-
-              // Title + detail
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 2,
                   children: [
                     Text(
-                      achievement.title,
-                      style: context.theme.typography.sm.copyWith(
-                        fontWeight: FontWeight.w700,
+                      'health.achievements.levelLabel'.tr(),
+                      style: context.theme.typography.xs.copyWith(
+                        color: colors.mutedForeground,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.4,
                       ),
                     ),
                     Text(
-                      achievement.detail,
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                        height: 1.4,
+                      'health.achievements.level'
+                          .tr(namedArgs: {'level': '${s?.level ?? 1}'}),
+                      style: TextStyle(
+                        fontFamily: context.theme.typography.xl2.fontFamily,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        color: colors.foreground,
+                        height: 1,
                       ),
                     ),
                   ],
                 ),
               ),
-
-              // Percentage
               Text(
-                '$pct%',
-                style: TextStyle(
-                  fontFamily: context.theme.typography.sm.fontFamily,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: barColor,
-                  height: 1,
+                'health.achievements.xpTotal'
+                    .tr(namedArgs: {'xp': '${s?.xpTotal ?? 0}'}),
+                style: context.theme.typography.sm.copyWith(
+                  color: colors.mutedForeground,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-
-          // Progress bar
           ClipRRect(
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: achievement.progress,
-              minHeight: 6,
+              value: s?.progress ?? 0,
+              minHeight: 8,
               backgroundColor: colors.secondary,
-              valueColor: AlwaysStoppedAnimation<Color>(barColor),
+              valueColor: const AlwaysStoppedAnimation<Color>(pbBlue),
             ),
+          ),
+          Text(
+            (s?.isMaxed ?? false)
+                ? 'health.achievements.maxed'.tr()
+                : 'health.achievements.toNext'.tr(namedArgs: {
+                    'current': '${s?.xpIntoLevel ?? 0}',
+                    'total': '${s?.xpForLevel ?? 0}',
+                  }),
+            style: context.theme.typography.xs
+                .copyWith(color: colors.mutedForeground),
           ),
         ],
       ),
