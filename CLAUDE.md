@@ -282,11 +282,32 @@ The handshake (accept/decline/counter-propose) is TBD.
 
 ### Notifications
 
-- Push notifications (FCM/APNs) for important events: challenger confirmation, activity
-  confirmation, pro session reminders.
-- Use a **flag system**: each feature that wants push notifs opts in explicitly (not automatic).
-  This allows incremental rollout as features are implemented.
-- Infrastructure (FCM setup, device token storage) is not yet configured.
+Push (raw FCM HTTP v1, iOS + Android) is **built**. Design + remaining provisioning steps:
+[`docs/push_notifications_runbook.md`](docs/push_notifications_runbook.md).
+
+- **Pipeline (outbox pattern):** a domain event calls `fn_enqueue_notification(kind, recipients,
+  …)` → one row per recipient in `notification_outbox` → an AFTER-INSERT trigger pokes the
+  `send-push` Edge Function via `pg_net` (fast path); a `pg_cron` job (`fn_cron_tick`, 1 min)
+  scans due reminders and re-pokes stragglers (safety net). The function claims rows atomically
+  (`fn_claim_outbox`), expands recipient → `user_device_token`, calls FCM, prunes dead tokens,
+  marks `sent`/`failed` (retry cap 3). Schema: `schema/push_notifications.sql`.
+- **Flag system = data-driven allowlist** `enabled_notification_kind`. Each `notification_kind`
+  is dark-launched / kill-switched by toggling its `enabled` flag (no redeploy). Live kinds:
+  `activity_confirmed`, `pro_session_reminder`. `challenger_confirmed` is reserved but
+  **disabled** (no `lobby_challenge` table yet).
+- **Client (`lib/notifications/`):** `notification_service.dart` (FCM init, token register/refresh
+  tied to `authControllerProvider`, foreground display via `flutter_local_notifications`, the
+  permission **soft-ask**), `notification_router.dart` (`kind` → typed `go_router` route),
+  `notification_kind.dart` (mirrors the DB enum by value). Init in `main.dart`.
+- **Soft-ask, not cold prompt:** `maybePromptAndRegister(context, ref)` shows an in-app `PSheet`
+  rationale before the OS dialog, fired at the first meaningful action (currently the teammate
+  "Xin vào" CTA), no-op for guests / already-decided, never re-prompts after denial. Add the same
+  one-liner at other first-action sites (lobby create, befriend accept, booking confirm) as they ship.
+- **Device tokens:** `user_device_token` (fcm_token PK); registering via the `register_device_token`
+  RPC moves the token to the current user (handles account-switch on a shared device); deleted on
+  logout and server-side on FCM `UNREGISTERED`.
+- **Forward-compat:** `notification_outbox` has `read_at` + a recipient self-`SELECT` RLS policy,
+  so an in-app notification centre is a pure frontend add (the `/notifications` route already exists).
 
 ## Agent skills
 

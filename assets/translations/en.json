@@ -246,6 +246,47 @@
             "message": "You will no longer be a member of this lobby.",
             "confirm": "Leave Lobby",
             "cancel": "Cancel"
+        },
+        "info": "Lobby Info",
+        "settings": "Settings",
+        "manageRequests": "Manage Join Requests",
+        "notifications": "Notifications",
+        "comingSoon": "Feature coming soon",
+        "inviteMember": "Invite Member",
+        "pendingRequests": "{count} pending",
+        "captainTransfer": {
+            "title": "Transfer Captaincy",
+            "message": "Select a member to become the new captain.",
+            "noOthers": "No other members to transfer captaincy to",
+            "success": "Captaincy transferred to {username}",
+            "failed": "Failed to transfer captaincy. Please try again."
+        },
+        "delete": {
+            "title": "Delete lobby?",
+            "message": "This action cannot be undone. The lobby will be permanently deleted.",
+            "confirm": "Delete lobby",
+            "failed": "Failed to delete lobby. Please try again."
+        },
+        "kick": {
+            "action": "Remove from lobby",
+            "title": "Remove {username} from lobby?",
+            "message": "The member will be removed from the lobby.",
+            "confirm": "Confirm",
+            "failed": "Failed to remove member. Please try again."
+        },
+        "joinRequests": {
+            "title": "Join Requests",
+            "empty": "No pending join requests."
+        },
+        "inviteUser": {
+            "label": "Username",
+            "hint": "e.g. Thach#1234",
+            "description": "Enter the username in username#tag format, or just the username if unique.",
+            "emptyError": "Enter a username (e.g. Thach#1234)",
+            "notFound": "User \"{name}\" not found",
+            "success": "Invite sent to {username}",
+            "failed": "Failed to send invite. Please try again.",
+            "send": "Send Invite"
         }
     },
     "createLobby": {

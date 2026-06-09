@@ -4,12 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../auth/auth_controller.dart';
 import '../../core/model/lobby.dart';
 import '../../ui/sheet.dart';
 import 'feed/lobby_controller.dart';
+import 'feed/lobby_form_sheet.dart';
+import 'join_requests_controller.dart';
+import 'join_requests_sheet.dart';
 import 'lobby_detail_controller.dart';
 import 'members/controller.dart';
 
@@ -102,15 +106,14 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
       context: context,
       builder: (dialogCtx, style, animation) => FDialog(
         animation: animation,
-        title: const Text('Xoá lobby?'),
-        body: const Text(
-            'Hành động này không thể hoàn tác. Lobby sẽ bị xoá vĩnh viễn.'),
+        title: Text('lobby.delete.title'.tr()),
+        body: Text('lobby.delete.message'.tr()),
         direction: Axis.horizontal,
         actions: [
           FButton(
             variant: .outline,
             onPress: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('Huỷ'),
+            child: Text('lobby.leave.cancel'.tr()),
           ),
           FButton(
             variant: .destructive,
@@ -121,10 +124,10 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                     .read(userLobbiesControllerProvider.notifier)
                     .delete(widget.lobbyId),
                 'Delete lobby failed',
-                'Xoá lobby thất bại. Vui lòng thử lại.',
+                'lobby.delete.failed'.tr(),
               );
             },
-            child: const Text('Xoá lobby'),
+            child: Text('lobby.delete.confirm'.tr()),
           ),
         ],
       ),
@@ -150,7 +153,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
         context: context,
         icon: const Icon(FIcons.circleX),
         variant: .destructive,
-        title: const Text('Lỗi'),
+        title: Text('error'.tr()),
         description: Text(errorMsg),
         alignment: .bottomCenter,
       );
@@ -167,7 +170,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
       showFToast(
         context: context,
         icon: const Icon(FIcons.info),
-        title: const Text('Chưa có thành viên nào khác để chuyển quyền'),
+        title: Text('lobby.captainTransfer.noOthers'.tr()),
         alignment: .bottomCenter,
       );
       return;
@@ -176,8 +179,8 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
       context: context,
       builder: (dialogCtx, style, animation) => FDialog(
         animation: animation,
-        title: const Text('Chuyển quyền đội trưởng'),
-        body: const Text('Chọn thành viên sẽ trở thành đội trưởng mới.'),
+        title: Text('lobby.captainTransfer.title'.tr()),
+        body: Text('lobby.captainTransfer.message'.tr()),
         direction: Axis.vertical,
         actions: [
           for (final m in others)
@@ -192,10 +195,38 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
           FButton(
             variant: .ghost,
             onPress: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('Huỷ'),
+            child: Text('lobby.leave.cancel'.tr()),
           ),
         ],
       ),
+    );
+  }
+
+  String? _pendingBadge(WidgetRef ref, String lobbyId) {
+    final count = ref
+        .watch(joinRequestsControllerProvider(lobbyId))
+        .value
+        ?.length;
+    if (count == null || count == 0) return null;
+    return 'lobby.pendingRequests'.tr(namedArgs: {'count': count.toString()});
+  }
+
+  Future<void> _editLobby(BuildContext context, Lobby lobby) async {
+    final updated = await showLobbyFormSheet(
+      context: context,
+      ref: ref,
+      lobbyId: widget.lobbyId,
+      existingLobby: lobby,
+    );
+    if (updated != null && mounted) {
+      ref.invalidate(lobbyDetailControllerProvider(widget.lobbyId));
+    }
+  }
+
+  void _showInviteUserSheet(BuildContext context, String lobbyId) {
+    showPSheet(
+      context: context,
+      builder: (_) => _InviteUserSheet(lobbyId: lobbyId),
     );
   }
 
@@ -210,7 +241,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
       showFToast(
         context: context,
         icon: const Icon(FIcons.check),
-        title: Text('Đã chuyển quyền cho ${member.username}'),
+        title: Text('lobby.captainTransfer.success'.tr(namedArgs: {'username': member.username})),
         alignment: .bottomCenter,
       );
     } catch (e, st) {
@@ -220,8 +251,8 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
         context: context,
         icon: const Icon(FIcons.circleX),
         variant: .destructive,
-        title: const Text('Lỗi'),
-        description: const Text('Chuyển quyền thất bại. Vui lòng thử lại.'),
+        title: Text('error'.tr()),
+        description: Text('lobby.captainTransfer.failed'.tr()),
         alignment: .bottomCenter,
       );
     }
@@ -241,9 +272,9 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
         lobby.name.isNotEmpty ? lobby.name[0].toUpperCase() : '?';
 
     final visLabel = switch (lobby.visibility) {
-      LobbyVisibility.private => 'Nội Bộ',
-      LobbyVisibility.discoverable => 'Mặc Định',
-      LobbyVisibility.public => 'Công Khai',
+      LobbyVisibility.private => 'lobby.visibility.private'.tr(),
+      LobbyVisibility.discoverable => 'lobby.visibility.discoverable'.tr(),
+      LobbyVisibility.public => 'lobby.visibility.public'.tr(),
     };
 
     return SingleChildScrollView(
@@ -254,7 +285,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
               PSheetTitle(
-                label: 'Thông tin lobby',
+                label: 'lobby.info'.tr(),
                 trailing: FButton.icon(
                   variant: .ghost,
                   onPress: () => Navigator.of(context).pop(),
@@ -424,13 +455,17 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   PSheetSectionLabel(
-                    label:
-                        'Thành viên${membersAsync.value != null ? " · ${membersAsync.value!.length}" : ""}',
-                    trailing: _SectionActionButton(
-                      icon: FIcons.userPlus,
-                      label: 'Mời',
-                      onTap: () {},
-                    ),
+                    label: membersAsync.value != null
+                        ? '${'lobby.detail.members'.tr()} · ${membersAsync.value!.length}'
+                        : 'lobby.detail.members'.tr(),
+                    trailing: isCaptain
+                        ? _SectionActionButton(
+                            icon: FIcons.userPlus,
+                            label: 'lobby.invite'.tr(),
+                            onTap: () => _showInviteUserSheet(
+                                context, widget.lobbyId),
+                          )
+                        : null,
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -453,7 +488,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                           ? Padding(
                               padding: const EdgeInsets.all(16),
                               child: Text(
-                                'Chưa có thành viên nào.',
+                                'lobby.detail.noMembers'.tr(),
                                 style: TextStyle(
                                     color: colors.mutedForeground),
                               ),
@@ -462,7 +497,13 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 for (var i = 0; i < members.length; i++) ...[
-                                  _MemberRow(member: members[i]),
+                                  _MemberRow(
+                                    member: members[i],
+                                    lobbyId: widget.lobbyId,
+                                    captainId: lobby.captainId,
+                                    currentUserId: currentUserId,
+                                    isCaptain: isCaptain,
+                                  ),
                                   if (i < members.length - 1)
                                     Divider(
                                       height: 1,
@@ -483,7 +524,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const PSheetSectionLabel(label: 'Cài đặt'),
+                  PSheetSectionLabel(label: 'lobby.settings'.tr()),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
@@ -495,31 +536,39 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _SettingsRow(
-                          icon: FIcons.pencil,
-                          label: 'Chỉnh sửa lobby',
-                          onTap: () {},
-                        ),
-                        Divider(
-                          height: 1,
-                          indent: 50,
-                          color: colors.border.withValues(alpha: 0.5),
-                        ),
-                        _SettingsRow(
-                          icon: FIcons.userPlus,
-                          label: 'Quản lý lời mời gia nhập',
-                          badge: '2 đang chờ',
-                          onTap: () {},
-                        ),
-                        Divider(
-                          height: 1,
-                          indent: 50,
-                          color: colors.border.withValues(alpha: 0.5),
-                        ),
+                        if (isCaptain) ...[
+                          _SettingsRow(
+                            icon: FIcons.pencil,
+                            label: 'lobby.edit'.tr(),
+                            onTap: () => _editLobby(context, lobby),
+                          ),
+                          Divider(
+                            height: 1,
+                            indent: 50,
+                            color: colors.border.withValues(alpha: 0.5),
+                          ),
+                          _SettingsRow(
+                            icon: FIcons.userPlus,
+                            label: 'lobby.manageRequests'.tr(),
+                            badge: _pendingBadge(ref, widget.lobbyId),
+                            onTap: () => showJoinRequestsSheet(
+                                context, widget.lobbyId),
+                          ),
+                          Divider(
+                            height: 1,
+                            indent: 50,
+                            color: colors.border.withValues(alpha: 0.5),
+                          ),
+                        ],
                         _SettingsRow(
                           icon: FIcons.bell,
-                          label: 'Thông báo',
-                          onTap: () {},
+                          label: 'lobby.notifications'.tr(),
+                          onTap: () => showFToast(
+                            context: context,
+                            icon: const Icon(FIcons.bell),
+                            title: Text('lobby.comingSoon'.tr()),
+                            alignment: .bottomCenter,
+                          ),
                         ),
                         Divider(
                           height: 1,
@@ -529,7 +578,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                         if (isCaptain) ...[
                           _SettingsRow(
                             icon: FIcons.crown,
-                            label: 'Chuyển quyền đội trưởng',
+                            label: 'lobby.captainTransfer.title'.tr(),
                             onTap: _transferCaptaincy,
                           ),
                           if (isSoleMember) ...[
@@ -540,7 +589,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                             ),
                             _SettingsRow(
                               icon: FIcons.trash2,
-                              label: 'Xoá lobby',
+                              label: 'lobby.delete.confirm'.tr(),
                               destructive: true,
                               onTap: _confirmDelete,
                             ),
@@ -548,7 +597,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                         ] else
                           _SettingsRow(
                             icon: FIcons.logOut,
-                            label: 'Rời lobby',
+                            label: 'lobby.leave.confirm'.tr(),
                             destructive: true,
                             onTap: _confirmLeave,
                           ),
@@ -626,16 +675,103 @@ class _SectionActionButton extends StatelessWidget {
   }
 }
 
-class _MemberRow extends StatelessWidget {
+class _MemberRow extends ConsumerWidget {
   final LobbyMemberInfo member;
-  const _MemberRow({required this.member});
+  final String lobbyId;
+  final String? captainId;
+  final String? currentUserId;
+  final bool isCaptain;
+
+  const _MemberRow({
+    required this.member,
+    required this.lobbyId,
+    required this.captainId,
+    required this.currentUserId,
+    required this.isCaptain,
+  });
+
+  bool get _isMemberTheCaptain => member.userId == captainId;
+  bool get _isMemberCurrentUser => member.userId == currentUserId;
+
+  void _showMemberMenu(BuildContext context, WidgetRef ref) {
+    showFDialog(
+      context: context,
+      builder: (dialogCtx, style, animation) => FDialog(
+        animation: animation,
+        title: Text('${member.username} #${member.tagNumber}'),
+        direction: Axis.vertical,
+        actions: [
+          FButton(
+            variant: .destructive,
+            onPress: () {
+              Navigator.of(dialogCtx).pop();
+              _confirmKick(context, ref);
+            },
+            child: Text('lobby.kick.action'.tr()),
+          ),
+          FButton(
+            variant: .ghost,
+            onPress: () => Navigator.of(dialogCtx).pop(),
+            child: Text('lobby.leave.cancel'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmKick(BuildContext context, WidgetRef ref) {
+    showFDialog(
+      context: context,
+      builder: (dialogCtx, style, animation) => FDialog(
+        animation: animation,
+        title: Text('lobby.kick.title'.tr(namedArgs: {'username': member.username})),
+        body: Text('lobby.kick.message'.tr()),
+        direction: Axis.horizontal,
+        actions: [
+          FButton(
+            variant: .outline,
+            onPress: () => Navigator.of(dialogCtx).pop(),
+            child: Text('lobby.leave.cancel'.tr()),
+          ),
+          FButton(
+            variant: .destructive,
+            onPress: () async {
+              Navigator.of(dialogCtx).pop();
+              try {
+                await ref
+                    .read(lobbyMembersControllerProvider(lobbyId).notifier)
+                    .kick(lobbyId, member.userId);
+              } catch (e, st) {
+                Talker().handle(e, st, 'Kick member failed');
+                if (context.mounted) {
+                  showFToast(
+                    context: context,
+                    icon: const Icon(FIcons.circleX),
+                    variant: .destructive,
+                    title: Text('error'.tr()),
+                    description: Text('lobby.kick.failed'.tr()),
+                    alignment: .bottomCenter,
+                  );
+                }
+              }
+            },
+            child: Text('lobby.kick.confirm'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final initial = member.username.isNotEmpty
         ? member.username[0].toUpperCase()
         : '?';
+
+    // Captain can kick any non-captain member who isn't themselves.
+    final canKick =
+        isCaptain && !_isMemberTheCaptain && !_isMemberCurrentUser;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -663,13 +799,22 @@ class _MemberRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  member.username,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF09090B),
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      member.username,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF09090B),
+                      ),
+                    ),
+                    if (_isMemberTheCaptain) ...[
+                      const SizedBox(width: 4),
+                      Icon(FIcons.crown,
+                          size: 11, color: colors.mutedForeground),
+                    ],
+                  ],
                 ),
                 Text(
                   '#${member.tagNumber}',
@@ -681,20 +826,21 @@ class _MemberRow extends StatelessWidget {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: () {},
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                    color: colors.border.withValues(alpha: 0.6)),
+          if (canKick)
+            GestureDetector(
+              onTap: () => _showMemberMenu(context, ref),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                      color: colors.border.withValues(alpha: 0.6)),
+                ),
+                child: Icon(FIcons.ellipsis,
+                    size: 14, color: colors.mutedForeground),
               ),
-              child: Icon(FIcons.ellipsis,
-                  size: 14, color: colors.mutedForeground),
             ),
-          ),
         ],
       ),
     );
@@ -770,6 +916,143 @@ class _SettingsRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Invite user sheet ─────────────────────────────────────────
+
+class _InviteUserSheet extends ConsumerStatefulWidget {
+  final String lobbyId;
+  const _InviteUserSheet({required this.lobbyId});
+
+  @override
+  ConsumerState<_InviteUserSheet> createState() => _InviteUserSheetState();
+}
+
+class _InviteUserSheetState extends ConsumerState<_InviteUserSheet> {
+  final _controller = TextEditingController();
+  bool _sending = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _invite() async {
+    final raw = _controller.text.trim();
+    if (raw.isEmpty) return;
+
+    final parts = raw.split('#');
+    final username = parts[0].trim();
+    final tagNumber = parts.length > 1 ? parts[1].trim() : null;
+
+    if (username.isEmpty) {
+      showFToast(
+        context: context,
+        icon: const Icon(FIcons.circleAlert),
+        variant: .destructive,
+        title: Text('lobby.inviteUser.emptyError'.tr()),
+        alignment: .bottomCenter,
+      );
+      return;
+    }
+
+    setState(() => _sending = true);
+    try {
+      final supabase = Supabase.instance.client;
+      var query = supabase
+          .from('user')
+          .select('id')
+          .eq('username', username);
+      if (tagNumber != null) query = query.eq('tag_number', tagNumber);
+      final rows = await query.limit(1).timeout(const Duration(seconds: 5));
+
+      if (rows.isEmpty) {
+        if (!mounted) return;
+        showFToast(
+          context: context,
+          icon: const Icon(FIcons.userX),
+          variant: .destructive,
+          title: Text('lobby.inviteUser.notFound'.tr(namedArgs: {'name': raw})),
+          alignment: .bottomCenter,
+        );
+        return;
+      }
+
+      final targetUserId = (rows.first as Map)['id'] as String;
+      final captainId = ref.read(authControllerProvider).value?.id;
+      if (captainId == null) return;
+
+      await supabase.from('lobby_befriend_record').insert({
+        'initiator_user_id': captainId,
+        'target_user_id': targetUserId,
+        'target_lobby_id': widget.lobbyId,
+        'interaction_type': 'invite',
+      }).timeout(const Duration(seconds: 5));
+
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      showFToast(
+        context: context,
+        icon: const Icon(FIcons.userPlus),
+        title: Text('lobby.inviteUser.success'.tr(namedArgs: {'username': username})),
+        alignment: .bottomCenter,
+      );
+    } catch (e, st) {
+      Talker().handle(e, st, 'Invite user failed');
+      if (!mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FIcons.circleX),
+        variant: .destructive,
+        title: Text('error'.tr()),
+        description: Text('lobby.inviteUser.failed'.tr()),
+        alignment: .bottomCenter,
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      primary: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 16,
+        children: [
+          PSheetTitle(
+            label: 'lobby.inviteMember'.tr(),
+            trailing: FButton.icon(
+              variant: .ghost,
+              onPress: () => Navigator.of(context).pop(),
+              child: const Icon(FIcons.x),
+            ),
+          ),
+          FTextField(
+            label: Text('lobby.inviteUser.label'.tr()),
+            hint: 'lobby.inviteUser.hint'.tr(),
+            control: FTextFieldControl.managed(controller: _controller),
+            description: Text('lobby.inviteUser.description'.tr()),
+          ),
+          FButton(
+            onPress: _sending ? null : _invite,
+            child: _sending
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
+                  )
+                : Text('lobby.inviteUser.send'.tr()),
+          ),
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }

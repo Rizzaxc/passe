@@ -242,12 +242,53 @@
         "searchIDCopied": "Đã sao chép SearchID",
         "searchIDExplanation": "Người chơi khác có thể dùng SearchID ở filter trang chủ để tìm thấy Lobby của bạn",
         "shareId": "Chia sẻ ID",
-        "invite": "Mời vào",
+        "invite": "Mời",
         "leave": {
             "title": "Rời lobby?",
             "message": "Bạn sẽ không còn là thành viên của lobby này.",
             "confirm": "Rời lobby",
             "cancel": "Huỷ"
+        },
+        "info": "Thông tin lobby",
+        "settings": "Cài đặt",
+        "manageRequests": "Quản lý lời mời gia nhập",
+        "notifications": "Thông báo",
+        "comingSoon": "Tính năng sắp ra mắt",
+        "inviteMember": "Mời thành viên",
+        "pendingRequests": "{count} đang chờ",
+        "captainTransfer": {
+            "title": "Chuyển quyền đội trưởng",
+            "message": "Chọn thành viên sẽ trở thành đội trưởng mới.",
+            "noOthers": "Chưa có thành viên nào khác để chuyển quyền",
+            "success": "Đã chuyển quyền cho {username}",
+            "failed": "Chuyển quyền thất bại. Vui lòng thử lại."
+        },
+        "delete": {
+            "title": "Xoá lobby?",
+            "message": "Hành động này không thể hoàn tác. Lobby sẽ bị xoá vĩnh viễn.",
+            "confirm": "Xoá lobby",
+            "failed": "Xoá lobby thất bại. Vui lòng thử lại."
+        },
+        "kick": {
+            "action": "Mời rời lobby",
+            "title": "Mời {username} rời lobby?",
+            "message": "Thành viên sẽ bị xoá khỏi lobby.",
+            "confirm": "Xác nhận",
+            "failed": "Không thể mời rời. Vui lòng thử lại."
+        },
+        "joinRequests": {
+            "title": "Xin gia nhập",
+            "empty": "Không có ai đang xin vào."
+        },
+        "inviteUser": {
+            "label": "Tên người dùng",
+            "hint": "vd. Thach#1234",
+            "description": "Nhập tên theo định dạng username#tag hoặc chỉ username nếu tên là duy nhất.",
+            "emptyError": "Nhập tên người dùng (vd. Thach#1234)",
+            "notFound": "Không tìm thấy người dùng \"{name}\"",
+            "success": "Đã gửi lời mời đến {username}",
+            "failed": "Không thể gửi lời mời. Vui lòng thử lại.",
+            "send": "Gửi lời mời"
         }
     },
     "createLobby": {

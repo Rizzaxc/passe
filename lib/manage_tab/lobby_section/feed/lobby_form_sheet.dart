@@ -16,17 +16,20 @@ Future<Lobby?> showLobbyFormSheet({
   required BuildContext context,
   required WidgetRef ref,
   String? lobbyId,
+  Lobby? existingLobby,
 }) {
   return showPSheet<Lobby>(
     context: context,
-    builder: (_) => LobbyFormSheet(lobbyId: lobbyId),
+    builder: (_) =>
+        LobbyFormSheet(lobbyId: lobbyId, existingLobby: existingLobby),
   );
 }
 
 class LobbyFormSheet extends ConsumerStatefulWidget {
   final String? lobbyId;
+  final Lobby? existingLobby;
 
-  const LobbyFormSheet({super.key, this.lobbyId});
+  const LobbyFormSheet({super.key, this.lobbyId, this.existingLobby});
 
   @override
   ConsumerState<LobbyFormSheet> createState() => _LobbyFormSheetState();
@@ -43,8 +46,17 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
   @override
   void initState() {
     super.initState();
-    final formState = ref.read(lobbyFormControllerProvider(widget.lobbyId));
-    _nameController = TextEditingController(text: formState.lobby.name);
+    _nameController =
+        TextEditingController(text: widget.existingLobby?.name ?? '');
+    if (widget.existingLobby != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref
+              .read(lobbyFormControllerProvider(widget.lobbyId).notifier)
+              .initFromLobby(widget.existingLobby!);
+        }
+      });
+    }
   }
 
   @override
@@ -164,7 +176,9 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text('createLobby.create'.tr()),
+                      : Text(widget.lobbyId != null
+                          ? 'lobby.saveButton'.tr()
+                          : 'createLobby.create'.tr()),
                 ),
 
             const SizedBox(height: 16),

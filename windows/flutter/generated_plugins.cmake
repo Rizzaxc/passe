@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   dynamic_color
   file_selector_windows
+  firebase_core
   permission_handler_windows
   sentry_flutter
   share_plus

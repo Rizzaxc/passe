@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,8 +17,10 @@ import 'package:talker_flutter/talker_flutter.dart';
 import 'package:talker_riverpod_logger/talker_riverpod_logger_observer.dart';
 import 'package:talker_riverpod_logger/talker_riverpod_logger_settings.dart';
 
+import 'firebase_options.dart';
 import 'health_tab/health_sync_service.dart';
 import 'logger/observer.dart';
+import 'notifications/notification_service.dart';
 import 'router.dart';
 
 Future<void> main() async {
@@ -38,6 +42,11 @@ Future<void> main() async {
   final supabaseURL = dotenv.env['SUPABASE_URL']!;
   final supabaseAnonKey = dotenv.env['SUPABASE_PUBLIC_KEY']!;
   await Supabase.initialize(url: supabaseURL, anonKey: supabaseAnonKey);
+
+  // Firebase + FCM. The background handler must be registered before runApp;
+  // it is a no-op (the OS renders the notification block) but FCM requires it.
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   await EasyLocalization.ensureInitialized();
 
@@ -100,6 +109,8 @@ class Passe extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    // Eagerly start the push service (FCM listeners + auth-driven token lifecycle).
+    ref.watch(notificationServiceProvider);
 
     return MaterialApp.router(
       title: 'Passe',

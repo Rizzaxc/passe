@@ -53,7 +53,7 @@ final class LobbyMembersControllerProvider
 }
 
 String _$lobbyMembersControllerHash() =>
-    r'80b7efddf8dbd829f47c870a6d59d78145e3bc43';
+    r'6c1d723bc663d53adcd3b2a98ff50bbddc5698b9';
 
 final class LobbyMembersControllerFamily extends $Family
     with

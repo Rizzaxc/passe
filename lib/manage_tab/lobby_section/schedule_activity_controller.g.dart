@@ -8,33 +8,12 @@ part of 'schedule_activity_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Captain-side "schedule a play session" mutation for a lobby.
-///
-/// TODO(activity-schedule): currently a no-op so the captain-side
-/// CTA flow completes without persisting. Wire to a Supabase insert
-/// into `activity` (with all the prepayment / confirmation / recurrence
-/// columns added by `schema/activity_scheduling.sql`) once the captain-
-/// only RLS policy lands.
 
 @ProviderFor(ScheduleActivityController)
 final scheduleActivityControllerProvider = ScheduleActivityControllerFamily._();
 
-/// Captain-side "schedule a play session" mutation for a lobby.
-///
-/// TODO(activity-schedule): currently a no-op so the captain-side
-/// CTA flow completes without persisting. Wire to a Supabase insert
-/// into `activity` (with all the prepayment / confirmation / recurrence
-/// columns added by `schema/activity_scheduling.sql`) once the captain-
-/// only RLS policy lands.
 final class ScheduleActivityControllerProvider
     extends $NotifierProvider<ScheduleActivityController, bool> {
-  /// Captain-side "schedule a play session" mutation for a lobby.
-  ///
-  /// TODO(activity-schedule): currently a no-op so the captain-side
-  /// CTA flow completes without persisting. Wire to a Supabase insert
-  /// into `activity` (with all the prepayment / confirmation / recurrence
-  /// columns added by `schema/activity_scheduling.sql`) once the captain-
-  /// only RLS policy lands.
   ScheduleActivityControllerProvider._({
     required ScheduleActivityControllerFamily super.from,
     required String super.argument,
@@ -81,15 +60,7 @@ final class ScheduleActivityControllerProvider
 }
 
 String _$scheduleActivityControllerHash() =>
-    r'1a98c057f1e4eda39bef5bb036cd8098c885e79c';
-
-/// Captain-side "schedule a play session" mutation for a lobby.
-///
-/// TODO(activity-schedule): currently a no-op so the captain-side
-/// CTA flow completes without persisting. Wire to a Supabase insert
-/// into `activity` (with all the prepayment / confirmation / recurrence
-/// columns added by `schema/activity_scheduling.sql`) once the captain-
-/// only RLS policy lands.
+    r'be94cd245e9adca81833bec2bfbae6fbd891de61';
 
 final class ScheduleActivityControllerFamily extends $Family
     with
@@ -109,28 +80,12 @@ final class ScheduleActivityControllerFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Captain-side "schedule a play session" mutation for a lobby.
-  ///
-  /// TODO(activity-schedule): currently a no-op so the captain-side
-  /// CTA flow completes without persisting. Wire to a Supabase insert
-  /// into `activity` (with all the prepayment / confirmation / recurrence
-  /// columns added by `schema/activity_scheduling.sql`) once the captain-
-  /// only RLS policy lands.
-
   ScheduleActivityControllerProvider call(String lobbyId) =>
       ScheduleActivityControllerProvider._(argument: lobbyId, from: this);
 
   @override
   String toString() => r'scheduleActivityControllerProvider';
 }
-
-/// Captain-side "schedule a play session" mutation for a lobby.
-///
-/// TODO(activity-schedule): currently a no-op so the captain-side
-/// CTA flow completes without persisting. Wire to a Supabase insert
-/// into `activity` (with all the prepayment / confirmation / recurrence
-/// columns added by `schema/activity_scheduling.sql`) once the captain-
-/// only RLS policy lands.
 
 abstract class _$ScheduleActivityController extends $Notifier<bool> {
   late final _$args = ref.$arg as String;

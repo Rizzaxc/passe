@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "618362334941",
+    "project_id": "passe-498715",
+    "storage_bucket": "passe-498715.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:618362334941:android:936faf61dd29f6e6993534",
+        "android_client_info": {
+          "package_name": "passe.vn.passe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "618362334941-o1s0qsusdgl1du2el5q98t5knhihg1pr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSKqe-dXNs35SGdht5g6GHPLtOmtWrQrg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "618362334941-o1s0qsusdgl1du2el5q98t5knhihg1pr.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "618362334941-9c6p21hlie4iatg7nadtka3fdrc7vt70.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "passe.vn.passe"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

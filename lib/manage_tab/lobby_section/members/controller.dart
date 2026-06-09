@@ -36,4 +36,14 @@ class LobbyMembersController extends _$LobbyMembersController {
       );
     }).toList();
   }
+
+  Future<void> kick(String lobbyId, String userId) async {
+    await supabase
+        .from('lobby_member')
+        .delete()
+        .eq('lobby_id', lobbyId)
+        .eq('user_id', userId)
+        .timeout(const Duration(seconds: 5));
+    ref.invalidateSelf();
+  }
 }

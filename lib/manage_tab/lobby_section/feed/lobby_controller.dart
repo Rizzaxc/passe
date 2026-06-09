@@ -134,10 +134,17 @@ class LobbyFormController extends _$LobbyFormController {
   final supabase = Supabase.instance.client;
   final talker = Talker();
 
+  String? _lobbyId;
+
   @override
   LobbyFormState build(String? lobbyId) {
+    _lobbyId = lobbyId;
     final sport = ref.read(selectedSportStateProvider).value ?? Sport.soccer;
     return LobbyFormState(lobby: Lobby(name: '', sport: sport));
+  }
+
+  void initFromLobby(Lobby lobby) {
+    state = LobbyFormState(lobby: lobby);
   }
 
 
@@ -208,39 +215,67 @@ class LobbyFormController extends _$LobbyFormController {
     state = state.copyWith(isSaving: true);
 
     try {
-      // Always use the RPC so the captain is added as first member atomically.
-      // For geocoded locations pass p_home_ground_id; for free-text pass address fields.
-      final params = <String, dynamic>{
-        'p_name': state.lobby.name,
-        'p_sport_id': state.lobby.sport.index,
-        'p_visibility': state.lobby.visibility.name,
-        if (state.lobby.playtime != null)
-          'p_playtime': state.lobby.playtime!.map((t) => t.toJson()).toList(),
-        if (state.lobby.details != null)
-          'p_details': state.lobby.details!.toJson(),
-      };
+      final Lobby lobby;
 
-      final fa = state.freeAddress;
-      if (fa != null) {
-        // free-text mode: create a new location row from the supplied fields
-        if ((fa['locationName'] ?? '').isNotEmpty)
-          params['p_location_name'] = fa['locationName'];
-        if ((fa['streetNumber'] ?? '').isNotEmpty)
-          params['p_street_number'] = fa['streetNumber'];
-        if ((fa['streetName'] ?? '').isNotEmpty)
-          params['p_street_name'] = fa['streetName'];
-        if ((fa['district'] ?? '').isNotEmpty)
-          params['p_district'] = fa['district'];
-        if ((fa['city'] ?? '').isNotEmpty)
-          params['p_city'] = fa['city'];
-      } else if (state.lobby.homeGround != null) {
-        // geocoded mode: reference an existing location by UUID
-        params['p_home_ground_id'] = state.lobby.homeGround;
+      if (_lobbyId != null) {
+        // Edit path — call update_lobby SECURITY DEFINER RPC.
+        final params = <String, dynamic>{
+          'p_lobby_id': _lobbyId,
+          'p_name': state.lobby.name,
+          'p_visibility': state.lobby.visibility.name,
+          'p_playtime': state.lobby.playtime?.map((t) => t.toJson()).toList(),
+          if (state.lobby.details != null)
+            'p_details': state.lobby.details!.toJson(),
+        };
+        if (state.lobby.homeGround != null) {
+          params['p_home_ground_id'] = state.lobby.homeGround;
+        }
+        await supabase
+            .rpc('update_lobby', params: params)
+            .timeout(const Duration(seconds: 5));
+        lobby = state.lobby.copyWith(id: _lobbyId);
+        ref.invalidate(userLobbiesControllerProvider);
+      } else {
+        // Create path — always use the RPC so the captain is added as first member atomically.
+        final params = <String, dynamic>{
+          'p_name': state.lobby.name,
+          'p_sport_id': state.lobby.sport.index,
+          'p_visibility': state.lobby.visibility.name,
+          if (state.lobby.playtime != null)
+            'p_playtime':
+                state.lobby.playtime!.map((t) => t.toJson()).toList(),
+          if (state.lobby.details != null)
+            'p_details': state.lobby.details!.toJson(),
+        };
+
+        final fa = state.freeAddress;
+        if (fa != null) {
+          if ((fa['locationName'] ?? '').isNotEmpty) {
+            params['p_location_name'] = fa['locationName'];
+          }
+          if ((fa['streetNumber'] ?? '').isNotEmpty) {
+            params['p_street_number'] = fa['streetNumber'];
+          }
+          if ((fa['streetName'] ?? '').isNotEmpty) {
+            params['p_street_name'] = fa['streetName'];
+          }
+          if ((fa['district'] ?? '').isNotEmpty) {
+            params['p_district'] = fa['district'];
+          }
+          if ((fa['city'] ?? '').isNotEmpty) {
+            params['p_city'] = fa['city'];
+          }
+        } else if (state.lobby.homeGround != null) {
+          params['p_home_ground_id'] = state.lobby.homeGround;
+        }
+
+        final response = await supabase
+            .rpc('create_lobby_with_location', params: params)
+            .timeout(const Duration(seconds: 5));
+        lobby = Lobby.fromJson(response as Map<String, dynamic>);
+        ref.invalidate(userLobbiesControllerProvider);
       }
 
-      final response = await supabase.rpc('create_lobby_with_location', params: params).timeout(const Duration(seconds: 5));
-      final lobby = Lobby.fromJson(response as Map<String, dynamic>);
-      ref.invalidate(userLobbiesControllerProvider);
       return lobby;
     } catch (e, st) {
       talker.handle(e, st, 'Error saving lobby');
