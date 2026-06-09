@@ -8,15 +8,15 @@ part of 'health_data_service.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Service for reading health data and syncing to backend
+/// Service for reading health data and syncing to backend.
 
 @ProviderFor(HealthDataService)
 final healthDataServiceProvider = HealthDataServiceProvider._();
 
-/// Service for reading health data and syncing to backend
+/// Service for reading health data and syncing to backend.
 final class HealthDataServiceProvider
     extends $NotifierProvider<HealthDataService, void> {
-  /// Service for reading health data and syncing to backend
+  /// Service for reading health data and syncing to backend.
   HealthDataServiceProvider._()
     : super(
         from: null,
@@ -44,9 +44,9 @@ final class HealthDataServiceProvider
   }
 }
 
-String _$healthDataServiceHash() => r'e43f2c3bb16c149695791e049d4f455b233c94cf';
+String _$healthDataServiceHash() => r'9169109edb4f8a83c8536b872e691a537c8b4fbf';
 
-/// Service for reading health data and syncing to backend
+/// Service for reading health data and syncing to backend.
 
 abstract class _$HealthDataService extends $Notifier<void> {
   void build();

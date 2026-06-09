@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UserHealthLink {
 
-@JsonKey(name: 'user_id') String get userId; HealthPlatform get platform;@JsonKey(name: 'linked_at') DateTime get linkedAt;@JsonKey(name: 'last_sync_at') DateTime? get lastSyncAt;
+@JsonKey(name: 'user_id') String get userId; HealthPlatform get platform;@JsonKey(name: 'linked_at') DateTime get linkedAt;@JsonKey(name: 'last_sync_at') DateTime? get lastSyncAt;// Optional user-declared HR thresholds (bpm). Null → app estimates them.
+@JsonKey(name: 'max_heart_rate') int? get maxHeartRate;@JsonKey(name: 'lt1_bpm') int? get lt1Bpm;@JsonKey(name: 'lt2_bpm') int? get lt2Bpm;
 /// Create a copy of UserHealthLink
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +29,16 @@ $UserHealthLinkCopyWith<UserHealthLink> get copyWith => _$UserHealthLinkCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserHealthLink&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.platform, platform) || other.platform == platform)&&(identical(other.linkedAt, linkedAt) || other.linkedAt == linkedAt)&&(identical(other.lastSyncAt, lastSyncAt) || other.lastSyncAt == lastSyncAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserHealthLink&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.platform, platform) || other.platform == platform)&&(identical(other.linkedAt, linkedAt) || other.linkedAt == linkedAt)&&(identical(other.lastSyncAt, lastSyncAt) || other.lastSyncAt == lastSyncAt)&&(identical(other.maxHeartRate, maxHeartRate) || other.maxHeartRate == maxHeartRate)&&(identical(other.lt1Bpm, lt1Bpm) || other.lt1Bpm == lt1Bpm)&&(identical(other.lt2Bpm, lt2Bpm) || other.lt2Bpm == lt2Bpm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,userId,platform,linkedAt,lastSyncAt);
+int get hashCode => Object.hash(runtimeType,userId,platform,linkedAt,lastSyncAt,maxHeartRate,lt1Bpm,lt2Bpm);
 
 @override
 String toString() {
-  return 'UserHealthLink(userId: $userId, platform: $platform, linkedAt: $linkedAt, lastSyncAt: $lastSyncAt)';
+  return 'UserHealthLink(userId: $userId, platform: $platform, linkedAt: $linkedAt, lastSyncAt: $lastSyncAt, maxHeartRate: $maxHeartRate, lt1Bpm: $lt1Bpm, lt2Bpm: $lt2Bpm)';
 }
 
 
@@ -48,7 +49,7 @@ abstract mixin class $UserHealthLinkCopyWith<$Res>  {
   factory $UserHealthLinkCopyWith(UserHealthLink value, $Res Function(UserHealthLink) _then) = _$UserHealthLinkCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'user_id') String userId, HealthPlatform platform,@JsonKey(name: 'linked_at') DateTime linkedAt,@JsonKey(name: 'last_sync_at') DateTime? lastSyncAt
+@JsonKey(name: 'user_id') String userId, HealthPlatform platform,@JsonKey(name: 'linked_at') DateTime linkedAt,@JsonKey(name: 'last_sync_at') DateTime? lastSyncAt,@JsonKey(name: 'max_heart_rate') int? maxHeartRate,@JsonKey(name: 'lt1_bpm') int? lt1Bpm,@JsonKey(name: 'lt2_bpm') int? lt2Bpm
 });
 
 
@@ -65,13 +66,16 @@ class _$UserHealthLinkCopyWithImpl<$Res>
 
 /// Create a copy of UserHealthLink
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? platform = null,Object? linkedAt = null,Object? lastSyncAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? platform = null,Object? linkedAt = null,Object? lastSyncAt = freezed,Object? maxHeartRate = freezed,Object? lt1Bpm = freezed,Object? lt2Bpm = freezed,}) {
   return _then(_self.copyWith(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,platform: null == platform ? _self.platform : platform // ignore: cast_nullable_to_non_nullable
 as HealthPlatform,linkedAt: null == linkedAt ? _self.linkedAt : linkedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,lastSyncAt: freezed == lastSyncAt ? _self.lastSyncAt : lastSyncAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,maxHeartRate: freezed == maxHeartRate ? _self.maxHeartRate : maxHeartRate // ignore: cast_nullable_to_non_nullable
+as int?,lt1Bpm: freezed == lt1Bpm ? _self.lt1Bpm : lt1Bpm // ignore: cast_nullable_to_non_nullable
+as int?,lt2Bpm: freezed == lt2Bpm ? _self.lt2Bpm : lt2Bpm // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -156,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'user_id')  String userId,  HealthPlatform platform, @JsonKey(name: 'linked_at')  DateTime linkedAt, @JsonKey(name: 'last_sync_at')  DateTime? lastSyncAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'user_id')  String userId,  HealthPlatform platform, @JsonKey(name: 'linked_at')  DateTime linkedAt, @JsonKey(name: 'last_sync_at')  DateTime? lastSyncAt, @JsonKey(name: 'max_heart_rate')  int? maxHeartRate, @JsonKey(name: 'lt1_bpm')  int? lt1Bpm, @JsonKey(name: 'lt2_bpm')  int? lt2Bpm)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UserHealthLink() when $default != null:
-return $default(_that.userId,_that.platform,_that.linkedAt,_that.lastSyncAt);case _:
+return $default(_that.userId,_that.platform,_that.linkedAt,_that.lastSyncAt,_that.maxHeartRate,_that.lt1Bpm,_that.lt2Bpm);case _:
   return orElse();
 
 }
@@ -177,10 +181,10 @@ return $default(_that.userId,_that.platform,_that.linkedAt,_that.lastSyncAt);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'user_id')  String userId,  HealthPlatform platform, @JsonKey(name: 'linked_at')  DateTime linkedAt, @JsonKey(name: 'last_sync_at')  DateTime? lastSyncAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'user_id')  String userId,  HealthPlatform platform, @JsonKey(name: 'linked_at')  DateTime linkedAt, @JsonKey(name: 'last_sync_at')  DateTime? lastSyncAt, @JsonKey(name: 'max_heart_rate')  int? maxHeartRate, @JsonKey(name: 'lt1_bpm')  int? lt1Bpm, @JsonKey(name: 'lt2_bpm')  int? lt2Bpm)  $default,) {final _that = this;
 switch (_that) {
 case _UserHealthLink():
-return $default(_that.userId,_that.platform,_that.linkedAt,_that.lastSyncAt);case _:
+return $default(_that.userId,_that.platform,_that.linkedAt,_that.lastSyncAt,_that.maxHeartRate,_that.lt1Bpm,_that.lt2Bpm);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +201,10 @@ return $default(_that.userId,_that.platform,_that.linkedAt,_that.lastSyncAt);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'user_id')  String userId,  HealthPlatform platform, @JsonKey(name: 'linked_at')  DateTime linkedAt, @JsonKey(name: 'last_sync_at')  DateTime? lastSyncAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'user_id')  String userId,  HealthPlatform platform, @JsonKey(name: 'linked_at')  DateTime linkedAt, @JsonKey(name: 'last_sync_at')  DateTime? lastSyncAt, @JsonKey(name: 'max_heart_rate')  int? maxHeartRate, @JsonKey(name: 'lt1_bpm')  int? lt1Bpm, @JsonKey(name: 'lt2_bpm')  int? lt2Bpm)?  $default,) {final _that = this;
 switch (_that) {
 case _UserHealthLink() when $default != null:
-return $default(_that.userId,_that.platform,_that.linkedAt,_that.lastSyncAt);case _:
+return $default(_that.userId,_that.platform,_that.linkedAt,_that.lastSyncAt,_that.maxHeartRate,_that.lt1Bpm,_that.lt2Bpm);case _:
   return null;
 
 }
@@ -212,13 +216,17 @@ return $default(_that.userId,_that.platform,_that.linkedAt,_that.lastSyncAt);cas
 @JsonSerializable()
 
 class _UserHealthLink implements UserHealthLink {
-  const _UserHealthLink({@JsonKey(name: 'user_id') required this.userId, required this.platform, @JsonKey(name: 'linked_at') required this.linkedAt, @JsonKey(name: 'last_sync_at') this.lastSyncAt});
+  const _UserHealthLink({@JsonKey(name: 'user_id') required this.userId, required this.platform, @JsonKey(name: 'linked_at') required this.linkedAt, @JsonKey(name: 'last_sync_at') this.lastSyncAt, @JsonKey(name: 'max_heart_rate') this.maxHeartRate, @JsonKey(name: 'lt1_bpm') this.lt1Bpm, @JsonKey(name: 'lt2_bpm') this.lt2Bpm});
   factory _UserHealthLink.fromJson(Map<String, dynamic> json) => _$UserHealthLinkFromJson(json);
 
 @override@JsonKey(name: 'user_id') final  String userId;
 @override final  HealthPlatform platform;
 @override@JsonKey(name: 'linked_at') final  DateTime linkedAt;
 @override@JsonKey(name: 'last_sync_at') final  DateTime? lastSyncAt;
+// Optional user-declared HR thresholds (bpm). Null → app estimates them.
+@override@JsonKey(name: 'max_heart_rate') final  int? maxHeartRate;
+@override@JsonKey(name: 'lt1_bpm') final  int? lt1Bpm;
+@override@JsonKey(name: 'lt2_bpm') final  int? lt2Bpm;
 
 /// Create a copy of UserHealthLink
 /// with the given fields replaced by the non-null parameter values.
@@ -233,16 +241,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserHealthLink&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.platform, platform) || other.platform == platform)&&(identical(other.linkedAt, linkedAt) || other.linkedAt == linkedAt)&&(identical(other.lastSyncAt, lastSyncAt) || other.lastSyncAt == lastSyncAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserHealthLink&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.platform, platform) || other.platform == platform)&&(identical(other.linkedAt, linkedAt) || other.linkedAt == linkedAt)&&(identical(other.lastSyncAt, lastSyncAt) || other.lastSyncAt == lastSyncAt)&&(identical(other.maxHeartRate, maxHeartRate) || other.maxHeartRate == maxHeartRate)&&(identical(other.lt1Bpm, lt1Bpm) || other.lt1Bpm == lt1Bpm)&&(identical(other.lt2Bpm, lt2Bpm) || other.lt2Bpm == lt2Bpm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,userId,platform,linkedAt,lastSyncAt);
+int get hashCode => Object.hash(runtimeType,userId,platform,linkedAt,lastSyncAt,maxHeartRate,lt1Bpm,lt2Bpm);
 
 @override
 String toString() {
-  return 'UserHealthLink(userId: $userId, platform: $platform, linkedAt: $linkedAt, lastSyncAt: $lastSyncAt)';
+  return 'UserHealthLink(userId: $userId, platform: $platform, linkedAt: $linkedAt, lastSyncAt: $lastSyncAt, maxHeartRate: $maxHeartRate, lt1Bpm: $lt1Bpm, lt2Bpm: $lt2Bpm)';
 }
 
 
@@ -253,7 +261,7 @@ abstract mixin class _$UserHealthLinkCopyWith<$Res> implements $UserHealthLinkCo
   factory _$UserHealthLinkCopyWith(_UserHealthLink value, $Res Function(_UserHealthLink) _then) = __$UserHealthLinkCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'user_id') String userId, HealthPlatform platform,@JsonKey(name: 'linked_at') DateTime linkedAt,@JsonKey(name: 'last_sync_at') DateTime? lastSyncAt
+@JsonKey(name: 'user_id') String userId, HealthPlatform platform,@JsonKey(name: 'linked_at') DateTime linkedAt,@JsonKey(name: 'last_sync_at') DateTime? lastSyncAt,@JsonKey(name: 'max_heart_rate') int? maxHeartRate,@JsonKey(name: 'lt1_bpm') int? lt1Bpm,@JsonKey(name: 'lt2_bpm') int? lt2Bpm
 });
 
 
@@ -270,13 +278,16 @@ class __$UserHealthLinkCopyWithImpl<$Res>
 
 /// Create a copy of UserHealthLink
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? platform = null,Object? linkedAt = null,Object? lastSyncAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? platform = null,Object? linkedAt = null,Object? lastSyncAt = freezed,Object? maxHeartRate = freezed,Object? lt1Bpm = freezed,Object? lt2Bpm = freezed,}) {
   return _then(_UserHealthLink(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,platform: null == platform ? _self.platform : platform // ignore: cast_nullable_to_non_nullable
 as HealthPlatform,linkedAt: null == linkedAt ? _self.linkedAt : linkedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,lastSyncAt: freezed == lastSyncAt ? _self.lastSyncAt : lastSyncAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,maxHeartRate: freezed == maxHeartRate ? _self.maxHeartRate : maxHeartRate // ignore: cast_nullable_to_non_nullable
+as int?,lt1Bpm: freezed == lt1Bpm ? _self.lt1Bpm : lt1Bpm // ignore: cast_nullable_to_non_nullable
+as int?,lt2Bpm: freezed == lt2Bpm ? _self.lt2Bpm : lt2Bpm // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

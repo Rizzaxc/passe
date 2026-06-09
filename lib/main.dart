@@ -15,6 +15,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import 'package:talker_riverpod_logger/talker_riverpod_logger_observer.dart';
 import 'package:talker_riverpod_logger/talker_riverpod_logger_settings.dart';
 
+import 'health_tab/health_sync_service.dart';
 import 'logger/observer.dart';
 import 'router.dart';
 
@@ -119,14 +120,34 @@ class Passe extends HookConsumerWidget {
   }
 }
 
-class ScaffoldWithNavBar extends StatelessWidget {
+class ScaffoldWithNavBar extends ConsumerStatefulWidget {
   const ScaffoldWithNavBar({required this.navigationShell, Key? key})
     : super(key: key ?? const ValueKey<String>('ScaffoldWithNavBar'));
 
   final StatefulNavigationShell navigationShell;
 
   @override
+  ConsumerState<ScaffoldWithNavBar> createState() => _ScaffoldWithNavBarState();
+}
+
+class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
+  @override
+  void initState() {
+    super.initState();
+    // One-shot, non-blocking device→Supabase health sync on app launch. The
+    // shell only mounts for an authed session; the sync controller self-guards
+    // guests / unlinked / revoked permissions, so this is safe to fire blind.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(healthSyncControllerProvider.notifier)
+          .syncNow()
+          .catchError((_) => const HealthSyncResult());
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final navigationShell = widget.navigationShell;
     return FScaffold(
       footer: FBottomNavigationBar(
         index: navigationShell.currentIndex,
@@ -155,9 +176,9 @@ class ScaffoldWithNavBar extends StatelessWidget {
   }
 
   void _onTap(BuildContext context, int index) {
-    navigationShell.goBranch(
+    widget.navigationShell.goBranch(
       index,
-      initialLocation: index == navigationShell.currentIndex,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
   }
 }

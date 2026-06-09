@@ -28,6 +28,11 @@ abstract class UserHealthLink with _$UserHealthLink {
     required HealthPlatform platform,
     @JsonKey(name: 'linked_at') required DateTime linkedAt,
     @JsonKey(name: 'last_sync_at') DateTime? lastSyncAt,
+
+    // Optional user-declared HR thresholds (bpm). Null → app estimates them.
+    @JsonKey(name: 'max_heart_rate') int? maxHeartRate,
+    @JsonKey(name: 'lt1_bpm') int? lt1Bpm,
+    @JsonKey(name: 'lt2_bpm') int? lt2Bpm,
   }) = _UserHealthLink;
 
   factory UserHealthLink.fromJson(Map<String, dynamic> json) =>

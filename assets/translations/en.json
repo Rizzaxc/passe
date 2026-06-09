@@ -240,7 +240,13 @@
         "searchIDCopied": "Lobby SearchID copied to clipboard",
         "searchIDExplanation": "Other players can use this ID to join your lobby using the home screen filter.",
         "shareId": "Share ID",
-        "invite": "Invite"
+        "invite": "Invite",
+        "leave": {
+            "title": "Leave Lobby?",
+            "message": "You will no longer be a member of this lobby.",
+            "confirm": "Leave Lobby",
+            "cancel": "Cancel"
+        }
     },
     "createLobby": {
         "title": "Create Lobby",
@@ -463,28 +469,69 @@
             "notAvailableAndroid": "Health Connect is not available. Please install Health Connect from the Play Store."
         },
         "userHealth": {
-            "title": "User Health",
-            "content": "View your health metrics and trends"
+            "title": "Body",
+            "empty": "No health data yet. Tap sync to pull from your wearable."
         },
         "activityData": {
             "title": "Activity",
-            "content": "Track your per-activity statistics"
+            "empty": "No activity recaps yet. Confirmed sessions with workout data show up here.",
+            "selectSport": "Choose a sport to see your activity recaps."
         },
         "achievements": {
             "title": "Achievements",
             "content": "View your goals and achievements"
         },
         "error": "Something went wrong. Please try again.",
-        "trend": {
-            "title": "Trend",
-            "period": "Last 30 days",
-            "statCalories": "cal/session",
-            "statHeartRate": "avg heart rate",
-            "statDistance": "distance"
+        "metric": {
+            "restingHr": "Resting HR",
+            "hrv": "HRV",
+            "sleep": "Sleep",
+            "weight": "Weight",
+            "steps": "Steps",
+            "distance": "Distance",
+            "activeCalories": "Active cal",
+            "totalCalories": "Total cal"
         },
-        "activity": {
-            "title": "Activity",
-            "summary": "3 sessions this week — moderate intensity."
+        "customize": {
+            "title": "Customize metrics"
+        },
+        "trend": {
+            "period": "Last 90 days",
+            "insufficient": "Not enough data to chart yet."
+        },
+        "detected": {
+            "title": "Detected workouts",
+            "evidenceHigh": "Workout recorded during this session",
+            "evidenceMedium": "Elevated heart rate during this session",
+            "attach": "Attach",
+            "dismiss": "Dismiss",
+            "attached": "Workout attached"
+        },
+        "source": {
+            "lobby": "Lobby",
+            "professional": "Coaching",
+            "self": "Personal"
+        },
+        "recap": {
+            "duration": "Duration",
+            "avgHr": "Avg HR",
+            "maxHr": "Max HR",
+            "calories": "Calories",
+            "distance": "Distance",
+            "effort": "Effort",
+            "hrCurve": "Heart rate",
+            "zones": "Zones",
+            "estimated": "(estimated)"
+        },
+        "zone": {
+            "easy": "Easy",
+            "moderate": "Moderate",
+            "hard": "Hard"
+        },
+        "sync": {
+            "done": "Synced {days} days, {activities} activities",
+            "skipped": "Link a health service first",
+            "failed": "Sync failed. Please try again."
         }
     },
     "welcome": {

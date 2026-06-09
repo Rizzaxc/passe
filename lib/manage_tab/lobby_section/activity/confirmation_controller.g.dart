@@ -8,41 +8,41 @@ part of 'confirmation_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Activity-level + member-level confirmation for one activity row.
+/// Activity-level + member-level RSVP for one activity row.
 ///
 /// The notifier reads through the `activity_confirmation_status` RPC
-/// (single round-trip) and writes by inserting / deleting the caller's
-/// row in `activity_confirmation`. After every write it re-reads — the
-/// status flip from "X of Y confirmed" → "official" needs to land in
-/// the same render frame, so we don't bother with optimistic local
-/// math.
+/// (single round-trip) and writes by upserting the caller's row in
+/// `activity_confirmation` with the chosen [Attendance]. Writes flip the
+/// local state **optimistically** (so the RSVP control reacts in the same
+/// frame), then reconcile against the server re-read; on failure the
+/// previous snapshot is restored.
 
 @ProviderFor(ActivityConfirmationController)
 final activityConfirmationControllerProvider =
     ActivityConfirmationControllerFamily._();
 
-/// Activity-level + member-level confirmation for one activity row.
+/// Activity-level + member-level RSVP for one activity row.
 ///
 /// The notifier reads through the `activity_confirmation_status` RPC
-/// (single round-trip) and writes by inserting / deleting the caller's
-/// row in `activity_confirmation`. After every write it re-reads — the
-/// status flip from "X of Y confirmed" → "official" needs to land in
-/// the same render frame, so we don't bother with optimistic local
-/// math.
+/// (single round-trip) and writes by upserting the caller's row in
+/// `activity_confirmation` with the chosen [Attendance]. Writes flip the
+/// local state **optimistically** (so the RSVP control reacts in the same
+/// frame), then reconcile against the server re-read; on failure the
+/// previous snapshot is restored.
 final class ActivityConfirmationControllerProvider
     extends
         $AsyncNotifierProvider<
           ActivityConfirmationController,
           ActivityConfirmationStatus
         > {
-  /// Activity-level + member-level confirmation for one activity row.
+  /// Activity-level + member-level RSVP for one activity row.
   ///
   /// The notifier reads through the `activity_confirmation_status` RPC
-  /// (single round-trip) and writes by inserting / deleting the caller's
-  /// row in `activity_confirmation`. After every write it re-reads — the
-  /// status flip from "X of Y confirmed" → "official" needs to land in
-  /// the same render frame, so we don't bother with optimistic local
-  /// math.
+  /// (single round-trip) and writes by upserting the caller's row in
+  /// `activity_confirmation` with the chosen [Attendance]. Writes flip the
+  /// local state **optimistically** (so the RSVP control reacts in the same
+  /// frame), then reconcile against the server re-read; on failure the
+  /// previous snapshot is restored.
   ActivityConfirmationControllerProvider._({
     required ActivityConfirmationControllerFamily super.from,
     required String super.argument,
@@ -81,16 +81,16 @@ final class ActivityConfirmationControllerProvider
 }
 
 String _$activityConfirmationControllerHash() =>
-    r'1ab61d2bf6b45bd77ebf45b3c75f95b218b6b70a';
+    r'e9bc7ca1dcfa31ed4484a71350a23e54c00881dd';
 
-/// Activity-level + member-level confirmation for one activity row.
+/// Activity-level + member-level RSVP for one activity row.
 ///
 /// The notifier reads through the `activity_confirmation_status` RPC
-/// (single round-trip) and writes by inserting / deleting the caller's
-/// row in `activity_confirmation`. After every write it re-reads — the
-/// status flip from "X of Y confirmed" → "official" needs to land in
-/// the same render frame, so we don't bother with optimistic local
-/// math.
+/// (single round-trip) and writes by upserting the caller's row in
+/// `activity_confirmation` with the chosen [Attendance]. Writes flip the
+/// local state **optimistically** (so the RSVP control reacts in the same
+/// frame), then reconcile against the server re-read; on failure the
+/// previous snapshot is restored.
 
 final class ActivityConfirmationControllerFamily extends $Family
     with
@@ -110,14 +110,14 @@ final class ActivityConfirmationControllerFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Activity-level + member-level confirmation for one activity row.
+  /// Activity-level + member-level RSVP for one activity row.
   ///
   /// The notifier reads through the `activity_confirmation_status` RPC
-  /// (single round-trip) and writes by inserting / deleting the caller's
-  /// row in `activity_confirmation`. After every write it re-reads — the
-  /// status flip from "X of Y confirmed" → "official" needs to land in
-  /// the same render frame, so we don't bother with optimistic local
-  /// math.
+  /// (single round-trip) and writes by upserting the caller's row in
+  /// `activity_confirmation` with the chosen [Attendance]. Writes flip the
+  /// local state **optimistically** (so the RSVP control reacts in the same
+  /// frame), then reconcile against the server re-read; on failure the
+  /// previous snapshot is restored.
 
   ActivityConfirmationControllerProvider call(String activityId) =>
       ActivityConfirmationControllerProvider._(
@@ -129,14 +129,14 @@ final class ActivityConfirmationControllerFamily extends $Family
   String toString() => r'activityConfirmationControllerProvider';
 }
 
-/// Activity-level + member-level confirmation for one activity row.
+/// Activity-level + member-level RSVP for one activity row.
 ///
 /// The notifier reads through the `activity_confirmation_status` RPC
-/// (single round-trip) and writes by inserting / deleting the caller's
-/// row in `activity_confirmation`. After every write it re-reads — the
-/// status flip from "X of Y confirmed" → "official" needs to land in
-/// the same render frame, so we don't bother with optimistic local
-/// math.
+/// (single round-trip) and writes by upserting the caller's row in
+/// `activity_confirmation` with the chosen [Attendance]. Writes flip the
+/// local state **optimistically** (so the RSVP control reacts in the same
+/// frame), then reconcile against the server re-read; on failure the
+/// previous snapshot is restored.
 
 abstract class _$ActivityConfirmationController
     extends $AsyncNotifier<ActivityConfirmationStatus> {

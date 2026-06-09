@@ -9,7 +9,40 @@ import 'model/hr_sample.dart';
 
 part 'health_data_service.g.dart';
 
-/// Service for reading health data and syncing to backend
+/// Resolved per-user heart-rate thresholds (bpm) used to bucket the 3-zone
+/// model and derive training load. `estimated` is true when the values are
+/// app-derived (age bucket / observed) rather than user-declared.
+class HrThresholds {
+  final int maxHr;
+  final int lt1; // aerobic threshold — below = easy
+  final int lt2; // anaerobic threshold — above = hard
+  final bool estimated;
+
+  const HrThresholds({
+    required this.maxHr,
+    required this.lt1,
+    required this.lt2,
+    required this.estimated,
+  });
+}
+
+/// How strongly the wearable suggests exercise actually happened in a window.
+enum HealthEvidence { none, medium, high }
+
+/// Outcome of reading a single activity's window from the device.
+class ActivityCaptureResult {
+  final ActivityHealthMetrics metrics;
+  final List<HrSamplePoint> curve; // already downsampled to ~1/min
+  final HealthEvidence evidence;
+
+  const ActivityCaptureResult({
+    required this.metrics,
+    required this.curve,
+    required this.evidence,
+  });
+}
+
+/// Service for reading health data and syncing to backend.
 @riverpod
 class HealthDataService extends _$HealthDataService {
   final _health = Health();
@@ -20,10 +53,12 @@ class HealthDataService extends _$HealthDataService {
     // No-op initialization
   }
 
-  /// Read health data for a specific activity time range
-  Future<ActivityHealthMetrics?> readActivityHealthData({
+  /// Read + aggregate one activity's window. Zones are computed at full sample
+  /// resolution; the returned [ActivityCaptureResult.curve] is downsampled to
+  /// ~1 point/min. Returns null when the activity has no end time.
+  Future<ActivityCaptureResult?> readActivityHealthData({
     required Activity activity,
-    int? userMaxHeartRate,
+    required HrThresholds thresholds,
   }) async {
     if (activity.endTime == null) return null;
 
@@ -31,38 +66,25 @@ class HealthDataService extends _$HealthDataService {
     final endTime = activity.endTime!;
 
     try {
-      // Fetch all health data types in parallel
       final results = await Future.wait([
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.STEPS],
-          startTime: startTime,
-          endTime: endTime,
-        ),
+            types: [HealthDataType.STEPS], startTime: startTime, endTime: endTime),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.DISTANCE_DELTA],
-          startTime: startTime,
-          endTime: endTime,
-        ),
+            types: [HealthDataType.DISTANCE_DELTA], startTime: startTime, endTime: endTime),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.ACTIVE_ENERGY_BURNED],
-          startTime: startTime,
-          endTime: endTime,
-        ),
+            types: [HealthDataType.ACTIVE_ENERGY_BURNED], startTime: startTime, endTime: endTime),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.HEART_RATE],
-          startTime: startTime,
-          endTime: endTime,
-        ),
+            types: [HealthDataType.HEART_RATE], startTime: startTime, endTime: endTime),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.HEART_RATE_VARIABILITY_SDNN],
-          startTime: startTime,
-          endTime: endTime,
-        ),
+            types: [HealthDataType.HEART_RATE_VARIABILITY_SDNN],
+            startTime: startTime,
+            endTime: endTime),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.WEIGHT],
-          startTime: startTime.subtract(const Duration(days: 7)),
-          endTime: endTime,
-        ),
+            types: [HealthDataType.WEIGHT],
+            startTime: startTime.subtract(const Duration(days: 7)),
+            endTime: endTime),
+        _health.getHealthDataFromTypes(
+            types: [HealthDataType.WORKOUT], startTime: startTime, endTime: endTime),
       ]);
 
       final stepsData = results[0];
@@ -71,17 +93,12 @@ class HealthDataService extends _$HealthDataService {
       final heartRateData = results[3];
       final hrvData = results[4];
       final weightData = results[5];
+      final workoutData = results[6];
 
-      // Aggregate steps
       final steps = _sumNumericValues(stepsData);
-
-      // Aggregate distance
       final distance = _sumNumericValues(distanceData);
-
-      // Aggregate calories
       final calories = _sumNumericValues(caloriesData);
 
-      // Process heart rate data
       final hrValues = _extractNumericValues(heartRateData);
       final avgHr = hrValues.isNotEmpty
           ? (hrValues.reduce((a, b) => a + b) / hrValues.length).round()
@@ -89,32 +106,44 @@ class HealthDataService extends _$HealthDataService {
       final maxHr = hrValues.isNotEmpty ? hrValues.reduce((a, b) => a > b ? a : b).round() : null;
       final minHr = hrValues.isNotEmpty ? hrValues.reduce((a, b) => a < b ? a : b).round() : null;
 
-      // Calculate HR zones if we have max HR
-      Map<int, int>? hrZones;
-      if (userMaxHeartRate != null && heartRateData.isNotEmpty) {
-        hrZones = _calculateHrZones(heartRateData, userMaxHeartRate);
-      }
+      // 3-zone time-in-zone (full resolution).
+      final zones = _calculateHrZones(heartRateData, thresholds);
+      final easy = zones['easy']!;
+      final moderate = zones['moderate']!;
+      final hard = zones['hard']!;
 
-      // Get HRV average
       final hrvValues = _extractNumericValues(hrvData);
       final avgHrv = hrvValues.isNotEmpty
           ? hrvValues.reduce((a, b) => a + b) / hrvValues.length
           : null;
 
-      // Get most recent weight
-      final weight = weightData.isNotEmpty
-          ? _extractNumericValue(weightData.last)
-          : null;
+      final weight = weightData.isNotEmpty ? _extractNumericValue(weightData.last) : null;
 
-      // Calculate training load (simplified TRIMP)
+      // Training load (simplified TRIMP).
       double? trainingLoad;
-      if (avgHr != null && userMaxHeartRate != null) {
+      if (avgHr != null) {
         final durationMinutes = endTime.difference(startTime).inMinutes;
-        final hrReserve = (avgHr - 60) / (userMaxHeartRate - 60);
-        trainingLoad = durationMinutes * hrReserve * 0.64; // Simplified TRIMP formula
+        final hrReserve = ((avgHr - 60) / (thresholds.maxHr - 60)).clamp(0.0, 1.0);
+        trainingLoad = durationMinutes * hrReserve * 0.64;
       }
 
-      return ActivityHealthMetrics(
+      // Effort score 0–100 from time-in-zone distribution.
+      final effortScore = _effortScore(easy: easy, moderate: moderate, hard: hard);
+
+      // Workout type label (from the first overlapping workout, if any).
+      final workoutType = _workoutType(workoutData);
+
+      // Evidence: an explicit workout = high; ≥10 min in moderate+hard = medium.
+      final HealthEvidence evidence;
+      if (workoutData.isNotEmpty) {
+        evidence = HealthEvidence.high;
+      } else if ((moderate + hard) >= 600) {
+        evidence = HealthEvidence.medium;
+      } else {
+        evidence = HealthEvidence.none;
+      }
+
+      final metrics = ActivityHealthMetrics(
         userId: activity.userId,
         activityId: activity.id!,
         steps: steps?.round(),
@@ -124,47 +153,27 @@ class HealthDataService extends _$HealthDataService {
         maxHeartRate: maxHr,
         minHeartRate: minHr,
         hrvSdnnMs: avgHrv,
-        hrZone1Seconds: hrZones?[1],
-        hrZone2Seconds: hrZones?[2],
-        hrZone3Seconds: hrZones?[3],
-        hrZone4Seconds: hrZones?[4],
-        hrZone5Seconds: hrZones?[5],
+        hrZoneEasySeconds: easy,
+        hrZoneModerateSeconds: moderate,
+        hrZoneHardSeconds: hard,
         trainingLoad: trainingLoad,
+        effortScore: effortScore,
         weightKg: weight,
+        workoutType: workoutType,
         recordedAt: DateTime.now(),
+      );
+
+      return ActivityCaptureResult(
+        metrics: metrics,
+        curve: _downsampleHrToMinutes(heartRateData),
+        evidence: evidence,
       );
     } catch (e) {
       return null;
     }
   }
 
-  /// Extract raw HR samples for detailed analysis
-  Future<List<HrSample>> readHrSamples({
-    required String activityId,
-    required DateTime startTime,
-    required DateTime endTime,
-  }) async {
-    try {
-      final heartRateData = await _health.getHealthDataFromTypes(
-        types: [HealthDataType.HEART_RATE],
-        startTime: startTime,
-        endTime: endTime,
-      );
-
-      return heartRateData.map((point) {
-        final value = _extractNumericValue(point);
-        return HrSample(
-          activityId: activityId,
-          timestamp: point.dateFrom,
-          bpm: value?.round() ?? 0,
-        );
-      }).where((s) => s.bpm > 0).toList();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  /// Read daily health summary
+  /// Read a single day's whole-body summary from the device.
   Future<DailyHealthSummary?> readDailyHealthSummary({
     required String userId,
     required DateTime date,
@@ -175,45 +184,25 @@ class HealthDataService extends _$HealthDataService {
     try {
       final results = await Future.wait([
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.STEPS],
-          startTime: startOfDay,
-          endTime: endOfDay,
-        ),
+            types: [HealthDataType.STEPS], startTime: startOfDay, endTime: endOfDay),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.DISTANCE_DELTA],
-          startTime: startOfDay,
-          endTime: endOfDay,
-        ),
+            types: [HealthDataType.DISTANCE_DELTA], startTime: startOfDay, endTime: endOfDay),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.ACTIVE_ENERGY_BURNED],
-          startTime: startOfDay,
-          endTime: endOfDay,
-        ),
+            types: [HealthDataType.ACTIVE_ENERGY_BURNED], startTime: startOfDay, endTime: endOfDay),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.TOTAL_CALORIES_BURNED],
-          startTime: startOfDay,
-          endTime: endOfDay,
-        ),
+            types: [HealthDataType.TOTAL_CALORIES_BURNED], startTime: startOfDay, endTime: endOfDay),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.RESTING_HEART_RATE],
-          startTime: startOfDay,
-          endTime: endOfDay,
-        ),
+            types: [HealthDataType.RESTING_HEART_RATE], startTime: startOfDay, endTime: endOfDay),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.HEART_RATE_VARIABILITY_SDNN],
-          startTime: startOfDay,
-          endTime: endOfDay,
-        ),
+            types: [HealthDataType.HEART_RATE_VARIABILITY_SDNN],
+            startTime: startOfDay,
+            endTime: endOfDay),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.SLEEP_ASLEEP],
-          startTime: startOfDay.subtract(const Duration(hours: 12)),
-          endTime: endOfDay,
-        ),
+            types: [HealthDataType.SLEEP_ASLEEP],
+            startTime: startOfDay.subtract(const Duration(hours: 12)),
+            endTime: endOfDay),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.WEIGHT],
-          startTime: startOfDay,
-          endTime: endOfDay,
-        ),
+            types: [HealthDataType.WEIGHT], startTime: startOfDay, endTime: endOfDay),
       ]);
 
       final steps = _sumNumericValues(results[0])?.round();
@@ -234,9 +223,7 @@ class HealthDataService extends _$HealthDataService {
       final sleepMinutes = _sumNumericValues(results[6])?.round();
 
       final weightData = results[7];
-      final weight = weightData.isNotEmpty
-          ? _extractNumericValue(weightData.last)
-          : null;
+      final weight = weightData.isNotEmpty ? _extractNumericValue(weightData.last) : null;
 
       return DailyHealthSummary(
         userId: userId,
@@ -256,91 +243,169 @@ class HealthDataService extends _$HealthDataService {
     }
   }
 
-  /// Save activity health metrics to backend
-  Future<void> saveActivityMetrics(ActivityHealthMetrics metrics) async {
-    await _supabase.from('activity_health_metrics').upsert(
-      metrics.toJson(),
-      onConflict: 'user_id,activity_id',
-    ).timeout(const Duration(seconds: 5));
-  }
+  /// Read raw HR samples (full resolution) — used by the recap detail when the
+  /// curve isn't already persisted. Most callers read the downsampled rows from
+  /// `activity_hr_sample` instead.
+  Future<List<HrSample>> readHrSamples({
+    required String activityId,
+    required DateTime startTime,
+    required DateTime endTime,
+  }) async {
+    try {
+      final heartRateData = await _health.getHealthDataFromTypes(
+        types: [HealthDataType.HEART_RATE],
+        startTime: startTime,
+        endTime: endTime,
+      );
 
-  /// Save HR samples in batch
-  Future<void> saveHrSamples(List<HrSample> samples) async {
-    if (samples.isEmpty) return;
-
-    // Batch insert in chunks of 500
-    const chunkSize = 500;
-    for (var i = 0; i < samples.length; i += chunkSize) {
-      final chunk = samples.skip(i).take(chunkSize).toList();
-      await _supabase.from('activity_hr_sample').insert(
-        chunk.map((s) => {
-          'activity_id': s.activityId,
-          'timestamp': s.timestamp.toIso8601String(),
-          'bpm': s.bpm,
-        }).toList(),
-      ).timeout(const Duration(seconds: 5));
+      return heartRateData
+          .map((point) => HrSample(
+                activityId: activityId,
+                timestamp: point.dateFrom,
+                bpm: _extractNumericValue(point)?.round() ?? 0,
+              ))
+          .where((s) => s.bpm > 0)
+          .toList();
+    } catch (e) {
+      return [];
     }
   }
 
-  /// Save daily health summary to backend
+  // ── Backend writes (direct upserts; RLS scopes to auth.uid()) ──────────────
+
+  Future<void> saveActivityMetrics(ActivityHealthMetrics metrics) async {
+    // Drop nulls so the DB keeps its defaults (notably `id` / `recorded_at`)
+    // instead of receiving an explicit null that overrides them.
+    final json = metrics.toJson()..removeWhere((_, v) => v == null);
+    await _supabase
+        .from('activity_health_metrics')
+        .upsert(json, onConflict: 'user_id,activity_id')
+        .timeout(const Duration(seconds: 5));
+  }
+
+  /// Insert a dismissal tombstone so the detected workout isn't re-prompted.
+  Future<void> dismissActivity({required String userId, required String activityId}) async {
+    await _supabase.from('activity_health_metrics').upsert({
+      'user_id': userId,
+      'activity_id': activityId,
+      'dismissed': true,
+    }, onConflict: 'user_id,activity_id').timeout(const Duration(seconds: 5));
+  }
+
   Future<void> saveDailySummary(DailyHealthSummary summary) async {
-    await _supabase.from('daily_health_summary').upsert(
-      summary.toJson(),
-      onConflict: 'user_id,date',
-    ).timeout(const Duration(seconds: 5));
+    await _supabase
+        .from('daily_health_summary')
+        .upsert(summary.toJson(), onConflict: 'user_id,date')
+        .timeout(const Duration(seconds: 5));
   }
 
-  // Helper methods
-
-  double? _sumNumericValues(List<HealthDataPoint> data) {
-    if (data.isEmpty) return null;
-    return data.fold<double>(0, (sum, point) {
-      final value = _extractNumericValue(point);
-      return sum + (value ?? 0);
-    });
+  /// Persist a (downsampled) HR curve. Replaces any prior samples for the
+  /// activity so re-capture is idempotent.
+  Future<void> saveHrCurve({
+    required String activityId,
+    required List<HrSamplePoint> points,
+  }) async {
+    await _supabase
+        .from('activity_hr_sample')
+        .delete()
+        .eq('activity_id', activityId)
+        .timeout(const Duration(seconds: 5));
+    if (points.isEmpty) return;
+    await _supabase
+        .from('activity_hr_sample')
+        .insert(points
+            .map((p) => {
+                  'activity_id': activityId,
+                  'timestamp': p.timestamp.toIso8601String(),
+                  'bpm': p.bpm,
+                })
+            .toList())
+        .timeout(const Duration(seconds: 5));
   }
 
-  List<double> _extractNumericValues(List<HealthDataPoint> data) {
-    return data
-        .map(_extractNumericValue)
-        .whereType<double>()
+  /// Read the persisted (downsampled) HR curve for a captured activity.
+  Future<List<HrSamplePoint>> loadHrCurve(String activityId) async {
+    final rows = await _supabase
+        .from('activity_hr_sample')
+        .select('timestamp, bpm')
+        .eq('activity_id', activityId)
+        .order('timestamp')
+        .timeout(const Duration(seconds: 5));
+    return (rows as List)
+        .map((r) => HrSamplePoint(
+              timestamp: DateTime.parse(r['timestamp'] as String),
+              bpm: (r['bpm'] as num).round(),
+            ))
         .toList();
   }
 
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  double? _sumNumericValues(List<HealthDataPoint> data) {
+    if (data.isEmpty) return null;
+    return data.fold<double>(0, (sum, point) => sum + (_extractNumericValue(point) ?? 0));
+  }
+
+  List<double> _extractNumericValues(List<HealthDataPoint> data) =>
+      data.map(_extractNumericValue).whereType<double>().toList();
+
   double? _extractNumericValue(HealthDataPoint point) {
     final value = point.value;
-    if (value is NumericHealthValue) {
-      return value.numericValue.toDouble();
+    if (value is NumericHealthValue) return value.numericValue.toDouble();
+    return null;
+  }
+
+  String? _workoutType(List<HealthDataPoint> workoutData) {
+    for (final p in workoutData) {
+      final v = p.value;
+      if (v is WorkoutHealthValue) return v.workoutActivityType.name;
     }
     return null;
   }
 
-  /// Calculate time spent in each HR zone (in seconds)
-  /// Zones: Z1(50-60%), Z2(60-70%), Z3(70-80%), Z4(80-90%), Z5(90-100%)
-  Map<int, int> _calculateHrZones(List<HealthDataPoint> hrData, int maxHr) {
-    final zones = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
-
+  /// Time (seconds) in each of the 3 LT zones, summed at full sample resolution.
+  /// easy = HR < LT1, moderate = LT1..LT2, hard = > LT2.
+  Map<String, int> _calculateHrZones(List<HealthDataPoint> hrData, HrThresholds t) {
+    final zones = {'easy': 0, 'moderate': 0, 'hard': 0};
     for (var i = 0; i < hrData.length; i++) {
       final value = _extractNumericValue(hrData[i]);
       if (value == null) continue;
 
-      final hrPercent = value / maxHr * 100;
-      final zone = hrPercent >= 90 ? 5
-          : hrPercent >= 80 ? 4
-          : hrPercent >= 70 ? 3
-          : hrPercent >= 60 ? 2
-          : 1;
+      final key = value > t.lt2 ? 'hard' : (value >= t.lt1 ? 'moderate' : 'easy');
 
-      // Estimate time between samples (default to 1 second)
-      int duration = 1;
+      var duration = 1;
       if (i < hrData.length - 1) {
-        duration = hrData[i + 1].dateFrom.difference(hrData[i].dateFrom).inSeconds;
-        duration = duration.clamp(1, 60); // Cap at 60 seconds to handle gaps
+        duration = hrData[i + 1].dateFrom.difference(hrData[i].dateFrom).inSeconds.clamp(1, 60);
       }
-
-      zones[zone] = zones[zone]! + duration;
+      zones[key] = zones[key]! + duration;
     }
-
     return zones;
+  }
+
+  /// 0–100 from the intensity-weighted time distribution (easy=1/mod=2/hard=3).
+  double? _effortScore({required int easy, required int moderate, required int hard}) {
+    final total = easy + moderate + hard;
+    if (total == 0) return null;
+    final weighted = (easy * 1 + moderate * 2 + hard * 3) / total; // 1..3
+    return ((weighted - 1) / 2 * 100).clamp(0, 100);
+  }
+
+  /// Reduce raw HR samples to ~1 point/minute (mean per minute bucket).
+  List<HrSamplePoint> _downsampleHrToMinutes(List<HealthDataPoint> hrData) {
+    final buckets = <int, List<double>>{};
+    final bucketStart = <int, DateTime>{};
+    for (final p in hrData) {
+      final value = _extractNumericValue(p);
+      if (value == null) continue;
+      final minute = p.dateFrom.millisecondsSinceEpoch ~/ 60000;
+      (buckets[minute] ??= []).add(value);
+      bucketStart.putIfAbsent(minute, () => p.dateFrom);
+    }
+    final keys = buckets.keys.toList()..sort();
+    return keys.map((m) {
+      final vals = buckets[m]!;
+      final mean = vals.reduce((a, b) => a + b) / vals.length;
+      return HrSamplePoint(timestamp: bucketStart[m]!, bpm: mean.round());
+    }).toList();
   }
 }

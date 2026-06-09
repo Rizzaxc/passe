@@ -242,7 +242,13 @@
         "searchIDCopied": "Đã sao chép SearchID",
         "searchIDExplanation": "Người chơi khác có thể dùng SearchID ở filter trang chủ để tìm thấy Lobby của bạn",
         "shareId": "Chia sẻ ID",
-        "invite": "Mời vào"
+        "invite": "Mời vào",
+        "leave": {
+            "title": "Rời lobby?",
+            "message": "Bạn sẽ không còn là thành viên của lobby này.",
+            "confirm": "Rời lobby",
+            "cancel": "Huỷ"
+        }
     },
     "createLobby": {
         "title": "Tạo Lobby",
@@ -463,28 +469,69 @@
             "notAvailableAndroid": "Health Connect không khả dụng. Vui lòng cài đặt Health Connect từ Play Store."
         },
         "userHealth": {
-            "title": "Xu hướng",
-            "content": "Xem chỉ số chung và xu hướng sức khỏe của bạn"
+            "title": "Cơ thể",
+            "empty": "Chưa có dữ liệu sức khỏe. Nhấn đồng bộ để lấy từ thiết bị đeo."
         },
         "activityData": {
             "title": "Hoạt động",
-            "content": "Theo dõi chỉ số trong hoạt động của bạn"
+            "empty": "Chưa có tóm tắt hoạt động. Các buổi đã xác nhận có dữ liệu tập sẽ hiện ở đây.",
+            "selectSport": "Chọn một môn để xem tóm tắt hoạt động."
         },
         "achievements": {
             "title": "Thành tựu",
             "content": "Xem mục tiêu và thành tựu của bạn"
         },
         "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
-        "trend": {
-            "title": "Xu hướng",
-            "period": "30 ngày qua",
-            "statCalories": "calo/buổi",
-            "statHeartRate": "nhịp tim TB",
-            "statDistance": "quãng đường"
+        "metric": {
+            "restingHr": "Nhịp tim nghỉ",
+            "hrv": "HRV",
+            "sleep": "Giấc ngủ",
+            "weight": "Cân nặng",
+            "steps": "Số bước",
+            "distance": "Quãng đường",
+            "activeCalories": "Cal vận động",
+            "totalCalories": "Tổng cal"
         },
-        "activity": {
-            "title": "Hoạt động",
-            "summary": "3 buổi tuần này — cường độ trung bình."
+        "customize": {
+            "title": "Tùy chỉnh chỉ số"
+        },
+        "trend": {
+            "period": "90 ngày qua",
+            "insufficient": "Chưa đủ dữ liệu để vẽ biểu đồ."
+        },
+        "detected": {
+            "title": "Buổi tập được phát hiện",
+            "evidenceHigh": "Có buổi tập được ghi trong khung giờ này",
+            "evidenceMedium": "Nhịp tim tăng cao trong khung giờ này",
+            "attach": "Đính kèm",
+            "dismiss": "Bỏ qua",
+            "attached": "Đã đính kèm buổi tập"
+        },
+        "source": {
+            "lobby": "Lobby",
+            "professional": "Huấn luyện",
+            "self": "Cá nhân"
+        },
+        "recap": {
+            "duration": "Thời lượng",
+            "avgHr": "Nhịp tim TB",
+            "maxHr": "Nhịp tim tối đa",
+            "calories": "Calo",
+            "distance": "Quãng đường",
+            "effort": "Nỗ lực",
+            "hrCurve": "Nhịp tim",
+            "zones": "Vùng nhịp tim",
+            "estimated": "(ước tính)"
+        },
+        "zone": {
+            "easy": "Nhẹ",
+            "moderate": "Vừa",
+            "hard": "Nặng"
+        },
+        "sync": {
+            "done": "Đã đồng bộ {days} ngày, {activities} hoạt động",
+            "skipped": "Hãy liên kết dịch vụ sức khỏe trước",
+            "failed": "Đồng bộ thất bại. Vui lòng thử lại."
         }
     },
     "welcome": {

@@ -99,7 +99,7 @@ final class JoinRequestStateProvider
   }
 }
 
-String _$joinRequestStateHash() => r'e9d1aa2de3b8418265a99dcfe20b871a8de040ae';
+String _$joinRequestStateHash() => r'fb5f9b67d91ff92ef73218367c66cd7ba0cf5ad9';
 
 /// Per-lobby, in-session override of the join-request state. The feed row's
 /// `alreadyRequested` (from the server) is the baseline; an entry here takes

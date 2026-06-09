@@ -101,6 +101,32 @@ class UserLobbiesController extends _$UserLobbiesController {
     await supabase.from('lobby').delete().eq('id', lobbyId).timeout(const Duration(seconds: 5));
     ref.invalidateSelf();
   }
+
+  /// Leaves a lobby by removing the caller's own `lobby_member` row. The
+  /// "Lobby membership deletion policy" RLS permits self-removal; the
+  /// `lobby_member_prevent_captain_leave` trigger rejects a captain leaving
+  /// (transfer captaincy or delete instead) — the caller surfaces that error.
+  Future<void> leave(String lobbyId) async {
+    final userId = ref.read(authControllerProvider).value?.id;
+    if (userId == null) return;
+    await supabase
+        .from('lobby_member')
+        .delete()
+        .eq('lobby_id', lobbyId)
+        .eq('user_id', userId)
+        .timeout(const Duration(seconds: 5));
+    ref.invalidateSelf();
+  }
+
+  /// Transfers captaincy to another member via the validated SECURITY DEFINER
+  /// RPC (RLS has no UPDATE policy on lobby). The old captain stays a member.
+  Future<void> transferCaptaincy(String lobbyId, String newCaptainId) async {
+    await supabase.rpc('transfer_lobby_captaincy', params: {
+      'p_lobby_id': lobbyId,
+      'p_new_captain_id': newCaptainId,
+    }).timeout(const Duration(seconds: 5));
+    ref.invalidateSelf();
+  }
 }
 
 @riverpod

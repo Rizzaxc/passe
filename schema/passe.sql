@@ -220,6 +220,114 @@ END;
 $$;
 
 --
+-- Name: activity_health_data(bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.activity_health_data(p_sport_id bigint) RETURNS TABLE(activity_id uuid, start_time timestamp with time zone, end_time timestamp with time zone, duration_minutes integer, location_label text, source text, steps integer, distance_meters real, active_calories real, avg_heart_rate integer, max_heart_rate integer, min_heart_rate integer, hrv_sdnn_ms real, hr_zone_easy_seconds integer, hr_zone_moderate_seconds integer, hr_zone_hard_seconds integer, training_load real, effort_score real, workout_type text, recorded_at timestamp with time zone)
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  RETURN QUERY
+  SELECT
+    m.activity_id,
+    a.start_time,
+    a.end_time,
+    CASE WHEN a.end_time IS NOT NULL
+      THEN (EXTRACT(EPOCH FROM (a.end_time - a.start_time)) / 60)::int
+      ELSE NULL END AS duration_minutes,
+    loc.name AS location_label,
+    CASE
+      WHEN a.professional_booking_id IS NOT NULL THEN 'professional'
+      WHEN a.lobby_id IS NOT NULL THEN 'lobby'
+      ELSE 'self'
+    END AS source,
+    m.steps,
+    m.distance_meters,
+    m.active_calories,
+    m.avg_heart_rate,
+    m.max_heart_rate,
+    m.min_heart_rate,
+    m.hrv_sdnn_ms,
+    m.hr_zone_easy_seconds,
+    m.hr_zone_moderate_seconds,
+    m.hr_zone_hard_seconds,
+    m.training_load,
+    m.effort_score,
+    m.workout_type,
+    m.recorded_at
+  FROM public.activity_health_metrics m
+  JOIN public.activity a ON a.id = m.activity_id
+  LEFT JOIN public.location loc ON loc.id = a.location_id
+  WHERE m.user_id = v_uid
+    AND m.dismissed = false
+    AND a.sport_id = p_sport_id
+  ORDER BY a.start_time DESC;
+END;
+$$;
+
+--
+-- Name: health_capture_candidates(timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.health_capture_candidates(p_window_start timestamp with time zone) RETURNS TABLE(activity_id uuid, start_time timestamp with time zone, end_time timestamp with time zone, sport_id bigint, source text, confirmed boolean)
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  RETURN QUERY
+  SELECT
+    a.id,
+    a.start_time,
+    a.end_time,
+    a.sport_id,
+    CASE
+      WHEN a.professional_booking_id IS NOT NULL THEN 'professional'
+      WHEN a.lobby_id IS NOT NULL THEN 'lobby'
+      ELSE 'self'
+    END AS source,
+    EXISTS (
+      SELECT 1 FROM public.activity_confirmation ac
+      WHERE ac.activity_id = a.id AND ac.user_id = v_uid
+    ) AS confirmed
+  FROM public.activity a
+  WHERE a.end_time IS NOT NULL
+    AND a.end_time < now()
+    AND a.end_time >= p_window_start
+    AND (
+      a.user_id = v_uid
+      OR EXISTS (
+        SELECT 1 FROM public.activity_confirmation ac
+        WHERE ac.activity_id = a.id AND ac.user_id = v_uid
+      )
+      OR (
+        a.professional_booking_id IS NOT NULL
+        AND EXISTS (
+          SELECT 1 FROM public.professional_booking pb
+          WHERE pb.id = a.professional_booking_id
+            AND (
+              pb.client_user_id = v_uid
+              OR EXISTS (
+                SELECT 1 FROM public.booking_additional_users bau
+                WHERE bau.booking_id = pb.id AND bau.user_id = v_uid
+              )
+            )
+        )
+      )
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM public.activity_health_metrics m
+      WHERE m.activity_id = a.id AND m.user_id = v_uid
+    )
+  ORDER BY a.end_time DESC;
+END;
+$$;
+
+--
 -- Name: calculate_profile_compat_score(uuid, uuid, bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1649,15 +1757,14 @@ CREATE TABLE public.activity_health_metrics (
     min_heart_rate integer,
     hrv_sdnn_ms real,
     hrv_rmssd_ms real,
-    hr_zone_1_seconds integer,
-    hr_zone_2_seconds integer,
-    hr_zone_3_seconds integer,
-    hr_zone_4_seconds integer,
-    hr_zone_5_seconds integer,
+    hr_zone_easy_seconds integer,
+    hr_zone_moderate_seconds integer,
+    hr_zone_hard_seconds integer,
     training_load real,
     effort_score real,
     weight_kg real,
     workout_type text,
+    dismissed boolean DEFAULT false NOT NULL,
     recorded_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT heart_rate_validity CHECK ((((avg_heart_rate IS NULL) OR ((avg_heart_rate >= 30) AND (avg_heart_rate <= 250))) AND ((max_heart_rate IS NULL) OR ((max_heart_rate >= 30) AND (max_heart_rate <= 250))) AND ((min_heart_rate IS NULL) OR ((min_heart_rate >= 30) AND (min_heart_rate <= 250)))))
 );
@@ -2202,7 +2309,10 @@ CREATE TABLE public.user_health_link (
     user_id uuid NOT NULL,
     platform public.health_platform NOT NULL,
     linked_at timestamp with time zone DEFAULT now() NOT NULL,
-    last_sync_at timestamp with time zone
+    last_sync_at timestamp with time zone,
+    max_heart_rate integer,
+    lt1_bpm integer,
+    lt2_bpm integer
 );
 
 --

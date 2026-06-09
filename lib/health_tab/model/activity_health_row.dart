@@ -1,51 +1,35 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'activity_health_metrics.freezed.dart';
-part 'activity_health_metrics.g.dart';
+part 'activity_health_row.freezed.dart';
+part 'activity_health_row.g.dart';
 
+/// One captured-activity recap row, as returned by the `activity_health_data`
+/// RPC (metrics joined to activity context). Read-only view model.
 @freezed
-abstract class ActivityHealthMetrics with _$ActivityHealthMetrics {
-  const factory ActivityHealthMetrics({
-    String? id,
-    @JsonKey(name: 'user_id') required String userId,
+abstract class ActivityHealthRow with _$ActivityHealthRow {
+  const factory ActivityHealthRow({
     @JsonKey(name: 'activity_id') required String activityId,
-
-    // Activity metrics
+    @JsonKey(name: 'start_time') required DateTime startTime,
+    @JsonKey(name: 'end_time') DateTime? endTime,
+    @JsonKey(name: 'duration_minutes') int? durationMinutes,
+    @JsonKey(name: 'location_label') String? locationLabel,
+    required String source,
     int? steps,
     @JsonKey(name: 'distance_meters') double? distanceMeters,
     @JsonKey(name: 'active_calories') double? activeCalories,
-
-    // Heart rate aggregates
     @JsonKey(name: 'avg_heart_rate') int? avgHeartRate,
     @JsonKey(name: 'max_heart_rate') int? maxHeartRate,
     @JsonKey(name: 'min_heart_rate') int? minHeartRate,
-
-    // HRV metrics
     @JsonKey(name: 'hrv_sdnn_ms') double? hrvSdnnMs,
-    @JsonKey(name: 'hrv_rmssd_ms') double? hrvRmssdMs,
-
-    // HR Zone distribution (seconds) — 3-zone LT model: easy (<LT1),
-    // moderate (LT1–LT2), hard (>LT2).
     @JsonKey(name: 'hr_zone_easy_seconds') int? hrZoneEasySeconds,
     @JsonKey(name: 'hr_zone_moderate_seconds') int? hrZoneModerateSeconds,
     @JsonKey(name: 'hr_zone_hard_seconds') int? hrZoneHardSeconds,
-
-    // Derived performance metrics
     @JsonKey(name: 'training_load') double? trainingLoad,
     @JsonKey(name: 'effort_score') double? effortScore,
-
-    // Weight snapshot
-    @JsonKey(name: 'weight_kg') double? weightKg,
-
-    // Workout type from health platform
     @JsonKey(name: 'workout_type') String? workoutType,
-
-    // Tombstone marker for a dismissed "detected workout" (carries null metrics).
-    @Default(false) bool dismissed,
-
     @JsonKey(name: 'recorded_at') DateTime? recordedAt,
-  }) = _ActivityHealthMetrics;
+  }) = _ActivityHealthRow;
 
-  factory ActivityHealthMetrics.fromJson(Map<String, dynamic> json) =>
-      _$ActivityHealthMetricsFromJson(json);
+  factory ActivityHealthRow.fromJson(Map<String, dynamic> json) =>
+      _$ActivityHealthRowFromJson(json);
 }

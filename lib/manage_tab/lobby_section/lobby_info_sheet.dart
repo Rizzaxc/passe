@@ -2,10 +2,14 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../auth/auth_controller.dart';
 import '../../core/model/lobby.dart';
 import '../../ui/sheet.dart';
+import 'feed/lobby_controller.dart';
 import 'lobby_detail_controller.dart';
 import 'members/controller.dart';
 
@@ -43,12 +47,196 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
     super.dispose();
   }
 
+  void _confirmLeave() {
+    showFDialog(
+      context: context,
+      builder: (dialogCtx, style, animation) => FDialog(
+        animation: animation,
+        title: Text('lobby.leave.title'.tr()),
+        body: Text('lobby.leave.message'.tr()),
+        direction: Axis.horizontal,
+        actions: [
+          FButton(
+            variant: .outline,
+            onPress: () => Navigator.of(dialogCtx).pop(),
+            child: Text('lobby.leave.cancel'.tr()),
+          ),
+          FButton(
+            variant: .destructive,
+            onPress: () {
+              Navigator.of(dialogCtx).pop();
+              _doLeave();
+            },
+            child: Text('lobby.leave.confirm'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _doLeave() async {
+    final router = GoRouter.of(context);
+    final sheetNav = Navigator.of(context);
+    try {
+      await ref
+          .read(userLobbiesControllerProvider.notifier)
+          .leave(widget.lobbyId);
+      sheetNav.pop(); // close the info sheet
+      router.pop();   // exit the detail page → back to the lobby list
+    } catch (e, st) {
+      Talker().handle(e, st, 'Leaving lobby failed');
+      if (!mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FIcons.circleX),
+        variant: .destructive,
+        title: Text('error'.tr()),
+        description: Text('errorGeneric'.tr()),
+        alignment: .bottomCenter,
+      );
+    }
+  }
+
+  void _confirmDelete() {
+    showFDialog(
+      context: context,
+      builder: (dialogCtx, style, animation) => FDialog(
+        animation: animation,
+        title: const Text('Xoá lobby?'),
+        body: const Text(
+            'Hành động này không thể hoàn tác. Lobby sẽ bị xoá vĩnh viễn.'),
+        direction: Axis.horizontal,
+        actions: [
+          FButton(
+            variant: .outline,
+            onPress: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('Huỷ'),
+          ),
+          FButton(
+            variant: .destructive,
+            onPress: () {
+              Navigator.of(dialogCtx).pop();
+              _runAndExit(
+                () => ref
+                    .read(userLobbiesControllerProvider.notifier)
+                    .delete(widget.lobbyId),
+                'Delete lobby failed',
+                'Xoá lobby thất bại. Vui lòng thử lại.',
+              );
+            },
+            child: const Text('Xoá lobby'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Runs an action that closes the sheet AND leaves the detail page on success.
+  Future<void> _runAndExit(
+    Future<void> Function() action,
+    String logMsg,
+    String errorMsg,
+  ) async {
+    final router = GoRouter.of(context);
+    final sheetNav = Navigator.of(context);
+    try {
+      await action();
+      sheetNav.pop();
+      router.pop();
+    } catch (e, st) {
+      Talker().handle(e, st, logMsg);
+      if (!mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FIcons.circleX),
+        variant: .destructive,
+        title: const Text('Lỗi'),
+        description: Text(errorMsg),
+        alignment: .bottomCenter,
+      );
+    }
+  }
+
+  void _transferCaptaincy() {
+    final members =
+        ref.read(lobbyMembersControllerProvider(widget.lobbyId)).value ??
+            const [];
+    final me = ref.read(authControllerProvider).value?.id;
+    final others = members.where((m) => m.userId != me).toList();
+    if (others.isEmpty) {
+      showFToast(
+        context: context,
+        icon: const Icon(FIcons.info),
+        title: const Text('Chưa có thành viên nào khác để chuyển quyền'),
+        alignment: .bottomCenter,
+      );
+      return;
+    }
+    showFDialog(
+      context: context,
+      builder: (dialogCtx, style, animation) => FDialog(
+        animation: animation,
+        title: const Text('Chuyển quyền đội trưởng'),
+        body: const Text('Chọn thành viên sẽ trở thành đội trưởng mới.'),
+        direction: Axis.vertical,
+        actions: [
+          for (final m in others)
+            FButton(
+              variant: .outline,
+              onPress: () {
+                Navigator.of(dialogCtx).pop();
+                _doTransfer(m);
+              },
+              child: Text('${m.username} #${m.tagNumber}'),
+            ),
+          FButton(
+            variant: .ghost,
+            onPress: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('Huỷ'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _doTransfer(LobbyMemberInfo member) async {
+    try {
+      await ref
+          .read(userLobbiesControllerProvider.notifier)
+          .transferCaptaincy(widget.lobbyId, member.userId);
+      ref.invalidate(lobbyDetailControllerProvider(widget.lobbyId));
+      ref.invalidate(lobbyMembersControllerProvider(widget.lobbyId));
+      if (!mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FIcons.check),
+        title: Text('Đã chuyển quyền cho ${member.username}'),
+        alignment: .bottomCenter,
+      );
+    } catch (e, st) {
+      Talker().handle(e, st, 'Transfer captaincy failed');
+      if (!mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FIcons.circleX),
+        variant: .destructive,
+        title: const Text('Lỗi'),
+        description: const Text('Chuyển quyền thất bại. Vui lòng thử lại.'),
+        alignment: .bottomCenter,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final lobby = widget.info.lobby;
+    final infoAsync = ref.watch(lobbyDetailControllerProvider(widget.lobbyId));
+    final lobby = infoAsync.value?.lobby ?? widget.info.lobby;
+    final currentUserId = ref.watch(authControllerProvider).value?.id;
+    final isCaptain = currentUserId != null && lobby.captainId == currentUserId;
     final colors = context.theme.colors;
     final membersAsync =
         ref.watch(lobbyMembersControllerProvider(widget.lobbyId));
+    final isSoleMember = (membersAsync.value?.length ?? 2) <= 1;
     final initial =
         lobby.name.isNotEmpty ? lobby.name[0].toUpperCase() : '?';
 
@@ -338,12 +526,32 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                           indent: 50,
                           color: colors.border.withValues(alpha: 0.5),
                         ),
-                        _SettingsRow(
-                          icon: FIcons.logOut,
-                          label: 'Rời lobby',
-                          destructive: true,
-                          onTap: () {},
-                        ),
+                        if (isCaptain) ...[
+                          _SettingsRow(
+                            icon: FIcons.crown,
+                            label: 'Chuyển quyền đội trưởng',
+                            onTap: _transferCaptaincy,
+                          ),
+                          if (isSoleMember) ...[
+                            Divider(
+                              height: 1,
+                              indent: 50,
+                              color: colors.border.withValues(alpha: 0.5),
+                            ),
+                            _SettingsRow(
+                              icon: FIcons.trash2,
+                              label: 'Xoá lobby',
+                              destructive: true,
+                              onTap: _confirmDelete,
+                            ),
+                          ],
+                        ] else
+                          _SettingsRow(
+                            icon: FIcons.logOut,
+                            label: 'Rời lobby',
+                            destructive: true,
+                            onTap: _confirmLeave,
+                          ),
                       ],
                     ),
                   ),
