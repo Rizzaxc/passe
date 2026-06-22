@@ -131,12 +131,12 @@ class SpendKindGlyph extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = switch (kind) {
-      DaSpendKind.confirm => FIcons.check,
-      DaSpendKind.venue => FIcons.mapPin,
-      DaSpendKind.coach => FIcons.userPlus,
-      DaSpendKind.split => FIcons.split,
-      DaSpendKind.fee => FIcons.flag,
-      DaSpendKind.refund => FIcons.arrowDown,
+      DaSpendKind.confirm => FLucideIcons.check,
+      DaSpendKind.venue => FLucideIcons.mapPin,
+      DaSpendKind.coach => FLucideIcons.userPlus,
+      DaSpendKind.split => FLucideIcons.split,
+      DaSpendKind.fee => FLucideIcons.flag,
+      DaSpendKind.refund => FLucideIcons.arrowDown,
     };
     return Icon(icon, size: size, color: color);
   }
@@ -167,7 +167,7 @@ class WalletStackHeader extends StatelessWidget {
               onPress: () {
                 if (Navigator.of(context).canPop()) Navigator.of(context).pop();
               },
-              child: Icon(FIcons.chevronLeft, size: 22, color: colors.foreground),
+              child: Icon(FLucideIcons.chevronLeft, size: 22, color: colors.foreground),
             ),
             const SizedBox(width: 4),
             Expanded(

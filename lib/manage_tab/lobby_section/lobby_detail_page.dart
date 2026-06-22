@@ -74,7 +74,7 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
                   ),
                   children: [
                     FTabEntry(
-                      label: const Icon(FIcons.activity),
+                      label: const Icon(FLucideIcons.activity),
                       child: ActivityTab(
                         lobbyId: widget.lobbyId,
                         isLeader: isLeader,
@@ -82,7 +82,7 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
                       ),
                     ),
                     FTabEntry(
-                      label: const Icon(FIcons.clock),
+                      label: const Icon(FLucideIcons.clock),
                       child: HistoryView(lobbyId: widget.lobbyId),
                     ),
                   ],

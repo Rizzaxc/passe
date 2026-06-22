@@ -25,6 +25,11 @@ linter:
     # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
     prefer_relative_imports: true
     unintended_html_in_doc_comment: true
+    # Enabled so the pre-commit hook's `dart fix` has a diagnostic to act on
+    # (it auto-orders import/export directives on staged files). `unnecessary_import`
+    # is a built-in analyzer warning, not a linter rule, so it needs no entry here —
+    # the hook fixes it via `--code` directly.
+    directives_ordering: true
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
 

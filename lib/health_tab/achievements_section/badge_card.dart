@@ -22,12 +22,12 @@ class TierIcons extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (var i = 1; i <= 3; i++) pip(FIcons.flame, i <= difficulty),
+        for (var i = 1; i <= 3; i++) pip(FLucideIcons.flame, i <= difficulty),
         const SizedBox(width: 6),
         for (var i = 1; i <= 3; i++)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 0.5),
-            child: pip(FIcons.circle, i <= consistency),
+            child: pip(FLucideIcons.circle, i <= consistency),
           ),
       ],
     );
@@ -70,7 +70,7 @@ class BadgeCard extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Icon(
-                  earned ? FIcons.badgeCheck : FIcons.lock,
+                  earned ? FLucideIcons.badgeCheck : FLucideIcons.lock,
                   size: 20,
                   color: earned ? pbGreen : colors.mutedForeground,
                 ),
@@ -82,12 +82,12 @@ class BadgeCard extends StatelessWidget {
                   children: [
                     Text(
                       badge.name,
-                      style: context.theme.typography.sm
+                      style: context.theme.typography.body.sm
                           .copyWith(fontWeight: FontWeight.w700),
                     ),
                     Text(
                       _subtitle(),
-                      style: context.theme.typography.xs.copyWith(
+                      style: context.theme.typography.body.xs.copyWith(
                         color: colors.mutedForeground,
                         height: 1.4,
                       ),
@@ -105,7 +105,7 @@ class BadgeCard extends StatelessWidget {
                   Text(
                     earned ? '✓' : '$pct%',
                     style: TextStyle(
-                      fontFamily: context.theme.typography.sm.fontFamily,
+                      fontFamily: context.theme.typography.body.sm.fontFamily,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: barColor,
@@ -115,7 +115,7 @@ class BadgeCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '+${badge.xpReward} XP',
-                    style: context.theme.typography.xs.copyWith(
+                    style: context.theme.typography.body.xs.copyWith(
                       color: colors.mutedForeground,
                     ),
                   ),

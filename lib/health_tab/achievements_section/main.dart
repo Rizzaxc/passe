@@ -132,7 +132,7 @@ class _CountChip extends StatelessWidget {
       ),
       child: Text(
         '$count',
-        style: context.theme.typography.xs
+        style: context.theme.typography.body.xs
             .copyWith(color: colors.mutedForeground, fontWeight: FontWeight.w700),
       ),
     );
@@ -173,7 +173,7 @@ class _LevelHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 alignment: Alignment.center,
-                child: Icon(FIcons.trophy, color: pbBlue, size: 26),
+                child: Icon(FLucideIcons.trophy, color: pbBlue, size: 26),
               ),
               Expanded(
                 child: Column(
@@ -182,7 +182,7 @@ class _LevelHeader extends StatelessWidget {
                   children: [
                     Text(
                       'health.achievements.levelLabel'.tr(),
-                      style: context.theme.typography.xs.copyWith(
+                      style: context.theme.typography.body.xs.copyWith(
                         color: colors.mutedForeground,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.4,
@@ -192,7 +192,7 @@ class _LevelHeader extends StatelessWidget {
                       'health.achievements.level'
                           .tr(namedArgs: {'level': '${s?.level ?? 1}'}),
                       style: TextStyle(
-                        fontFamily: context.theme.typography.xl2.fontFamily,
+                        fontFamily: context.theme.typography.body.xl2.fontFamily,
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
                         color: colors.foreground,
@@ -205,7 +205,7 @@ class _LevelHeader extends StatelessWidget {
               Text(
                 'health.achievements.xpTotal'
                     .tr(namedArgs: {'xp': '${s?.xpTotal ?? 0}'}),
-                style: context.theme.typography.sm.copyWith(
+                style: context.theme.typography.body.sm.copyWith(
                   color: colors.mutedForeground,
                   fontWeight: FontWeight.w600,
                 ),
@@ -228,7 +228,7 @@ class _LevelHeader extends StatelessWidget {
                     'current': '${s?.xpIntoLevel ?? 0}',
                     'total': '${s?.xpForLevel ?? 0}',
                   }),
-            style: context.theme.typography.xs
+            style: context.theme.typography.body.xs
                 .copyWith(color: colors.mutedForeground),
           ),
         ],

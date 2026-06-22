@@ -25,7 +25,7 @@ class EloSeedField extends StatelessWidget {
         label: Text('eloSeed.label'.tr()),
         children: [
           FTile(
-            prefix: const Icon(FIcons.lock),
+            prefix: const Icon(FLucideIcons.lock),
             title: Text(value!.getLocalizedName(context)),
           ),
         ],

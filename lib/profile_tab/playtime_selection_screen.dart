@@ -34,7 +34,7 @@ class PlaytimeSelectionScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(32.0),
                   child: Text(
                     'profile.playtimeExplanation'.tr(),
-                    style: context.theme.typography.md.copyWith(
+                    style: context.theme.typography.body.md.copyWith(
                       color: context.theme.colors.mutedForeground,
                     ),
                   ),
@@ -42,7 +42,7 @@ class PlaytimeSelectionScreen extends ConsumerWidget {
               )
             else
               FTileGroup(
-                label: const Icon(FIcons.calendarDays),
+                label: const Icon(FLucideIcons.calendarDays),
                 children: timeslots
                     .map(
                       (timeslot) => FTile(
@@ -52,7 +52,7 @@ class PlaytimeSelectionScreen extends ConsumerWidget {
                         suffix: FButton.icon(
                           variant: .ghost,
                           child: Icon(
-                            FIcons.trash,
+                            FLucideIcons.trash,
                             color: context.theme.colors.destructive,
                           ),
                           onPress: () {
@@ -96,8 +96,8 @@ class PlaytimeSelectionScreen extends ConsumerWidget {
               onSecondPressed: () {
                 ref.read(profileControllerProvider.notifier).resetPlaytime();
               },
-              firstChild: const Icon(FIcons.plus),
-              secondChild: const Icon(FIcons.rotateCcw),
+              firstChild: const Icon(FLucideIcons.plus),
+              secondChild: const Icon(FLucideIcons.rotateCcw),
             ),
           ],
         ),

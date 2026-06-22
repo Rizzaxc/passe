@@ -166,12 +166,12 @@ FButtonSizeStyles _ghostSizes({
   // md (default) — matches forui's text-mode min size, but icon hit-box
   // shrinks to 36 so the round pressed state stays compact.
   final md = make(
-    textStyle: typography.sm,
+    textStyle: typography.body.sm,
     contentConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
     contentSpacing: 6,
     iconConstraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-    iconSize: typography.md.fontSize ?? 18,
+    iconSize: typography.body.md.fontSize ?? 18,
     iconPadding: const EdgeInsets.all(9),
   );
 
@@ -179,31 +179,31 @@ FButtonSizeStyles _ghostSizes({
     md,
     variants: {
       [.xs]: make(
-        textStyle: typography.xs,
+        textStyle: typography.body.xs,
         contentConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         contentSpacing: 4,
         iconConstraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-        iconSize: typography.sm.fontSize ?? 16,
+        iconSize: typography.body.sm.fontSize ?? 16,
         iconPadding: const EdgeInsets.all(5),
       ),
       [.sm]: make(
-        textStyle: typography.sm,
+        textStyle: typography.body.sm,
         contentConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         contentSpacing: 4,
         iconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-        iconSize: typography.md.fontSize ?? 18,
+        iconSize: typography.body.md.fontSize ?? 18,
         iconPadding: const EdgeInsets.all(7),
       ),
       [.md]: md,
       [.lg]: make(
-        textStyle: typography.sm,
+        textStyle: typography.body.sm,
         contentConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         contentSpacing: 6,
         iconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-        iconSize: typography.lg.fontSize ?? 20,
+        iconSize: typography.body.lg.fontSize ?? 20,
         iconPadding: const EdgeInsets.all(10),
       ),
     },

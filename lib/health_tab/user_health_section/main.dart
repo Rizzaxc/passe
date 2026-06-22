@@ -92,13 +92,13 @@ class _HeaderRow extends StatelessWidget {
       children: [
         Text(
           'health.userHealth.title'.tr(),
-          style: context.theme.typography.lg.copyWith(fontWeight: FontWeight.w700),
+          style: context.theme.typography.body.lg.copyWith(fontWeight: FontWeight.w700),
         ),
         const Spacer(),
         FButton.icon(
           variant: .ghost,
           onPress: onCustomize,
-          child: Icon(FIcons.slidersHorizontal, size: 18),
+          child: Icon(FLucideIcons.slidersHorizontal, size: 18),
         ),
       ],
     );
@@ -167,7 +167,7 @@ class _SnapshotCard extends StatelessWidget {
         children: [
           Text(
             metric.labelKey.tr().toUpperCase(),
-            style: context.theme.typography.xs.copyWith(
+            style: context.theme.typography.body.xs.copyWith(
               color: colors.mutedForeground,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.4,
@@ -181,7 +181,7 @@ class _SnapshotCard extends StatelessWidget {
               Text(
                 latest != null ? metric.format(latest) : '—',
                 style: TextStyle(
-                  fontFamily: context.theme.typography.xl2.fontFamily,
+                  fontFamily: context.theme.typography.body.xl2.fontFamily,
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                   color: colors.foreground,
@@ -191,7 +191,7 @@ class _SnapshotCard extends StatelessWidget {
               if (metric.unit.isNotEmpty && latest != null)
                 Text(
                   metric.unit,
-                  style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+                  style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
                 ),
             ],
           ),
@@ -200,13 +200,13 @@ class _SnapshotCard extends StatelessWidget {
               spacing: 2,
               children: [
                 Icon(
-                  delta > 0 ? FIcons.arrowUp : FIcons.arrowDown,
+                  delta > 0 ? FLucideIcons.arrowUp : FLucideIcons.arrowDown,
                   size: 12,
                   color: colors.mutedForeground,
                 ),
                 Text(
                   metric.format(delta.abs()),
-                  style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+                  style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
                 ),
               ],
             )
@@ -277,7 +277,7 @@ class _TrendChartCard extends StatelessWidget {
                 ? Center(
                     child: Text(
                       'health.trend.insufficient'.tr(),
-                      style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+                      style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
                     ),
                   )
                 : LineChart(
@@ -306,7 +306,7 @@ class _TrendChartCard extends StatelessWidget {
           ),
           Text(
             'health.trend.period'.tr(),
-            style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+            style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
           ),
         ],
       ),
@@ -333,7 +333,7 @@ class _MetricChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: context.theme.typography.xs.copyWith(
+          style: context.theme.typography.body.xs.copyWith(
             color: selected ? colors.primaryForeground : colors.mutedForeground,
             fontWeight: FontWeight.w600,
           ),
@@ -371,11 +371,11 @@ class _CustomizeMetricsSheet extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         m.labelKey.tr(),
-                        style: context.theme.typography.md,
+                        style: context.theme.typography.body.md,
                       ),
                     ),
                     Icon(
-                      selected.contains(m) ? FIcons.checkCheck : FIcons.plus,
+                      selected.contains(m) ? FLucideIcons.checkCheck : FLucideIcons.plus,
                       size: 18,
                       color: selected.contains(m) ? colors.primary : colors.mutedForeground,
                     ),

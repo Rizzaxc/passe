@@ -7,10 +7,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:forui/forui.dart';
-import 'ui/main.dart' as ui;
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -23,6 +22,7 @@ import 'health_tab/health_sync_service.dart';
 import 'logger/observer.dart';
 import 'notifications/notification_service.dart';
 import 'router.dart';
+import 'ui/main.dart' as ui;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -124,7 +124,7 @@ class Passe extends HookConsumerWidget {
       builder: (_, child) => FTheme(
         data: ui.pbThemeLight,
         child: DefaultTextStyle(
-          style: ui.pbThemeLight.typography.md,
+          style: ui.pbThemeLight.typography.body.md,
           child: FToaster(child: child!),
         ),
       ),
@@ -171,19 +171,19 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
         onChange: (index) => _onTap(context, index),
         children: [
           FBottomNavigationBarItem(
-            icon: Icon(FIcons.house),
+            icon: Icon(FLucideIcons.house),
             label: Text('nav.home'.tr()),
           ),
           FBottomNavigationBarItem(
-            icon: Icon(FIcons.calendar),
+            icon: Icon(FLucideIcons.calendar),
             label: Text('nav.manage'.tr()),
           ),
           FBottomNavigationBarItem(
-            icon: Icon(FIcons.heartPulse),
+            icon: Icon(FLucideIcons.heartPulse),
             label: Text('nav.health'.tr()),
           ),
           FBottomNavigationBarItem(
-            icon: Icon(FIcons.userCog),
+            icon: Icon(FLucideIcons.userCog),
             label: Text('nav.profile'.tr()),
           ),
         ],

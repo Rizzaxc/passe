@@ -147,7 +147,7 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
       child: FTappable(
         onPress: _toggleMode,
         child: Icon(
-          _freeTextMode ? FIcons.search : FIcons.pencil,
+          _freeTextMode ? FLucideIcons.search : FLucideIcons.pencil,
           size: 16,
           color: context.theme.colors.mutedForeground,
         ),
@@ -185,14 +185,14 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
                 label: _showOuterLabel
                     ? Text(
                         'createLobby.homeGround'.tr(),
-                        style: context.theme.typography.sm
+                        style: context.theme.typography.body.sm
                             .copyWith(fontWeight: .bold),
                       )
                     : null,
                 hint: 'createLobby.homeGroundFreeHint'.tr(),
                 prefixBuilder: (context, style, states) => Padding(
                   padding: const EdgeInsets.fromLTRB(8, 4, 0, 4),
-                  child: Icon(widget.prefixIcon ?? FIcons.pencil),
+                  child: Icon(widget.prefixIcon ?? FLucideIcons.pencil),
                 ),
                 control: FTextFieldControl.managed(
                   controller: _nameCtrl,
@@ -296,7 +296,7 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
                 style: fieldStyle.labelTextStyle.resolve({}),
                 child: Text(
                   'createLobby.homeGround'.tr(),
-                  style: context.theme.typography.sm
+                  style: context.theme.typography.body.sm
                       .copyWith(fontWeight: .bold),
                 ),
               ),
@@ -316,14 +316,14 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
                     GestureDetector(
                       onTap: _toggleMode,
                       child: Icon(
-                        FIcons.pencil,
+                        FLucideIcons.pencil,
                         size: 16,
                         color: context.theme.colors.mutedForeground,
                       ),
                     ),
                     GestureDetector(
                       onTap: _clear,
-                      child: const Icon(FIcons.x, size: 16),
+                      child: const Icon(FLucideIcons.x, size: 16),
                     ),
                   ],
                 ),
@@ -340,7 +340,7 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
           label: _showOuterLabel
               ? Text(
                   'createLobby.homeGround'.tr(),
-                  style: context.theme.typography.sm
+                  style: context.theme.typography.body.sm
                       .copyWith(fontWeight: .bold),
                 )
               : null,
@@ -367,13 +367,13 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
               children: [
                 Text(
                   loc.name,
-                  style: context.theme.typography.sm.copyWith(
+                  style: context.theme.typography.body.sm.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   locAddr,
-                  style: context.theme.typography.xs.copyWith(
+                  style: context.theme.typography.body.xs.copyWith(
                     color: context.theme.colors.mutedForeground,
                   ),
                   maxLines: 1,

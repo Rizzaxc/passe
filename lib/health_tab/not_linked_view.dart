@@ -23,14 +23,14 @@ class HealthNotLinkedView extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            FIcons.heartPulse,
+            FLucideIcons.heartPulse,
             size: 64,
             color: theme.colors.mutedForeground,
           ),
           const SizedBox(height: 24),
           Text(
             'health.notLinked.title'.tr(),
-            style: theme.typography.xl2.copyWith(
+            style: theme.typography.body.xl2.copyWith(
               fontWeight: FontWeight.w600,
               color: theme.colors.foreground,
             ),
@@ -39,7 +39,7 @@ class HealthNotLinkedView extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(
             'health.notLinked.description'.tr(),
-            style: theme.typography.sm.copyWith(
+            style: theme.typography.body.sm.copyWith(
               color: theme.colors.mutedForeground,
             ),
             textAlign: TextAlign.center,
@@ -56,7 +56,7 @@ class HealthNotLinkedView extends ConsumerWidget {
                 Platform.isIOS
                     ? 'health.notLinked.notAvailableIOS'.tr()
                     : 'health.notLinked.notAvailableAndroid'.tr(),
-                style: theme.typography.sm.copyWith(
+                style: theme.typography.body.sm.copyWith(
                   color: theme.colors.destructive,
                 ),
                 textAlign: TextAlign.center,

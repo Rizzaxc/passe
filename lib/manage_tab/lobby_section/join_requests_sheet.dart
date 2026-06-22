@@ -37,7 +37,7 @@ class _JoinRequestsSheet extends ConsumerWidget {
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),
-              child: const Icon(FIcons.x),
+              child: const Icon(FLucideIcons.x),
             ),
           ),
           requestsAsync.when(
@@ -56,7 +56,7 @@ class _JoinRequestsSheet extends ConsumerWidget {
                     child: Center(
                       child: Text(
                         'lobby.joinRequests.empty'.tr(),
-                        style: context.theme.typography.sm
+                        style: context.theme.typography.body.sm
                             .copyWith(color: colors.mutedForeground),
                       ),
                     ),
@@ -128,7 +128,7 @@ class _RequestRowState extends ConsumerState<_RequestRow> {
       if (!mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleX),
+        icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
         title: Text('errorGeneric'.tr()),
         alignment: .bottomCenter,
@@ -200,7 +200,7 @@ class _RequestRowState extends ConsumerState<_RequestRow> {
               onPress: () => _act(() => ref
                   .read(joinRequestsControllerProvider(widget.lobbyId).notifier)
                   .decline(r.id)),
-              child: Icon(FIcons.x, size: 16, color: colors.mutedForeground),
+              child: Icon(FLucideIcons.x, size: 16, color: colors.mutedForeground),
             ),
             const SizedBox(width: 4),
             FButton.icon(
@@ -212,7 +212,7 @@ class _RequestRowState extends ConsumerState<_RequestRow> {
                     .accept(r.id);
                 ref.invalidate(lobbyMembersControllerProvider(widget.lobbyId));
               }),
-              child: const Icon(FIcons.check, size: 16),
+              child: const Icon(FLucideIcons.check, size: 16),
             ),
           ],
         ],

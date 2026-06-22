@@ -84,7 +84,7 @@ class _Legend extends StatelessWidget {
         ),
         Text(
           '$label ${minutes}m',
-          style: context.theme.typography.xs.copyWith(color: context.theme.colors.mutedForeground),
+          style: context.theme.typography.body.xs.copyWith(color: context.theme.colors.mutedForeground),
         ),
       ],
     );

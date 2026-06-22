@@ -34,7 +34,7 @@ class LocationSubtab extends ConsumerWidget {
                 children: [
                   PEmptySectionPlaceholder(
                     hero: Icon(
-                      FIcons.searchX,
+                      FLucideIcons.searchX,
                       size: 64,
                       color: context.theme.colors.mutedForeground,
                     ),
@@ -49,7 +49,7 @@ class LocationSubtab extends ConsumerWidget {
                       children: [
                         PEmptySectionPlaceholder(
                           hero: Icon(
-                            FIcons.mapPin,
+                            FLucideIcons.mapPin,
                             size: 64,
                             color: context.theme.colors.mutedForeground,
                           ),
@@ -97,7 +97,7 @@ class _LocationCard extends StatelessWidget {
         children: [
           Text(
             location.name,
-            style: context.theme.typography.sm.copyWith(
+            style: context.theme.typography.body.sm.copyWith(
               fontWeight: FontWeight.w600,
               color: colors.primary,
             ),
@@ -111,12 +111,12 @@ class _LocationCard extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 1),
-                  child: Icon(FIcons.mapPin, size: 12, color: colors.mutedForeground),
+                  child: Icon(FLucideIcons.mapPin, size: 12, color: colors.mutedForeground),
                 ),
                 Expanded(
                   child: Text(
                     address,
-                    style: context.theme.typography.sm
+                    style: context.theme.typography.body.sm
                         .copyWith(color: colors.mutedForeground),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

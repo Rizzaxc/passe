@@ -162,7 +162,7 @@ class _HeroEmpty extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(FIcons.bell,
+                        Icon(FLucideIcons.bell,
                             size: 14, color: colors.secondaryForeground),
                         const SizedBox(width: 6),
                         Text(
@@ -365,7 +365,7 @@ class _HeroExpanded extends ConsumerWidget {
                       // Location
                       Row(
                         children: [
-                          Icon(FIcons.mapPin,
+                          Icon(FLucideIcons.mapPin,
                               size: 14, color: colors.mutedForeground),
                           const SizedBox(width: 6),
                           Text(

@@ -49,7 +49,7 @@ class _UpcomingEmpty extends StatelessWidget {
               Expanded(
                 child: Text(
                   'lobby.detail.noUpcoming'.tr(),
-                  style: context.theme.typography.sm.copyWith(
+                  style: context.theme.typography.body.sm.copyWith(
                     color: context.theme.colors.mutedForeground,
                   ),
                 ),
@@ -93,12 +93,12 @@ class _ActivityTile extends StatelessWidget {
                 children: [
                   Text(
                     dateStr,
-                    style: context.theme.typography.sm
+                    style: context.theme.typography.body.sm
                         .copyWith(fontWeight: FontWeight.w600),
                   ),
                   Text(
                     timeStr,
-                    style: context.theme.typography.sm.copyWith(
+                    style: context.theme.typography.body.sm.copyWith(
                       color: context.theme.colors.mutedForeground,
                     ),
                   ),
@@ -106,7 +106,7 @@ class _ActivityTile extends StatelessWidget {
               ),
               const Spacer(),
               Icon(
-                FIcons.calendarDays,
+                FLucideIcons.calendarDays,
                 size: 16,
                 color: context.theme.colors.mutedForeground,
               ),

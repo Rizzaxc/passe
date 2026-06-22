@@ -684,7 +684,7 @@ class _SystemEvent extends StatelessWidget {
               color: _crimsonTint,
               shape: BoxShape.circle,
             ),
-            child: const Icon(FIcons.userPlus, size: 15, color: _crimson),
+            child: const Icon(FLucideIcons.userPlus, size: 15, color: _crimson),
           ),
           const SizedBox(width: 10),
           Expanded(

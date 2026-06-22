@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
 import '../router.dart';
@@ -21,7 +21,7 @@ class AuthScreen extends ConsumerWidget {
       if (!context.mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleX),
+        icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
         title: Text('auth.guestLoginFailed'.tr()),
         description: Text('errorGeneric'.tr()),
@@ -59,7 +59,7 @@ class AuthScreen extends ConsumerWidget {
                     onPress: () => _continueAsGuest(context, ref),
                     child: Text(
                       'auth.guestContinue'.tr(),
-                      style: context.theme.typography.sm.copyWith(
+                      style: context.theme.typography.body.sm.copyWith(
                         color: context.theme.colors.mutedForeground,
                         decoration: TextDecoration.underline,
                       ),
@@ -108,7 +108,7 @@ class _AuthFormState extends ConsumerState<AuthForm> {
         }
         showFToast(
           context: context,
-          icon: const Icon(FIcons.circleX),
+          icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
           title: Text('auth.loginFailed'.tr()),
           description: Text(message.tr()),
@@ -134,7 +134,7 @@ class _AuthFormState extends ConsumerState<AuthForm> {
         }
         showFToast(
           context: context,
-          icon: const Icon(FIcons.circleX),
+          icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
           title: Text('auth.signUpFailed'.tr()),
           description: Text(message.tr()),
@@ -190,7 +190,7 @@ class _AuthFormState extends ConsumerState<AuthForm> {
               onPress: () => const ForgotPasswordRoute().push<void>(context),
               child: Text(
                 'auth.forgotPassword'.tr(),
-                style: context.theme.typography.sm.copyWith(
+                style: context.theme.typography.body.sm.copyWith(
                   color: context.theme.colors.primary,
                 ),
               ),
@@ -227,7 +227,7 @@ class SocialAuthSection extends ConsumerWidget {
         if (!context.mounted) return;
         showFToast(
           context: context,
-          icon: const Icon(FIcons.circleX),
+          icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
           title: Text(errorTitle),
           description: Text('errorGeneric'.tr()),
@@ -268,7 +268,7 @@ class SocialAuthSection extends ConsumerWidget {
             const SizedBox(width: 16),
             Text(
               label,
-              style: context.theme.typography.lg.copyWith(fontWeight: FontWeight.w600),
+              style: context.theme.typography.body.lg.copyWith(fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -303,7 +303,7 @@ class SocialAuthSection extends ConsumerWidget {
               ),
             if (showGuestOption)
               buildRow(
-                icon: Icon(FIcons.forward),
+                icon: Icon(FLucideIcons.forward),
                 label: 'auth.guestContinue'.tr(),
                 onTap: () => handleAuthAction(
                   () => ref.read(authControllerProvider.notifier).continueAsGuest(),

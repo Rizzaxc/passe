@@ -51,7 +51,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       if (!mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleCheck),
+        icon: const Icon(FLucideIcons.circleCheck),
         title: Text('auth.passwordResetSuccess'.tr()),
         alignment: .bottomCenter,
       );
@@ -64,7 +64,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
           : 'errorGeneric'.tr();
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleX),
+        icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
         title: Text('auth.resetFailed'.tr()),
         description: Text(description),
@@ -99,7 +99,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             children: [
               Text(
                 'auth.resetPasswordInstruction'.tr(args: [widget.email]),
-                style: context.theme.typography.sm.copyWith(
+                style: context.theme.typography.body.sm.copyWith(
                   color: context.theme.colors.mutedForeground,
                 ),
               ),

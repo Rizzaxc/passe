@@ -76,7 +76,7 @@ class _MemberChip extends StatelessWidget {
             member.username.isNotEmpty
                 ? member.username[0].toUpperCase()
                 : '?',
-            style: context.theme.typography.md.copyWith(
+            style: context.theme.typography.body.md.copyWith(
               color: context.theme.colors.secondaryForeground,
               fontWeight: FontWeight.w600,
             ),
@@ -84,7 +84,7 @@ class _MemberChip extends StatelessWidget {
         ),
         Text(
           member.username,
-          style: context.theme.typography.xs,
+          style: context.theme.typography.body.xs,
           overflow: TextOverflow.ellipsis,
         ),
       ],

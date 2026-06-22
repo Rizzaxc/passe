@@ -39,7 +39,7 @@ class ProfessionalDetailPage extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
             child: Text(
               'Không tải được hồ sơ',
-              style: context.theme.typography.sm.copyWith(
+              style: context.theme.typography.body.sm.copyWith(
                 color: context.theme.colors.mutedForeground,
               ),
             ),
@@ -158,7 +158,7 @@ class _Body extends StatelessWidget {
                           _initials,
                           style: TextStyle(
                             fontFamily:
-                                context.theme.typography.xl3.fontFamily,
+                                context.theme.typography.body.xl3.fontFamily,
                             fontSize: 36,
                             fontWeight: FontWeight.w700,
                             color: colors.primaryForeground,
@@ -177,7 +177,7 @@ class _Body extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              FIcons.badgeCheck,
+                              FLucideIcons.badgeCheck,
                               size: 24,
                               color: pbBlue,
                             ),
@@ -193,7 +193,7 @@ class _Body extends StatelessWidget {
                 Center(
                   child: Text(
                     item.displayName,
-                    style: context.theme.typography.xl2.copyWith(
+                    style: context.theme.typography.body.xl2.copyWith(
                       fontWeight: FontWeight.bold,
                       height: 1.1,
                     ),
@@ -207,7 +207,7 @@ class _Body extends StatelessWidget {
                 Center(
                   child: Text(
                     isCoach ? 'Huấn luyện viên' : 'Trọng tài',
-                    style: context.theme.typography.sm.copyWith(
+                    style: context.theme.typography.body.sm.copyWith(
                       color: colors.mutedForeground,
                       fontWeight: FontWeight.w500,
                     ),
@@ -234,7 +234,7 @@ class _Body extends StatelessWidget {
                         margin: const EdgeInsets.symmetric(horizontal: 18),
                       ),
                       _StatTile(
-                        icon: FIcons.briefcaseBusiness,
+                        icon: FLucideIcons.briefcaseBusiness,
                         iconColor: colors.mutedForeground,
                         label: '${item.experienceYears}',
                         sub: 'năm kinh nghiệm',
@@ -267,7 +267,7 @@ class _Body extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     item.bio!,
-                    style: context.theme.typography.sm.copyWith(
+                    style: context.theme.typography.body.sm.copyWith(
                       color: colors.foreground,
                       height: 1.55,
                     ),
@@ -319,7 +319,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: context.theme.typography.xs.copyWith(
+      style: context.theme.typography.body.xs.copyWith(
         color: context.theme.colors.mutedForeground,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
@@ -354,7 +354,7 @@ class _StatTile extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               label,
-              style: context.theme.typography.lg.copyWith(
+              style: context.theme.typography.body.lg.copyWith(
                 fontWeight: FontWeight.w700,
                 height: 1,
               ),
@@ -364,7 +364,7 @@ class _StatTile extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           sub,
-          style: context.theme.typography.xs.copyWith(
+          style: context.theme.typography.body.xs.copyWith(
             color: colors.mutedForeground,
           ),
         ),
@@ -394,7 +394,7 @@ class _SportChip extends StatelessWidget {
           sport.getIcon(size: 12),
           Text(
             sport.getLocalizedName(context),
-            style: context.theme.typography.xs.copyWith(
+            style: context.theme.typography.body.xs.copyWith(
               color: colors.secondaryForeground,
               fontWeight: FontWeight.w600,
             ),

@@ -82,7 +82,7 @@ Future<T?> showPSheet<T>({
 
 /// Top-of-sheet title shared by every [PSheet].
 ///
-/// Renders as `typography.xl2` at bold weight — visually distinct from
+/// Renders as `typography.body.xl2` at bold weight — visually distinct from
 /// the all-caps [PSheetSectionLabel] used for groups inside the sheet.
 /// Pair the two: one title per sheet at the top, section labels for
 /// each logical group beneath.
@@ -108,7 +108,7 @@ class PSheetTitle extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: context.theme.typography.xl2
+              style: context.theme.typography.body.xl2
                   .copyWith(fontWeight: FontWeight.bold),
             ),
           ),

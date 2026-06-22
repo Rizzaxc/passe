@@ -26,7 +26,7 @@ Future<Timeslot?> showTimeslotPicker({
         const SizedBox(height: 16),
         FButton(
           onPress: () => Navigator.of(context).pop(selectedTimeslot),
-          child: const Icon(FIcons.check),
+          child: const Icon(FLucideIcons.check),
         ),
       ],
     ),
@@ -103,7 +103,7 @@ class _TimeslotPickerState extends State<TimeslotPicker> {
                         (chunk) => Center(
                           child: Text(
                             chunk.getFullName(context),
-                            style: context.theme.typography.md,
+                            style: context.theme.typography.body.md,
                           ),
                         ),
                       )
@@ -119,7 +119,7 @@ class _TimeslotPickerState extends State<TimeslotPicker> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 '-',
-                style: context.theme.typography.xl.copyWith(
+                style: context.theme.typography.body.xl.copyWith(
                   color: context.theme.colors.mutedForeground,
                 ),
               ),
@@ -152,7 +152,7 @@ class _TimeslotPickerState extends State<TimeslotPicker> {
                         (day) => Center(
                           child: Text(
                             day.getFullName(context),
-                            style: context.theme.typography.md,
+                            style: context.theme.typography.body.md,
                           ),
                         ),
                       )

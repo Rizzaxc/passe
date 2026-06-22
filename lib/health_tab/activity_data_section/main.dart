@@ -91,7 +91,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w700),
+      style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
     );
   }
 }
@@ -153,7 +153,7 @@ class _DetectedCardState extends ConsumerState<_DetectedCard> {
           Row(
             spacing: 8,
             children: [
-              Icon(FIcons.activity, size: 18, color: colors.primary),
+              Icon(FLucideIcons.activity, size: 18, color: colors.primary),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,11 +161,11 @@ class _DetectedCardState extends ConsumerState<_DetectedCard> {
                   children: [
                     Text(
                       '${_dateLabel(context, w.startTime)} · ${_sourceLabel(w.source).tr()}',
-                      style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w700),
+                      style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
                     ),
                     Text(
                       evidenceKey.tr(),
-                      style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+                      style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
                     ),
                   ],
                 ),
@@ -245,16 +245,16 @@ class _RecapCard extends StatelessWidget {
                     children: [
                       Text(
                         _dateLabel(context, row.startTime),
-                        style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w700),
+                        style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
                       ),
                       Text(
                         subtitle,
-                        style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+                        style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
                       ),
                     ],
                   ),
                 ),
-                Icon(FIcons.chevronRight, size: 18, color: colors.mutedForeground),
+                Icon(FLucideIcons.chevronRight, size: 18, color: colors.mutedForeground),
               ],
             ),
             Row(
@@ -302,11 +302,11 @@ class _MiniStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: context.theme.typography.md.copyWith(fontWeight: FontWeight.w700, height: 1),
+          style: context.theme.typography.body.md.copyWith(fontWeight: FontWeight.w700, height: 1),
         ),
         Text(
           label.toUpperCase(),
-          style: context.theme.typography.xs.copyWith(
+          style: context.theme.typography.body.xs.copyWith(
             color: colors.mutedForeground,
             letterSpacing: 0.3,
           ),

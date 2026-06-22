@@ -32,17 +32,17 @@ class _HealthTabState extends ConsumerState<HealthTab> {
 
   static const _sections = [
     (
-      icon: FIcons.trendingUp,
+      icon: FLucideIcons.trendingUp,
       titleKey: 'health.userHealth.title',
       child: UserHealthSubtab(),
     ),
     (
-      icon: FIcons.activity,
+      icon: FLucideIcons.activity,
       titleKey: 'health.activityData.title',
       child: ActivityDataSubtab(),
     ),
     (
-      icon: FIcons.trophy,
+      icon: FLucideIcons.trophy,
       titleKey: 'health.achievements.title',
       child: AchievementsSubtab(),
     ),
@@ -64,7 +64,7 @@ class _HealthTabState extends ConsumerState<HealthTab> {
     return [
       for (final section in _sections)
         FTabEntry(
-          label: section.icon == FIcons.trophy && hasUnseenAchievements
+          label: section.icon == FLucideIcons.trophy && hasUnseenAchievements
               ? _DottedIcon(icon: section.icon)
               : Icon(section.icon, key: const ValueKey('icon')),
           child: section.child,
@@ -207,7 +207,7 @@ class _SyncButton extends ConsumerWidget {
       child: syncing
           ? const SizedBox(
               width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-          : Icon(FIcons.refreshCw, size: 20),
+          : Icon(FLucideIcons.refreshCw, size: 20),
     );
   }
 }

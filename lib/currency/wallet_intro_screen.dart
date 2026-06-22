@@ -13,7 +13,7 @@ class WalletIntroScreen extends StatelessWidget {
 
   static final _uses = <_UseCase>[
     _UseCase(
-      icon: FIcons.check,
+      icon: FLucideIcons.check,
       color: _crimson,
       tintBuilder: (c) => c.crimsonTint,
       title: 'Xác nhận buổi chơi',
@@ -22,7 +22,7 @@ class WalletIntroScreen extends StatelessWidget {
       cost: '10 Đá / cọc',
     ),
     _UseCase(
-      icon: FIcons.mapPin,
+      icon: FLucideIcons.mapPin,
       color: _blue,
       tintBuilder: (c) => c.blueTint,
       title: 'Đặt sân venue',
@@ -31,7 +31,7 @@ class WalletIntroScreen extends StatelessWidget {
       cost: '50–200 Đá / giờ',
     ),
     _UseCase(
-      icon: FIcons.userPlus,
+      icon: FLucideIcons.userPlus,
       color: _crimson,
       tintBuilder: (c) => c.crimsonTint,
       title: 'Đặt lịch HLV & Trọng Tài',
@@ -40,7 +40,7 @@ class WalletIntroScreen extends StatelessWidget {
       cost: '50–300 Đá / buổi',
     ),
     _UseCase(
-      icon: FIcons.split,
+      icon: FLucideIcons.split,
       color: _green,
       tintBuilder: (c) => c.greenTint,
       title: 'Split bill nội bộ',

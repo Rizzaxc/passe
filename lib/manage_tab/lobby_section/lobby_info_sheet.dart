@@ -92,7 +92,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
       if (!mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleX),
+        icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
         title: Text('error'.tr()),
         description: Text('errorGeneric'.tr()),
@@ -151,7 +151,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
       if (!mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleX),
+        icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
         title: Text('error'.tr()),
         description: Text(errorMsg),
@@ -169,7 +169,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
     if (others.isEmpty) {
       showFToast(
         context: context,
-        icon: const Icon(FIcons.info),
+        icon: const Icon(FLucideIcons.info),
         title: Text('lobby.captainTransfer.noOthers'.tr()),
         alignment: .bottomCenter,
       );
@@ -240,7 +240,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
       if (!mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.check),
+        icon: const Icon(FLucideIcons.check),
         title: Text('lobby.captainTransfer.success'.tr(namedArgs: {'username': member.username})),
         alignment: .bottomCenter,
       );
@@ -249,7 +249,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
       if (!mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleX),
+        icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
         title: Text('error'.tr()),
         description: Text('lobby.captainTransfer.failed'.tr()),
@@ -289,7 +289,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                 trailing: FButton.icon(
                   variant: .ghost,
                   onPress: () => Navigator.of(context).pop(),
-                  child: const Icon(FIcons.x),
+                  child: const Icon(FLucideIcons.x),
                 ),
               ),
 
@@ -333,7 +333,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                             children: [
                               Text(
                                 lobby.name,
-                                style: context.theme.typography.lg.copyWith(
+                                style: context.theme.typography.body.lg.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                                 maxLines: 1,
@@ -347,7 +347,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                                   Flexible(
                                     child: Text(
                                       lobby.sport.getLocalizedName(context),
-                                      style: context.theme.typography.sm
+                                      style: context.theme.typography.body.sm
                                           .copyWith(
                                         color: colors.mutedForeground,
                                       ),
@@ -386,7 +386,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                           children: [
                             Text(
                               'SearchID',
-                              style: context.theme.typography.xs.copyWith(
+                              style: context.theme.typography.body.xs.copyWith(
                                 color: colors.mutedForeground,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 0.6,
@@ -396,7 +396,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                             Expanded(
                               child: Text(
                                 lobby.searchableId!,
-                                style: context.theme.typography.sm.copyWith(
+                                style: context.theme.typography.body.sm.copyWith(
                                   color: colors.secondaryForeground,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.4,
@@ -411,13 +411,13 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                                 if (!context.mounted) return;
                                 showFToast(
                                   context: context,
-                                  icon: const Icon(FIcons.copy),
+                                  icon: const Icon(FLucideIcons.copy),
                                   title:
                                       Text('lobby.searchIDCopied'.tr()),
                                   alignment: .bottomCenter,
                                 );
                               },
-                              child: const Icon(FIcons.copy, size: 14),
+                              child: const Icon(FLucideIcons.copy, size: 14),
                             ),
                           ],
                         ),
@@ -429,13 +429,13 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          Icon(FIcons.mapPin,
+                          Icon(FLucideIcons.mapPin,
                               size: 12, color: colors.mutedForeground),
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
                               widget.info.homeGroundName!,
-                              style: context.theme.typography.sm.copyWith(
+                              style: context.theme.typography.body.sm.copyWith(
                                 color: colors.mutedForeground,
                               ),
                               maxLines: 2,
@@ -460,7 +460,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                         : 'lobby.detail.members'.tr(),
                     trailing: isCaptain
                         ? _SectionActionButton(
-                            icon: FIcons.userPlus,
+                            icon: FLucideIcons.userPlus,
                             label: 'lobby.invite'.tr(),
                             onTap: () => _showInviteUserSheet(
                                 context, widget.lobbyId),
@@ -538,7 +538,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                       children: [
                         if (isCaptain) ...[
                           _SettingsRow(
-                            icon: FIcons.pencil,
+                            icon: FLucideIcons.pencil,
                             label: 'lobby.edit'.tr(),
                             onTap: () => _editLobby(context, lobby),
                           ),
@@ -548,7 +548,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                             color: colors.border.withValues(alpha: 0.5),
                           ),
                           _SettingsRow(
-                            icon: FIcons.userPlus,
+                            icon: FLucideIcons.userPlus,
                             label: 'lobby.manageRequests'.tr(),
                             badge: _pendingBadge(ref, widget.lobbyId),
                             onTap: () => showJoinRequestsSheet(
@@ -561,11 +561,11 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                           ),
                         ],
                         _SettingsRow(
-                          icon: FIcons.bell,
+                          icon: FLucideIcons.bell,
                           label: 'lobby.notifications'.tr(),
                           onTap: () => showFToast(
                             context: context,
-                            icon: const Icon(FIcons.bell),
+                            icon: const Icon(FLucideIcons.bell),
                             title: Text('lobby.comingSoon'.tr()),
                             alignment: .bottomCenter,
                           ),
@@ -577,7 +577,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                         ),
                         if (isCaptain) ...[
                           _SettingsRow(
-                            icon: FIcons.crown,
+                            icon: FLucideIcons.crown,
                             label: 'lobby.captainTransfer.title'.tr(),
                             onTap: _transferCaptaincy,
                           ),
@@ -588,7 +588,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                               color: colors.border.withValues(alpha: 0.5),
                             ),
                             _SettingsRow(
-                              icon: FIcons.trash2,
+                              icon: FLucideIcons.trash2,
                               label: 'lobby.delete.confirm'.tr(),
                               destructive: true,
                               onTap: _confirmDelete,
@@ -596,7 +596,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                           ],
                         ] else
                           _SettingsRow(
-                            icon: FIcons.logOut,
+                            icon: FLucideIcons.logOut,
                             label: 'lobby.leave.confirm'.tr(),
                             destructive: true,
                             onTap: _confirmLeave,
@@ -746,7 +746,7 @@ class _MemberRow extends ConsumerWidget {
                 if (context.mounted) {
                   showFToast(
                     context: context,
-                    icon: const Icon(FIcons.circleX),
+                    icon: const Icon(FLucideIcons.circleX),
                     variant: .destructive,
                     title: Text('error'.tr()),
                     description: Text('lobby.kick.failed'.tr()),
@@ -811,7 +811,7 @@ class _MemberRow extends ConsumerWidget {
                     ),
                     if (_isMemberTheCaptain) ...[
                       const SizedBox(width: 4),
-                      Icon(FIcons.crown,
+                      Icon(FLucideIcons.crown,
                           size: 11, color: colors.mutedForeground),
                     ],
                   ],
@@ -837,7 +837,7 @@ class _MemberRow extends ConsumerWidget {
                   border: Border.all(
                       color: colors.border.withValues(alpha: 0.6)),
                 ),
-                child: Icon(FIcons.ellipsis,
+                child: Icon(FLucideIcons.ellipsis,
                     size: 14, color: colors.mutedForeground),
               ),
             ),
@@ -910,7 +910,7 @@ class _SettingsRow extends StatelessWidget {
               const SizedBox(width: 4),
             ],
             Icon(
-              FIcons.chevronRight,
+              FLucideIcons.chevronRight,
               size: 14,
               color: colors.mutedForeground.withValues(alpha: 0.5),
             ),
@@ -952,7 +952,7 @@ class _InviteUserSheetState extends ConsumerState<_InviteUserSheet> {
     if (username.isEmpty) {
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleAlert),
+        icon: const Icon(FLucideIcons.circleAlert),
         variant: .destructive,
         title: Text('lobby.inviteUser.emptyError'.tr()),
         alignment: .bottomCenter,
@@ -974,7 +974,7 @@ class _InviteUserSheetState extends ConsumerState<_InviteUserSheet> {
         if (!mounted) return;
         showFToast(
           context: context,
-          icon: const Icon(FIcons.userX),
+          icon: const Icon(FLucideIcons.userX),
           variant: .destructive,
           title: Text('lobby.inviteUser.notFound'.tr(namedArgs: {'name': raw})),
           alignment: .bottomCenter,
@@ -997,7 +997,7 @@ class _InviteUserSheetState extends ConsumerState<_InviteUserSheet> {
       Navigator.of(context).pop();
       showFToast(
         context: context,
-        icon: const Icon(FIcons.userPlus),
+        icon: const Icon(FLucideIcons.userPlus),
         title: Text('lobby.inviteUser.success'.tr(namedArgs: {'username': username})),
         alignment: .bottomCenter,
       );
@@ -1006,7 +1006,7 @@ class _InviteUserSheetState extends ConsumerState<_InviteUserSheet> {
       if (!mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleX),
+        icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
         title: Text('error'.tr()),
         description: Text('lobby.inviteUser.failed'.tr()),
@@ -1031,7 +1031,7 @@ class _InviteUserSheetState extends ConsumerState<_InviteUserSheet> {
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),
-              child: const Icon(FIcons.x),
+              child: const Icon(FLucideIcons.x),
             ),
           ),
           FTextField(

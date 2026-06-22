@@ -525,7 +525,7 @@ class _HistoryCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Icon(FIcons.mapPin,
+                    Icon(FLucideIcons.mapPin,
                         size: 11, color: colors.mutedForeground),
                     const SizedBox(width: 4),
                     Expanded(

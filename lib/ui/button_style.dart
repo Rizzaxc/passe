@@ -45,7 +45,7 @@ FButtonContentStyle _buttonContentStyle({
   required Color disabled,
 }) => FButtonContentStyle(
   textStyle: .from(
-    typography.md.copyWith(
+    typography.body.md.copyWith(
       color: enabled,
       fontWeight: FontWeight.w500,
       height: 1,

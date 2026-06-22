@@ -183,7 +183,7 @@ class ChatTriggerBar extends StatelessWidget {
                         isLeader
                             ? 'Bạn muốn đăng gì cho lobby?'
                             : 'Bạn muốn đăng gì?',
-                        style: context.theme.typography.sm.copyWith(
+                        style: context.theme.typography.body.sm.copyWith(
                           fontStyle: FontStyle.italic,
                           color: colors.mutedForeground,
                         ),
@@ -198,7 +198,7 @@ class ChatTriggerBar extends StatelessWidget {
                         color: _crimson,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(FIcons.plus,
+                      child: const Icon(FLucideIcons.plus,
                           size: 14, color: Colors.white),
                     ),
                   ],
@@ -260,7 +260,7 @@ class _ActionPickerSheet extends StatelessWidget {
                 trailing: FButton.icon(
                   variant: .ghost,
                   onPress: () => Navigator.of(context).pop(),
-                  child: const Icon(FIcons.x),
+                  child: const Icon(FLucideIcons.x),
                 ),
               ),
               const SizedBox(height: 4),
@@ -302,7 +302,7 @@ class _ActionPickerSheet extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          FIcons.crown,
+                          FLucideIcons.crown,
                           size: 11,
                           color: context.theme.colors.mutedForeground,
                         ),
@@ -439,7 +439,7 @@ class _ActionRow extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(FIcons.chevronRight,
+            Icon(FLucideIcons.chevronRight,
                 size: 16,
                 color: colors.mutedForeground.withValues(alpha: 0.6)),
           ],

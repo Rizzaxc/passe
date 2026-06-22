@@ -87,7 +87,7 @@ class PSegmentedButton<T> extends StatelessWidget {
                 size: 20,
               ),
               child: DefaultTextStyle(
-                style: context.theme.typography.sm.copyWith(
+                style: context.theme.typography.body.sm.copyWith(
                   color: isSelected ? colors.primary : context.theme.brand.blue,
                   overflow: TextOverflow.ellipsis,
                   fontWeight: .bold,
@@ -123,7 +123,7 @@ class PSegmentedButton<T> extends StatelessWidget {
       children: [
         if (label != null)
           DefaultTextStyle.merge(
-            style: context.theme.typography.sm.copyWith(fontWeight: .bold),
+            style: context.theme.typography.body.sm.copyWith(fontWeight: .bold),
             child: label!,
           ),
         track,
@@ -133,7 +133,7 @@ class PSegmentedButton<T> extends StatelessWidget {
             '$selectedDesc\n',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: context.theme.typography.xs.copyWith(
+            style: context.theme.typography.body.xs.copyWith(
               color: colors.mutedForeground,
             ),
           ),

@@ -1,5 +1,3 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 import 'package:forui/forui.dart';
 
@@ -59,6 +57,6 @@ FSelectStyle selectStyle({
 }) => FSelectStyle(
   fieldStyles: .inherit(colors: colors, typography: typography, style: style, touch: true),
   searchStyle: .inherit(colors: colors, typography: typography, style: style, touch: true),
-  contentStyle: .inherit(colors: colors, typography: typography, style: style, touch: true),
-  emptyTextStyle: typography.sm,
+  contentStyle: .inherit(colors: colors, icons: FIcons.lucide(), typography: typography, style: style, touch: true),
+  emptyTextStyle: typography.body.sm,
 );

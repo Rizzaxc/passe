@@ -22,15 +22,15 @@ class ManageTab extends StatefulWidget {
   static const manageSections = <FTabEntry>[
     FTabEntry(
       child: ScheduleSection(),
-      label: Icon(FIcons.calendarDays),
+      label: Icon(FLucideIcons.calendarDays),
     ),
     FTabEntry(
       child: LobbySubtab(),
-      label: Icon(FIcons.users),
+      label: Icon(FLucideIcons.users),
     ),
     FTabEntry(
       child: CoachingSection(),
-      label: Icon(FIcons.graduationCap),
+      label: Icon(FLucideIcons.graduationCap),
     ),
   ];
 

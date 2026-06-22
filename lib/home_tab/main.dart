@@ -7,7 +7,6 @@ import '../core/sport_selector.dart';
 import '../currency/da_appbar_button.dart';
 import '../ui/main.dart';
 import 'challenger_section/main.dart';
-import 'filter.dart';
 import 'location_section/main.dart';
 import 'professional_section/main.dart';
 import 'teammate_section/main.dart';

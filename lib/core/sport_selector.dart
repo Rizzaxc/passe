@@ -67,7 +67,7 @@ class SportSelector extends ConsumerWidget {
                 return FItem(
                   prefix: sport.getIcon(),
                   title: Text(sport.getLocalizedName(context)),
-                  details: isSelected ? const Icon(FIcons.check) : null,
+                  details: isSelected ? const Icon(FLucideIcons.check) : null,
                   selected: isSelected,
                   onPress: () {
                     ref.read(selectedSportStateProvider.notifier).change(sport);
@@ -94,7 +94,7 @@ class SportSelector extends ConsumerWidget {
       error: (err, stack) => FButton.icon(
         variant: .ghost,
         onPress: null,
-        child: const Icon(FIcons.triangleAlert),
+        child: const Icon(FLucideIcons.triangleAlert),
       ),
     );
   }

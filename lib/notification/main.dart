@@ -12,7 +12,7 @@ class NotificationPage extends StatelessWidget {
         title: const Text('Notifications'),
         suffixes: [
           FHeaderAction(
-            icon: Icon(FIcons.x),
+            icon: Icon(FLucideIcons.x),
             onPress: () {
               if (context.canPop()) context.pop();
             },

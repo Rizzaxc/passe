@@ -62,12 +62,12 @@ dependencies:
   firebase_core: ^3.8.0
   firebase_messaging: ^15.1.5
   flutter_local_notifications: ^18.0.1
-  google_mobile_ads: ^5.2.0
+  google_mobile_ads: ^9.0.0
   in_app_review: ^2.0.11
   freezed_annotation: ^3.1.0
   talker_riverpod_logger: ^5.1.5
   talker_flutter: ^5.1.5
-  forui: ^0.21.3
+  forui: ^0.23.0
   riverpod: ^3.2.0
   hooks: ^1.0.0
 

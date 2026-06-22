@@ -17,17 +17,17 @@ class WelcomeScreen extends HookConsumerWidget {
 
     final introPages = [
       _IntroPage(
-        icon: FIcons.users,
+        icon: FLucideIcons.users,
         title: 'welcome.page1.title'.tr(),
         description: 'welcome.page1.description'.tr(),
       ),
       _IntroPage(
-        icon: FIcons.calendar,
+        icon: FLucideIcons.calendar,
         title: 'welcome.page2.title'.tr(),
         description: 'welcome.page2.description'.tr(),
       ),
       _IntroPage(
-        icon: FIcons.trophy,
+        icon: FLucideIcons.trophy,
         title: 'welcome.page3.title'.tr(),
         description: 'welcome.page3.description'.tr(),
       ),
@@ -103,7 +103,7 @@ class _IntroPage extends StatelessWidget {
           const SizedBox(height: 32),
           Text(
             title,
-            style: context.theme.typography.xl2.copyWith(
+            style: context.theme.typography.body.xl2.copyWith(
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
@@ -111,7 +111,7 @@ class _IntroPage extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             description,
-            style: context.theme.typography.md.copyWith(
+            style: context.theme.typography.body.md.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
             textAlign: TextAlign.center,

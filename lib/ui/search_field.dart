@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
 
 /// A forui-styled search field with optional typeahead dropdown.
@@ -134,7 +133,7 @@ class _PSearchFieldState<T> extends State<PSearchField<T>> {
                 setState(() => _suggestions = []);
               }
             },
-            child: const Icon(FIcons.x),
+            child: const Icon(FLucideIcons.x),
           ),
         );
       },

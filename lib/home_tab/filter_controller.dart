@@ -2,7 +2,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../auth/auth_controller.dart';
 import '../core/model/enum.dart';
 import '../core/model/timeslot.dart';
-import '../core/model/user_location.dart';
 
 part 'filter_controller.g.dart';
 

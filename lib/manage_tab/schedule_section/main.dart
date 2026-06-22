@@ -128,7 +128,7 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
       if (next is AsyncError && context.mounted) {
         showFToast(
           context: context,
-          icon: const Icon(FIcons.circleX),
+          icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
           title: Text('error'.tr()),
           description: Text('errorGeneric'.tr()),
@@ -155,8 +155,8 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
           suffix: PPillToggle<_ViewMode>(
             value: _viewMode,
             options: const [
-              PPillOption(value: _ViewMode.timeline, icon: FIcons.clock),
-              PPillOption(value: _ViewMode.cards, icon: FIcons.layoutList),
+              PPillOption(value: _ViewMode.timeline, icon: FLucideIcons.clock),
+              PPillOption(value: _ViewMode.cards, icon: FLucideIcons.layoutList),
             ],
             onChanged: _switchMode,
           ),
@@ -266,7 +266,7 @@ class _DaySection extends StatelessWidget {
             children: [
               Text(
                 _dayLabel(date),
-                style: context.theme.typography.sm.copyWith(
+                style: context.theme.typography.body.sm.copyWith(
                   fontWeight: FontWeight.w700,
                   color: _isToday ? colors.primary : colors.foreground,
                   height: 1,
@@ -275,7 +275,7 @@ class _DaySection extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 '${date.day}/${date.month}',
-                style: context.theme.typography.xs.copyWith(
+                style: context.theme.typography.body.xs.copyWith(
                   color: colors.mutedForeground,
                 ),
               ),
@@ -288,7 +288,7 @@ class _DaySection extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
               child: Text(
                 'Không có lịch',
-                style: context.theme.typography.xs.copyWith(
+                style: context.theme.typography.body.xs.copyWith(
                   color: colors.mutedForeground.withValues(alpha: 0.55),
                   fontStyle: FontStyle.italic,
                 ),
@@ -328,14 +328,14 @@ class _EmptyDayCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            FIcons.calendarDays,
+            FLucideIcons.calendarDays,
             size: 26,
             color: colors.mutedForeground.withValues(alpha: 0.45),
           ),
           const SizedBox(height: 10),
           Text(
             '00:00 – $to',
-            style: context.theme.typography.sm.copyWith(
+            style: context.theme.typography.body.sm.copyWith(
               color: colors.mutedForeground,
               fontWeight: FontWeight.w600,
             ),
@@ -343,7 +343,7 @@ class _EmptyDayCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             'Không có lịch',
-            style: context.theme.typography.xs.copyWith(
+            style: context.theme.typography.body.xs.copyWith(
               color: colors.mutedForeground.withValues(alpha: 0.65),
             ),
           ),
@@ -363,7 +363,7 @@ class _CollapsedBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final style = TextStyle(
-      fontFamily: context.theme.typography.xs.fontFamily,
+      fontFamily: context.theme.typography.body.xs.fontFamily,
       fontSize: 11,
       color: colors.mutedForeground.withValues(alpha: 0.6),
     );
@@ -437,7 +437,7 @@ class _EventRow extends StatelessWidget {
                     Text(
                       '–',
                       style: TextStyle(
-                        fontFamily: context.theme.typography.lg.fontFamily,
+                        fontFamily: context.theme.typography.body.lg.fontFamily,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: accent.withValues(alpha: 0.55),
@@ -459,7 +459,7 @@ class _EventRow extends StatelessWidget {
                     children: [
                       Text(
                         event.title,
-                        style: context.theme.typography.sm.copyWith(
+                        style: context.theme.typography.body.sm.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                         maxLines: 2,
@@ -467,7 +467,7 @@ class _EventRow extends StatelessWidget {
                       ),
                       Text(
                         event.meta,
-                        style: context.theme.typography.xs.copyWith(
+                        style: context.theme.typography.body.xs.copyWith(
                           color: colors.mutedForeground,
                           height: 1.4,
                         ),
@@ -499,7 +499,7 @@ class _TimeLabel extends StatelessWidget {
     return Text(
       time,
       style: TextStyle(
-        fontFamily: context.theme.typography.lg.fontFamily,
+        fontFamily: context.theme.typography.body.lg.fontFamily,
         fontSize: 15,
         fontWeight: FontWeight.w700,
         color: color,
@@ -587,7 +587,7 @@ class _TimeGrid extends StatelessWidget {
                   child: Text(
                     '${h.toString().padLeft(2, '0')}:00',
                     style: TextStyle(
-                      fontFamily: context.theme.typography.xs.fontFamily,
+                      fontFamily: context.theme.typography.body.xs.fontFamily,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w500,
                       color: colors.mutedForeground,
@@ -667,7 +667,7 @@ class _EventBlock extends StatelessWidget {
             Text(
               '${_fmtTime(event.start)} – ${_fmtTime(event.end)}',
               style: TextStyle(
-                fontFamily: context.theme.typography.xs.fontFamily,
+                fontFamily: context.theme.typography.body.xs.fontFamily,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: accent,
@@ -677,7 +677,7 @@ class _EventBlock extends StatelessWidget {
             const SizedBox(height: 1),
             Text(
               event.title,
-              style: context.theme.typography.xs.copyWith(
+              style: context.theme.typography.body.xs.copyWith(
                 fontWeight: FontWeight.w600,
                 color: colors.foreground,
                 height: 1.3,
@@ -687,7 +687,7 @@ class _EventBlock extends StatelessWidget {
             ),
             Text(
               event.meta,
-              style: context.theme.typography.xs.copyWith(
+              style: context.theme.typography.body.xs.copyWith(
                 color: colors.mutedForeground,
                 fontSize: 10,
                 height: 1.2,

@@ -23,7 +23,7 @@ class FilterWidget extends ConsumerWidget {
           builder: (_) => const FilterSheet(),
         );
       },
-      child: Icon(FIcons.listFilter),
+      child: Icon(FLucideIcons.listFilter),
     );
   }
 }
@@ -218,7 +218,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                                             .fromSTEB(4, 4, 0, 4),
                                         child: Text(
                                           context.tr('homeTab.filter.any'),
-                                          style: context.theme.typography.sm
+                                          style: context.theme.typography.body.sm
                                               .copyWith(
                                             color: context
                                                 .theme.colors.mutedForeground,
@@ -253,7 +253,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                                                   Text(
                                                     '${timeslot.dayChunk.getShortName(context)} ${timeslot.dayOfWeek.getShortName(context)}',
                                                     style: context
-                                                        .theme.typography.sm
+                                                        .theme.typography.body.sm
                                                         .copyWith(
                                                       color: context.theme
                                                           .colors
@@ -267,7 +267,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                                                       size: 15,
                                                     ),
                                                     child:
-                                                        const Icon(FIcons.x),
+                                                        const Icon(FLucideIcons.x),
                                                   ),
                                                 ],
                                               ),
@@ -353,7 +353,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                             notifier.setSchedule(updated);
                           }
                         },
-                        child: const Icon(FIcons.plus),
+                        child: const Icon(FLucideIcons.plus),
                       ),
                     ],
                   ),
@@ -361,7 +361,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
               ),
               FButton(
                 onPress: () => Navigator.of(context).pop(),
-                child: Icon(FIcons.check),
+                child: Icon(FLucideIcons.check),
               ),
               const SizedBox(height: 8,)
             ],

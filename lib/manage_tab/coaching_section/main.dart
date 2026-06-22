@@ -317,18 +317,18 @@ class _CoachStrip extends StatelessWidget {
                     Flexible(
                       child: Text(
                         coach.name,
-                        style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w700),
+                        style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (coach.verified)
-                      Icon(FIcons.badgeCheck, size: 14, color: pbBlue),
+                      Icon(FLucideIcons.badgeCheck, size: 14, color: pbBlue),
                   ],
                 ),
                 Text(
                   '${coach.title} · ${coach.years}năm KN',
-                  style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+                  style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
                 ),
               ],
             ),
@@ -372,7 +372,7 @@ class _NextUpHero extends StatelessWidget {
                 child: Text(
                   '${session.index}',
                   style: TextStyle(
-                    fontFamily: context.theme.typography.xl8.fontFamily,
+                    fontFamily: context.theme.typography.body.xl8.fontFamily,
                     fontSize: 160,
                     fontWeight: FontWeight.w400,
                     color: Colors.white.withValues(alpha: 0.08),
@@ -390,7 +390,7 @@ class _NextUpHero extends StatelessWidget {
                     children: [
                       Text(
                         isToday ? 'Buổi tới · Hôm nay' : 'Buổi tới · ${_relDay(session.at)}',
-                        style: context.theme.typography.xs.copyWith(
+                        style: context.theme.typography.body.xs.copyWith(
                           color: Colors.white.withValues(alpha: 0.85),
                           fontWeight: FontWeight.w500,
                           letterSpacing: 0.8,
@@ -405,7 +405,7 @@ class _NextUpHero extends StatelessWidget {
                       ),
                       Text(
                         _fmtTime(session.at),
-                        style: context.theme.typography.xs.copyWith(
+                        style: context.theme.typography.body.xs.copyWith(
                           color: Colors.white.withValues(alpha: 0.9),
                           fontWeight: FontWeight.w700,
                         ),
@@ -419,7 +419,7 @@ class _NextUpHero extends StatelessWidget {
                     children: [
                       Text(
                         course.title,
-                        style: context.theme.typography.xl2.copyWith(
+                        style: context.theme.typography.body.xl2.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.4,
@@ -429,7 +429,7 @@ class _NextUpHero extends StatelessWidget {
                       if (course.totalSessions != null)
                         Text(
                           'Buổi ${session.index} / ${course.totalSessions}',
-                          style: context.theme.typography.sm.copyWith(
+                          style: context.theme.typography.body.sm.copyWith(
                             color: Colors.white.withValues(alpha: 0.75),
                           ),
                         ),
@@ -443,11 +443,11 @@ class _NextUpHero extends StatelessWidget {
                       Row(
                         spacing: 8,
                         children: [
-                          Icon(FIcons.mapPin, size: 13, color: Colors.white.withValues(alpha: 0.85)),
+                          Icon(FLucideIcons.mapPin, size: 13, color: Colors.white.withValues(alpha: 0.85)),
                           Expanded(
                             child: Text(
                               course.venue,
-                              style: context.theme.typography.xs.copyWith(
+                              style: context.theme.typography.body.xs.copyWith(
                                 color: Colors.white.withValues(alpha: 0.85),
                                 fontWeight: FontWeight.w500,
                               ),
@@ -466,12 +466,12 @@ class _NextUpHero extends StatelessWidget {
                               children: [
                                 Text(
                                   'Xem chi tiết',
-                                  style: context.theme.typography.xs.copyWith(
+                                  style: context.theme.typography.body.xs.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                Icon(FIcons.forward, size: 11, color: Colors.white),
+                                Icon(FLucideIcons.forward, size: 11, color: Colors.white),
                               ],
                             ),
                           ),
@@ -550,7 +550,7 @@ class _CurrentJourneySection extends StatelessWidget {
                       children: [
                         Text(
                           course.title,
-                          style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w700),
+                          style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
                         ),
                         Row(
                           spacing: 6,
@@ -558,14 +558,14 @@ class _CurrentJourneySection extends StatelessWidget {
                             _CourseTypeBadge(type: course.type),
                             Text(
                               '· ${course.schedule}',
-                              style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+                              style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
                             ),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  Icon(FIcons.chevronRight, size: 16, color: colors.mutedForeground),
+                  Icon(FLucideIcons.chevronRight, size: 16, color: colors.mutedForeground),
                 ],
               ),
               // Ribbon
@@ -582,10 +582,10 @@ class _CurrentJourneySection extends StatelessWidget {
                   Row(
                     spacing: 4,
                     children: [
-                      Icon(FIcons.info, size: 11, color: colors.mutedForeground),
+                      Icon(FLucideIcons.info, size: 11, color: colors.mutedForeground),
                       Text(
                         'Chạm vào ô để xem ghi chú',
-                        style: context.theme.typography.xs.copyWith(
+                        style: context.theme.typography.body.xs.copyWith(
                           color: colors.mutedForeground,
                           fontWeight: FontWeight.w500,
                         ),
@@ -595,7 +595,7 @@ class _CurrentJourneySection extends StatelessWidget {
                   if (unpaidCount > 0)
                     Text(
                       '$unpaidCount buổi chưa trả',
-                      style: context.theme.typography.xs.copyWith(
+                      style: context.theme.typography.body.xs.copyWith(
                         color: colors.primary,
                         fontWeight: FontWeight.w700,
                       ),
@@ -685,7 +685,7 @@ class _JourneyRibbon extends StatelessWidget {
                   Text(
                     '$i',
                     style: TextStyle(
-                      fontFamily: context.theme.typography.xs.fontFamily,
+                      fontFamily: context.theme.typography.body.xs.fontFamily,
                       fontSize: 12,
                       fontWeight: weight,
                       color: textColor,
@@ -718,7 +718,7 @@ class _JourneyRibbon extends StatelessWidget {
             child: Center(
               child: Text(
                 '…',
-                style: context.theme.typography.lg.copyWith(
+                style: context.theme.typography.body.lg.copyWith(
                   color: context.theme.colors.mutedForeground,
                   fontWeight: FontWeight.w700,
                 ),
@@ -793,7 +793,7 @@ class _PastCourseCard extends StatelessWidget {
                   children: [
                     Text(
                       course.title,
-                      style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w700),
+                      style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
                     ),
                     Row(
                       spacing: 6,
@@ -801,7 +801,7 @@ class _PastCourseCard extends StatelessWidget {
                         _StatusChip(label: 'Hoàn thành', color: const Color(0xFF3F7E4B), bg: const Color(0xFFDDF0E2)),
                         Text(
                           '· ${course.schedule}',
-                          style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+                          style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
                         ),
                       ],
                     ),
@@ -817,13 +817,13 @@ class _PastCourseCard extends StatelessWidget {
                   ),
                   child: Text(
                     'chưa đánh giá',
-                    style: context.theme.typography.xs.copyWith(
+                    style: context.theme.typography.body.xs.copyWith(
                       color: colors.primary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-              Icon(FIcons.chevronRight, size: 16, color: colors.mutedForeground),
+              Icon(FLucideIcons.chevronRight, size: 16, color: colors.mutedForeground),
             ],
           ),
           _JourneyRibbon(
@@ -860,7 +860,7 @@ class _BrowseMoreCta extends StatelessWidget {
         child: Row(
           spacing: 12,
           children: [
-            Icon(FIcons.sparkles, size: 16, color: colors.mutedForeground),
+            Icon(FLucideIcons.sparkles, size: 16, color: colors.mutedForeground),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -868,16 +868,16 @@ class _BrowseMoreCta extends StatelessWidget {
                 children: [
                   Text(
                     'Đổi sang môn khác',
-                    style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w700),
+                    style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
                   ),
                   Text(
                     'Chạm biểu tượng thể thao trên góc phải để chuyển HLV.',
-                    style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+                    style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
                   ),
                 ],
               ),
             ),
-            Icon(FIcons.chevronRight, size: 14, color: colors.mutedForeground),
+            Icon(FLucideIcons.chevronRight, size: 14, color: colors.mutedForeground),
           ],
         ),
       ),
@@ -953,7 +953,7 @@ class _SessionPreviewSheet extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Text(
                     '${session.index}',
-                    style: context.theme.typography.lg.copyWith(
+                    style: context.theme.typography.body.lg.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       height: 1,
@@ -967,7 +967,7 @@ class _SessionPreviewSheet extends StatelessWidget {
                     children: [
                       Text(
                         'BUỔI ${session.index}${course.totalSessions != null ? ' / ${course.totalSessions}' : ''}',
-                        style: context.theme.typography.xs.copyWith(
+                        style: context.theme.typography.body.xs.copyWith(
                           color: colors.mutedForeground,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 0.7,
@@ -975,11 +975,11 @@ class _SessionPreviewSheet extends StatelessWidget {
                       ),
                       Text(
                         '${isToday ? 'Hôm nay' : _relDay(session.at)} · ${_fmtTime(session.at)}',
-                        style: context.theme.typography.lg.copyWith(fontWeight: FontWeight.w700),
+                        style: context.theme.typography.body.lg.copyWith(fontWeight: FontWeight.w700),
                       ),
                       Text(
                         '${session.at.day}/${session.at.month} · ${course.venue}',
-                        style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+                        style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
                       ),
                     ],
                   ),
@@ -1006,7 +1006,7 @@ class _SessionPreviewSheet extends StatelessWidget {
                         _Avatar(initials: coach.initials, color: coach.color, size: 22),
                         Text(
                           'GHI CHÚ TỪ ${coach.name.toUpperCase()}',
-                          style: context.theme.typography.xs.copyWith(
+                          style: context.theme.typography.body.xs.copyWith(
                             color: const Color(0xFF8E7B3F),
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.7,
@@ -1021,7 +1021,7 @@ class _SessionPreviewSheet extends StatelessWidget {
                       ),
                       child: Text(
                         '"${session.notes}"',
-                        style: context.theme.typography.sm.copyWith(
+                        style: context.theme.typography.body.sm.copyWith(
                           color: colors.foreground,
                           height: 1.5,
                         ),
@@ -1040,7 +1040,7 @@ class _SessionPreviewSheet extends StatelessWidget {
                 child: Text(
                   'HLV chưa ghi chú cho buổi này.',
                   textAlign: TextAlign.center,
-                  style: context.theme.typography.sm.copyWith(color: colors.mutedForeground),
+                  style: context.theme.typography.body.sm.copyWith(color: colors.mutedForeground),
                 ),
               ),
             // Upcoming: block summary
@@ -1055,7 +1055,7 @@ class _SessionPreviewSheet extends StatelessWidget {
                       children: [
                         Text(
                           'GIÁO ÁN DỰ KIẾN',
-                          style: context.theme.typography.xs.copyWith(
+                          style: context.theme.typography.body.xs.copyWith(
                             color: colors.mutedForeground,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.7,
@@ -1063,7 +1063,7 @@ class _SessionPreviewSheet extends StatelessWidget {
                         ),
                         Text(
                           "$totalDur′",
-                          style: context.theme.typography.xs.copyWith(fontWeight: FontWeight.w700),
+                          style: context.theme.typography.body.xs.copyWith(fontWeight: FontWeight.w700),
                         ),
                       ],
                     ),
@@ -1081,12 +1081,12 @@ class _SessionPreviewSheet extends StatelessWidget {
                           Expanded(
                             child: Text(
                               block.name,
-                              style: context.theme.typography.xs.copyWith(fontWeight: FontWeight.w500),
+                              style: context.theme.typography.body.xs.copyWith(fontWeight: FontWeight.w500),
                             ),
                           ),
                           Text(
                             "${block.duration}′",
-                            style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+                            style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
                           ),
                         ],
                       ),
@@ -1097,7 +1097,7 @@ class _SessionPreviewSheet extends StatelessWidget {
               FCard(
                 child: Text(
                   'Freestyle session. HLV sẽ điều chỉnh tại sân.',
-                  style: context.theme.typography.sm.copyWith(color: colors.mutedForeground),
+                  style: context.theme.typography.body.sm.copyWith(color: colors.mutedForeground),
                 ),
               ),
             // Payment CTA
@@ -1108,7 +1108,7 @@ class _SessionPreviewSheet extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   spacing: 8,
                   children: [
-                    const Icon(FIcons.wallet, size: 16),
+                    const Icon(FLucideIcons.wallet, size: 16),
                     Text('Thanh toán ${course.pricePerSession}k VND'),
                   ],
                 ),
@@ -1122,7 +1122,7 @@ class _SessionPreviewSheet extends StatelessWidget {
                 spacing: 8,
                 children: [
                   const Text('Xem chi tiết buổi'),
-                  const Icon(FIcons.forward, size: 13),
+                  const Icon(FLucideIcons.forward, size: 13),
                 ],
               ),
             ),
@@ -1151,7 +1151,7 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: context.theme.typography.lg.copyWith(
+          style: context.theme.typography.body.lg.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: -0.2,
             height: 1,
@@ -1160,7 +1160,7 @@ class _SectionHeader extends StatelessWidget {
         if (subtitle != null)
           Text(
             subtitle!,
-            style: context.theme.typography.xs.copyWith(
+            style: context.theme.typography.body.xs.copyWith(
               color: colors.mutedForeground,
               fontWeight: FontWeight.w500,
             ),
@@ -1187,7 +1187,7 @@ class _Avatar extends StatelessWidget {
       child: Text(
         initials,
         style: TextStyle(
-          fontFamily: context.theme.typography.xs.fontFamily,
+          fontFamily: context.theme.typography.body.xs.fontFamily,
           fontSize: size * 0.38,
           fontWeight: FontWeight.w700,
           color: Colors.white,
@@ -1216,13 +1216,13 @@ class _RatingBadge extends StatelessWidget {
             const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
             Text(
               rating.toStringAsFixed(1),
-              style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w700),
+              style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
             ),
           ],
         ),
         Text(
           '($reviewCount)',
-          style: context.theme.typography.xs.copyWith(
+          style: context.theme.typography.body.xs.copyWith(
             color: context.theme.colors.mutedForeground,
           ),
         ),
@@ -1248,7 +1248,7 @@ class _CourseTypeBadge extends StatelessWidget {
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
       child: Text(
         label,
-        style: context.theme.typography.xs.copyWith(color: fg, fontWeight: FontWeight.w600),
+        style: context.theme.typography.body.xs.copyWith(color: fg, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -1268,7 +1268,7 @@ class _StatusChip extends StatelessWidget {
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
       child: Text(
         label,
-        style: context.theme.typography.xs.copyWith(color: color, fontWeight: FontWeight.w600),
+        style: context.theme.typography.body.xs.copyWith(color: color, fontWeight: FontWeight.w600),
       ),
     );
   }

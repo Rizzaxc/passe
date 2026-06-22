@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,7 +9,6 @@ import '../auth/auth_controller.dart';
 import '../core/model/enum.dart';
 import '../core/model/network.dart';
 import '../core/model/user_details.dart';
-import '../main.dart';
 
 part 'profile_controller.freezed.dart';
 part 'profile_controller.g.dart';

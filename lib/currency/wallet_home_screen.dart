@@ -27,7 +27,7 @@ class WalletHomeScreen extends ConsumerWidget {
         trailing: FButton.icon(
           variant: .ghost,
           onPress: () {},
-          child: Icon(FIcons.ellipsis, size: 20, color: colors.foreground),
+          child: Icon(FLucideIcons.ellipsis, size: 20, color: colors.foreground),
         ),
       ),
       child: ListView(
@@ -42,7 +42,7 @@ class WalletHomeScreen extends ConsumerWidget {
                   tone: _Tone.green,
                   label: 'Lịch sử nạp',
                   sub: '${sampleDaPurchases.length} giao dịch',
-                  icon: FIcons.arrowDown,
+                  icon: FLucideIcons.arrowDown,
                   onTap: () => const WalletPurchaseHistoryRoute().push(context),
                 ),
               ),
@@ -52,7 +52,7 @@ class WalletHomeScreen extends ConsumerWidget {
                   tone: _Tone.crimson,
                   label: 'Lịch sử chi',
                   sub: '${sampleDaSpending.length} hoạt động',
-                  icon: FIcons.arrowUp,
+                  icon: FLucideIcons.arrowUp,
                   onTap: () => const WalletSpendingHistoryRoute().push(context),
                 ),
               ),
@@ -189,7 +189,7 @@ class _BalanceHero extends StatelessWidget {
                 Expanded(
                   child: _HeroAction(
                     label: 'Nạp Đá',
-                    icon: FIcons.plus,
+                    icon: FLucideIcons.plus,
                     background: colors.primary,
                     foreground: colors.primaryForeground,
                     onTap: () => const WalletTopupRoute().push(context),
@@ -356,7 +356,7 @@ class _IntroLink extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: const Icon(
-                FIcons.info,
+                FLucideIcons.info,
                 size: 18,
                 color: Color(0xFF3090F2),
               ),
@@ -390,7 +390,7 @@ class _IntroLink extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(FIcons.chevronRight, size: 18, color: colors.mutedForeground),
+            Icon(FLucideIcons.chevronRight, size: 18, color: colors.mutedForeground),
           ],
         ),
       ),
@@ -444,7 +444,7 @@ class _RecentEntry {
       badgeColor: const Color(0xFFF97316),
       badgeBg: const Color(0x1FF97316),
       glyphBuilder: (ctx) =>
-          const Icon(FIcons.arrowDown, size: 14, color: Color(0xFF959D54)),
+          const Icon(FLucideIcons.arrowDown, size: 14, color: Color(0xFF959D54)),
       date: p.date,
       time: p.time,
     );
@@ -465,7 +465,7 @@ class _RecentEntry {
       glyphBuilder: (ctx) {
         if (isRefund) {
           return const Icon(
-            FIcons.arrowDown,
+            FLucideIcons.arrowDown,
             size: 14,
             color: Color(0xFF959D54),
           );

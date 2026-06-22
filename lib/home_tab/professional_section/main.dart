@@ -143,7 +143,7 @@ class _SectionState extends State<_Section> {
     // icon and text bounding boxes are the same size — center alignment
     // in the Row then produces actual visual centering instead of
     // sitting both items on the line's baseline.
-    final titleStyle = context.theme.typography.xl2.copyWith(
+    final titleStyle = context.theme.typography.body.xl2.copyWith(
       fontWeight: FontWeight.bold,
       height: 1.0,
     );
@@ -167,7 +167,7 @@ class _SectionState extends State<_Section> {
                     Text(widget.title, style: titleStyle),
                     const SizedBox(width: 4),
                     Icon(
-                      FIcons.chevronRight,
+                      FLucideIcons.chevronRight,
                       size: titleStyle.fontSize,
                       color: colors.mutedForeground,
                     ),
@@ -186,7 +186,7 @@ class _SectionState extends State<_Section> {
             child: Text(
               'homeTab.professional.empty.message'.tr(),
               textAlign: TextAlign.center,
-              style: context.theme.typography.sm.copyWith(
+              style: context.theme.typography.body.sm.copyWith(
                 color: colors.mutedForeground,
               ),
             ),
@@ -303,7 +303,7 @@ class _ProfessionalCard extends StatelessWidget {
                       child: Text(
                         _initials,
                         style: TextStyle(
-                          fontFamily: context.theme.typography.xl2.fontFamily,
+                          fontFamily: context.theme.typography.body.xl2.fontFamily,
                           fontSize: 30,
                           fontWeight: FontWeight.w700,
                           color: colors.primaryForeground,
@@ -322,7 +322,7 @@ class _ProfessionalCard extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            FIcons.badgeCheck,
+                            FLucideIcons.badgeCheck,
                             size: 20,
                             color: pbBlue,
                           ),
@@ -335,7 +335,7 @@ class _ProfessionalCard extends StatelessWidget {
               // Name
               Text(
                 item.displayName,
-                style: context.theme.typography.sm.copyWith(
+                style: context.theme.typography.body.sm.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
                 textAlign: TextAlign.center,
@@ -355,14 +355,14 @@ class _ProfessionalCard extends StatelessWidget {
                   const SizedBox(width: 2),
                   Text(
                     item.averageRating.toStringAsFixed(1),
-                    style: context.theme.typography.sm.copyWith(
+                    style: context.theme.typography.body.sm.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '(${item.reviewCount})',
-                    style: context.theme.typography.xs.copyWith(
+                    style: context.theme.typography.body.xs.copyWith(
                       color: colors.mutedForeground,
                     ),
                   ),
@@ -376,7 +376,7 @@ class _ProfessionalCard extends StatelessWidget {
                   item.bio == null || item.bio!.isEmpty
                       ? ''
                       : '"${item.bio!}"',
-                  style: context.theme.typography.sm.copyWith(
+                  style: context.theme.typography.body.sm.copyWith(
                     color: colors.mutedForeground,
                     fontStyle: FontStyle.italic,
                     height: 1.4,
@@ -437,7 +437,7 @@ class _ProfessionalSheetState extends State<_ProfessionalSheet> {
               Expanded(
                 child: Text(
                   widget.title,
-                  style: context.theme.typography.xl2.copyWith(
+                  style: context.theme.typography.body.xl2.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -445,7 +445,7 @@ class _ProfessionalSheetState extends State<_ProfessionalSheet> {
               FButton.icon(
                 variant: .ghost,
                 onPress: () => Navigator.of(context).pop(),
-                child: const Icon(FIcons.x),
+                child: const Icon(FLucideIcons.x),
               ),
             ],
           ),
@@ -512,7 +512,7 @@ class _SheetRow extends StatelessWidget {
                     child: Text(
                       _initials,
                       style: TextStyle(
-                        fontFamily: context.theme.typography.xl2.fontFamily,
+                        fontFamily: context.theme.typography.body.xl2.fontFamily,
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
                         color: colors.primaryForeground,
@@ -531,7 +531,7 @@ class _SheetRow extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          FIcons.badgeCheck,
+                          FLucideIcons.badgeCheck,
                           size: 18,
                           color: pbBlue,
                         ),
@@ -546,7 +546,7 @@ class _SheetRow extends StatelessWidget {
                   children: [
                     Text(
                       item.displayName,
-                      style: context.theme.typography.lg.copyWith(
+                      style: context.theme.typography.body.lg.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
@@ -567,14 +567,14 @@ class _SheetRow extends StatelessWidget {
                             const SizedBox(width: 2),
                             Text(
                               item.averageRating.toStringAsFixed(1),
-                              style: context.theme.typography.sm.copyWith(
+                              style: context.theme.typography.body.sm.copyWith(
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '(${item.reviewCount} đánh giá)',
-                              style: context.theme.typography.sm.copyWith(
+                              style: context.theme.typography.body.sm.copyWith(
                                 color: colors.mutedForeground,
                               ),
                             ),
@@ -585,14 +585,14 @@ class _SheetRow extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                FIcons.briefcaseBusiness,
+                                FLucideIcons.briefcaseBusiness,
                                 size: 13,
                                 color: colors.mutedForeground,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '${item.experienceYears} năm kinh nghiệm',
-                                style: context.theme.typography.sm.copyWith(
+                                style: context.theme.typography.body.sm.copyWith(
                                   color: colors.mutedForeground,
                                 ),
                               ),
@@ -624,10 +624,10 @@ class _SheetRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   spacing: 4,
                   children: [
-                    Icon(FIcons.badgeCheck, size: 12, color: pbBlue),
+                    Icon(FLucideIcons.badgeCheck, size: 12, color: pbBlue),
                     Text(
                       'Đã xác minh',
-                      style: context.theme.typography.xs.copyWith(
+                      style: context.theme.typography.body.xs.copyWith(
                         color: pbBlue,
                         fontWeight: FontWeight.w600,
                       ),
@@ -643,7 +643,7 @@ class _SheetRow extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Môn',
-              style: context.theme.typography.xs.copyWith(
+              style: context.theme.typography.body.xs.copyWith(
                 color: colors.mutedForeground,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.5,
@@ -669,7 +669,7 @@ class _SheetRow extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Giới thiệu',
-              style: context.theme.typography.xs.copyWith(
+              style: context.theme.typography.body.xs.copyWith(
                 color: colors.mutedForeground,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.5,
@@ -678,7 +678,7 @@ class _SheetRow extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               item.bio!,
-              style: context.theme.typography.sm.copyWith(
+              style: context.theme.typography.body.sm.copyWith(
                 color: colors.foreground,
                 height: 1.5,
               ),
@@ -732,7 +732,7 @@ class _SportChip extends StatelessWidget {
           sport.getIcon(size: 12),
           Text(
             sport.getLocalizedName(context),
-            style: context.theme.typography.xs.copyWith(
+            style: context.theme.typography.body.xs.copyWith(
               color: colors.secondaryForeground,
               fontWeight: FontWeight.w600,
             ),

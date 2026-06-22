@@ -207,7 +207,7 @@ class NotificationService {
             Text(
               'Cho phép thông báo để biết khi nào hoạt động được chốt và '
               'khi sắp tới giờ tập với coach.',
-              style: typography.md,
+              style: typography.body.md,
             ),
             const SizedBox(height: 24),
             FButton(

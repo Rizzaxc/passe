@@ -1,10 +1,12 @@
 import 'dart:io';
+
 import 'package:avatar_plus/avatar_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../auth/auth_controller.dart';
 import '../core/model/enum.dart';
 import '../core/model/user_details.dart';
@@ -18,8 +20,8 @@ import 'change_password_screen.dart';
 import 'change_username_screen.dart';
 import 'guest_profile_view.dart';
 import 'industry_selection_screen.dart';
-import 'network_selection_screen.dart';
 import 'location_selection_screen.dart';
+import 'network_selection_screen.dart';
 import 'playtime_selection_screen.dart';
 import 'profile_controller.dart';
 import 'sport_profile/sport_profile_controller.dart';
@@ -118,7 +120,7 @@ class ProfileTab extends ConsumerWidget {
                       if (!context.mounted) return;
                       showFToast(
                         context: context,
-                        icon: const Icon(FIcons.circleX),
+                        icon: const Icon(FLucideIcons.circleX),
                         variant: .destructive,
                         title: Text('error'.tr()),
                         description: Text('errorGeneric'.tr()),
@@ -185,7 +187,7 @@ class ProfileTab extends ConsumerWidget {
                       .read(profileControllerProvider.notifier)
                       .removeAvatar(),
                   variant: .ghost,
-                  child: const Icon(FIcons.trash),
+                  child: const Icon(FLucideIcons.trash),
                 )
               else
                 FButton.icon(
@@ -193,7 +195,7 @@ class ProfileTab extends ConsumerWidget {
                       .read(profileControllerProvider.notifier)
                       .randomizeAvatar(),
                   variant: .ghost,
-                  child: const Icon(FIcons.shuffle),
+                  child: const Icon(FLucideIcons.shuffle),
                 ),
               const SizedBox(width: 12),
               FButton.icon(
@@ -204,7 +206,7 @@ class ProfileTab extends ConsumerWidget {
                     if (!context.mounted) return;
                     showFToast(
                       context: context,
-                      icon: const Icon(FIcons.circleX),
+                      icon: const Icon(FLucideIcons.circleX),
                       variant: .destructive,
                       title: Text('profile.uploadFailed'.tr()),
                       alignment: .bottomCenter,
@@ -212,7 +214,7 @@ class ProfileTab extends ConsumerWidget {
                   }
                 },
                 variant: .ghost,
-                child: const Icon(FIcons.camera),
+                child: const Icon(FLucideIcons.camera),
               ),
             ],
           ),
@@ -258,7 +260,7 @@ class ProfileTab extends ConsumerWidget {
           onPress: () {
             showFToast(
               context: context,
-              icon: const Icon(FIcons.logOut),
+              icon: const Icon(FLucideIcons.logOut),
               title: Text('profile.confirmLogout'.tr()),
               duration: const Duration(milliseconds: 1500),
               alignment: .bottomCenter,
@@ -270,7 +272,7 @@ class ProfileTab extends ConsumerWidget {
             'profile.logout'.tr(),
             style: TextStyle(color: context.theme.colors.destructive),
           ),
-          details: Icon(FIcons.logOut, color: context.theme.colors.destructive),
+          details: Icon(FLucideIcons.logOut, color: context.theme.colors.destructive),
         ),
       ],
     );
@@ -283,8 +285,8 @@ class ProfileTab extends ConsumerWidget {
   ) {
     final genderSuffix = () {
       if (details.gender == null) return null;
-      if (details.gender == Gender.male) return FIcons.mars;
-      return FIcons.venus;
+      if (details.gender == Gender.male) return FLucideIcons.mars;
+      return FLucideIcons.venus;
     }();
 
     return FTileGroup(
@@ -335,7 +337,7 @@ class ProfileTab extends ConsumerWidget {
         FTile(
           title: Text('profile.location'.tr()),
           details: _isLocationSet(details)
-              ? const Icon(FIcons.chevronRight)
+              ? const Icon(FLucideIcons.chevronRight)
               : Text(
                   'notSet'.tr(),
                   style: TextStyle(
@@ -351,7 +353,7 @@ class ProfileTab extends ConsumerWidget {
         FTile(
           title: Text('profile.playtime'.tr()),
           details: (details.playtime != null && details.playtime!.isNotEmpty)
-              ? const Icon(FIcons.chevronRight)
+              ? const Icon(FLucideIcons.chevronRight)
               : Text(
                   'notSet'.tr(),
                   style: TextStyle(color: context.theme.colors.mutedForeground),
@@ -394,7 +396,7 @@ class ProfileTab extends ConsumerWidget {
           label: Text('profile.industryAndNetworkLabel'.tr()),
           children: [
             FTile(
-              prefix: Icon(FIcons.briefcaseBusiness),
+              prefix: Icon(FLucideIcons.briefcaseBusiness),
               title: industryRowTitle,
               suffix: profileState.industries.isEmpty
                   ? Text(
@@ -411,7 +413,7 @@ class ProfileTab extends ConsumerWidget {
               ),
             ),
             FTile(
-              prefix: Icon(FIcons.network),
+              prefix: Icon(FLucideIcons.network),
               title: networkRowTitle,
               suffix: profileState.networks.isEmpty
                   ? Text(
@@ -443,7 +445,7 @@ class ProfileTab extends ConsumerWidget {
         FTile(
           prefix: sport.getIcon(size: 8),
           title: Text('profile.sportProfile'.tr(args: [sportName])),
-          suffix: const Icon(FIcons.chevronRight),
+          suffix: const Icon(FLucideIcons.chevronRight),
           onPress: () => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => const SportProfileScreen(),

@@ -60,7 +60,7 @@ class LobbyFeedCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         item.name,
-                        style: context.theme.typography.sm.copyWith(
+                        style: context.theme.typography.body.sm.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                         maxLines: 2,
@@ -77,7 +77,7 @@ class LobbyFeedCard extends StatelessWidget {
                         children: [
                           Text(
                             '${item.memberCount}',
-                            style: context.theme.typography.lg.copyWith(
+                            style: context.theme.typography.body.lg.copyWith(
                               fontWeight: FontWeight.w700,
                               color: colors.primary,
                               height: 1,
@@ -85,7 +85,7 @@ class LobbyFeedCard extends StatelessWidget {
                           ),
                           Text(
                             'thành viên',
-                            style: context.theme.typography.xs.copyWith(
+                            style: context.theme.typography.body.xs.copyWith(
                               color: colors.mutedForeground,
                             ),
                           ),
@@ -110,14 +110,14 @@ class LobbyFeedCard extends StatelessWidget {
                               spacing: 3,
                               children: [
                                 Icon(
-                                  FIcons.mapPin,
+                                  FLucideIcons.mapPin,
                                   size: 11,
                                   color: colors.mutedForeground,
                                 ),
                                 Expanded(
                                   child: Text(
                                     item.homegroundName!,
-                                    style: context.theme.typography.xs.copyWith(
+                                    style: context.theme.typography.body.xs.copyWith(
                                       color: colors.mutedForeground,
                                       fontSize: 11,
                                     ),
@@ -161,7 +161,7 @@ class LobbyFeedCard extends StatelessWidget {
                                 Text(
                                   'FitScore',
                                   style: TextStyle(
-                                    fontFamily: context.theme.typography.xs.fontFamily,
+                                    fontFamily: context.theme.typography.body.xs.fontFamily,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                     color: colors.mutedForeground,
@@ -180,7 +180,7 @@ class LobbyFeedCard extends StatelessWidget {
                                 Text(
                                   'homeTab.challenger.mmr'.tr(),
                                   style: TextStyle(
-                                    fontFamily: context.theme.typography.xs.fontFamily,
+                                    fontFamily: context.theme.typography.body.xs.fontFamily,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                     color: colors.mutedForeground,
@@ -189,7 +189,7 @@ class LobbyFeedCard extends StatelessWidget {
                                 ),
                                 Text(
                                   '${item.lobbyMmr}',
-                                  style: context.theme.typography.xs.copyWith(
+                                  style: context.theme.typography.body.xs.copyWith(
                                     fontWeight: FontWeight.w700,
                                     color: colors.foreground,
                                   ),
@@ -250,7 +250,7 @@ class _ScoreBadge extends StatelessWidget {
           Text(
             score.toStringAsFixed(1),
             style: TextStyle(
-              fontFamily: context.theme.typography.xs.fontFamily,
+              fontFamily: context.theme.typography.body.xs.fontFamily,
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: scoreFg,
@@ -261,7 +261,7 @@ class _ScoreBadge extends StatelessWidget {
           Text(
             '/ 5',
             style: TextStyle(
-              fontFamily: context.theme.typography.xs.fontFamily,
+              fontFamily: context.theme.typography.body.xs.fontFamily,
               fontSize: 8,
               fontWeight: FontWeight.w500,
               color: scoreFg.withValues(alpha: 0.85),
@@ -297,7 +297,7 @@ class _FavorabilityBadge extends StatelessWidget {
       child: Text(
         favorability.getLocalizedName(context),
         style: TextStyle(
-          fontFamily: context.theme.typography.xs.fontFamily,
+          fontFamily: context.theme.typography.body.xs.fontFamily,
           fontSize: 9,
           fontWeight: FontWeight.w700,
           color: fg,
@@ -321,13 +321,13 @@ class _FitScoreVibes extends StatelessWidget {
     // Each real factor code → (label, icon, foreground). The chip background is
     // the foreground at 8% opacity. Unknown codes are skipped.
     (String, IconData, Color)? specFor(String code) => switch (code) {
-          'skill' => ('Trình độ phù hợp', FIcons.trophy, const Color(0xFFD97706)),
-          'network' => ('Chung mạng lưới', FIcons.users, const Color(0xFF059669)),
-          'industry' => ('Cùng ngành nghề', FIcons.briefcase, const Color(0xFF0D9488)),
-          'age' => ('Cùng nhóm tuổi', FIcons.cake, const Color(0xFF7C3AED)),
-          'gender' => ('Thân thiện với nữ', FIcons.venus, const Color(0xFFDB2777)),
-          'playtime' => ('Lịch chơi khớp', FIcons.calendar, pbBlue),
-          'location' => ('Vị trí thuận tiện', FIcons.mapPin, colors.primary),
+          'skill' => ('Trình độ phù hợp', FLucideIcons.trophy, const Color(0xFFD97706)),
+          'network' => ('Chung mạng lưới', FLucideIcons.users, const Color(0xFF059669)),
+          'industry' => ('Cùng ngành nghề', FLucideIcons.briefcase, const Color(0xFF0D9488)),
+          'age' => ('Cùng nhóm tuổi', FLucideIcons.cake, const Color(0xFF7C3AED)),
+          'gender' => ('Thân thiện với nữ', FLucideIcons.venus, const Color(0xFFDB2777)),
+          'playtime' => ('Lịch chơi khớp', FLucideIcons.calendar, pbBlue),
+          'location' => ('Vị trí thuận tiện', FLucideIcons.mapPin, colors.primary),
           _ => null,
         };
 
@@ -351,7 +351,7 @@ class _FitScoreVibes extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontFamily: context.theme.typography.xs.fontFamily,
+                  fontFamily: context.theme.typography.body.xs.fontFamily,
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
                   color: fg,
@@ -393,7 +393,7 @@ class _TimeslotChip extends StatelessWidget {
             ),
             Text(
               label,
-              style: context.theme.typography.xs.copyWith(
+              style: context.theme.typography.body.xs.copyWith(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
                 color: pbBlue,

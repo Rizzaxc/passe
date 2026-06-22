@@ -34,7 +34,7 @@ class ChallengerSubtab extends ConsumerWidget {
                 children: [
                   PEmptySectionPlaceholder(
                     hero: Icon(
-                      FIcons.searchX,
+                      FLucideIcons.searchX,
                       size: 64,
                       color: context.theme.colors.mutedForeground,
                     ),
@@ -49,7 +49,7 @@ class ChallengerSubtab extends ConsumerWidget {
                       children: [
                         PEmptySectionPlaceholder(
                           hero: Icon(
-                            FIcons.searchX,
+                            FLucideIcons.searchX,
                             size: 64,
                             color: context.theme.colors.mutedForeground,
                           ),

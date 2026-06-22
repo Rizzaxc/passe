@@ -41,7 +41,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       if (!mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleCheck),
+        icon: const Icon(FLucideIcons.circleCheck),
         title: Text('auth.resetCodeSent'.tr()),
         description: Text('auth.resetCodeSentDescription'.tr()),
         alignment: .bottomCenter,
@@ -52,7 +52,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       if (!mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleX),
+        icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
         title: Text('auth.resetFailed'.tr()),
         description: Text('auth.resetEmailFailed'.tr()),
@@ -87,7 +87,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             children: [
               Text(
                 'auth.forgotPasswordInstruction'.tr(),
-                style: context.theme.typography.sm.copyWith(
+                style: context.theme.typography.body.sm.copyWith(
                   color: context.theme.colors.mutedForeground,
                 ),
               ),

@@ -21,7 +21,7 @@ class LobbySubtab extends ConsumerWidget {
       if (next is AsyncError && context.mounted) {
         showFToast(
           context: context,
-          icon: const Icon(FIcons.circleX),
+          icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
           title: Text('error'.tr()),
           description: Text('errorGeneric'.tr()),
@@ -38,7 +38,7 @@ class LobbySubtab extends ConsumerWidget {
             variant: .ghost,
             onPress: () =>
                 showLobbyFormSheet(context: context, ref: ref, lobbyId: null),
-            child: const Icon(FIcons.plus),
+            child: const Icon(FLucideIcons.plus),
           ),
         ),
         Expanded(
@@ -48,7 +48,7 @@ class LobbySubtab extends ConsumerWidget {
             data: (lobbies) => lobbies.isEmpty
                 ? PEmptySectionPlaceholder(
                     hero: Icon(
-                      FIcons.users,
+                      FLucideIcons.users,
                       size: 64,
                       color: context.theme.colors.mutedForeground,
                     ),
@@ -131,7 +131,7 @@ class _LobbyCard extends ConsumerWidget {
                         child: Text(
                           initial,
                           style: TextStyle(
-                            fontFamily: context.theme.typography.xl2.fontFamily,
+                            fontFamily: context.theme.typography.body.xl2.fontFamily,
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
                             color: colors.primary,
@@ -155,7 +155,7 @@ class _LobbyCard extends ConsumerWidget {
                                       Flexible(
                                         child: Text(
                                           lobby.name,
-                                          style: context.theme.typography.sm
+                                          style: context.theme.typography.body.sm
                                               .copyWith(
                                                 fontWeight: FontWeight.w600,
                                                 color: colors.primary,
@@ -167,7 +167,7 @@ class _LobbyCard extends ConsumerWidget {
                                       ),
                                       if (isLeader)
                                         Icon(
-                                          FIcons.crown,
+                                          FLucideIcons.crown,
                                           size: 13,
                                           color: colors.mutedForeground,
                                         ),
@@ -181,7 +181,7 @@ class _LobbyCard extends ConsumerWidget {
                                   children: [
                                     Text(
                                       '${item.memberCount}',
-                                      style: context.theme.typography.lg
+                                      style: context.theme.typography.body.lg
                                           .copyWith(
                                             fontWeight: FontWeight.w700,
                                             color: colors.primary,
@@ -193,7 +193,7 @@ class _LobbyCard extends ConsumerWidget {
                                       'thành viên',
                                       style: TextStyle(
                                         fontFamily: context
-                                            .theme.typography.xs.fontFamily,
+                                            .theme.typography.body.xs.fontFamily,
                                         fontSize: 10,
                                         fontWeight: FontWeight.w500,
                                         color: colors.mutedForeground,
@@ -211,14 +211,14 @@ class _LobbyCard extends ConsumerWidget {
                                 spacing: 4,
                                 children: [
                                   Icon(
-                                    FIcons.mapPin,
+                                    FLucideIcons.mapPin,
                                     size: 12,
                                     color: colors.mutedForeground,
                                   ),
                                   Flexible(
                                     child: Text(
                                       item.homeGroundName!,
-                                      style: context.theme.typography.xs
+                                      style: context.theme.typography.body.xs
                                           .copyWith(
                                             color: colors.mutedForeground,
                                           ),
@@ -242,7 +242,7 @@ class _LobbyCard extends ConsumerWidget {
                       // Activity state
                       if (item.nextActivity != null) ...[
                         Icon(
-                          FIcons.calendar,
+                          FLucideIcons.calendar,
                           size: 12,
                           color: colors.mutedForeground,
                         ),
@@ -254,7 +254,7 @@ class _LobbyCard extends ConsumerWidget {
                             ),
                             style: TextStyle(
                               fontFamily:
-                                  context.theme.typography.xs.fontFamily,
+                                  context.theme.typography.body.xs.fontFamily,
                               fontSize: 11,
                               color: colors.mutedForeground,
                               height: 1.2,
@@ -269,7 +269,7 @@ class _LobbyCard extends ConsumerWidget {
                             'lobby.noActivity'.tr(),
                             style: TextStyle(
                               fontFamily:
-                                  context.theme.typography.xs.fontFamily,
+                                  context.theme.typography.body.xs.fontFamily,
                               fontSize: 11,
                               fontStyle: FontStyle.italic,
                               color: colors.mutedForeground,
@@ -285,7 +285,7 @@ class _LobbyCard extends ConsumerWidget {
                           onPress: () =>
                               showFToast(context: context, title: Text('TODO')),
                           child: Icon(
-                            FIcons.calendarPlus,
+                            FLucideIcons.calendarPlus,
                             size: 16,
                             color: pbBlue,
                           ),
@@ -301,7 +301,7 @@ class _LobbyCard extends ConsumerWidget {
                                 if (!context.mounted) return;
                                 showFToast(
                                   context: context,
-                                  icon: const Icon(FIcons.info),
+                                  icon: const Icon(FLucideIcons.info),
                                   title: Text('lobby.searchIDCopied'.tr()),
                                   description: Text(
                                     'lobby.searchIDExplanation'.tr(),
@@ -310,13 +310,13 @@ class _LobbyCard extends ConsumerWidget {
                                 );
                               }
                             : null,
-                        child: Icon(FIcons.copy, size: 16, color: pbBlue),
+                        child: Icon(FLucideIcons.copy, size: 16, color: pbBlue),
                       ),
                       FButton.icon(
                         size: .xs,
                         variant: .ghost,
                         onPress: null,
-                        child: Icon(FIcons.userPlus, size: 16, color: pbBlue),
+                        child: Icon(FLucideIcons.userPlus, size: 16, color: pbBlue),
                       ),
                     ],
                   ),

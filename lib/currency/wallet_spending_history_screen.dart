@@ -197,7 +197,7 @@ class _SpendRow extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: isRefund
-                  ? const Icon(FIcons.arrowDown, size: 14, color: _green)
+                  ? const Icon(FLucideIcons.arrowDown, size: 14, color: _green)
                   : SpendKindGlyph(
                       kind: s.kind,
                       color: colors.secondaryForeground,

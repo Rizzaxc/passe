@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# Apply targeted dart fixes to STAGED Dart files only, then re-stage them.
+#
+# Tracked hook — activated by pointing git at this dir:
+#   git config core.hooksPath .githooks   (run `sh tool/install-git-hooks.sh`)
+#
+# Why per-file: `dart fix --apply` defaults to the whole project, so a naive
+# hook would rewrite (and `git add`) files that aren't part of this commit.
+# `dart fix` only accepts ONE target per run, so we loop over the staged files.
+
+STAGED_DART=$(git diff --cached --name-only --diff-filter=ACM | grep '\.dart$')
+
+if [ -z "$STAGED_DART" ]; then
+  exit 0
+fi
+
+echo "$STAGED_DART" | while IFS= read -r file; do
+  # Skip files staged-then-deleted on disk; dart fix would error on them.
+  [ -f "$file" ] || continue
+  dart fix --apply --code=directives_ordering,unnecessary_import "$file" >/dev/null 2>&1
+  # Re-stage this file in case dart fix modified it.
+  git add -- "$file"
+done
+
+exit 0

@@ -76,7 +76,7 @@ class _InviteChallengeSheetState
     if (searchId.isEmpty) {
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleAlert),
+        icon: const Icon(FLucideIcons.circleAlert),
         variant: .destructive,
         title: const Text('Nhập SearchID của lobby muốn thách đấu'),
         alignment: .bottomCenter,
@@ -99,7 +99,7 @@ class _InviteChallengeSheetState
     Navigator.of(context).pop();
     showFToast(
       context: context,
-      icon: const Icon(FIcons.flag),
+      icon: const Icon(FLucideIcons.flag),
       title: const Text('Đã gửi lời thách đấu'),
       alignment: .bottomCenter,
     );
@@ -123,7 +123,7 @@ class _InviteChallengeSheetState
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),
-              child: const Icon(FIcons.x),
+              child: const Icon(FLucideIcons.x),
             ),
           ),
 
@@ -150,13 +150,13 @@ class _InviteChallengeSheetState
               ),
               child: Row(
                 children: [
-                  Icon(FIcons.calendar,
+                  Icon(FLucideIcons.calendar,
                       size: 18, color: colors.secondaryForeground),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Đề xuất thời gian',
-                      style: context.theme.typography.sm
+                      style: context.theme.typography.body.sm
                           .copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
@@ -164,7 +164,7 @@ class _InviteChallengeSheetState
                     _proposedAt == null
                         ? 'Để đối thủ chọn'
                         : _fmtDateTime(_proposedAt!),
-                    style: context.theme.typography.sm.copyWith(
+                    style: context.theme.typography.body.sm.copyWith(
                       color: _proposedAt == null
                           ? colors.mutedForeground
                           : colors.secondaryForeground,
@@ -172,7 +172,7 @@ class _InviteChallengeSheetState
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Icon(FIcons.chevronRight,
+                  Icon(FLucideIcons.chevronRight,
                       size: 16, color: colors.mutedForeground),
                 ],
               ),

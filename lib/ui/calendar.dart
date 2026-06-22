@@ -103,7 +103,7 @@ class _PCalendarTile extends StatelessWidget {
           children: [
             Text(
               'timeslot.dayOfWeek.shortName.$weekdayKey'.tr(),
-              style: typography.xs.copyWith(
+              style: typography.body.xs.copyWith(
                 color: isSelected ? colors.primaryForeground : colors.mutedForeground,
                 fontWeight: FontWeight.w500,
               ),
@@ -111,7 +111,7 @@ class _PCalendarTile extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               date.day.toString(),
-              style: typography.xl.copyWith(
+              style: typography.body.xl.copyWith(
                 color: isSelected ? colors.primaryForeground : colors.primary,
                 fontWeight: FontWeight.w500,
                 decoration: isToday ? TextDecoration.underline : null,

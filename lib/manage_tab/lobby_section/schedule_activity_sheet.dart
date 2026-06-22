@@ -194,7 +194,7 @@ class _ScheduleActivitySheetState
     if (_prepaymentRequired && (amount == null || amount <= 0)) {
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleAlert),
+        icon: const Icon(FLucideIcons.circleAlert),
         variant: .destructive,
         title: const Text('Số tiền đặt cọc không hợp lệ'),
         alignment: .bottomCenter,
@@ -224,7 +224,7 @@ class _ScheduleActivitySheetState
     Navigator.of(context).pop();
     showFToast(
       context: context,
-      icon: const Icon(FIcons.check),
+      icon: const Icon(FLucideIcons.check),
       title: const Text('Đã lên lịch buổi chơi'),
       alignment: .bottomCenter,
     );
@@ -262,7 +262,7 @@ class _ScheduleActivitySheetState
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),
-              child: const Icon(FIcons.x),
+              child: const Icon(FLucideIcons.x),
             ),
           ),
 
@@ -271,19 +271,19 @@ class _ScheduleActivitySheetState
             label: 'Khi nào & ở đâu',
             children: [
               _PickerRow(
-                icon: FIcons.calendar,
+                icon: FLucideIcons.calendar,
                 label: 'Ngày',
                 value: _fmtDate(_date),
                 onTap: _pickDate,
               ),
               _PickerRow(
-                icon: FIcons.clock,
+                icon: FLucideIcons.clock,
                 label: 'Bắt đầu',
                 value: _fmtTime(_start),
                 onTap: _pickStart,
               ),
               _PickerRow(
-                icon: FIcons.clock,
+                icon: FLucideIcons.clock,
                 label: 'Kết thúc',
                 value: _fmtTime(_end),
                 onTap: _pickEnd,
@@ -294,7 +294,7 @@ class _ScheduleActivitySheetState
                 // No outer label — the "Khi nào & ở đâu" section title
                 // above already says what this field is for. The pin
                 // icon inside the field carries the visual cue.
-                prefixIcon: FIcons.mapPin,
+                prefixIcon: FLucideIcons.mapPin,
                 onChanged: (id) => setState(() {
                   _locationId = id.isEmpty ? null : id;
                 }),
@@ -308,7 +308,7 @@ class _ScheduleActivitySheetState
                 }),
               ),
               _SwitchRow(
-                icon: FIcons.repeat,
+                icon: FLucideIcons.repeat,
                 label: 'Lặp lại hằng tuần',
                 sub: _recurring
                     ? 'Vào ${_weekdayLong(_date.weekday)} hằng tuần'
@@ -324,7 +324,7 @@ class _ScheduleActivitySheetState
             label: 'Đặt cọc',
             children: [
               _SwitchRow(
-                icon: FIcons.wallet,
+                icon: FLucideIcons.wallet,
                 label: 'Yêu cầu đặt cọc trước',
                 sub: _prepaymentRequired
                     ? 'Thành viên phải đặt cọc để xác nhận'
@@ -383,7 +383,7 @@ class _ScheduleActivitySheetState
             'Mọi thành viên sẽ thấy buổi này ở Hoạt động và '
             '${_prepaymentRequired ? "phải đặt cọc" : "có thể xác nhận"} '
             'để tham gia.',
-            style: context.theme.typography.sm
+            style: context.theme.typography.body.sm
                 .copyWith(color: colors.mutedForeground),
           ),
         ],
@@ -474,14 +474,14 @@ class _PickerRow extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: context.theme.typography.sm
+                style: context.theme.typography.body.sm
                     .copyWith(fontWeight: FontWeight.w600),
               ),
             ),
             Flexible(
               child: Text(
                 value,
-                style: context.theme.typography.sm.copyWith(
+                style: context.theme.typography.body.sm.copyWith(
                   color: colors.secondaryForeground,
                   fontWeight: FontWeight.w700,
                 ),
@@ -490,7 +490,7 @@ class _PickerRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            Icon(FIcons.chevronRight, size: 16, color: colors.mutedForeground),
+            Icon(FLucideIcons.chevronRight, size: 16, color: colors.mutedForeground),
           ],
         ),
       ),
@@ -534,14 +534,14 @@ class _SwitchRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: context.theme.typography.sm
+                  style: context.theme.typography.body.sm
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
                 if (sub != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     sub!,
-                    style: context.theme.typography.xs
+                    style: context.theme.typography.body.xs
                         .copyWith(color: colors.mutedForeground),
                   ),
                 ],
@@ -619,7 +619,7 @@ class _PaymentTypeOption extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             label,
-            style: context.theme.typography.sm.copyWith(
+            style: context.theme.typography.body.sm.copyWith(
               fontWeight: FontWeight.w700,
               color:
                   active ? colors.primaryForeground : colors.secondaryForeground,
@@ -655,7 +655,7 @@ class _AmountRow extends StatelessWidget {
           padding: const EdgeInsets.only(top: 24),
           child: Text(
             suffix,
-            style: context.theme.typography.sm.copyWith(
+            style: context.theme.typography.body.sm.copyWith(
               fontWeight: FontWeight.w700,
               color: colors.secondaryForeground,
             ),
@@ -684,7 +684,7 @@ class _ThresholdRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(FIcons.users, size: 18, color: colors.secondaryForeground),
+          Icon(FLucideIcons.users, size: 18, color: colors.secondaryForeground),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -693,19 +693,19 @@ class _ThresholdRow extends StatelessWidget {
               children: [
                 Text(
                   'Ngưỡng xác nhận',
-                  style: context.theme.typography.sm
+                  style: context.theme.typography.body.sm
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
                 Text(
                   'Buổi chơi chính thức khi đủ số người',
-                  style: context.theme.typography.xs
+                  style: context.theme.typography.body.xs
                       .copyWith(color: colors.mutedForeground),
                 ),
               ],
             ),
           ),
           _StepperButton(
-            icon: FIcons.minus,
+            icon: FLucideIcons.minus,
             onTap: value > 2 ? () => onChanged(value - 1) : null,
           ),
           SizedBox(
@@ -713,14 +713,14 @@ class _ThresholdRow extends StatelessWidget {
             child: Text(
               '$value',
               textAlign: TextAlign.center,
-              style: context.theme.typography.lg.copyWith(
+              style: context.theme.typography.body.lg.copyWith(
                 fontWeight: FontWeight.w800,
                 color: colors.foreground,
               ),
             ),
           ),
           _StepperButton(
-            icon: FIcons.plus,
+            icon: FLucideIcons.plus,
             onTap: value < 30 ? () => onChanged(value + 1) : null,
           ),
         ],
@@ -791,7 +791,7 @@ class _DeadlineRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(FIcons.alarmClock, size: 18, color: colors.secondaryForeground),
+          Icon(FLucideIcons.alarmClock, size: 18, color: colors.secondaryForeground),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -800,12 +800,12 @@ class _DeadlineRow extends StatelessWidget {
               children: [
                 Text(
                   'Hạn chót xác nhận',
-                  style: context.theme.typography.sm
+                  style: context.theme.typography.body.sm
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
                 Text(
                   sub,
-                  style: context.theme.typography.xs
+                  style: context.theme.typography.body.xs
                       .copyWith(color: colors.mutedForeground),
                 ),
               ],

@@ -43,7 +43,7 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
       if (!mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleX),
+        icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
         title: Text('profile.usernameTaken'.tr()),
         alignment: .bottomCenter,
@@ -52,7 +52,7 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
       if (!mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleX),
+        icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
         title: Text('error'.tr()),
         description: Text('errorGeneric'.tr()),
@@ -95,7 +95,7 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Text(
                     '#$tag',
-                    style: context.theme.typography.sm.copyWith(
+                    style: context.theme.typography.body.sm.copyWith(
                       color: context.theme.colors.mutedForeground,
                     ),
                   ),
@@ -120,7 +120,7 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Text(
                     '#$tag',
-                    style: context.theme.typography.sm.copyWith(
+                    style: context.theme.typography.body.sm.copyWith(
                       color: context.theme.colors.mutedForeground,
                     ),
                   ),

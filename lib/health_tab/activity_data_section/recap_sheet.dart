@@ -40,7 +40,7 @@ class _RecapSheet extends ConsumerWidget {
           if (row.locationLabel != null)
             Text(
               row.locationLabel!,
-              style: context.theme.typography.sm.copyWith(color: colors.mutedForeground),
+              style: context.theme.typography.body.sm.copyWith(color: colors.mutedForeground),
             ),
 
           // Headline metrics (max-HR-independent).
@@ -98,7 +98,7 @@ class _Stat extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontFamily: context.theme.typography.xl.fontFamily,
+            fontFamily: context.theme.typography.body.xl.fontFamily,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: colors.foreground,
@@ -107,7 +107,7 @@ class _Stat extends StatelessWidget {
         ),
         Text(
           label.toUpperCase(),
-          style: context.theme.typography.xs.copyWith(
+          style: context.theme.typography.body.xs.copyWith(
             color: colors.mutedForeground,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.4,
@@ -134,7 +134,7 @@ class _HrCurveCard extends StatelessWidget {
       children: [
         Text(
           'health.recap.hrCurve'.tr(),
-          style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w700),
+          style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
         ),
         SizedBox(
           height: 120,
@@ -186,12 +186,12 @@ class _ZoneSection extends StatelessWidget {
           children: [
             Text(
               'health.recap.zones'.tr(),
-              style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w700),
+              style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
             ),
             if (estimated)
               Text(
                 'health.recap.estimated'.tr(),
-                style: context.theme.typography.xs.copyWith(color: colors.mutedForeground),
+                style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
               ),
           ],
         ),

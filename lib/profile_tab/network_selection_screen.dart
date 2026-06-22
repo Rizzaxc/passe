@@ -2,10 +2,11 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
 import '../core/model/enum.dart';
 import '../core/model/network.dart';
 import '../ui/search_field.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'profile_controller.dart';
 
 class NetworkSelectionScreen extends HookConsumerWidget {
@@ -93,7 +94,7 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                           );
                           return FTile(
                             title: Text(network.name),
-                            suffix: isSelected ? const Icon(FIcons.check) : null,
+                            suffix: isSelected ? const Icon(FLucideIcons.check) : null,
                             subtitle: network.city != null ? Text(network.city!.getLocalizedName(context)) : null,
                             onPress: () {
                               final success = ref
@@ -102,7 +103,7 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                               if (!success && context.mounted) {
                                 showFToast(
                                   context: context,
-                                  icon: const Icon(FIcons.triangleAlert),
+                                  icon: const Icon(FLucideIcons.triangleAlert),
                                   title: Text('profile.networkMaxReached'.tr()),
                                   alignment: .bottomCenter,
                                 );
@@ -125,7 +126,7 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                       Expanded(
                         child: Text(
                           'profile.selectedNetworks'.tr(),
-                          style: context.theme.typography.md.copyWith(
+                          style: context.theme.typography.body.md.copyWith(
                             fontWeight: .bold
                           ),
                         ),
@@ -142,7 +143,7 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                           }
                           isRemovalMode.value = !isRemovalMode.value;
                         },
-                        child: Icon(FIcons.trash, size: 16),
+                        child: Icon(FLucideIcons.trash, size: 16),
                       ),
                     ],
                   ),
@@ -197,14 +198,14 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                 child: Column(
                   children: [
                     Icon(
-                      FIcons.network,
+                      FLucideIcons.network,
                       size: 64,
                       color: context.theme.colors.mutedForeground,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'profile.networkFeatureExplanation'.tr(),
-                      style: context.theme.typography.sm.copyWith(
+                      style: context.theme.typography.body.sm.copyWith(
                         color: context.theme.colors.mutedForeground,
                       ),
                       textAlign: TextAlign.center,

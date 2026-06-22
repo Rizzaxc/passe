@@ -67,12 +67,12 @@ class _HistoryTile extends StatelessWidget {
                 children: [
                   Text(
                     dateStr,
-                    style: context.theme.typography.sm
+                    style: context.theme.typography.body.sm
                         .copyWith(fontWeight: FontWeight.w600),
                   ),
                   Text(
                     timeStr,
-                    style: context.theme.typography.sm.copyWith(
+                    style: context.theme.typography.body.sm.copyWith(
                       color: context.theme.colors.mutedForeground,
                     ),
                   ),
@@ -82,7 +82,7 @@ class _HistoryTile extends StatelessWidget {
               if (durationStr != null)
                 Text(
                   durationStr,
-                  style: context.theme.typography.sm.copyWith(
+                  style: context.theme.typography.body.sm.copyWith(
                     color: context.theme.colors.mutedForeground,
                   ),
                 ),

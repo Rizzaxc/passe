@@ -1,9 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../core/model/enum.dart';
 import '../../../core/model/lobby.dart';
@@ -202,7 +201,7 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
       if (!context.mounted) return;
       showFToast(
         context: context,
-        icon: const Icon(FIcons.circleX),
+        icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
         title: Text('lobby.saveFailed'.tr()),
         description: Text('errorGeneric'.tr()),
@@ -241,7 +240,7 @@ class _TimeslotSection extends StatelessWidget {
       children: [
         Text(
           'createLobby.playtime'.tr(),
-          style: context.theme.typography.sm.copyWith(fontWeight: .bold),
+          style: context.theme.typography.body.sm.copyWith(fontWeight: .bold),
         ),
 
         // Chips container
@@ -271,7 +270,7 @@ class _TimeslotSection extends StatelessWidget {
                             const EdgeInsetsDirectional.fromSTEB(4, 4, 0, 4),
                         child: Text(
                           'homeTab.filter.any'.tr(),
-                          style: context.theme.typography.sm.copyWith(
+                          style: context.theme.typography.body.sm.copyWith(
                             color: context.theme.colors.mutedForeground,
                           ),
                         ),
@@ -294,7 +293,7 @@ class _TimeslotSection extends StatelessWidget {
                               children: [
                                 Text(
                                   '${timeslot.dayChunk.getShortName(context)} ${timeslot.dayOfWeek.getShortName(context)}',
-                                  style: context.theme.typography.sm.copyWith(
+                                  style: context.theme.typography.body.sm.copyWith(
                                     color: context
                                         .theme.colors.secondaryForeground,
                                   ),
@@ -305,7 +304,7 @@ class _TimeslotSection extends StatelessWidget {
                                         context.theme.colors.mutedForeground,
                                     size: 15,
                                   ),
-                                  child: const Icon(FIcons.x),
+                                  child: const Icon(FLucideIcons.x),
                                 ),
                               ],
                             ),
@@ -367,7 +366,7 @@ class _TimeslotSection extends StatelessWidget {
             FButton.icon(
               variant: .ghost,
               onPress: onAdd,
-              child: const Icon(FIcons.plus),
+              child: const Icon(FLucideIcons.plus),
             ),
           ],
         ),

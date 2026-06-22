@@ -47,7 +47,7 @@ class TeammateSubtab extends ConsumerWidget {
         children: [
           PEmptySectionPlaceholder(
             hero: Icon(
-              FIcons.searchX,
+              FLucideIcons.searchX,
               size: 64,
               color: context.theme.colors.mutedForeground,
             ),
@@ -68,7 +68,7 @@ class _JoinButton extends ConsumerWidget {
     Talker().handle(e, st, log);
     showFToast(
       context: context,
-      icon: const Icon(FIcons.circleX),
+      icon: const Icon(FLucideIcons.circleX),
       variant: .destructive,
       title: Text('error'.tr()),
       description: Text('errorGeneric'.tr()),
@@ -91,7 +91,7 @@ class _JoinButton extends ConsumerWidget {
         children: [
           Text(
             'homeTab.teammate.sent'.tr(),
-            style: context.theme.typography.sm.copyWith(
+            style: context.theme.typography.body.sm.copyWith(
               color: context.theme.colors.mutedForeground,
               fontWeight: FontWeight.w500,
             ),
@@ -99,7 +99,7 @@ class _JoinButton extends ConsumerWidget {
           FButton(
             size: .sm,
             variant: .outline,
-            prefix: const Icon(FIcons.undo2),
+            prefix: const Icon(FLucideIcons.undo2),
             onPress: () async {
               try {
                 await ref
