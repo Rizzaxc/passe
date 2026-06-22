@@ -17,6 +17,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import 'package:talker_riverpod_logger/talker_riverpod_logger_observer.dart';
 import 'package:talker_riverpod_logger/talker_riverpod_logger_settings.dart';
 
+import 'ads/ad_service.dart';
 import 'firebase_options.dart';
 import 'health_tab/health_sync_service.dart';
 import 'logger/observer.dart';
@@ -49,6 +50,11 @@ Future<void> main() async {
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   await EasyLocalization.ensureInitialized();
+
+  // Google AdMob. Init is independent of the UI; banners/interstitials won't
+  // serve until this completes. Test unit ids are used until real ones land
+  // in .env (see lib/ads/ad_config.dart).
+  await initMobileAds();
 
   final sentryDSN = dotenv.env['SENTRY_DSN']!;
   const Map<String, double?> sampleRates = {

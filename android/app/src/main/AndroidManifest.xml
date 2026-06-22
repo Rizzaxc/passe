@@ -16,6 +16,13 @@
         android:label="Passe"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- Google AdMob App ID. This is Google's official SAMPLE/test App ID;
+             replace with the real Android AdMob app id before release. Unlike
+             ad unit ids (loaded from .env), the app id must live in the manifest. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
