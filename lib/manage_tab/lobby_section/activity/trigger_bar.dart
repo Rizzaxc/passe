@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 
 import '../../../../ui/sheet.dart';
 import '../../../../ui/theme.dart';
+import '../invite_member_sheet.dart';
 
 const _crimson = Color(0xFFDC143C);
 const _crimsonTint = Color(0xFFFFEBED);
@@ -100,15 +101,15 @@ const _captainActions = [
     tone: 'green',
     label: 'Đặt HLV / Trọng tài',
   ),
+];
+
+const _sharedActions = [
   _ActionDef(
     id: 'invite',
     icon: Icons.person_add_alt_1_outlined,
     tone: 'blue',
     label: 'Mời thành viên',
   ),
-];
-
-const _sharedActions = [
   _ActionDef(
     id: 'poll',
     icon: Icons.bar_chart_rounded,
@@ -223,6 +224,7 @@ void showActionPickerSheet(
   BuildContext context, {
   required bool isLeader,
   required bool hasActivity,
+  required String lobbyId,
 }) {
   showPSheet(
     context: context,
@@ -230,6 +232,7 @@ void showActionPickerSheet(
     builder: (_) => _ActionPickerSheet(
       isLeader: isLeader,
       hasActivity: hasActivity,
+      lobbyId: lobbyId,
     ),
   );
 }
@@ -237,10 +240,12 @@ void showActionPickerSheet(
 class _ActionPickerSheet extends StatelessWidget {
   final bool isLeader;
   final bool hasActivity;
+  final String lobbyId;
 
   const _ActionPickerSheet({
     required this.isLeader,
     required this.hasActivity,
+    required this.lobbyId,
   });
 
   @override
@@ -312,7 +317,7 @@ class _ActionPickerSheet extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  _ActionGroup(actions: _captainActions),
+                  _ActionGroup(actions: _captainActions, lobbyId: lobbyId),
                 ],
                 const SizedBox(height: 14),
                 PSheetSectionLabel(
@@ -321,7 +326,7 @@ class _ActionPickerSheet extends StatelessWidget {
                       _SectionDescription('Mọi thành viên đều đăng được'),
                 ),
                 const SizedBox(height: 6),
-                _ActionGroup(actions: _sharedActions),
+                _ActionGroup(actions: _sharedActions, lobbyId: lobbyId),
               ],
             ),
           ),
@@ -354,8 +359,9 @@ class _SectionDescription extends StatelessWidget {
 
 class _ActionGroup extends StatelessWidget {
   final List<_ActionDef> actions;
+  final String? lobbyId;
 
-  const _ActionGroup({required this.actions});
+  const _ActionGroup({required this.actions, this.lobbyId});
 
   @override
   Widget build(BuildContext context) {
@@ -370,7 +376,7 @@ class _ActionGroup extends StatelessWidget {
       child: Column(
         children: [
           for (var i = 0; i < actions.length; i++) ...[
-            _ActionRow(def: actions[i]),
+            _ActionRow(def: actions[i], lobbyId: lobbyId),
             if (i < actions.length - 1)
               Divider(
                 height: 1,
@@ -386,8 +392,9 @@ class _ActionGroup extends StatelessWidget {
 
 class _ActionRow extends StatelessWidget {
   final _ActionDef def;
+  final String? lobbyId;
 
-  const _ActionRow({required this.def});
+  const _ActionRow({required this.def, this.lobbyId});
 
   @override
   Widget build(BuildContext context) {
@@ -398,6 +405,9 @@ class _ActionRow extends StatelessWidget {
     return FTappable(
       onPress: () {
         Navigator.of(context).pop();
+        if (def.id == 'invite' && lobbyId != null) {
+          showInviteMemberSheet(context, lobbyId!);
+        }
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),

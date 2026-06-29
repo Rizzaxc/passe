@@ -217,30 +217,35 @@ class _Body extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Stats row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _StatTile(
-                      icon: Icons.star_rounded,
-                      iconColor: const Color(0xFFF59E0B),
-                      label: item.averageRating.toStringAsFixed(1),
-                      sub: '${item.reviewCount} đánh giá',
-                    ),
-                    if (item.experienceYears != null) ...[
-                      Container(
-                        width: 1,
-                        height: 36,
-                        color: colors.border,
-                        margin: const EdgeInsets.symmetric(horizontal: 18),
+                IntrinsicHeight(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: _StatTile(
+                          icon: Icons.star_rounded,
+                          iconColor: const Color(0xFFF59E0B),
+                          label: item.averageRating.toStringAsFixed(1),
+                          sub: '${item.reviewCount} đánh giá',
+                        ),
                       ),
-                      _StatTile(
-                        icon: FLucideIcons.briefcaseBusiness,
-                        iconColor: colors.mutedForeground,
-                        label: '${item.experienceYears}',
-                        sub: 'năm kinh nghiệm',
-                      ),
+                      if (item.experienceYears != null) ...[
+                        Container(
+                          width: 1,
+                          color: colors.border,
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        Flexible(
+                          child: _StatTile(
+                            icon: FLucideIcons.briefcaseBusiness,
+                            iconColor: colors.mutedForeground,
+                            label: '${item.experienceYears}',
+                            sub: 'năm kinh nghiệm',
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
 
                 if (item.sports.isNotEmpty) ...[

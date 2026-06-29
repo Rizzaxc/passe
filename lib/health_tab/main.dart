@@ -110,7 +110,7 @@ class _HealthTabState extends ConsumerState<HealthTab> {
           ),
         ),
         data: (status) {
-          if (status == HealthLinkStatus.notLinked) {
+          if (status != HealthLinkStatus.linked) {
             return const HealthNotLinkedView();
           }
 

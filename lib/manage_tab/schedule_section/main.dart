@@ -98,14 +98,12 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
     if (events.isEmpty) return -1;
     int boundaryHour = events.map((e) => e.start.hour).reduce(min);
     if (isToday) boundaryHour = min(boundaryHour, TimeOfDay.now().hour);
-    return (boundaryHour - 1).clamp(0, 23);
+    return boundaryHour.clamp(0, 23);
   }
 
   /// True end of the empty leading range shown in collapsed/empty labels.
-  String _emptyRangeEnd(List<ScheduleEvent> events, bool isToday) {
-    if (events.isEmpty) {
-      return isToday ? _fmtTime(TimeOfDay.now()) : '24:00';
-    }
+  String _emptyRangeEnd(List<ScheduleEvent> events) {
+    if (events.isEmpty) return '24:00';
     final first = events.reduce((a, b) =>
         (a.start.hour * 60 + a.start.minute) <=
                 (b.start.hour * 60 + b.start.minute)
@@ -144,7 +142,7 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
     final events = _eventsFor(_selectedDate);
     final isToday = _isSameDay(_selectedDate, DateTime.now());
     final startHour = _gridStartHour(events, isToday);
-    final rangeEnd = _emptyRangeEnd(events, isToday);
+    final rangeEnd = _emptyRangeEnd(events);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -186,32 +184,42 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
               ref.invalidate(scheduleEventsProvider);
               await ref.read(scheduleEventsProvider.future);
             },
-            child: SingleChildScrollView(
-              controller: _scrollCtrl,
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(0, 0, 0, 40),
-              child: _viewMode == _ViewMode.cards
-                  // ── Multi-day card list ───────────────────────────
-                  ? _MultiDayCardView(eventsFor: _eventsFor)
-                  // ── Single-day time grid ──────────────────────────
-                  : startHour < 0
-                      ? _EmptyDayCard(to: rangeEnd)
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (startHour > 0) ...[
-                              _CollapsedBlock(
-                                  from: '00:00', to: rangeEnd),
-                              const SizedBox(height: 6),
+            child: _viewMode == _ViewMode.timeline && startHour < 0
+                ? LayoutBuilder(
+                    builder: (context, constraints) =>
+                        SingleChildScrollView(
+                      controller: _scrollCtrl,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight),
+                        child: const _EmptyDayCard(),
+                      ),
+                    ),
+                  )
+                : SingleChildScrollView(
+                    controller: _scrollCtrl,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 40),
+                    child: _viewMode == _ViewMode.cards
+                        ? _MultiDayCardView(eventsFor: _eventsFor)
+                        : Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.stretch,
+                            children: [
+                              if (startHour > 0) ...[
+                                _CollapsedBlock(
+                                    from: '00:00', to: rangeEnd),
+                                const SizedBox(height: 16),
+                              ],
+                              _TimeGrid(
+                                events: events,
+                                startHour: startHour,
+                                showNowIndicator: isToday,
+                              ),
                             ],
-                            _TimeGrid(
-                              events: events,
-                              startHour: startHour,
-                              showNowIndicator: isToday,
-                            ),
-                          ],
-                        ),
-            ),
+                          ),
+                  ),
           ),
         ),
       ],
@@ -310,31 +318,23 @@ class _DaySection extends StatelessWidget {
 // ─── Collapsed / empty blocks ─────────────────────────────────────────────────
 
 class _EmptyDayCard extends StatelessWidget {
-  final String to;
-
-  const _EmptyDayCard({required this.to});
+  const _EmptyDayCard();
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
-      decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.border.withValues(alpha: 0.45)),
-      ),
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             FLucideIcons.calendarDays,
-            size: 26,
-            color: colors.mutedForeground.withValues(alpha: 0.45),
+            size: 32,
+            color: colors.mutedForeground.withValues(alpha: 0.4),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
-            '00:00 – $to',
+            'Không có lịch',
             style: context.theme.typography.body.sm.copyWith(
               color: colors.mutedForeground,
               fontWeight: FontWeight.w600,
@@ -342,9 +342,9 @@ class _EmptyDayCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            'Không có lịch',
+            '00:00 – 24:00',
             style: context.theme.typography.body.xs.copyWith(
-              color: colors.mutedForeground.withValues(alpha: 0.65),
+              color: colors.mutedForeground.withValues(alpha: 0.55),
             ),
           ),
         ],

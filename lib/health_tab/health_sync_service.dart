@@ -52,21 +52,31 @@ class HealthSyncController extends _$HealthSyncController {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return const HealthSyncResult(skipped: true);
 
-    // Reuse the link-status state machine: it re-verifies OS permissions.
     final status = await ref.read(healthControllerProvider.future);
+    if (!ref.mounted) return const HealthSyncResult(skipped: true);
     if (status != HealthLinkStatus.linked) return const HealthSyncResult(skipped: true);
 
     state = HealthSyncPhase.syncing;
     try {
       final thresholds = await ref.read(hrThresholdsProvider.future);
+      if (!ref.mounted) return const HealthSyncResult(skipped: true);
+
       final daysSynced = await _syncDailySummaries(userId);
+      if (!ref.mounted) return HealthSyncResult(daysSynced: daysSynced);
+
       final captured = await _captureActivities(userId, thresholds);
+      if (!ref.mounted) return HealthSyncResult(daysSynced: daysSynced, activitiesCaptured: captured);
 
-      // Fresh health data has landed — re-evaluate achievements. The evaluator
-      // is the sole mutator of XP/level; it returns the newly-unlocked badges.
       final celebration = await _evaluateAchievements(userId);
+      if (!ref.mounted) {
+        return HealthSyncResult(
+          daysSynced: daysSynced,
+          activitiesCaptured: captured,
+          achievementsUnlocked: celebration?.unlocked.length ?? 0,
+          leveledUp: celebration?.leveledUp ?? false,
+        );
+      }
 
-      // Refresh the read model so open subtabs reflect the new rows.
       ref.invalidate(dailyHealthTrendProvider);
       ref.invalidate(activityHealthListProvider);
       ref.invalidate(detectedWorkoutsProvider);
@@ -83,7 +93,7 @@ class HealthSyncController extends _$HealthSyncController {
       _talker.handle(e, st, 'Health sync failed');
       rethrow;
     } finally {
-      state = HealthSyncPhase.idle;
+      if (ref.mounted) state = HealthSyncPhase.idle;
     }
   }
 
@@ -110,6 +120,7 @@ class HealthSyncController extends _$HealthSyncController {
     for (var day = firstDay;
         !day.isAfter(DateTime(today.year, today.month, today.day));
         day = day.add(const Duration(days: 1))) {
+      if (!ref.mounted) return count;
       final summary = await _service.readDailyHealthSummary(userId: userId, date: day);
       if (summary != null) {
         await _service.saveDailySummary(summary);
@@ -117,6 +128,7 @@ class HealthSyncController extends _$HealthSyncController {
       }
     }
 
+    if (!ref.mounted) return count;
     await _supabase
         .from('user_health_link')
         .update({'last_sync_at': today.toIso8601String()})
@@ -135,6 +147,7 @@ class HealthSyncController extends _$HealthSyncController {
     var captured = 0;
     for (final r in rows as List) {
       if (r['confirmed'] != true) continue;
+      if (!ref.mounted) return captured;
       final activity = Activity(
         userId: userId,
         id: r['activity_id'] as String,
@@ -155,10 +168,6 @@ class HealthSyncController extends _$HealthSyncController {
   /// Re-run the achievement evaluator after fresh data lands. Persists unlocks
   /// + banks XP server-side; on the client it stashes the celebration payload
   /// (consumed by the achievements subtab) and lights the unseen dot.
-  ///
-  /// TODO(notifications): once the push-notification system exists, replace the
-  /// launch-sync toast with a push notification for the unlock/level-up event;
-  /// the in-app dot → celebration-sheet flow stays.
   Future<AchievementCelebration?> _evaluateAchievements(String userId) async {
     try {
       final res = await _supabase
@@ -167,13 +176,12 @@ class HealthSyncController extends _$HealthSyncController {
       if (res is! Map) return null;
       final celebration =
           AchievementCelebration.fromRpc(Map<String, dynamic>.from(res));
-      if (!celebration.isEmpty) {
+      if (!celebration.isEmpty && ref.mounted) {
         ref.read(achievementCelebrationControllerProvider.notifier).show(celebration);
         await ref.read(unseenAchievementsProvider.notifier).mark();
       }
       return celebration;
     } catch (e, st) {
-      // Never let achievement evaluation fail the whole sync.
       _talker.handle(e, st, 'Achievement evaluation failed');
       return null;
     }
@@ -185,6 +193,7 @@ class HealthSyncController extends _$HealthSyncController {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return false;
     final thresholds = await ref.read(hrThresholdsProvider.future);
+    if (!ref.mounted) return false;
     final activity = Activity(
       userId: userId,
       id: workout.activityId,
@@ -197,6 +206,7 @@ class HealthSyncController extends _$HealthSyncController {
     if (result == null) return false;
     await _service.saveActivityMetrics(result.metrics);
     await _service.saveHrCurve(activityId: activity.id!, points: result.curve);
+    if (!ref.mounted) return true;
     ref.invalidate(detectedWorkoutsProvider);
     ref.invalidate(activityHealthListProvider);
     return true;
@@ -207,6 +217,7 @@ class HealthSyncController extends _$HealthSyncController {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
     await _service.dismissActivity(userId: userId, activityId: activityId);
+    if (!ref.mounted) return;
     ref.invalidate(detectedWorkoutsProvider);
   }
 }

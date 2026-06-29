@@ -7,6 +7,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../auth/auth_controller.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
+import '../invite_member_sheet.dart';
 import 'lobby_controller.dart';
 import 'lobby_form_sheet.dart';
 
@@ -312,12 +313,14 @@ class _LobbyCard extends ConsumerWidget {
                             : null,
                         child: Icon(FLucideIcons.copy, size: 16, color: pbBlue),
                       ),
-                      FButton.icon(
-                        size: .xs,
-                        variant: .ghost,
-                        onPress: null,
-                        child: Icon(FLucideIcons.userPlus, size: 16, color: pbBlue),
-                      ),
+                      if (lobby.id != null)
+                        FButton.icon(
+                          size: .xs,
+                          variant: .ghost,
+                          onPress: () =>
+                              showInviteMemberSheet(context, lobby.id!),
+                          child: Icon(FLucideIcons.userPlus, size: 16, color: pbBlue),
+                        ),
                     ],
                   ),
                 ],

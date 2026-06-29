@@ -282,13 +282,24 @@
         },
         "inviteUser": {
             "label": "Tên người dùng",
-            "hint": "vd. Thach#1234",
-            "description": "Nhập tên theo định dạng username#tag hoặc chỉ username nếu tên là duy nhất.",
-            "emptyError": "Nhập tên người dùng (vd. Thach#1234)",
+            "hint": "vd. Thach#1234 hoặc #1234",
+            "description": "Nhập username#tag, chỉ username, hoặc chỉ #tag để tìm.",
+            "emptyError": "Nhập tên hoặc tag người dùng",
             "notFound": "Không tìm thấy người dùng \"{name}\"",
             "success": "Đã gửi lời mời đến {username}",
             "failed": "Không thể gửi lời mời. Vui lòng thử lại.",
-            "send": "Gửi lời mời"
+            "send": "Gửi lời mời",
+            "search": "Tìm",
+            "alreadyMember": "Người dùng đã là thành viên",
+            "emailLabel": "Địa chỉ email",
+            "emailHint": "vd. ten@email.com",
+            "emailDescription": "Nếu chưa có tài khoản, họ sẽ tự động vào lobby khi đăng ký.",
+            "emailEmptyError": "Nhập địa chỉ email",
+            "emailSuccess": "Đã gửi lời mời đến {email}",
+            "emailExisting": "Đã mời người dùng hiện tại",
+            "emailAlreadyMember": "Email này đã là thành viên của lobby",
+            "modeUser": "Username",
+            "modeEmail": "Email"
         }
     },
     "createLobby": {
@@ -523,7 +534,9 @@
             "empty": "Chưa có thành tựu nào. Đồng bộ thiết bị đeo để bắt đầu tích XP.",
             "inProgress": "Đang tiến hành",
             "earned": "Đã mở khóa",
+            "completed": "Đã hoàn thành",
             "locked": "Chưa bắt đầu",
+            "showMore": "Xem thêm",
             "earnedPeriod": "Hoàn thành kỳ này · làm mới kỳ sau",
             "levelLabel": "CẤP ĐỘ THỂ CHẤT",
             "level": "Cấp {level}",

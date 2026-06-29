@@ -280,13 +280,24 @@
         },
         "inviteUser": {
             "label": "Username",
-            "hint": "e.g. Thach#1234",
-            "description": "Enter the username in username#tag format, or just the username if unique.",
-            "emptyError": "Enter a username (e.g. Thach#1234)",
+            "hint": "e.g. Thach#1234 or #1234",
+            "description": "Enter username#tag, just a username, or just #tag to search.",
+            "emptyError": "Enter a username or tag",
             "notFound": "User \"{name}\" not found",
             "success": "Invite sent to {username}",
             "failed": "Failed to send invite. Please try again.",
-            "send": "Send Invite"
+            "send": "Send Invite",
+            "search": "Search",
+            "alreadyMember": "User is already a member",
+            "emailLabel": "Email address",
+            "emailHint": "e.g. name@email.com",
+            "emailDescription": "If they don't have an account yet, they'll auto-join the lobby on sign-up.",
+            "emailEmptyError": "Enter an email address",
+            "emailSuccess": "Invite sent to {email}",
+            "emailExisting": "Invited existing user",
+            "emailAlreadyMember": "This email is already a member of the lobby",
+            "modeUser": "Username",
+            "modeEmail": "Email"
         }
     },
     "createLobby": {
@@ -523,7 +534,9 @@
             "empty": "No achievements yet. Sync your wearable to start earning XP.",
             "inProgress": "In progress",
             "earned": "Unlocked",
+            "completed": "Completed",
             "locked": "Not started",
+            "showMore": "Show more",
             "earnedPeriod": "Completed this period · resets next",
             "levelLabel": "FITNESS LEVEL",
             "level": "Level {level}",

@@ -4,7 +4,8 @@
 enum NotificationKind {
   activityConfirmed('activity_confirmed'),
   proSessionReminder('pro_session_reminder'),
-  challengerConfirmed('challenger_confirmed');
+  challengerConfirmed('challenger_confirmed'),
+  lobbyInvite('lobby_invite');
 
   const NotificationKind(this.value);
 

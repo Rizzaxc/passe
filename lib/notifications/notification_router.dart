@@ -26,6 +26,8 @@ void routeNotificationTap(GoRouter router, Map<String, dynamic>? data) {
     // Reserved/dormant; route to the lobby when the handshake ships.
     NotificationKind.challengerConfirmed =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    // Lobby invite — go to the manage/lobby tab so they see their pending invites.
+    NotificationKind.lobbyInvite => const ManageLobbyRoute().location,
   };
 
   if (location != null) router.go(location);

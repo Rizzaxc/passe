@@ -33,15 +33,14 @@ class WelcomeScreen extends HookConsumerWidget {
       ),
     ];
 
-    final isLastIntroPage = currentPage.value == introPages.length - 1;
     final isAuthPage = currentPage.value == introPages.length;
-
 
     return FScaffold(
       child: Column(
         children: [
           Expanded(
             child: PageView(
+              allowImplicitScrolling: true,
               controller: pageController,
               onPageChanged: (index) => currentPage.value = index,
               children: [
@@ -50,27 +49,29 @@ class WelcomeScreen extends HookConsumerWidget {
               ],
             ),
           ),
-          if (!isAuthPage)
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    SmoothPageIndicator(
-                      controller: pageController,
-                      count: introPages.length + 1,
-                      effect: WormEffect(
-                        dotHeight: 8,
-                        dotWidth: 8,
-                        activeDotColor: context.theme.colors.primary,
-                        dotColor: context.theme.colors.border,
-                      ),
+          IgnorePointer(
+            ignoring: isAuthPage,
+            child: AnimatedOpacity(
+              opacity: isAuthPage ? 0 : 1,
+              duration: const Duration(milliseconds: 200),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: SmoothPageIndicator(
+                    controller: pageController,
+                    count: introPages.length + 1,
+                    effect: WormEffect(
+                      dotHeight: 8,
+                      dotWidth: 8,
+                      activeDotColor: context.theme.colors.primary,
+                      dotColor: context.theme.colors.border,
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
+          ),
         ],
       ),
     );

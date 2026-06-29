@@ -70,9 +70,18 @@ class HealthController extends _$HealthController {
     return _checkBackendLinkStatus();
   }
 
-  /// Check if health permissions are currently granted
+  /// Check if health permissions are currently granted.
+  ///
+  /// iOS HealthKit does not expose read-permission status — `hasPermissions`
+  /// always returns `null` for READ types. On iOS we trust the cached /
+  /// backend link; if the user revokes access in Settings, sync reads
+  /// degrade to empty results and they can unlink manually.
   Future<bool> _checkHealthPermissions() async {
+    if (Platform.isIOS) return true;
+
     try {
+      await _health.configure();
+
       final permissions = _healthDataTypes
           .map((type) => HealthDataAccess.READ)
           .toList();

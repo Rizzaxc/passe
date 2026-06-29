@@ -40,15 +40,18 @@ class PCalendar extends StatelessWidget {
     return Padding(
       padding: padding,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          for (final date in dates)
-            _PCalendarTile(
-              date: date,
-              isSelected: _isSameDay(date, selectedDate),
-              isToday: _isSameDay(date, today),
-              onTap: onDateSelected != null ? () => onDateSelected!(date) : null,
+          for (final (i, date) in dates.indexed) ...[
+            if (i > 0) const SizedBox(width: 6),
+            Expanded(
+              child: _PCalendarTile(
+                date: date,
+                isSelected: _isSameDay(date, selectedDate),
+                isToday: _isSameDay(date, today),
+                onTap: onDateSelected != null ? () => onDateSelected!(date) : null,
+              ),
             ),
+          ],
         ],
       ),
     );
@@ -92,7 +95,7 @@ class _PCalendarTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? colors.primary : colors.background,
           border: Border.all(color: colors.border),

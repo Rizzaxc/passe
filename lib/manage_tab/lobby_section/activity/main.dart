@@ -76,6 +76,7 @@ class ActivityTab extends ConsumerWidget {
             context,
             isLeader: isLeader,
             hasActivity: hasActivity,
+            lobbyId: lobbyId,
           ),
         ),
       ],

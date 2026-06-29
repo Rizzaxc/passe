@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../auth/auth_controller.dart';
@@ -12,6 +11,7 @@ import '../../core/model/lobby.dart';
 import '../../ui/sheet.dart';
 import 'feed/lobby_controller.dart';
 import 'feed/lobby_form_sheet.dart';
+import 'invite_member_sheet.dart';
 import 'join_requests_controller.dart';
 import 'join_requests_sheet.dart';
 import 'lobby_detail_controller.dart';
@@ -224,10 +224,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
   }
 
   void _showInviteUserSheet(BuildContext context, String lobbyId) {
-    showPSheet(
-      context: context,
-      builder: (_) => _InviteUserSheet(lobbyId: lobbyId),
-    );
+    showInviteMemberSheet(context, lobbyId);
   }
 
   Future<void> _doTransfer(LobbyMemberInfo member) async {
@@ -458,14 +455,12 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                     label: membersAsync.value != null
                         ? '${'lobby.detail.members'.tr()} · ${membersAsync.value!.length}'
                         : 'lobby.detail.members'.tr(),
-                    trailing: isCaptain
-                        ? _SectionActionButton(
-                            icon: FLucideIcons.userPlus,
-                            label: 'lobby.invite'.tr(),
-                            onTap: () => _showInviteUserSheet(
-                                context, widget.lobbyId),
-                          )
-                        : null,
+                    trailing: _SectionActionButton(
+                      icon: FLucideIcons.userPlus,
+                      label: 'lobby.invite'.tr(),
+                      onTap: () => _showInviteUserSheet(
+                          context, widget.lobbyId),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -916,143 +911,6 @@ class _SettingsRow extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ─── Invite user sheet ─────────────────────────────────────────
-
-class _InviteUserSheet extends ConsumerStatefulWidget {
-  final String lobbyId;
-  const _InviteUserSheet({required this.lobbyId});
-
-  @override
-  ConsumerState<_InviteUserSheet> createState() => _InviteUserSheetState();
-}
-
-class _InviteUserSheetState extends ConsumerState<_InviteUserSheet> {
-  final _controller = TextEditingController();
-  bool _sending = false;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _invite() async {
-    final raw = _controller.text.trim();
-    if (raw.isEmpty) return;
-
-    final parts = raw.split('#');
-    final username = parts[0].trim();
-    final tagNumber = parts.length > 1 ? parts[1].trim() : null;
-
-    if (username.isEmpty) {
-      showFToast(
-        context: context,
-        icon: const Icon(FLucideIcons.circleAlert),
-        variant: .destructive,
-        title: Text('lobby.inviteUser.emptyError'.tr()),
-        alignment: .bottomCenter,
-      );
-      return;
-    }
-
-    setState(() => _sending = true);
-    try {
-      final supabase = Supabase.instance.client;
-      var query = supabase
-          .from('user')
-          .select('id')
-          .eq('username', username);
-      if (tagNumber != null) query = query.eq('tag_number', tagNumber);
-      final rows = await query.limit(1).timeout(const Duration(seconds: 5));
-
-      if (rows.isEmpty) {
-        if (!mounted) return;
-        showFToast(
-          context: context,
-          icon: const Icon(FLucideIcons.userX),
-          variant: .destructive,
-          title: Text('lobby.inviteUser.notFound'.tr(namedArgs: {'name': raw})),
-          alignment: .bottomCenter,
-        );
-        return;
-      }
-
-      final targetUserId = (rows.first as Map)['id'] as String;
-      final captainId = ref.read(authControllerProvider).value?.id;
-      if (captainId == null) return;
-
-      await supabase.from('lobby_befriend_record').insert({
-        'initiator_user_id': captainId,
-        'target_user_id': targetUserId,
-        'target_lobby_id': widget.lobbyId,
-        'interaction_type': 'invite',
-      }).timeout(const Duration(seconds: 5));
-
-      if (!mounted) return;
-      Navigator.of(context).pop();
-      showFToast(
-        context: context,
-        icon: const Icon(FLucideIcons.userPlus),
-        title: Text('lobby.inviteUser.success'.tr(namedArgs: {'username': username})),
-        alignment: .bottomCenter,
-      );
-    } catch (e, st) {
-      Talker().handle(e, st, 'Invite user failed');
-      if (!mounted) return;
-      showFToast(
-        context: context,
-        icon: const Icon(FLucideIcons.circleX),
-        variant: .destructive,
-        title: Text('error'.tr()),
-        description: Text('lobby.inviteUser.failed'.tr()),
-        alignment: .bottomCenter,
-      );
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      primary: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 16,
-        children: [
-          PSheetTitle(
-            label: 'lobby.inviteMember'.tr(),
-            trailing: FButton.icon(
-              variant: .ghost,
-              onPress: () => Navigator.of(context).pop(),
-              child: const Icon(FLucideIcons.x),
-            ),
-          ),
-          FTextField(
-            label: Text('lobby.inviteUser.label'.tr()),
-            hint: 'lobby.inviteUser.hint'.tr(),
-            control: FTextFieldControl.managed(controller: _controller),
-            description: Text('lobby.inviteUser.description'.tr()),
-          ),
-          FButton(
-            onPress: _sending ? null : _invite,
-            child: _sending
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
-                  )
-                : Text('lobby.inviteUser.send'.tr()),
-          ),
-          const SizedBox(height: 8),
-        ],
       ),
     );
   }

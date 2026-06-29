@@ -14,6 +14,19 @@ import 'auth_controller.dart';
 class AuthScreen extends ConsumerWidget {
   const AuthScreen({super.key});
 
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FScaffold(
+      resizeToAvoidBottomInset: false,
+      header: FHeader(title: Text('auth.welcome'.tr())),
+      child: const AuthContent(),
+    );
+  }
+}
+
+class AuthContent extends ConsumerWidget {
+  const AuthContent({super.key});
+
   Future<void> _continueAsGuest(BuildContext context, WidgetRef ref) async {
     try {
       await ref.read(authControllerProvider.notifier).continueAsGuest();
@@ -32,42 +45,34 @@ class AuthScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FScaffold(
-      resizeToAvoidBottomInset: false,
-      header: FHeader(title: Text('auth.welcome'.tr())),
-      child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Social sign-in is the default, expected path — shown up
-                // front and sized to be the obvious primary action.
-                const SizedBox(height: 16),
-                const SocialAuthSection(showGuestOption: false),
-                const SizedBox(height: 24),
-                FDivider(),
-                const SizedBox(height: 24),
-                const AuthForm(),
-                const SizedBox(height: 24),
-                // "Skip" sits at the very bottom — least prominent, for
-                // people who just want to poke around before committing.
-                Center(
-                  child: FTappable(
-                    onPress: () => _continueAsGuest(context, ref),
-                    child: Text(
-                      'auth.guestContinue'.tr(),
-                      style: context.theme.typography.body.sm.copyWith(
-                        color: context.theme.colors.mutedForeground,
-                        decoration: TextDecoration.underline,
-                      ),
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 16),
+              const SocialAuthSection(showGuestOption: false),
+              const SizedBox(height: 24),
+              FDivider(),
+              const SizedBox(height: 24),
+              const AuthForm(),
+              const SizedBox(height: 24),
+              Center(
+                child: FTappable(
+                  onPress: () => _continueAsGuest(context, ref),
+                  child: Text(
+                    'auth.guestContinue'.tr(),
+                    style: context.theme.typography.body.sm.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -143,7 +148,7 @@ class _AuthFormState extends ConsumerState<AuthForm> {
       }
     }
 
-    return Form(
+    final form = Form(
       key: _key,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -211,6 +216,7 @@ class _AuthFormState extends ConsumerState<AuthForm> {
         ],
       ),
     );
+    return form;
   }
 }
 
@@ -250,8 +256,8 @@ class SocialAuthSection extends ConsumerWidget {
         builder: (context, variants, child) => DecoratedBox(
           decoration: buttonStyle.decoration.resolve(variants),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-            child: Center(child: child),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            child: FittedBox(fit: BoxFit.scaleDown, child: child),
           ),
         ),
         onPress: onTap,
@@ -275,7 +281,7 @@ class SocialAuthSection extends ConsumerWidget {
       );
     }
 
-    return Column(
+    final result = Column(
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -289,9 +295,6 @@ class SocialAuthSection extends ConsumerWidget {
                 'auth.googleLoginFailed'.tr(),
               ),
             ),
-            // Native Sign in with Apple only works on Apple platforms — the
-            // controller guards it too, but hiding the button here avoids
-            // presenting a dead end on Android/other platforms.
             if (Platform.isIOS || Platform.isMacOS)
               buildRow(
                 icon: FaIcon(FontAwesomeIcons.apple, color: context.theme.colors.foreground),
@@ -314,5 +317,6 @@ class SocialAuthSection extends ConsumerWidget {
         ),
       ],
     );
+    return result;
   }
 }

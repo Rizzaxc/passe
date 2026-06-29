@@ -45,6 +45,11 @@ class UserLobbiesController extends _$UserLobbiesController {
     final sport = ref.watch(selectedSportStateProvider).value;
     if (sport == null) return [];
 
+    // Housekeeping: delete past unconfirmed lobby activities.
+    await supabase
+        .rpc('expire_past_activities')
+        .timeout(const Duration(seconds: 5));
+
     final lobbyRows = await supabase
         .from('lobby')
         .select('id, name, searchable_id, sport_id, captain_id, home_ground, location(name), lobby_member!inner(user_id)')

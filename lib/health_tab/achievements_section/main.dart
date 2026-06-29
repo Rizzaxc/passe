@@ -18,6 +18,12 @@ class AchievementsSubtab extends ConsumerStatefulWidget {
 }
 
 class _AchievementsSubtabState extends ConsumerState<AchievementsSubtab> {
+  static const _pageSize = 5;
+  int _inProgressLimit = _pageSize;
+  int _earnedPeriodLimit = _pageSize;
+  int _doneLimit = _pageSize;
+  int _notStartedLimit = _pageSize;
+
   @override
   void initState() {
     super.initState();
@@ -84,7 +90,14 @@ class _AchievementsSubtabState extends ConsumerState<AchievementsSubtab> {
               .where((b) => b.state == AchievementState.inProgress)
               .toList()
             ..sort(_compare);
-          final earned = list.where((b) => b.isEarned).toList()..sort(_compare);
+          final earnedPeriod = list
+              .where((b) => b.state == AchievementState.earnedPeriod)
+              .toList()
+            ..sort(_compare);
+          final done = list
+              .where((b) => b.state == AchievementState.done)
+              .toList()
+            ..sort(_compare);
           final notStarted = list
               .where((b) => b.state == AchievementState.notStarted)
               .toList()
@@ -92,13 +105,38 @@ class _AchievementsSubtabState extends ConsumerState<AchievementsSubtab> {
 
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             children: [
               _LevelHeader(summary: level.value),
               const SizedBox(height: 16),
-              ..._section('health.achievements.inProgress'.tr(), inProgress),
-              ..._section('health.achievements.earned'.tr(), earned),
-              ..._section('health.achievements.locked'.tr(), notStarted),
+              ..._paginatedSection(
+                'health.achievements.inProgress'.tr(),
+                inProgress,
+                limit: _inProgressLimit,
+                onMore: () =>
+                    setState(() => _inProgressLimit += _pageSize),
+              ),
+              ..._paginatedSection(
+                'health.achievements.earned'.tr(),
+                earnedPeriod,
+                limit: _earnedPeriodLimit,
+                onMore: () =>
+                    setState(() => _earnedPeriodLimit += _pageSize),
+              ),
+              ..._paginatedSection(
+                'health.achievements.completed'.tr(),
+                done,
+                limit: _doneLimit,
+                onMore: () =>
+                    setState(() => _doneLimit += _pageSize),
+              ),
+              ..._paginatedSection(
+                'health.achievements.locked'.tr(),
+                notStarted,
+                limit: _notStartedLimit,
+                onMore: () =>
+                    setState(() => _notStartedLimit += _pageSize),
+              ),
             ],
           );
         },
@@ -106,14 +144,68 @@ class _AchievementsSubtabState extends ConsumerState<AchievementsSubtab> {
     );
   }
 
-  List<Widget> _section(String title, List<AchievementProgress> items) {
+  List<Widget> _paginatedSection(
+    String title,
+    List<AchievementProgress> items, {
+    required int limit,
+    required VoidCallback onMore,
+  }) {
     if (items.isEmpty) return const [];
+    final visible = items.take(limit).toList();
+    final hasMore = items.length > limit;
+    return _section(
+      title,
+      visible,
+      totalCount: items.length,
+      trailing: hasMore ? _ShowMoreButton(onTap: onMore) : null,
+    );
+  }
+
+  List<Widget> _section(
+    String title,
+    List<AchievementProgress> items, {
+    int? totalCount,
+    Widget? trailing,
+  }) {
+    if (items.isEmpty && trailing == null) return const [];
     return [
-      PSectionHeader(title: title, suffix: _CountChip(count: items.length)),
+      PSectionHeader(
+          title: title,
+          suffix: _CountChip(count: totalCount ?? items.length)),
       const SizedBox(height: 10),
       for (final b in items) ...[BadgeCard(badge: b), const SizedBox(height: 10)],
+      if (trailing != null) ...[trailing, const SizedBox(height: 10)],
       const SizedBox(height: 8),
     ];
+  }
+}
+
+class _ShowMoreButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _ShowMoreButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          border: Border.all(color: colors.border),
+          borderRadius: context.theme.style.borderRadius.md,
+        ),
+        child: Text(
+          'health.achievements.showMore'.tr(),
+          style: context.theme.typography.body.sm.copyWith(
+            color: colors.mutedForeground,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 }
 

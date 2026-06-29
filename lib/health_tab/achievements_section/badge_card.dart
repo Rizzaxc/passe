@@ -49,7 +49,7 @@ class BadgeCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: colors.card,
-        border: Border.all(color: colors.border),
+        border: Border.all(color: earned ? pbGreen.withValues(alpha: 0.3) : colors.border),
         borderRadius: context.theme.style.borderRadius.md,
         boxShadow: context.theme.style.shadow,
       ),
@@ -102,16 +102,32 @@ class BadgeCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    earned ? '✓' : '$pct%',
-                    style: TextStyle(
-                      fontFamily: context.theme.typography.body.sm.fontFamily,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: barColor,
-                      height: 1,
+                  if (earned)
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: pbGreen,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        FLucideIcons.check,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                    )
+                  else
+                    Text(
+                      '$pct%',
+                      style: TextStyle(
+                        fontFamily: context.theme.typography.body.sm.fontFamily,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: barColor,
+                        height: 1,
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 2),
                   Text(
                     '+${badge.xpReward} XP',
