@@ -26,7 +26,9 @@ Map<String, dynamic> _$SoccerProfileToJson(_SoccerProfile instance) =>
     };
 
 const _$SoccerPositionEnumMap = {
-  SoccerPosition.outfield: 'outfield',
+  SoccerPosition.forward: 'forward',
+  SoccerPosition.midfielder: 'midfielder',
+  SoccerPosition.defender: 'defender',
   SoccerPosition.keeper: 'keeper',
 };
 

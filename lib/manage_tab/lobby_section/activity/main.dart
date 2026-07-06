@@ -43,9 +43,8 @@ class ActivityTab extends ConsumerWidget {
         // matter how far the user scrolls into older messages.
         ActivityHero(
           lobbyId: lobbyId,
-          activityId: upcomingActivity?.activity.id,
+          upcoming: upcomingActivity,
           sport: sport,
-          hasActivity: hasActivity,
           isLeader: isLeader,
         ),
         Expanded(
@@ -65,7 +64,7 @@ class ActivityTab extends ConsumerWidget {
               children: [
                 // Children laid out bottom-up: index 0 sits at the bottom.
                 for (final item in feed.reversed)
-                  FeedItemWidget(item: item),
+                  FeedItemWidget(item: item, lobbyId: lobbyId),
               ],
             ),
           ),
@@ -77,6 +76,7 @@ class ActivityTab extends ConsumerWidget {
             isLeader: isLeader,
             hasActivity: hasActivity,
             lobbyId: lobbyId,
+            upcoming: upcomingActivity,
           ),
         ),
       ],

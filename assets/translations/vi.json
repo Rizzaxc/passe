@@ -141,13 +141,16 @@
             "filter": {
                 "all": "Tất Cả",
                 "coach": "Huấn Luyện Viên",
-                "referee": "Trọng Tài"
+                "referee": "Trọng Tài",
+                "role": "Vai trò"
             },
             "empty": {
                 "title": "Không tìm thấy chuyên gia",
                 "message": "Thử điều chỉnh bộ lọc hoặc quay lại sau"
             },
             "book": "Đặt Lịch",
+            "seeAll": "Xem tất cả",
+            "viewProfile": "Xem hồ sơ",
             "experience": "{years} năm kinh nghiệm",
             "reviews": "{count} đánh giá",
             "role": {
@@ -337,7 +340,9 @@
     "soccer": {
         "position": {
             "label": "Vị Trí",
-            "outfield": "Cầu Thủ Sân",
+            "forward": "Tiền Đạo",
+            "midfielder": "Tiền Vệ",
+            "defender": "Hậu Vệ",
             "keeper": "Thủ Môn"
         },
         "pitch": {

@@ -11,6 +11,11 @@ class ProfessionalFeedItem {
   final int reviewCount;
   final bool isVerified;
 
+  /// Cheapest active `professional_service.hourly_rate` for the context sport,
+  /// rolled up by the feed controller (not present on the `professional` row
+  /// itself). `null` when the professional has no active priced service.
+  final double? priceFrom;
+
   const ProfessionalFeedItem({
     required this.id,
     required this.displayName,
@@ -21,14 +26,18 @@ class ProfessionalFeedItem {
     required this.averageRating,
     required this.reviewCount,
     required this.isVerified,
+    this.priceFrom,
   });
 
   factory ProfessionalFeedItem.fromJson(Map<String, dynamic> json) {
     return ProfessionalFeedItem(
       id: json['id'] as String,
       displayName: (json['display_name'] ?? json['name'] ?? '') as String,
+      // DB column is `professional_role`; keep `role` as a fallback for any
+      // RPC that aliases it. (Reading only `role` silently made every
+      // professional parse as `coach`.)
       role: ProfessionalRole.values.firstWhere(
-        (r) => r.name == (json['role'] as String?),
+        (r) => r.name == ((json['professional_role'] ?? json['role']) as String?),
         orElse: () => ProfessionalRole.coach,
       ),
       bio: json['bio'] as String?,
@@ -41,6 +50,7 @@ class ProfessionalFeedItem {
           double.tryParse(json['average_rating']?.toString() ?? '') ?? 0,
       reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,
       isVerified: json['is_verified'] as bool? ?? false,
+      priceFrom: double.tryParse(json['price_from']?.toString() ?? ''),
     );
   }
 }

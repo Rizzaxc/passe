@@ -105,6 +105,100 @@ class ScheduleActivityController extends _$ScheduleActivityController {
     }
   }
 
+  /// Captain-side edit of an already-scheduled activity: updates the row
+  /// in place (RLS restricts UPDATE to the row's own `user_id`, i.e. the
+  /// captain who scheduled it) and posts a `rescheduled` update feed item.
+  Future<void> reschedule({
+    required String activityId,
+    required DateTime start,
+    required DateTime end,
+    String? locationId,
+    bool prepaymentRequired = false,
+    ActivityPaymentType? paymentType,
+    num? prepaymentAmount,
+    int? confirmationThreshold,
+    DateTime? confirmationDeadline,
+    /// 0 = Mon … 6 = Sun (ISO ordering). null = one-off session.
+    int? recurrenceDayOfWeek,
+  }) async {
+    state = true;
+    try {
+      final user = ref.read(authControllerProvider).value;
+      if (user == null || user.id == null) return;
+
+      await supabase
+          .from('activity')
+          .update({
+            'start_time': start.toUtc().toIso8601String(),
+            'end_time': end.toUtc().toIso8601String(),
+            'location_id': locationId,
+            'prepayment_required': prepaymentRequired,
+            'payment_type': prepaymentRequired ? paymentType?.db : null,
+            'prepayment_amount': prepaymentRequired ? prepaymentAmount : null,
+            'confirmation_threshold': confirmationThreshold,
+            'confirmation_deadline':
+                confirmationDeadline?.toUtc().toIso8601String(),
+            'recurrence_day_of_week': recurrenceDayOfWeek,
+          })
+          .eq('id', activityId)
+          .timeout(const Duration(seconds: 5));
+
+      await supabase.from('lobby_feed_item').insert({
+        'lobby_id': lobbyId,
+        'author_id': user.id,
+        'kind': 'update',
+        'payload': {
+          'title': 'Đổi giờ buổi chơi',
+          'kind': 'rescheduled',
+          'tone': 'crimson',
+          'fields': [
+            ['Ngày', _fmtDate(start)],
+            ['Giờ', '${_fmtTime(start)} - ${_fmtTime(end)}'],
+          ],
+        },
+      }).timeout(const Duration(seconds: 5));
+
+      ref.invalidate(lobbyFeedControllerProvider(lobbyId));
+      ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
+    } finally {
+      state = false;
+    }
+  }
+
+  /// Captain-side cancellation: deletes the row (RLS-owner-scoped, same
+  /// as reschedule) and posts a `cancelled` update feed item so members
+  /// see why the pinned activity disappeared.
+  Future<void> cancel(String activityId) async {
+    state = true;
+    try {
+      final user = ref.read(authControllerProvider).value;
+      if (user == null || user.id == null) return;
+
+      await supabase
+          .from('activity')
+          .delete()
+          .eq('id', activityId)
+          .timeout(const Duration(seconds: 5));
+
+      await supabase.from('lobby_feed_item').insert({
+        'lobby_id': lobbyId,
+        'author_id': user.id,
+        'kind': 'update',
+        'payload': {
+          'title': 'Đã hủy buổi chơi',
+          'kind': 'cancelled',
+          'tone': 'crimson',
+          'fields': <List<String>>[],
+        },
+      }).timeout(const Duration(seconds: 5));
+
+      ref.invalidate(lobbyFeedControllerProvider(lobbyId));
+      ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
+    } finally {
+      state = false;
+    }
+  }
+
   static const _wd = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
   static String _fmtDate(DateTime d) =>

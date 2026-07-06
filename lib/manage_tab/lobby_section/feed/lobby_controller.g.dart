@@ -34,7 +34,7 @@ final class UserLobbiesControllerProvider
 }
 
 String _$userLobbiesControllerHash() =>
-    r'c0a978fc97e4f2a1cc5e9a7e5730bd46d61aa26b';
+    r'08ad02546b6177121658e92d32e1f756c7e0f384';
 
 abstract class _$UserLobbiesController
     extends $AsyncNotifier<List<LobbyListItem>> {

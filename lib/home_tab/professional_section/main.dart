@@ -3,11 +3,35 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../core/format.dart';
 import '../../core/model/enum.dart';
 import '../../core/model/professional_feed_item.dart';
+import '../../professional/booking_sheet.dart';
+import '../../router.dart';
 import '../../ui/main.dart';
 import '../filter.dart';
 import 'feed_controller.dart';
+
+// ─── Shared helpers ────────────────────────────────────────────
+
+/// Opens the full-page profile for a coach / referee. The model is passed as
+/// `$extra` so the detail page renders immediately without a refetch.
+void _openDetail(BuildContext context, ProfessionalFeedItem item) {
+  ProfessionalDetailRoute(id: item.id, $extra: item).push(context);
+}
+
+String _initialsOf(String displayName) {
+  final cleaned = displayName
+      .replaceAll(
+        RegExp(r'^(hlv|coach|trọng tài)\s+', caseSensitive: false),
+        '',
+      )
+      .trim();
+  final parts = cleaned.split(RegExp(r'\s+'));
+  if (parts.isEmpty || parts.first.isEmpty) return '?';
+  if (parts.length == 1) return parts.first[0].toUpperCase();
+  return (parts.first[0] + parts.last[0]).toUpperCase();
+}
 
 // ─── Subtab root ───────────────────────────────────────────────
 
@@ -16,7 +40,24 @@ class ProfessionalSubtab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Surface load errors as a toast (matching the schedule feed) rather than
+    // silently rendering empty sections.
+    ref.listen(professionalFeedProvider, (_, next) {
+      if (next is AsyncError && context.mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: Text('error'.tr()),
+          description: Text('errorGeneric'.tr()),
+          alignment: .bottomCenter,
+        );
+      }
+    });
+
     final feed = ref.watch(professionalFeedProvider);
+    // Role lives in the shared filter (toggled inside the filter sheet).
+    final role = ref.watch(filterStateProvider.select((f) => f.role));
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -24,8 +65,9 @@ class ProfessionalSubtab extends ConsumerWidget {
         await ref.read(professionalFeedProvider.future);
       },
       child: feed.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => const _Sections(coaches: [], referees: []),
+        loading: () => const _LoadingSkeleton(),
+        error: (_, _) =>
+            _Sections(coaches: const [], referees: const [], role: role),
         data: (items) {
           final coaches = items
               .where((p) => p.role == ProfessionalRole.coach)
@@ -33,57 +75,66 @@ class ProfessionalSubtab extends ConsumerWidget {
           final referees = items
               .where((p) => p.role == ProfessionalRole.referee)
               .toList();
-          return _Sections(coaches: coaches, referees: referees);
+          return _Sections(coaches: coaches, referees: referees, role: role);
         },
       ),
     );
   }
 }
 
-// ─── Two vertically stacked sections ───────────────────────────
+// ─── The (role-filtered) sections ──────────────────────────────
 
 class _Sections extends StatelessWidget {
   final List<ProfessionalFeedItem> coaches;
   final List<ProfessionalFeedItem> referees;
+  // null = both roles shown (default); otherwise narrowed to a single role.
+  final ProfessionalRole? role;
 
   const _Sections({
     required this.coaches,
     required this.referees,
+    required this.role,
   });
 
   @override
   Widget build(BuildContext context) {
+    final showCoaches = role != ProfessionalRole.referee;
+    final showReferees = role != ProfessionalRole.coach;
+
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 16),
       children: [
-        _Section(
-          title: 'homeTab.professional.filter.coach'.tr(),
-          items: coaches,
-          suffix: const FilterWidget(),
+        // Filter entry point for the whole subtab; the role toggle lives
+        // inside this sheet.
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: const [Spacer(), FilterWidget(showRoleFilter: true)],
+          ),
         ),
-        const SizedBox(height: 24),
-        _Section(
-          title: 'homeTab.professional.filter.referee'.tr(),
-          items: referees,
-        ),
-        const SizedBox(height: 16),
+        if (showCoaches)
+          _Section(
+            title: 'homeTab.professional.filter.coach'.tr(),
+            items: coaches,
+          ),
+        if (showCoaches && showReferees) const SizedBox(height: 24),
+        if (showReferees)
+          _Section(
+            title: 'homeTab.professional.filter.referee'.tr(),
+            items: referees,
+          ),
       ],
     );
   }
 }
 
-// A single section: clickable title + carousel (PageView) of cards + dots
+// A single role section: header (tappable + "see all") + carousel + dots.
 class _Section extends StatefulWidget {
   final String title;
   final List<ProfessionalFeedItem> items;
-  final Widget? suffix;
 
-  const _Section({
-    required this.title,
-    required this.items,
-    this.suffix,
-  });
+  const _Section({required this.title, required this.items});
 
   @override
   State<_Section> createState() => _SectionState();
@@ -91,13 +142,14 @@ class _Section extends StatefulWidget {
 
 class _SectionState extends State<_Section> {
   static const double _viewportFraction = 0.92;
-  // Fraction of the viewport width the user must drag past the last
-  // card. Scales with screen size — 18% of a 390-wide phone is ~70 px,
-  // 18% of a 600-wide tablet is ~108 px, etc.
-  static const double _overscrollFraction = 0.18;
+  // Fraction of the viewport width the user must drag past the last card
+  // before the full-list sheet opens. Kept low so the gesture is easy to
+  // trigger; the explicit "Xem tất cả" header action is the primary path.
+  static const double _overscrollFraction = 0.10;
 
-  late final PageController _controller =
-      PageController(viewportFraction: _viewportFraction);
+  late final PageController _controller = PageController(
+    viewportFraction: _viewportFraction,
+  );
   int _page = 0;
   bool _sheetOpening = false;
 
@@ -108,23 +160,20 @@ class _SectionState extends State<_Section> {
   }
 
   Future<void> _openSheet() async {
-    if (_sheetOpening) return;
+    if (_sheetOpening || widget.items.isEmpty) return;
     _sheetOpening = true;
     await showPSheet<void>(
       context: context,
       maxHeightRatio: 0.9,
-      builder: (_) => _ProfessionalSheet(
-        title: widget.title,
-        items: widget.items,
-      ),
+      builder: (_) =>
+          _ProfessionalSheet(title: widget.title, items: widget.items),
     );
     if (mounted) _sheetOpening = false;
   }
 
   bool _onScroll(ScrollNotification n) {
-    // Only count position updates that came from an active user drag —
-    // a fling settle overshoots past `maxScrollExtent` too, but its
-    // ScrollUpdateNotifications carry `dragDetails == null`.
+    // Only react to an active user drag past the end (a fling settle also
+    // overshoots, but carries dragDetails == null).
     if (n is! ScrollUpdateNotification || n.dragDetails == null) return false;
 
     final m = n.metrics;
@@ -139,10 +188,6 @@ class _SectionState extends State<_Section> {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    // height: 1.0 collapses the line box to the glyph height, so the
-    // icon and text bounding boxes are the same size — center alignment
-    // in the Row then produces actual visual centering instead of
-    // sitting both items on the line's baseline.
     final titleStyle = context.theme.typography.body.xl2.copyWith(
       fontWeight: FontWeight.bold,
       height: 1.0,
@@ -151,49 +196,52 @@ class _SectionState extends State<_Section> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            FTappable(
-              onPress: widget.items.isEmpty ? null : _openSheet,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 4,
-                  vertical: 4,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(widget.title, style: titleStyle),
-                    const SizedBox(width: 4),
-                    Icon(
-                      FLucideIcons.chevronRight,
-                      size: titleStyle.fontSize,
-                      color: colors.mutedForeground,
-                    ),
-                  ],
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: [
+              FTappable(
+                onPress: widget.items.isEmpty ? null : _openSheet,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(widget.title, style: titleStyle),
                 ),
               ),
-            ),
-            const Spacer(),
-            ?widget.suffix,
-          ],
+              const Spacer(),
+              if (widget.items.isNotEmpty)
+                FButton(
+                  variant: .ghost,
+                  onPress: _openSheet,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'homeTab.professional.seeAll'.tr(),
+                        style: context.theme.typography.body.sm.copyWith(
+                          color: colors.mutedForeground,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        FLucideIcons.chevronRight,
+                        size: 16,
+                        color: colors.mutedForeground,
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
         const SizedBox(height: 10),
         if (widget.items.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Text(
-              'homeTab.professional.empty.message'.tr(),
-              textAlign: TextAlign.center,
-              style: context.theme.typography.body.sm.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
+          PEmptySectionPlaceholder(
+            subtitle: 'homeTab.professional.empty.message'.tr(),
           )
         else ...[
           SizedBox(
-            height: 332,
+            height: 320,
             child: NotificationListener<ScrollNotification>(
               onNotification: _onScroll,
               child: PageView.builder(
@@ -204,7 +252,9 @@ class _SectionState extends State<_Section> {
                 onPageChanged: (i) => setState(() => _page = i),
                 itemBuilder: (context, i) => Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: _ProfessionalCard(item: widget.items[i]),
+                  child: Center(
+                    child: _ProfessionalCard(item: widget.items[i]),
+                  ),
                 ),
               ),
             ),
@@ -236,9 +286,7 @@ class _PageDots extends StatelessWidget {
             width: i == active ? 20 : 6,
             height: 6,
             decoration: BoxDecoration(
-              color: i == active
-                  ? colors.primary
-                  : colors.border,
+              color: i == active ? colors.primary : colors.border,
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -247,92 +295,90 @@ class _PageDots extends StatelessWidget {
   }
 }
 
-// ─── Testimonial-style card (avatar-prominent) ─────────────────
+// ─── Avatar (initials fallback; ready for a real photo) ────────
+
+class _ProAvatar extends StatelessWidget {
+  final ProfessionalFeedItem item;
+  final double size;
+
+  const _ProAvatar({required this.item, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: colors.primary,
+            boxShadow: [
+              BoxShadow(
+                color: colors.primary.withValues(alpha: 0.24),
+                blurRadius: size * 0.18,
+                offset: Offset(0, size * 0.08),
+              ),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            _initialsOf(item.displayName),
+            style: TextStyle(
+              fontFamily: context.theme.typography.body.xl2.fontFamily,
+              fontSize: size * 0.38,
+              fontWeight: FontWeight.w700,
+              color: colors.primaryForeground,
+              height: 1,
+            ),
+          ),
+        ),
+        if (item.isVerified)
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: colors.card,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                FLucideIcons.badgeCheck,
+                size: size * 0.26,
+                color: pbBlue,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ─── Discovery card ────────────────────────────────────────────
 
 class _ProfessionalCard extends StatelessWidget {
   final ProfessionalFeedItem item;
 
   const _ProfessionalCard({required this.item});
 
-  String get _initials {
-    final cleaned = item.displayName
-        .replaceAll(
-          RegExp(r'^(hlv|coach|trọng tài)\s+', caseSensitive: false),
-          '',
-        )
-        .trim();
-    final parts = cleaned.split(RegExp(r'\s+'));
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) return parts.first[0].toUpperCase();
-    return (parts.first[0] + parts.last[0]).toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final isCoach = item.role == ProfessionalRole.coach;
-    final accent = isCoach ? colors.primary : pbBlue;
 
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
+    return FTappable(
+      onPress: () => _openDetail(context, item),
+      child: FCard(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Prominent avatar
-              Center(
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: accent,
-                        boxShadow: [
-                          BoxShadow(
-                            color: accent.withValues(alpha: 0.28),
-                            blurRadius: 14,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        _initials,
-                        style: TextStyle(
-                          fontFamily: context.theme.typography.body.xl2.fontFamily,
-                          fontSize: 30,
-                          fontWeight: FontWeight.w700,
-                          color: colors.primaryForeground,
-                          height: 1,
-                        ),
-                      ),
-                    ),
-                    if (item.isVerified)
-                      Positioned(
-                        right: -2,
-                        bottom: -2,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: colors.card,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            FLucideIcons.badgeCheck,
-                            size: 20,
-                            color: pbBlue,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+              Center(child: _ProAvatar(item: item, size: 76)),
               const SizedBox(height: 12),
-              // Name
               Text(
                 item.displayName,
                 style: context.theme.typography.body.sm.copyWith(
@@ -343,59 +389,121 @@ class _ProfessionalCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
-              // Rating
+              // Rating + price on one line.
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.star_rounded,
-                    size: 14,
-                    color: Color(0xFFF59E0B),
-                  ),
-                  const SizedBox(width: 2),
+                  Icon(FLucideIcons.star, size: 13, color: pbStar),
+                  const SizedBox(width: 3),
                   Text(
                     item.averageRating.toStringAsFixed(1),
                     style: context.theme.typography.body.sm.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(width: 4),
                   Text(
-                    '(${item.reviewCount})',
+                    ' (${item.reviewCount})',
                     style: context.theme.typography.body.xs.copyWith(
                       color: colors.mutedForeground,
                     ),
                   ),
+                  if (item.priceFrom != null) ...[
+                    Text(
+                      '  ·  ',
+                      style: context.theme.typography.body.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                    Text(
+                      'từ ${formatVnd(item.priceFrom!)}₫/giờ',
+                      style: context.theme.typography.body.sm.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 8),
-              // Bio (testimonial quote) — fixed height, no flex
               SizedBox(
-                height: 64,
+                height: 40,
                 child: Text(
-                  item.bio == null || item.bio!.isEmpty
-                      ? ''
-                      : '"${item.bio!}"',
+                  item.bio ?? '',
                   style: context.theme.typography.body.sm.copyWith(
                     color: colors.mutedForeground,
-                    fontStyle: FontStyle.italic,
                     height: 1.4,
                   ),
                   textAlign: TextAlign.center,
-                  maxLines: 3,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               FButton(
-                size: .sm,
                 variant: .secondary,
-                onPress: () {},
-                child: Text('homeTab.professional.book'.tr()),
+                onPress: () => _openDetail(context, item),
+                child: Text('homeTab.professional.viewProfile'.tr()),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─── Loading skeleton ──────────────────────────────────────────
+
+class _LoadingSkeleton extends StatelessWidget {
+  const _LoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    Widget bar(double w, double h) => Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: BorderRadius.circular(6),
+      ),
+    );
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(4, 8, 4, 16),
+      children: [
+        bar(double.infinity, 40),
+        const SizedBox(height: 20),
+        for (var s = 0; s < 2; s++) ...[
+          bar(160, 24),
+          const SizedBox(height: 12),
+          FCard(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                children: [
+                  Container(
+                    width: 76,
+                    height: 76,
+                    decoration: BoxDecoration(
+                      color: colors.muted,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  bar(140, 16),
+                  const SizedBox(height: 8),
+                  bar(180, 12),
+                  const SizedBox(height: 16),
+                  bar(double.infinity, 36),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ],
     );
   }
 }
@@ -406,10 +514,7 @@ class _ProfessionalSheet extends StatefulWidget {
   final String title;
   final List<ProfessionalFeedItem> items;
 
-  const _ProfessionalSheet({
-    required this.title,
-    required this.items,
-  });
+  const _ProfessionalSheet({required this.title, required this.items});
 
   @override
   State<_ProfessionalSheet> createState() => _ProfessionalSheetState();
@@ -457,255 +562,168 @@ class _ProfessionalSheetState extends State<_ProfessionalSheet> {
   }
 }
 
-// Sheet row — surfaces full info: bio, sports, experience, verification
+// Sheet row — surfaces full info: bio, sports, experience, verification, price.
 class _SheetRow extends StatelessWidget {
   final ProfessionalFeedItem item;
 
   const _SheetRow({required this.item});
 
-  String get _initials {
-    final cleaned = item.displayName
-        .replaceAll(
-          RegExp(r'^(hlv|coach|trọng tài)\s+', caseSensitive: false),
-          '',
-        )
-        .trim();
-    final parts = cleaned.split(RegExp(r'\s+'));
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) return parts.first[0].toUpperCase();
-    return (parts.first[0] + parts.last[0]).toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final isCoach = item.role == ProfessionalRole.coach;
-    final accent = isCoach ? colors.primary : pbBlue;
 
-    return FCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header: avatar + name + stats
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 14,
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: accent,
-                      boxShadow: [
-                        BoxShadow(
-                          color: accent.withValues(alpha: 0.22),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+    return FTappable(
+      onPress: () => _openDetail(context, item),
+      child: FCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 14,
+              children: [
+                _ProAvatar(item: item, size: 64),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 6,
+                    children: [
+                      Text(
+                        item.displayName,
+                        style: context.theme.typography.body.lg.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      _initials,
-                      style: TextStyle(
-                        fontFamily: context.theme.typography.body.xl2.fontFamily,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: colors.primaryForeground,
-                        height: 1,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ),
-                  if (item.isVerified)
-                    Positioned(
-                      right: -2,
-                      bottom: -2,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: colors.card,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          FLucideIcons.badgeCheck,
-                          size: 18,
-                          color: pbBlue,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 6,
-                  children: [
-                    Text(
-                      item.displayName,
-                      style: context.theme.typography.body.lg.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 4,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.star_rounded,
-                              size: 16,
-                              color: Color(0xFFF59E0B),
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              item.averageRating.toStringAsFixed(1),
-                              style: context.theme.typography.body.sm.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '(${item.reviewCount} đánh giá)',
-                              style: context.theme.typography.body.sm.copyWith(
-                                color: colors.mutedForeground,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (item.experienceYears != null)
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 4,
+                        children: [
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                FLucideIcons.briefcaseBusiness,
-                                size: 13,
-                                color: colors.mutedForeground,
+                              Icon(FLucideIcons.star, size: 15, color: pbStar),
+                              const SizedBox(width: 3),
+                              Text(
+                                item.averageRating.toStringAsFixed(1),
+                                style: context.theme.typography.body.sm
+                                    .copyWith(fontWeight: FontWeight.w700),
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${item.experienceYears} năm kinh nghiệm',
-                                style: context.theme.typography.body.sm.copyWith(
-                                  color: colors.mutedForeground,
-                                ),
+                                '(${item.reviewCount} đánh giá)',
+                                style: context.theme.typography.body.sm
+                                    .copyWith(color: colors.mutedForeground),
                               ),
                             ],
                           ),
-                      ],
-                    ),
-                  ],
+                          if (item.experienceYears != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  FLucideIcons.briefcaseBusiness,
+                                  size: 13,
+                                  color: colors.mutedForeground,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${item.experienceYears} năm kinh nghiệm',
+                                  style: context.theme.typography.body.sm
+                                      .copyWith(color: colors.mutedForeground),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            if (item.priceFrom != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                'từ ${formatVnd(item.priceFrom!)}₫/giờ',
+                style: context.theme.typography.body.lg.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.primary,
                 ),
               ),
             ],
-          ),
 
-          // Verified chip
-          if (item.isVerified) ...[
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: pbBlue.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 4,
-                  children: [
-                    Icon(FLucideIcons.badgeCheck, size: 12, color: pbBlue),
-                    Text(
-                      'Đã xác minh',
-                      style: context.theme.typography.body.xs.copyWith(
-                        color: pbBlue,
-                        fontWeight: FontWeight.w600,
-                      ),
+            if (item.sports.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _RowLabel('Môn'),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final sportIdx in item.sports)
+                    _SportChip(
+                      sport: sportIdx >= 0 && sportIdx < Sport.values.length
+                          ? Sport.values[sportIdx]
+                          : Sport.others,
                     ),
-                  ],
+                ],
+              ),
+            ],
+
+            if (item.bio != null && item.bio!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _RowLabel('Giới thiệu'),
+              const SizedBox(height: 4),
+              Text(
+                item.bio!,
+                style: context.theme.typography.body.sm.copyWith(
+                  color: colors.foreground,
+                  height: 1.5,
                 ),
               ),
-            ),
-          ],
+            ],
 
-          // Sports
-          if (item.sports.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Môn',
-              style: context.theme.typography.body.xs.copyWith(
-                color: colors.mutedForeground,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
+            const SizedBox(height: 14),
+            Row(
+              spacing: 8,
               children: [
-                for (final sportIdx in item.sports)
-                  _SportChip(
-                    sport: sportIdx >= 0 && sportIdx < Sport.values.length
-                        ? Sport.values[sportIdx]
-                        : Sport.others,
+                Expanded(
+                  child: FButton(
+                    variant: .outline,
+                    onPress: () => _openDetail(context, item),
+                    child: Text('homeTab.professional.viewProfile'.tr()),
                   ),
+                ),
+                Expanded(
+                  child: FButton(
+                    onPress: () => showProfessionalBookingSheet(context, item),
+                    child: Text('homeTab.professional.book'.tr()),
+                  ),
+                ),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
 
-          // Full bio
-          if (item.bio != null && item.bio!.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Giới thiệu',
-              style: context.theme.typography.body.xs.copyWith(
-                color: colors.mutedForeground,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              item.bio!,
-              style: context.theme.typography.body.sm.copyWith(
-                color: colors.foreground,
-                height: 1.5,
-              ),
-            ),
-          ],
+class _RowLabel extends StatelessWidget {
+  final String text;
 
-          // Actions
-          const SizedBox(height: 14),
-          Row(
-            spacing: 8,
-            children: [
-              Expanded(
-                child: FButton(
-                  variant: .outline,
-                  onPress: () {},
-                  child: const Text('Xem Hồ Sơ'),
-                ),
-              ),
-              Expanded(
-                child: FButton(
-                  onPress: () {},
-                  child: Text('homeTab.professional.book'.tr()),
-                ),
-              ),
-            ],
-          ),
-        ],
+  const _RowLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: context.theme.typography.body.xs.copyWith(
+        color: context.theme.colors.mutedForeground,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
       ),
     );
   }

@@ -42,7 +42,7 @@ Quick map, then the full contract for each:
 |---|---|---|---|
 | Teammate | `home_teammate_lobby_data` RPC | `LobbyFeedItem` | "Xin vào" → insert `lobby_befriend_record` (`request`) |
 | Challenger | `home_challenger_lobby_data` RPC | `LobbyFeedItem` (`memberCount` set) | "Thách đấu" — **disabled placeholder** (no `lobby_challenge` table yet) |
-| Professional | `professional` table (no geo filter, `average_rating DESC`) | `ProfessionalFeedItem` | tap → `ProfessionalDetailRoute` |
+| Professional | `home_professional_data` RPC (sport + soft city/district/schedule + role toggle; ranked verified/rating/reviews; `price_from` from `professional_service`) | `ProfessionalFeedItem` | tap → `ProfessionalDetailRoute`; book = "coming soon" toast |
 | Location | `location` table, or `search_locations` RPC when `search` is set | `Location` (freezed) | informational only |
 
 Conventions across all four: `p_sport_id` is `Sport.index`; `p_city` is `City.dbIndex`; districts
@@ -96,16 +96,43 @@ freezed) — edit them by hand, no build_runner.
 
 ### Professional (Neutral) subtab
 
-- Shows coaches and referees offering services for the selected sport.
-- Queried directly from the `professional` table — **no location filter** (professionals aren't
-  geographically bound in the current schema). Filter: `sports` array contains the sport id.
-  Order by `average_rating DESC`.
-- Booking flow is TBD (either app currency "đá" or out-of-band + session scheduling).
-- Tap a card → `ProfessionalDetailRoute` (`/professional/:id`); pass the `ProfessionalFeedItem` as
-  `$extra` to skip a refetch.
+- Shows coaches and referees offering services for the selected sport, in two horizontal carousels
+  (one per role). The subtab keeps the shared `FilterWidget` icon (top-right); opened here it shows
+  an extra **role toggle** (`FilterWidget(showRoleFilter: true)` → a deselectable `PSegmentedButton`
+  inside the filter sheet, bound to `FilterData.role`). Deselected = both roles (default); selecting
+  Coach/Referee hides the other section. `role` is applied client-side, and the feed `.select`s the
+  query-affecting filter fields *excluding* `role` so toggling it doesn't refetch.
+- Data: `home_professional_data` RPC (`schema/professional_location_filter.sql`). Params mirror
+  teammate — `p_sport_id`, `p_timeslots` (`Timeslot.listToJson`), `p_city` (`City.dbIndex`),
+  `p_districts` (district ids), `p_page_size/number`. Returns the `professional` columns +
+  `professional_role` + `price_from` (cheapest active `professional_service.hourly_rate` for the
+  sport, numeric → `double.tryParse`, shown "từ {rate}₫/giờ") + `timeslot_compat_score`. Ranked
+  `is_verified DESC, average_rating DESC, review_count DESC`. (RLS exposes services only for
+  *verified* pros, so unverified pros list without a price.)
+- **Geo/schedule filter IS wired** (and soft). `professional` gained `preferred_city_cluster`
+  (FK → `supported_city_cluster`) + `preferred_districts text[]`; `schedule jsonb` holds the same
+  array shape as lobby playtime. The RPC treats all three as **soft**: a pro with *no* stated
+  preference always shows; one *with* a preference must match (city equality, district `&&` overlap,
+  schedule `calculate_timeslot_compat_score ≥ 4`). The feed `.select`s `(city, districts, schedule)`
+  to refetch on those, and excludes `role` (applied client-side) and `search` (pros aren't
+  text-searched).
+- Tap a card (or a "see all" sheet row) → `ProfessionalDetailRoute` (`/professional/:id`) via
+  `.push`, passing the `ProfessionalFeedItem` as `$extra` to skip a refetch. The "Xem hồ sơ" CTA does
+  the same. A visible "Xem tất cả" header action opens the full-list sheet (no longer reliant on the
+  hidden overscroll-drag, which remains as a bonus).
+- **Booking is real** (`professional_booking` / `professional_service`, `lib/professional/booking_sheet.dart` +
+  `booking_controller.dart`): "Đặt lịch" opens a sheet to pick an active service + date/time + optional
+  note, then inserts a `professional_booking` row (`status` defaults `requested`; the professional
+  accepts/rejects out of band — no in-app professional-side flow yet). Payment is out-of-band
+  (`agreed_rate` is informational, not an đá charge). See Manage ▸ Coaching for where a client's
+  bookings surface afterward. **Messaging has no backing flow** (no message/conversation table at
+  all) — "Nhắn tin" still shows a "sẽ sớm có mặt" toast.
+- States: loading = skeleton list; empty = `PEmptySectionPlaceholder`; error = `showFToast`
+  (destructive) + empty sections (matches the schedule feed). Avatars are initials-on-`primary`;
+  real photos should follow the `user_avatar` Storage convention once a pro photo bucket exists.
 - Model: `ProfessionalFeedItem` — `id, displayName, role (ProfessionalRole), bio, sports
-  (List<int>), experienceYears, averageRating (double), reviewCount (int), isVerified (bool)`.
-  `ProfessionalRole` (`coach`/`referee`) lives in `core/model/enum.dart`.
+  (List<int>), experienceYears, averageRating (double), reviewCount (int), isVerified (bool),
+  priceFrom (double?)`. `ProfessionalRole` (`coach`/`referee`) lives in `core/model/enum.dart`.
 
 ### Location subtab
 

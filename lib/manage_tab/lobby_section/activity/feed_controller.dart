@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../auth/auth_controller.dart';
 import 'feed.dart';
 
 part 'feed_controller.g.dart';
@@ -56,5 +57,47 @@ class LobbyFeedController extends _$LobbyFeedController {
       out.add(FeedItem.fromRow(row));
     }
     return out;
+  }
+
+  /// Cast (or change) the caller's vote on a poll feed item. Upserts on
+  /// the `(feed_item_id, user_id)` primary key, so re-tapping a different
+  /// option just moves the existing vote. Refetches afterwards so the
+  /// tallies + `myVote` reflect the server, rather than faking the count
+  /// locally.
+  Future<void> vote(String feedItemId, int optionIndex) async {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
+    await supabase
+        .from('lobby_feed_poll_vote')
+        .upsert({
+          'feed_item_id': feedItemId,
+          'user_id': userId,
+          'option_index': optionIndex,
+        })
+        .timeout(const Duration(seconds: 5));
+
+    ref.invalidateSelf();
+    await future;
+  }
+
+  /// Post one of the quick "personal" status updates (comeEarly, late,
+  /// bringGear, needLift, offerLift, paid, skip, cheer, remindCaptain —
+  /// see `PersonalActionKind`). RLS allows any lobby member to insert
+  /// `kind = 'personal'` items, unlike `update`/`poll` which are
+  /// captain-only.
+  Future<void> postPersonalAction(String actionKind) async {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
+    await supabase.from('lobby_feed_item').insert({
+      'lobby_id': lobbyId,
+      'author_id': userId,
+      'kind': 'personal',
+      'payload': {'action_kind': actionKind},
+    }).timeout(const Duration(seconds: 5));
+
+    ref.invalidateSelf();
+    await future;
   }
 }

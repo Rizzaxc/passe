@@ -6,7 +6,19 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../core/model/enum.dart';
 import '../core/model/professional_feed_item.dart';
 import '../ui/theme.dart';
+import 'booking_sheet.dart';
 import 'controller.dart';
+
+/// Messaging has no backing flow at all (no message/conversation table in
+/// the schema), so the CTA honestly says so instead of silently no-op'ing.
+void _showComingSoon(BuildContext context, String feature) {
+  showFToast(
+    context: context,
+    icon: const Icon(FLucideIcons.hammer),
+    title: Text('$feature sẽ sớm có mặt'),
+    alignment: .bottomCenter,
+  );
+}
 
 /// Full-page profile view for a coach / referee.
 ///
@@ -19,11 +31,7 @@ class ProfessionalDetailPage extends ConsumerWidget {
   final String id;
   final ProfessionalFeedItem? initialItem;
 
-  const ProfessionalDetailPage({
-    super.key,
-    required this.id,
-    this.initialItem,
-  });
+  const ProfessionalDetailPage({super.key, required this.id, this.initialItem});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,7 +40,8 @@ class ProfessionalDetailPage extends ConsumerWidget {
     final async = ref.watch(professionalByIdProvider(id));
     return async.when(
       data: (item) => _Body(item: item),
-      loading: () => const _Shell(child: Center(child: CircularProgressIndicator())),
+      loading: () =>
+          const _Shell(child: Center(child: CircularProgressIndicator())),
       error: (_, _) => _Shell(
         child: Center(
           child: Padding(
@@ -125,7 +134,9 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final isCoach = item.role == ProfessionalRole.coach;
-    final accent = isCoach ? colors.primary : pbBlue;
+    // Single accent across the screen; role is conveyed by the label below,
+    // not by switching colours.
+    final accent = colors.primary;
 
     return _Shell(
       child: Column(
@@ -223,8 +234,8 @@ class _Body extends StatelessWidget {
                     children: [
                       Flexible(
                         child: _StatTile(
-                          icon: Icons.star_rounded,
-                          iconColor: const Color(0xFFF59E0B),
+                          icon: FLucideIcons.star,
+                          iconColor: pbStar,
                           label: item.averageRating.toStringAsFixed(1),
                           sub: '${item.reviewCount} đánh giá',
                         ),
@@ -296,14 +307,14 @@ class _Body extends StatelessWidget {
                 Expanded(
                   child: FButton(
                     variant: .outline,
-                    onPress: () {},
+                    onPress: () => _showComingSoon(context, 'Nhắn tin'),
                     child: const Text('Nhắn tin'),
                   ),
                 ),
                 Expanded(
                   child: FButton(
-                    onPress: () {},
-                    child: const Text('Đặt buổi'),
+                    onPress: () => showProfessionalBookingSheet(context, item),
+                    child: const Text('Đặt lịch'),
                   ),
                 ),
               ],

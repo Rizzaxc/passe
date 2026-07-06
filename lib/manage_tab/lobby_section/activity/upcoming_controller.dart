@@ -11,6 +11,11 @@ part 'upcoming_controller.g.dart';
 /// [nextStart] is the resolved start instant (may differ from the
 /// stored row's `start_time` when the row is a recurring template
 /// whose first occurrence has already happened).
+///
+/// The fields below (location, prepayment, confirmation) come straight off
+/// the `activity` row / its `location` join but aren't part of the shared
+/// `Activity` freezed model, so they're carried here instead of bloating a
+/// model used elsewhere in the app.
 class UpcomingActivity {
   final Activity activity;
   final DateTime nextStart;
@@ -19,13 +24,40 @@ class UpcomingActivity {
   /// weekly recurrence.
   final int? recurrenceDayOfWeek;
 
+  final String? locationId;
+  final String? locationName;
+  final String? locationDistrict;
+
+  final bool prepaymentRequired;
+  final String? paymentType; // 'manual' | 'da'
+  final num? prepaymentAmount;
+
+  final int? confirmationThreshold;
+  final DateTime? confirmationDeadline;
+
   const UpcomingActivity({
     required this.activity,
     required this.nextStart,
     required this.recurrenceDayOfWeek,
+    required this.locationId,
+    required this.locationName,
+    required this.locationDistrict,
+    required this.prepaymentRequired,
+    required this.paymentType,
+    required this.prepaymentAmount,
+    required this.confirmationThreshold,
+    required this.confirmationDeadline,
   });
 
   bool get isRecurring => recurrenceDayOfWeek != null;
+
+  /// [nextStart] shifted by the row's own start→end duration, so a
+  /// recurring series' "next occurrence" gets the right end time too.
+  DateTime? get nextEnd {
+    final end = activity.endTime;
+    if (end == null) return null;
+    return nextStart.add(end.difference(activity.startTime));
+  }
 }
 
 /// Soonest upcoming activity for a lobby, accounting for weekly
@@ -49,7 +81,7 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
 
     final response = await supabase
         .from('activity')
-        .select('*, recurrence_day_of_week')
+        .select('*, location(name, district)')
         .eq('lobby_id', lobbyId)
         .or(
           'start_time.gt.${nowUtc.toIso8601String()},'
@@ -71,10 +103,22 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
       );
       if (next == null) continue;
       if (best == null || next.isBefore(best.nextStart)) {
+        final location = row['location'] as Map<String, dynamic>?;
         best = UpcomingActivity(
           activity: activity,
           nextStart: next,
           recurrenceDayOfWeek: recDow,
+          locationId: row['location_id'] as String?,
+          locationName: location?['name'] as String?,
+          locationDistrict: location?['district'] as String?,
+          prepaymentRequired: (row['prepayment_required'] as bool?) ?? false,
+          paymentType: row['payment_type'] as String?,
+          prepaymentAmount: row['prepayment_amount'] as num?,
+          confirmationThreshold:
+              (row['confirmation_threshold'] as num?)?.toInt(),
+          confirmationDeadline: row['confirmation_deadline'] != null
+              ? DateTime.parse(row['confirmation_deadline'] as String)
+              : null,
         );
       }
     }
@@ -82,10 +126,12 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
   }
 
   /// Strip columns the freezed `Activity.fromJson` doesn't know about
-  /// so the deserialisation succeeds. The augmented fields (recurrence
-  /// etc.) are read directly from the row above.
+  /// so the deserialisation succeeds. The augmented fields (location join,
+  /// recurrence, prepayment, confirmation) are read directly from the row
+  /// above and carried on `UpcomingActivity` instead.
   Map<String, dynamic> _stripExtras(Map<String, dynamic> row) {
     return {...row}
+      ..remove('location')
       ..remove('recurrence_day_of_week')
       ..remove('location_id')
       ..remove('prepayment_required')

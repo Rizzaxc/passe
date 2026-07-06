@@ -142,13 +142,16 @@
             "filter": {
                 "all": "All",
                 "coach": "Coach",
-                "referee": "Referee"
+                "referee": "Referee",
+                "role": "Role"
             },
             "empty": {
                 "title": "No professionals found",
                 "message": "Try adjusting your filters or check back later"
             },
             "book": "Book",
+            "seeAll": "See all",
+            "viewProfile": "View profile",
             "experience": "{years} years experience",
             "reviews": "{count} reviews",
             "role": {
@@ -337,7 +340,9 @@
     "soccer": {
         "position": {
             "label": "Position",
-            "outfield": "Outfield",
+            "forward": "Forward",
+            "midfielder": "Midfielder",
+            "defender": "Defender",
             "keeper": "Goalkeeper"
         },
         "pitch": {

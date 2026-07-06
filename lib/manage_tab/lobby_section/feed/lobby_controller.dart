@@ -26,7 +26,7 @@ abstract class LobbyFormState with _$LobbyFormState {
 class LobbyListItem {
   final Lobby lobby;
   final int memberCount;
-  final DateTime? nextActivity; // TODO: populate from schedule
+  final DateTime? nextActivity;
   final String? homeGroundName;
 
   const LobbyListItem({required this.lobby, required this.memberCount, this.nextActivity, this.homeGroundName});
@@ -93,11 +93,36 @@ class UserLobbiesController extends _$UserLobbiesController {
       countMap[id] = (countMap[id] ?? 0) + 1;
     }
 
+    // Soonest upcoming one-off activity per lobby, for the card's
+    // activity-state row. Recurring series (recurrence_day_of_week) are
+    // deliberately not resolved to their next occurrence here — that
+    // needs the same virtual-occurrence math as
+    // activity/upcoming_controller.dart, which is more than this compact
+    // list card needs; a recurring-only lobby just shows "no activity"
+    // until it's opened.
+    final activityRows = await supabase
+        .from('activity')
+        .select('lobby_id, start_time')
+        .inFilter('lobby_id', lobbyIds)
+        .gt('start_time', DateTime.now().toUtc().toIso8601String())
+        .order('start_time')
+        .timeout(const Duration(seconds: 5));
+
+    final nextActivityMap = <String, DateTime>{};
+    for (final row in activityRows as List) {
+      final id = row['lobby_id'] as String;
+      // Rows arrive start_time-ascending, so the first one seen per
+      // lobby is already the soonest.
+      nextActivityMap.putIfAbsent(
+          id, () => DateTime.parse(row['start_time'] as String));
+    }
+
     return lobbies
         .map((lobby) => LobbyListItem(
               lobby: lobby,
               memberCount: countMap[lobby.id] ?? 0,
               homeGroundName: homeGroundNames[lobby.id],
+              nextActivity: nextActivityMap[lobby.id],
             ))
         .toList();
   }

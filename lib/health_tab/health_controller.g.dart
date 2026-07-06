@@ -33,7 +33,7 @@ final class HealthControllerProvider
   HealthController create() => HealthController();
 }
 
-String _$healthControllerHash() => r'1c256aa8bff6ac17ad7b81dc67921eaaad75f1f6';
+String _$healthControllerHash() => r'c9c112d0fb676a9d79c3efcdac99f755adad0867';
 
 abstract class _$HealthController extends $AsyncNotifier<HealthLinkStatus> {
   FutureOr<HealthLinkStatus> build();

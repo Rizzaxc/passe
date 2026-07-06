@@ -34,7 +34,7 @@ final class ProfessionalFeedProvider
   ProfessionalFeed create() => ProfessionalFeed();
 }
 
-String _$professionalFeedHash() => r'60ca64fe6b28ed7569b99975f71835181b0791f0';
+String _$professionalFeedHash() => r'f2df3a6c1849339a1a1ee7eefea5201bad91e8ac';
 
 abstract class _$ProfessionalFeed
     extends $AsyncNotifier<List<ProfessionalFeedItem>> {

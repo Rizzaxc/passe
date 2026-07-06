@@ -11,11 +11,16 @@ class FilterData {
   final Set<District> districts;
   final List<Timeslot> schedule;
 
+  /// Professional-subtab only: narrow the discovery feed to a single role.
+  /// `null` = show both coaches and referees (the default).
+  final ProfessionalRole? role;
+
   FilterData({
     this.search = '',
     this.city = City.hochiminh,
     this.districts = const {},
     this.schedule = const [],
+    this.role,
   });
 
   FilterData copyWith({
@@ -23,12 +28,15 @@ class FilterData {
     City? city,
     Set<District>? districts,
     List<Timeslot>? schedule,
+    ProfessionalRole? role,
+    bool clearRole = false,
   }) {
     return FilterData(
       search: search ?? this.search,
       city: city ?? this.city,
       districts: districts ?? this.districts,
       schedule: schedule ?? this.schedule,
+      role: clearRole ? null : (role ?? this.role),
     );
   }
 }
@@ -76,6 +84,14 @@ class FilterState extends _$FilterState {
       schedule.removeAt(0);
     }
     state = state.copyWith(schedule: schedule);
+  }
+
+  /// `null` clears the role filter (both roles shown). Only the professional
+  /// subtab reads this field.
+  void setRole(ProfessionalRole? role) {
+    state = role == null
+        ? state.copyWith(clearRole: true)
+        : state.copyWith(role: role);
   }
 
   /// TODO: Send filter settings to server

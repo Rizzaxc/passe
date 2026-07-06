@@ -24,13 +24,13 @@ enum Sport {
   }
 
   Widget getIcon({double size = 12}) => switch (this) {
-        Sport.soccer => SportIcons.soccer(size: size),
-        Sport.basketball => SportIcons.basketball(size: size),
-        Sport.badminton => SportIcons.badminton(size: size),
-        Sport.tennis => SportIcons.tennis(size: size),
-        Sport.pickleball => SportIcons.pickleball(size: size),
-        Sport.others => Icon(Icons.question_mark, size: size),
-      };
+    Sport.soccer => SportIcons.soccer(size: size),
+    Sport.basketball => SportIcons.basketball(size: size),
+    Sport.badminton => SportIcons.badminton(size: size),
+    Sport.tennis => SportIcons.tennis(size: size),
+    Sport.pickleball => SportIcons.pickleball(size: size),
+    Sport.others => Icon(Icons.question_mark, size: size),
+  };
 
   static List<String> getAllLocalizedNames(BuildContext context) {
     return Sport.values.map((e) => e.getLocalizedName(context)).toList();
@@ -108,7 +108,6 @@ enum DayOfWeek {
 
   String getShortName(BuildContext context) {
     return context.tr('timeslot.dayOfWeek.shortName.$name');
-
   }
 
   String getFullName(BuildContext context) {
@@ -182,7 +181,8 @@ class District {
   /// Full name with prefix (e.g., "Quận 1")
   String get fullName => '$name ${type.prefix}';
 
-  String getLocalizedFullName(BuildContext context) => '${context.tr('district.${type.name}')} $name';
+  String getLocalizedFullName(BuildContext context) =>
+      '${context.tr('district.${type.name}')} $name';
 
   /// Full name with city (e.g., "Tp Hồ Chí Minh - Quận 1")
   String get fullNameWithCity => '${city.name} - $name ${type.prefix}';
@@ -690,8 +690,12 @@ enum Gender {
 
 @JsonEnum()
 enum SoccerPosition {
-  @JsonValue('outfield')
-  outfield('soccer.position.outfield'),
+  @JsonValue('forward')
+  forward('soccer.position.forward'),
+  @JsonValue('midfielder')
+  midfielder('soccer.position.midfielder'),
+  @JsonValue('defender')
+  defender('soccer.position.defender'),
   @JsonValue('keeper')
   keeper('soccer.position.keeper');
 
@@ -800,7 +804,10 @@ enum Industry {
   technology,
   transportation;
 
-  String getLocalizedName(BuildContext context, {bool withoutDiacritics = false}) {
+  String getLocalizedName(
+    BuildContext context, {
+    bool withoutDiacritics = false,
+  }) {
     final localizedName = context.tr('industry.$name');
     if (withoutDiacritics) return removeDiacritics(localizedName);
     return localizedName;
@@ -822,6 +829,29 @@ enum ProfessionalRole {
 
   String getLocalizedName(BuildContext context) =>
       context.tr('homeTab.professional.role.$name');
+}
+
+/// Mirrors the `professional_booking_status` Postgres enum by value.
+/// Manually parsed (not JsonSerializable), same convention as [Attendance].
+enum ProfessionalBookingStatus {
+  requested('requested'),
+  confirmed('confirmed'),
+  rejected('rejected'),
+  cancelledByClient('cancelled_by_client'),
+  cancelledByPro('cancelled_by_pro'),
+  completed('completed');
+
+  final String value;
+
+  const ProfessionalBookingStatus(this.value);
+
+  static ProfessionalBookingStatus? fromValue(String? value) {
+    if (value == null) return null;
+    for (final s in ProfessionalBookingStatus.values) {
+      if (s.value == value) return s;
+    }
+    return null;
+  }
 }
 
 /// A member's RSVP to an activity. Mirrors the `activity_attendance` Postgres

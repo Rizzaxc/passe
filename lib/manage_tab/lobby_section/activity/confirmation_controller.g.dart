@@ -167,3 +167,97 @@ abstract class _$ActivityConfirmationController
     element.handleCreate(ref, () => build(_$args));
   }
 }
+
+/// Small sample of who's going / maybe, for the hero's avatar strip.
+/// `activity_confirmation_status` only returns aggregate counts, so this
+/// is a separate lightweight query rather than bloating that RPC.
+
+@ProviderFor(activityAttendees)
+final activityAttendeesProvider = ActivityAttendeesFamily._();
+
+/// Small sample of who's going / maybe, for the hero's avatar strip.
+/// `activity_confirmation_status` only returns aggregate counts, so this
+/// is a separate lightweight query rather than bloating that RPC.
+
+final class ActivityAttendeesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Attendee>>,
+          List<Attendee>,
+          FutureOr<List<Attendee>>
+        >
+    with $FutureModifier<List<Attendee>>, $FutureProvider<List<Attendee>> {
+  /// Small sample of who's going / maybe, for the hero's avatar strip.
+  /// `activity_confirmation_status` only returns aggregate counts, so this
+  /// is a separate lightweight query rather than bloating that RPC.
+  ActivityAttendeesProvider._({
+    required ActivityAttendeesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'activityAttendeesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$activityAttendeesHash();
+
+  @override
+  String toString() {
+    return r'activityAttendeesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Attendee>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Attendee>> create(Ref ref) {
+    final argument = this.argument as String;
+    return activityAttendees(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ActivityAttendeesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$activityAttendeesHash() => r'733b685342950a387e7b55c29c5ab7a32becad74';
+
+/// Small sample of who's going / maybe, for the hero's avatar strip.
+/// `activity_confirmation_status` only returns aggregate counts, so this
+/// is a separate lightweight query rather than bloating that RPC.
+
+final class ActivityAttendeesFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Attendee>>, String> {
+  ActivityAttendeesFamily._()
+    : super(
+        retry: null,
+        name: r'activityAttendeesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Small sample of who's going / maybe, for the hero's avatar strip.
+  /// `activity_confirmation_status` only returns aggregate counts, so this
+  /// is a separate lightweight query rather than bloating that RPC.
+
+  ActivityAttendeesProvider call(String activityId) =>
+      ActivityAttendeesProvider._(argument: activityId, from: this);
+
+  @override
+  String toString() => r'activityAttendeesProvider';
+}

@@ -10,6 +10,9 @@ import 'tabs_style.dart';
 // const pbRed = Color(0xFFDC143C);
 const pbBlue = Color(0xFF3090F2);
 const pbGreen = Color(0xFF959D54);
+// Rating-star amber. Shared by every place that renders a star score so the
+// colour stays consistent and theme-derived instead of a hardcoded literal.
+const pbStar = Color(0xFFF59E0B);
 
 FThemeData get pbThemeLight {
   final colors = FColors(

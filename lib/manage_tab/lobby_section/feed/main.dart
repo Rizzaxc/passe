@@ -8,6 +8,7 @@ import '../../../auth/auth_controller.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
 import '../invite_member_sheet.dart';
+import '../schedule_activity_sheet.dart';
 import 'lobby_controller.dart';
 import 'lobby_form_sheet.dart';
 
@@ -279,12 +280,12 @@ class _LobbyCard extends ConsumerWidget {
                           ),
                         ),
                       // Action buttons
-                      if (isLeader)
+                      if (isLeader && lobby.id != null)
                         FButton.icon(
                           size: .xs,
                           variant: .ghost,
                           onPress: () =>
-                              showFToast(context: context, title: Text('TODO')),
+                              showScheduleActivitySheet(context, lobby.id!),
                           child: Icon(
                             FLucideIcons.calendarPlus,
                             size: 16,

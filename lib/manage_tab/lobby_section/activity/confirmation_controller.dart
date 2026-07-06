@@ -116,3 +116,34 @@ class ActivityConfirmationController
     }
   }
 }
+
+/// One row of the hero's RSVP avatar strip.
+class Attendee {
+  final String username;
+  final Attendance attendance;
+  const Attendee({required this.username, required this.attendance});
+}
+
+/// Small sample of who's going / maybe, for the hero's avatar strip.
+/// `activity_confirmation_status` only returns aggregate counts, so this
+/// is a separate lightweight query rather than bloating that RPC.
+@riverpod
+Future<List<Attendee>> activityAttendees(Ref ref, String activityId) async {
+  final supabase = Supabase.instance.client;
+  final rows = await supabase
+      .from('activity_confirmation')
+      .select('attendance, user!activity_confirmation_user_id_fkey(username)')
+      .eq('activity_id', activityId)
+      .inFilter('attendance', ['going', 'maybe'])
+      .order('confirmed_at')
+      .limit(6)
+      .timeout(const Duration(seconds: 5));
+
+  return (rows as List).map((row) {
+    final u = row['user'] as Map<String, dynamic>;
+    return Attendee(
+      username: u['username'] as String,
+      attendance: Attendance.fromValue(row['attendance'] as String)!,
+    );
+  }).toList();
+}

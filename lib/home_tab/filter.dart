@@ -5,13 +5,18 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../core/model/enum.dart';
 import '../core/model/timeslot.dart';
 import '../ui/search_field.dart';
+import '../ui/segmented_button.dart';
 import '../ui/sheet.dart';
 import 'filter_controller.dart';
 
 export 'filter_controller.dart' show FilterData, filterStateProvider;
 
 class FilterWidget extends ConsumerWidget {
-  const FilterWidget({super.key});
+  /// When true, the sheet also shows a coach/referee role toggle (professional
+  /// subtab only). Other subtabs don't use the `role` filter field.
+  final bool showRoleFilter;
+
+  const FilterWidget({super.key, this.showRoleFilter = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,7 +25,7 @@ class FilterWidget extends ConsumerWidget {
       onPress: () {
         showPSheet(
           context: context,
-          builder: (_) => const FilterSheet(),
+          builder: (_) => FilterSheet(showRoleFilter: showRoleFilter),
         );
       },
       child: Icon(FLucideIcons.listFilter),
@@ -83,7 +88,9 @@ class _DistrictSelect extends StatelessWidget {
 }
 
 class FilterSheet extends ConsumerStatefulWidget {
-  const FilterSheet({super.key});
+  final bool showRoleFilter;
+
+  const FilterSheet({super.key, this.showRoleFilter = false});
 
   @override
   ConsumerState<FilterSheet> createState() => _FilterSheetState();
@@ -122,6 +129,32 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
             spacing: 20,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Role section (professional subtab only). Deselected = both.
+              if (widget.showRoleFilter)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    PSheetSectionLabel(
+                      label: context.tr('homeTab.professional.filter.role'),
+                    ),
+                    const SizedBox(height: 8),
+                    PSegmentedButton<ProfessionalRole>(
+                      values: ProfessionalRole.values,
+                      selected: filter.role,
+                      deselectable: true,
+                      onChange: notifier.setRole,
+                      format: (r) => Text(
+                        switch (r) {
+                          ProfessionalRole.coach =>
+                            'homeTab.professional.filter.coach',
+                          ProfessionalRole.referee =>
+                            'homeTab.professional.filter.referee',
+                        }.tr(),
+                      ),
+                    ),
+                  ],
+                ),
+
               // Search section
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -156,7 +156,9 @@ BEGIN
         INSERT INTO soccer_profile (user_id, "position", pitch, elo_seed)
         VALUES (
             v_id,
-            CASE WHEN i % 7 = 0 THEN ARRAY['keeper','outfield'] ELSE ARRAY['outfield'] END,
+            CASE WHEN i % 7 = 0 THEN ARRAY['keeper']
+                 ELSE ARRAY[(ARRAY['forward','midfielder','defender'])[1 + (i % 3)]]
+            END,
             CASE (i % 4)
                 WHEN 0 THEN ARRAY['futsal']
                 WHEN 1 THEN ARRAY['5v5']
@@ -237,9 +239,12 @@ BEGIN
     END LOOP;
 
     -- ── 5 coaches + 5 referees (+ services) ────────────────────────────────
+    -- preferred location + schedule feed the home_professional_data filter:
+    -- all in HCM (cluster 1), one varied district each, fully available.
     FOR i IN 1..10 LOOP
         INSERT INTO professional (professional_role, display_name, bio, is_verified, sports,
-                                  experience_years, average_rating, review_count)
+                                  experience_years, average_rating, review_count,
+                                  preferred_city_cluster, preferred_districts, schedule)
         VALUES (
             (CASE WHEN i <= 5 THEN 'coach' ELSE 'referee' END)::professional_role,
             (CASE WHEN i <= 5 THEN 'mocked_HLV ' ELSE 'mocked_Trọng tài ' END) || i,
@@ -250,7 +255,14 @@ BEGIN
             ARRAY[1]::bigint[],                        -- soccer
             2 + (i % 12),
             round((3.6 + (i % 14) * 0.1)::numeric, 2), -- 3.6–5.0
-            5 + (i * 7) % 95)
+            5 + (i * 7) % 95,
+            1,                                         -- Ho Chi Minh
+            ARRAY[(ARRAY['hcm_q1','hcm_q3','hcm_q5','hcm_q7','hcm_binhthanh',
+                         'hcm_phunhuan','hcm_govap','hcm_thuduc','hcm_tanbinh',
+                         'hcm_q10'])[i]],
+            (SELECT jsonb_agg(jsonb_build_object('dayOfWeek', d, 'dayChunk', c))
+             FROM unnest(ARRAY['mon','tue','wed','thu','fri','sat','sun']) AS d
+             CROSS JOIN unnest(ARRAY['early','midday','noon','night']) AS c))
         RETURNING id INTO v_pro;
 
         INSERT INTO professional_service (professional_id, sport_id, service_type, service_description,

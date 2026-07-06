@@ -1,8 +1,11 @@
 // Feed item models + renderers — action-based, no free-text chat
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../ui/theme.dart';
+import 'feed_controller.dart';
 
 // ─── Color tokens ──────────────────────────────────────────────
 const _crimson = Color(0xFFDC143C);
@@ -10,7 +13,6 @@ const _crimsonTint = Color(0xFFFFEBED);
 const _greenTint = Color(0xFFEEF2E4);
 const _amberTint = Color(0xFFFDF3DC);
 const _blueTint = Color(0xFFEBF5FF);
-const _orange = Color(0xFFF97316);
 const _amber = Color(0xFFC58A1A);
 
 // ─── Feed item sealed hierarchy ─────────────────────────────────
@@ -29,6 +31,7 @@ enum UpdateKind {
   refereeBooked('referee_booked', Icons.sports_score_outlined),
   rescheduled('rescheduled', Icons.update_outlined),
   venueChanged('venue_changed', Icons.swap_horiz_outlined),
+  cancelled('cancelled', Icons.event_busy_outlined),
   other('other', Icons.campaign_outlined);
 
   final String db;
@@ -64,7 +67,10 @@ enum PersonalActionKind {
   skip('skip', 'Vắng buổi này', FeedTone.crimson, Icons.close_rounded),
   cheer(
       'cheer', 'Tăng động năng lượng', FeedTone.neutral,
-      Icons.emoji_emotions_outlined);
+      Icons.emoji_emotions_outlined),
+  remindCaptain(
+      'remind_captain', 'Đã nhắc đội trưởng', FeedTone.neutral,
+      Icons.notifications_active_outlined);
 
   final String db;
   final String label;
@@ -141,7 +147,6 @@ sealed class FeedItem {
               .map<(String, String)>(
                   (f) => ((f as List)[0] as String, f[1] as String))
               .toList(),
-          ctaLabel: payload['cta_label'] as String?,
         );
 
       case 'personal':
@@ -157,10 +162,7 @@ sealed class FeedItem {
         );
 
       case 'system':
-        return SystemItem(
-          text: payload['text'] as String,
-          hasApprove: (payload['has_approve'] as bool?) ?? false,
-        );
+        return SystemItem(text: payload['text'] as String);
 
       case 'poll':
         final tallies = (row['poll_tallies'] as Map?) ?? const {};
@@ -179,6 +181,7 @@ sealed class FeedItem {
           options: options,
           totalMembers: (payload['total_members'] as num).toInt(),
           deadline: (payload['deadline'] as String?) ?? '',
+          myVote: (row['my_vote'] as num?)?.toInt(),
         );
 
       case 'photo':
@@ -215,7 +218,6 @@ final class UpdateItem extends FeedItem {
   final UpdateKind kind;
   final FeedTone tone;
   final List<(String, String)> fields;
-  final String? ctaLabel;
   const UpdateItem({
     required this.author,
     required this.time,
@@ -223,7 +225,6 @@ final class UpdateItem extends FeedItem {
     required this.kind,
     required this.tone,
     required this.fields,
-    this.ctaLabel,
   });
 }
 
@@ -244,8 +245,7 @@ final class PersonalItem extends FeedItem {
 
 final class SystemItem extends FeedItem {
   final String text;
-  final bool hasApprove;
-  const SystemItem({required this.text, this.hasApprove = false});
+  const SystemItem({required this.text});
 }
 
 final class PollItem extends FeedItem {
@@ -256,6 +256,7 @@ final class PollItem extends FeedItem {
   final List<(String, int)> options; // (label, voteCount)
   final int totalMembers;
   final String deadline;
+  final int? myVote; // option index the caller voted for, null if none yet
   const PollItem({
     required this.id,
     required this.author,
@@ -264,6 +265,7 @@ final class PollItem extends FeedItem {
     required this.options,
     required this.totalMembers,
     required this.deadline,
+    required this.myVote,
   });
 }
 
@@ -284,7 +286,8 @@ final class PhotoItem extends FeedItem {
 
 class FeedItemWidget extends StatelessWidget {
   final FeedItem item;
-  const FeedItemWidget({super.key, required this.item});
+  final String lobbyId;
+  const FeedItemWidget({super.key, required this.item, required this.lobbyId});
 
   @override
   Widget build(BuildContext context) {
@@ -293,7 +296,7 @@ class FeedItemWidget extends StatelessWidget {
       final UpdateItem u => _UpdateCard(item: u),
       final PersonalItem p => _PersonalCard(item: p),
       final SystemItem s => _SystemEvent(item: s),
-      final PollItem po => _PollCard(item: po),
+      final PollItem po => _PollCard(item: po, lobbyId: lobbyId),
       final PhotoItem ph => _PhotoCard(item: ph),
     };
   }
@@ -622,28 +625,6 @@ class _UpdateCard extends StatelessWidget {
                               ],
                             ),
                           ),
-                        if (item.ctaLabel != null) ...[
-                          const SizedBox(height: 6),
-                          GestureDetector(
-                            onTap: () {},
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: pbGreen,
-                                borderRadius: BorderRadius.circular(9),
-                              ),
-                              child: Text(
-                                item.ctaLabel!,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),
@@ -697,48 +678,6 @@ class _SystemEvent extends StatelessWidget {
               ),
             ),
           ),
-          if (item.hasApprove) ...[
-            const SizedBox(width: 4),
-            GestureDetector(
-              onTap: () {},
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _greenTint,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Đồng Ý',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: pbGreen,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            GestureDetector(
-              onTap: () {},
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Color(0x25F97316),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Từ Chối',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: _orange,
-                  ),
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -747,22 +686,58 @@ class _SystemEvent extends StatelessWidget {
 
 // ─── Poll card ─────────────────────────────────────────────────
 
-class _PollCard extends StatefulWidget {
+class _PollCard extends ConsumerStatefulWidget {
   final PollItem item;
-  const _PollCard({required this.item});
+  final String lobbyId;
+  const _PollCard({required this.item, required this.lobbyId});
 
   @override
-  State<_PollCard> createState() => _PollCardState();
+  ConsumerState<_PollCard> createState() => _PollCardState();
 }
 
-class _PollCardState extends State<_PollCard> {
-  int? _voted;
+class _PollCardState extends ConsumerState<_PollCard> {
+  // Optimistic local override so the tap feels instant; cleared once the
+  // real vote lands (the provider refetch brings item.myVote back in sync).
+  int? _pendingVote;
+  bool _voting = false;
+
+  Future<void> _vote(int index) async {
+    if (_voting) return;
+    setState(() {
+      _pendingVote = index;
+      _voting = true;
+    });
+    try {
+      await ref
+          .read(lobbyFeedControllerProvider(widget.lobbyId).notifier)
+          .vote(widget.item.id, index);
+    } catch (e, st) {
+      Talker().handle(e, st, 'Poll vote failed');
+      if (mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: const Text('Bình chọn thất bại'),
+          alignment: .bottomCenter,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _voting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final voted = _pendingVote ?? widget.item.myVote;
+    // While a vote is in flight and the refetch hasn't caught up yet, bump
+    // the chosen option by one so the tap feels instant; once the real
+    // tallies land (myVote == _pendingVote) this stops applying on its own.
+    final isPendingBump =
+        _voting && _pendingVote != null && widget.item.myVote != _pendingVote;
     final total = widget.item.options.fold<int>(0, (s, o) => s + o.$2) +
-        (_voted != null ? 1 : 0);
+        (isPendingBump ? 1 : 0);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
@@ -840,10 +815,10 @@ class _PollCardState extends State<_PollCard> {
                             child: _PollOption(
                               label: widget.item.options[i].$1,
                               votes: widget.item.options[i].$2 +
-                                  (_voted == i ? 1 : 0),
+                                  (isPendingBump && voted == i ? 1 : 0),
                               total: total,
-                              selected: _voted == i,
-                              onTap: () => setState(() => _voted = i),
+                              selected: voted == i,
+                              onTap: () => _vote(i),
                             ),
                           ),
                         const SizedBox(height: 4),

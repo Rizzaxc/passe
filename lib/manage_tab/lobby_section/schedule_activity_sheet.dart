@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../ui/sheet.dart';
+import 'activity/upcoming_controller.dart';
 import 'feed/home_ground_selector.dart';
 import 'lobby_detail_controller.dart';
 import 'schedule_activity_controller.dart';
@@ -11,13 +12,17 @@ import 'schedule_activity_controller.dart';
 ///
 /// Opens a form sheet asking for the full activity spec (date / time,
 /// location, recurrence, prepayment, confirmation threshold + deadline)
-/// and fires the schedule mutation on the lobby's controller. The
-/// controller is currently a no-op (TODO) so the user gets confirmation
-/// without the row actually being persisted — wiring lands separately.
-void showScheduleActivitySheet(BuildContext context, String lobbyId) {
+/// and fires the schedule (or, when [existing] is passed, reschedule)
+/// mutation on the lobby's `ScheduleActivityController`, which inserts
+/// (or updates) the `activity` row and posts a matching feed item.
+void showScheduleActivitySheet(
+  BuildContext context,
+  String lobbyId, {
+  UpcomingActivity? existing,
+}) {
   showPSheet(
     context: context,
-    builder: (_) => _ScheduleActivitySheet(lobbyId: lobbyId),
+    builder: (_) => _ScheduleActivitySheet(lobbyId: lobbyId, existing: existing),
   );
 }
 
@@ -31,8 +36,9 @@ const _defaultDeadlineLeadDays = 2;
 
 class _ScheduleActivitySheet extends ConsumerStatefulWidget {
   final String lobbyId;
+  final UpcomingActivity? existing;
 
-  const _ScheduleActivitySheet({required this.lobbyId});
+  const _ScheduleActivitySheet({required this.lobbyId, this.existing});
 
   @override
   ConsumerState<_ScheduleActivitySheet> createState() =>
@@ -67,12 +73,43 @@ class _ScheduleActivitySheetState
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
-    _date = DateTime(now.year, now.month, now.day)
-        .add(const Duration(days: 1));
-    // Lobby home ground default — populated once async info resolves.
-    _seedDefaultsFromLobby();
+    final existing = widget.existing;
+    if (existing != null) {
+      _seedFromExisting(existing);
+    } else {
+      final now = DateTime.now();
+      _date = DateTime(now.year, now.month, now.day)
+          .add(const Duration(days: 1));
+      // Lobby home ground default — populated once async info resolves.
+      _seedDefaultsFromLobby();
+    }
     _recomputeDeadline();
+  }
+
+  /// Prefill every field from the activity being edited. The deadline
+  /// on/off toggle only supports the fixed 2-day-before-start lead (same
+  /// as a fresh schedule) rather than an arbitrary custom date, so an
+  /// existing deadline that isn't exactly `start - 2 days` gets
+  /// normalised to that default on save — a known simplification.
+  void _seedFromExisting(UpcomingActivity existing) {
+    final start = existing.nextStart.toLocal();
+    final end = existing.nextEnd?.toLocal();
+    _date = DateTime(start.year, start.month, start.day);
+    _start = TimeOfDay(hour: start.hour, minute: start.minute);
+    _end = end != null
+        ? TimeOfDay(hour: end.hour, minute: end.minute)
+        : _addHours(_start, 2);
+    _locationId = existing.locationId;
+    _recurring = existing.isRecurring;
+    _prepaymentRequired = existing.prepaymentRequired;
+    _paymentType = existing.paymentType == 'manual'
+        ? ActivityPaymentType.manual
+        : ActivityPaymentType.da;
+    if (existing.prepaymentAmount != null) {
+      _amountController.text = existing.prepaymentAmount!.toString();
+    }
+    _confirmationThreshold = existing.confirmationThreshold ?? 4;
+    _deadlineManuallyOff = existing.confirmationDeadline == null;
   }
 
   void _seedDefaultsFromLobby() {
@@ -205,27 +242,43 @@ class _ScheduleActivitySheetState
     // Day-of-week ISO ordering: Mon=0 … Sun=6. DateTime.weekday is
     // 1..7 (Mon..Sun) so subtract one.
     final dayOfWeek = _recurring ? _date.weekday - 1 : null;
+    final existing = widget.existing;
+    final controller =
+        ref.read(scheduleActivityControllerProvider(widget.lobbyId).notifier);
 
-    await ref
-        .read(scheduleActivityControllerProvider(widget.lobbyId).notifier)
-        .schedule(
-          start: start,
-          end: end,
-          locationId: _locationId,
-          prepaymentRequired: _prepaymentRequired,
-          paymentType: _prepaymentRequired ? _paymentType : null,
-          prepaymentAmount: amount,
-          confirmationThreshold: _confirmationThreshold,
-          confirmationDeadline: _confirmationDeadline,
-          recurrenceDayOfWeek: dayOfWeek,
-        );
+    if (existing != null) {
+      await controller.reschedule(
+        activityId: existing.activity.id!,
+        start: start,
+        end: end,
+        locationId: _locationId,
+        prepaymentRequired: _prepaymentRequired,
+        paymentType: _prepaymentRequired ? _paymentType : null,
+        prepaymentAmount: amount,
+        confirmationThreshold: _confirmationThreshold,
+        confirmationDeadline: _confirmationDeadline,
+        recurrenceDayOfWeek: dayOfWeek,
+      );
+    } else {
+      await controller.schedule(
+        start: start,
+        end: end,
+        locationId: _locationId,
+        prepaymentRequired: _prepaymentRequired,
+        paymentType: _prepaymentRequired ? _paymentType : null,
+        prepaymentAmount: amount,
+        confirmationThreshold: _confirmationThreshold,
+        confirmationDeadline: _confirmationDeadline,
+        recurrenceDayOfWeek: dayOfWeek,
+      );
+    }
 
     if (!mounted) return;
     Navigator.of(context).pop();
     showFToast(
       context: context,
       icon: const Icon(FLucideIcons.check),
-      title: const Text('Đã lên lịch buổi chơi'),
+      title: Text(existing != null ? 'Đã cập nhật lịch' : 'Đã lên lịch buổi chơi'),
       alignment: .bottomCenter,
     );
   }
@@ -239,12 +292,15 @@ class _ScheduleActivitySheetState
       scheduleActivityControllerProvider(widget.lobbyId),
     );
 
-    // Re-seed location once the lobby info async value lands.
+    // Re-seed location once the lobby info async value lands. Only for a
+    // fresh schedule — an edit already seeded (possibly null / "no
+    // location") from the activity being edited and shouldn't get
+    // silently overwritten by the lobby's home ground default.
     ref.listen<AsyncValue<LobbyDetailInfo>>(
       lobbyDetailControllerProvider(widget.lobbyId),
       (prev, next) {
         final info = next.value;
-        if (info != null && _locationId == null) {
+        if (widget.existing == null && info != null && _locationId == null) {
           setState(() => _locationId = info.lobby.homeGround);
         }
       },
@@ -258,7 +314,7 @@ class _ScheduleActivitySheetState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PSheetTitle(
-            label: 'Lên Lịch Buổi Chơi',
+            label: widget.existing != null ? 'Đổi Giờ Buổi Chơi' : 'Lên Lịch Buổi Chơi',
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),
@@ -377,7 +433,7 @@ class _ScheduleActivitySheetState
                       color: Colors.white,
                     ),
                   )
-                : const Text('Xác Nhận Lịch'),
+                : Text(widget.existing != null ? 'Cập Nhật' : 'Xác Nhận Lịch'),
           ),
           Text(
             'Mọi thành viên sẽ thấy buổi này ở Hoạt động và '

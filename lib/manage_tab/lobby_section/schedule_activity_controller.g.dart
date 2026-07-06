@@ -60,7 +60,7 @@ final class ScheduleActivityControllerProvider
 }
 
 String _$scheduleActivityControllerHash() =>
-    r'be94cd245e9adca81833bec2bfbae6fbd891de61';
+    r'8ea5b6957e4cab3192b4a03526c82d2ba451df49';
 
 final class ScheduleActivityControllerFamily extends $Family
     with

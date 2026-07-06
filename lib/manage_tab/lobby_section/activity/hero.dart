@@ -1,15 +1,21 @@
 // Pinned activity hero — empty state and expanded state
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../core/model/enum.dart';
 import '../../../../ui/dual_button.dart';
 import '../../../../ui/theme.dart';
 import '../invite_challenge_sheet.dart';
+import '../invite_member_sheet.dart';
+import '../schedule_activity_controller.dart';
 import '../schedule_activity_sheet.dart';
 import 'confirmation_controller.dart';
+import 'feed_controller.dart';
+import 'upcoming_controller.dart';
 
 // ─── Color tokens ──────────────────────────────────────────────
 const _crimson = Color(0xFFDC143C);
@@ -24,23 +30,22 @@ const _orange = Color(0xFFF97316);
 
 class ActivityHero extends ConsumerWidget {
   final String lobbyId;
-  final String? activityId;
+  final UpcomingActivity? upcoming;
   final Sport? sport;
-  final bool hasActivity;
   final bool isLeader;
 
   const ActivityHero({
     super.key,
     required this.lobbyId,
-    required this.activityId,
+    required this.upcoming,
     required this.sport,
-    required this.hasActivity,
     required this.isLeader,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!hasActivity || activityId == null) {
+    final activity = upcoming;
+    if (activity == null) {
       return _HeroEmpty(lobbyId: lobbyId, isLeader: isLeader);
     }
 
@@ -49,13 +54,13 @@ class ActivityHero extends ConsumerWidget {
     // other RSVP states are local-only personal indicators that don't
     // touch the DB until we model attendance vs. confirmation
     // separately.
-    final status = ref
-        .watch(activityConfirmationControllerProvider(activityId!))
-        .value;
+    final activityId = activity.activity.id!;
+    final status =
+        ref.watch(activityConfirmationControllerProvider(activityId)).value;
 
     return _HeroExpanded(
       lobbyId: lobbyId,
-      activityId: activityId!,
+      upcoming: activity,
       sport: sport,
       isLeader: isLeader,
       status: status,
@@ -65,14 +70,42 @@ class ActivityHero extends ConsumerWidget {
 
 // ─── Empty state ───────────────────────────────────────────────
 
-class _HeroEmpty extends StatelessWidget {
+class _HeroEmpty extends ConsumerWidget {
   final String lobbyId;
   final bool isLeader;
 
   const _HeroEmpty({required this.lobbyId, required this.isLeader});
 
+  Future<void> _remindCaptain(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref
+          .read(lobbyFeedControllerProvider(lobbyId).notifier)
+          .postPersonalAction('remind_captain');
+    } catch (e, st) {
+      Talker().handle(e, st, 'Remind captain failed');
+      if (context.mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: const Text('Không thể gửi nhắc nhở'),
+          alignment: .bottomCenter,
+        );
+      }
+      return;
+    }
+    if (context.mounted) {
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.check),
+        title: const Text('Đã nhắc đội trưởng'),
+        alignment: .bottomCenter,
+      );
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     return Padding(
       // 4-px horizontal inset matches FTabs' internal padding so the
@@ -151,7 +184,7 @@ class _HeroEmpty extends StatelessWidget {
                 )
               else
                 GestureDetector(
-                  onTap: () {},
+                  onTap: () => _remindCaptain(context, ref),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 10),
@@ -227,22 +260,130 @@ class _CTALabel extends StatelessWidget {
 
 class _HeroExpanded extends ConsumerWidget {
   final String lobbyId;
-  final String activityId;
+  final UpcomingActivity upcoming;
   final Sport? sport;
   final bool isLeader;
   final ActivityConfirmationStatus? status;
 
   const _HeroExpanded({
     required this.lobbyId,
-    required this.activityId,
+    required this.upcoming,
     required this.sport,
     required this.isLeader,
     required this.status,
   });
 
+  static const _wd = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+  String get _activityId => upcoming.activity.id!;
+
+  String _dateLabel() {
+    final d = upcoming.nextStart.toLocal();
+    return '${_wd[d.weekday - 1]}, ${d.day}/${d.month}';
+  }
+
+  String _timeLabel() {
+    final start = upcoming.nextStart.toLocal();
+    final startStr = '${start.hour.toString().padLeft(2, '0')}:'
+        '${start.minute.toString().padLeft(2, '0')}';
+    final end = upcoming.nextEnd?.toLocal();
+    if (end == null) return startStr;
+    final endStr = '${end.hour.toString().padLeft(2, '0')}:'
+        '${end.minute.toString().padLeft(2, '0')}';
+    return '$startStr – $endStr';
+  }
+
+  String _countdownLabel() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final start = upcoming.nextStart.toLocal();
+    final startDay = DateTime(start.year, start.month, start.day);
+    final days = startDay.difference(today).inDays;
+    if (days <= 0) return 'Hôm nay';
+    if (days == 1) return 'Ngày mai';
+    return 'còn $days ngày';
+  }
+
+  String? _prepaymentLabel() {
+    final amount = upcoming.prepaymentAmount;
+    if (!upcoming.prepaymentRequired || amount == null) return null;
+    final unit = upcoming.paymentType == 'da' ? 'Đá' : 'đ';
+    return '${amount.toStringAsFixed(0)} $unit';
+  }
+
+  Future<void> _copyAddress(BuildContext context) async {
+    final name = upcoming.locationName;
+    if (name == null) return;
+    final district = upcoming.locationDistrict;
+    final text = district == null ? name : '$name, $district';
+    await Clipboard.setData(ClipboardData(text: text));
+    if (context.mounted) {
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.copy),
+        title: const Text('Đã sao chép địa chỉ'),
+        alignment: .bottomCenter,
+      );
+    }
+  }
+
+  void _openReschedule(BuildContext context) {
+    showScheduleActivitySheet(context, lobbyId, existing: upcoming);
+  }
+
+  void _confirmCancel(BuildContext context, WidgetRef ref) {
+    showFDialog(
+      context: context,
+      builder: (dialogCtx, style, animation) => FDialog(
+        animation: animation,
+        title: const Text('Hủy buổi chơi?'),
+        body: const Text(
+          'Mọi thành viên sẽ thấy buổi này bị hủy trong Hoạt động.',
+        ),
+        direction: Axis.horizontal,
+        actions: [
+          FButton(
+            variant: .outline,
+            onPress: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('Đóng'),
+          ),
+          FButton(
+            variant: .destructive,
+            onPress: () {
+              Navigator.of(dialogCtx).pop();
+              _doCancel(context, ref);
+            },
+            child: const Text('Hủy Buổi'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _doCancel(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref
+          .read(scheduleActivityControllerProvider(lobbyId).notifier)
+          .cancel(_activityId);
+    } catch (e, st) {
+      Talker().handle(e, st, 'Cancel activity failed');
+      if (context.mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: const Text('Không thể hủy buổi chơi'),
+          alignment: .bottomCenter,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
+    final activityId = _activityId;
+    final prepaymentLabel = _prepaymentLabel();
 
     return Padding(
       // See _HeroEmpty above — 4-px inset aligns with tab pill edges.
@@ -305,7 +446,7 @@ class _HeroExpanded extends ConsumerWidget {
                           ),
                           const Spacer(),
                           _Tag(
-                            text: 'còn 2 ngày',
+                            text: _countdownLabel(),
                             icon: Icons.access_time_rounded,
                             tone: 'crimson',
                           ),
@@ -316,13 +457,13 @@ class _HeroExpanded extends ConsumerWidget {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'T7, 21/5',
-                                  style: TextStyle(
+                                  _dateLabel(),
+                                  style: const TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w800,
                                     color: Color(0xFF09090B),
@@ -330,10 +471,10 @@ class _HeroExpanded extends ConsumerWidget {
                                     height: 1.05,
                                   ),
                                 ),
-                                SizedBox(height: 4),
+                                const SizedBox(height: 4),
                                 Text(
-                                  '18:00 – 20:00',
-                                  style: TextStyle(
+                                  _timeLabel(),
+                                  style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
                                     color: _crimson,
@@ -361,51 +502,63 @@ class _HeroExpanded extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      // Location
-                      Row(
-                        children: [
-                          Icon(FLucideIcons.mapPin,
-                              size: 14, color: colors.mutedForeground),
-                          const SizedBox(width: 6),
-                          Text(
-                            'NTĐ Bách Khoa',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: colors.secondaryForeground,
-                            ),
-                          ),
-                          Text(
-                            ' · ',
-                            style: TextStyle(
-                              color: colors.mutedForeground
-                                  .withValues(alpha: 0.5),
-                            ),
-                          ),
-                          Flexible(
-                            child: Text(
-                              'Q.10, Tp Hồ Chí Minh',
+                      if (upcoming.locationName != null) ...[
+                        const SizedBox(height: 10),
+                        // Location — real join from the activity's
+                        // location_id (schema/activity_member_visibility.sql
+                        // + upcoming_controller.dart). No pitch/court-number
+                        // or match-format data exists on `activity`, so
+                        // unlike the old mock there's nothing else to show
+                        // here beyond name + district.
+                        Row(
+                          children: [
+                            Icon(FLucideIcons.mapPin,
+                                size: 14, color: colors.mutedForeground),
+                            const SizedBox(width: 6),
+                            Text(
+                              upcoming.locationName!,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: colors.mutedForeground,
+                                color: colors.secondaryForeground,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      // Tags
-                      const Wrap(
-                        spacing: 6,
-                        children: [
-                          _Tag(text: 'Sân 3', tone: 'neutral'),
-                          _Tag(text: 'Đôi nam nữ', tone: 'neutral'),
-                          _Tag(text: '80k/người', tone: 'neutral'),
-                        ],
-                      ),
+                            if (upcoming.locationDistrict != null) ...[
+                              Text(
+                                ' · ',
+                                style: TextStyle(
+                                  color: colors.mutedForeground
+                                      .withValues(alpha: 0.5),
+                                ),
+                              ),
+                              Flexible(
+                                child: Text(
+                                  upcoming.locationDistrict!,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: colors.mutedForeground,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                      if (prepaymentLabel != null) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          children: [
+                            _Tag(
+                              text: 'Đặt cọc $prepaymentLabel',
+                              icon: Icons.account_balance_wallet_outlined,
+                              tone: 'neutral',
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       // Confirmation summary — status from the
                       // ActivityConfirmationController. While loading
@@ -413,7 +566,7 @@ class _HeroExpanded extends ConsumerWidget {
                       // the layout doesn't pop.
                       Row(
                         children: [
-                          const _RsvpAvatarRow(),
+                          _RsvpAvatarRow(activityId: activityId),
                           const SizedBox(width: 10),
                           Expanded(child: _ConfirmationSummary(status: status)),
                         ],
@@ -447,46 +600,51 @@ class _HeroExpanded extends ConsumerWidget {
                               physics: const ClampingScrollPhysics(),
                               child: Row(
                                 children: [
-                                  _QuickAction(
-                                    icon: Icons.navigation_outlined,
-                                    label: 'Chỉ Đường',
-                                    onTap: () {},
-                                  ),
-                                  const SizedBox(width: 6),
+                                  if (upcoming.locationName != null) ...[
+                                    _QuickAction(
+                                      icon: Icons.navigation_outlined,
+                                      label: 'Chỉ Đường',
+                                      onTap: () => _copyAddress(context),
+                                    ),
+                                    const SizedBox(width: 6),
+                                  ],
                                   if (isLeader) ...[
                                     _QuickAction(
                                       icon: Icons.calendar_month_outlined,
                                       label: 'Đổi Giờ',
-                                      onTap: () {},
+                                      onTap: () => _openReschedule(context),
                                     ),
                                     const SizedBox(width: 6),
                                   ],
                                   _QuickAction(
                                     icon: Icons.person_add_alt_1_outlined,
                                     label: 'Mời',
-                                    onTap: () {},
+                                    onTap: () =>
+                                        showInviteMemberSheet(context, lobbyId),
                                   ),
                                 ],
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () {},
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              alignment: Alignment.center,
-                              child: Icon(
-                                Icons.more_horiz_rounded,
-                                size: 18,
-                                color: colors.secondaryForeground,
+                          if (isLeader) ...[
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () => _confirmCancel(context, ref),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                alignment: Alignment.center,
+                                child: Icon(
+                                  Icons.more_horiz_rounded,
+                                  size: 18,
+                                  color: colors.secondaryForeground,
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ],
@@ -503,28 +661,41 @@ class _HeroExpanded extends ConsumerWidget {
 
 // ─── RSVP avatar strip ──────────────────────────────────────────
 
-class _RsvpAvatarRow extends StatelessWidget {
-  const _RsvpAvatarRow();
+class _RsvpAvatarRow extends ConsumerWidget {
+  final String activityId;
+  const _RsvpAvatarRow({required this.activityId});
 
-  static const _going = [
-    ('T', Color(0xFF6366F1)),
-    ('A', Color(0xFF0EA5E9)),
-    ('L', Color(0xFF10B981)),
-    ('Lo', Color(0xFF8B5CF6)),
+  static const _palette = [
+    Color(0xFF6366F1),
+    Color(0xFF0EA5E9),
+    Color(0xFF10B981),
+    Color(0xFFF59E0B),
+    Color(0xFFEC4899),
+    Color(0xFF8B5CF6),
   ];
-  static const _maybe = [
-    ('M', Color(0xFFF59E0B)),
-  ];
+
+  static Color _colorFor(String seed) =>
+      _palette[seed.hashCode.abs() % _palette.length];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // `activity_confirmation_status` only returns aggregate counts, so
+    // this is a small separate query (activityAttendeesProvider) just
+    // for the sample of who's going/maybe. Empty/loading/error all
+    // render nothing — this strip is decorative, not load-bearing.
+    final attendees =
+        ref.watch(activityAttendeesProvider(activityId)).value ?? const [];
+    if (attendees.isEmpty) return const SizedBox.shrink();
+
     return Row(
       spacing: 5,
       children: [
-        for (final (l, c) in _going)
-          _RsvpAvatar(letter: l, bg: c, ring: 'going'),
-        for (final (l, c) in _maybe)
-          _RsvpAvatar(letter: l, bg: c, ring: 'maybe'),
+        for (final a in attendees)
+          _RsvpAvatar(
+            letter: a.username.isNotEmpty ? a.username[0].toUpperCase() : '?',
+            bg: _colorFor(a.username),
+            going: a.attendance == Attendance.going,
+          ),
       ],
     );
   }
@@ -533,21 +704,17 @@ class _RsvpAvatarRow extends StatelessWidget {
 class _RsvpAvatar extends StatelessWidget {
   final String letter;
   final Color bg;
-  final String ring;
+  final bool going;
 
   const _RsvpAvatar({
     required this.letter,
     required this.bg,
-    required this.ring,
+    required this.going,
   });
 
   @override
   Widget build(BuildContext context) {
-    final ringColor = ring == 'going'
-        ? _green
-        : ring == 'maybe'
-            ? _amber
-            : _orange;
+    final ringColor = going ? _green : _amber;
     return Container(
       width: 26,
       height: 26,
