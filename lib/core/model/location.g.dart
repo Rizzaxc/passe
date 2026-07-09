@@ -14,6 +14,10 @@ _Location _$LocationFromJson(Map json) => _Location(
   streetName: json['street_name'] as String?,
   district: json['district'] as String?,
   city: json['city'] as String?,
+  lat: (json['lat'] as num?)?.toDouble(),
+  lon: (json['lon'] as num?)?.toDouble(),
+  tags: json['tags'] == null ? const <String>[] : _tagsFromJson(json['tags']),
+  cityCluster: (json['city_cluster'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$LocationToJson(_Location instance) => <String, dynamic>{
@@ -24,4 +28,8 @@ Map<String, dynamic> _$LocationToJson(_Location instance) => <String, dynamic>{
   'street_name': ?instance.streetName,
   'district': ?instance.district,
   'city': ?instance.city,
+  'lat': ?instance.lat,
+  'lon': ?instance.lon,
+  'tags': instance.tags,
+  'city_cluster': ?instance.cityCluster,
 };

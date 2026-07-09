@@ -28,10 +28,17 @@ user grants health permissions, every subtab is replaced by the "not linked" CTA
 - `health_data_controller.dart` — read providers (UI reads Supabase, not the device):
   `dailyHealthTrend` (direct select, sport-agnostic), `activityHealthList` (`activity_health_data`
   RPC, sport-scoped), `detectedWorkouts` (`health_capture_candidates` RPC + per-candidate device
-  evidence re-check), and `hrThresholds` (shared threshold resolver).
+  evidence re-check), and `hrThresholds` (shared threshold resolver). Also the one write path:
+  `HrThresholdController.save()` (a `bool`-state notifier) directly `UPDATE`s
+  `max_heart_rate`/`lt1_bpm`/`lt2_bpm` on the caller's `user_health_link` row (RLS-scoped, no RPC
+  needed) and invalidates `hrThresholdsProvider`.
 - `not_linked_view.dart` — the permission-request CTA.
 - `user_health_section/` — body-trends dashboard (`main.dart`) + `health_metric.dart`
   (`HealthMetric` enum + `DashboardMetrics`, a locally-persisted customizable visible set).
+  `main.dart` also has the **HR Zone** card (`_HrZoneSection`) — shows resolved max
+  HR/LT1/LT2 (with an "(estimated)" tag when `lt1`/`lt2` aren't user-declared) and a pencil button
+  opening `_HrZoneEditSheet` to declare real values. LT1/LT2 are required on save (int, LT1 < LT2 ≤
+  250); Max HR is optional — leave it blank to keep the age-bucket estimate.
 - `activity_data_section/` — recap list + detected-workouts inbox (`main.dart`), `recap_sheet.dart`
   (per-activity HR-curve detail), `zone_bar.dart` (3-zone stacked bar).
 - `achievements_section/` — the gamification screen (see **Gamification** below):

@@ -9,16 +9,17 @@ import 'model/achievement_progress.dart';
 class TierIcons extends StatelessWidget {
   final int difficulty;
   final int consistency;
-  const TierIcons({super.key, required this.difficulty, required this.consistency});
+  const TierIcons({
+    super.key,
+    required this.difficulty,
+    required this.consistency,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    Widget pip(IconData icon, bool filled) => Icon(
-          icon,
-          size: 11,
-          color: filled ? pbGreen : colors.border,
-        );
+    Widget pip(IconData icon, bool filled) =>
+        Icon(icon, size: 11, color: filled ? pbGreen : colors.border);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -49,7 +50,9 @@ class BadgeCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: colors.card,
-        border: Border.all(color: earned ? pbGreen.withValues(alpha: 0.3) : colors.border),
+        border: Border.all(
+          color: earned ? pbGreen.withValues(alpha: 0.3) : colors.border,
+        ),
         borderRadius: context.theme.style.borderRadius.md,
         boxShadow: context.theme.style.shadow,
       ),
@@ -64,8 +67,9 @@ class BadgeCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: (earned ? pbGreen : colors.mutedForeground)
-                      .withValues(alpha: 0.14),
+                  color: (earned ? pbGreen : colors.mutedForeground).withValues(
+                    alpha: 0.14,
+                  ),
                   borderRadius: BorderRadius.circular(9),
                 ),
                 alignment: Alignment.center,
@@ -82,8 +86,9 @@ class BadgeCard extends StatelessWidget {
                   children: [
                     Text(
                       badge.name,
-                      style: context.theme.typography.body.sm
-                          .copyWith(fontWeight: FontWeight.w700),
+                      style: context.theme.typography.body.sm.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     Text(
                       _subtitle(),
@@ -94,8 +99,9 @@ class BadgeCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     TierIcons(
-                        difficulty: badge.difficulty,
-                        consistency: badge.consistency),
+                      difficulty: badge.difficulty,
+                      consistency: badge.consistency,
+                    ),
                   ],
                 ),
               ),
@@ -157,8 +163,7 @@ class BadgeCard extends StatelessWidget {
   String _subtitle() {
     final d = badge.description ?? '';
     return switch (badge.state) {
-      AchievementState.earnedPeriod =>
-        'health.achievements.earnedPeriod'.tr(),
+      AchievementState.earnedPeriod => 'health.achievements.earnedPeriod'.tr(),
       AchievementState.done => d,
       _ => d,
     };

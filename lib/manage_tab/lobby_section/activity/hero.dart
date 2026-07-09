@@ -7,8 +7,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../core/model/enum.dart';
-import '../../../../ui/dual_button.dart';
-import '../../../../ui/theme.dart';
+import '../../../../ui/button_styles.dart';
 import '../invite_challenge_sheet.dart';
 import '../invite_member_sheet.dart';
 import '../schedule_activity_controller.dart';
@@ -18,13 +17,13 @@ import 'feed_controller.dart';
 import 'upcoming_controller.dart';
 
 // ─── Color tokens ──────────────────────────────────────────────
+// Two accents only: crimson (brand / pinned / priority) and green
+// (the one semantic "positive" state — going / confirmed). Everything
+// else in the hero is neutral theme grays.
 const _crimson = Color(0xFFDC143C);
 const _crimsonTint = Color(0xFFFFEBED);
 const _green = Color(0xFF959D54);
 const _greenTint = Color(0xFFEEF2E4);
-const _amber = Color(0xFFC58A1A);
-const _amberTint = Color(0xFFFDF3DC);
-const _orange = Color(0xFFF97316);
 
 // ─── Entry point ───────────────────────────────────────────────
 
@@ -34,12 +33,19 @@ class ActivityHero extends ConsumerWidget {
   final Sport? sport;
   final bool isLeader;
 
+  /// True once the feed below has scrolled away from the newest message
+  /// (i.e. the user overscrolled into older history) — collapses the
+  /// hero down to date + hour + confirmed count to give the feed more
+  /// room, matching how a persistent header would shrink.
+  final bool compact;
+
   const ActivityHero({
     super.key,
     required this.lobbyId,
     required this.upcoming,
     required this.sport,
     required this.isLeader,
+    this.compact = false,
   });
 
   @override
@@ -55,15 +61,21 @@ class ActivityHero extends ConsumerWidget {
     // touch the DB until we model attendance vs. confirmation
     // separately.
     final activityId = activity.activity.id!;
-    final status =
-        ref.watch(activityConfirmationControllerProvider(activityId)).value;
+    final status = ref
+        .watch(activityConfirmationControllerProvider(activityId))
+        .value;
 
-    return _HeroExpanded(
-      lobbyId: lobbyId,
-      upcoming: activity,
-      sport: sport,
-      isLeader: isLeader,
-      status: status,
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 180),
+      child: _HeroExpanded(
+        key: ValueKey(compact),
+        lobbyId: lobbyId,
+        upcoming: activity,
+        sport: sport,
+        isLeader: isLeader,
+        status: status,
+        compact: compact,
+      ),
     );
   }
 }
@@ -130,128 +142,146 @@ class _HeroEmpty extends ConsumerWidget {
             ),
           ],
         ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  color: _crimsonTint,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.calendar_today_outlined,
-                    size: 22, color: _crimson),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: const BoxDecoration(
+                color: _crimsonTint,
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Chưa có buổi chơi nào',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF09090B),
-                ),
+              child: const Icon(
+                Icons.calendar_today_outlined,
+                size: 22,
+                color: _crimson,
               ),
-              const SizedBox(height: 4),
-              Text(
-                isLeader
-                    ? 'Lên lịch buổi mới hoặc mời lobby khác thách đấu để khởi động.'
-                    : 'Đội trưởng chưa lên lịch buổi nào. Bạn có thể nhắc.',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w400,
-                  color: colors.mutedForeground,
-                  height: 1.45,
-                ),
-                textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Chưa có buổi chơi nào',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF09090B),
               ),
-              const SizedBox(height: 16),
-              if (isLeader)
-                PDualButton(
-                  onFirstPressed: () =>
-                      showScheduleActivitySheet(context, lobbyId),
-                  onSecondPressed: () =>
-                      showInviteChallengeSheet(context, lobbyId),
-                  firstChild: const _CTALabel(
-                    icon: Icon(Icons.calendar_month_outlined, size: 20),
-                    label: 'Lên Lịch Buổi Chơi',
-                  ),
-                  secondChild: const _CTALabel(
-                    // Match the icon used in Discover ▸ Challenger.
-                    icon: FaIcon(FontAwesomeIcons.fireFlameCurved, size: 20),
-                    label: 'Mời Thách Đấu',
-                  ),
-                )
-              else
-                GestureDetector(
-                  onTap: () => _remindCaptain(context, ref),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: colors.secondary,
-                      borderRadius: BorderRadius.circular(10),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isLeader
+                  ? 'Lên lịch buổi mới hoặc mời lobby khác thách đấu để khởi động.'
+                  : 'Đội trưởng chưa lên lịch buổi nào. Bạn có thể nhắc.',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w400,
+                color: colors.mutedForeground,
+                height: 1.45,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            if (isLeader)
+              Column(
+                spacing: 8,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: FButton(
+                      size: .sm,
+                      style: FButtonStyleExtension.accentBlueStyle(
+                        context.theme.buttonStyles.primary.base,
+                      ),
+                      onPress: () =>
+                          showScheduleActivitySheet(context, lobbyId),
+                      child: const _CTALabel(
+                        icon: Icon(Icons.calendar_month_outlined, size: 16),
+                        label: 'Lên Lịch',
+                      ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(FLucideIcons.bell,
-                            size: 14, color: colors.secondaryForeground),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Nhắc đội trưởng',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: colors.secondaryForeground,
-                          ),
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FButton(
+                      size: .sm,
+                      onPress: () => showInviteChallengeSheet(context, lobbyId),
+                      // Match the icon used in Discover ▸ Challenger.
+                      child: const _CTALabel(
+                        icon: FaIcon(
+                          FontAwesomeIcons.fireFlameCurved,
+                          size: 16,
                         ),
-                      ],
+                        label: 'Mời Thách Đấu',
+                        iconTrailing: true,
+                      ),
                     ),
                   ),
+                ],
+              )
+            else
+              GestureDetector(
+                onTap: () => _remindCaptain(context, ref),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.secondary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        FLucideIcons.bell,
+                        size: 14,
+                        color: colors.secondaryForeground,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Nhắc đội trưởng',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: colors.secondaryForeground,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
+      ),
     );
   }
 }
 
-/// Stacked icon + label used inside the empty hero's PDualButton.
-///
-/// Each half of the dual button gets one of these; the underlying
-/// FButton sizes itself to fit, giving the two CTAs the same tall
-/// silhouette the design called for.
+/// Compact icon + label used inside the empty hero's two CTA buttons.
+/// Color comes from whatever the enclosing [FButton]'s style resolves to
+/// (crimson primary vs. the accent-blue style), not hardcoded here.
 class _CTALabel extends StatelessWidget {
   final Widget icon;
   final String label;
+  final bool iconTrailing;
 
-  const _CTALabel({required this.icon, required this.label});
+  const _CTALabel({
+    required this.icon,
+    required this.label,
+    this.iconTrailing = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconTheme.merge(
-            data: const IconThemeData(color: Color(0xFFFFF1F2)),
-            child: icon,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFFFFF1F2),
-              height: 1.2,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    final text = Flexible(
+      child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+    );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 6,
+      children: iconTrailing ? [text, icon] : [icon, text],
     );
   }
 }
@@ -264,13 +294,16 @@ class _HeroExpanded extends ConsumerWidget {
   final Sport? sport;
   final bool isLeader;
   final ActivityConfirmationStatus? status;
+  final bool compact;
 
   const _HeroExpanded({
+    super.key,
     required this.lobbyId,
     required this.upcoming,
     required this.sport,
     required this.isLeader,
     required this.status,
+    required this.compact,
   });
 
   static const _wd = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
@@ -284,24 +317,22 @@ class _HeroExpanded extends ConsumerWidget {
 
   String _timeLabel() {
     final start = upcoming.nextStart.toLocal();
-    final startStr = '${start.hour.toString().padLeft(2, '0')}:'
+    final startStr =
+        '${start.hour.toString().padLeft(2, '0')}:'
         '${start.minute.toString().padLeft(2, '0')}';
     final end = upcoming.nextEnd?.toLocal();
     if (end == null) return startStr;
-    final endStr = '${end.hour.toString().padLeft(2, '0')}:'
+    final endStr =
+        '${end.hour.toString().padLeft(2, '0')}:'
         '${end.minute.toString().padLeft(2, '0')}';
     return '$startStr – $endStr';
   }
 
-  String _countdownLabel() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+  /// Just the start hour, for the compact (overscrolled) form.
+  String _startTimeLabel() {
     final start = upcoming.nextStart.toLocal();
-    final startDay = DateTime(start.year, start.month, start.day);
-    final days = startDay.difference(today).inDays;
-    if (days <= 0) return 'Hôm nay';
-    if (days == 1) return 'Ngày mai';
-    return 'còn $days ngày';
+    return '${start.hour.toString().padLeft(2, '0')}:'
+        '${start.minute.toString().padLeft(2, '0')}';
   }
 
   String? _prepaymentLabel() {
@@ -382,6 +413,41 @@ class _HeroExpanded extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
+
+    if (compact) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: colors.border),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.event, size: 14, color: _crimson),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '${_dateLabel()} · ${_startTimeLabel()}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF09090B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _ConfirmationSummary(status: status),
+            ],
+          ),
+        ),
+      );
+    }
+
     final activityId = _activityId;
     final prepaymentLabel = _prepaymentLabel();
 
@@ -402,255 +468,212 @@ class _HeroExpanded extends ConsumerWidget {
           ],
         ),
         clipBehavior: Clip.antiAlias,
-        child: Stack(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Court bleed background
-            Positioned(
-              top: -10,
-              right: -28,
-              width: 156,
-              height: 196,
-              child: Opacity(
-                opacity: 0.10,
-                child: CustomPaint(
-                  painter: _CourtPainter(sport ?? Sport.badminton),
-                ),
-              ),
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Crimson top strip
-                Container(height: 3, color: _crimson),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            // Crimson top strip — the one "this is pinned" signal.
+            Container(height: 3, color: _crimson),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Label row
+                  Row(
                     children: [
-                      // Label row
-                      Row(
-                        children: [
-                          const Icon(Icons.push_pin_outlined,
-                              size: 12, color: _crimson),
-                          const SizedBox(width: 4),
-                          const Text(
-                            'GHIM · BUỔI TIẾP THEO',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: _crimson,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                          const Spacer(),
-                          _Tag(
-                            text: _countdownLabel(),
-                            icon: Icons.access_time_rounded,
-                            tone: 'crimson',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      // Date + sport icon
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _dateLabel(),
-                                  style: const TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF09090B),
-                                    letterSpacing: -0.5,
-                                    height: 1.05,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _timeLabel(),
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: _crimson,
-                                    letterSpacing: -0.2,
-                                    height: 1.2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              color: colors.background,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color:
-                                      colors.border.withValues(alpha: 0.6)),
-                            ),
-                            child: Center(
-                              child: sport?.getIcon(size: 34) ??
-                                  const Icon(Icons.sports, size: 34),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (upcoming.locationName != null) ...[
-                        const SizedBox(height: 10),
-                        // Location — real join from the activity's
-                        // location_id (schema/activity_member_visibility.sql
-                        // + upcoming_controller.dart). No pitch/court-number
-                        // or match-format data exists on `activity`, so
-                        // unlike the old mock there's nothing else to show
-                        // here beyond name + district.
-                        Row(
-                          children: [
-                            Icon(FLucideIcons.mapPin,
-                                size: 14, color: colors.mutedForeground),
-                            const SizedBox(width: 6),
-                            Text(
-                              upcoming.locationName!,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: colors.secondaryForeground,
-                              ),
-                            ),
-                            if (upcoming.locationDistrict != null) ...[
-                              Text(
-                                ' · ',
-                                style: TextStyle(
-                                  color: colors.mutedForeground
-                                      .withValues(alpha: 0.5),
-                                ),
-                              ),
-                              Flexible(
-                                child: Text(
-                                  upcoming.locationDistrict!,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: colors.mutedForeground,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ],
+                      Icon(Icons.push_pin_outlined, size: 13, color: _crimson),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Buổi tiếp theo',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: colors.mutedForeground,
                         ),
-                      ],
-                      if (prepaymentLabel != null) ...[
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 6,
-                          children: [
-                            _Tag(
-                              text: 'Đặt cọc $prepaymentLabel',
-                              icon: Icons.account_balance_wallet_outlined,
-                              tone: 'neutral',
-                            ),
-                          ],
-                        ),
-                      ],
-                      const SizedBox(height: 12),
-                      // Confirmation summary — status from the
-                      // ActivityConfirmationController. While loading
-                      // we render the avatar strip with no count so
-                      // the layout doesn't pop.
-                      Row(
-                        children: [
-                          _RsvpAvatarRow(activityId: activityId),
-                          const SizedBox(width: 10),
-                          Expanded(child: _ConfirmationSummary(status: status)),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      // RSVP segmented control — going / maybe / out are all
-                      // persisted (activity_confirmation.attendance); only
-                      // "going" counts toward the confirmation threshold. No
-                      // segment is active until the member responds.
-                      _RsvpControl(
-                        value: status?.myAttendance?.value ?? '',
-                        onChange: (v) {
-                          final next = Attendance.fromValue(v);
-                          if (next == null) return;
-                          ref
-                              .read(
-                                activityConfirmationControllerProvider(
-                                  activityId,
-                                ).notifier,
-                              )
-                              .setAttendance(activityId, next);
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Quick actions
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              physics: const ClampingScrollPhysics(),
-                              child: Row(
-                                children: [
-                                  if (upcoming.locationName != null) ...[
-                                    _QuickAction(
-                                      icon: Icons.navigation_outlined,
-                                      label: 'Chỉ Đường',
-                                      onTap: () => _copyAddress(context),
-                                    ),
-                                    const SizedBox(width: 6),
-                                  ],
-                                  if (isLeader) ...[
-                                    _QuickAction(
-                                      icon: Icons.calendar_month_outlined,
-                                      label: 'Đổi Giờ',
-                                      onTap: () => _openReschedule(context),
-                                    ),
-                                    const SizedBox(width: 6),
-                                  ],
-                                  _QuickAction(
-                                    icon: Icons.person_add_alt_1_outlined,
-                                    label: 'Mời',
-                                    onTap: () =>
-                                        showInviteMemberSheet(context, lobbyId),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          if (isLeader) ...[
-                            const SizedBox(width: 6),
-                            GestureDetector(
-                              onTap: () => _confirmCancel(context, ref),
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                alignment: Alignment.center,
-                                child: Icon(
-                                  Icons.more_horiz_rounded,
-                                  size: 18,
-                                  color: colors.secondaryForeground,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  // Date + time
+                  Text(
+                    _dateLabel(),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF09090B),
+                      letterSpacing: -0.5,
+                      height: 1.05,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _timeLabel(),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: _crimson,
+                      letterSpacing: -0.2,
+                      height: 1.2,
+                    ),
+                  ),
+                  if (upcoming.locationName != null) ...[
+                    const SizedBox(height: 10),
+                    // Location — real join from the activity's
+                    // location_id (schema/activity_member_visibility.sql
+                    // + upcoming_controller.dart). No pitch/court-number
+                    // or match-format data exists on `activity`, so
+                    // unlike the old mock there's nothing else to show
+                    // here beyond name + district.
+                    Row(
+                      children: [
+                        Icon(
+                          FLucideIcons.mapPin,
+                          size: 14,
+                          color: colors.mutedForeground,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          flex: 2,
+                          child: Text(
+                            upcoming.locationName!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: colors.secondaryForeground,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (upcoming.locationDistrict != null) ...[
+                          Text(
+                            ' · ',
+                            style: TextStyle(
+                              color: colors.mutedForeground.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                          ),
+                          Flexible(
+                            child: Text(
+                              upcoming.locationDistrict!,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: colors.mutedForeground,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                  if (prepaymentLabel != null) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      children: [
+                        _Tag(
+                          text: 'Đặt cọc $prepaymentLabel',
+                          icon: Icons.account_balance_wallet_outlined,
+                          tone: 'neutral',
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  // Confirmation summary — status from the
+                  // ActivityConfirmationController. While loading
+                  // we render the avatar strip with no count so
+                  // the layout doesn't pop.
+                  Row(
+                    children: [
+                      _RsvpAvatarRow(activityId: activityId),
+                      const SizedBox(width: 10),
+                      Expanded(child: _ConfirmationSummary(status: status)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // RSVP segmented control — going / maybe / out are all
+                  // persisted (activity_confirmation.attendance); only
+                  // "going" counts toward the confirmation threshold. No
+                  // segment is active until the member responds.
+                  _RsvpControl(
+                    value: status?.myAttendance?.value ?? '',
+                    onChange: (v) {
+                      final next = Attendance.fromValue(v);
+                      if (next == null) return;
+                      ref
+                          .read(
+                            activityConfirmationControllerProvider(
+                              activityId,
+                            ).notifier,
+                          )
+                          .setAttendance(activityId, next);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  // Quick actions
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const ClampingScrollPhysics(),
+                          child: Row(
+                            children: [
+                              if (upcoming.locationName != null) ...[
+                                _QuickAction(
+                                  icon: Icons.navigation_outlined,
+                                  label: 'Chỉ Đường',
+                                  onTap: () => _copyAddress(context),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              if (isLeader) ...[
+                                _QuickAction(
+                                  icon: Icons.calendar_month_outlined,
+                                  label: 'Đổi Giờ',
+                                  onTap: () => _openReschedule(context),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              _QuickAction(
+                                icon: Icons.person_add_alt_1_outlined,
+                                label: 'Mời',
+                                onTap: () =>
+                                    showInviteMemberSheet(context, lobbyId),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (isLeader) ...[
+                        const SizedBox(width: 6),
+                        GestureDetector(
+                          onTap: () => _confirmCancel(context, ref),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.more_horiz_rounded,
+                              size: 18,
+                              color: colors.secondaryForeground,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -664,18 +687,6 @@ class _HeroExpanded extends ConsumerWidget {
 class _RsvpAvatarRow extends ConsumerWidget {
   final String activityId;
   const _RsvpAvatarRow({required this.activityId});
-
-  static const _palette = [
-    Color(0xFF6366F1),
-    Color(0xFF0EA5E9),
-    Color(0xFF10B981),
-    Color(0xFFF59E0B),
-    Color(0xFFEC4899),
-    Color(0xFF8B5CF6),
-  ];
-
-  static Color _colorFor(String seed) =>
-      _palette[seed.hashCode.abs() % _palette.length];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -693,7 +704,6 @@ class _RsvpAvatarRow extends ConsumerWidget {
         for (final a in attendees)
           _RsvpAvatar(
             letter: a.username.isNotEmpty ? a.username[0].toUpperCase() : '?',
-            bg: _colorFor(a.username),
             going: a.attendance == Attendance.going,
           ),
       ],
@@ -701,35 +711,34 @@ class _RsvpAvatarRow extends ConsumerWidget {
   }
 }
 
+/// Single neutral background for every avatar — status reads from the
+/// ring color (green = going, gray = anything else), not from a
+/// per-person hash-color palette.
 class _RsvpAvatar extends StatelessWidget {
   final String letter;
-  final Color bg;
   final bool going;
 
-  const _RsvpAvatar({
-    required this.letter,
-    required this.bg,
-    required this.going,
-  });
+  const _RsvpAvatar({required this.letter, required this.going});
 
   @override
   Widget build(BuildContext context) {
-    final ringColor = going ? _green : _amber;
+    final colors = context.theme.colors;
+    final ringColor = going ? _green : colors.border;
     return Container(
       width: 26,
       height: 26,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: bg,
+        color: colors.secondary,
         border: Border.all(color: ringColor, width: 2),
       ),
       alignment: Alignment.center,
       child: Text(
         letter,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w700,
-          color: Colors.white,
+          color: colors.secondaryForeground,
         ),
       ),
     );
@@ -741,6 +750,8 @@ class _RsvpAvatar extends StatelessWidget {
 /// Renders the "N có mặt … X người để chính thức" copy next to the
 /// avatar strip. When [status] is null (still loading) we show nothing
 /// to avoid flicker; when there's no threshold we just show the count.
+/// Compact "confirmed / threshold" ratio (falls back to a bare count when
+/// the activity has no confirmation threshold) instead of a sentence.
 class _ConfirmationSummary extends StatelessWidget {
   final ActivityConfirmationStatus? status;
 
@@ -752,49 +763,30 @@ class _ConfirmationSummary extends StatelessWidget {
     final s = status;
     if (s == null) return const SizedBox.shrink();
 
-    final spans = <TextSpan>[
-      TextSpan(
-        text: '${s.confirmedCount} có mặt',
-        style: const TextStyle(
-          color: _green,
-          fontWeight: FontWeight.w700,
-          fontSize: 11.5,
-        ),
-      ),
-    ];
+    final label = s.threshold != null
+        ? '${s.confirmedCount}/${s.threshold}'
+        : '${s.confirmedCount}';
+    final color = s.activityConfirmed ? _green : colors.secondaryForeground;
 
-    if (s.maybeCount > 0) {
-      spans.add(TextSpan(
-        text: ' · ${s.maybeCount} có thể',
-        style: TextStyle(
-          color: colors.mutedForeground,
-          fontSize: 11.5,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 4,
+      children: [
+        Icon(
+          s.activityConfirmed ? Icons.check_circle : Icons.check_circle_outline,
+          size: 14,
+          color: color,
         ),
-      ));
-    }
-
-    if (s.threshold != null && !s.activityConfirmed) {
-      // Threshold exists and we haven't hit it yet — show progress.
-      final remaining = s.threshold! - s.confirmedCount;
-      spans.add(TextSpan(
-        text: ' · cần thêm $remaining để chính thức',
-        style: TextStyle(
-          color: colors.mutedForeground,
-          fontSize: 11.5,
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
         ),
-      ));
-    } else if (s.activityConfirmed) {
-      spans.add(const TextSpan(
-        text: ' · chính thức',
-        style: TextStyle(
-          color: _green,
-          fontWeight: FontWeight.w700,
-          fontSize: 11.5,
-        ),
-      ));
-    }
-
-    return Text.rich(TextSpan(children: spans));
+      ],
+    );
   }
 }
 
@@ -831,7 +823,7 @@ class _RsvpControl extends StatelessWidget {
             label: 'Có Thể',
             icon: Icons.help_outline_rounded,
             active: value == 'maybe',
-            tone: 'amber',
+            tone: 'neutral',
             onTap: onChange,
           ),
           _RsvpBtn(
@@ -839,7 +831,7 @@ class _RsvpControl extends StatelessWidget {
             label: 'Vắng',
             icon: Icons.close_rounded,
             active: value == 'out',
-            tone: 'red',
+            tone: 'neutral',
             onTap: onChange,
           ),
         ],
@@ -868,24 +860,17 @@ class _RsvpBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final fg = tone == 'green'
-        ? _green
-        : tone == 'amber'
-            ? _amber
-            : _orange;
-    final bg = tone == 'green'
-        ? _greenTint
-        : tone == 'amber'
-            ? _amberTint
-            : const Color(0x25F97316);
+    // Only "going" gets the green semantic accent — "maybe" / "out" are
+    // both neutral, differentiated by their icon rather than a hue.
+    final fg = tone == 'green' ? _green : colors.secondaryForeground;
+    final bg = tone == 'green' ? _greenTint : colors.secondary;
 
     return Expanded(
       child: GestureDetector(
         onTap: () => onTap(id),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding:
-              const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
           decoration: BoxDecoration(
             color: active ? bg : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
@@ -893,17 +878,14 @@ class _RsvpBtn extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon,
-                  size: 14,
-                  color: active ? fg : colors.mutedForeground),
+              Icon(icon, size: 14, color: active ? fg : colors.mutedForeground),
               const SizedBox(width: 5),
               Flexible(
                 child: Text(
                   label,
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight:
-                        active ? FontWeight.w700 : FontWeight.w600,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w600,
                     color: active ? fg : colors.secondaryForeground,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -936,18 +918,16 @@ class _QuickAction extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
           color: colors.card,
           borderRadius: BorderRadius.circular(8),
-          border:
-              Border.all(color: colors.border.withValues(alpha: 0.6)),
+          border: Border.all(color: colors.border.withValues(alpha: 0.6)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 13, color: pbBlue),
+            Icon(icon, size: 13, color: colors.mutedForeground),
             const SizedBox(width: 5),
             Text(
               label,
@@ -979,18 +959,20 @@ class _Tag extends StatelessWidget {
     final Color fg = tone == 'crimson'
         ? _crimson
         : tone == 'green'
-            ? _green
-            : colors.secondaryForeground;
+        ? _green
+        : colors.secondaryForeground;
     final Color bg = tone == 'crimson'
         ? _crimsonTint
         : tone == 'green'
-            ? _greenTint
-            : colors.secondary;
+        ? _greenTint
+        : colors.secondary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -998,97 +980,20 @@ class _Tag extends StatelessWidget {
             Icon(icon, size: 11, color: fg),
             const SizedBox(width: 3),
           ],
-          Text(
-            text,
-            style: TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w600, color: fg),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: fg,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
     );
   }
 }
-
-// ─── Court bleed painter ───────────────────────────────────────
-
-class _CourtPainter extends CustomPainter {
-  final Sport sport;
-  const _CourtPainter(this.sport);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = _crimson
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    // Scale from viewBox 120x160
-    canvas.scale(size.width / 120, size.height / 160);
-
-    switch (sport) {
-      case Sport.badminton:
-      case Sport.others:
-        _badminton(canvas, paint);
-      case Sport.soccer:
-        _soccer(canvas, paint);
-      case Sport.basketball:
-        _basketball(canvas, paint);
-      case Sport.tennis:
-        _tennis(canvas, paint);
-      case Sport.pickleball:
-        _pickleball(canvas, paint);
-    }
-  }
-
-  void _badminton(Canvas c, Paint p) {
-    c.drawRect(const Rect.fromLTWH(2, 2, 116, 156), p);
-    c.drawLine(const Offset(2, 80), const Offset(118, 80), p);
-    c.drawLine(const Offset(60, 2), const Offset(60, 158), p);
-    c.drawRect(const Rect.fromLTWH(20, 20, 80, 120), p);
-    c.drawLine(const Offset(20, 55), const Offset(100, 55), p);
-    c.drawLine(const Offset(20, 105), const Offset(100, 105), p);
-  }
-
-  void _soccer(Canvas c, Paint p) {
-    c.drawRect(const Rect.fromLTWH(2, 2, 116, 156), p);
-    c.drawLine(const Offset(2, 80), const Offset(118, 80), p);
-    c.drawCircle(const Offset(60, 80), 22, p);
-    c.drawRect(const Rect.fromLTWH(30, 2, 60, 22), p);
-    c.drawRect(const Rect.fromLTWH(30, 136, 60, 22), p);
-  }
-
-  void _basketball(Canvas c, Paint p) {
-    c.drawRect(const Rect.fromLTWH(2, 2, 116, 156), p);
-    c.drawLine(const Offset(2, 80), const Offset(118, 80), p);
-    c.drawCircle(const Offset(60, 80), 18, p);
-    final path1 = Path()
-      ..moveTo(2, 22)
-      ..cubicTo(40, 22, 40, 60, 60, 60)
-      ..cubicTo(80, 60, 80, 22, 118, 22);
-    c.drawPath(path1, p);
-    final path2 = Path()
-      ..moveTo(2, 138)
-      ..cubicTo(40, 138, 40, 100, 60, 100)
-      ..cubicTo(80, 100, 80, 138, 118, 138);
-    c.drawPath(path2, p);
-  }
-
-  void _tennis(Canvas c, Paint p) {
-    c.drawRect(const Rect.fromLTWH(2, 2, 116, 156), p);
-    c.drawLine(const Offset(2, 80), const Offset(118, 80), p);
-    c.drawLine(const Offset(60, 40), const Offset(60, 120), p);
-    c.drawRect(const Rect.fromLTWH(20, 40, 80, 80), p);
-  }
-
-  void _pickleball(Canvas c, Paint p) {
-    c.drawRect(const Rect.fromLTWH(2, 2, 116, 156), p);
-    c.drawLine(const Offset(2, 80), const Offset(118, 80), p);
-    c.drawLine(const Offset(60, 2), const Offset(60, 60), p);
-    c.drawLine(const Offset(60, 100), const Offset(60, 158), p);
-    c.drawRect(const Rect.fromLTWH(2, 60, 116, 40), p);
-  }
-
-  @override
-  bool shouldRepaint(_CourtPainter old) => old.sport != sport;
-}
-

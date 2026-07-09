@@ -5,9 +5,13 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../ui/main.dart';
+import '../activity_data_section/zone_bar.dart';
 import '../health_data_controller.dart';
+import '../health_data_service.dart';
 import '../model/daily_health_summary.dart';
+import '../vitality_score_controller.dart';
 import 'health_metric.dart';
+import 'vitality_score_card.dart';
 
 class UserHealthSubtab extends ConsumerStatefulWidget {
   const UserHealthSubtab({super.key});
@@ -22,12 +26,18 @@ class _UserHealthSubtabState extends ConsumerState<UserHealthSubtab> {
   @override
   Widget build(BuildContext context) {
     final trend = ref.watch(dailyHealthTrendProvider);
-    final metrics = ref.watch(dashboardMetricsProvider).value ?? HealthMetric.defaults;
+    final metrics =
+        ref.watch(dashboardMetricsProvider).value ?? HealthMetric.defaults;
+    final vitalityScore = ref.watch(vitalityScoreSummaryProvider).value;
 
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(dailyHealthTrendProvider);
-        await ref.read(dailyHealthTrendProvider.future);
+        ref.invalidate(vitalityScoreSummaryProvider);
+        await Future.wait([
+          ref.read(dailyHealthTrendProvider.future),
+          ref.read(vitalityScoreSummaryProvider.future),
+        ]);
       },
       child: trend.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -41,19 +51,19 @@ class _UserHealthSubtabState extends ConsumerState<UserHealthSubtab> {
           ],
         ),
         data: (days) {
-          if (days.isEmpty) {
-            return ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [PEmptySectionPlaceholder(subtitle: 'health.userHealth.empty'.tr())],
-            );
-          }
-          // Default the chart to the first visible metric.
+          // Default the chart to the first visible metric. Renders the real
+          // dashboard shell (dashes + "not enough data") even with zero days,
+          // rather than swapping in a generic empty state.
           final chartMetric =
-              (_chartMetric != null && metrics.contains(_chartMetric)) ? _chartMetric! : metrics.first;
+              (_chartMetric != null && metrics.contains(_chartMetric))
+              ? _chartMetric!
+              : metrics.first;
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             children: [
+              VitalityScoreCard(score: vitalityScore),
+              const SizedBox(height: 12),
               _HeaderRow(onCustomize: () => _showCustomizeSheet(context)),
               const SizedBox(height: 12),
               _SnapshotGrid(days: days, metrics: metrics),
@@ -64,6 +74,8 @@ class _UserHealthSubtabState extends ConsumerState<UserHealthSubtab> {
                 selected: chartMetric,
                 onSelect: (m) => setState(() => _chartMetric = m),
               ),
+              const SizedBox(height: 12),
+              const _HrZoneSection(),
             ],
           );
         },
@@ -92,7 +104,9 @@ class _HeaderRow extends StatelessWidget {
       children: [
         Text(
           'health.userHealth.title'.tr(),
-          style: context.theme.typography.body.lg.copyWith(fontWeight: FontWeight.w700),
+          style: context.theme.typography.body.lg.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const Spacer(),
         FButton.icon(
@@ -114,21 +128,23 @@ class _SnapshotGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      const spacing = 12.0;
-      final cardWidth = (constraints.maxWidth - spacing) / 2;
-      return Wrap(
-        spacing: spacing,
-        runSpacing: spacing,
-        children: [
-          for (final m in metrics)
-            SizedBox(
-              width: cardWidth,
-              child: _SnapshotCard(metric: m, days: days),
-            ),
-        ],
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        final cardWidth = (constraints.maxWidth - spacing) / 2;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final m in metrics)
+              SizedBox(
+                width: cardWidth,
+                child: _SnapshotCard(metric: m, days: days),
+              ),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -191,7 +207,9 @@ class _SnapshotCard extends StatelessWidget {
               if (metric.unit.isNotEmpty && latest != null)
                 Text(
                   metric.unit,
-                  style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
                 ),
             ],
           ),
@@ -206,7 +224,9 @@ class _SnapshotCard extends StatelessWidget {
                 ),
                 Text(
                   metric.format(delta.abs()),
-                  style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
                 ),
               ],
             )
@@ -277,7 +297,9 @@ class _TrendChartCard extends StatelessWidget {
                 ? Center(
                     child: Text(
                       'health.trend.insufficient'.tr(),
-                      style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
+                      style: context.theme.typography.body.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
                     ),
                   )
                 : LineChart(
@@ -306,7 +328,9 @@ class _TrendChartCard extends StatelessWidget {
           ),
           Text(
             'health.trend.period'.tr(),
-            style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
+            style: context.theme.typography.body.xs.copyWith(
+              color: colors.mutedForeground,
+            ),
           ),
         ],
       ),
@@ -318,7 +342,11 @@ class _MetricChip extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  const _MetricChip({required this.label, required this.selected, required this.onTap});
+  const _MetricChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -350,7 +378,8 @@ class _CustomizeMetricsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selected = ref.watch(dashboardMetricsProvider).value ?? HealthMetric.defaults;
+    final selected =
+        ref.watch(dashboardMetricsProvider).value ?? HealthMetric.defaults;
     final colors = context.theme.colors;
 
     return SingleChildScrollView(
@@ -362,10 +391,14 @@ class _CustomizeMetricsSheet extends ConsumerWidget {
           const SizedBox(height: 8),
           for (final m in HealthMetric.values)
             GestureDetector(
-              onTap: () => ref.read(dashboardMetricsProvider.notifier).toggle(m),
+              onTap: () =>
+                  ref.read(dashboardMetricsProvider.notifier).toggle(m),
               behavior: HitTestBehavior.opaque,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 4,
+                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -375,9 +408,13 @@ class _CustomizeMetricsSheet extends ConsumerWidget {
                       ),
                     ),
                     Icon(
-                      selected.contains(m) ? FLucideIcons.checkCheck : FLucideIcons.plus,
+                      selected.contains(m)
+                          ? FLucideIcons.checkCheck
+                          : FLucideIcons.plus,
                       size: 18,
-                      color: selected.contains(m) ? colors.primary : colors.mutedForeground,
+                      color: selected.contains(m)
+                          ? colors.primary
+                          : colors.mutedForeground,
                     ),
                   ],
                 ),
@@ -385,6 +422,285 @@ class _CustomizeMetricsSheet extends ConsumerWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+// ─── HR Zone ────────────────────────────────────────────────────────────────
+
+class _HrZoneSection extends ConsumerWidget {
+  const _HrZoneSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final thresholds = ref.watch(hrThresholdsProvider).value;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.card,
+        border: Border.all(color: colors.border),
+        borderRadius: context.theme.style.borderRadius.md,
+        boxShadow: context.theme.style.shadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 16,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 3,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'health.hrZone.title'.tr(),
+                          style: context.theme.typography.body.sm.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (thresholds?.estimated ?? false) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            'health.recap.estimated'.tr(),
+                            style: context.theme.typography.body.xs.copyWith(
+                              color: colors.mutedForeground,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (thresholds != null)
+                      Text(
+                        'health.hrZone.maxHrLine'.tr(
+                          namedArgs: {'value': '${thresholds.maxHr}'},
+                        ),
+                        style: context.theme.typography.body.xs.copyWith(
+                          color: colors.mutedForeground,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              FButton.icon(
+                variant: .ghost,
+                onPress: () => _showEditSheet(context, thresholds),
+                child: Icon(FLucideIcons.pencil, size: 16),
+              ),
+            ],
+          ),
+          if (thresholds != null) ...[
+            _ZoneRow(
+              color: zoneEasyColor,
+              name: 'health.zone.easy'.tr(),
+              range: '< ${thresholds.lt1} bpm',
+              description: 'health.hrZone.zoneDesc.easy'.tr(),
+            ),
+            _ZoneRow(
+              color: zoneModerateColor,
+              name: 'health.zone.moderate'.tr(),
+              range: '${thresholds.lt1}–${thresholds.lt2} bpm',
+              description: 'health.hrZone.zoneDesc.moderate'.tr(),
+            ),
+            _ZoneRow(
+              color: colors.primary,
+              name: 'health.zone.hard'.tr(),
+              range: '> ${thresholds.lt2} bpm',
+              description: 'health.hrZone.zoneDesc.hard'.tr(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showEditSheet(BuildContext context, HrThresholds? current) {
+    showPSheet(
+      context: context,
+      builder: (_) => _HrZoneEditSheet(current: current),
+    );
+  }
+}
+
+class _ZoneRow extends StatelessWidget {
+  final Color color;
+  final String name;
+  final String range;
+  final String description;
+
+  const _ZoneRow({
+    required this.color,
+    required this.name,
+    required this.range,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 4,
+      children: [
+        Row(
+          spacing: 6,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            Text(
+              name,
+              style: context.theme.typography.body.sm.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              range,
+              style: context.theme.typography.body.xs.copyWith(
+                color: colors.mutedForeground,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 14),
+          child: Text(
+            description,
+            style: context.theme.typography.body.xs.copyWith(
+              color: colors.mutedForeground,
+              height: 1.4,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HrZoneEditSheet extends ConsumerStatefulWidget {
+  final HrThresholds? current;
+  const _HrZoneEditSheet({required this.current});
+
+  @override
+  ConsumerState<_HrZoneEditSheet> createState() => _HrZoneEditSheetState();
+}
+
+class _HrZoneEditSheetState extends ConsumerState<_HrZoneEditSheet> {
+  late final TextEditingController _maxHrController;
+  late final TextEditingController _lt1Controller;
+  late final TextEditingController _lt2Controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final c = widget.current;
+    _maxHrController = TextEditingController(text: c?.maxHr.toString() ?? '');
+    _lt1Controller = TextEditingController(text: c?.lt1.toString() ?? '');
+    _lt2Controller = TextEditingController(text: c?.lt2.toString() ?? '');
+  }
+
+  @override
+  void dispose() {
+    _maxHrController.dispose();
+    _lt1Controller.dispose();
+    _lt2Controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final saving = ref.watch(hrThresholdControllerProvider);
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 16,
+        children: [
+          PSheetTitle(label: 'health.hrZone.edit.title'.tr()),
+          Text(
+            'health.hrZone.edit.description'.tr(),
+            style: context.theme.typography.body.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+          FTextField(
+            label: Text('health.hrZone.edit.maxHrLabel'.tr()),
+            hint: '190',
+            control: FTextFieldControl.managed(controller: _maxHrController),
+            keyboardType: const TextInputType.numberWithOptions(decimal: false),
+          ),
+          FTextField(
+            label: Text('health.hrZone.edit.lt1Label'.tr()),
+            hint: '150',
+            control: FTextFieldControl.managed(controller: _lt1Controller),
+            keyboardType: const TextInputType.numberWithOptions(decimal: false),
+          ),
+          FTextField(
+            label: Text('health.hrZone.edit.lt2Label'.tr()),
+            hint: '165',
+            control: FTextFieldControl.managed(controller: _lt2Controller),
+            keyboardType: const TextInputType.numberWithOptions(decimal: false),
+          ),
+          FButton(
+            onPress: saving ? null : _submit,
+            child: saving
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text('health.hrZone.edit.save'.tr()),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    final lt1 = int.tryParse(_lt1Controller.text.trim());
+    final lt2 = int.tryParse(_lt2Controller.text.trim());
+    final maxHrText = _maxHrController.text.trim();
+    final maxHr = maxHrText.isEmpty ? null : int.tryParse(maxHrText);
+
+    final valid =
+        lt1 != null &&
+        lt2 != null &&
+        lt1 > 0 &&
+        lt2 > lt1 &&
+        lt1 <= 250 &&
+        lt2 <= 250 &&
+        (maxHr == null || (maxHr > lt2 && maxHr <= 250));
+    if (!valid) {
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleAlert),
+        variant: .destructive,
+        title: Text('health.hrZone.edit.invalid'.tr()),
+        alignment: .bottomCenter,
+      );
+      return;
+    }
+
+    await ref
+        .read(hrThresholdControllerProvider.notifier)
+        .save(lt1Bpm: lt1, lt2Bpm: lt2, maxHeartRate: maxHr);
+
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    showFToast(
+      context: context,
+      icon: const Icon(FLucideIcons.check),
+      title: Text('health.hrZone.edit.saved'.tr()),
+      alignment: .bottomCenter,
     );
   }
 }

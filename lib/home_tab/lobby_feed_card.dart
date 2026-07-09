@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../core/model/enum.dart';
-import '../core/model/lobby.dart';
 import '../core/model/lobby_feed_item.dart';
 import '../ui/theme.dart';
 
@@ -71,10 +70,14 @@ class LobbyFeedCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Row(
                         mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         spacing: 4,
                         children: [
+                          Icon(
+                            FLucideIcons.users,
+                            size: 14,
+                            color: colors.primary,
+                          ),
                           Text(
                             '${item.memberCount}',
                             style: context.theme.typography.body.lg.copyWith(
@@ -83,53 +86,43 @@ class LobbyFeedCard extends StatelessWidget {
                               height: 1,
                             ),
                           ),
-                          Text(
-                            'thành viên',
-                            style: context.theme.typography.body.xs.copyWith(
-                              color: colors.mutedForeground,
-                            ),
-                          ),
                         ],
                       ),
                     ],
                   ],
                 ),
 
-                // Visibility + homeground + timeslots
+                // Homeground + timeslots. Visibility used to show here too
+                // (an icon: public/discoverable/private) — dropped from the
+                // discovery cards since it's not decision-relevant at
+                // browse time; it's still shown when creating a lobby and
+                // on the lobby detail page.
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 6,
                   children: [
-                    Row(
-                      spacing: 6,
-                      children: [
-                        _VisibilityIcon(visibility: item.visibility),
-                        if (item.homegroundName != null)
+                    if (item.homegroundName != null)
+                      Row(
+                        spacing: 3,
+                        children: [
+                          Icon(
+                            FLucideIcons.mapPin,
+                            size: 11,
+                            color: colors.mutedForeground,
+                          ),
                           Expanded(
-                            child: Row(
-                              spacing: 3,
-                              children: [
-                                Icon(
-                                  FLucideIcons.mapPin,
-                                  size: 11,
-                                  color: colors.mutedForeground,
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    item.homegroundName!,
-                                    style: context.theme.typography.body.xs.copyWith(
-                                      color: colors.mutedForeground,
-                                      fontSize: 11,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              item.homegroundName!,
+                              style: context.theme.typography.body.xs.copyWith(
+                                color: colors.mutedForeground,
+                                fontSize: 11,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                      ],
-                    ),
+                        ],
+                      ),
                     if (item.playtime.isNotEmpty)
                       Wrap(
                         spacing: 6,
@@ -161,7 +154,12 @@ class LobbyFeedCard extends StatelessWidget {
                                 Text(
                                   'FitScore',
                                   style: TextStyle(
-                                    fontFamily: context.theme.typography.body.xs.fontFamily,
+                                    fontFamily: context
+                                        .theme
+                                        .typography
+                                        .body
+                                        .xs
+                                        .fontFamily,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                     color: colors.mutedForeground,
@@ -180,7 +178,12 @@ class LobbyFeedCard extends StatelessWidget {
                                 Text(
                                   'homeTab.challenger.mmr'.tr(),
                                   style: TextStyle(
-                                    fontFamily: context.theme.typography.body.xs.fontFamily,
+                                    fontFamily: context
+                                        .theme
+                                        .typography
+                                        .body
+                                        .xs
+                                        .fontFamily,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                     color: colors.mutedForeground,
@@ -189,19 +192,21 @@ class LobbyFeedCard extends StatelessWidget {
                                 ),
                                 Text(
                                   '${item.lobbyMmr}',
-                                  style: context.theme.typography.body.xs.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: colors.foreground,
-                                  ),
+                                  style: context.theme.typography.body.xs
+                                      .copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: colors.foreground,
+                                      ),
                                 ),
                                 if (item.favorability != null)
-                                  _FavorabilityBadge(favorability: item.favorability!),
+                                  _FavorabilityBadge(
+                                    favorability: item.favorability!,
+                                  ),
                               ],
                             ),
                         ],
                       ),
-                      if (showCompat && score > 0)
-                        _FitScoreVibes(item: item),
+                      if (showCompat && score > 0) _FitScoreVibes(item: item),
                     ],
                   ),
                 ],
@@ -209,10 +214,7 @@ class LobbyFeedCard extends StatelessWidget {
                 FDivider(),
 
                 // CTA
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: action,
-                ),
+                Align(alignment: Alignment.centerRight, child: action),
               ],
             ),
           ),
@@ -285,7 +287,10 @@ class _FavorabilityBadge extends StatelessWidget {
     final (Color bg, Color fg) = switch (favorability) {
       ChallengeFavorability.favored => (const Color(0xFF16a34a), Colors.white),
       ChallengeFavorability.even => (const Color(0xFFd97706), Colors.white),
-      ChallengeFavorability.underdog => (colors.secondary, colors.mutedForeground),
+      ChallengeFavorability.underdog => (
+        colors.secondary,
+        colors.mutedForeground,
+      ),
     };
 
     return Container(
@@ -321,15 +326,31 @@ class _FitScoreVibes extends StatelessWidget {
     // Each real factor code → (label, icon, foreground). The chip background is
     // the foreground at 8% opacity. Unknown codes are skipped.
     (String, IconData, Color)? specFor(String code) => switch (code) {
-          'skill' => ('Trình độ phù hợp', FLucideIcons.trophy, const Color(0xFFD97706)),
-          'network' => ('Chung mạng lưới', FLucideIcons.users, const Color(0xFF059669)),
-          'industry' => ('Cùng ngành nghề', FLucideIcons.briefcase, const Color(0xFF0D9488)),
-          'age' => ('Cùng nhóm tuổi', FLucideIcons.cake, const Color(0xFF7C3AED)),
-          'gender' => ('Thân thiện với nữ', FLucideIcons.venus, const Color(0xFFDB2777)),
-          'playtime' => ('Lịch chơi khớp', FLucideIcons.calendar, pbBlue),
-          'location' => ('Vị trí thuận tiện', FLucideIcons.mapPin, colors.primary),
-          _ => null,
-        };
+      'skill' => (
+        'Trình độ phù hợp',
+        FLucideIcons.trophy,
+        const Color(0xFFD97706),
+      ),
+      'network' => (
+        'Chung mạng lưới',
+        FLucideIcons.users,
+        const Color(0xFF059669),
+      ),
+      'industry' => (
+        'Cùng ngành nghề',
+        FLucideIcons.briefcase,
+        const Color(0xFF0D9488),
+      ),
+      'age' => ('Cùng nhóm tuổi', FLucideIcons.cake, const Color(0xFF7C3AED)),
+      'gender' => (
+        'Thân thiện với nữ',
+        FLucideIcons.venus,
+        const Color(0xFFDB2777),
+      ),
+      'playtime' => ('Lịch chơi khớp', FLucideIcons.calendar, pbBlue),
+      'location' => ('Vị trí thuận tiện', FLucideIcons.mapPin, colors.primary),
+      _ => null,
+    };
 
     final chips = <Widget>[];
     for (final code in item.matchFactors) {
@@ -386,11 +407,7 @@ class _TimeslotChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           spacing: 3,
           children: [
-            const Icon(
-              Icons.schedule_rounded,
-              size: 10,
-              color: pbBlue,
-            ),
+            const Icon(Icons.schedule_rounded, size: 10, color: pbBlue),
             Text(
               label,
               style: context.theme.typography.body.xs.copyWith(
@@ -403,24 +420,5 @@ class _TimeslotChip extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _VisibilityIcon extends StatelessWidget {
-  final LobbyVisibility visibility;
-
-  const _VisibilityIcon({required this.visibility});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = visibility == LobbyVisibility.public
-        ? pbBlue
-        : context.theme.colors.mutedForeground;
-    final icon = switch (visibility) {
-      LobbyVisibility.public => Icons.language_rounded,
-      LobbyVisibility.discoverable => Icons.search_rounded,
-      LobbyVisibility.private => Icons.lock_outline_rounded,
-    };
-    return Icon(icon, size: 14, color: color);
   }
 }

@@ -13,23 +13,23 @@ enum AchievementState {
 
 /// Supabase returns `numeric` columns as `String` — parse defensively.
 double _toDouble(Object? v) => switch (v) {
-      null => 0,
-      final num n => n.toDouble(),
-      _ => double.tryParse(v.toString()) ?? 0,
-    };
+  null => 0,
+  final num n => n.toDouble(),
+  _ => double.tryParse(v.toString()) ?? 0,
+};
 
 int _toInt(Object? v) => switch (v) {
-      null => 0,
-      final num n => n.toInt(),
-      _ => int.tryParse(v.toString()) ?? 0,
-    };
+  null => 0,
+  final num n => n.toInt(),
+  _ => int.tryParse(v.toString()) ?? 0,
+};
 
 AchievementState _toState(Object? v) => switch (v) {
-      'earned_period' => AchievementState.earnedPeriod,
-      'done' => AchievementState.done,
-      'in_progress' => AchievementState.inProgress,
-      _ => AchievementState.notStarted,
-    };
+  'earned_period' => AchievementState.earnedPeriod,
+  'done' => AchievementState.done,
+  'in_progress' => AchievementState.inProgress,
+  _ => AchievementState.notStarted,
+};
 
 @freezed
 abstract class AchievementProgress with _$AchievementProgress {
@@ -44,7 +44,8 @@ abstract class AchievementProgress with _$AchievementProgress {
     @JsonKey(fromJson: _toInt) required int consistency,
     @JsonKey(name: 'xp_reward', fromJson: _toInt) required int xpReward,
     required bool repeatable,
-    @JsonKey(name: 'current_value', fromJson: _toDouble) required double currentValue,
+    @JsonKey(name: 'current_value', fromJson: _toDouble)
+    required double currentValue,
     @JsonKey(fromJson: _toDouble) required double threshold,
     @JsonKey(fromJson: _toDouble) required double progress,
     @JsonKey(fromJson: _toState) required AchievementState state,

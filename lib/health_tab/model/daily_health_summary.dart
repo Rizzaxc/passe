@@ -28,7 +28,9 @@ abstract class DailyHealthSummary with _$DailyHealthSummary {
 
     // Activity summary
     @Default(0) @JsonKey(name: 'activity_count') int activityCount,
-    @Default(0) @JsonKey(name: 'total_activity_minutes') int totalActivityMinutes,
+    @Default(0)
+    @JsonKey(name: 'total_activity_minutes')
+    int totalActivityMinutes,
 
     @JsonKey(name: 'synced_at') DateTime? syncedAt,
   }) = _DailyHealthSummary;

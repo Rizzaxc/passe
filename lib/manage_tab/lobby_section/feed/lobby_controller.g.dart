@@ -34,14 +34,14 @@ final class UserLobbiesControllerProvider
 }
 
 String _$userLobbiesControllerHash() =>
-    r'08ad02546b6177121658e92d32e1f756c7e0f384';
+    r'ee715aec3f093cd053d9a3ea2bc3f33d573f5df6';
 
 abstract class _$UserLobbiesController
     extends $AsyncNotifier<List<LobbyListItem>> {
   FutureOr<List<LobbyListItem>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<List<LobbyListItem>>, List<LobbyListItem>>;
     final element =
@@ -52,7 +52,7 @@ abstract class _$UserLobbiesController
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -106,7 +106,7 @@ final class LobbyFormControllerProvider
 }
 
 String _$lobbyFormControllerHash() =>
-    r'9cf2c5d52c57dbd8090ccb9350a9ed8f75bc44c1';
+    r'c5624d45bc94255c627749d630b70c1025438de5';
 
 final class LobbyFormControllerFamily extends $Family
     with
@@ -140,7 +140,7 @@ abstract class _$LobbyFormController extends $Notifier<LobbyFormState> {
   LobbyFormState build(String? lobbyId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<LobbyFormState, LobbyFormState>;
     final element =
         ref.element
@@ -150,6 +150,6 @@ abstract class _$LobbyFormController extends $Notifier<LobbyFormState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

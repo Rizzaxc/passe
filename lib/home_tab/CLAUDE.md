@@ -28,11 +28,20 @@ sport) and the same shared `FilterData`. Each feed returns `[]` when no sport is
 
 ## Shared filter
 
-`filterStateProvider` (`FilterState` → `FilterData`: `search`, `city`, `districts` ≤3,
+`filterStateProvider` (`FilterState` → `FilterData`: `search`, `city`, `districts` ≤6,
 `schedule` ≤3 `Timeslot`s) is the single filter for all subtabs. It's **seeded from the signed-in
 user's `details.location` and `details.playtime`** on build, defaulting to `City.hochiminh`.
 Changing the city clears districts. Feeds `ref.watch(filterStateProvider)` so they refetch on any
 filter change. `FilterState.onCommit()` (persisting the filter server-side) is a TODO.
+
+**`search` (`p_search`) is now wired into all four RPCs** (`schema/home_feed_search.sql` —
+**written but not yet applied to prod**, blocked by the safety policy on live-DB function
+migrations; apply it before relying on search): teammate/challenger match `lobby.name` OR
+`lobby.searchable_id`; professional matches `professional.display_name`; location matches
+name/address via the existing `search_locations` fuzzy match. All four are diacritic-insensitive
+(`extensions.unaccent`). **Location is the one exception to "search narrows the result set"**: its
+district filter is OR'd with the search term (broadens results), not AND'd — see the Location
+subtab section below for why.
 
 ## Subtab data sources
 
@@ -43,7 +52,7 @@ Quick map, then the full contract for each:
 | Teammate | `home_teammate_lobby_data` RPC | `LobbyFeedItem` | "Xin vào" → insert `lobby_befriend_record` (`request`) |
 | Challenger | `home_challenger_lobby_data` RPC | `LobbyFeedItem` (`memberCount` set) | "Thách đấu" — **disabled placeholder** (no `lobby_challenge` table yet) |
 | Professional | `home_professional_data` RPC (sport + soft city/district/schedule + role toggle; ranked verified/rating/reviews; `price_from` from `professional_service`) | `ProfessionalFeedItem` | tap → `ProfessionalDetailRoute`; book = "coming soon" toast |
-| Location | `location` table, or `search_locations` RPC when `search` is set | `Location` (freezed) | informational only |
+| Location | `location` table, or `search_locations` RPC when `search` is set | `Location` (freezed) | list/map toggle; tap → detail sheet; "Chỉ đường" launches external maps |
 
 Conventions across all four: `p_sport_id` is `Sport.index`; `p_city` is `City.dbIndex`; districts
 are `district.id` strings; every RPC/query carries `.timeout(const Duration(seconds: 5))`.
@@ -97,11 +106,18 @@ freezed) — edit them by hand, no build_runner.
 ### Professional (Neutral) subtab
 
 - Shows coaches and referees offering services for the selected sport, in two horizontal carousels
-  (one per role). The subtab keeps the shared `FilterWidget` icon (top-right); opened here it shows
-  an extra **role toggle** (`FilterWidget(showRoleFilter: true)` → a deselectable `PSegmentedButton`
-  inside the filter sheet, bound to `FilterData.role`). Deselected = both roles (default); selecting
-  Coach/Referee hides the other section. `role` is applied client-side, and the feed `.select`s the
-  query-affecting filter fields *excluding* `role` so toggling it doesn't refetch.
+  (one per role), each with its own header (`_Section` in `professional_section/main.dart`) styled
+  like the teammate/challenger/location subtabs' single `PSectionHeader` — title + chevron as one
+  tappable unit (opens the "see all" sheet), with the shared `FilterWidget(showRoleFilter: true)`
+  icon as the row's suffix. There's no single umbrella title here the way siblings have one: each
+  role header *is* this screen's equivalent of that title, so the filter icon rides as the suffix on
+  every currently-visible role section (not just one), so it stays reachable no matter which roles
+  are checked.
+- **Role visibility** is `FilterData.visibleRoles` (`Set<ProfessionalRole>`, both checked by
+  default) — two independent `FCheckbox`es inside the filter sheet, one per role
+  (`FilterState.setRoleVisible` refuses to uncheck the last remaining role). Unchecking a role hides
+  its carousel entirely. This is applied client-side, and the feed `.select`s the query-affecting
+  filter fields *excluding* `visibleRoles` so toggling it doesn't refetch.
 - Data: `home_professional_data` RPC (`schema/professional_location_filter.sql`). Params mirror
   teammate — `p_sport_id`, `p_timeslots` (`Timeslot.listToJson`), `p_city` (`City.dbIndex`),
   `p_districts` (district ids), `p_page_size/number`. Returns the `professional` columns +
@@ -136,14 +152,54 @@ freezed) — edit them by hand, no build_runner.
 
 ### Location subtab
 
-- Shows venues/courts from the `location` table, filtered by `city_cluster` and `district`.
-- Informational only for now — no booking or map integration yet.
-- If `FilterData.search` is non-empty, use the `search_locations(search_term)` RPC; otherwise query
-  `location` directly with city_cluster + district filters.
-- **Known gap (deferred):** the direct query currently filters by `city_cluster` only —
-  `filter.districts` is not yet applied. See `TODO(location-district-filter)` in
-  `location_section/feed_controller.dart`.
-- Model: reuses the `Location` freezed model in `core/model/location.dart`.
+- Shows venues/courts from the `location` table, filtered by `city_cluster`, `district`, and the
+  context sport (see below).
+- **List/Map toggle** (`PPillToggle`, local `_VenueView` state — not persisted) in the header
+  suffix next to the filter icon. List = interactive `FCard`s; Map = embedded `flutter_map`
+  (OpenStreetMap tiles, no API key). Tapping a card **or** a map marker opens the venue detail sheet
+  (`showPSheet`, `maxHeightRatio: 1.0`) with a static mini-map, address, sport/amenity chips, and a
+  directions CTA.
+- **Directions** hand off to the device's maps app via a `geo:` URI (falls back to a Google Maps web
+  URL) using `url_launcher` — no API key / billing, the OS routes the intent. Disabled when the
+  venue has no `lat/lon`. Google Maps SDK was deliberately *not* used (poor VN coverage + cost).
+- **Coordinates & tags**: the `Location` freezed model carries `lat`, `lon`, `tags`, `cityCluster`,
+  plus `coord` (→ `LatLng?`) and `displayAddress` helpers.
+- **Sport-scoped** (`Location.matchesSport`/`.sports`/`hasDeclaredSport` in `core/model/location.dart`):
+  the feed watches `selectedSportStateProvider` and drops venues whose OSM `sport:[...]` tag names
+  sports Passe doesn't support (billiards, shooting, …) but *keeps* untagged venues (ambiguous —
+  could still be a general facility). `Sport.others` (nothing chosen) skips the filter. Filtering is
+  client-side, after fetch — the raw tag format ("key:[v1, v2]" strings) isn't something SQL can
+  cleanly filter without a normalization migration; same precedent as the professional subtab's
+  `visibleRoles` filter.
+- **Sport/amenity chips** (`_SportChip`/`_TagChip` in `location_section/main.dart`) parse that same
+  tag format instead of showing it raw: a chip per recognized Passe sport (icon + localized name,
+  matching the professional subtab's `_SportChip` styling) plus a chip per recognized `leisure:[...]`
+  facility value (`homeTab.location.amenity.<value>` translation keys — `pitch`, `sports_centre`,
+  `stadium`, `swimming_pool`). Everything else in the tag set (opening_hours, building:levels,
+  website, wikidata, …) is dropped rather than shown as raw OSM junk.
+- **District filter** matches `location.district` against each selected ward's `legacyDistrict`
+  (plus `id`, for the few rows already using it) — **not** `District.id`. `location.district` is
+  free text from a 3rd-party scrape; verified against prod that HCMC's 16 old urban quận store the
+  exact old-district label ("Quận 7", "Quận Bình Thạnh"), which is exactly what `legacyDistrict`
+  holds (~43% of HCMC rows match this way). Rows using a pre-2021 sub-ward name (predating even the
+  old Quận 2/Thủ Đức merger, e.g. "Phường Thảo Điền") or no district at all won't match any filter
+  selection — an accepted gap given the data's quality, not a bug to chase further without a
+  normalization pass on the source data (which is a 3rd-party API re-fetch, not something to migrate
+  by hand — see root CLAUDE.md district-model note).
+- If `FilterData.search` **or** `filter.districts` is non-empty, route through the
+  `search_locations(search_term, p_districts)` RPC instead of the direct city-only query — the two
+  are **OR'd**, not AND'd (picking a district broadens results rather than narrowing a name search;
+  `p_districts` uses the same `legacyDistrict` + `id` label set as the direct-query path above).
+  City filtering is skipped on this path (a pre-existing gap, low-risk since district labels are
+  already city-specific).
+- **Migration**: `schema/home_feed_search.sql` widens `search_locations` to also return
+  `lat/lon/tags/city_cluster` (so searched venues are pinnable) and adds the `p_districts` OR-match;
+  also adds `p_search` to the other 3 RPCs (see "Shared filter" above). **Not yet applied to
+  prod** — apply it before relying on search or map pins in *search* results (the direct-query path
+  already returns lat/lon/tags). Supersedes the retired `location_map_support.sql`.
+- Roadmap: we don't own venue data yet; booking arrives with local-business integration. The detail
+  sheet states this (`homeTab.location.roadmapNote`).
+- Model: the `Location` freezed model in `core/model/location.dart`.
 
 ## Gotchas
 

@@ -15,8 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UserHealthLink {
 
-@JsonKey(name: 'user_id') String get userId; HealthPlatform get platform;@JsonKey(name: 'linked_at') DateTime get linkedAt;@JsonKey(name: 'last_sync_at') DateTime? get lastSyncAt;// Optional user-declared HR thresholds (bpm). Null → app estimates them.
-@JsonKey(name: 'max_heart_rate') int? get maxHeartRate;@JsonKey(name: 'lt1_bpm') int? get lt1Bpm;@JsonKey(name: 'lt2_bpm') int? get lt2Bpm;
+@JsonKey(name: 'user_id') String get userId; HealthPlatform get platform;@JsonKey(name: 'linked_at') DateTime get linkedAt;@JsonKey(name: 'last_sync_at') DateTime? get lastSyncAt;@JsonKey(name: 'max_heart_rate') int? get maxHeartRate;@JsonKey(name: 'lt1_bpm') int? get lt1Bpm;@JsonKey(name: 'lt2_bpm') int? get lt2Bpm;
 /// Create a copy of UserHealthLink
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -223,7 +222,6 @@ class _UserHealthLink implements UserHealthLink {
 @override final  HealthPlatform platform;
 @override@JsonKey(name: 'linked_at') final  DateTime linkedAt;
 @override@JsonKey(name: 'last_sync_at') final  DateTime? lastSyncAt;
-// Optional user-declared HR thresholds (bpm). Null → app estimates them.
 @override@JsonKey(name: 'max_heart_rate') final  int? maxHeartRate;
 @override@JsonKey(name: 'lt1_bpm') final  int? lt1Bpm;
 @override@JsonKey(name: 'lt2_bpm') final  int? lt2Bpm;

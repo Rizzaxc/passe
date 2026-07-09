@@ -15,12 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DailyHealthSummary {
 
-@JsonKey(name: 'user_id') String get userId; DateTime get date;// Resting vitals
-@JsonKey(name: 'resting_heart_rate') int? get restingHeartRate;@JsonKey(name: 'hrv_sdnn_ms') double? get hrvSdnnMs;// Daily totals
- int? get steps;@JsonKey(name: 'distance_meters') double? get distanceMeters;@JsonKey(name: 'active_calories') double? get activeCalories;@JsonKey(name: 'total_calories') double? get totalCalories;// Sleep
-@JsonKey(name: 'sleep_minutes') int? get sleepMinutes;@JsonKey(name: 'sleep_quality_score') double? get sleepQualityScore;// Weight
-@JsonKey(name: 'weight_kg') double? get weightKg;// Activity summary
-@JsonKey(name: 'activity_count') int get activityCount;@JsonKey(name: 'total_activity_minutes') int get totalActivityMinutes;@JsonKey(name: 'synced_at') DateTime? get syncedAt;
+@JsonKey(name: 'user_id') String get userId; DateTime get date;@JsonKey(name: 'resting_heart_rate') int? get restingHeartRate;@JsonKey(name: 'hrv_sdnn_ms') double? get hrvSdnnMs; int? get steps;@JsonKey(name: 'distance_meters') double? get distanceMeters;@JsonKey(name: 'active_calories') double? get activeCalories;@JsonKey(name: 'total_calories') double? get totalCalories;@JsonKey(name: 'sleep_minutes') int? get sleepMinutes;@JsonKey(name: 'sleep_quality_score') double? get sleepQualityScore;@JsonKey(name: 'weight_kg') double? get weightKg;@JsonKey(name: 'activity_count') int get activityCount;@JsonKey(name: 'total_activity_minutes') int get totalActivityMinutes;@JsonKey(name: 'synced_at') DateTime? get syncedAt;
 /// Create a copy of DailyHealthSummary
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -232,20 +227,15 @@ class _DailyHealthSummary implements DailyHealthSummary {
 
 @override@JsonKey(name: 'user_id') final  String userId;
 @override final  DateTime date;
-// Resting vitals
 @override@JsonKey(name: 'resting_heart_rate') final  int? restingHeartRate;
 @override@JsonKey(name: 'hrv_sdnn_ms') final  double? hrvSdnnMs;
-// Daily totals
 @override final  int? steps;
 @override@JsonKey(name: 'distance_meters') final  double? distanceMeters;
 @override@JsonKey(name: 'active_calories') final  double? activeCalories;
 @override@JsonKey(name: 'total_calories') final  double? totalCalories;
-// Sleep
 @override@JsonKey(name: 'sleep_minutes') final  int? sleepMinutes;
 @override@JsonKey(name: 'sleep_quality_score') final  double? sleepQualityScore;
-// Weight
 @override@JsonKey(name: 'weight_kg') final  double? weightKg;
-// Activity summary
 @override@JsonKey(name: 'activity_count') final  int activityCount;
 @override@JsonKey(name: 'total_activity_minutes') final  int totalActivityMinutes;
 @override@JsonKey(name: 'synced_at') final  DateTime? syncedAt;

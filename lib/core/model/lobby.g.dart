@@ -9,12 +9,14 @@ part of 'lobby.dart';
 _LobbyDetails _$LobbyDetailsFromJson(Map json) => _LobbyDetails(
   ageGroup: $enumDecodeNullable(_$AgeGroupEnumMap, json['ageGroup']),
   skill: (json['skill'] as num?)?.toInt(),
+  hasAvatar: json['hasAvatar'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$LobbyDetailsToJson(_LobbyDetails instance) =>
     <String, dynamic>{
       'ageGroup': ?_$AgeGroupEnumMap[instance.ageGroup],
       'skill': ?instance.skill,
+      'hasAvatar': instance.hasAvatar,
     };
 
 const _$AgeGroupEnumMap = {

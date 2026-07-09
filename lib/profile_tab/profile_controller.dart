@@ -13,6 +13,13 @@ import '../core/model/user_details.dart';
 part 'profile_controller.freezed.dart';
 part 'profile_controller.g.dart';
 
+class AvatarUploadFailedException implements Exception {
+  const AvatarUploadFailedException();
+
+  @override
+  String toString() => 'AvatarUploadFailedException: failed to upload avatar to storage';
+}
+
 @freezed
 abstract class ProfileState with _$ProfileState {
   const factory ProfileState({
@@ -353,23 +360,28 @@ class ProfileController extends _$ProfileController {
     );
   }
 
-  void uploadAvatar() async {
+  Future<void> uploadAvatar() async {
     final user = ref.read(authControllerProvider).value;
     if (user == null || user.id == null) return;
 
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 512,
-      maxHeight: 512,
-      imageQuality: 80,
-    );
-    if (picked == null) return;
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+      if (picked == null) return;
 
-    updateDraft(
-      details: state.details.copyWith(generatedAvatar: ''),
-      pickedAvatar: picked,
-    );
+      updateDraft(
+        details: state.details.copyWith(generatedAvatar: ''),
+        pickedAvatar: picked,
+      );
+    } catch (e, st) {
+      talker.handle(e, st, 'Failed to pick avatar image');
+      rethrow;
+    }
   }
 
   void resetDraft() {
@@ -390,6 +402,7 @@ class ProfileController extends _$ProfileController {
     if (user == null || user.id == null) return;
 
     var updatedDetails = state.details;
+    var avatarUploadFailed = false;
 
     try {
       // 1. Handle Avatar storage operations
@@ -423,13 +436,11 @@ class ProfileController extends _$ProfileController {
               ).timeout(const Duration(seconds: 5));
         } catch (e, st) {
           talker.handle(e, st, 'Failed to upload avatar to storage');
-          // If upload fails, we might want to revert to a generated avatar
-          // but for now let's just log it. The user will see a broken image or old one.
-          // To be safe, if it fails and we intended it to be custom, maybe we should
-          // set generatedAvatar back to something.
-          // But according to instructions: "nullify the url if that previous step fails"
-          // Since we don't have avatarUrl anymore, if upload fails, we should probably
-          // set a generatedAvatar so it's not "null" (which means custom).
+          // Fall back to a generated avatar so `generatedAvatar` isn't left as
+          // '' (which means "custom photo"), then surface the failure to the
+          // user via AvatarUploadFailedException once the rest of the commit
+          // succeeds below.
+          avatarUploadFailed = true;
           final tagNumber = user.tagNumber;
           final seed = 'fallback_${DateTime.now().millisecondsSinceEpoch}_$tagNumber';
           updatedDetails = updatedDetails.copyWith(generatedAvatar: seed);
@@ -449,8 +460,14 @@ class ProfileController extends _$ProfileController {
         // 4. Sync industries (user_industry table)
         ref.read(industryControllerProvider.notifier).commit(),
       ]);
+
+      if (avatarUploadFailed) {
+        throw const AvatarUploadFailedException();
+      }
     } on PostgrestException catch (e, st) {
       talker.handle(e, st, state.details.toString());
+      rethrow;
+    } on AvatarUploadFailedException {
       rethrow;
     } catch (e, st) {
       talker.handle(e, st);

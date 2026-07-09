@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../core/model/enum.dart';
 import '../core/model/user_details.dart';
 import '../core/model/user_location.dart';
+import '../ui/district_select.dart';
 import 'profile_controller.dart';
 
 class LocationSelectionScreen extends ConsumerWidget {
@@ -38,7 +39,9 @@ class LocationSelectionScreen extends ConsumerWidget {
               control: FSelectControl.lifted(
                 value: selectedCity,
                 onChange: (city) {
-                  ref.read(profileControllerProvider.notifier).updateDraft(
+                  ref
+                      .read(profileControllerProvider.notifier)
+                      .updateDraft(
                         details: details.copyWith(
                           location: UserLocation(
                             city: city ?? City.none,
@@ -92,13 +95,9 @@ class _DistrictSelect extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final allDistricts = VietnamLocationData.instance.getDistrictsByCity(city);
-    final groups = <VietnamDistrictType, List<District>>{};
-    for (final d in allDistricts) {
-      groups.putIfAbsent(d.type, () => []).add(d);
-    }
-
-    return FMultiSelect<String>.rich(
+    // 102-126 flat wards per city is too long to scroll — .searchBuilder adds
+    // a search field, still grouped by legacy quận/huyện via districtSections.
+    return FMultiSelect<String>.searchBuilder(
       label: Text('profile.locationDistrict'.tr()),
       hint: Text('profile.locationDistrictHint'.tr()),
       format: (id) {
@@ -109,35 +108,29 @@ class _DistrictSelect extends ConsumerWidget {
       control: FMultiValueControl.managed(
         initial: selectedIds,
         onChange: (selected) {
-          final capped = selected.length > 3
-              ? selected.take(3).toSet()
+          final capped = selected.length > 6
+              ? selected.take(6).toSet()
               : selected;
-          ref.read(profileControllerProvider.notifier).updateDraft(
+          ref
+              .read(profileControllerProvider.notifier)
+              .updateDraft(
                 details: details.copyWith(
                   location: location.copyWith(districts: capped.toList()),
                 ),
               );
         },
       ),
-      children: [
-        for (final entry in groups.entries)
-          FSelectSection<String>.rich(
-            label: Text(context.tr('district.${entry.key.name}')),
-            children: (entry.value.toList()
-                  ..sort((a, b) {
-                    final aScore = selectedIds.contains(a.id) ? 0 : 1;
-                    final bScore = selectedIds.contains(b.id) ? 0 : 1;
-                    return aScore.compareTo(bScore);
-                  }))
-                .map(
-                  (d) => FSelectItem<String>(
-                    title: Text(d.getLocalizedFullName(context)),
-                    value: d.id,
-                  ),
-                )
-                .toList(),
-          ),
-      ],
+      searchFieldProperties: districtSearchFieldProperties(context),
+      contentEmptyBuilder: (context, _) => districtEmptyBuilder(context),
+      filter: (query) => VietnamLocationData.instance
+          .searchDistricts(city, query)
+          .map((d) => d.id),
+      contentBuilder: (context, query, values) => districtSections<String>(
+        context: context,
+        values: values,
+        toDistrict: (id) => VietnamLocationData.instance.findDistrictById(id)!,
+        isSelected: selectedIds.contains,
+      ),
     );
   }
 }

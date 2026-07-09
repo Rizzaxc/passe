@@ -29,7 +29,9 @@ class _RecapSheet extends ConsumerWidget {
     final colors = context.theme.colors;
     final curve = ref.watch(_hrCurveProvider(row.activityId));
     final estimated = ref.watch(hrThresholdsProvider).value?.estimated ?? true;
-    final dateLabel = DateFormat.MMMEd(context.locale.toString()).add_jm().format(row.startTime);
+    final dateLabel = DateFormat.MMMEd(
+      context.locale.toString(),
+    ).add_jm().format(row.startTime);
 
     return SingleChildScrollView(
       child: Column(
@@ -40,7 +42,9 @@ class _RecapSheet extends ConsumerWidget {
           if (row.locationLabel != null)
             Text(
               row.locationLabel!,
-              style: context.theme.typography.body.sm.copyWith(color: colors.mutedForeground),
+              style: context.theme.typography.body.sm.copyWith(
+                color: colors.mutedForeground,
+              ),
             ),
 
           // Headline metrics (max-HR-independent).
@@ -49,23 +53,45 @@ class _RecapSheet extends ConsumerWidget {
             runSpacing: 12,
             children: [
               if (row.durationMinutes != null)
-                _Stat(label: 'health.recap.duration'.tr(), value: _duration(row.durationMinutes!)),
+                _Stat(
+                  label: 'health.recap.duration'.tr(),
+                  value: _duration(row.durationMinutes!),
+                ),
               if (row.avgHeartRate != null)
-                _Stat(label: 'health.recap.avgHr'.tr(), value: '${row.avgHeartRate} bpm'),
+                _Stat(
+                  label: 'health.recap.avgHr'.tr(),
+                  value: '${row.avgHeartRate} bpm',
+                ),
               if (row.activeCalories != null)
-                _Stat(label: 'health.recap.calories'.tr(), value: '${row.activeCalories!.round()} kcal'),
+                _Stat(
+                  label: 'health.recap.calories'.tr(),
+                  value: '${row.activeCalories!.round()} kcal',
+                ),
               if (row.distanceMeters != null && row.distanceMeters! > 0)
-                _Stat(label: 'health.recap.distance'.tr(), value: '${(row.distanceMeters! / 1000).toStringAsFixed(1)} km'),
+                _Stat(
+                  label: 'health.recap.distance'.tr(),
+                  value:
+                      '${(row.distanceMeters! / 1000).toStringAsFixed(1)} km',
+                ),
               if (row.maxHeartRate != null)
-                _Stat(label: 'health.recap.maxHr'.tr(), value: '${row.maxHeartRate} bpm'),
+                _Stat(
+                  label: 'health.recap.maxHr'.tr(),
+                  value: '${row.maxHeartRate} bpm',
+                ),
               if (row.effortScore != null)
-                _Stat(label: 'health.recap.effort'.tr(), value: row.effortScore!.round().toString()),
+                _Stat(
+                  label: 'health.recap.effort'.tr(),
+                  value: row.effortScore!.round().toString(),
+                ),
             ],
           ),
 
           // HR curve.
           curve.when(
-            loading: () => const SizedBox(height: 120, child: Center(child: CircularProgressIndicator())),
+            loading: () => const SizedBox(
+              height: 120,
+              child: Center(child: CircularProgressIndicator()),
+            ),
             error: (_, _) => const SizedBox.shrink(),
             data: (points) => points.length < 2
                 ? const SizedBox.shrink()
@@ -126,7 +152,8 @@ class _HrCurveCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final spots = [
-      for (var i = 0; i < points.length; i++) FlSpot(i.toDouble(), points[i].bpm.toDouble()),
+      for (var i = 0; i < points.length; i++)
+        FlSpot(i.toDouble(), points[i].bpm.toDouble()),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,7 +161,9 @@ class _HrCurveCard extends StatelessWidget {
       children: [
         Text(
           'health.recap.hrCurve'.tr(),
-          style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
+          style: context.theme.typography.body.sm.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
         SizedBox(
           height: 120,
@@ -153,7 +182,10 @@ class _HrCurveCard extends StatelessWidget {
                   color: colors.primary,
                   barWidth: 2,
                   dotData: const FlDotData(show: false),
-                  belowBarData: BarAreaData(show: true, color: colors.primary.withValues(alpha: 0.1)),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: colors.primary.withValues(alpha: 0.1),
+                  ),
                 ),
               ],
             ),
@@ -186,12 +218,16 @@ class _ZoneSection extends StatelessWidget {
           children: [
             Text(
               'health.recap.zones'.tr(),
-              style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
+              style: context.theme.typography.body.sm.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             if (estimated)
               Text(
                 'health.recap.estimated'.tr(),
-                style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
+                style: context.theme.typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
               ),
           ],
         ),
@@ -202,6 +238,9 @@ class _ZoneSection extends StatelessWidget {
 }
 
 /// Loads the persisted (downsampled) HR curve for one activity.
-final _hrCurveProvider = FutureProvider.family<List<HrSamplePoint>, String>((ref, activityId) {
+final _hrCurveProvider = FutureProvider.family<List<HrSamplePoint>, String>((
+  ref,
+  activityId,
+) {
   return ref.watch(healthDataServiceProvider.notifier).loadHrCurve(activityId);
 });

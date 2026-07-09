@@ -67,24 +67,24 @@ final class CoachingBookingsProvider
 String _$coachingBookingsHash() => r'9430b24434315357f3ee1a04bec4372d8f53f942';
 
 /// Client-side actions on a coaching booking: cancelling an upcoming
-/// request/confirmation, or reviewing a past confirmed session (see
-/// `schema/professional_booking_review_policy_fix.sql` for why the review
-/// gate is "confirmed + past", not `status == completed`).
+/// request/confirmation, marking a past confirmed session complete (either
+/// party, first tap wins — see `schema/professional_booking_completion.sql`),
+/// or reviewing a completed session.
 
 @ProviderFor(CoachingBookingActionController)
 final coachingBookingActionControllerProvider =
     CoachingBookingActionControllerProvider._();
 
 /// Client-side actions on a coaching booking: cancelling an upcoming
-/// request/confirmation, or reviewing a past confirmed session (see
-/// `schema/professional_booking_review_policy_fix.sql` for why the review
-/// gate is "confirmed + past", not `status == completed`).
+/// request/confirmation, marking a past confirmed session complete (either
+/// party, first tap wins — see `schema/professional_booking_completion.sql`),
+/// or reviewing a completed session.
 final class CoachingBookingActionControllerProvider
     extends $NotifierProvider<CoachingBookingActionController, bool> {
   /// Client-side actions on a coaching booking: cancelling an upcoming
-  /// request/confirmation, or reviewing a past confirmed session (see
-  /// `schema/professional_booking_review_policy_fix.sql` for why the review
-  /// gate is "confirmed + past", not `status == completed`).
+  /// request/confirmation, marking a past confirmed session complete (either
+  /// party, first tap wins — see `schema/professional_booking_completion.sql`),
+  /// or reviewing a completed session.
   CoachingBookingActionControllerProvider._()
     : super(
         from: null,
@@ -113,18 +113,18 @@ final class CoachingBookingActionControllerProvider
 }
 
 String _$coachingBookingActionControllerHash() =>
-    r'99b79768f491f598b2a9cb276428e22373939d9f';
+    r'c940b069776197870bf942557a23476c24105ca3';
 
 /// Client-side actions on a coaching booking: cancelling an upcoming
-/// request/confirmation, or reviewing a past confirmed session (see
-/// `schema/professional_booking_review_policy_fix.sql` for why the review
-/// gate is "confirmed + past", not `status == completed`).
+/// request/confirmation, marking a past confirmed session complete (either
+/// party, first tap wins — see `schema/professional_booking_completion.sql`),
+/// or reviewing a completed session.
 
 abstract class _$CoachingBookingActionController extends $Notifier<bool> {
   bool build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<bool, bool>;
     final element =
         ref.element
@@ -134,6 +134,6 @@ abstract class _$CoachingBookingActionController extends $Notifier<bool> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

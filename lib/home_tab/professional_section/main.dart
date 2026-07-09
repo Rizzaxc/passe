@@ -56,8 +56,11 @@ class ProfessionalSubtab extends ConsumerWidget {
     });
 
     final feed = ref.watch(professionalFeedProvider);
-    // Role lives in the shared filter (toggled inside the filter sheet).
-    final role = ref.watch(filterStateProvider.select((f) => f.role));
+    // Role visibility lives in the shared filter (checkboxes in the filter
+    // sheet), each role toggled independently.
+    final visibleRoles = ref.watch(
+      filterStateProvider.select((f) => f.visibleRoles),
+    );
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -66,8 +69,11 @@ class ProfessionalSubtab extends ConsumerWidget {
       },
       child: feed.when(
         loading: () => const _LoadingSkeleton(),
-        error: (_, _) =>
-            _Sections(coaches: const [], referees: const [], role: role),
+        error: (_, _) => _Sections(
+          coaches: const [],
+          referees: const [],
+          visibleRoles: visibleRoles,
+        ),
         data: (items) {
           final coaches = items
               .where((p) => p.role == ProfessionalRole.coach)
@@ -75,7 +81,11 @@ class ProfessionalSubtab extends ConsumerWidget {
           final referees = items
               .where((p) => p.role == ProfessionalRole.referee)
               .toList();
-          return _Sections(coaches: coaches, referees: referees, role: role);
+          return _Sections(
+            coaches: coaches,
+            referees: referees,
+            visibleRoles: visibleRoles,
+          );
         },
       ),
     );
@@ -87,42 +97,41 @@ class ProfessionalSubtab extends ConsumerWidget {
 class _Sections extends StatelessWidget {
   final List<ProfessionalFeedItem> coaches;
   final List<ProfessionalFeedItem> referees;
-  // null = both roles shown (default); otherwise narrowed to a single role.
-  final ProfessionalRole? role;
+  final Set<ProfessionalRole> visibleRoles;
 
   const _Sections({
     required this.coaches,
     required this.referees,
-    required this.role,
+    required this.visibleRoles,
   });
 
   @override
   Widget build(BuildContext context) {
-    final showCoaches = role != ProfessionalRole.referee;
-    final showReferees = role != ProfessionalRole.coach;
+    final showCoaches = visibleRoles.contains(ProfessionalRole.coach);
+    final showReferees = visibleRoles.contains(ProfessionalRole.referee);
+
+    // Each role can now be hidden independently (checkboxes, not a single
+    // either/or toggle), so the filter needs to stay reachable from
+    // whichever section(s) are actually on screen — every visible role
+    // header gets its own suffix, not just the first one.
+    const filterSuffix = FilterWidget(showRoleFilter: true);
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 16),
       children: [
-        // Filter entry point for the whole subtab; the role toggle lives
-        // inside this sheet.
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Row(
-            children: const [Spacer(), FilterWidget(showRoleFilter: true)],
-          ),
-        ),
         if (showCoaches)
           _Section(
             title: 'homeTab.professional.filter.coach'.tr(),
             items: coaches,
+            filterSuffix: filterSuffix,
           ),
         if (showCoaches && showReferees) const SizedBox(height: 24),
         if (showReferees)
           _Section(
             title: 'homeTab.professional.filter.referee'.tr(),
             items: referees,
+            filterSuffix: filterSuffix,
           ),
       ],
     );
@@ -130,11 +139,16 @@ class _Sections extends StatelessWidget {
 }
 
 // A single role section: header (tappable + "see all") + carousel + dots.
+// This header is this screen's equivalent of the teammate/challenger/
+// location subtabs' single PSectionHeader — there are two of them (one per
+// role) instead of one, so [filterSuffix] (the subtab-wide filter) is on
+// every visible one, same as PSectionHeader's own title+suffix shape.
 class _Section extends StatefulWidget {
   final String title;
   final List<ProfessionalFeedItem> items;
+  final Widget? filterSuffix;
 
-  const _Section({required this.title, required this.items});
+  const _Section({required this.title, required this.items, this.filterSuffix});
 
   @override
   State<_Section> createState() => _SectionState();
@@ -198,39 +212,44 @@ class _SectionState extends State<_Section> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
+          // Same shape as PSectionHeader: Expanded(title) + suffix. Title
+          // and chevron are one tappable unit; only the title itself is
+          // Flexible/ellipsized so the chevron (and the filter suffix,
+          // when present) never get squeezed off — that race between the
+          // title and a trailing element is what overflowed on iPhone 13
+          // when this used an unguarded "Xem tất cả" label instead.
           child: Row(
             children: [
-              FTappable(
-                onPress: widget.items.isEmpty ? null : _openSheet,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text(widget.title, style: titleStyle),
-                ),
-              ),
-              const Spacer(),
-              if (widget.items.isNotEmpty)
-                FButton(
-                  variant: .ghost,
-                  onPress: _openSheet,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'homeTab.professional.seeAll'.tr(),
-                        style: context.theme.typography.body.sm.copyWith(
-                          color: colors.mutedForeground,
-                          fontWeight: FontWeight.w600,
+              Expanded(
+                child: FTappable(
+                  onPress: widget.items.isEmpty ? null : _openSheet,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.title,
+                            style: titleStyle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 2),
-                      Icon(
-                        FLucideIcons.chevronRight,
-                        size: 16,
-                        color: colors.mutedForeground,
-                      ),
-                    ],
+                        if (widget.items.isNotEmpty) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            FLucideIcons.chevronRight,
+                            size: 20,
+                            color: colors.mutedForeground,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
+              ),
+              ?widget.filterSuffix,
             ],
           ),
         ),
@@ -389,39 +408,53 @@ class _ProfessionalCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
-              // Rating + price on one line.
+              // Rating + price on one line. A high review count or a long
+              // price both push this wide enough to overflow a narrow phone
+              // (this exact row overflowed on iPhone 13) — a single
+              // Text.rich in a Flexible truncates instead of ever
+              // rendering past the card's edge.
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(FLucideIcons.star, size: 13, color: pbStar),
                   const SizedBox(width: 3),
-                  Text(
-                    item.averageRating.toStringAsFixed(1),
-                    style: context.theme.typography.body.sm.copyWith(
-                      fontWeight: FontWeight.w700,
+                  Flexible(
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: item.averageRating.toStringAsFixed(1),
+                            style: context.theme.typography.body.sm.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' (${item.reviewCount})',
+                            style: context.theme.typography.body.xs.copyWith(
+                              color: colors.mutedForeground,
+                            ),
+                          ),
+                          if (item.priceFrom != null) ...[
+                            TextSpan(
+                              text: '  ·  ',
+                              style: context.theme.typography.body.xs.copyWith(
+                                color: colors.mutedForeground,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'từ ${formatVnd(item.priceFrom!)}₫/giờ',
+                              style: context.theme.typography.body.sm.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: colors.primary,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Text(
-                    ' (${item.reviewCount})',
-                    style: context.theme.typography.body.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
-                  if (item.priceFrom != null) ...[
-                    Text(
-                      '  ·  ',
-                      style: context.theme.typography.body.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                    Text(
-                      'từ ${formatVnd(item.priceFrom!)}₫/giờ',
-                      style: context.theme.typography.body.sm.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: colors.primary,
-                      ),
-                    ),
-                  ],
                 ],
               ),
               const SizedBox(height: 8),

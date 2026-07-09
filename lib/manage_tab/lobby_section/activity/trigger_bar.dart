@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../../professional/pending_activity_booking_state.dart';
 import '../../../../ui/sheet.dart';
 import '../../../../ui/theme.dart';
 import '../../../router.dart';
@@ -451,8 +452,16 @@ class _ActionRow extends ConsumerWidget {
         }
       case 'bookCoach':
         // Deep-links to the general Neutrals/professional discovery tab —
-        // there's no lobby-scoped "book a coach for this session" flow
-        // yet, so this is a stopgap until that's built.
+        // there's still no dedicated lobby-scoped browse screen. The
+        // activity id is stashed as a one-shot hand-off consumed by the
+        // next booking sheet submission (see
+        // PendingActivityBookingState), which links the resulting
+        // booking back via `activity.professional_booking_id`.
+        if (upcoming != null) {
+          ref
+              .read(pendingActivityBookingStateProvider.notifier)
+              .set(upcoming!.activity.id);
+        }
         const HomeProfessionalRoute().go(context);
       default:
         _postPersonal(context, ref);

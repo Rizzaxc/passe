@@ -81,27 +81,32 @@ class _AchievementsSubtabState extends ConsumerState<AchievementsSubtab> {
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 PEmptySectionPlaceholder(
-                    subtitle: 'health.achievements.empty'.tr()),
+                  hero: Icon(
+                    FLucideIcons.trophy,
+                    size: 64,
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                  title: 'health.achievements.emptyTitle'.tr(),
+                  subtitle: 'health.achievements.empty'.tr(),
+                ),
               ],
             );
           }
 
-          final inProgress = list
-              .where((b) => b.state == AchievementState.inProgress)
-              .toList()
-            ..sort(_compare);
-          final earnedPeriod = list
-              .where((b) => b.state == AchievementState.earnedPeriod)
-              .toList()
-            ..sort(_compare);
-          final done = list
-              .where((b) => b.state == AchievementState.done)
-              .toList()
-            ..sort(_compare);
-          final notStarted = list
-              .where((b) => b.state == AchievementState.notStarted)
-              .toList()
-            ..sort(_compare);
+          final inProgress =
+              list.where((b) => b.state == AchievementState.inProgress).toList()
+                ..sort(_compare);
+          final earnedPeriod =
+              list
+                  .where((b) => b.state == AchievementState.earnedPeriod)
+                  .toList()
+                ..sort(_compare);
+          final done =
+              list.where((b) => b.state == AchievementState.done).toList()
+                ..sort(_compare);
+          final notStarted =
+              list.where((b) => b.state == AchievementState.notStarted).toList()
+                ..sort(_compare);
 
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -113,29 +118,25 @@ class _AchievementsSubtabState extends ConsumerState<AchievementsSubtab> {
                 'health.achievements.inProgress'.tr(),
                 inProgress,
                 limit: _inProgressLimit,
-                onMore: () =>
-                    setState(() => _inProgressLimit += _pageSize),
+                onMore: () => setState(() => _inProgressLimit += _pageSize),
               ),
               ..._paginatedSection(
                 'health.achievements.earned'.tr(),
                 earnedPeriod,
                 limit: _earnedPeriodLimit,
-                onMore: () =>
-                    setState(() => _earnedPeriodLimit += _pageSize),
+                onMore: () => setState(() => _earnedPeriodLimit += _pageSize),
               ),
               ..._paginatedSection(
                 'health.achievements.completed'.tr(),
                 done,
                 limit: _doneLimit,
-                onMore: () =>
-                    setState(() => _doneLimit += _pageSize),
+                onMore: () => setState(() => _doneLimit += _pageSize),
               ),
               ..._paginatedSection(
                 'health.achievements.locked'.tr(),
                 notStarted,
                 limit: _notStartedLimit,
-                onMore: () =>
-                    setState(() => _notStartedLimit += _pageSize),
+                onMore: () => setState(() => _notStartedLimit += _pageSize),
               ),
             ],
           );
@@ -170,10 +171,14 @@ class _AchievementsSubtabState extends ConsumerState<AchievementsSubtab> {
     if (items.isEmpty && trailing == null) return const [];
     return [
       PSectionHeader(
-          title: title,
-          suffix: _CountChip(count: totalCount ?? items.length)),
+        title: title,
+        suffix: _CountChip(count: totalCount ?? items.length),
+      ),
       const SizedBox(height: 10),
-      for (final b in items) ...[BadgeCard(badge: b), const SizedBox(height: 10)],
+      for (final b in items) ...[
+        BadgeCard(badge: b),
+        const SizedBox(height: 10),
+      ],
       if (trailing != null) ...[trailing, const SizedBox(height: 10)],
       const SizedBox(height: 8),
     ];
@@ -224,8 +229,10 @@ class _CountChip extends StatelessWidget {
       ),
       child: Text(
         '$count',
-        style: context.theme.typography.body.xs
-            .copyWith(color: colors.mutedForeground, fontWeight: FontWeight.w700),
+        style: context.theme.typography.body.xs.copyWith(
+          color: colors.mutedForeground,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -281,10 +288,12 @@ class _LevelHeader extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'health.achievements.level'
-                          .tr(namedArgs: {'level': '${s?.level ?? 1}'}),
+                      'health.achievements.level'.tr(
+                        namedArgs: {'level': '${s?.level ?? 1}'},
+                      ),
                       style: TextStyle(
-                        fontFamily: context.theme.typography.body.xl2.fontFamily,
+                        fontFamily:
+                            context.theme.typography.body.xl2.fontFamily,
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
                         color: colors.foreground,
@@ -295,8 +304,9 @@ class _LevelHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                'health.achievements.xpTotal'
-                    .tr(namedArgs: {'xp': '${s?.xpTotal ?? 0}'}),
+                'health.achievements.xpTotal'.tr(
+                  namedArgs: {'xp': '${s?.xpTotal ?? 0}'},
+                ),
                 style: context.theme.typography.body.sm.copyWith(
                   color: colors.mutedForeground,
                   fontWeight: FontWeight.w600,
@@ -316,12 +326,15 @@ class _LevelHeader extends StatelessWidget {
           Text(
             (s?.isMaxed ?? false)
                 ? 'health.achievements.maxed'.tr()
-                : 'health.achievements.toNext'.tr(namedArgs: {
-                    'current': '${s?.xpIntoLevel ?? 0}',
-                    'total': '${s?.xpForLevel ?? 0}',
-                  }),
-            style: context.theme.typography.body.xs
-                .copyWith(color: colors.mutedForeground),
+                : 'health.achievements.toNext'.tr(
+                    namedArgs: {
+                      'current': '${s?.xpIntoLevel ?? 0}',
+                      'total': '${s?.xpForLevel ?? 0}',
+                    },
+                  ),
+            style: context.theme.typography.body.xs.copyWith(
+              color: colors.mutedForeground,
+            ),
           ),
         ],
       ),

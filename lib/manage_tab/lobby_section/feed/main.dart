@@ -8,6 +8,7 @@ import '../../../auth/auth_controller.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
 import '../invite_member_sheet.dart';
+import '../lobby_avatar.dart';
 import '../schedule_activity_sheet.dart';
 import 'lobby_controller.dart';
 import 'lobby_form_sheet.dart';
@@ -92,13 +93,15 @@ class _LobbyCard extends ConsumerWidget {
         currentUserId != null &&
         lobby.captainId != null &&
         lobby.captainId == currentUserId;
-    final initial =
-        lobby.name.isNotEmpty ? lobby.name[0].toUpperCase() : '?';
+    // Scheduling is coordinator-eligible too (not kicking, not editing
+    // lobby info) — the crown badge and sliver accent stay captain-only.
+    final canManage = isLeader || item.isCoordinator;
     final sliverColor = isLeader ? colors.primary : colors.muted;
 
     return FTappable(
       onPress: lobby.id != null
-          ? () => LobbyDetailRoute(id: lobby.id!, $extra: lobby.name).go(context)
+          ? () =>
+                LobbyDetailRoute(id: lobby.id!, $extra: lobby.name).go(context)
           : null,
       child: Container(
         decoration: BoxDecoration(
@@ -122,119 +125,130 @@ class _LobbyCard extends ConsumerWidget {
                     spacing: 12,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: colors.secondary,
-                          borderRadius: context.theme.style.borderRadius.md,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          initial,
-                          style: TextStyle(
-                            fontFamily: context.theme.typography.body.xl2.fontFamily,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: colors.primary,
-                            height: 1,
-                          ),
-                        ),
+                      LobbyAvatar(
+                        lobbyId: lobby.id,
+                        name: lobby.name,
+                        hasAvatar: lobby.details?.hasAvatar ?? false,
+                        size: 48,
+                        borderRadius: context.theme.style.borderRadius.md,
+                        backgroundColor: colors.secondary,
+                        foregroundColor: colors.primary,
                       ),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           spacing: 4,
                           children: [
-                            // Name + crown | member count (top-right)
+                            // Name + crown (full width, wraps up to 2 lines)
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              spacing: 4,
                               children: [
                                 Expanded(
-                                  child: Row(
-                                    spacing: 4,
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          lobby.name,
-                                          style: context.theme.typography.body.sm
-                                              .copyWith(
-                                                fontWeight: FontWeight.w600,
-                                                color: colors.primary,
-                                                fontSize: 15,
-                                              ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                  child: Text(
+                                    lobby.name,
+                                    style: context.theme.typography.body.sm
+                                        .copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: colors.primary,
+                                          fontSize: 15,
                                         ),
-                                      ),
-                                      if (isLeader)
-                                        Icon(
-                                          FLucideIcons.crown,
-                                          size: 13,
-                                          color: colors.mutedForeground,
-                                        ),
-                                    ],
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      '${item.memberCount}',
-                                      style: context.theme.typography.body.lg
-                                          .copyWith(
-                                            fontWeight: FontWeight.w700,
-                                            color: colors.primary,
-                                            height: 1,
-                                          ),
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      'thành viên',
-                                      style: TextStyle(
-                                        fontFamily: context
-                                            .theme.typography.body.xs.fontFamily,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w500,
-                                        color: colors.mutedForeground,
-                                        letterSpacing: 0.4,
-                                        height: 1,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            // Homeground
-                            if (item.homeGroundName != null)
-                              Row(
-                                spacing: 4,
-                                children: [
+                                if (isLeader)
                                   Icon(
-                                    FLucideIcons.mapPin,
-                                    size: 12,
+                                    FLucideIcons.crown,
+                                    size: 13,
                                     color: colors.mutedForeground,
                                   ),
-                                  Flexible(
+                              ],
+                            ),
+                            // Meta: mmr
+                            Row(
+                              spacing: 10,
+                              children: [
+                                if (item.isMmrCalibrated)
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    spacing: 4,
+                                    children: [
+                                      Icon(
+                                        FLucideIcons.swords,
+                                        size: 14,
+                                        color: colors.primary,
+                                      ),
+                                      Text(
+                                        '${item.mmr}',
+                                        style: context.theme.typography.body.lg
+                                            .copyWith(
+                                              fontWeight: FontWeight.w700,
+                                              color: colors.primary,
+                                              height: 1,
+                                            ),
+                                      ),
+                                    ],
+                                  )
+                                else
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: colors.muted,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
                                     child: Text(
-                                      item.homeGroundName!,
-                                      style: context.theme.typography.body.xs
-                                          .copyWith(
-                                            color: colors.mutedForeground,
-                                          ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                      '? MMR',
+                                      style: TextStyle(
+                                        fontFamily: context
+                                            .theme
+                                            .typography
+                                            .body
+                                            .xs
+                                            .fontFamily,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: colors.mutedForeground,
+                                        letterSpacing: 0.4,
+                                      ),
                                     ),
                                   ),
-                                ],
-                              ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
                     ],
                   ),
+
+                  // Homeground — level with the avatar, spanning the full
+                  // card width rather than indented under the name column.
+                  if (item.homeGroundName != null)
+                    Row(
+                      spacing: 4,
+                      children: [
+                        Icon(
+                          FLucideIcons.mapPin,
+                          size: 12,
+                          color: colors.mutedForeground,
+                        ),
+                        Flexible(
+                          child: Text(
+                            item.homeGroundName!,
+                            style: context.theme.typography.body.xs.copyWith(
+                              color: colors.mutedForeground,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
 
                   FDivider(),
 
@@ -251,9 +265,9 @@ class _LobbyCard extends ConsumerWidget {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            DateFormat('EEE, d MMM · HH:mm').format(
-                              item.nextActivity!,
-                            ),
+                            DateFormat(
+                              'EEE, d MMM · HH:mm',
+                            ).format(item.nextActivity!),
                             style: TextStyle(
                               fontFamily:
                                   context.theme.typography.body.xs.fontFamily,
@@ -280,7 +294,7 @@ class _LobbyCard extends ConsumerWidget {
                           ),
                         ),
                       // Action buttons
-                      if (isLeader && lobby.id != null)
+                      if (canManage && lobby.id != null)
                         FButton.icon(
                           size: .xs,
                           variant: .ghost,
@@ -320,7 +334,11 @@ class _LobbyCard extends ConsumerWidget {
                           variant: .ghost,
                           onPress: () =>
                               showInviteMemberSheet(context, lobby.id!),
-                          child: Icon(FLucideIcons.userPlus, size: 16, color: pbBlue),
+                          child: Icon(
+                            FLucideIcons.userPlus,
+                            size: 16,
+                            color: pbBlue,
+                          ),
                         ),
                     ],
                   ),

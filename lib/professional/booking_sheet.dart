@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/format.dart';
+import '../core/model/enum.dart';
 import '../core/model/professional_feed_item.dart';
 import '../ui/sheet.dart';
 import 'booking_controller.dart';
+import 'booking_location_field.dart';
+import 'pending_activity_booking_state.dart';
 
 /// "Đặt lịch" flow: pick one of the professional's active services, a date
 /// + start time, an optional note, then insert a `professional_booking` row
@@ -39,6 +43,11 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
   late DateTime _date;
   TimeOfDay _start = const TimeOfDay(hour: 18, minute: 0);
   final _notesController = TextEditingController();
+  final _participantInputController = TextEditingController();
+
+  String? _locationId;
+  final List<_Participant> _participants = [];
+  bool get _isCoach => widget.item.role == ProfessionalRole.coach;
 
   @override
   void initState() {
@@ -50,7 +59,49 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
   @override
   void dispose() {
     _notesController.dispose();
+    _participantInputController.dispose();
     super.dispose();
+  }
+
+  Future<void> _addParticipant(int maxParticipants) async {
+    final input = _participantInputController.text.trim();
+    if (input.isEmpty || !input.contains('#')) return;
+    final parts = input.split('#');
+    if (parts.length != 2) return;
+    final username = parts[0];
+    final tagNumber = int.tryParse(parts[1]);
+    if (tagNumber == null) return;
+
+    final response = await Supabase.instance.client
+        .from('user')
+        .select('id, username, tag_number')
+        .eq('username', username)
+        .eq('tag_number', tagNumber)
+        .maybeSingle()
+        .timeout(const Duration(seconds: 5));
+
+    if (response == null) {
+      if (mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: const Text('Không tìm thấy người dùng này'),
+          alignment: .bottomCenter,
+        );
+      }
+      return;
+    }
+
+    final id = response['id'] as String;
+    if (_participants.any((p) => p.id == id) ||
+        _participants.length >= maxParticipants - 1) {
+      return;
+    }
+    setState(() {
+      _participants.add(_Participant(id: id, label: input));
+      _participantInputController.clear();
+    });
   }
 
   Future<void> _pickDate() async {
@@ -79,12 +130,42 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
       DateTime(_date.year, _date.month, _date.day, _start.hour, _start.minute);
 
   Future<void> _submit(ProfessionalServiceOption service) async {
+    if (_isCoach && (_locationId == null || _locationId!.isEmpty)) {
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: const Text('Vui lòng chọn hoặc đề xuất một địa điểm'),
+        alignment: .bottomCenter,
+      );
+      return;
+    }
+
     final durationMinutes = service.minDurationMinutes ?? 60;
     final start = _startInstant;
     final end = start.add(Duration(minutes: durationMinutes));
-    final agreedRate = service.hourlyRate != null
-        ? service.hourlyRate! * durationMinutes / 60
-        : null;
+    final participantCount = _participants.length + 1; // + the booking client
+    double? agreedRate;
+    double? packageTotalPrice;
+    if (service.hourlyRate != null) {
+      if (service.pricingMode == 'wholesale') {
+        packageTotalPrice = service.hourlyRate;
+        agreedRate = service.hourlyRate;
+      } else {
+        final perSession = service.hourlyRate! *
+            durationMinutes /
+            60 *
+            (service.isGroup ? participantCount : 1);
+        agreedRate = perSession;
+        packageTotalPrice = service.isPackage
+            ? perSession * service.sessionCount
+            : null;
+      }
+    }
+
+    final activityId = ref
+        .read(pendingActivityBookingStateProvider.notifier)
+        .consume();
 
     try {
       await ref
@@ -95,6 +176,12 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
             end: end,
             agreedRate: agreedRate,
             notes: _notesController.text.trim(),
+            locationId: _isCoach ? _locationId : null,
+            participantUserIds:
+                _participants.isEmpty ? null : _participants.map((p) => p.id).toList(),
+            newPackageSessionCount: service.isPackage ? service.sessionCount : null,
+            newPackageTotalPrice: packageTotalPrice,
+            activityId: activityId,
           );
     } catch (e, st) {
       Talker().handle(e, st, 'Professional booking failed');
@@ -202,6 +289,104 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
                       ),
                     ],
                   ),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final duration = selected.minDurationMinutes ?? 60;
+                      final conflictAsync = ref.watch(
+                        hasBookingConflictProvider(
+                          widget.item.id,
+                          _startInstant,
+                          _startInstant.add(Duration(minutes: duration)),
+                        ),
+                      );
+                      final hasConflict = conflictAsync.value ?? false;
+                      if (!hasConflict) return const SizedBox.shrink();
+                      return Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFBE7D3),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          spacing: 8,
+                          children: [
+                            const Icon(
+                              FLucideIcons.triangleAlert,
+                              size: 16,
+                              color: Color(0xFF8E5D1F),
+                            ),
+                            Expanded(
+                              child: Text(
+                                'Khung giờ này có thể đã trùng với lịch đã xác nhận khác của ${widget.item.displayName}.',
+                                style: context.theme.typography.body.xs.copyWith(
+                                  color: const Color(0xFF8E5D1F),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  if (_isCoach)
+                    BookingLocationField(
+                      professionalId: widget.item.id,
+                      value: _locationId,
+                      onChanged: (id) => setState(() => _locationId = id),
+                    ),
+                  if (selected.isGroup)
+                    _Section(
+                      label: 'Người tham gia (tối đa ${selected.maxParticipants} người)',
+                      children: [
+                        Row(
+                          spacing: 8,
+                          children: [
+                            Expanded(
+                              child: FTextField(
+                                hint: 'username#1234',
+                                control: FTextFieldControl.managed(
+                                  controller: _participantInputController,
+                                ),
+                              ),
+                            ),
+                            FButton(
+                              variant: .outline,
+                              onPress: () => _addParticipant(
+                                selected.maxParticipants ?? 1,
+                              ),
+                              child: const Text('Thêm'),
+                            ),
+                          ],
+                        ),
+                        if (_participants.isNotEmpty)
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              for (final p in _participants)
+                                FBadge(
+                                  variant: .outline,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(p.label),
+                                      const SizedBox(width: 4),
+                                      GestureDetector(
+                                        onTap: () => setState(
+                                          () => _participants.remove(p),
+                                        ),
+                                        child: const Icon(
+                                          FLucideIcons.x,
+                                          size: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                      ],
+                    ),
                   FTextField(
                     label: const Text('Ghi chú (tuỳ chọn)'),
                     hint: 'VD: sân tập, mục tiêu buổi học...',
@@ -221,11 +406,7 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
                               color: Colors.white,
                             ),
                           )
-                        : Text(
-                            selected.hourlyRate != null
-                                ? 'Gửi Yêu Cầu · ${formatVnd(selected.hourlyRate! * (selected.minDurationMinutes ?? 60) / 60)}₫'
-                                : 'Gửi Yêu Cầu',
-                          ),
+                        : Text('Gửi Yêu Cầu${_priceSuffix(selected)}'),
                   ),
                   Text(
                     '${widget.item.displayName} sẽ xác nhận yêu cầu này. Bạn có thể huỷ ở '
@@ -250,6 +431,26 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
 
   String _fmtTime(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  String _priceSuffix(ProfessionalServiceOption service) {
+    if (service.hourlyRate == null) return '';
+    if (service.pricingMode == 'wholesale') {
+      return ' · ${formatVnd(service.hourlyRate!)}₫ trọn gói';
+    }
+    final duration = service.minDurationMinutes ?? 60;
+    final perSession = service.hourlyRate! * duration / 60;
+    if (service.isPackage) {
+      return ' · ${formatVnd(perSession)}₫/buổi × ${service.sessionCount} buổi';
+    }
+    return ' · ${formatVnd(perSession)}₫';
+  }
+}
+
+class _Participant {
+  final String id;
+  final String label;
+
+  const _Participant({required this.id, required this.label});
 }
 
 // ── Reusable rows (kept file-local — mirrors schedule_activity_sheet.dart's
@@ -385,6 +586,8 @@ class _ServiceOption extends StatelessWidget {
                     style: context.theme.typography.body.sm.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (service.description != null &&
                       service.description!.isNotEmpty)
@@ -400,11 +603,19 @@ class _ServiceOption extends StatelessWidget {
               ),
             ),
             if (service.hourlyRate != null)
-              Text(
-                '${formatVnd(service.hourlyRate!)}₫/giờ',
-                style: context.theme.typography.body.xs.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.primary,
+              Flexible(
+                child: Text(
+                  service.pricingMode == 'wholesale'
+                      ? '${formatVnd(service.hourlyRate!)}₫ trọn gói'
+                      : service.isPackage
+                      ? '${formatVnd(service.hourlyRate!)}₫/giờ · ${service.sessionCount} buổi'
+                      : '${formatVnd(service.hourlyRate!)}₫/giờ',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.theme.typography.body.xs.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colors.primary,
+                  ),
                 ),
               ),
           ],

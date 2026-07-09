@@ -76,7 +76,16 @@ primary glossary until a `CONTEXT.md` exists (see `docs/agents/domain.md`).
 - **Timeslot** — a `(dayOfWeek, dayChunk)` pair; *playtime* is a user's/lobby's list of timeslots
   used for schedule matching. `dayChunk` ∈ early/midday/noon/night.
 - **City cluster** / **district** — geographic scoping. A *city cluster* (`supported_city_cluster`,
-  mapped by `City.dbIndex`) groups *districts* (hard-coded in `core/model/enum.dart`).
+  mapped by `City.dbIndex`) groups *districts* (hard-coded in `core/model/enum.dart`). "District"
+  (`District`, `WardType`) means a post-2025-reform **ward/commune** (phường/xã) — Vietnam abolished
+  the old quận/huyện tier nationwide on 2025-07-01. The class kept its old name for continuity with
+  the `location.district` DB column and the `district.*` translation namespace; each entry also
+  carries `legacyDistrict` (the pre-reform quận/huyện name) purely as a display/grouping label, not a
+  functional key. Data is scoped to the *old* HCMC/Hanoi footprints (102 + 126 units) — HCMC's 2025
+  merger with Bình Dương and Bà Rịa–Vũng Tàu is **not** modeled; expanding city coverage to the new
+  provincial boundary is a separate product decision. Saved district preferences from before this
+  conversion (old ids like `hcm_q1`) silently fail to resolve — every call site already treats a miss
+  as "unknown" rather than crashing.
 - **Compat score** — matchmaking output on a lobby feed row: `timeslot_compat_score` (schedule
   overlap) and `profile_compat_score` (networks/industries/skill proximity, 0–5).
 - **ELO / elo seed** — skill rating. `elo_seed` (beginner/casual/tryhard) is the self-declared
@@ -165,6 +174,17 @@ JSON — parse with `double.tryParse`. Complex reads go through Postgres functio
 - Interactive auth flows (native Google/Apple sign-in) are the one exception to the 5s-timeout rule below — they're
   gated on the user, not a background RPC, so they must NOT be wrapped in `.timeout`.
 - Every feed-like screen implements scroll to refresh. Scroll to refresh is recommended in general. Prefer to ask not to include instead of ignoring it
+- **Guard every `Row` that mixes an icon/label with dynamic-length text** (a user's name, a formatted price, a review
+  count, anything not a short fixed string you control) **against horizontal overflow.** A `Row` with unguarded
+  `Text` children only "works" until content is long enough or the device is narrow enough (this exact bug shipped
+  on iPhone 13 in the professional discovery card's rating/price row). Concretely: wrap the dynamic text in
+  `Flexible` or `Expanded` and set `maxLines: 1, overflow: TextOverflow.ellipsis` (or combine multiple dynamic spans
+  into one `Text.rich` inside a single `Flexible` so the whole group ellipsizes together, not each piece
+  independently). `Spacer()` between two unguarded children does **not** prevent overflow — it only absorbs slack,
+  it doesn't shrink its siblings. When several elements in a row can't all be protected, let the least important one
+  (e.g. a restated price) be the one that shrinks/ellipsizes first, not the primary action. Mentally (or actually)
+  check new layouts against a narrow reference width (iPhone SE / 13 mini, ~375px) in addition to whatever device
+  you're testing on, since a layout that fits on a larger phone can still overflow on a smaller one.
 - App-level model is created with freezed. persisted in json form. app state persistence key is _stateKey (mostly for
   riverpod providers)
 - If an entity has db id and its app model is enum, use the db value as the enum value

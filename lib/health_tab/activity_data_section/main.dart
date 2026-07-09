@@ -31,11 +31,15 @@ class ActivityDataSubtab extends ConsumerWidget {
       child: (sport == null || sport == Sport.others)
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              children: [PEmptySectionPlaceholder(subtitle: 'health.activityData.selectSport'.tr())],
+              children: [
+                PEmptySectionPlaceholder(
+                  subtitle: 'health.activityData.selectSport'.tr(),
+                ),
+              ],
             )
           : ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 12),
               children: [
                 // Detected workouts (reconciliation inbox).
                 ...detected.maybeWhen(
@@ -65,7 +69,7 @@ class ActivityDataSubtab extends ConsumerWidget {
                   ),
                   data: (rows) {
                     if (rows.isEmpty) {
-                      return PEmptySectionPlaceholder(subtitle: 'health.activityData.empty'.tr());
+                      return const _SampleRecapCard();
                     }
                     return Column(
                       children: [
@@ -91,16 +95,18 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
+      style: context.theme.typography.body.sm.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
     );
   }
 }
 
 String _sourceLabel(String source) => switch (source) {
-      'lobby' => 'health.source.lobby',
-      'professional' => 'health.source.professional',
-      _ => 'health.source.self',
-    };
+  'lobby' => 'health.source.lobby',
+  'professional' => 'health.source.professional',
+  _ => 'health.source.self',
+};
 
 String _dateLabel(BuildContext context, DateTime dt) =>
     DateFormat.MMMEd(context.locale.toString()).format(dt);
@@ -161,11 +167,15 @@ class _DetectedCardState extends ConsumerState<_DetectedCard> {
                   children: [
                     Text(
                       '${_dateLabel(context, w.startTime)} · ${_sourceLabel(w.source).tr()}',
-                      style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
+                      style: context.theme.typography.body.sm.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     Text(
                       evidenceKey.tr(),
-                      style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
+                      style: context.theme.typography.body.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
                     ),
                   ],
                 ),
@@ -173,7 +183,12 @@ class _DetectedCardState extends ConsumerState<_DetectedCard> {
             ],
           ),
           if (_busy)
-            const Center(child: Padding(padding: EdgeInsets.all(4), child: CircularProgressIndicator()))
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(4),
+                child: CircularProgressIndicator(),
+              ),
+            )
           else
             Row(
               spacing: 8,
@@ -181,19 +196,26 @@ class _DetectedCardState extends ConsumerState<_DetectedCard> {
                 Expanded(
                   child: FButton(
                     variant: .outline,
-                    onPress: () => _run(() =>
-                        ref.read(healthSyncControllerProvider.notifier).dismiss(w.activityId)),
+                    onPress: () => _run(
+                      () => ref
+                          .read(healthSyncControllerProvider.notifier)
+                          .dismiss(w.activityId),
+                    ),
                     child: Text('health.detected.dismiss'.tr()),
                   ),
                 ),
                 Expanded(
                   child: FButton(
                     onPress: () => _run(() async {
-                      final ok =
-                          await ref.read(healthSyncControllerProvider.notifier).attach(w);
+                      final ok = await ref
+                          .read(healthSyncControllerProvider.notifier)
+                          .attach(w);
                       if (!context.mounted) return;
                       if (ok) {
-                        showFToast(context: context, title: Text('health.detected.attached'.tr()));
+                        showFToast(
+                          context: context,
+                          title: Text('health.detected.attached'.tr()),
+                        );
                       }
                     }),
                     child: Text('health.detected.attach'.tr()),
@@ -202,6 +224,141 @@ class _DetectedCardState extends ConsumerState<_DetectedCard> {
               ],
             ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Sample recap (shown in place of the empty state) ──────────────────────────
+
+/// A dimmed, non-interactive stand-in for `_RecapCard` so a first-time user
+/// sees the real recap layout instead of a blank message.
+class _SampleRecapCard extends StatelessWidget {
+  const _SampleRecapCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Opacity(
+          opacity: 0.45,
+          child: IgnorePointer(
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: colors.card,
+                border: Border.all(color: colors.border),
+                borderRadius: context.theme.style.borderRadius.md,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 10,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 2,
+                          children: [
+                            Row(
+                              spacing: 6,
+                              children: [
+                                Text(
+                                  'health.activityData.sample.session'.tr(),
+                                  style: context.theme.typography.body.sm
+                                      .copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                _PreviewChip(colors: colors),
+                              ],
+                            ),
+                            Text(
+                              'health.source.self'.tr(),
+                              style: context.theme.typography.body.xs.copyWith(
+                                color: colors.mutedForeground,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        FLucideIcons.chevronRight,
+                        size: 18,
+                        color: colors.mutedForeground,
+                      ),
+                    ],
+                  ),
+                  Row(
+                    spacing: 16,
+                    children: [
+                      _MiniStat(
+                        value: '45m',
+                        label: 'health.recap.duration'.tr(),
+                      ),
+                      _MiniStat(value: '132', label: 'health.recap.avgHr'.tr()),
+                      _MiniStat(
+                        value: '410',
+                        label: 'health.recap.calories'.tr(),
+                      ),
+                    ],
+                  ),
+                  const ZoneBar(
+                    easy: 600,
+                    moderate: 1200,
+                    hard: 900,
+                    compact: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          spacing: 6,
+          children: [
+            Icon(
+              FLucideIcons.sparkles,
+              size: 14,
+              color: colors.mutedForeground,
+            ),
+            Expanded(
+              child: Text(
+                'health.activityData.sample.caption'.tr(),
+                style: context.theme.typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _PreviewChip extends StatelessWidget {
+  final FColors colors;
+  const _PreviewChip({required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: colors.secondary,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        'health.activityData.sample.label'.tr().toUpperCase(),
+        style: context.theme.typography.body.xs.copyWith(
+          color: colors.mutedForeground,
+          fontWeight: FontWeight.w700,
+          fontSize: 9,
+          letterSpacing: 0.3,
+        ),
       ),
     );
   }
@@ -245,27 +402,44 @@ class _RecapCard extends StatelessWidget {
                     children: [
                       Text(
                         _dateLabel(context, row.startTime),
-                        style: context.theme.typography.body.sm.copyWith(fontWeight: FontWeight.w700),
+                        style: context.theme.typography.body.sm.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       Text(
                         subtitle,
-                        style: context.theme.typography.body.xs.copyWith(color: colors.mutedForeground),
+                        style: context.theme.typography.body.xs.copyWith(
+                          color: colors.mutedForeground,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                Icon(FLucideIcons.chevronRight, size: 18, color: colors.mutedForeground),
+                Icon(
+                  FLucideIcons.chevronRight,
+                  size: 18,
+                  color: colors.mutedForeground,
+                ),
               ],
             ),
             Row(
               spacing: 16,
               children: [
                 if (row.durationMinutes != null)
-                  _MiniStat(value: _duration(row.durationMinutes!), label: 'health.recap.duration'.tr()),
+                  _MiniStat(
+                    value: _duration(row.durationMinutes!),
+                    label: 'health.recap.duration'.tr(),
+                  ),
                 if (row.avgHeartRate != null)
-                  _MiniStat(value: '${row.avgHeartRate}', label: 'health.recap.avgHr'.tr()),
+                  _MiniStat(
+                    value: '${row.avgHeartRate}',
+                    label: 'health.recap.avgHr'.tr(),
+                  ),
                 if (row.activeCalories != null)
-                  _MiniStat(value: '${row.activeCalories!.round()}', label: 'health.recap.calories'.tr()),
+                  _MiniStat(
+                    value: '${row.activeCalories!.round()}',
+                    label: 'health.recap.calories'.tr(),
+                  ),
               ],
             ),
             if ((row.hrZoneEasySeconds ?? 0) +
@@ -302,7 +476,10 @@ class _MiniStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: context.theme.typography.body.md.copyWith(fontWeight: FontWeight.w700, height: 1),
+          style: context.theme.typography.body.md.copyWith(
+            fontWeight: FontWeight.w700,
+            height: 1,
+          ),
         ),
         Text(
           label.toUpperCase(),

@@ -33,13 +33,13 @@ final class TeammateFeedProvider
   TeammateFeed create() => TeammateFeed();
 }
 
-String _$teammateFeedHash() => r'd8c78ea049c63cba7f027567f5644a6b16ff1f35';
+String _$teammateFeedHash() => r'456d6aa5553a18218c119180f1995f6b8b035824';
 
 abstract class _$TeammateFeed extends $AsyncNotifier<List<LobbyFeedItem>> {
   FutureOr<List<LobbyFeedItem>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<List<LobbyFeedItem>>, List<LobbyFeedItem>>;
     final element =
@@ -50,7 +50,7 @@ abstract class _$TeammateFeed extends $AsyncNotifier<List<LobbyFeedItem>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -110,7 +110,7 @@ abstract class _$JoinRequestState extends $Notifier<Map<String, bool>> {
   Map<String, bool> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<Map<String, bool>, Map<String, bool>>;
     final element =
         ref.element
@@ -120,6 +120,6 @@ abstract class _$JoinRequestState extends $Notifier<Map<String, bool>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

@@ -15,16 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ActivityHealthMetrics {
 
- String? get id;@JsonKey(name: 'user_id') String get userId;@JsonKey(name: 'activity_id') String get activityId;// Activity metrics
- int? get steps;@JsonKey(name: 'distance_meters') double? get distanceMeters;@JsonKey(name: 'active_calories') double? get activeCalories;// Heart rate aggregates
-@JsonKey(name: 'avg_heart_rate') int? get avgHeartRate;@JsonKey(name: 'max_heart_rate') int? get maxHeartRate;@JsonKey(name: 'min_heart_rate') int? get minHeartRate;// HRV metrics
-@JsonKey(name: 'hrv_sdnn_ms') double? get hrvSdnnMs;@JsonKey(name: 'hrv_rmssd_ms') double? get hrvRmssdMs;// HR Zone distribution (seconds) — 3-zone LT model: easy (<LT1),
-// moderate (LT1–LT2), hard (>LT2).
-@JsonKey(name: 'hr_zone_easy_seconds') int? get hrZoneEasySeconds;@JsonKey(name: 'hr_zone_moderate_seconds') int? get hrZoneModerateSeconds;@JsonKey(name: 'hr_zone_hard_seconds') int? get hrZoneHardSeconds;// Derived performance metrics
-@JsonKey(name: 'training_load') double? get trainingLoad;@JsonKey(name: 'effort_score') double? get effortScore;// Weight snapshot
-@JsonKey(name: 'weight_kg') double? get weightKg;// Workout type from health platform
-@JsonKey(name: 'workout_type') String? get workoutType;// Tombstone marker for a dismissed "detected workout" (carries null metrics).
- bool get dismissed;@JsonKey(name: 'recorded_at') DateTime? get recordedAt;
+ String? get id;@JsonKey(name: 'user_id') String get userId;@JsonKey(name: 'activity_id') String get activityId; int? get steps;@JsonKey(name: 'distance_meters') double? get distanceMeters;@JsonKey(name: 'active_calories') double? get activeCalories;@JsonKey(name: 'avg_heart_rate') int? get avgHeartRate;@JsonKey(name: 'max_heart_rate') int? get maxHeartRate;@JsonKey(name: 'min_heart_rate') int? get minHeartRate;@JsonKey(name: 'hrv_sdnn_ms') double? get hrvSdnnMs;@JsonKey(name: 'hrv_rmssd_ms') double? get hrvRmssdMs;@JsonKey(name: 'hr_zone_easy_seconds') int? get hrZoneEasySeconds;@JsonKey(name: 'hr_zone_moderate_seconds') int? get hrZoneModerateSeconds;@JsonKey(name: 'hr_zone_hard_seconds') int? get hrZoneHardSeconds;@JsonKey(name: 'training_load') double? get trainingLoad;@JsonKey(name: 'effort_score') double? get effortScore;@JsonKey(name: 'weight_kg') double? get weightKg;@JsonKey(name: 'workout_type') String? get workoutType; bool get dismissed;@JsonKey(name: 'recorded_at') DateTime? get recordedAt;
 /// Create a copy of ActivityHealthMetrics
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -243,30 +234,21 @@ class _ActivityHealthMetrics implements ActivityHealthMetrics {
 @override final  String? id;
 @override@JsonKey(name: 'user_id') final  String userId;
 @override@JsonKey(name: 'activity_id') final  String activityId;
-// Activity metrics
 @override final  int? steps;
 @override@JsonKey(name: 'distance_meters') final  double? distanceMeters;
 @override@JsonKey(name: 'active_calories') final  double? activeCalories;
-// Heart rate aggregates
 @override@JsonKey(name: 'avg_heart_rate') final  int? avgHeartRate;
 @override@JsonKey(name: 'max_heart_rate') final  int? maxHeartRate;
 @override@JsonKey(name: 'min_heart_rate') final  int? minHeartRate;
-// HRV metrics
 @override@JsonKey(name: 'hrv_sdnn_ms') final  double? hrvSdnnMs;
 @override@JsonKey(name: 'hrv_rmssd_ms') final  double? hrvRmssdMs;
-// HR Zone distribution (seconds) — 3-zone LT model: easy (<LT1),
-// moderate (LT1–LT2), hard (>LT2).
 @override@JsonKey(name: 'hr_zone_easy_seconds') final  int? hrZoneEasySeconds;
 @override@JsonKey(name: 'hr_zone_moderate_seconds') final  int? hrZoneModerateSeconds;
 @override@JsonKey(name: 'hr_zone_hard_seconds') final  int? hrZoneHardSeconds;
-// Derived performance metrics
 @override@JsonKey(name: 'training_load') final  double? trainingLoad;
 @override@JsonKey(name: 'effort_score') final  double? effortScore;
-// Weight snapshot
 @override@JsonKey(name: 'weight_kg') final  double? weightKg;
-// Workout type from health platform
 @override@JsonKey(name: 'workout_type') final  String? workoutType;
-// Tombstone marker for a dismissed "detected workout" (carries null metrics).
 @override@JsonKey() final  bool dismissed;
 @override@JsonKey(name: 'recorded_at') final  DateTime? recordedAt;
 

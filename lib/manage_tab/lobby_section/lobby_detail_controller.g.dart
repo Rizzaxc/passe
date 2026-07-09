@@ -85,7 +85,7 @@ abstract class _$LobbyDetailController extends $AsyncNotifier<LobbyDetailInfo> {
   FutureOr<LobbyDetailInfo> build(String lobbyId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<LobbyDetailInfo>, LobbyDetailInfo>;
     final element =
         ref.element
@@ -95,6 +95,81 @@ abstract class _$LobbyDetailController extends $AsyncNotifier<LobbyDetailInfo> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
+}
+
+@ProviderFor(myLobbyPermission)
+final myLobbyPermissionProvider = MyLobbyPermissionFamily._();
+
+final class MyLobbyPermissionProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<LobbyPermission>,
+          LobbyPermission,
+          FutureOr<LobbyPermission>
+        >
+    with $FutureModifier<LobbyPermission>, $FutureProvider<LobbyPermission> {
+  MyLobbyPermissionProvider._({
+    required MyLobbyPermissionFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'myLobbyPermissionProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$myLobbyPermissionHash();
+
+  @override
+  String toString() {
+    return r'myLobbyPermissionProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<LobbyPermission> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<LobbyPermission> create(Ref ref) {
+    final argument = this.argument as String;
+    return myLobbyPermission(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MyLobbyPermissionProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$myLobbyPermissionHash() => r'2ce0fffa8b24e44a3b1a1f60a14397825b7e130b';
+
+final class MyLobbyPermissionFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<LobbyPermission>, String> {
+  MyLobbyPermissionFamily._()
+    : super(
+        retry: null,
+        name: r'myLobbyPermissionProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  MyLobbyPermissionProvider call(String lobbyId) =>
+      MyLobbyPermissionProvider._(argument: lobbyId, from: this);
+
+  @override
+  String toString() => r'myLobbyPermissionProvider';
 }

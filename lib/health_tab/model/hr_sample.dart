@@ -30,10 +30,8 @@ abstract class HrSampleBatch with _$HrSampleBatch {
 
 @freezed
 abstract class HrSamplePoint with _$HrSamplePoint {
-  const factory HrSamplePoint({
-    required DateTime timestamp,
-    required int bpm,
-  }) = _HrSamplePoint;
+  const factory HrSamplePoint({required DateTime timestamp, required int bpm}) =
+      _HrSamplePoint;
 
   factory HrSamplePoint.fromJson(Map<String, dynamic> json) =>
       _$HrSamplePointFromJson(json);

@@ -41,13 +41,13 @@ final class FilterStateProvider
   }
 }
 
-String _$filterStateHash() => r'8b6e611dfd4cfaebc9648213abca32bbc50aa6cc';
+String _$filterStateHash() => r'26e027f876ecb128164eac41ee67e5f587b38916';
 
 abstract class _$FilterState extends $Notifier<FilterData> {
   FilterData build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<FilterData, FilterData>;
     final element =
         ref.element
@@ -57,6 +57,6 @@ abstract class _$FilterState extends $Notifier<FilterData> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

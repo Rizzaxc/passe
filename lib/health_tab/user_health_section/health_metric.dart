@@ -28,24 +28,24 @@ enum HealthMetric {
 
   /// The raw numeric value for charting (null when the day lacks the metric).
   double? value(DailyHealthSummary s) => switch (this) {
-        restingHr => s.restingHeartRate?.toDouble(),
-        hrv => s.hrvSdnnMs,
-        sleep => s.sleepMinutes?.toDouble(),
-        weight => s.weightKg,
-        steps => s.steps?.toDouble(),
-        distance => s.distanceMeters,
-        activeCalories => s.activeCalories,
-        totalCalories => s.totalCalories,
-      };
+    restingHr => s.restingHeartRate?.toDouble(),
+    hrv => s.hrvSdnnMs,
+    sleep => s.sleepMinutes?.toDouble(),
+    weight => s.weightKg,
+    steps => s.steps?.toDouble(),
+    distance => s.distanceMeters,
+    activeCalories => s.activeCalories,
+    totalCalories => s.totalCalories,
+  };
 
   /// Human-facing display of a value (without unit).
   String format(double v) => switch (this) {
-        sleep => '${(v ~/ 60)}h ${(v % 60).round()}m',
-        distance => (v / 1000).toStringAsFixed(1),
-        weight => v.toStringAsFixed(1),
-        hrv => v.toStringAsFixed(0),
-        _ => v.round().toString(),
-      };
+    sleep => '${(v ~/ 60)}h ${(v % 60).round()}m',
+    distance => (v / 1000).toStringAsFixed(1),
+    weight => v.toStringAsFixed(1),
+    hrv => v.toStringAsFixed(0),
+    _ => v.round().toString(),
+  };
 }
 
 /// The user's chosen visible metric set, persisted locally (display state only).
@@ -58,7 +58,10 @@ class DashboardMetrics extends _$DashboardMetrics {
     final stored = await UserPreferences.instance.getStringList(_prefKey);
     if (stored == null) return HealthMetric.defaults;
     final byName = {for (final m in HealthMetric.values) m.name: m};
-    final resolved = stored.map((s) => byName[s]).whereType<HealthMetric>().toList();
+    final resolved = stored
+        .map((s) => byName[s])
+        .whereType<HealthMetric>()
+        .toList();
     return resolved.isEmpty ? HealthMetric.defaults : resolved;
   }
 
@@ -74,8 +77,10 @@ class DashboardMetrics extends _$DashboardMetrics {
         ..add(metric)
         ..sort((a, b) => a.index.compareTo(b.index));
     }
-    await UserPreferences.instance
-        .setStringList(_prefKey, current.map((m) => m.name).toList());
+    await UserPreferences.instance.setStringList(
+      _prefKey,
+      current.map((m) => m.name).toList(),
+    );
     state = AsyncData(current);
   }
 }

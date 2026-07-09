@@ -161,7 +161,7 @@ abstract class _$LobbyUpcomingActivityController
   FutureOr<UpcomingActivity?> build(String lobbyId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<UpcomingActivity?>, UpcomingActivity?>;
     final element =
@@ -172,6 +172,6 @@ abstract class _$LobbyUpcomingActivityController
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

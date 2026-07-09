@@ -114,11 +114,115 @@ final class ProfessionalServicesFamily extends $Family
   String toString() => r'professionalServicesProvider';
 }
 
+/// Soft availability check: existing *confirmed* bookings for this
+/// professional overlapping the requested window
+/// (`professional_booking_conflicts` RPC). Warns in the booking sheet UI —
+/// the hard gate is `accept_professional_booking`'s atomic overlap check.
+
+@ProviderFor(hasBookingConflict)
+final hasBookingConflictProvider = HasBookingConflictFamily._();
+
+/// Soft availability check: existing *confirmed* bookings for this
+/// professional overlapping the requested window
+/// (`professional_booking_conflicts` RPC). Warns in the booking sheet UI —
+/// the hard gate is `accept_professional_booking`'s atomic overlap check.
+
+final class HasBookingConflictProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Soft availability check: existing *confirmed* bookings for this
+  /// professional overlapping the requested window
+  /// (`professional_booking_conflicts` RPC). Warns in the booking sheet UI —
+  /// the hard gate is `accept_professional_booking`'s atomic overlap check.
+  HasBookingConflictProvider._({
+    required HasBookingConflictFamily super.from,
+    required (String, DateTime, DateTime) super.argument,
+  }) : super(
+         retry: null,
+         name: r'hasBookingConflictProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$hasBookingConflictHash();
+
+  @override
+  String toString() {
+    return r'hasBookingConflictProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument = this.argument as (String, DateTime, DateTime);
+    return hasBookingConflict(ref, argument.$1, argument.$2, argument.$3);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is HasBookingConflictProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$hasBookingConflictHash() =>
+    r'2a5ecc6b183cfc2959a1d401fdd928cf2a195a78';
+
+/// Soft availability check: existing *confirmed* bookings for this
+/// professional overlapping the requested window
+/// (`professional_booking_conflicts` RPC). Warns in the booking sheet UI —
+/// the hard gate is `accept_professional_booking`'s atomic overlap check.
+
+final class HasBookingConflictFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<bool>,
+          (String, DateTime, DateTime)
+        > {
+  HasBookingConflictFamily._()
+    : super(
+        retry: null,
+        name: r'hasBookingConflictProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Soft availability check: existing *confirmed* bookings for this
+  /// professional overlapping the requested window
+  /// (`professional_booking_conflicts` RPC). Warns in the booking sheet UI —
+  /// the hard gate is `accept_professional_booking`'s atomic overlap check.
+
+  HasBookingConflictProvider call(
+    String professionalId,
+    DateTime start,
+    DateTime end,
+  ) => HasBookingConflictProvider._(
+    argument: (professionalId, start, end),
+    from: this,
+  );
+
+  @override
+  String toString() => r'hasBookingConflictProvider';
+}
+
 /// Creates a `professional_booking` row for one professional. RLS ("Clients
 /// can manage their own bookings") scopes the insert to the caller as
-/// `client_user_id`; the row starts at the default `requested` status and
-/// the professional accepts/rejects it out of band (no in-app flow for the
-/// professional side yet).
+/// `client_user_id`; the row starts at the default `requested` status —
+/// the professional accepts/rejects it via `accept_professional_booking`/
+/// `reject_professional_booking` (schema/professional_booking_actions.sql).
 
 @ProviderFor(ProfessionalBookingController)
 final professionalBookingControllerProvider =
@@ -126,16 +230,16 @@ final professionalBookingControllerProvider =
 
 /// Creates a `professional_booking` row for one professional. RLS ("Clients
 /// can manage their own bookings") scopes the insert to the caller as
-/// `client_user_id`; the row starts at the default `requested` status and
-/// the professional accepts/rejects it out of band (no in-app flow for the
-/// professional side yet).
+/// `client_user_id`; the row starts at the default `requested` status —
+/// the professional accepts/rejects it via `accept_professional_booking`/
+/// `reject_professional_booking` (schema/professional_booking_actions.sql).
 final class ProfessionalBookingControllerProvider
     extends $NotifierProvider<ProfessionalBookingController, bool> {
   /// Creates a `professional_booking` row for one professional. RLS ("Clients
   /// can manage their own bookings") scopes the insert to the caller as
-  /// `client_user_id`; the row starts at the default `requested` status and
-  /// the professional accepts/rejects it out of band (no in-app flow for the
-  /// professional side yet).
+  /// `client_user_id`; the row starts at the default `requested` status —
+  /// the professional accepts/rejects it via `accept_professional_booking`/
+  /// `reject_professional_booking` (schema/professional_booking_actions.sql).
   ProfessionalBookingControllerProvider._({
     required ProfessionalBookingControllerFamily super.from,
     required String super.argument,
@@ -182,13 +286,13 @@ final class ProfessionalBookingControllerProvider
 }
 
 String _$professionalBookingControllerHash() =>
-    r'70a1bd46c5fab3704495c873f3b9f0b3a2743f0d';
+    r'bd05ee7a2e14e04fc0f9faa8efb42bb7b3223e33';
 
 /// Creates a `professional_booking` row for one professional. RLS ("Clients
 /// can manage their own bookings") scopes the insert to the caller as
-/// `client_user_id`; the row starts at the default `requested` status and
-/// the professional accepts/rejects it out of band (no in-app flow for the
-/// professional side yet).
+/// `client_user_id`; the row starts at the default `requested` status —
+/// the professional accepts/rejects it via `accept_professional_booking`/
+/// `reject_professional_booking` (schema/professional_booking_actions.sql).
 
 final class ProfessionalBookingControllerFamily extends $Family
     with
@@ -210,9 +314,9 @@ final class ProfessionalBookingControllerFamily extends $Family
 
   /// Creates a `professional_booking` row for one professional. RLS ("Clients
   /// can manage their own bookings") scopes the insert to the caller as
-  /// `client_user_id`; the row starts at the default `requested` status and
-  /// the professional accepts/rejects it out of band (no in-app flow for the
-  /// professional side yet).
+  /// `client_user_id`; the row starts at the default `requested` status —
+  /// the professional accepts/rejects it via `accept_professional_booking`/
+  /// `reject_professional_booking` (schema/professional_booking_actions.sql).
 
   ProfessionalBookingControllerProvider call(String professionalId) =>
       ProfessionalBookingControllerProvider._(
@@ -226,9 +330,9 @@ final class ProfessionalBookingControllerFamily extends $Family
 
 /// Creates a `professional_booking` row for one professional. RLS ("Clients
 /// can manage their own bookings") scopes the insert to the caller as
-/// `client_user_id`; the row starts at the default `requested` status and
-/// the professional accepts/rejects it out of band (no in-app flow for the
-/// professional side yet).
+/// `client_user_id`; the row starts at the default `requested` status —
+/// the professional accepts/rejects it via `accept_professional_booking`/
+/// `reject_professional_booking` (schema/professional_booking_actions.sql).
 
 abstract class _$ProfessionalBookingController extends $Notifier<bool> {
   late final _$args = ref.$arg as String;
@@ -237,7 +341,7 @@ abstract class _$ProfessionalBookingController extends $Notifier<bool> {
   bool build(String professionalId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<bool, bool>;
     final element =
         ref.element
@@ -247,6 +351,6 @@ abstract class _$ProfessionalBookingController extends $Notifier<bool> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

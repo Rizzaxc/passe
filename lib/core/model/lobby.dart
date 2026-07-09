@@ -22,11 +22,40 @@ enum LobbyVisibility {
   }
 }
 
+/// A member's role within a lobby (`lobby_member.role`). Captaincy itself
+/// isn't part of this enum — it lives separately on `lobby.captain_id` —
+/// this only distinguishes a plain member from a captain-appointed
+/// coordinator (everything a captain can do except kick members or edit
+/// lobby info; see `schema/lobby_coordinator_role.sql`).
+enum LobbyMemberRole {
+  member('member'),
+  coordinator('coordinator');
+
+  final String value;
+
+  const LobbyMemberRole(this.value);
+
+  static LobbyMemberRole fromValue(String? value) {
+    for (final r in LobbyMemberRole.values) {
+      if (r.value == value) return r;
+    }
+    return LobbyMemberRole.member;
+  }
+
+  String getLocalizedName(BuildContext context) {
+    return context.tr('lobby.memberRole.$name');
+  }
+}
+
 @freezed
 abstract class LobbyDetails with _$LobbyDetails {
   const factory LobbyDetails({
     AgeGroup? ageGroup,
     int? skill,
+    // True once a custom photo has been uploaded to the `lobby_avatar`
+    // storage bucket at `<lobbyId>.jpg`. False/absent falls back to the
+    // deterministic letter-square avatar (see `LobbyAvatar`).
+    @Default(false) bool hasAvatar,
   }) = _LobbyDetails;
 
   factory LobbyDetails.fromJson(Map<String, dynamic> json) =>

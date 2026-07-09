@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../core/format.dart';
 import '../core/model/enum.dart';
 import '../core/model/professional_feed_item.dart';
 import '../ui/theme.dart';
@@ -255,6 +256,25 @@ class _Body extends StatelessWidget {
                           ),
                         ),
                       ],
+                      // Price is the one fact this page was missing — it's
+                      // shown on the discovery card but dropped once you
+                      // reach the full profile, which is exactly where a
+                      // booking decision gets made.
+                      if (item.priceFrom != null) ...[
+                        Container(
+                          width: 1,
+                          color: colors.border,
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        Flexible(
+                          child: _StatTile(
+                            icon: FLucideIcons.wallet,
+                            iconColor: colors.primary,
+                            label: formatVnd(item.priceFrom!),
+                            sub: 'đ/giờ',
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -368,11 +388,18 @@ class _StatTile extends StatelessWidget {
           children: [
             Icon(icon, size: 16, color: iconColor),
             const SizedBox(width: 4),
-            Text(
-              label,
-              style: context.theme.typography.body.lg.copyWith(
-                fontWeight: FontWeight.w700,
-                height: 1,
+            // Flexible + ellipsis: this tile sits inside an outer Flexible
+            // in the stats row (up to 3 tiles side by side), so a long
+            // price/label on a narrow phone must truncate, not overflow.
+            Flexible(
+              child: Text(
+                label,
+                style: context.theme.typography.body.lg.copyWith(
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -383,6 +410,8 @@ class _StatTile extends StatelessWidget {
           style: context.theme.typography.body.xs.copyWith(
             color: colors.mutedForeground,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );

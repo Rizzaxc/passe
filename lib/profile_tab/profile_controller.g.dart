@@ -48,7 +48,7 @@ abstract class _$NetworkSearchController extends $Notifier<NetworkSearchState> {
   NetworkSearchState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<NetworkSearchState, NetworkSearchState>;
     final element =
         ref.element
@@ -58,7 +58,7 @@ abstract class _$NetworkSearchController extends $Notifier<NetworkSearchState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -100,7 +100,7 @@ abstract class _$NetworkController extends $Notifier<List<Network>> {
   List<Network> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<List<Network>, List<Network>>;
     final element =
         ref.element
@@ -110,7 +110,7 @@ abstract class _$NetworkController extends $Notifier<List<Network>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -153,7 +153,7 @@ abstract class _$IndustryController extends $Notifier<List<Industry>> {
   List<Industry> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<List<Industry>, List<Industry>>;
     final element =
         ref.element
@@ -163,7 +163,7 @@ abstract class _$IndustryController extends $Notifier<List<Industry>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -199,13 +199,13 @@ final class ProfileControllerProvider
   }
 }
 
-String _$profileControllerHash() => r'd2eb196e649dd26eed7bb4e36d4ba4f661445eae';
+String _$profileControllerHash() => r'a87b3f527cf131d76b2808d10ee52a5ab57ca0e6';
 
 abstract class _$ProfileController extends $Notifier<ProfileState> {
   ProfileState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ProfileState, ProfileState>;
     final element =
         ref.element
@@ -215,6 +215,6 @@ abstract class _$ProfileController extends $Notifier<ProfileState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

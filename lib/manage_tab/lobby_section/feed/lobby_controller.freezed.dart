@@ -14,8 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LobbyFormState {
 
- Lobby get lobby; bool get isSaving;// non-null when the user is entering a custom address (free-text mode)
- Map<String, String?>? get freeAddress;
+ Lobby get lobby; bool get isSaving; Map<String, String?>? get freeAddress; XFile? get pickedAvatar;
 /// Create a copy of LobbyFormState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +25,16 @@ $LobbyFormStateCopyWith<LobbyFormState> get copyWith => _$LobbyFormStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other.freeAddress, freeAddress));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other.freeAddress, freeAddress)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(freeAddress));
+int get hashCode => Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(freeAddress),pickedAvatar);
 
 @override
 String toString() {
-  return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, freeAddress: $freeAddress)';
+  return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, freeAddress: $freeAddress, pickedAvatar: $pickedAvatar)';
 }
 
 
@@ -46,7 +45,7 @@ abstract mixin class $LobbyFormStateCopyWith<$Res>  {
   factory $LobbyFormStateCopyWith(LobbyFormState value, $Res Function(LobbyFormState) _then) = _$LobbyFormStateCopyWithImpl;
 @useResult
 $Res call({
- Lobby lobby, bool isSaving, Map<String, String?>? freeAddress
+ Lobby lobby, bool isSaving, Map<String, String?>? freeAddress, XFile? pickedAvatar
 });
 
 
@@ -63,12 +62,13 @@ class _$LobbyFormStateCopyWithImpl<$Res>
 
 /// Create a copy of LobbyFormState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? lobby = null,Object? isSaving = null,Object? freeAddress = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? lobby = null,Object? isSaving = null,Object? freeAddress = freezed,Object? pickedAvatar = freezed,}) {
   return _then(_self.copyWith(
 lobby: null == lobby ? _self.lobby : lobby // ignore: cast_nullable_to_non_nullable
 as Lobby,isSaving: null == isSaving ? _self.isSaving : isSaving // ignore: cast_nullable_to_non_nullable
 as bool,freeAddress: freezed == freeAddress ? _self.freeAddress : freeAddress // ignore: cast_nullable_to_non_nullable
-as Map<String, String?>?,
+as Map<String, String?>?,pickedAvatar: freezed == pickedAvatar ? _self.pickedAvatar : pickedAvatar // ignore: cast_nullable_to_non_nullable
+as XFile?,
   ));
 }
 /// Create a copy of LobbyFormState
@@ -162,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Lobby lobby,  bool isSaving,  Map<String, String?>? freeAddress)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Lobby lobby,  bool isSaving,  Map<String, String?>? freeAddress,  XFile? pickedAvatar)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LobbyFormState() when $default != null:
-return $default(_that.lobby,_that.isSaving,_that.freeAddress);case _:
+return $default(_that.lobby,_that.isSaving,_that.freeAddress,_that.pickedAvatar);case _:
   return orElse();
 
 }
@@ -183,10 +183,10 @@ return $default(_that.lobby,_that.isSaving,_that.freeAddress);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Lobby lobby,  bool isSaving,  Map<String, String?>? freeAddress)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Lobby lobby,  bool isSaving,  Map<String, String?>? freeAddress,  XFile? pickedAvatar)  $default,) {final _that = this;
 switch (_that) {
 case _LobbyFormState():
-return $default(_that.lobby,_that.isSaving,_that.freeAddress);case _:
+return $default(_that.lobby,_that.isSaving,_that.freeAddress,_that.pickedAvatar);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +203,10 @@ return $default(_that.lobby,_that.isSaving,_that.freeAddress);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Lobby lobby,  bool isSaving,  Map<String, String?>? freeAddress)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Lobby lobby,  bool isSaving,  Map<String, String?>? freeAddress,  XFile? pickedAvatar)?  $default,) {final _that = this;
 switch (_that) {
 case _LobbyFormState() when $default != null:
-return $default(_that.lobby,_that.isSaving,_that.freeAddress);case _:
+return $default(_that.lobby,_that.isSaving,_that.freeAddress,_that.pickedAvatar);case _:
   return null;
 
 }
@@ -218,14 +218,12 @@ return $default(_that.lobby,_that.isSaving,_that.freeAddress);case _:
 
 
 class _LobbyFormState implements LobbyFormState {
-  const _LobbyFormState({required this.lobby, this.isSaving = false, final  Map<String, String?>? freeAddress}): _freeAddress = freeAddress;
+  const _LobbyFormState({required this.lobby, this.isSaving = false, final  Map<String, String?>? freeAddress, this.pickedAvatar}): _freeAddress = freeAddress;
   
 
 @override final  Lobby lobby;
 @override@JsonKey() final  bool isSaving;
-// non-null when the user is entering a custom address (free-text mode)
  final  Map<String, String?>? _freeAddress;
-// non-null when the user is entering a custom address (free-text mode)
 @override Map<String, String?>? get freeAddress {
   final value = _freeAddress;
   if (value == null) return null;
@@ -234,6 +232,7 @@ class _LobbyFormState implements LobbyFormState {
   return EqualUnmodifiableMapView(value);
 }
 
+@override final  XFile? pickedAvatar;
 
 /// Create a copy of LobbyFormState
 /// with the given fields replaced by the non-null parameter values.
@@ -245,16 +244,16 @@ _$LobbyFormStateCopyWith<_LobbyFormState> get copyWith => __$LobbyFormStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other._freeAddress, _freeAddress));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other._freeAddress, _freeAddress)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(_freeAddress));
+int get hashCode => Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(_freeAddress),pickedAvatar);
 
 @override
 String toString() {
-  return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, freeAddress: $freeAddress)';
+  return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, freeAddress: $freeAddress, pickedAvatar: $pickedAvatar)';
 }
 
 
@@ -265,7 +264,7 @@ abstract mixin class _$LobbyFormStateCopyWith<$Res> implements $LobbyFormStateCo
   factory _$LobbyFormStateCopyWith(_LobbyFormState value, $Res Function(_LobbyFormState) _then) = __$LobbyFormStateCopyWithImpl;
 @override @useResult
 $Res call({
- Lobby lobby, bool isSaving, Map<String, String?>? freeAddress
+ Lobby lobby, bool isSaving, Map<String, String?>? freeAddress, XFile? pickedAvatar
 });
 
 
@@ -282,12 +281,13 @@ class __$LobbyFormStateCopyWithImpl<$Res>
 
 /// Create a copy of LobbyFormState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? lobby = null,Object? isSaving = null,Object? freeAddress = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? lobby = null,Object? isSaving = null,Object? freeAddress = freezed,Object? pickedAvatar = freezed,}) {
   return _then(_LobbyFormState(
 lobby: null == lobby ? _self.lobby : lobby // ignore: cast_nullable_to_non_nullable
 as Lobby,isSaving: null == isSaving ? _self.isSaving : isSaving // ignore: cast_nullable_to_non_nullable
 as bool,freeAddress: freezed == freeAddress ? _self._freeAddress : freeAddress // ignore: cast_nullable_to_non_nullable
-as Map<String, String?>?,
+as Map<String, String?>?,pickedAvatar: freezed == pickedAvatar ? _self.pickedAvatar : pickedAvatar // ignore: cast_nullable_to_non_nullable
+as XFile?,
   ));
 }
 

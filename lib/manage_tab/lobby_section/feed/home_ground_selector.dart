@@ -6,6 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/model/enum.dart';
 import '../../../core/model/location.dart';
+import '../../../ui/district_select.dart';
+import '../../../ui/pill_toggle.dart';
 import '../../../ui/search_field.dart';
 import 'lobby_controller.dart';
 
@@ -140,17 +142,40 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
     }
   }
 
-  Widget _modeToggleIcon(BuildContext context) {
-    return Positioned(
-      right: 8,
-      bottom: 12,
-      child: FTappable(
-        onPress: _toggleMode,
-        child: Icon(
-          _freeTextMode ? FLucideIcons.search : FLucideIcons.pencil,
-          size: 16,
-          color: context.theme.colors.mutedForeground,
-        ),
+  Widget _modeToggle(BuildContext context) {
+    return PPillToggle<bool>(
+      value: _freeTextMode,
+      options: const [
+        PPillOption(value: false, icon: FLucideIcons.search),
+        PPillOption(value: true, icon: FLucideIcons.pencil),
+      ],
+      onChanged: (freeText) {
+        if (freeText != _freeTextMode) _toggleMode();
+      },
+    );
+  }
+
+  Widget _labelRow(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        if (_showOuterLabel)
+          Text(
+            'createLobby.homeGround'.tr(),
+            style: context.theme.typography.body.sm.copyWith(fontWeight: .bold),
+          )
+        else
+          const SizedBox.shrink(),
+        _modeToggle(context),
+      ],
+    );
+  }
+
+  Widget _helperText(BuildContext context) {
+    return Text(
+      'createLobby.homeGroundDescription'.tr(),
+      style: context.theme.typography.body.xs.copyWith(
+        color: context.theme.colors.mutedForeground,
       ),
     );
   }
@@ -178,29 +203,19 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 8,
         children: [
+          _labelRow(context),
+          if (_showOuterLabel) _helperText(context),
           // Row 1: Location name (required)
-          Stack(
-            children: [
-              FTextField(
-                label: _showOuterLabel
-                    ? Text(
-                        'createLobby.homeGround'.tr(),
-                        style: context.theme.typography.body.sm
-                            .copyWith(fontWeight: .bold),
-                      )
-                    : null,
-                hint: 'createLobby.homeGroundFreeHint'.tr(),
-                prefixBuilder: (context, style, states) => Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 4, 0, 4),
-                  child: Icon(widget.prefixIcon ?? FLucideIcons.pencil),
-                ),
-                control: FTextFieldControl.managed(
-                  controller: _nameCtrl,
-                  onChange: notify,
-                ),
-              ),
-              if (_nameCtrl.text.isEmpty) _modeToggleIcon(context),
-            ],
+          FTextField(
+            hint: 'createLobby.homeGroundFreeHint'.tr(),
+            prefixBuilder: (context, style, states) => Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 0, 4),
+              child: Icon(widget.prefixIcon ?? FLucideIcons.pencil),
+            ),
+            control: FTextFieldControl.managed(
+              controller: _nameCtrl,
+              onChange: notify,
+            ),
           ),
           // Row 2: Street number + street name
           Row(
@@ -296,11 +311,13 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
                 style: fieldStyle.labelTextStyle.resolve({}),
                 child: Text(
                   'createLobby.homeGround'.tr(),
-                  style: context.theme.typography.body.sm
-                      .copyWith(fontWeight: .bold),
+                  style: context.theme.typography.body.sm.copyWith(
+                    fontWeight: .bold,
+                  ),
                 ),
               ),
             ),
+          if (_showOuterLabel) _helperText(context),
           FTileGroup(
             children: [
               FTile(
@@ -334,16 +351,13 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
       );
     }
 
-    return Stack(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 4,
       children: [
+        _labelRow(context),
+        if (_showOuterLabel) _helperText(context),
         PSearchField<Location>(
-          label: _showOuterLabel
-              ? Text(
-                  'createLobby.homeGround'.tr(),
-                  style: context.theme.typography.body.sm
-                      .copyWith(fontWeight: .bold),
-                )
-              : null,
           prefixIcon: widget.prefixIcon,
           hint: 'createLobby.homeGroundHint'.tr(),
           controller: _controller,
@@ -383,7 +397,6 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
             );
           },
         ),
-        if (_controller.text.isEmpty) _modeToggleIcon(context),
       ],
     );
   }
@@ -403,31 +416,23 @@ class _SingleDistrictSelect extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final allDistricts = VietnamLocationData.instance.getDistrictsByCity(city);
-    final groups = <VietnamDistrictType, List<District>>{};
-    for (final d in allDistricts) {
-      groups.putIfAbsent(d.type, () => []).add(d);
-    }
-
-    return FSelect<District>.rich(
+    // 102-126 flat wards per city is too long to scroll — .searchBuilder adds
+    // a search field, still grouped by legacy quận/huyện via districtSections.
+    return FSelect<District>.searchBuilder(
       hint: context.tr('createLobby.district'),
       format: (d) => d.getLocalizedFullName(context),
       autoHide: true,
       control: FSelectControl.lifted(value: selected, onChange: onChanged),
-      children: [
-        for (final entry in groups.entries)
-          FSelectSection<District>.rich(
-            label: Text(context.tr('district.${entry.key.name}')),
-            children: entry.value
-                .map(
-                  (d) => FSelectItem<District>(
-                    title: Text(d.getLocalizedFullName(context)),
-                    value: d,
-                  ),
-                )
-                .toList(),
-          ),
-      ],
+      searchFieldProperties: districtSearchFieldProperties(context),
+      contentEmptyBuilder: (context, _) => districtEmptyBuilder(context),
+      filter: (query) =>
+          VietnamLocationData.instance.searchDistricts(city, query),
+      contentBuilder: (context, query, values) => districtSections<District>(
+        context: context,
+        values: values,
+        toDistrict: (d) => d,
+        isSelected: (d) => d == selected,
+      ),
     );
   }
 }

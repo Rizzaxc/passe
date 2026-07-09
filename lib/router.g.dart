@@ -376,6 +376,10 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
               factory: $ManageScheduleRoute._fromState,
             ),
             GoRouteData.$route(
+              path: 'requests',
+              factory: $ManageRequestsRoute._fromState,
+            ),
+            GoRouteData.$route(
               path: 'lobby',
               factory: $ManageLobbyRoute._fromState,
               routes: [
@@ -553,6 +557,27 @@ mixin $ManageScheduleRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/manage/schedule');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ManageRequestsRoute on GoRouteData {
+  static ManageRequestsRoute _fromState(GoRouterState state) =>
+      const ManageRequestsRoute();
+
+  @override
+  String get location => GoRouteData.$location('/manage/requests');
 
   @override
   void go(BuildContext context) => context.go(location);

@@ -33,13 +33,13 @@ final class LocationFeedProvider
   LocationFeed create() => LocationFeed();
 }
 
-String _$locationFeedHash() => r'ae2b62989787b1f057641d40dad88829c00d5bb2';
+String _$locationFeedHash() => r'6c2fa1048c2da2ce2db015ded0da1cb64d9cfe09';
 
 abstract class _$LocationFeed extends $AsyncNotifier<List<Location>> {
   FutureOr<List<Location>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<List<Location>>, List<Location>>;
     final element =
         ref.element
@@ -49,6 +49,6 @@ abstract class _$LocationFeed extends $AsyncNotifier<List<Location>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

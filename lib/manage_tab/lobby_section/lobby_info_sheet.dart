@@ -86,7 +86,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
           .read(userLobbiesControllerProvider.notifier)
           .leave(widget.lobbyId);
       sheetNav.pop(); // close the info sheet
-      router.pop();   // exit the detail page → back to the lobby list
+      router.pop(); // exit the detail page → back to the lobby list
     } catch (e, st) {
       Talker().handle(e, st, 'Leaving lobby failed');
       if (!mounted) return;
@@ -163,7 +163,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
   void _transferCaptaincy() {
     final members =
         ref.read(lobbyMembersControllerProvider(widget.lobbyId)).value ??
-            const [];
+        const [];
     final me = ref.read(authControllerProvider).value?.id;
     final others = members.where((m) => m.userId != me).toList();
     if (others.isEmpty) {
@@ -238,7 +238,11 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.check),
-        title: Text('lobby.captainTransfer.success'.tr(namedArgs: {'username': member.username})),
+        title: Text(
+          'lobby.captainTransfer.success'.tr(
+            namedArgs: {'username': member.username},
+          ),
+        ),
         alignment: .bottomCenter,
       );
     } catch (e, st) {
@@ -262,11 +266,20 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
     final currentUserId = ref.watch(authControllerProvider).value?.id;
     final isCaptain = currentUserId != null && lobby.captainId == currentUserId;
     final colors = context.theme.colors;
-    final membersAsync =
-        ref.watch(lobbyMembersControllerProvider(widget.lobbyId));
+    final membersAsync = ref.watch(
+      lobbyMembersControllerProvider(widget.lobbyId),
+    );
     final isSoleMember = (membersAsync.value?.length ?? 2) <= 1;
-    final initial =
-        lobby.name.isNotEmpty ? lobby.name[0].toUpperCase() : '?';
+    final initial = lobby.name.isNotEmpty ? lobby.name[0].toUpperCase() : '?';
+
+    // Coordinator: everything a captain does except kicking members and
+    // editing lobby info (edit/transfer/delete stay isCaptain-only below).
+    final myRole = membersAsync.value
+        ?.where((m) => m.userId == currentUserId)
+        .firstOrNull
+        ?.role;
+    final isCoordinator = myRole == LobbyMemberRole.coordinator;
+    final canManage = isCaptain || isCoordinator;
 
     final visLabel = switch (lobby.visibility) {
       LobbyVisibility.private => 'lobby.visibility.private'.tr(),
@@ -281,326 +294,332 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
         spacing: 18,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-              PSheetTitle(
-                label: 'lobby.info'.tr(),
-                trailing: FButton.icon(
-                  variant: .ghost,
-                  onPress: () => Navigator.of(context).pop(),
-                  child: const Icon(FLucideIcons.x),
+          PSheetTitle(
+            label: 'lobby.info'.tr(),
+            trailing: FButton.icon(
+              variant: .ghost,
+              onPress: () => Navigator.of(context).pop(),
+              child: const Icon(FLucideIcons.x),
+            ),
+          ),
+
+          // Lobby info card
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: colors.card,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colors.border),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: _crimsonTint,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: colors.border),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: _crimson,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            lobby.name,
+                            style: context.theme.typography.body.lg.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              lobby.sport.getIcon(size: 12),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  lobby.sport.getLocalizedName(context),
+                                  style: context.theme.typography.body.sm
+                                      .copyWith(color: colors.mutedForeground),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Text(
+                                ' · ',
+                                style: TextStyle(
+                                  color: colors.mutedForeground.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                ),
+                              ),
+                              _VisTag(label: visLabel),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Search ID
+                if (lobby.searchableId != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.background,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: colors.border.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          'SearchID',
+                          style: context.theme.typography.body.xs.copyWith(
+                            color: colors.mutedForeground,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            lobby.searchableId!,
+                            style: context.theme.typography.body.sm.copyWith(
+                              color: colors.secondaryForeground,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ),
+                        FButton.icon(
+                          variant: .ghost,
+                          onPress: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: lobby.searchableId!),
+                            );
+                            if (!context.mounted) return;
+                            showFToast(
+                              context: context,
+                              icon: const Icon(FLucideIcons.copy),
+                              title: Text('lobby.searchIDCopied'.tr()),
+                              alignment: .bottomCenter,
+                            );
+                          },
+                          child: const Icon(FLucideIcons.copy, size: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Location
+                if (widget.info.homeGroundName != null) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Icon(
+                        FLucideIcons.mapPin,
+                        size: 12,
+                        color: colors.mutedForeground,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          widget.info.homeGroundName!,
+                          style: context.theme.typography.body.sm.copyWith(
+                            color: colors.mutedForeground,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // Members section
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PSheetSectionLabel(
+                label: membersAsync.value != null
+                    ? '${'lobby.detail.members'.tr()} · ${membersAsync.value!.length}'
+                    : 'lobby.detail.members'.tr(),
+                trailing: _SectionActionButton(
+                  icon: FLucideIcons.userPlus,
+                  label: 'lobby.invite'.tr(),
+                  onTap: () => _showInviteUserSheet(context, widget.lobbyId),
                 ),
               ),
-
-              // Lobby info card
+              const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: colors.card,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: colors.border),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            color: _crimsonTint,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: colors.border),
-                          ),
-                          alignment: Alignment.center,
+                clipBehavior: Clip.antiAlias,
+                child: membersAsync.when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (_, _) => Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text('errorGeneric'.tr()),
+                  ),
+                  data: (members) => members.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.all(16),
                           child: Text(
-                            initial,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                              color: _crimson,
-                              letterSpacing: -0.4,
-                            ),
+                            'lobby.detail.noMembers'.tr(),
+                            style: TextStyle(color: colors.mutedForeground),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                lobby.name,
-                                style: context.theme.typography.body.lg.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  lobby.sport.getIcon(size: 12),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      lobby.sport.getLocalizedName(context),
-                                      style: context.theme.typography.body.sm
-                                          .copyWith(
-                                        color: colors.mutedForeground,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  Text(
-                                    ' · ',
-                                    style: TextStyle(
-                                      color: colors.mutedForeground
-                                          .withValues(alpha: 0.4),
-                                    ),
-                                  ),
-                                  _VisTag(label: visLabel),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Search ID
-                    if (lobby.searchableId != null) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: colors.background,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                              color: colors.border.withValues(alpha: 0.6)),
-                        ),
-                        child: Row(
+                        )
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              'SearchID',
-                              style: context.theme.typography.body.xs.copyWith(
-                                color: colors.mutedForeground,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.6,
+                            for (var i = 0; i < members.length; i++) ...[
+                              _MemberRow(
+                                member: members[i],
+                                lobbyId: widget.lobbyId,
+                                captainId: lobby.captainId,
+                                currentUserId: currentUserId,
+                                isCaptain: isCaptain,
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                lobby.searchableId!,
-                                style: context.theme.typography.body.sm.copyWith(
-                                  color: colors.secondaryForeground,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.4,
+                              if (i < members.length - 1)
+                                Divider(
+                                  height: 1,
+                                  indent: 60,
+                                  color: colors.border.withValues(alpha: 0.5),
                                 ),
-                              ),
-                            ),
-                            FButton.icon(
-                              variant: .ghost,
-                              onPress: () async {
-                                await Clipboard.setData(ClipboardData(
-                                    text: lobby.searchableId!));
-                                if (!context.mounted) return;
-                                showFToast(
-                                  context: context,
-                                  icon: const Icon(FLucideIcons.copy),
-                                  title:
-                                      Text('lobby.searchIDCopied'.tr()),
-                                  alignment: .bottomCenter,
-                                );
-                              },
-                              child: const Icon(FLucideIcons.copy, size: 14),
-                            ),
+                            ],
                           ],
                         ),
-                      ),
-                    ],
-
-                    // Location
-                    if (widget.info.homeGroundName != null) ...[
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Icon(FLucideIcons.mapPin,
-                              size: 12, color: colors.mutedForeground),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              widget.info.homeGroundName!,
-                              style: context.theme.typography.body.sm.copyWith(
-                                color: colors.mutedForeground,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
                 ),
               ),
+            ],
+          ),
 
-              // Members section
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  PSheetSectionLabel(
-                    label: membersAsync.value != null
-                        ? '${'lobby.detail.members'.tr()} · ${membersAsync.value!.length}'
-                        : 'lobby.detail.members'.tr(),
-                    trailing: _SectionActionButton(
-                      icon: FLucideIcons.userPlus,
-                      label: 'lobby.invite'.tr(),
-                      onTap: () => _showInviteUserSheet(
-                          context, widget.lobbyId),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colors.card,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: colors.border),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: membersAsync.when(
-                      loading: () => const Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Center(child: CircularProgressIndicator()),
+          // Settings section
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PSheetSectionLabel(label: 'lobby.settings'.tr()),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colors.border),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isCaptain) ...[
+                      _SettingsRow(
+                        icon: FLucideIcons.pencil,
+                        label: 'lobby.edit'.tr(),
+                        onTap: () => _editLobby(context, lobby),
                       ),
-                      error: (_, _) => Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text('errorGeneric'.tr()),
+                      Divider(
+                        height: 1,
+                        indent: 50,
+                        color: colors.border.withValues(alpha: 0.5),
                       ),
-                      data: (members) => members.isEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                'lobby.detail.noMembers'.tr(),
-                                style: TextStyle(
-                                    color: colors.mutedForeground),
-                              ),
-                            )
-                          : Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                for (var i = 0; i < members.length; i++) ...[
-                                  _MemberRow(
-                                    member: members[i],
-                                    lobbyId: widget.lobbyId,
-                                    captainId: lobby.captainId,
-                                    currentUserId: currentUserId,
-                                    isCaptain: isCaptain,
-                                  ),
-                                  if (i < members.length - 1)
-                                    Divider(
-                                      height: 1,
-                                      indent: 60,
-                                      color: colors.border
-                                          .withValues(alpha: 0.5),
-                                    ),
-                                ],
-                              ],
-                            ),
+                    ],
+                    // Managing join requests is coordinator-eligible — it's
+                    // neither kicking a member nor editing lobby info.
+                    if (canManage) ...[
+                      _SettingsRow(
+                        icon: FLucideIcons.userPlus,
+                        label: 'lobby.manageRequests'.tr(),
+                        badge: _pendingBadge(ref, widget.lobbyId),
+                        onTap: () =>
+                            showJoinRequestsSheet(context, widget.lobbyId),
+                      ),
+                      Divider(
+                        height: 1,
+                        indent: 50,
+                        color: colors.border.withValues(alpha: 0.5),
+                      ),
+                    ],
+                    _SettingsRow(
+                      icon: FLucideIcons.bell,
+                      label: 'lobby.notifications'.tr(),
+                      onTap: () => showFToast(
+                        context: context,
+                        icon: const Icon(FLucideIcons.bell),
+                        title: Text('lobby.comingSoon'.tr()),
+                        alignment: .bottomCenter,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-
-              // Settings section
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  PSheetSectionLabel(label: 'lobby.settings'.tr()),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colors.card,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: colors.border),
+                    Divider(
+                      height: 1,
+                      indent: 50,
+                      color: colors.border.withValues(alpha: 0.5),
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (isCaptain) ...[
-                          _SettingsRow(
-                            icon: FLucideIcons.pencil,
-                            label: 'lobby.edit'.tr(),
-                            onTap: () => _editLobby(context, lobby),
-                          ),
-                          Divider(
-                            height: 1,
-                            indent: 50,
-                            color: colors.border.withValues(alpha: 0.5),
-                          ),
-                          _SettingsRow(
-                            icon: FLucideIcons.userPlus,
-                            label: 'lobby.manageRequests'.tr(),
-                            badge: _pendingBadge(ref, widget.lobbyId),
-                            onTap: () => showJoinRequestsSheet(
-                                context, widget.lobbyId),
-                          ),
-                          Divider(
-                            height: 1,
-                            indent: 50,
-                            color: colors.border.withValues(alpha: 0.5),
-                          ),
-                        ],
-                        _SettingsRow(
-                          icon: FLucideIcons.bell,
-                          label: 'lobby.notifications'.tr(),
-                          onTap: () => showFToast(
-                            context: context,
-                            icon: const Icon(FLucideIcons.bell),
-                            title: Text('lobby.comingSoon'.tr()),
-                            alignment: .bottomCenter,
-                          ),
-                        ),
+                    if (isCaptain) ...[
+                      _SettingsRow(
+                        icon: FLucideIcons.crown,
+                        label: 'lobby.captainTransfer.title'.tr(),
+                        onTap: _transferCaptaincy,
+                      ),
+                      if (isSoleMember) ...[
                         Divider(
                           height: 1,
                           indent: 50,
                           color: colors.border.withValues(alpha: 0.5),
                         ),
-                        if (isCaptain) ...[
-                          _SettingsRow(
-                            icon: FLucideIcons.crown,
-                            label: 'lobby.captainTransfer.title'.tr(),
-                            onTap: _transferCaptaincy,
-                          ),
-                          if (isSoleMember) ...[
-                            Divider(
-                              height: 1,
-                              indent: 50,
-                              color: colors.border.withValues(alpha: 0.5),
-                            ),
-                            _SettingsRow(
-                              icon: FLucideIcons.trash2,
-                              label: 'lobby.delete.confirm'.tr(),
-                              destructive: true,
-                              onTap: _confirmDelete,
-                            ),
-                          ],
-                        ] else
-                          _SettingsRow(
-                            icon: FLucideIcons.logOut,
-                            label: 'lobby.leave.confirm'.tr(),
-                            destructive: true,
-                            onTap: _confirmLeave,
-                          ),
+                        _SettingsRow(
+                          icon: FLucideIcons.trash2,
+                          label: 'lobby.delete.confirm'.tr(),
+                          destructive: true,
+                          onTap: _confirmDelete,
+                        ),
                       ],
-                    ),
-                  ),
-                ],
+                    ] else
+                      _SettingsRow(
+                        icon: FLucideIcons.logOut,
+                        label: 'lobby.leave.confirm'.tr(),
+                        destructive: true,
+                        onTap: _confirmLeave,
+                      ),
+                  ],
+                ),
               ),
+            ],
+          ),
 
           const SizedBox(height: 8),
         ],
@@ -618,8 +637,7 @@ class _VisTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: const Color(0xFFEBF5FF),
         borderRadius: BorderRadius.circular(6),
@@ -689,6 +707,7 @@ class _MemberRow extends ConsumerWidget {
   bool get _isMemberCurrentUser => member.userId == currentUserId;
 
   void _showMemberMenu(BuildContext context, WidgetRef ref) {
+    final isCoordinator = member.role == LobbyMemberRole.coordinator;
     showFDialog(
       context: context,
       builder: (dialogCtx, style, animation) => FDialog(
@@ -696,6 +715,19 @@ class _MemberRow extends ConsumerWidget {
         title: Text('${member.username} #${member.tagNumber}'),
         direction: Axis.vertical,
         actions: [
+          FButton(
+            variant: .outline,
+            onPress: () {
+              Navigator.of(dialogCtx).pop();
+              _toggleCoordinator(context, ref, isCoordinator);
+            },
+            child: Text(
+              (isCoordinator
+                      ? 'lobby.coordinator.removeAction'
+                      : 'lobby.coordinator.makeAction')
+                  .tr(),
+            ),
+          ),
           FButton(
             variant: .destructive,
             onPress: () {
@@ -714,12 +746,53 @@ class _MemberRow extends ConsumerWidget {
     );
   }
 
+  Future<void> _toggleCoordinator(
+    BuildContext context,
+    WidgetRef ref,
+    bool isCoordinator,
+  ) async {
+    final nextRole = isCoordinator
+        ? LobbyMemberRole.member
+        : LobbyMemberRole.coordinator;
+    try {
+      await ref
+          .read(lobbyMembersControllerProvider(lobbyId).notifier)
+          .setRole(lobbyId, member.userId, nextRole);
+      if (!context.mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.check),
+        title: Text(
+          (isCoordinator
+                  ? 'lobby.coordinator.removeSuccess'
+                  : 'lobby.coordinator.setSuccess')
+              .tr(namedArgs: {'username': member.username}),
+        ),
+        alignment: .bottomCenter,
+      );
+    } catch (e, st) {
+      Talker().handle(e, st, 'Set member role failed');
+      if (context.mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: Text('error'.tr()),
+          description: Text('lobby.coordinator.failed'.tr()),
+          alignment: .bottomCenter,
+        );
+      }
+    }
+  }
+
   void _confirmKick(BuildContext context, WidgetRef ref) {
     showFDialog(
       context: context,
       builder: (dialogCtx, style, animation) => FDialog(
         animation: animation,
-        title: Text('lobby.kick.title'.tr(namedArgs: {'username': member.username})),
+        title: Text(
+          'lobby.kick.title'.tr(namedArgs: {'username': member.username}),
+        ),
         body: Text('lobby.kick.message'.tr()),
         direction: Axis.horizontal,
         actions: [
@@ -764,9 +837,11 @@ class _MemberRow extends ConsumerWidget {
         ? member.username[0].toUpperCase()
         : '?';
 
-    // Captain can kick any non-captain member who isn't themselves.
-    final canKick =
+    // Captain-only row menu: kick, or grant/revoke coordinator — never for
+    // the captain's own row or the viewer's own row.
+    final canManageRow =
         isCaptain && !_isMemberTheCaptain && !_isMemberCurrentUser;
+    final isCoordinator = member.role == LobbyMemberRole.coordinator;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -806,22 +881,29 @@ class _MemberRow extends ConsumerWidget {
                     ),
                     if (_isMemberTheCaptain) ...[
                       const SizedBox(width: 4),
-                      Icon(FLucideIcons.crown,
-                          size: 11, color: colors.mutedForeground),
+                      Icon(
+                        FLucideIcons.crown,
+                        size: 11,
+                        color: colors.mutedForeground,
+                      ),
+                    ] else if (isCoordinator) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        FLucideIcons.shield,
+                        size: 11,
+                        color: colors.mutedForeground,
+                      ),
                     ],
                   ],
                 ),
                 Text(
                   '#${member.tagNumber}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colors.mutedForeground,
-                  ),
+                  style: TextStyle(fontSize: 11, color: colors.mutedForeground),
                 ),
               ],
             ),
           ),
-          if (canKick)
+          if (canManageRow)
             GestureDetector(
               onTap: () => _showMemberMenu(context, ref),
               child: Container(
@@ -830,10 +912,14 @@ class _MemberRow extends ConsumerWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                      color: colors.border.withValues(alpha: 0.6)),
+                    color: colors.border.withValues(alpha: 0.6),
+                  ),
                 ),
-                child: Icon(FLucideIcons.ellipsis,
-                    size: 14, color: colors.mutedForeground),
+                child: Icon(
+                  FLucideIcons.ellipsis,
+                  size: 14,
+                  color: colors.mutedForeground,
+                ),
               ),
             ),
         ],
@@ -860,9 +946,7 @@ class _SettingsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final fg = destructive
-        ? colors.destructive
-        : colors.foreground;
+    final fg = destructive ? colors.destructive : colors.foreground;
     final iconColor = destructive
         ? colors.destructive
         : colors.secondaryForeground;
@@ -887,8 +971,7 @@ class _SettingsRow extends StatelessWidget {
             ),
             if (badge != null) ...[
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   color: _crimsonTint,
                   borderRadius: BorderRadius.circular(6),

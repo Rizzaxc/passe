@@ -121,8 +121,9 @@ class _HealthTabState extends ConsumerState<HealthTab> {
               index: _currentIndex,
               onChange: _onTabChanged,
             ),
-            children:
-                _buildTabEntries(hasUnseenAchievements: hasUnseenAchievements),
+            children: _buildTabEntries(
+              hasUnseenAchievements: hasUnseenAchievements,
+            ),
           );
         },
       ),
@@ -151,7 +152,10 @@ class _DottedIcon extends StatelessWidget {
             decoration: BoxDecoration(
               color: pbBlue,
               shape: BoxShape.circle,
-              border: Border.all(color: context.theme.colors.background, width: 1.5),
+              border: Border.all(
+                color: context.theme.colors.background,
+                width: 1.5,
+              ),
             ),
           ),
         ),
@@ -168,7 +172,8 @@ class _SyncButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final syncing = ref.watch(healthSyncControllerProvider) == HealthSyncPhase.syncing;
+    final syncing =
+        ref.watch(healthSyncControllerProvider) == HealthSyncPhase.syncing;
 
     return FButton.icon(
       variant: .ghost,
@@ -176,37 +181,54 @@ class _SyncButton extends ConsumerWidget {
           ? null
           : () async {
               try {
-                final result =
-                    await ref.read(healthSyncControllerProvider.notifier).syncNow();
+                final result = await ref
+                    .read(healthSyncControllerProvider.notifier)
+                    .syncNow();
                 if (!context.mounted) return;
                 showFToast(
                   context: context,
-                  title: Text(result.skipped
-                      ? 'health.sync.skipped'.tr()
-                      : 'health.sync.done'.tr(namedArgs: {
-                          'days': '${result.daysSynced}',
-                          'activities': '${result.activitiesCaptured}',
-                        })),
+                  title: Text(
+                    result.skipped
+                        ? 'health.sync.skipped'.tr()
+                        : 'health.sync.done'.tr(
+                            namedArgs: {
+                              'days': '${result.daysSynced}',
+                              'activities': '${result.activitiesCaptured}',
+                            },
+                          ),
+                  ),
                 );
                 // Celebrate any unlock/level-up from this sync.
                 if (result.leveledUp) {
-                  showFToast(context: context, title: Text('health.achievements.toast.levelUp'.tr()));
+                  showFToast(
+                    context: context,
+                    title: Text('health.achievements.toast.levelUp'.tr()),
+                  );
                 } else if (result.achievementsUnlocked > 0) {
                   showFToast(
                     context: context,
-                    title: Text('health.achievements.toast.unlocked'
-                        .tr(namedArgs: {'count': '${result.achievementsUnlocked}'})),
+                    title: Text(
+                      'health.achievements.toast.unlocked'.tr(
+                        namedArgs: {'count': '${result.achievementsUnlocked}'},
+                      ),
+                    ),
                   );
                 }
               } catch (_) {
                 if (context.mounted) {
-                  showFToast(context: context, title: Text('health.sync.failed'.tr()));
+                  showFToast(
+                    context: context,
+                    title: Text('health.sync.failed'.tr()),
+                  );
                 }
               }
             },
       child: syncing
           ? const SizedBox(
-              width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
           : Icon(FLucideIcons.refreshCw, size: 20),
     );
   }

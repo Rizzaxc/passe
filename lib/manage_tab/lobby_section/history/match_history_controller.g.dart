@@ -122,7 +122,7 @@ abstract class _$LobbyMatchHistoryController
   FutureOr<List<LobbyMatch>> build(String lobbyId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<List<LobbyMatch>>, List<LobbyMatch>>;
     final element =
@@ -133,6 +133,6 @@ abstract class _$LobbyMatchHistoryController
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

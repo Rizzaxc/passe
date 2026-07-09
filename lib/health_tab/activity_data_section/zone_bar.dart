@@ -2,6 +2,12 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+// 3-zone LT palette, shared with anything else that needs to color-code a
+// zone outside a ZoneBar (e.g. the Body tab's HR Zone card).
+const zoneEasyColor = Color(0xFF4F94CD); // calm blue
+const zoneModerateColor = Color(0xFFE0A800); // amber
+// Hard reuses the app's theme primary — read `context.theme.colors.primary`.
+
 /// Stacked 3-zone time bar (easy / moderate / hard) with a minute legend.
 class ZoneBar extends StatelessWidget {
   final int easy;
@@ -17,9 +23,6 @@ class ZoneBar extends StatelessWidget {
     this.compact = false,
   });
 
-  static const _easyColor = Color(0xFF4F94CD); // calm blue
-  static const _moderateColor = Color(0xFFE0A800); // amber
-
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
@@ -28,8 +31,8 @@ class ZoneBar extends StatelessWidget {
     if (total == 0) return const SizedBox.shrink();
 
     final segments = <(int, Color)>[
-      (easy, _easyColor),
-      (moderate, _moderateColor),
+      (easy, zoneEasyColor),
+      (moderate, zoneModerateColor),
       (hard, hardColor),
     ];
 
@@ -54,9 +57,21 @@ class ZoneBar extends StatelessWidget {
           Row(
             spacing: 12,
             children: [
-              _Legend(color: _easyColor, label: 'health.zone.easy'.tr(), seconds: easy),
-              _Legend(color: _moderateColor, label: 'health.zone.moderate'.tr(), seconds: moderate),
-              _Legend(color: hardColor, label: 'health.zone.hard'.tr(), seconds: hard),
+              _Legend(
+                color: zoneEasyColor,
+                label: 'health.zone.easy'.tr(),
+                seconds: easy,
+              ),
+              _Legend(
+                color: zoneModerateColor,
+                label: 'health.zone.moderate'.tr(),
+                seconds: moderate,
+              ),
+              _Legend(
+                color: hardColor,
+                label: 'health.zone.hard'.tr(),
+                seconds: hard,
+              ),
             ],
           ),
       ],
@@ -68,7 +83,11 @@ class _Legend extends StatelessWidget {
   final Color color;
   final String label;
   final int seconds;
-  const _Legend({required this.color, required this.label, required this.seconds});
+  const _Legend({
+    required this.color,
+    required this.label,
+    required this.seconds,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -80,11 +99,16 @@ class _Legend extends StatelessWidget {
         Container(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
         Text(
           '$label ${minutes}m',
-          style: context.theme.typography.body.xs.copyWith(color: context.theme.colors.mutedForeground),
+          style: context.theme.typography.body.xs.copyWith(
+            color: context.theme.colors.mutedForeground,
+          ),
         ),
       ],
     );

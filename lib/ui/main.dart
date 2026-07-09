@@ -1,6 +1,7 @@
 export '../notification/notification_icon_button.dart';
 export 'button_styles.dart';
 export 'calendar.dart';
+export 'district_select.dart';
 export 'dual_button.dart';
 export 'empty_section_placeholder.dart';
 export 'pill_toggle.dart';

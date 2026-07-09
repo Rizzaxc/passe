@@ -273,6 +273,7 @@ class ProfessionalDetailRoute extends GoRouteData
           path: '/manage',
           routes: [
             TypedGoRoute<ManageScheduleRoute>(path: 'schedule'),
+            TypedGoRoute<ManageRequestsRoute>(path: 'requests'),
             TypedGoRoute<ManageLobbyRoute>(
               path: 'lobby',
               routes: [
@@ -389,6 +390,18 @@ class ManageScheduleRoute extends GoRouteData with $ManageScheduleRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       ManageTab.withInitialTab(0);
+}
+
+@immutable
+class ManageRequestsRoute extends GoRouteData with $ManageRequestsRoute {
+  const ManageRequestsRoute();
+
+  // In pro mode, ManageTab's subtab list is [schedule, pending requests,
+  // history] instead of [schedule, lobby, coaching] — index 1 lands on
+  // pending requests only when pro mode is active (see ManageTab.build).
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ManageTab.withInitialTab(1);
 }
 
 @immutable

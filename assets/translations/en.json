@@ -81,10 +81,10 @@
         "hanoi": "Hanoi"
     },
     "district": {
-        "urban": "District",
-        "rural": "District",
-        "township": "Town",
-        "city": "City"
+        "ward": "Ward",
+        "commune": "Commune",
+        "searchHint": "Search wards, communes...",
+        "noResults": "No matching wards/communes found"
     },
     "homeTab": {
         "title": "Home",
@@ -119,6 +119,7 @@
         "challenger": {
             "title": "Challengers",
             "challenge": "Challenge",
+            "challengingAs": "Challenging as",
             "mmr": "MMR",
             "favorability": {
                 "underdog": "Underdog",
@@ -128,10 +129,28 @@
             "empty": {
                 "title": "No challengers found",
                 "message": "Try adjusting your filters or check back later"
+            },
+            "noLobby": {
+                "title": "You don't have a lobby yet",
+                "message": "Challenges are lobby vs lobby. Create your own lobby or join one to start challenging others.",
+                "findLobby": "Find a lobby",
+                "createLobby": "Create a lobby"
             }
         },
         "location": {
             "viewMap": "View Map",
+            "directions": "Directions",
+            "directionsFailed": "Couldn't open a maps app",
+            "address": "Address",
+            "amenities": "Amenities",
+            "amenity": {
+                "pitch": "Pitch/court",
+                "sports_centre": "Sports centre",
+                "stadium": "Stadium",
+                "swimming_pool": "Swimming pool"
+            },
+            "someUnmapped": "Some venues aren't mapped yet",
+            "roadmapNote": "Venue data is still being built out. Direct court booking arrives once we partner with local businesses.",
             "empty": {
                 "title": "No venues found",
                 "message": "Try searching by name or adjusting filters"
@@ -150,7 +169,6 @@
                 "message": "Try adjusting your filters or check back later"
             },
             "book": "Book",
-            "seeAll": "See all",
             "viewProfile": "View profile",
             "experience": "{years} years experience",
             "reviews": "{count} reviews",
@@ -219,6 +237,7 @@
         "ageGroup": "Age Group",
         "saveButton": "Save",
         "saveFailed": "Failed to save lobby",
+        "avatarPickFailed": "Failed to pick a photo",
         "emptyTitle": "No lobbies yet",
         "emptyMessage": "Create a lobby to start playing with others",
         "visibility": {
@@ -277,6 +296,17 @@
             "confirm": "Confirm",
             "failed": "Failed to remove member. Please try again."
         },
+        "memberRole": {
+            "member": "Member",
+            "coordinator": "Coordinator"
+        },
+        "coordinator": {
+            "makeAction": "Make Coordinator",
+            "removeAction": "Remove Coordinator role",
+            "setSuccess": "{username} is now a Coordinator",
+            "removeSuccess": "Removed {username}'s Coordinator role",
+            "failed": "Failed to update role. Please try again."
+        },
         "joinRequests": {
             "title": "Join Requests",
             "empty": "No pending join requests."
@@ -318,6 +348,7 @@
         "private": "Private",
         "privateDescription": "Only people with the link can join",
         "homeGround": "Home Ground",
+        "homeGroundDescription": "Members will use this as the default meeting point for activities",
         "homeGroundHint": "Search by venue name...",
         "homeGroundFreeHint": "Enter venue name or address...",
         "homeGroundFreeTextMode": "Enter manually",
@@ -473,7 +504,7 @@
         "location": "Location",
         "locationCity": "City",
         "locationDistrict": "District",
-        "locationDistrictHint": "Pick up to 3 districts",
+        "locationDistrictHint": "Pick up to 6 districts",
         "playtime": "Playtime",
         "sportProfile": "{} Profile",
         "noSportProfile": "No sport information provided",
@@ -526,17 +557,51 @@
             "notAvailableAndroid": "Health Connect is not available. Please install Health Connect from the Play Store."
         },
         "userHealth": {
-            "title": "Body",
-            "empty": "No health data yet. Tap sync to pull from your wearable."
+            "title": "Body"
+        },
+        "vitality": {
+            "title": "VITALITY SCORE",
+            "notEnoughData": "Not enough data yet — keep syncing for a couple weeks",
+            "streakBonus": "+{n} streak bonus",
+            "component": {
+                "consistency": "Consistency",
+                "load": "Load",
+                "recovery": "Recovery",
+                "volume": "Volume"
+            }
+        },
+        "hrZone": {
+            "title": "HR Zone",
+            "maxHrLine": "Max HR ~{value} bpm",
+            "zoneDesc": {
+                "easy": "Conversational pace. Builds your aerobic base and aids recovery.",
+                "moderate": "Sustainable tempo effort. Improves endurance and lactate clearance.",
+                "hard": "Above lactate threshold. Builds speed and anaerobic capacity."
+            },
+            "edit": {
+                "title": "Edit HR zone",
+                "description": "Declare your real lactate-threshold heart rates for more accurate zone breakdowns. Leave Max HR blank to let Passe estimate it from your age.",
+                "maxHrLabel": "Max HR (optional)",
+                "lt1Label": "LT1 — aerobic threshold",
+                "lt2Label": "LT2 — anaerobic threshold",
+                "invalid": "Enter valid HR values: LT1 < LT2, and both below Max HR.",
+                "save": "Save",
+                "saved": "HR zone updated"
+            }
         },
         "activityData": {
             "title": "Activity",
-            "empty": "No activity recaps yet. Confirmed sessions with workout data show up here.",
-            "selectSport": "Choose a sport to see your activity recaps."
+            "selectSport": "Choose a sport to see your activity recaps.",
+            "sample": {
+                "label": "Preview",
+                "session": "Your next session",
+                "caption": "Sync a confirmed session to replace this with your real data."
+            }
         },
         "achievements": {
             "title": "Achievements",
-            "empty": "No achievements yet. Sync your wearable to start earning XP.",
+            "emptyTitle": "No achievements yet",
+            "empty": "Sync your wearable after a session to start earning XP.",
             "inProgress": "In progress",
             "earned": "Unlocked",
             "completed": "Completed",

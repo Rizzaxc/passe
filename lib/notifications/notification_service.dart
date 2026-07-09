@@ -66,7 +66,7 @@ class NotificationService {
       // Foreground local-notification plugin (Android renders these; on iOS the
       // OS draws the banner from the notification block via the option below).
       await _local.initialize(
-        const InitializationSettings(
+        settings: const InitializationSettings(
           android: AndroidInitializationSettings('@mipmap/ic_launcher'),
           iOS: DarwinInitializationSettings(
             requestAlertPermission: false,
@@ -135,10 +135,10 @@ class NotificationService {
     // iOS already draws the banner (presentation options); only Android needs us.
     if (Platform.isIOS) return;
     await _local.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      NotificationDetails(
+      id: notification.hashCode,
+      title: notification.title,
+      body: notification.body,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _androidChannel.id,
           _androidChannel.name,

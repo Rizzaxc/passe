@@ -35,6 +35,7 @@ class ScheduleActivityController extends _$ScheduleActivityController {
     num? prepaymentAmount,
     int? confirmationThreshold,
     DateTime? confirmationDeadline,
+
     /// 0 = Mon … 6 = Sun (ISO ordering). null = one-off session.
     int? recurrenceDayOfWeek,
   }) async {
@@ -43,8 +44,7 @@ class ScheduleActivityController extends _$ScheduleActivityController {
       final user = ref.read(authControllerProvider).value;
       if (user == null || user.id == null) return;
 
-      final lobbyInfo =
-          ref.read(lobbyDetailControllerProvider(lobbyId)).value;
+      final lobbyInfo = ref.read(lobbyDetailControllerProvider(lobbyId)).value;
       if (lobbyInfo == null) return;
 
       final params = <String, dynamic>{
@@ -65,8 +65,9 @@ class ScheduleActivityController extends _$ScheduleActivityController {
         params['confirmation_threshold'] = confirmationThreshold;
       }
       if (confirmationDeadline != null) {
-        params['confirmation_deadline'] =
-            confirmationDeadline.toUtc().toIso8601String();
+        params['confirmation_deadline'] = confirmationDeadline
+            .toUtc()
+            .toIso8601String();
       }
       if (recurrenceDayOfWeek != null) {
         params['recurrence_day_of_week'] = recurrenceDayOfWeek;
@@ -80,23 +81,29 @@ class ScheduleActivityController extends _$ScheduleActivityController {
       // Post a feed item so the captain-side activity tab shows the new
       // session immediately. The `scheduled` update kind + blue tone
       // matches the existing UpdateKind / FeedTone vocabulary.
-      await supabase.from('lobby_feed_item').insert({
-        'lobby_id': lobbyId,
-        'author_id': user.id,
-        'kind': 'update',
-        'payload': {
-          'title': 'Lên lịch buổi chơi',
-          'kind': 'scheduled',
-          'tone': 'blue',
-          'fields': [
-            ['Ngày', _fmtDate(start)],
-            ['Giờ', '${_fmtTime(start)} - ${_fmtTime(end)}'],
-            if (recurrenceDayOfWeek != null) ['Lặp lại', 'Hằng tuần'],
-            if (prepaymentRequired && prepaymentAmount != null)
-              ['Đặt cọc', '$prepaymentAmount ${paymentType == ActivityPaymentType.da ? 'Đá' : 'đ'}'],
-          ],
-        },
-      }).timeout(const Duration(seconds: 5));
+      await supabase
+          .from('lobby_feed_item')
+          .insert({
+            'lobby_id': lobbyId,
+            'author_id': user.id,
+            'kind': 'update',
+            'payload': {
+              'title': 'Lên lịch buổi chơi',
+              'kind': 'scheduled',
+              'tone': 'blue',
+              'fields': [
+                ['Ngày', _fmtDate(start)],
+                ['Giờ', '${_fmtTime(start)} - ${_fmtTime(end)}'],
+                if (recurrenceDayOfWeek != null) ['Lặp lại', 'Hằng tuần'],
+                if (prepaymentRequired && prepaymentAmount != null)
+                  [
+                    'Đặt cọc',
+                    '$prepaymentAmount ${paymentType == ActivityPaymentType.da ? 'Đá' : 'đ'}',
+                  ],
+              ],
+            },
+          })
+          .timeout(const Duration(seconds: 5));
 
       ref.invalidate(lobbyFeedControllerProvider(lobbyId));
       ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
@@ -105,9 +112,11 @@ class ScheduleActivityController extends _$ScheduleActivityController {
     }
   }
 
-  /// Captain-side edit of an already-scheduled activity: updates the row
-  /// in place (RLS restricts UPDATE to the row's own `user_id`, i.e. the
-  /// captain who scheduled it) and posts a `rescheduled` update feed item.
+  /// Edits an already-scheduled activity: updates the row in place (RLS
+  /// permits either the row's own `user_id` or any captain/coordinator of
+  /// its lobby — schema/lobby_coordinator_role.sql — so this isn't limited
+  /// to whoever originally scheduled it) and posts a `rescheduled` update
+  /// feed item.
   Future<void> reschedule({
     required String activityId,
     required DateTime start,
@@ -118,6 +127,7 @@ class ScheduleActivityController extends _$ScheduleActivityController {
     num? prepaymentAmount,
     int? confirmationThreshold,
     DateTime? confirmationDeadline,
+
     /// 0 = Mon … 6 = Sun (ISO ordering). null = one-off session.
     int? recurrenceDayOfWeek,
   }) async {
@@ -136,27 +146,31 @@ class ScheduleActivityController extends _$ScheduleActivityController {
             'payment_type': prepaymentRequired ? paymentType?.db : null,
             'prepayment_amount': prepaymentRequired ? prepaymentAmount : null,
             'confirmation_threshold': confirmationThreshold,
-            'confirmation_deadline':
-                confirmationDeadline?.toUtc().toIso8601String(),
+            'confirmation_deadline': confirmationDeadline
+                ?.toUtc()
+                .toIso8601String(),
             'recurrence_day_of_week': recurrenceDayOfWeek,
           })
           .eq('id', activityId)
           .timeout(const Duration(seconds: 5));
 
-      await supabase.from('lobby_feed_item').insert({
-        'lobby_id': lobbyId,
-        'author_id': user.id,
-        'kind': 'update',
-        'payload': {
-          'title': 'Đổi giờ buổi chơi',
-          'kind': 'rescheduled',
-          'tone': 'crimson',
-          'fields': [
-            ['Ngày', _fmtDate(start)],
-            ['Giờ', '${_fmtTime(start)} - ${_fmtTime(end)}'],
-          ],
-        },
-      }).timeout(const Duration(seconds: 5));
+      await supabase
+          .from('lobby_feed_item')
+          .insert({
+            'lobby_id': lobbyId,
+            'author_id': user.id,
+            'kind': 'update',
+            'payload': {
+              'title': 'Đổi giờ buổi chơi',
+              'kind': 'rescheduled',
+              'tone': 'crimson',
+              'fields': [
+                ['Ngày', _fmtDate(start)],
+                ['Giờ', '${_fmtTime(start)} - ${_fmtTime(end)}'],
+              ],
+            },
+          })
+          .timeout(const Duration(seconds: 5));
 
       ref.invalidate(lobbyFeedControllerProvider(lobbyId));
       ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
@@ -165,9 +179,9 @@ class ScheduleActivityController extends _$ScheduleActivityController {
     }
   }
 
-  /// Captain-side cancellation: deletes the row (RLS-owner-scoped, same
-  /// as reschedule) and posts a `cancelled` update feed item so members
-  /// see why the pinned activity disappeared.
+  /// Cancels an activity: deletes the row (same RLS as reschedule — owner
+  /// or any captain/coordinator of the lobby) and posts a `cancelled`
+  /// update feed item so members see why the pinned activity disappeared.
   Future<void> cancel(String activityId) async {
     state = true;
     try {
@@ -180,17 +194,20 @@ class ScheduleActivityController extends _$ScheduleActivityController {
           .eq('id', activityId)
           .timeout(const Duration(seconds: 5));
 
-      await supabase.from('lobby_feed_item').insert({
-        'lobby_id': lobbyId,
-        'author_id': user.id,
-        'kind': 'update',
-        'payload': {
-          'title': 'Đã hủy buổi chơi',
-          'kind': 'cancelled',
-          'tone': 'crimson',
-          'fields': <List<String>>[],
-        },
-      }).timeout(const Duration(seconds: 5));
+      await supabase
+          .from('lobby_feed_item')
+          .insert({
+            'lobby_id': lobbyId,
+            'author_id': user.id,
+            'kind': 'update',
+            'payload': {
+              'title': 'Đã hủy buổi chơi',
+              'kind': 'cancelled',
+              'tone': 'crimson',
+              'fields': <List<String>>[],
+            },
+          })
+          .timeout(const Duration(seconds: 5));
 
       ref.invalidate(lobbyFeedControllerProvider(lobbyId));
       ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));

@@ -79,5 +79,10 @@
         </intent>
         <!-- Health Connect -->
         <package android:name="com.google.android.apps.healthdata"/>
+        <!-- Maps directions handoff (venue subtab) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="geo"/>
+        </intent>
     </queries>
 </manifest>

@@ -29,7 +29,12 @@ Future<List<AchievementProgress>> achievementProgressList(Ref ref) async {
 @riverpod
 Future<LevelSummary> levelSummary(Ref ref) async {
   final userId = ref.watch(currentUserIdProvider);
-  const empty = LevelSummary(level: 1, xpTotal: 0, currentFloor: 0, nextFloor: 50);
+  const empty = LevelSummary(
+    level: 1,
+    xpTotal: 0,
+    currentFloor: 0,
+    nextFloor: 50,
+  );
   if (userId == null) return empty;
 
   final rows = await Supabase.instance.client
@@ -44,7 +49,8 @@ Future<LevelSummary> levelSummary(Ref ref) async {
 /// Holds the most recent unlock/level-up payload from a sync, consumed and
 /// cleared by the achievements subtab to show the celebration sheet.
 @riverpod
-class AchievementCelebrationController extends _$AchievementCelebrationController {
+class AchievementCelebrationController
+    extends _$AchievementCelebrationController {
   @override
   AchievementCelebration? build() => null;
 

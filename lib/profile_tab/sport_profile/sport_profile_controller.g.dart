@@ -42,13 +42,13 @@ final class SoccerProfileControllerProvider
 }
 
 String _$soccerProfileControllerHash() =>
-    r'41240cdf16ed2069b0e21ed6eb396cafd5a038ad';
+    r'bd77c7b0dd05f6a400138da3b97c92247599ca54';
 
 abstract class _$SoccerProfileController extends $Notifier<SoccerProfileState> {
   SoccerProfileState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<SoccerProfileState, SoccerProfileState>;
     final element =
         ref.element
@@ -58,7 +58,7 @@ abstract class _$SoccerProfileController extends $Notifier<SoccerProfileState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -97,14 +97,14 @@ final class BasketballProfileControllerProvider
 }
 
 String _$basketballProfileControllerHash() =>
-    r'0f2f53f2f409e9e5f7da3aabb5d9334f9b544eba';
+    r'4325ba06d4f1f3709dec5c21d7bba059fbe4bc46';
 
 abstract class _$BasketballProfileController
     extends $Notifier<BasketballProfileState> {
   BasketballProfileState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<BasketballProfileState, BasketballProfileState>;
     final element =
@@ -115,7 +115,7 @@ abstract class _$BasketballProfileController
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -154,14 +154,14 @@ final class BadmintonProfileControllerProvider
 }
 
 String _$badmintonProfileControllerHash() =>
-    r'ecb8172476d7343823804818b6d6c96545656324';
+    r'76cdc248a5b1a59dfde2e556984bccd2643c2b41';
 
 abstract class _$BadmintonProfileController
     extends $Notifier<BadmintonProfileState> {
   BadmintonProfileState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<BadmintonProfileState, BadmintonProfileState>;
     final element =
         ref.element
@@ -171,7 +171,7 @@ abstract class _$BadmintonProfileController
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -208,13 +208,13 @@ final class TennisProfileControllerProvider
 }
 
 String _$tennisProfileControllerHash() =>
-    r'9cda373f93612b57163c53ec0dc76094c6378271';
+    r'1e5b2a7da27f3531e4038dce8d500980366275d9';
 
 abstract class _$TennisProfileController extends $Notifier<TennisProfileState> {
   TennisProfileState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<TennisProfileState, TennisProfileState>;
     final element =
         ref.element
@@ -224,7 +224,7 @@ abstract class _$TennisProfileController extends $Notifier<TennisProfileState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -263,14 +263,14 @@ final class PickleballProfileControllerProvider
 }
 
 String _$pickleballProfileControllerHash() =>
-    r'9d11355d22853ce11cbb920d66dc08c969f37bc3';
+    r'7f6f5b15f7de130d5991298873afa38a540e6b4e';
 
 abstract class _$PickleballProfileController
     extends $Notifier<PickleballProfileState> {
   PickleballProfileState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<PickleballProfileState, PickleballProfileState>;
     final element =
@@ -281,6 +281,6 @@ abstract class _$PickleballProfileController
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

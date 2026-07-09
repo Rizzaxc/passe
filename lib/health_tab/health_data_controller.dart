@@ -37,11 +37,11 @@ class DetectedWorkout {
 }
 
 int _ageMidpoint(AgeGroup? group) => switch (group) {
-      AgeGroup.student => 20,
-      AgeGroup.mature => 30,
-      AgeGroup.middleAge => 45,
-      null => 30,
-    };
+  AgeGroup.student => 20,
+  AgeGroup.mature => 30,
+  AgeGroup.middleAge => 45,
+  null => 30,
+};
 
 /// Resolves the caller's HR thresholds: user-declared values from
 /// `user_health_link`, else estimated from an age-bucket max HR. `estimated`
@@ -80,6 +80,39 @@ Future<HrThresholds> hrThresholds(Ref ref) async {
     lt2: lt2 ?? (resolvedMax * 0.88).round(),
     estimated: lt1 == null || lt2 == null,
   );
+}
+
+/// Saves the user's declared HR-zone thresholds to `user_health_link`.
+/// Pass `maxHeartRate: null` to fall back to the age-bucket estimate.
+@riverpod
+class HrThresholdController extends _$HrThresholdController {
+  @override
+  bool build() => false; // saving
+
+  Future<void> save({
+    required int lt1Bpm,
+    required int lt2Bpm,
+    int? maxHeartRate,
+  }) async {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
+    state = true;
+    try {
+      await Supabase.instance.client
+          .from('user_health_link')
+          .update({
+            'lt1_bpm': lt1Bpm,
+            'lt2_bpm': lt2Bpm,
+            'max_heart_rate': maxHeartRate,
+          })
+          .eq('user_id', userId)
+          .timeout(const Duration(seconds: 5));
+      ref.invalidate(hrThresholdsProvider);
+    } finally {
+      state = false;
+    }
+  }
 }
 
 /// Whole-body daily summaries for the last [healthBackfillDays] (direct select).
@@ -136,13 +169,20 @@ Future<List<DetectedWorkout>> detectedWorkouts(Ref ref) async {
   final thresholds = await ref.watch(hrThresholdsProvider.future);
   final service = ref.watch(healthDataServiceProvider.notifier);
 
-  final windowStart = DateTime.now().subtract(const Duration(days: healthBackfillDays));
-  final rows = await Supabase.instance.client.rpc('health_capture_candidates',
-      params: {'p_window_start': windowStart.toIso8601String()}).timeout(const Duration(seconds: 5));
+  final windowStart = DateTime.now().subtract(
+    const Duration(days: healthBackfillDays),
+  );
+  final rows = await Supabase.instance.client
+      .rpc(
+        'health_capture_candidates',
+        params: {'p_window_start': windowStart.toIso8601String()},
+      )
+      .timeout(const Duration(seconds: 5));
 
   final detected = <DetectedWorkout>[];
   for (final r in rows as List) {
-    if (r['confirmed'] == true) continue; // confirmed ones are auto-captured by sync
+    if (r['confirmed'] == true)
+      continue; // confirmed ones are auto-captured by sync
     final activity = Activity(
       userId: userId,
       id: r['activity_id'] as String,
@@ -150,17 +190,21 @@ Future<List<DetectedWorkout>> detectedWorkouts(Ref ref) async {
       startTime: DateTime.parse(r['start_time'] as String),
       endTime: DateTime.parse(r['end_time'] as String),
     );
-    final result =
-        await service.readActivityHealthData(activity: activity, thresholds: thresholds);
+    final result = await service.readActivityHealthData(
+      activity: activity,
+      thresholds: thresholds,
+    );
     if (result == null || result.evidence == HealthEvidence.none) continue;
-    detected.add(DetectedWorkout(
-      activityId: activity.id!,
-      startTime: activity.startTime,
-      endTime: activity.endTime!,
-      sportId: activity.sportId,
-      source: r['source'] as String,
-      evidence: result.evidence,
-    ));
+    detected.add(
+      DetectedWorkout(
+        activityId: activity.id!,
+        startTime: activity.startTime,
+        endTime: activity.endTime!,
+        sportId: activity.sportId,
+        source: r['source'] as String,
+        evidence: result.evidence,
+      ),
+    );
   }
   return detected;
 }

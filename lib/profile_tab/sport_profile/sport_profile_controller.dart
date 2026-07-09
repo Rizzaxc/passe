@@ -33,7 +33,9 @@ class SoccerProfileController extends _$SoccerProfileController {
           .timeout(const Duration(seconds: 5));
       if (response != null) {
         final profile = SoccerProfile.fromJson(response);
-        state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
+        if (ref.mounted) {
+          state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
+        }
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error fetching soccer profile');
@@ -49,10 +51,10 @@ class SoccerProfileController extends _$SoccerProfileController {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
     try {
-      await _supabase.from('soccer_profile').upsert({
-        'user_id': user!.id!,
-        ...state.profile.toJson(),
-      }).timeout(const Duration(seconds: 5));
+      await _supabase
+          .from('soccer_profile')
+          .upsert({'user_id': user!.id!, ...state.profile.toJson()})
+          .timeout(const Duration(seconds: 5));
       if (state.profile.eloSeed != null) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
@@ -67,7 +69,7 @@ class SoccerProfileController extends _$SoccerProfileController {
 
 typedef BasketballProfileState = ({
   BasketballProfile profile,
-  bool eloSeedLocked
+  bool eloSeedLocked,
 });
 
 @riverpod
@@ -92,7 +94,9 @@ class BasketballProfileController extends _$BasketballProfileController {
           .timeout(const Duration(seconds: 5));
       if (response != null) {
         final profile = BasketballProfile.fromJson(response);
-        state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
+        if (ref.mounted) {
+          state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
+        }
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error fetching basketball profile');
@@ -108,10 +112,10 @@ class BasketballProfileController extends _$BasketballProfileController {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
     try {
-      await _supabase.from('basketball_profile').upsert({
-        'user_id': user!.id!,
-        ...state.profile.toJson(),
-      }).timeout(const Duration(seconds: 5));
+      await _supabase
+          .from('basketball_profile')
+          .upsert({'user_id': user!.id!, ...state.profile.toJson()})
+          .timeout(const Duration(seconds: 5));
       if (state.profile.eloSeed != null) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
@@ -126,7 +130,7 @@ class BasketballProfileController extends _$BasketballProfileController {
 
 typedef BadmintonProfileState = ({
   BadmintonProfile profile,
-  bool eloSeedLocked
+  bool eloSeedLocked,
 });
 
 @riverpod
@@ -151,7 +155,9 @@ class BadmintonProfileController extends _$BadmintonProfileController {
           .timeout(const Duration(seconds: 5));
       if (response != null) {
         final profile = BadmintonProfile.fromJson(response);
-        state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
+        if (ref.mounted) {
+          state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
+        }
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error fetching badminton profile');
@@ -167,10 +173,10 @@ class BadmintonProfileController extends _$BadmintonProfileController {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
     try {
-      await _supabase.from('badminton_profile').upsert({
-        'user_id': user!.id!,
-        ...state.profile.toJson(),
-      }).timeout(const Duration(seconds: 5));
+      await _supabase
+          .from('badminton_profile')
+          .upsert({'user_id': user!.id!, ...state.profile.toJson()})
+          .timeout(const Duration(seconds: 5));
       if (state.profile.eloSeed != null) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
@@ -207,7 +213,9 @@ class TennisProfileController extends _$TennisProfileController {
           .timeout(const Duration(seconds: 5));
       if (response != null) {
         final profile = TennisProfile.fromJson(response);
-        state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
+        if (ref.mounted) {
+          state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
+        }
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error fetching tennis profile');
@@ -223,10 +231,10 @@ class TennisProfileController extends _$TennisProfileController {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
     try {
-      await _supabase.from('tennis_profile').upsert({
-        'user_id': user!.id!,
-        ...state.profile.toJson(),
-      }).timeout(const Duration(seconds: 5));
+      await _supabase
+          .from('tennis_profile')
+          .upsert({'user_id': user!.id!, ...state.profile.toJson()})
+          .timeout(const Duration(seconds: 5));
       if (state.profile.eloSeed != null) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
@@ -241,7 +249,7 @@ class TennisProfileController extends _$TennisProfileController {
 
 typedef PickleballProfileState = ({
   PickleballProfile profile,
-  bool eloSeedLocked
+  bool eloSeedLocked,
 });
 
 @riverpod
@@ -266,7 +274,9 @@ class PickleballProfileController extends _$PickleballProfileController {
           .timeout(const Duration(seconds: 5));
       if (response != null) {
         final profile = PickleballProfile.fromJson(response);
-        state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
+        if (ref.mounted) {
+          state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
+        }
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error fetching pickleball profile');
@@ -282,10 +292,10 @@ class PickleballProfileController extends _$PickleballProfileController {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
     try {
-      await _supabase.from('pickleball_profile').upsert({
-        'user_id': user!.id!,
-        ...state.profile.toJson(),
-      }).timeout(const Duration(seconds: 5));
+      await _supabase
+          .from('pickleball_profile')
+          .upsert({'user_id': user!.id!, ...state.profile.toJson()})
+          .timeout(const Duration(seconds: 5));
       if (state.profile.eloSeed != null) {
         state = (profile: state.profile, eloSeedLocked: true);
       }

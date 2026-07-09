@@ -43,6 +43,13 @@ class _ReviewSheet extends ConsumerStatefulWidget {
 
 class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
   double _rating = 5.0;
+  final _commentController = TextEditingController();
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     try {
@@ -52,6 +59,7 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
             bookingId: widget.bookingId,
             professionalId: widget.professionalId,
             rating: _rating,
+            comment: _commentController.text.trim(),
           );
     } catch (e, st) {
       Talker().handle(e, st, 'Coaching review submit failed');
@@ -112,6 +120,12 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
           style: context.theme.typography.body.sm.copyWith(
             color: colors.mutedForeground,
           ),
+        ),
+        FTextField(
+          label: const Text('Nhận xét (tuỳ chọn)'),
+          hint: 'Buổi tập thế nào?',
+          control: FTextFieldControl.managed(controller: _commentController),
+          maxLines: 3,
         ),
         FButton(
           onPress: saving ? null : _submit,

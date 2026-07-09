@@ -87,7 +87,7 @@ abstract class _$JoinRequestsController
   FutureOr<List<JoinRequest>> build(String lobbyId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<List<JoinRequest>>, List<JoinRequest>>;
     final element =
@@ -98,6 +98,6 @@ abstract class _$JoinRequestsController
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

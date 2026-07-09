@@ -44,7 +44,7 @@ abstract class _$DashboardMetrics extends $AsyncNotifier<List<HealthMetric>> {
   FutureOr<List<HealthMetric>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<List<HealthMetric>>, List<HealthMetric>>;
     final element =
@@ -55,6 +55,6 @@ abstract class _$DashboardMetrics extends $AsyncNotifier<List<HealthMetric>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

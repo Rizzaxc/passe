@@ -13,6 +13,9 @@ class ProfessionalServiceOption {
   final String? description;
   final double? hourlyRate;
   final int? minDurationMinutes;
+  final int? maxParticipants;
+  final int sessionCount;
+  final String pricingMode; // 'per_session' | 'wholesale'
 
   const ProfessionalServiceOption({
     required this.id,
@@ -20,7 +23,13 @@ class ProfessionalServiceOption {
     this.description,
     this.hourlyRate,
     this.minDurationMinutes,
+    this.maxParticipants,
+    required this.sessionCount,
+    required this.pricingMode,
   });
+
+  bool get isPackage => sessionCount > 1;
+  bool get isGroup => (maxParticipants ?? 1) > 1;
 
   factory ProfessionalServiceOption.fromJson(Map<String, dynamic> json) {
     return ProfessionalServiceOption(
@@ -29,6 +38,9 @@ class ProfessionalServiceOption {
       description: json['service_description'] as String?,
       hourlyRate: double.tryParse(json['hourly_rate']?.toString() ?? ''),
       minDurationMinutes: (json['min_duration_minutes'] as num?)?.toInt(),
+      maxParticipants: (json['max_participants'] as num?)?.toInt(),
+      sessionCount: (json['session_count'] as num?)?.toInt() ?? 1,
+      pricingMode: json['pricing_mode'] as String? ?? 'per_session',
     );
   }
 }
@@ -54,11 +66,35 @@ Future<List<ProfessionalServiceOption>> professionalServices(
       .toList();
 }
 
+/// Soft availability check: existing *confirmed* bookings for this
+/// professional overlapping the requested window
+/// (`professional_booking_conflicts` RPC). Warns in the booking sheet UI —
+/// the hard gate is `accept_professional_booking`'s atomic overlap check.
+@riverpod
+Future<bool> hasBookingConflict(
+  Ref ref,
+  String professionalId,
+  DateTime start,
+  DateTime end,
+) async {
+  final response = await Supabase.instance.client
+      .rpc(
+        'professional_booking_conflicts',
+        params: {
+          'p_professional_id': professionalId,
+          'p_start': start.toUtc().toIso8601String(),
+          'p_end': end.toUtc().toIso8601String(),
+        },
+      )
+      .timeout(const Duration(seconds: 5));
+  return (response as List).isNotEmpty;
+}
+
 /// Creates a `professional_booking` row for one professional. RLS ("Clients
 /// can manage their own bookings") scopes the insert to the caller as
-/// `client_user_id`; the row starts at the default `requested` status and
-/// the professional accepts/rejects it out of band (no in-app flow for the
-/// professional side yet).
+/// `client_user_id`; the row starts at the default `requested` status —
+/// the professional accepts/rejects it via `accept_professional_booking`/
+/// `reject_professional_booking` (schema/professional_booking_actions.sql).
 @riverpod
 class ProfessionalBookingController extends _$ProfessionalBookingController {
   final supabase = Supabase.instance.client;
@@ -66,19 +102,54 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
   @override
   bool build(String professionalId) => false; // in-flight flag
 
+  /// [existingPackageId] schedules the next session of an already-purchased
+  /// rolling package (no new package row). [newPackageSessionCount] > 1
+  /// instead creates a fresh `professional_booking_package` container plus
+  /// this one first session. Neither set = a plain single booking.
+  /// [participantUserIds] populates `booking_additional_users` for a group
+  /// service. [activityId] links the new booking back to a lobby activity
+  /// (`activity.professional_booking_id`) for a captain/coordinator's
+  /// lobby-scoped booking.
   Future<void> book({
     required String serviceId,
     required DateTime start,
     required DateTime end,
     double? agreedRate,
     String? notes,
+    String? locationId,
+    List<String>? participantUserIds,
+    String? existingPackageId,
+    int? newPackageSessionCount,
+    double? newPackageTotalPrice,
+    String? activityId,
   }) async {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
     state = true;
     try {
-      await supabase
+      var packageId = existingPackageId;
+
+      if (packageId == null &&
+          newPackageSessionCount != null &&
+          newPackageSessionCount > 1) {
+        final packageRow = await supabase
+            .from('professional_booking_package')
+            .insert({
+              'client_user_id': userId,
+              'professional_id': professionalId,
+              'service_id': serviceId,
+              'sessions_total': newPackageSessionCount,
+              if (newPackageTotalPrice != null)
+                'total_price': newPackageTotalPrice,
+            })
+            .select('id')
+            .single()
+            .timeout(const Duration(seconds: 5));
+        packageId = packageRow['id'] as String;
+      }
+
+      final bookingRow = await supabase
           .from('professional_booking')
           .insert({
             'client_user_id': userId,
@@ -88,8 +159,32 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
             'booking_time_end': end.toUtc().toIso8601String(),
             if (agreedRate != null) 'agreed_rate': agreedRate,
             if (notes != null && notes.isNotEmpty) 'client_notes': notes,
+            if (locationId != null && locationId.isNotEmpty)
+              'location_id': locationId,
+            if (packageId != null) 'package_id': packageId,
           })
+          .select('id')
+          .single()
           .timeout(const Duration(seconds: 5));
+      final bookingId = bookingRow['id'] as String;
+
+      if (participantUserIds != null && participantUserIds.isNotEmpty) {
+        await supabase
+            .from('booking_additional_users')
+            .insert([
+              for (final uid in participantUserIds)
+                {'booking_id': bookingId, 'user_id': uid},
+            ])
+            .timeout(const Duration(seconds: 5));
+      }
+
+      if (activityId != null) {
+        await supabase
+            .from('activity')
+            .update({'professional_booking_id': bookingId})
+            .eq('id', activityId)
+            .timeout(const Duration(seconds: 5));
+      }
     } finally {
       state = false;
     }

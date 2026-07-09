@@ -51,7 +51,7 @@ final class HealthSyncControllerProvider
 }
 
 String _$healthSyncControllerHash() =>
-    r'db2e5a9bdde8578fe7095493300105dad1ff97ec';
+    r'51c10e97bdbdac8706a4334f80509e520fb1b164';
 
 /// The device → Supabase sync engine. Fired once on app launch (non-blocking)
 /// and on the explicit Sync button. Pull-to-refresh does NOT call this — it only
@@ -61,7 +61,7 @@ abstract class _$HealthSyncController extends $Notifier<HealthSyncPhase> {
   HealthSyncPhase build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<HealthSyncPhase, HealthSyncPhase>;
     final element =
         ref.element
@@ -71,6 +71,6 @@ abstract class _$HealthSyncController extends $Notifier<HealthSyncPhase> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

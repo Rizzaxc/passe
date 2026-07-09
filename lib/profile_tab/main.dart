@@ -11,9 +11,12 @@ import '../auth/auth_controller.dart';
 import '../core/model/enum.dart';
 import '../core/model/user_details.dart';
 import '../core/sport_selector.dart';
+import '../core/state/pro_mode_state.dart';
 import '../core/state/selected_sport_state.dart';
 import '../currency/da_appbar_button.dart';
 import '../notification/notification_icon_button.dart';
+import '../professional/controller.dart';
+import '../professional/pro_mode/service_editor_main.dart';
 import '../ui/main.dart';
 import 'age_group_selection_screen.dart';
 import 'change_password_screen.dart';
@@ -52,87 +55,140 @@ class ProfileTab extends ConsumerWidget {
             return const GuestProfileView();
           }
 
+          final linkedProfessionalId = ref
+              .watch(linkedProfessionalIdProvider)
+              .asData
+              ?.value;
+          final proModeActive =
+              ref.watch(proModeStateProvider).asData?.value ?? false;
+
+          if (linkedProfessionalId != null && proModeActive) {
+            return ProProfileView(professionalId: linkedProfessionalId);
+          }
+
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(authControllerProvider);
               await ref.read(authControllerProvider.future);
             },
             child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Section 1: Avatar + Account Info
-                _buildAvatar(context, ref, profileState),
-                const SizedBox(height: 16),
-                _buildAccountSection(context, ref, profileState, user),
-                const SizedBox(height: 24),
+              physics: const AlwaysScrollableScrollPhysics(),
+              // padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (linkedProfessionalId != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: FTileGroup(
+                        children: [
+                          FTile(
+                            prefix: const Icon(FLucideIcons.briefcaseBusiness),
+                            title: const Text('Chế Độ Chuyên Gia'),
+                            details: FSwitch(
+                              value: proModeActive,
+                              onChange: (v) => ref
+                                  .read(proModeStateProvider.notifier)
+                                  .set(v),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  // Section 1: Avatar + Account Info
+                  _buildAvatar(context, ref, profileState),
+                  const SizedBox(height: 16),
+                  _buildAccountSection(context, ref, profileState, user),
+                  const SizedBox(height: 24),
 
-                // Section 2: General Info
-                _buildGeneralInfoSection(context, ref, profileState.details),
-                const SizedBox(height: 24),
+                  // Section 2: General Info
+                  _buildGeneralInfoSection(context, ref, profileState.details),
+                  const SizedBox(height: 24),
 
-                // Section 3: Network & Industry Info
-                _buildNetworkIndustrySection(context, ref, profileState),
-                const SizedBox(height: 24),
+                  // Section 3: Network & Industry Info
+                  _buildNetworkIndustrySection(context, ref, profileState),
+                  const SizedBox(height: 24),
 
-                // Section 4: Sport-Specific Info
-                _buildSportInfoSection(context, ref),
-                const SizedBox(height: 24),
+                  // Section 4: Sport-Specific Info
+                  _buildSportInfoSection(context, ref),
+                  const SizedBox(height: 24),
 
-                // Commit Button
-                FButton(
-                  onPress: () async {
-                    try {
-                      final sport = ref
-                          .read(selectedSportStateProvider)
-                          .asData
-                          ?.value;
-                      await Future.wait([
-                        ref
-                            .read(profileControllerProvider.notifier)
-                            .commit(),
-                        if (sport != null && sport != Sport.others)
-                          switch (sport) {
-                            Sport.soccer => ref
-                                .read(soccerProfileControllerProvider.notifier)
-                                .commit(),
-                            Sport.basketball => ref
-                                .read(basketballProfileControllerProvider
-                                    .notifier)
-                                .commit(),
-                            Sport.badminton => ref
-                                .read(
-                                    badmintonProfileControllerProvider.notifier)
-                                .commit(),
-                            Sport.tennis => ref
-                                .read(tennisProfileControllerProvider.notifier)
-                                .commit(),
-                            Sport.pickleball => ref
-                                .read(pickleballProfileControllerProvider
-                                    .notifier)
-                                .commit(),
-                            Sport.others => Future.value(),
-                          },
-                      ]);
-                    } catch (e) {
-                      if (!context.mounted) return;
-                      showFToast(
-                        context: context,
-                        icon: const Icon(FLucideIcons.circleX),
-                        variant: .destructive,
-                        title: Text('error'.tr()),
-                        description: Text('errorGeneric'.tr()),
-                        alignment: .bottomCenter,
-                      );
-                    }
-                  },
-                  child: Text('profile.commit'.tr()),
-                ),
-              ],
+                  // Commit Button
+                  FButton(
+                    onPress: () async {
+                      try {
+                        final sport = ref
+                            .read(selectedSportStateProvider)
+                            .asData
+                            ?.value;
+                        await Future.wait([
+                          ref.read(profileControllerProvider.notifier).commit(),
+                          if (sport != null && sport != Sport.others)
+                            switch (sport) {
+                              Sport.soccer =>
+                                ref
+                                    .read(
+                                      soccerProfileControllerProvider.notifier,
+                                    )
+                                    .commit(),
+                              Sport.basketball =>
+                                ref
+                                    .read(
+                                      basketballProfileControllerProvider
+                                          .notifier,
+                                    )
+                                    .commit(),
+                              Sport.badminton =>
+                                ref
+                                    .read(
+                                      badmintonProfileControllerProvider
+                                          .notifier,
+                                    )
+                                    .commit(),
+                              Sport.tennis =>
+                                ref
+                                    .read(
+                                      tennisProfileControllerProvider.notifier,
+                                    )
+                                    .commit(),
+                              Sport.pickleball =>
+                                ref
+                                    .read(
+                                      pickleballProfileControllerProvider
+                                          .notifier,
+                                    )
+                                    .commit(),
+                              Sport.others => Future.value(),
+                            },
+                        ]);
+                      } on AvatarUploadFailedException {
+                        if (!context.mounted) return;
+                        showFToast(
+                          context: context,
+                          icon: const Icon(FLucideIcons.circleX),
+                          variant: .destructive,
+                          title: Text('profile.uploadFailed'.tr()),
+                          alignment: .bottomCenter,
+                        );
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        showFToast(
+                          context: context,
+                          icon: const Icon(FLucideIcons.circleX),
+                          variant: .destructive,
+                          title: Text('error'.tr()),
+                          description: Text('errorGeneric'.tr()),
+                          alignment: .bottomCenter,
+                        );
+                      }
+                    },
+                    child: Text('profile.commit'.tr()),
+                  ),
+                ],
+              ),
             ),
-          ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -201,7 +257,9 @@ class ProfileTab extends ConsumerWidget {
               FButton.icon(
                 onPress: () async {
                   try {
-                    ref.read(profileControllerProvider.notifier).uploadAvatar();
+                    await ref
+                        .read(profileControllerProvider.notifier)
+                        .uploadAvatar();
                   } catch (e) {
                     if (!context.mounted) return;
                     showFToast(
@@ -272,7 +330,10 @@ class ProfileTab extends ConsumerWidget {
             'profile.logout'.tr(),
             style: TextStyle(color: context.theme.colors.destructive),
           ),
-          details: Icon(FLucideIcons.logOut, color: context.theme.colors.destructive),
+          details: Icon(
+            FLucideIcons.logOut,
+            color: context.theme.colors.destructive,
+          ),
         ),
       ],
     );
@@ -340,9 +401,7 @@ class ProfileTab extends ConsumerWidget {
               ? const Icon(FLucideIcons.chevronRight)
               : Text(
                   'notSet'.tr(),
-                  style: TextStyle(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: TextStyle(color: context.theme.colors.mutedForeground),
                 ),
           onPress: () => Navigator.of(context).push(
             MaterialPageRoute(
@@ -385,11 +444,11 @@ class ProfileTab extends ConsumerWidget {
     final networkRowTitle = profileState.networks.isEmpty
         ? Text('profile.networkLabel'.tr())
         : Text(
-      profileState.networks
-          .map((e) => e.getLocalizedName(context))
-          .join(', '),
-      maxLines: 2,
-    );
+            profileState.networks
+                .map((e) => e.getLocalizedName(context))
+                .join(', '),
+            maxLines: 2,
+          );
     return Column(
       children: [
         FTileGroup(
@@ -417,11 +476,11 @@ class ProfileTab extends ConsumerWidget {
               title: networkRowTitle,
               suffix: profileState.networks.isEmpty
                   ? Text(
-                'notSet'.tr(),
-                style: TextStyle(
-                  color: context.theme.colors.mutedForeground,
-                ),
-              )
+                      'notSet'.tr(),
+                      style: TextStyle(
+                        color: context.theme.colors.mutedForeground,
+                      ),
+                    )
                   : null,
               onPress: () => Navigator.of(context).push(
                 MaterialPageRoute(
@@ -437,7 +496,10 @@ class ProfileTab extends ConsumerWidget {
 
   Widget _buildSportInfoSection(BuildContext context, WidgetRef ref) {
     final sportAsync = ref.watch(selectedSportStateProvider);
-    final sport = sportAsync.maybeWhen(data: (s) => s, orElse: () => Sport.others);
+    final sport = sportAsync.maybeWhen(
+      data: (s) => s,
+      orElse: () => Sport.others,
+    );
     final sportName = sport.getLocalizedName(context);
 
     return FTileGroup(
@@ -447,9 +509,7 @@ class ProfileTab extends ConsumerWidget {
           title: Text('profile.sportProfile'.tr(args: [sportName])),
           suffix: const Icon(FLucideIcons.chevronRight),
           onPress: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const SportProfileScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const SportProfileScreen()),
           ),
         ),
       ],

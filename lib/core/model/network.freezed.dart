@@ -15,9 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Network {
 
- int get id; String get name;// if representing a UserNetwork, can either be true or false.
-// if it's only for a Network, default to false
- bool get isAlumni; NetworkCategory get category; City? get city;
+ int get id; String get name; bool get isAlumni; NetworkCategory get category; City? get city;
 /// Create a copy of Network
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -216,8 +214,6 @@ class _Network extends Network {
 
 @override final  int id;
 @override final  String name;
-// if representing a UserNetwork, can either be true or false.
-// if it's only for a Network, default to false
 @override final  bool isAlumni;
 @override final  NetworkCategory category;
 @override final  City? city;

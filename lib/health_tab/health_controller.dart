@@ -35,12 +35,7 @@ const _healthDataTypes = <HealthDataType>[
 ];
 
 /// Represents the health service linking status
-enum HealthLinkStatus {
-  loading,
-  linked,
-  notLinked,
-  error,
-}
+enum HealthLinkStatus { loading, linked, notLinked, error }
 
 @riverpod
 class HealthController extends _$HealthController {
@@ -117,7 +112,10 @@ class HealthController extends _$HealthController {
           // Cache locally
           final prefs = UserPreferences.instance;
           await prefs.setBool(_prefKeyLinked, true);
-          await prefs.setString(_prefKeyPlatform, response['platform'] as String);
+          await prefs.setString(
+            _prefKeyPlatform,
+            response['platform'] as String,
+          );
           return HealthLinkStatus.linked;
         }
         // Permissions were revoked, need to re-link
@@ -166,11 +164,14 @@ class HealthController extends _$HealthController {
         return;
       }
 
-      await _supabase.from('user_health_link').upsert({
-        'user_id': userId,
-        'platform': platform.dbValue,
-        'linked_at': DateTime.now().toIso8601String(),
-      }).timeout(const Duration(seconds: 5));
+      await _supabase
+          .from('user_health_link')
+          .upsert({
+            'user_id': userId,
+            'platform': platform.dbValue,
+            'linked_at': DateTime.now().toIso8601String(),
+          })
+          .timeout(const Duration(seconds: 5));
 
       // Cache locally
       final prefs = UserPreferences.instance;

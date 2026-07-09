@@ -1,13 +1,17 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/model/enum.dart';
 import '../../../core/model/lobby.dart';
 import '../../../core/model/timeslot.dart';
 import '../../../ui/main.dart';
+import '../lobby_avatar.dart';
 import 'home_ground_selector.dart';
 import 'lobby_controller.dart';
 
@@ -45,8 +49,9 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
   @override
   void initState() {
     super.initState();
-    _nameController =
-        TextEditingController(text: widget.existingLobby?.name ?? '');
+    _nameController = TextEditingController(
+      text: widget.existingLobby?.name ?? '',
+    );
     if (widget.existingLobby != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -68,8 +73,9 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
   @override
   Widget build(BuildContext context) {
     final formState = ref.watch(lobbyFormControllerProvider(widget.lobbyId));
-    final notifier =
-        ref.read(lobbyFormControllerProvider(widget.lobbyId).notifier);
+    final notifier = ref.read(
+      lobbyFormControllerProvider(widget.lobbyId).notifier,
+    );
     final lobby = formState.lobby;
 
     return Form(
@@ -78,107 +84,143 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
         controller: _scrollController,
         primary: false,
         child: Column(
-              spacing: 16,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+          spacing: 16,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Avatar
+            _AvatarSection(
+              lobbyId: widget.lobbyId,
+              name: lobby.name,
+              hasAvatar: lobby.details?.hasAvatar ?? false,
+              pickedAvatar: formState.pickedAvatar,
+              onPick: () async {
+                try {
+                  await notifier.pickAvatar();
+                } catch (e) {
+                  if (!context.mounted) return;
+                  showFToast(
+                    context: context,
+                    icon: const Icon(FLucideIcons.circleX),
+                    variant: .destructive,
+                    title: Text('lobby.avatarPickFailed'.tr()),
+                    alignment: .bottomCenter,
+                  );
+                }
+              },
+              onRemove: notifier.removeAvatar,
+            ),
 
-                // Name
-                FTextFormField(
-                  hint: 'createLobby.lobbyNameHint'.tr(),
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  control: FTextFieldControl.managed(
-                    controller: _nameController,
-                    onChange: (value) =>
-                        notifier.updateDraft(name: value.text),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'lobby.nameRequired'.tr();
-                    }
-                    if (value.length < 3) {
-                      return 'lobby.nameTooShort'.tr();
-                    }
-                    return null;
-                  },
-                ),
+            // Name
+            FTextFormField(
+              hint: 'createLobby.lobbyNameHint'.tr(),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              control: FTextFieldControl.managed(
+                controller: _nameController,
+                onChange: (value) => notifier.updateDraft(name: value.text),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'lobby.nameRequired'.tr();
+                }
+                if (value.length < 3) {
+                  return 'lobby.nameTooShort'.tr();
+                }
+                return null;
+              },
+            ),
 
-
-                // Visibility
-                PSegmentedButton<LobbyVisibility>(
-                  label: Text('createLobby.visibility'.tr()),
-                  values: LobbyVisibility.values,
-                  selected: lobby.visibility,
-                  format: (v) => Text(v.getLocalizedName(context)),
-                  description: (v) =>
-                      'lobby.visibility.${v.name}Description'.tr(),
-                  onChange: (v) {
-                    if (v != null) notifier.updateDraft(visibility: v);
-                  },
-                ),
-
-
-                // Age Group
-                PSegmentedButton<AgeGroup>(
-                  label: Text('lobby.ageGroup'.tr()),
-                  values: AgeGroup.values,
-                  selected: lobby.details?.ageGroup,
-                  format: (ag) => FaIcon(switch (ag) {
-                    AgeGroup.student => FontAwesomeIcons.graduationCap,
-                    AgeGroup.mature => FontAwesomeIcons.briefcase,
-                    AgeGroup.middleAge => FontAwesomeIcons.wineGlass,
+            // Visibility
+            PSegmentedButton<LobbyVisibility>(
+              label: Text('createLobby.visibility'.tr()),
+              values: LobbyVisibility.values,
+              selected: lobby.visibility,
+              format: (v) => Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 2,
+                children: [
+                  Icon(switch (v) {
+                    LobbyVisibility.public => FLucideIcons.eye,
+                    LobbyVisibility.discoverable => FLucideIcons.eyeOff,
+                    LobbyVisibility.private => FLucideIcons.lock,
                   }),
-                  description: (ag) => ag.getLocalizedName(context),
-                  onChange: (ag) => notifier.updateDetails(ageGroup: ag),
-                  deselectable: true,
-                ),
+                  Text(
+                    v.getLocalizedName(context),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+              description: (v) => 'lobby.visibility.${v.name}Description'.tr(),
+              onChange: (v) {
+                if (v != null) notifier.updateDraft(visibility: v);
+              },
+            ),
 
+            // Age Group
+            PSegmentedButton<AgeGroup>(
+              label: Text('lobby.ageGroup'.tr()),
+              values: AgeGroup.values,
+              selected: lobby.details?.ageGroup,
+              format: (ag) => FaIcon(switch (ag) {
+                AgeGroup.student => FontAwesomeIcons.graduationCap,
+                AgeGroup.mature => FontAwesomeIcons.briefcase,
+                AgeGroup.middleAge => FontAwesomeIcons.wineGlass,
+              }),
+              description: (ag) => ag.getLocalizedName(context),
+              onChange: (ag) => notifier.updateDetails(ageGroup: ag),
+              deselectable: true,
+            ),
 
-                // Home Ground
-                HomeGroundField(
-                  value: lobby.homeGround,
-                  onChanged: (v) => notifier.updateDraft(homeGround: v),
-                  onFreeAddressChanged: notifier.updateFreeAddress,
-                ),
+            // Home Ground
+            HomeGroundField(
+              value: lobby.homeGround,
+              onChanged: (v) => notifier.updateDraft(homeGround: v),
+              onFreeAddressChanged: notifier.updateFreeAddress,
+            ),
 
+            // Playtime
+            _TimeslotSection(
+              playtime: lobby.playtime ?? [],
+              pendingDayChunk: _pendingDayChunk,
+              pendingDayOfWeek: _pendingDayOfWeek,
+              onDayChunkChanged: (chunk) =>
+                  setState(() => _pendingDayChunk = chunk),
+              onDayOfWeekChanged: (day) =>
+                  setState(() => _pendingDayOfWeek = day),
+              onAdd: () {
+                final timeslot = Timeslot(_pendingDayOfWeek, _pendingDayChunk);
+                final updated = <Timeslot>[...(lobby.playtime ?? [])];
+                if (!updated.contains(timeslot)) {
+                  updated.add(timeslot);
+                  notifier.updateDraft(playtime: updated);
+                }
+              },
+              onRemove: (timeslot) {
+                final updated = <Timeslot>[...(lobby.playtime ?? [])];
+                updated.remove(timeslot);
+                notifier.updateDraft(playtime: updated);
+              },
+            ),
 
-                // Playtime
-                _TimeslotSection(
-                  playtime: lobby.playtime ?? [],
-                  pendingDayChunk: _pendingDayChunk,
-                  pendingDayOfWeek: _pendingDayOfWeek,
-                  onDayChunkChanged: (chunk) =>
-                      setState(() => _pendingDayChunk = chunk),
-                  onDayOfWeekChanged: (day) =>
-                      setState(() => _pendingDayOfWeek = day),
-                  onAdd: () {
-                    final timeslot =
-                        Timeslot(_pendingDayOfWeek, _pendingDayChunk);
-                    final updated = <Timeslot>[...(lobby.playtime ?? [])];
-                    if (!updated.contains(timeslot)) {
-                      updated.add(timeslot);
-                      notifier.updateDraft(playtime: updated);
-                    }
-                  },
-                  onRemove: (timeslot) {
-                    final updated = <Timeslot>[...(lobby.playtime ?? [])];
-                    updated.remove(timeslot);
-                    notifier.updateDraft(playtime: updated);
-                  },
-                ),
-
-                // Save button
-                FButton(
-                  onPress: formState.isSaving ? null : () => _onSave(context),
-                  child: formState.isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(widget.lobbyId != null
+            // Save button
+            FButton(
+              onPress: formState.isSaving ? null : () => _onSave(context),
+              child: formState.isSaving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(
+                      widget.lobbyId != null
                           ? 'lobby.saveButton'.tr()
-                          : 'createLobby.create'.tr()),
-                ),
+                          : 'createLobby.create'.tr(),
+                    ),
+            ),
 
             const SizedBox(height: 16),
           ],
@@ -208,6 +250,80 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
         alignment: .bottomCenter,
       );
     }
+  }
+}
+
+class _AvatarSection extends StatelessWidget {
+  static const _size = 96.0;
+
+  final String? lobbyId;
+  final String name;
+  final bool hasAvatar;
+  final XFile? pickedAvatar;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+
+  const _AvatarSection({
+    required this.lobbyId,
+    required this.name,
+    required this.hasAvatar,
+    required this.pickedAvatar,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final radius = context.theme.style.borderRadius.md;
+    final showRemove = pickedAvatar != null || hasAvatar;
+
+    final preview = pickedAvatar != null
+        ? ClipRRect(
+            borderRadius: radius,
+            child: Image.file(
+              File(pickedAvatar!.path),
+              width: _size,
+              height: _size,
+              fit: BoxFit.cover,
+            ),
+          )
+        : LobbyAvatar(
+            lobbyId: lobbyId,
+            name: name,
+            hasAvatar: hasAvatar,
+            size: _size,
+            borderRadius: radius,
+            backgroundColor: colors.secondary,
+            foregroundColor: colors.primary,
+          );
+
+    return Center(
+      child: Column(
+        children: [
+          preview,
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (showRemove) ...[
+                FButton.icon(
+                  onPress: onRemove,
+                  variant: .ghost,
+                  child: const Icon(FLucideIcons.trash),
+                ),
+                const SizedBox(width: 12),
+              ],
+              FButton.icon(
+                onPress: onPick,
+                variant: .ghost,
+                child: const Icon(FLucideIcons.camera),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -266,8 +382,12 @@ class _TimeslotSection extends StatelessWidget {
                   children: [
                     if (playtime.isEmpty)
                       Padding(
-                        padding:
-                            const EdgeInsetsDirectional.fromSTEB(4, 4, 0, 4),
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                          4,
+                          4,
+                          0,
+                          4,
+                        ),
                         child: Text(
                           'homeTab.filter.any'.tr(),
                           style: context.theme.typography.body.sm.copyWith(
@@ -286,22 +406,26 @@ class _TimeslotSection extends StatelessWidget {
                           ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                                vertical: 4, horizontal: 8),
+                              vertical: 4,
+                              horizontal: 8,
+                            ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               spacing: 4,
                               children: [
                                 Text(
                                   '${timeslot.dayChunk.getShortName(context)} ${timeslot.dayOfWeek.getShortName(context)}',
-                                  style: context.theme.typography.body.sm.copyWith(
-                                    color: context
-                                        .theme.colors.secondaryForeground,
-                                  ),
+                                  style: context.theme.typography.body.sm
+                                      .copyWith(
+                                        color: context
+                                            .theme
+                                            .colors
+                                            .secondaryForeground,
+                                      ),
                                 ),
                                 IconTheme(
                                   data: IconThemeData(
-                                    color:
-                                        context.theme.colors.mutedForeground,
+                                    color: context.theme.colors.mutedForeground,
                                     size: 15,
                                   ),
                                   child: const Icon(FLucideIcons.x),
@@ -321,13 +445,17 @@ class _TimeslotSection extends StatelessWidget {
         // Pickers row
         Row(
           spacing: 8,
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: FSelect<DayChunk>.rich(
                 hint: pendingDayChunk.getFullName(context),
                 format: (chunk) => chunk.getFullName(context),
                 autoHide: true,
+                contentConstraints: const FPortalConstraints(
+                  maxWidth: 180,
+                  maxHeight: 300,
+                ),
                 control: FSelectControl.lifted(
                   value: pendingDayChunk,
                   onChange: (chunk) {
@@ -348,6 +476,10 @@ class _TimeslotSection extends StatelessWidget {
                 hint: pendingDayOfWeek.getFullName(context),
                 format: (day) => day.getFullName(context),
                 autoHide: true,
+                contentConstraints: const FPortalConstraints(
+                  maxWidth: 180,
+                  maxHeight: 300,
+                ),
                 control: FSelectControl.lifted(
                   value: pendingDayOfWeek,
                   onChange: (day) {

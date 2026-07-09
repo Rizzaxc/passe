@@ -28,6 +28,14 @@ void routeNotificationTap(GoRouter router, Map<String, dynamic>? data) {
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
     // Lobby invite — go to the manage/lobby tab so they see their pending invites.
     NotificationKind.lobbyInvite => const ManageLobbyRoute().location,
+    // A new request came in for the linked professional — their pending-requests subtab.
+    NotificationKind.professionalBookingRequested =>
+      const ManageRequestsRoute().location,
+    // The professional responded — the client's own booking lives in their schedule/coaching view.
+    NotificationKind.professionalBookingConfirmed =>
+      const ManageScheduleRoute().location,
+    NotificationKind.professionalBookingRejected =>
+      const ManageScheduleRoute().location,
   };
 
   if (location != null) router.go(location);

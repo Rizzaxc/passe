@@ -57,7 +57,7 @@ abstract class _$ScheduleEvents
   FutureOr<Map<DateTime, List<ScheduleEvent>>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -75,6 +75,6 @@ abstract class _$ScheduleEvents
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

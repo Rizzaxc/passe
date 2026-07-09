@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LobbyDetails {
 
- AgeGroup? get ageGroup; int? get skill;
+ AgeGroup? get ageGroup; int? get skill; bool get hasAvatar;
 /// Create a copy of LobbyDetails
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $LobbyDetailsCopyWith<LobbyDetails> get copyWith => _$LobbyDetailsCopyWithImpl<L
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyDetails&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&(identical(other.skill, skill) || other.skill == skill));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyDetails&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&(identical(other.skill, skill) || other.skill == skill)&&(identical(other.hasAvatar, hasAvatar) || other.hasAvatar == hasAvatar));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,ageGroup,skill);
+int get hashCode => Object.hash(runtimeType,ageGroup,skill,hasAvatar);
 
 @override
 String toString() {
-  return 'LobbyDetails(ageGroup: $ageGroup, skill: $skill)';
+  return 'LobbyDetails(ageGroup: $ageGroup, skill: $skill, hasAvatar: $hasAvatar)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $LobbyDetailsCopyWith<$Res>  {
   factory $LobbyDetailsCopyWith(LobbyDetails value, $Res Function(LobbyDetails) _then) = _$LobbyDetailsCopyWithImpl;
 @useResult
 $Res call({
- AgeGroup? ageGroup, int? skill
+ AgeGroup? ageGroup, int? skill, bool hasAvatar
 });
 
 
@@ -65,11 +65,12 @@ class _$LobbyDetailsCopyWithImpl<$Res>
 
 /// Create a copy of LobbyDetails
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? ageGroup = freezed,Object? skill = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? ageGroup = freezed,Object? skill = freezed,Object? hasAvatar = null,}) {
   return _then(_self.copyWith(
 ageGroup: freezed == ageGroup ? _self.ageGroup : ageGroup // ignore: cast_nullable_to_non_nullable
 as AgeGroup?,skill: freezed == skill ? _self.skill : skill // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,hasAvatar: null == hasAvatar ? _self.hasAvatar : hasAvatar // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -154,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( AgeGroup? ageGroup,  int? skill)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( AgeGroup? ageGroup,  int? skill,  bool hasAvatar)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LobbyDetails() when $default != null:
-return $default(_that.ageGroup,_that.skill);case _:
+return $default(_that.ageGroup,_that.skill,_that.hasAvatar);case _:
   return orElse();
 
 }
@@ -175,10 +176,10 @@ return $default(_that.ageGroup,_that.skill);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( AgeGroup? ageGroup,  int? skill)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( AgeGroup? ageGroup,  int? skill,  bool hasAvatar)  $default,) {final _that = this;
 switch (_that) {
 case _LobbyDetails():
-return $default(_that.ageGroup,_that.skill);case _:
+return $default(_that.ageGroup,_that.skill,_that.hasAvatar);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +196,10 @@ return $default(_that.ageGroup,_that.skill);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( AgeGroup? ageGroup,  int? skill)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( AgeGroup? ageGroup,  int? skill,  bool hasAvatar)?  $default,) {final _that = this;
 switch (_that) {
 case _LobbyDetails() when $default != null:
-return $default(_that.ageGroup,_that.skill);case _:
+return $default(_that.ageGroup,_that.skill,_that.hasAvatar);case _:
   return null;
 
 }
@@ -210,11 +211,12 @@ return $default(_that.ageGroup,_that.skill);case _:
 @JsonSerializable()
 
 class _LobbyDetails implements LobbyDetails {
-  const _LobbyDetails({this.ageGroup, this.skill});
+  const _LobbyDetails({this.ageGroup, this.skill, this.hasAvatar = false});
   factory _LobbyDetails.fromJson(Map<String, dynamic> json) => _$LobbyDetailsFromJson(json);
 
 @override final  AgeGroup? ageGroup;
 @override final  int? skill;
+@override@JsonKey() final  bool hasAvatar;
 
 /// Create a copy of LobbyDetails
 /// with the given fields replaced by the non-null parameter values.
@@ -229,16 +231,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyDetails&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&(identical(other.skill, skill) || other.skill == skill));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyDetails&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&(identical(other.skill, skill) || other.skill == skill)&&(identical(other.hasAvatar, hasAvatar) || other.hasAvatar == hasAvatar));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,ageGroup,skill);
+int get hashCode => Object.hash(runtimeType,ageGroup,skill,hasAvatar);
 
 @override
 String toString() {
-  return 'LobbyDetails(ageGroup: $ageGroup, skill: $skill)';
+  return 'LobbyDetails(ageGroup: $ageGroup, skill: $skill, hasAvatar: $hasAvatar)';
 }
 
 
@@ -249,7 +251,7 @@ abstract mixin class _$LobbyDetailsCopyWith<$Res> implements $LobbyDetailsCopyWi
   factory _$LobbyDetailsCopyWith(_LobbyDetails value, $Res Function(_LobbyDetails) _then) = __$LobbyDetailsCopyWithImpl;
 @override @useResult
 $Res call({
- AgeGroup? ageGroup, int? skill
+ AgeGroup? ageGroup, int? skill, bool hasAvatar
 });
 
 
@@ -266,11 +268,12 @@ class __$LobbyDetailsCopyWithImpl<$Res>
 
 /// Create a copy of LobbyDetails
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? ageGroup = freezed,Object? skill = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? ageGroup = freezed,Object? skill = freezed,Object? hasAvatar = null,}) {
   return _then(_LobbyDetails(
 ageGroup: freezed == ageGroup ? _self.ageGroup : ageGroup // ignore: cast_nullable_to_non_nullable
 as AgeGroup?,skill: freezed == skill ? _self.skill : skill // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,hasAvatar: null == hasAvatar ? _self.hasAvatar : hasAvatar // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

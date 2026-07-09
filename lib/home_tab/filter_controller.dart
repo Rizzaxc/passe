@@ -11,16 +11,20 @@ class FilterData {
   final Set<District> districts;
   final List<Timeslot> schedule;
 
-  /// Professional-subtab only: narrow the discovery feed to a single role.
-  /// `null` = show both coaches and referees (the default).
-  final ProfessionalRole? role;
+  /// Professional-subtab only: which roles to show, each independently
+  /// checked. Both checked by default. `setRoleVisible` refuses to empty
+  /// this set — "show neither" isn't a real filter state.
+  final Set<ProfessionalRole> visibleRoles;
 
   FilterData({
     this.search = '',
     this.city = City.hochiminh,
     this.districts = const {},
     this.schedule = const [],
-    this.role,
+    this.visibleRoles = const {
+      ProfessionalRole.coach,
+      ProfessionalRole.referee,
+    },
   });
 
   FilterData copyWith({
@@ -28,15 +32,14 @@ class FilterData {
     City? city,
     Set<District>? districts,
     List<Timeslot>? schedule,
-    ProfessionalRole? role,
-    bool clearRole = false,
+    Set<ProfessionalRole>? visibleRoles,
   }) {
     return FilterData(
       search: search ?? this.search,
       city: city ?? this.city,
       districts: districts ?? this.districts,
       schedule: schedule ?? this.schedule,
-      role: clearRole ? null : (role ?? this.role),
+      visibleRoles: visibleRoles ?? this.visibleRoles,
     );
   }
 }
@@ -53,13 +56,18 @@ class FilterState extends _$FilterState {
         ? location.city!
         : City.hochiminh;
 
-    final districts = location?.districts
+    final districts =
+        location?.districts
             .map((id) => VietnamLocationData.instance.findDistrictById(id))
             .whereType<District>()
             .toSet() ??
         {};
 
-    return FilterData(city: city, districts: districts, schedule: List.of(playtime));
+    return FilterData(
+      city: city,
+      districts: districts,
+      schedule: List.of(playtime),
+    );
   }
 
   void setFilter(String value) {
@@ -73,7 +81,7 @@ class FilterState extends _$FilterState {
   }
 
   void setDistricts(Set<District> districts) {
-    while (districts.length > 3) {
+    while (districts.length > 6) {
       districts.remove(districts.first);
     }
     state = state.copyWith(districts: districts);
@@ -86,15 +94,19 @@ class FilterState extends _$FilterState {
     state = state.copyWith(schedule: schedule);
   }
 
-  /// `null` clears the role filter (both roles shown). Only the professional
-  /// subtab reads this field.
-  void setRole(ProfessionalRole? role) {
-    state = role == null
-        ? state.copyWith(clearRole: true)
-        : state.copyWith(role: role);
+  /// Checks/unchecks one role's checkbox. Only the professional subtab
+  /// reads this field. Refuses to uncheck the last remaining role — at
+  /// least one must stay visible.
+  void setRoleVisible(ProfessionalRole role, bool visible) {
+    final updated = Set<ProfessionalRole>.of(state.visibleRoles);
+    if (visible) {
+      updated.add(role);
+    } else if (updated.length > 1) {
+      updated.remove(role);
+    }
+    state = state.copyWith(visibleRoles: updated);
   }
 
   /// TODO: Send filter settings to server
-  Future<void> onCommit() async {
-  }
+  Future<void> onCommit() async {}
 }

@@ -86,7 +86,7 @@ abstract class _$LobbyHistoryController extends $AsyncNotifier<List<Activity>> {
   FutureOr<List<Activity>> build(String lobbyId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<List<Activity>>, List<Activity>>;
     final element =
         ref.element
@@ -96,6 +96,6 @@ abstract class _$LobbyHistoryController extends $AsyncNotifier<List<Activity>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

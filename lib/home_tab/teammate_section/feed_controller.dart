@@ -21,17 +21,20 @@ class TeammateFeed extends _$TeammateFeed {
     final timeslots = Timeslot.listToJson(filter.schedule);
     final districtIds = filter.districts.map((d) => d.id).toList();
 
-    final response = await Supabase.instance.client.rpc(
-      'home_teammate_lobby_data',
-      params: {
-        'p_sport_id': sport.index,
-        'p_timeslots': timeslots,
-        'p_city': filter.city.dbIndex,
-        'p_districts': districtIds,
-        'p_page_size': 20,
-        'p_page_number': 1,
-      },
-    ).timeout(const Duration(seconds: 5));
+    final response = await Supabase.instance.client
+        .rpc(
+          'home_teammate_lobby_data',
+          params: {
+            'p_sport_id': sport.index,
+            'p_timeslots': timeslots,
+            'p_city': filter.city.dbIndex,
+            'p_districts': districtIds,
+            'p_search': filter.search,
+            'p_page_size': 20,
+            'p_page_number': 1,
+          },
+        )
+        .timeout(const Duration(seconds: 5));
 
     return (response as List)
         .map((e) => LobbyFeedItem.fromJson(e as Map<String, dynamic>))
@@ -67,11 +70,14 @@ class JoinRequestState extends _$JoinRequestState {
     _set(lobbyId, true);
     try {
       final userId = ref.read(authControllerProvider).value?.id;
-      await Supabase.instance.client.from('lobby_befriend_record').insert({
-        'initiator_user_id': ?userId,
-        'target_lobby_id': lobbyId,
-        'interaction_type': 'request',
-      }).timeout(const Duration(seconds: 5));
+      await Supabase.instance.client
+          .from('lobby_befriend_record')
+          .insert({
+            'initiator_user_id': ?userId,
+            'target_lobby_id': lobbyId,
+            'interaction_type': 'request',
+          })
+          .timeout(const Duration(seconds: 5));
     } catch (e) {
       _set(lobbyId, previous);
       rethrow;

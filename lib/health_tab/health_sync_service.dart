@@ -9,6 +9,7 @@ import 'achievements_section/model/achievement_celebration.dart';
 import 'health_controller.dart';
 import 'health_data_controller.dart';
 import 'health_data_service.dart';
+import 'vitality_score_controller.dart';
 
 part 'health_sync_service.g.dart';
 
@@ -42,7 +43,8 @@ class HealthSyncController extends _$HealthSyncController {
   @override
   HealthSyncPhase build() => HealthSyncPhase.idle;
 
-  HealthDataService get _service => ref.read(healthDataServiceProvider.notifier);
+  HealthDataService get _service =>
+      ref.read(healthDataServiceProvider.notifier);
 
   /// Pull the device's data into Supabase. Self-guards guests / unlinked /
   /// revoked permissions, so it is safe to fire unconditionally at launch.
@@ -54,7 +56,8 @@ class HealthSyncController extends _$HealthSyncController {
 
     final status = await ref.read(healthControllerProvider.future);
     if (!ref.mounted) return const HealthSyncResult(skipped: true);
-    if (status != HealthLinkStatus.linked) return const HealthSyncResult(skipped: true);
+    if (status != HealthLinkStatus.linked)
+      return const HealthSyncResult(skipped: true);
 
     state = HealthSyncPhase.syncing;
     try {
@@ -65,9 +68,23 @@ class HealthSyncController extends _$HealthSyncController {
       if (!ref.mounted) return HealthSyncResult(daysSynced: daysSynced);
 
       final captured = await _captureActivities(userId, thresholds);
-      if (!ref.mounted) return HealthSyncResult(daysSynced: daysSynced, activitiesCaptured: captured);
+      if (!ref.mounted)
+        return HealthSyncResult(
+          daysSynced: daysSynced,
+          activitiesCaptured: captured,
+        );
 
       final celebration = await _evaluateAchievements(userId);
+      if (!ref.mounted) {
+        return HealthSyncResult(
+          daysSynced: daysSynced,
+          activitiesCaptured: captured,
+          achievementsUnlocked: celebration?.unlocked.length ?? 0,
+          leveledUp: celebration?.leveledUp ?? false,
+        );
+      }
+
+      await _evaluateVitalityScore(userId);
       if (!ref.mounted) {
         return HealthSyncResult(
           daysSynced: daysSynced,
@@ -82,6 +99,7 @@ class HealthSyncController extends _$HealthSyncController {
       ref.invalidate(detectedWorkoutsProvider);
       ref.invalidate(achievementProgressListProvider);
       ref.invalidate(levelSummaryProvider);
+      ref.invalidate(vitalityScoreSummaryProvider);
 
       return HealthSyncResult(
         daysSynced: daysSynced,
@@ -113,15 +131,23 @@ class HealthSyncController extends _$HealthSyncController {
     final today = DateTime.now();
     final firstDay = lastSync != null
         ? DateTime(lastSync.year, lastSync.month, lastSync.day)
-        : DateTime(today.year, today.month, today.day)
-            .subtract(const Duration(days: healthBackfillDays));
+        : DateTime(
+            today.year,
+            today.month,
+            today.day,
+          ).subtract(const Duration(days: healthBackfillDays));
 
     var count = 0;
-    for (var day = firstDay;
-        !day.isAfter(DateTime(today.year, today.month, today.day));
-        day = day.add(const Duration(days: 1))) {
+    for (
+      var day = firstDay;
+      !day.isAfter(DateTime(today.year, today.month, today.day));
+      day = day.add(const Duration(days: 1))
+    ) {
       if (!ref.mounted) return count;
-      final summary = await _service.readDailyHealthSummary(userId: userId, date: day);
+      final summary = await _service.readDailyHealthSummary(
+        userId: userId,
+        date: day,
+      );
       if (summary != null) {
         await _service.saveDailySummary(summary);
         count++;
@@ -140,9 +166,15 @@ class HealthSyncController extends _$HealthSyncController {
   /// Auto-capture confirmed candidates with wearable evidence. Unconfirmed ones
   /// are left for the "Detected workouts" UI (see [detectedWorkoutsProvider]).
   Future<int> _captureActivities(String userId, HrThresholds thresholds) async {
-    final windowStart = DateTime.now().subtract(const Duration(days: healthBackfillDays));
-    final rows = await _supabase.rpc('health_capture_candidates',
-        params: {'p_window_start': windowStart.toIso8601String()}).timeout(const Duration(seconds: 5));
+    final windowStart = DateTime.now().subtract(
+      const Duration(days: healthBackfillDays),
+    );
+    final rows = await _supabase
+        .rpc(
+          'health_capture_candidates',
+          params: {'p_window_start': windowStart.toIso8601String()},
+        )
+        .timeout(const Duration(seconds: 5));
 
     var captured = 0;
     for (final r in rows as List) {
@@ -155,11 +187,16 @@ class HealthSyncController extends _$HealthSyncController {
         startTime: DateTime.parse(r['start_time'] as String),
         endTime: DateTime.parse(r['end_time'] as String),
       );
-      final result =
-          await _service.readActivityHealthData(activity: activity, thresholds: thresholds);
+      final result = await _service.readActivityHealthData(
+        activity: activity,
+        thresholds: thresholds,
+      );
       if (result == null || result.evidence == HealthEvidence.none) continue;
       await _service.saveActivityMetrics(result.metrics);
-      await _service.saveHrCurve(activityId: activity.id!, points: result.curve);
+      await _service.saveHrCurve(
+        activityId: activity.id!,
+        points: result.curve,
+      );
       captured++;
     }
     return captured;
@@ -174,16 +211,32 @@ class HealthSyncController extends _$HealthSyncController {
           .rpc('evaluate_achievements', params: {'p_user_id': userId})
           .timeout(const Duration(seconds: 5));
       if (res is! Map) return null;
-      final celebration =
-          AchievementCelebration.fromRpc(Map<String, dynamic>.from(res));
+      final celebration = AchievementCelebration.fromRpc(
+        Map<String, dynamic>.from(res),
+      );
       if (!celebration.isEmpty && ref.mounted) {
-        ref.read(achievementCelebrationControllerProvider.notifier).show(celebration);
+        ref
+            .read(achievementCelebrationControllerProvider.notifier)
+            .show(celebration);
         await ref.read(unseenAchievementsProvider.notifier).mark();
       }
       return celebration;
     } catch (e, st) {
       _talker.handle(e, st, 'Achievement evaluation failed');
       return null;
+    }
+  }
+
+  /// Re-run the vitality-score evaluator after fresh data lands. Own
+  /// try/catch, mirroring [_evaluateAchievements] — a failure here must never
+  /// block achievement unlocks or the sync toast.
+  Future<void> _evaluateVitalityScore(String userId) async {
+    try {
+      await _supabase
+          .rpc('evaluate_vitality_score', params: {'p_user_id': userId})
+          .timeout(const Duration(seconds: 5));
+    } catch (e, st) {
+      _talker.handle(e, st, 'Vitality score evaluation failed');
     }
   }
 
@@ -201,8 +254,10 @@ class HealthSyncController extends _$HealthSyncController {
       startTime: workout.startTime,
       endTime: workout.endTime,
     );
-    final result =
-        await _service.readActivityHealthData(activity: activity, thresholds: thresholds);
+    final result = await _service.readActivityHealthData(
+      activity: activity,
+      thresholds: thresholds,
+    );
     if (result == null) return false;
     await _service.saveActivityMetrics(result.metrics);
     await _service.saveHrCurve(activityId: activity.id!, points: result.curve);

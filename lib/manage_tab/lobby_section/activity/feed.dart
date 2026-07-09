@@ -40,37 +40,58 @@ enum UpdateKind {
   const UpdateKind(this.db, this.icon);
 
   static UpdateKind fromDb(String? raw) => UpdateKind.values.firstWhere(
-        (k) => k.db == raw,
-        orElse: () => UpdateKind.other,
-      );
+    (k) => k.db == raw,
+    orElse: () => UpdateKind.other,
+  );
 }
 
 /// Personal-action categories. Mirrors the picker catalog in
 /// `trigger_bar.dart` — every id the user can pick has an entry here.
 enum PersonalActionKind {
   comeEarly(
-      'come_early', 'Đến sớm khởi động', FeedTone.amber,
-      Icons.local_fire_department_outlined),
+    'come_early',
+    'Đến sớm khởi động',
+    FeedTone.amber,
+    Icons.local_fire_department_outlined,
+  ),
   late('late', 'Đến muộn', FeedTone.crimson, Icons.access_time_rounded),
   bringGear(
-      'bring_gear', 'Mang thêm gear', FeedTone.green,
-      Icons.sports_tennis_outlined),
+    'bring_gear',
+    'Mang thêm gear',
+    FeedTone.green,
+    Icons.sports_tennis_outlined,
+  ),
   needLift(
-      'need_lift', 'Cần đi nhờ', FeedTone.blue,
-      Icons.directions_car_outlined),
+    'need_lift',
+    'Cần đi nhờ',
+    FeedTone.blue,
+    Icons.directions_car_outlined,
+  ),
   offerLift(
-      'offer_lift', 'Cho đi nhờ', FeedTone.blue,
-      Icons.directions_car_outlined),
+    'offer_lift',
+    'Cho đi nhờ',
+    FeedTone.blue,
+    Icons.directions_car_outlined,
+  ),
   paid(
-      'paid', 'Đã chuyển tiền sân', FeedTone.green,
-      Icons.account_balance_wallet_outlined),
+    'paid',
+    'Đã chuyển tiền sân',
+    FeedTone.green,
+    Icons.account_balance_wallet_outlined,
+  ),
   skip('skip', 'Vắng buổi này', FeedTone.crimson, Icons.close_rounded),
   cheer(
-      'cheer', 'Tăng động năng lượng', FeedTone.neutral,
-      Icons.emoji_emotions_outlined),
+    'cheer',
+    'Tăng động năng lượng',
+    FeedTone.neutral,
+    Icons.emoji_emotions_outlined,
+  ),
   remindCaptain(
-      'remind_captain', 'Đã nhắc đội trưởng', FeedTone.neutral,
-      Icons.notifications_active_outlined);
+    'remind_captain',
+    'Đã nhắc đội trưởng',
+    FeedTone.neutral,
+    Icons.notifications_active_outlined,
+  );
 
   final String db;
   final String label;
@@ -79,11 +100,8 @@ enum PersonalActionKind {
 
   const PersonalActionKind(this.db, this.label, this.tone, this.icon);
 
-  static PersonalActionKind fromDb(String? raw) =>
-      PersonalActionKind.values.firstWhere(
-        (k) => k.db == raw,
-        orElse: () => PersonalActionKind.cheer,
-      );
+  static PersonalActionKind fromDb(String? raw) => PersonalActionKind.values
+      .firstWhere((k) => k.db == raw, orElse: () => PersonalActionKind.cheer);
 }
 
 /// Soft palette tones used by update cards, personal cards and chip
@@ -101,9 +119,9 @@ enum FeedTone {
   const FeedTone(this.fg, this.bg);
 
   static FeedTone fromDb(String? raw) => FeedTone.values.firstWhere(
-        (t) => t.name == raw,
-        orElse: () => FeedTone.neutral,
-      );
+    (t) => t.name == raw,
+    orElse: () => FeedTone.neutral,
+  );
 }
 
 /// Single reaction tally on a personal card (e.g. `(emoji: '👍', count: 3)`).
@@ -114,9 +132,9 @@ class FeedReaction {
   const FeedReaction({required this.emoji, required this.count});
 
   factory FeedReaction.fromJson(Map<String, dynamic> j) => FeedReaction(
-        emoji: j['emoji'] as String,
-        count: (j['count'] as num).toInt(),
-      );
+    emoji: j['emoji'] as String,
+    count: (j['count'] as num).toInt(),
+  );
 
   String get display => '$emoji $count';
 }
@@ -133,19 +151,22 @@ sealed class FeedItem {
     final kind = row['kind'] as String;
     final payload = row['payload'] as Map<String, dynamic>;
     final author = (row['author_username'] as String?) ?? '';
+    final authorId = row['author_id'] as String?;
     final time = _formatHm(DateTime.parse(row['created_at'] as String));
 
     switch (kind) {
       case 'update':
         return UpdateItem(
           author: author,
+          authorId: authorId,
           time: time,
           title: payload['title'] as String,
           kind: UpdateKind.fromDb(payload['kind'] as String?),
           tone: FeedTone.fromDb(payload['tone'] as String?),
           fields: (payload['fields'] as List)
               .map<(String, String)>(
-                  (f) => ((f as List)[0] as String, f[1] as String))
+                (f) => ((f as List)[0] as String, f[1] as String),
+              )
               .toList(),
         );
 
@@ -153,6 +174,7 @@ sealed class FeedItem {
         final rawReactions = payload['reactions'] as List?;
         return PersonalItem(
           author: author,
+          authorId: authorId,
           time: time,
           action: PersonalActionKind.fromDb(payload['action_kind'] as String?),
           detail: payload['detail'] as String?,
@@ -166,16 +188,18 @@ sealed class FeedItem {
 
       case 'poll':
         final tallies = (row['poll_tallies'] as Map?) ?? const {};
-        final options = (payload['options'] as List).indexed
-            .map<(String, int)>((entry) {
-          final (i, raw) = entry;
-          final label = (raw as Map<String, dynamic>)['label'] as String;
-          final count = (tallies['$i'] as num?)?.toInt() ?? 0;
-          return (label, count);
-        }).toList();
+        final options = (payload['options'] as List).indexed.map<(String, int)>(
+          (entry) {
+            final (i, raw) = entry;
+            final label = (raw as Map<String, dynamic>)['label'] as String;
+            final count = (tallies['$i'] as num?)?.toInt() ?? 0;
+            return (label, count);
+          },
+        ).toList();
         return PollItem(
           id: row['id'] as String,
           author: author,
+          authorId: authorId,
           time: time,
           question: payload['question'] as String,
           options: options,
@@ -187,6 +211,7 @@ sealed class FeedItem {
       case 'photo':
         return PhotoItem(
           author: author,
+          authorId: authorId,
           time: time,
           storagePath: payload['storage_path'] as String,
           caption: payload['caption'] as String?,
@@ -213,6 +238,7 @@ final class DayDivItem extends FeedItem {
 
 final class UpdateItem extends FeedItem {
   final String author;
+  final String? authorId;
   final String time;
   final String title;
   final UpdateKind kind;
@@ -220,6 +246,7 @@ final class UpdateItem extends FeedItem {
   final List<(String, String)> fields;
   const UpdateItem({
     required this.author,
+    required this.authorId,
     required this.time,
     required this.title,
     required this.kind,
@@ -230,12 +257,14 @@ final class UpdateItem extends FeedItem {
 
 final class PersonalItem extends FeedItem {
   final String author;
+  final String? authorId;
   final String time;
   final PersonalActionKind action;
   final String? detail;
   final List<FeedReaction>? reactions;
   const PersonalItem({
     required this.author,
+    required this.authorId,
     required this.time,
     required this.action,
     this.detail,
@@ -251,6 +280,7 @@ final class SystemItem extends FeedItem {
 final class PollItem extends FeedItem {
   final String id;
   final String author;
+  final String? authorId;
   final String time;
   final String question;
   final List<(String, int)> options; // (label, voteCount)
@@ -260,6 +290,7 @@ final class PollItem extends FeedItem {
   const PollItem({
     required this.id,
     required this.author,
+    required this.authorId,
     required this.time,
     required this.question,
     required this.options,
@@ -271,11 +302,13 @@ final class PollItem extends FeedItem {
 
 final class PhotoItem extends FeedItem {
   final String author;
+  final String? authorId;
   final String time;
   final String storagePath;
   final String? caption;
   const PhotoItem({
     required this.author,
+    required this.authorId,
     required this.time,
     required this.storagePath,
     this.caption,
@@ -287,17 +320,27 @@ final class PhotoItem extends FeedItem {
 class FeedItemWidget extends StatelessWidget {
   final FeedItem item;
   final String lobbyId;
-  const FeedItemWidget({super.key, required this.item, required this.lobbyId});
+  final String? captainId;
+  const FeedItemWidget({
+    super.key,
+    required this.item,
+    required this.lobbyId,
+    this.captainId,
+  });
 
   @override
   Widget build(BuildContext context) {
     return switch (item) {
       final DayDivItem d => _DayDivider(item: d),
-      final UpdateItem u => _UpdateCard(item: u),
-      final PersonalItem p => _PersonalCard(item: p),
+      final UpdateItem u => _UpdateCard(item: u, captainId: captainId),
+      final PersonalItem p => _PersonalCard(item: p, captainId: captainId),
       final SystemItem s => _SystemEvent(item: s),
-      final PollItem po => _PollCard(item: po, lobbyId: lobbyId),
-      final PhotoItem ph => _PhotoCard(item: ph),
+      final PollItem po => _PollCard(
+        item: po,
+        lobbyId: lobbyId,
+        captainId: captainId,
+      ),
+      final PhotoItem ph => _PhotoCard(item: ph, captainId: captainId),
     };
   }
 }
@@ -339,17 +382,23 @@ class _DayDivider extends StatelessWidget {
 
 class _AuthorRow extends StatelessWidget {
   final String name;
+  final String? authorId;
+  final String? captainId;
   final String time;
 
-  const _AuthorRow({required this.name, required this.time});
-
-  static const _captainName = 'Trang';
+  const _AuthorRow({
+    required this.name,
+    required this.authorId,
+    required this.captainId,
+    required this.time,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    final isLeader = name == _captainName;
+    final isLeader =
+        authorId != null && captainId != null && authorId == captainId;
 
     return Row(
       children: [
@@ -428,7 +477,8 @@ Color _memberColor(String name) {
 
 class _PersonalCard extends StatelessWidget {
   final PersonalItem item;
-  const _PersonalCard({required this.item});
+  final String? captainId;
+  const _PersonalCard({required this.item, required this.captainId});
 
   @override
   Widget build(BuildContext context) {
@@ -441,7 +491,12 @@ class _PersonalCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AuthorRow(name: item.author, time: item.time),
+          _AuthorRow(
+            name: item.author,
+            authorId: item.authorId,
+            captainId: captainId,
+            time: item.time,
+          ),
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.only(left: 35),
@@ -505,17 +560,22 @@ class _PersonalCard extends StatelessWidget {
                     Container(
                       margin: const EdgeInsets.only(right: 4),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 2),
+                        horizontal: 7,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: colors.background,
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                            color: colors.border.withValues(alpha: 0.8)),
+                          color: colors.border.withValues(alpha: 0.8),
+                        ),
                       ),
                       child: Text(
                         r.display,
                         style: const TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.w600),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                 ],
@@ -532,7 +592,8 @@ class _PersonalCard extends StatelessWidget {
 
 class _UpdateCard extends StatelessWidget {
   final UpdateItem item;
-  const _UpdateCard({required this.item});
+  final String? captainId;
+  const _UpdateCard({required this.item, required this.captainId});
 
   @override
   Widget build(BuildContext context) {
@@ -546,7 +607,12 @@ class _UpdateCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AuthorRow(name: item.author, time: item.time),
+          _AuthorRow(
+            name: item.author,
+            authorId: item.authorId,
+            captainId: captainId,
+            time: item.time,
+          ),
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.only(left: 35),
@@ -569,7 +635,9 @@ class _UpdateCard extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     color: bgColor,
                     child: Row(
                       children: [
@@ -636,7 +704,6 @@ class _UpdateCard extends StatelessWidget {
       ),
     );
   }
-
 }
 
 // ─── System event (join request etc.) ─────────────────────────
@@ -689,7 +756,12 @@ class _SystemEvent extends StatelessWidget {
 class _PollCard extends ConsumerStatefulWidget {
   final PollItem item;
   final String lobbyId;
-  const _PollCard({required this.item, required this.lobbyId});
+  final String? captainId;
+  const _PollCard({
+    required this.item,
+    required this.lobbyId,
+    required this.captainId,
+  });
 
   @override
   ConsumerState<_PollCard> createState() => _PollCardState();
@@ -736,7 +808,8 @@ class _PollCardState extends ConsumerState<_PollCard> {
     // tallies land (myVote == _pendingVote) this stops applying on its own.
     final isPendingBump =
         _voting && _pendingVote != null && widget.item.myVote != _pendingVote;
-    final total = widget.item.options.fold<int>(0, (s, o) => s + o.$2) +
+    final total =
+        widget.item.options.fold<int>(0, (s, o) => s + o.$2) +
         (isPendingBump ? 1 : 0);
 
     return Padding(
@@ -745,7 +818,12 @@ class _PollCardState extends ConsumerState<_PollCard> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AuthorRow(name: widget.item.author, time: widget.item.time),
+          _AuthorRow(
+            name: widget.item.author,
+            authorId: widget.item.authorId,
+            captainId: widget.captainId,
+            time: widget.item.time,
+          ),
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.only(left: 35),
@@ -758,7 +836,7 @@ class _PollCardState extends ConsumerState<_PollCard> {
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 6,
-                  )
+                  ),
                 ],
               ),
               clipBehavior: Clip.antiAlias,
@@ -766,12 +844,17 @@ class _PollCardState extends ConsumerState<_PollCard> {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     color: _blueTint,
                     child: Row(
                       children: [
-                        const Icon(Icons.bar_chart_rounded,
-                            size: 13, color: pbBlue),
+                        const Icon(
+                          Icons.bar_chart_rounded,
+                          size: 13,
+                          color: pbBlue,
+                        ),
                         const SizedBox(width: 6),
                         const Text(
                           'BÌNH CHỌN',
@@ -814,7 +897,8 @@ class _PollCardState extends ConsumerState<_PollCard> {
                             padding: const EdgeInsets.only(bottom: 6),
                             child: _PollOption(
                               label: widget.item.options[i].$1,
-                              votes: widget.item.options[i].$2 +
+                              votes:
+                                  widget.item.options[i].$2 +
                                   (isPendingBump && voted == i ? 1 : 0),
                               total: total,
                               selected: voted == i,
@@ -933,7 +1017,8 @@ class _PollOption extends StatelessWidget {
 
 class _PhotoCard extends StatelessWidget {
   final PhotoItem item;
-  const _PhotoCard({required this.item});
+  final String? captainId;
+  const _PhotoCard({required this.item, required this.captainId});
 
   @override
   Widget build(BuildContext context) {
@@ -944,7 +1029,12 @@ class _PhotoCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AuthorRow(name: item.author, time: item.time),
+          _AuthorRow(
+            name: item.author,
+            authorId: item.authorId,
+            captainId: captainId,
+            time: item.time,
+          ),
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.only(left: 35),

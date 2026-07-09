@@ -118,3 +118,54 @@ final class ProfessionalByIdFamily extends $Family
   @override
   String toString() => r'professionalByIdProvider';
 }
+
+/// The signed-in user's own `professional.id`, if their account is linked
+/// (`professional.linked_user_id = auth.uid()`) — `null` for a regular
+/// player. Set out-of-app (admin/DB-direct), never self-registered. Gates
+/// whether the pro-mode toggle appears at all, and scopes every pro-mode
+/// query.
+
+@ProviderFor(linkedProfessionalId)
+final linkedProfessionalIdProvider = LinkedProfessionalIdProvider._();
+
+/// The signed-in user's own `professional.id`, if their account is linked
+/// (`professional.linked_user_id = auth.uid()`) — `null` for a regular
+/// player. Set out-of-app (admin/DB-direct), never self-registered. Gates
+/// whether the pro-mode toggle appears at all, and scopes every pro-mode
+/// query.
+
+final class LinkedProfessionalIdProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  /// The signed-in user's own `professional.id`, if their account is linked
+  /// (`professional.linked_user_id = auth.uid()`) — `null` for a regular
+  /// player. Set out-of-app (admin/DB-direct), never self-registered. Gates
+  /// whether the pro-mode toggle appears at all, and scopes every pro-mode
+  /// query.
+  LinkedProfessionalIdProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'linkedProfessionalIdProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$linkedProfessionalIdHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    return linkedProfessionalId(ref);
+  }
+}
+
+String _$linkedProfessionalIdHash() =>
+    r'b58d26f84e9f8ef9f8f4fe13f3a0ab285f807134';

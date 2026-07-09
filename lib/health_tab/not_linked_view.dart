@@ -67,7 +67,9 @@ class HealthNotLinkedView extends ConsumerWidget {
           FButton(
             onPress: isLinking
                 ? null
-                : () => ref.read(healthControllerProvider.notifier).linkHealthService(),
+                : () => ref
+                      .read(healthControllerProvider.notifier)
+                      .linkHealthService(),
             child: isLinking
                 ? const SizedBox(
                     width: 16,

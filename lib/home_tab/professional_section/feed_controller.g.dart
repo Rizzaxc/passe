@@ -34,14 +34,14 @@ final class ProfessionalFeedProvider
   ProfessionalFeed create() => ProfessionalFeed();
 }
 
-String _$professionalFeedHash() => r'f2df3a6c1849339a1a1ee7eefea5201bad91e8ac';
+String _$professionalFeedHash() => r'cd2a981f57634fcd87dcea0a2752f06080f6f20e';
 
 abstract class _$ProfessionalFeed
     extends $AsyncNotifier<List<ProfessionalFeedItem>> {
   FutureOr<List<ProfessionalFeedItem>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -59,6 +59,6 @@ abstract class _$ProfessionalFeed
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

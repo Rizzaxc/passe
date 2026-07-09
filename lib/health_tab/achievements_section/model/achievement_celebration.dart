@@ -21,10 +21,10 @@ class AchievementCelebration {
   bool get isEmpty => unlocked.isEmpty && !leveledUp;
 
   static int _int(Object? v) => switch (v) {
-        null => 0,
-        final num n => n.toInt(),
-        _ => int.tryParse(v.toString()) ?? 0,
-      };
+    null => 0,
+    final num n => n.toInt(),
+    _ => int.tryParse(v.toString()) ?? 0,
+  };
 
   factory AchievementCelebration.fromRpc(Map<String, dynamic> json) {
     final raw = (json['newly_unlocked'] as List?) ?? const [];
@@ -58,11 +58,11 @@ class UnlockedBadge {
   });
 
   factory UnlockedBadge.fromJson(Map<String, dynamic> j) => UnlockedBadge(
-        code: j['code'] as String? ?? '',
-        name: j['name'] as String? ?? '',
-        xp: AchievementCelebration._int(j['xp']),
-        difficulty: AchievementCelebration._int(j['difficulty']),
-        consistency: AchievementCelebration._int(j['consistency']),
-        repeatable: j['repeatable'] as bool? ?? false,
-      );
+    code: j['code'] as String? ?? '',
+    name: j['name'] as String? ?? '',
+    xp: AchievementCelebration._int(j['xp']),
+    difficulty: AchievementCelebration._int(j['difficulty']),
+    consistency: AchievementCelebration._int(j['consistency']),
+    repeatable: j['repeatable'] as bool? ?? false,
+  );
 }

@@ -39,10 +39,13 @@ class CelebrationSheet extends StatelessWidget {
                 children: [
                   Icon(FLucideIcons.trophy, size: 36, color: pbGreen),
                   Text(
-                    'health.achievements.level'
-                        .tr(namedArgs: {'level': '${celebration.level}'}),
-                    style: context.theme.typography.body.xl2
-                        .copyWith(fontWeight: FontWeight.bold, color: pbGreen),
+                    'health.achievements.level'.tr(
+                      namedArgs: {'level': '${celebration.level}'},
+                    ),
+                    style: context.theme.typography.body.xl2.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: pbGreen,
+                    ),
                   ),
                 ],
               ),
@@ -53,8 +56,10 @@ class CelebrationSheet extends StatelessWidget {
               label: 'health.achievements.celebrate.unlocked'.tr(),
               trailing: Text(
                 '+${celebration.xpGained} XP',
-                style: context.theme.typography.body.sm
-                    .copyWith(fontWeight: FontWeight.w700, color: pbGreen),
+                style: context.theme.typography.body.sm.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: pbGreen,
+                ),
               ),
             ),
             for (final b in celebration.unlocked)
@@ -65,7 +70,10 @@ class CelebrationSheet extends StatelessWidget {
                   children: [
                     Icon(FLucideIcons.badgeCheck, size: 20, color: pbGreen),
                     Expanded(
-                      child: Text(b.name, style: context.theme.typography.body.md),
+                      child: Text(
+                        b.name,
+                        style: context.theme.typography.body.md,
+                      ),
                     ),
                     Text(
                       '+${b.xp}',

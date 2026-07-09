@@ -58,6 +58,69 @@ final class HrThresholdsProvider
 
 String _$hrThresholdsHash() => r'e711bacfbb8e6e4d8666bfe91129dbfa9206e5e7';
 
+/// Saves the user's declared HR-zone thresholds to `user_health_link`.
+/// Pass `maxHeartRate: null` to fall back to the age-bucket estimate.
+
+@ProviderFor(HrThresholdController)
+final hrThresholdControllerProvider = HrThresholdControllerProvider._();
+
+/// Saves the user's declared HR-zone thresholds to `user_health_link`.
+/// Pass `maxHeartRate: null` to fall back to the age-bucket estimate.
+final class HrThresholdControllerProvider
+    extends $NotifierProvider<HrThresholdController, bool> {
+  /// Saves the user's declared HR-zone thresholds to `user_health_link`.
+  /// Pass `maxHeartRate: null` to fall back to the age-bucket estimate.
+  HrThresholdControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'hrThresholdControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$hrThresholdControllerHash();
+
+  @$internal
+  @override
+  HrThresholdController create() => HrThresholdController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$hrThresholdControllerHash() =>
+    r'f134904574ba41bff8d818b772d78559a7629671';
+
+/// Saves the user's declared HR-zone thresholds to `user_health_link`.
+/// Pass `maxHeartRate: null` to fall back to the age-bucket estimate.
+
+abstract class _$HrThresholdController extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// Whole-body daily summaries for the last [healthBackfillDays] (direct select).
 /// Sport-agnostic. Newest first.
 

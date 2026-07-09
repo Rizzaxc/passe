@@ -68,23 +68,40 @@ class HealthDataService extends _$HealthDataService {
     try {
       final results = await Future.wait([
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.STEPS], startTime: startTime, endTime: endTime),
+          types: [HealthDataType.STEPS],
+          startTime: startTime,
+          endTime: endTime,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.DISTANCE_DELTA], startTime: startTime, endTime: endTime),
+          types: [HealthDataType.DISTANCE_DELTA],
+          startTime: startTime,
+          endTime: endTime,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.ACTIVE_ENERGY_BURNED], startTime: startTime, endTime: endTime),
+          types: [HealthDataType.ACTIVE_ENERGY_BURNED],
+          startTime: startTime,
+          endTime: endTime,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.HEART_RATE], startTime: startTime, endTime: endTime),
+          types: [HealthDataType.HEART_RATE],
+          startTime: startTime,
+          endTime: endTime,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.HEART_RATE_VARIABILITY_SDNN],
-            startTime: startTime,
-            endTime: endTime),
+          types: [HealthDataType.HEART_RATE_VARIABILITY_SDNN],
+          startTime: startTime,
+          endTime: endTime,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.WEIGHT],
-            startTime: startTime.subtract(const Duration(days: 7)),
-            endTime: endTime),
+          types: [HealthDataType.WEIGHT],
+          startTime: startTime.subtract(const Duration(days: 7)),
+          endTime: endTime,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.WORKOUT], startTime: startTime, endTime: endTime),
+          types: [HealthDataType.WORKOUT],
+          startTime: startTime,
+          endTime: endTime,
+        ),
       ]);
 
       final stepsData = results[0];
@@ -103,8 +120,12 @@ class HealthDataService extends _$HealthDataService {
       final avgHr = hrValues.isNotEmpty
           ? (hrValues.reduce((a, b) => a + b) / hrValues.length).round()
           : null;
-      final maxHr = hrValues.isNotEmpty ? hrValues.reduce((a, b) => a > b ? a : b).round() : null;
-      final minHr = hrValues.isNotEmpty ? hrValues.reduce((a, b) => a < b ? a : b).round() : null;
+      final maxHr = hrValues.isNotEmpty
+          ? hrValues.reduce((a, b) => a > b ? a : b).round()
+          : null;
+      final minHr = hrValues.isNotEmpty
+          ? hrValues.reduce((a, b) => a < b ? a : b).round()
+          : null;
 
       // 3-zone time-in-zone (full resolution).
       final zones = _calculateHrZones(heartRateData, thresholds);
@@ -117,18 +138,27 @@ class HealthDataService extends _$HealthDataService {
           ? hrvValues.reduce((a, b) => a + b) / hrvValues.length
           : null;
 
-      final weight = weightData.isNotEmpty ? _extractNumericValue(weightData.last) : null;
+      final weight = weightData.isNotEmpty
+          ? _extractNumericValue(weightData.last)
+          : null;
 
       // Training load (simplified TRIMP).
       double? trainingLoad;
       if (avgHr != null) {
         final durationMinutes = endTime.difference(startTime).inMinutes;
-        final hrReserve = ((avgHr - 60) / (thresholds.maxHr - 60)).clamp(0.0, 1.0);
+        final hrReserve = ((avgHr - 60) / (thresholds.maxHr - 60)).clamp(
+          0.0,
+          1.0,
+        );
         trainingLoad = durationMinutes * hrReserve * 0.64;
       }
 
       // Effort score 0–100 from time-in-zone distribution.
-      final effortScore = _effortScore(easy: easy, moderate: moderate, hard: hard);
+      final effortScore = _effortScore(
+        easy: easy,
+        moderate: moderate,
+        hard: hard,
+      );
 
       // Workout type label (from the first overlapping workout, if any).
       final workoutType = _workoutType(workoutData);
@@ -184,25 +214,45 @@ class HealthDataService extends _$HealthDataService {
     try {
       final results = await Future.wait([
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.STEPS], startTime: startOfDay, endTime: endOfDay),
+          types: [HealthDataType.STEPS],
+          startTime: startOfDay,
+          endTime: endOfDay,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.DISTANCE_DELTA], startTime: startOfDay, endTime: endOfDay),
+          types: [HealthDataType.DISTANCE_DELTA],
+          startTime: startOfDay,
+          endTime: endOfDay,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.ACTIVE_ENERGY_BURNED], startTime: startOfDay, endTime: endOfDay),
+          types: [HealthDataType.ACTIVE_ENERGY_BURNED],
+          startTime: startOfDay,
+          endTime: endOfDay,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.TOTAL_CALORIES_BURNED], startTime: startOfDay, endTime: endOfDay),
+          types: [HealthDataType.TOTAL_CALORIES_BURNED],
+          startTime: startOfDay,
+          endTime: endOfDay,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.RESTING_HEART_RATE], startTime: startOfDay, endTime: endOfDay),
+          types: [HealthDataType.RESTING_HEART_RATE],
+          startTime: startOfDay,
+          endTime: endOfDay,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.HEART_RATE_VARIABILITY_SDNN],
-            startTime: startOfDay,
-            endTime: endOfDay),
+          types: [HealthDataType.HEART_RATE_VARIABILITY_SDNN],
+          startTime: startOfDay,
+          endTime: endOfDay,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.SLEEP_ASLEEP],
-            startTime: startOfDay.subtract(const Duration(hours: 12)),
-            endTime: endOfDay),
+          types: [HealthDataType.SLEEP_ASLEEP],
+          startTime: startOfDay.subtract(const Duration(hours: 12)),
+          endTime: endOfDay,
+        ),
         _health.getHealthDataFromTypes(
-            types: [HealthDataType.WEIGHT], startTime: startOfDay, endTime: endOfDay),
+          types: [HealthDataType.WEIGHT],
+          startTime: startOfDay,
+          endTime: endOfDay,
+        ),
       ]);
 
       final steps = _sumNumericValues(results[0])?.round();
@@ -223,7 +273,9 @@ class HealthDataService extends _$HealthDataService {
       final sleepMinutes = _sumNumericValues(results[6])?.round();
 
       final weightData = results[7];
-      final weight = weightData.isNotEmpty ? _extractNumericValue(weightData.last) : null;
+      final weight = weightData.isNotEmpty
+          ? _extractNumericValue(weightData.last)
+          : null;
 
       return DailyHealthSummary(
         userId: userId,
@@ -259,11 +311,13 @@ class HealthDataService extends _$HealthDataService {
       );
 
       return heartRateData
-          .map((point) => HrSample(
-                activityId: activityId,
-                timestamp: point.dateFrom,
-                bpm: _extractNumericValue(point)?.round() ?? 0,
-              ))
+          .map(
+            (point) => HrSample(
+              activityId: activityId,
+              timestamp: point.dateFrom,
+              bpm: _extractNumericValue(point)?.round() ?? 0,
+            ),
+          )
           .where((s) => s.bpm > 0)
           .toList();
     } catch (e) {
@@ -284,12 +338,18 @@ class HealthDataService extends _$HealthDataService {
   }
 
   /// Insert a dismissal tombstone so the detected workout isn't re-prompted.
-  Future<void> dismissActivity({required String userId, required String activityId}) async {
-    await _supabase.from('activity_health_metrics').upsert({
-      'user_id': userId,
-      'activity_id': activityId,
-      'dismissed': true,
-    }, onConflict: 'user_id,activity_id').timeout(const Duration(seconds: 5));
+  Future<void> dismissActivity({
+    required String userId,
+    required String activityId,
+  }) async {
+    await _supabase
+        .from('activity_health_metrics')
+        .upsert({
+          'user_id': userId,
+          'activity_id': activityId,
+          'dismissed': true,
+        }, onConflict: 'user_id,activity_id')
+        .timeout(const Duration(seconds: 5));
   }
 
   Future<void> saveDailySummary(DailyHealthSummary summary) async {
@@ -313,13 +373,17 @@ class HealthDataService extends _$HealthDataService {
     if (points.isEmpty) return;
     await _supabase
         .from('activity_hr_sample')
-        .insert(points
-            .map((p) => {
+        .insert(
+          points
+              .map(
+                (p) => {
                   'activity_id': activityId,
                   'timestamp': p.timestamp.toIso8601String(),
                   'bpm': p.bpm,
-                })
-            .toList())
+                },
+              )
+              .toList(),
+        )
         .timeout(const Duration(seconds: 5));
   }
 
@@ -332,10 +396,12 @@ class HealthDataService extends _$HealthDataService {
         .order('timestamp')
         .timeout(const Duration(seconds: 5));
     return (rows as List)
-        .map((r) => HrSamplePoint(
-              timestamp: DateTime.parse(r['timestamp'] as String),
-              bpm: (r['bpm'] as num).round(),
-            ))
+        .map(
+          (r) => HrSamplePoint(
+            timestamp: DateTime.parse(r['timestamp'] as String),
+            bpm: (r['bpm'] as num).round(),
+          ),
+        )
         .toList();
   }
 
@@ -343,7 +409,10 @@ class HealthDataService extends _$HealthDataService {
 
   double? _sumNumericValues(List<HealthDataPoint> data) {
     if (data.isEmpty) return null;
-    return data.fold<double>(0, (sum, point) => sum + (_extractNumericValue(point) ?? 0));
+    return data.fold<double>(
+      0,
+      (sum, point) => sum + (_extractNumericValue(point) ?? 0),
+    );
   }
 
   List<double> _extractNumericValues(List<HealthDataPoint> data) =>
@@ -365,17 +434,25 @@ class HealthDataService extends _$HealthDataService {
 
   /// Time (seconds) in each of the 3 LT zones, summed at full sample resolution.
   /// easy = HR < LT1, moderate = LT1..LT2, hard = > LT2.
-  Map<String, int> _calculateHrZones(List<HealthDataPoint> hrData, HrThresholds t) {
+  Map<String, int> _calculateHrZones(
+    List<HealthDataPoint> hrData,
+    HrThresholds t,
+  ) {
     final zones = {'easy': 0, 'moderate': 0, 'hard': 0};
     for (var i = 0; i < hrData.length; i++) {
       final value = _extractNumericValue(hrData[i]);
       if (value == null) continue;
 
-      final key = value > t.lt2 ? 'hard' : (value >= t.lt1 ? 'moderate' : 'easy');
+      final key = value > t.lt2
+          ? 'hard'
+          : (value >= t.lt1 ? 'moderate' : 'easy');
 
       var duration = 1;
       if (i < hrData.length - 1) {
-        duration = hrData[i + 1].dateFrom.difference(hrData[i].dateFrom).inSeconds.clamp(1, 60);
+        duration = hrData[i + 1].dateFrom
+            .difference(hrData[i].dateFrom)
+            .inSeconds
+            .clamp(1, 60);
       }
       zones[key] = zones[key]! + duration;
     }
@@ -383,7 +460,11 @@ class HealthDataService extends _$HealthDataService {
   }
 
   /// 0–100 from the intensity-weighted time distribution (easy=1/mod=2/hard=3).
-  double? _effortScore({required int easy, required int moderate, required int hard}) {
+  double? _effortScore({
+    required int easy,
+    required int moderate,
+    required int hard,
+  }) {
     final total = easy + moderate + hard;
     if (total == 0) return null;
     final weighted = (easy * 1 + moderate * 2 + hard * 3) / total; // 1..3

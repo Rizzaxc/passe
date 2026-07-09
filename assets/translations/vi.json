@@ -81,10 +81,10 @@
         "hanoi": "Hà Nội"
     },
     "district": {
-        "urban": "Quận",
-        "rural": "Huyện",
-        "township": "Thị xã",
-        "city": "Thành phố"
+        "ward": "Phường",
+        "commune": "Xã",
+        "searchHint": "Tìm phường, xã...",
+        "noResults": "Không tìm thấy phường, xã phù hợp"
     },
     "homeTab": {
         "filter": {
@@ -118,6 +118,7 @@
         "challenger": {
             "title": "Đối thủ",
             "challenge": "Thách Đấu",
+            "challengingAs": "Thách đấu với tư cách",
             "mmr": "MMR",
             "favorability": {
                 "underdog": "Cửa dưới",
@@ -127,10 +128,28 @@
             "empty": {
                 "title": "Không có đối thủ nào",
                 "message": "Thử điều chỉnh filter hoặc quay lại sau"
+            },
+            "noLobby": {
+                "title": "Bạn chưa có lobby nào",
+                "message": "Thách đấu là lobby đấu lobby. Tạo lobby của riêng bạn hoặc tham gia một lobby để bắt đầu thách đấu người khác.",
+                "findLobby": "Tìm Lobby",
+                "createLobby": "Tạo Lobby"
             }
         },
         "location": {
             "viewMap": "Xem Bản Đồ",
+            "directions": "Chỉ Đường",
+            "directionsFailed": "Không mở được ứng dụng bản đồ",
+            "address": "Địa Chỉ",
+            "amenities": "Tiện Ích",
+            "amenity": {
+                "pitch": "Sân thi đấu",
+                "sports_centre": "Trung tâm thể thao",
+                "stadium": "Sân vận động",
+                "swimming_pool": "Hồ bơi"
+            },
+            "someUnmapped": "Một số địa điểm chưa có toạ độ",
+            "roadmapNote": "Dữ liệu địa điểm đang được hoàn thiện. Đặt sân trực tiếp sẽ có khi tụi mình kết nối với các cơ sở địa phương.",
             "empty": {
                 "title": "Không tìm thấy địa điểm",
                 "message": "Thử nhập từ khoá hoặc điều chỉnh filter"
@@ -149,7 +168,6 @@
                 "message": "Thử điều chỉnh bộ lọc hoặc quay lại sau"
             },
             "book": "Đặt Lịch",
-            "seeAll": "Xem tất cả",
             "viewProfile": "Xem hồ sơ",
             "experience": "{years} năm kinh nghiệm",
             "reviews": "{count} đánh giá",
@@ -221,6 +239,7 @@
         "ageGroup": "Nhóm Tuổi",
         "saveButton": "Lưu",
         "saveFailed": "Lưu lobby thất bại",
+        "avatarPickFailed": "Không thể chọn ảnh",
         "emptyTitle": "Chưa có lobby nào",
         "emptyMessage": "Tạo lobby để bắt đầu chơi cùng người khác",
         "visibility": {
@@ -279,6 +298,17 @@
             "confirm": "Xác nhận",
             "failed": "Không thể mời rời. Vui lòng thử lại."
         },
+        "memberRole": {
+            "member": "Thành Viên",
+            "coordinator": "Điều Phối Viên"
+        },
+        "coordinator": {
+            "makeAction": "Đặt làm Điều Phối Viên",
+            "removeAction": "Bỏ Vai Trò Điều Phối Viên",
+            "setSuccess": "Đã đặt {username} làm Điều Phối Viên",
+            "removeSuccess": "Đã bỏ vai trò Điều Phối Viên của {username}",
+            "failed": "Cập nhật vai trò thất bại. Vui lòng thử lại."
+        },
         "joinRequests": {
             "title": "Xin gia nhập",
             "empty": "Không có ai đang xin vào."
@@ -320,6 +350,7 @@
         "private": "Nội Bộ",
         "privateDescription": "Không hiện trên search hay matchmaking. Cần phải được mời",
         "homeGround": "Sân Nhà",
+        "homeGroundDescription": "Đây sẽ là điểm hẹn mặc định để các thành viên tìm đến khi có buổi chơi",
         "homeGroundHint": "Tìm theo tên địa điểm/ địa chỉ...",
         "homeGroundFreeHint": "Nhập trực tiếp tên địa điểm/ địa chỉ...",
         "homeGroundFreeTextMode": "Nhập thủ công",
@@ -474,7 +505,7 @@
         "location": "Địa điểm",
         "locationCity": "Thành phố",
         "locationDistrict": "Quận/ Huyện",
-        "locationDistrictHint": "Chọn tối đa 3 quận/ huyện",
+        "locationDistrictHint": "Chọn tối đa 6 quận/ huyện",
         "playtime": "Khung giờ thường chơi",
         "playtimeShort": "Khung giờ",
         "sportProfile": "Hồ sơ {}",
@@ -526,17 +557,51 @@
             "notAvailableAndroid": "Health Connect không khả dụng. Vui lòng cài đặt Health Connect từ Play Store."
         },
         "userHealth": {
-            "title": "Cơ thể",
-            "empty": "Chưa có dữ liệu sức khỏe. Nhấn đồng bộ để lấy từ thiết bị đeo."
+            "title": "Cơ thể"
+        },
+        "vitality": {
+            "title": "VITALITY SCORE",
+            "notEnoughData": "Chưa đủ dữ liệu — hãy đồng bộ thêm vài tuần nữa",
+            "streakBonus": "+{n} thưởng chuỗi",
+            "component": {
+                "consistency": "Đều đặn",
+                "load": "Cường độ",
+                "recovery": "Hồi phục",
+                "volume": "Khối lượng"
+            }
+        },
+        "hrZone": {
+            "title": "HR Zone",
+            "maxHrLine": "Nhịp tim tối đa ~{value} bpm",
+            "zoneDesc": {
+                "easy": "Nhịp độ vừa nói chuyện được. Xây nền hiếu khí và hỗ trợ hồi phục.",
+                "moderate": "Cường độ tempo bền vững. Cải thiện sức bền và khả năng thải lactate.",
+                "hard": "Trên ngưỡng lactate. Xây tốc độ và sức bền yếm khí."
+            },
+            "edit": {
+                "title": "Chỉnh vùng nhịp tim",
+                "description": "Khai báo ngưỡng lactate thật để chia vùng nhịp tim chính xác hơn. Bỏ trống Nhịp tim tối đa để Passe tự ước tính theo độ tuổi.",
+                "maxHrLabel": "Nhịp tim tối đa (tuỳ chọn)",
+                "lt1Label": "LT1 — ngưỡng hiếu khí",
+                "lt2Label": "LT2 — ngưỡng yếm khí",
+                "invalid": "Nhập giá trị hợp lệ: LT1 < LT2, và cả hai đều nhỏ hơn Nhịp tim tối đa.",
+                "save": "Lưu",
+                "saved": "Đã cập nhật vùng nhịp tim"
+            }
         },
         "activityData": {
             "title": "Hoạt động",
-            "empty": "Chưa có tóm tắt hoạt động. Các buổi đã xác nhận có dữ liệu tập sẽ hiện ở đây.",
-            "selectSport": "Chọn một môn để xem tóm tắt hoạt động."
+            "selectSport": "Chọn một môn để xem tóm tắt hoạt động.",
+            "sample": {
+                "label": "Preview",
+                "session": "Buổi tập tiếp theo của bạn",
+                "caption": "Đồng bộ một buổi đã xác nhận để thay thế bằng dữ liệu thật."
+            }
         },
         "achievements": {
             "title": "Thành tựu",
-            "empty": "Chưa có thành tựu nào. Đồng bộ thiết bị đeo để bắt đầu tích XP.",
+            "emptyTitle": "Chưa có thành tựu nào",
+            "empty": "Đồng bộ thiết bị đeo sau buổi tập để bắt đầu tích XP.",
             "inProgress": "Đang tiến hành",
             "earned": "Đã mở khóa",
             "completed": "Đã hoàn thành",

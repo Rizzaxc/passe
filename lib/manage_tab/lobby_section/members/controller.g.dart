@@ -53,7 +53,7 @@ final class LobbyMembersControllerProvider
 }
 
 String _$lobbyMembersControllerHash() =>
-    r'6c1d723bc663d53adcd3b2a98ff50bbddc5698b9';
+    r'1089fc332b91178f2d4f6262546236a1806656f6';
 
 final class LobbyMembersControllerFamily extends $Family
     with
@@ -88,7 +88,7 @@ abstract class _$LobbyMembersController
   FutureOr<List<LobbyMemberInfo>> build(String lobbyId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<AsyncValue<List<LobbyMemberInfo>>, List<LobbyMemberInfo>>;
@@ -103,6 +103,6 @@ abstract class _$LobbyMembersController
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
