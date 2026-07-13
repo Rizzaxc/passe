@@ -1,3 +1,22 @@
 # Hide generated code from diffs (still committed)
 *.g.dart -diff linguist-generated
 *.freezed.dart -diff linguist-generated
+
+# Enforce Unix (LF) line endings for all text files
+* text=auto eol=lf
+
+# Binary assets — never touch line endings
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.vec binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+*.jar binary
+*.keystore binary

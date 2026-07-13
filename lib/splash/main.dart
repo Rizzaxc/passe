@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../ui/logo.dart';
 
 /// splash page shown while we check authentication status
 class SplashScreen extends StatelessWidget {
@@ -12,7 +13,8 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(height: 16),
+            PLogo(variant: PLogoVariant.stacked, size: 72),
+            SizedBox(height: 44),
             CircularProgressIndicator(strokeWidth: 1.5),
           ],
         ),

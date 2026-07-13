@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Passe mark — wider & connected</title>
+<style>
+  body{margin:0;background:#0e0509;color:#fff;
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:48px 24px}
+  h1{font-size:28px;letter-spacing:-.02em;margin:0 0 4px}
+  .sub{color:#c9a9b2;margin-bottom:32px;max-width:60ch}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}
+  .cell{background:#170a10;border:1px solid #2a1119;border-radius:18px;padding:22px;text-align:center}
+  .cell.old{opacity:.55;border-style:dashed}
+  .cell h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#FF5680;margin:0 0 4px}
+  .cell p{font-size:12.5px;color:#c9a9b2;margin:8px 0 0}
+  .big{width:150px;height:150px}
+  .sizes{display:flex;gap:16px;align-items:center;justify-content:center;margin-top:16px}
+  .s40{width:40px;height:40px}.s22{width:22px;height:22px}
+  .onwhite{background:#fff;border-radius:10px;padding:8px;display:inline-block}
+</style>
+</head>
+<body>
+
+<!-- reusable marks -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="red" x1="24" y1="18" x2="80" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF1F32"/><stop offset="1" stop-color="#E60043"/></linearGradient>
+    <linearGradient id="pink" x1="74" y1="47" x2="42" y2="84" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF5680"/><stop offset="1" stop-color="#FB979C"/></linearGradient>
+
+    <!-- OLD: sharp, detached -->
+    <g id="mOld">
+      <polygon points="21,22 59,50 21,78 42,50" fill="#E63950"/>
+      <polygon points="40,22 79,50 62,50" fill="url(#red)"/>
+      <polygon points="62,50 79,50 41,78" fill="url(#pink)"/>
+    </g>
+
+    <!-- A: LINKED — wide angle, front notch meets back tip -->
+    <g id="mA">
+      <polygon points="27,16 58,50 27,84 43,50" fill="#E63950"/>
+      <polygon points="42,16 73,50 58,50" fill="url(#red)"/>
+      <polygon points="58,50 73,50 42,84" fill="url(#pink)"/>
+    </g>
+
+    <!-- B: FUSED — one connected arrowhead, split two-tone -->
+    <g id="mB">
+      <polygon points="18,14 82,50 46,50" fill="url(#red)"/>
+      <polygon points="46,50 82,50 18,86" fill="url(#pink)"/>
+    </g>
+
+    <!-- C: STACKED — chunky overlap, front corners welded onto back's notch -->
+    <g id="mC">
+      <polygon points="20,16 54,50 20,84 36,50" fill="#E63950"/>
+      <polygon points="36,16 70,50 52,50" fill="url(#red)"/>
+      <polygon points="52,50 70,50 36,84" fill="url(#pink)"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <h1>Wider angle · blades connected</h1>
+  <div class="sub">Opened the V from ~73° to ~95° and joined the two darts so they read as one mark. Three ways to connect them — pick the join you like.</div>
+
+  <div class="grid">
+    <div class="cell old">
+      <h2>Before</h2>
+      <svg class="big" viewBox="0 0 100 100"><use href="#mOld"/></svg>
+      <p>Too sharp, two floating darts.</p>
+    </div>
+
+    <div class="cell">
+      <h2>A · Linked</h2>
+      <svg class="big" viewBox="0 0 100 100"><use href="#mA"/></svg>
+      <p>Front dart’s tail locks onto the back dart’s tip. Still clearly “»”.</p>
+      <div class="sizes">
+        <svg class="s40" viewBox="0 0 100 100"><use href="#mA"/></svg>
+        <svg class="s22" viewBox="0 0 100 100"><use href="#mA"/></svg>
+        <span class="onwhite"><svg class="s22" viewBox="0 0 100 100"><use href="#mA"/></svg></span>
+      </div>
+    </div>
+
+    <div class="cell">
+      <h2>B · Fused</h2>
+      <svg class="big" viewBox="0 0 100 100"><use href="#mB"/></svg>
+      <p>One solid arrowhead, split red→pink. Maximum unity, boldest at small sizes.</p>
+      <div class="sizes">
+        <svg class="s40" viewBox="0 0 100 100"><use href="#mB"/></svg>
+        <svg class="s22" viewBox="0 0 100 100"><use href="#mB"/></svg>
+        <span class="onwhite"><svg class="s22" viewBox="0 0 100 100"><use href="#mB"/></svg></span>
+      </div>
+    </div>
+
+    <div class="cell">
+      <h2>C · Stacked</h2>
+      <svg class="big" viewBox="0 0 100 100"><use href="#mC"/></svg>
+      <p>Chunky overlap — front dart welds onto the back dart’s notch. Most depth.</p>
+      <div class="sizes">
+        <svg class="s40" viewBox="0 0 100 100"><use href="#mC"/></svg>
+        <svg class="s22" viewBox="0 0 100 100"><use href="#mC"/></svg>
+        <span class="onwhite"><svg class="s22" viewBox="0 0 100 100"><use href="#mC"/></svg></span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
