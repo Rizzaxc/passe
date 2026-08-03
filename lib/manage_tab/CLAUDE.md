@@ -102,9 +102,14 @@ Judgment calls made along the way, in case they need revisiting:
   (`_PollCardState` in `activity/feed.dart`) now upserts into `lobby_feed_poll_vote` and re-derives
   tallies from `lobby_feed_data` (extended with a `my_vote` column — see
   `schema/lobby_feed_poll_my_vote.sql`) instead of faking the count with local `setState`.
-- **Photo** action was removed from the picker rather than wired — posting `kind: 'photo'` needs an
-  actual uploaded file (a storage bucket + storage RLS policies that don't currently exist), which is
-  a bigger unit of infra than this pass covers. Left as a gap rather than a decoy tile.
+- **Photo** action was removed from the picker rather than wired — posting `kind: 'photo'` needed a
+  storage bucket + policies that didn't exist. **Now restored**, but not as a lobby-only photo: the
+  `photo` kind is retired as a *writable* kind, and `lobby_feed_data` instead unions in the
+  `wall_post` rows attached to that lobby's activities (`schema/lobby_feed_wall_posts.sql`), which
+  the feed renders with the shared `PostCard`. The picker's photo tile opens the wall composer
+  scoped to this lobby. One source of truth — a post deleted or TTL-swept vanishes from the lobby
+  feed at the same moment it vanishes everywhere else. The old `_PhotoCard` (which drew a *painted
+  fake* court photo via `_CourtPhotoPainter`) is gone.
 - **"Đặt HLV / Trọng tài" (bookCoach)** navigates to the general Neutrals/professional discovery tab
   (`HomeProfessionalRoute`) after stashing the upcoming activity id in `PendingActivityBookingState`.
   The next booking submitted attaches back to that activity — into `coach_booking_id` **or**

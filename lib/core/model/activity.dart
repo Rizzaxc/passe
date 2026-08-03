@@ -13,6 +13,11 @@ abstract class Activity with _$Activity {
     @JsonKey(name: 'end_time') DateTime? endTime,
     @JsonKey(name: 'lobby_id') String? lobbyId,
     @JsonKey(name: 'professional_booking_id') String? professionalBookingId,
+    // A coach and/or referee hired for this (lobby) activity — distinct from
+    // professional_booking_id, and allowed to coexist with lobby_id. See
+    // schema/activity_professional_attachment.sql.
+    @JsonKey(name: 'coach_booking_id') String? coachBookingId,
+    @JsonKey(name: 'referee_booking_id') String? refereeBookingId,
     @JsonKey(name: 'created_at') DateTime? createdAt,
   }) = _Activity;
 

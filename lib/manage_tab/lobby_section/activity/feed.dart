@@ -5,6 +5,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../ui/theme.dart';
+import '../../../core/model/wall_post.dart';
+import '../../../feed_tab/post_card.dart';
 import 'feed_controller.dart';
 
 // ─── Color tokens ──────────────────────────────────────────────
@@ -208,14 +210,12 @@ sealed class FeedItem {
           myVote: (row['my_vote'] as num?)?.toInt(),
         );
 
+      // `photo` is no longer a natively-written kind — lobby_feed_data
+      // synthesises these rows from `wall_post` (see
+      // schema/lobby_feed_wall_posts.sql), so the payload is a full wall post,
+      // not the old {storage_path, caption} shape.
       case 'photo':
-        return PhotoItem(
-          author: author,
-          authorId: authorId,
-          time: time,
-          storagePath: payload['storage_path'] as String,
-          caption: payload['caption'] as String?,
-        );
+        return WallPostItem(post: WallPost.fromJson(payload));
 
       default:
         throw StateError('Unknown lobby feed kind: $kind');
@@ -300,19 +300,12 @@ final class PollItem extends FeedItem {
   });
 }
 
-final class PhotoItem extends FeedItem {
-  final String author;
-  final String? authorId;
-  final String time;
-  final String storagePath;
-  final String? caption;
-  const PhotoItem({
-    required this.author,
-    required this.authorId,
-    required this.time,
-    required this.storagePath,
-    this.caption,
-  });
+/// A wall post attached to one of this lobby's activities, surfaced inline in
+/// the lobby feed. There is no separate lobby-photo entity — this is the same
+/// row the Home feed and the author's wall render.
+final class WallPostItem extends FeedItem {
+  final WallPost post;
+  const WallPostItem({required this.post});
 }
 
 // ─── Feed item widget router ────────────────────────────────────
@@ -340,7 +333,10 @@ class FeedItemWidget extends StatelessWidget {
         lobbyId: lobbyId,
         captainId: captainId,
       ),
-      final PhotoItem ph => _PhotoCard(item: ph, captainId: captainId),
+      final WallPostItem w => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        child: PostCard(post: w.post),
+      ),
     };
   }
 }
@@ -1015,108 +1011,3 @@ class _PollOption extends StatelessWidget {
 
 // ─── Photo card ────────────────────────────────────────────────
 
-class _PhotoCard extends StatelessWidget {
-  final PhotoItem item;
-  final String? captainId;
-  const _PhotoCard({required this.item, required this.captainId});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _AuthorRow(
-            name: item.author,
-            authorId: item.authorId,
-            captainId: captainId,
-            time: item.time,
-          ),
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.only(left: 35),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: SizedBox(
-                    width: 240,
-                    height: 160,
-                    child: CustomPaint(painter: _CourtPhotoPainter()),
-                  ),
-                ),
-                if (item.caption != null) ...[
-                  const SizedBox(height: 5),
-                  Text(
-                    item.caption!,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w400,
-                      color: colors.secondaryForeground,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CourtPhotoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Dark court background
-    final bgPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: const [Color(0xFF3D4760), Color(0xFF1C2334)],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
-
-    // Wood floor
-    canvas.drawRect(
-      Rect.fromLTRB(0, size.height * 0.69, size.width, size.height),
-      Paint()..color = const Color(0xFFA6804A),
-    );
-
-    // Court lines
-    final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.6)
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-
-    final court = Rect.fromLTWH(
-      size.width * 0.17,
-      size.height * 0.74,
-      size.width * 0.66,
-      size.height * 0.24,
-    );
-    canvas.drawRect(court, linePaint);
-    canvas.drawLine(
-      Offset(size.width * 0.5, size.height * 0.74),
-      Offset(size.width * 0.5, size.height * 0.98),
-      linePaint,
-    );
-    // Net line
-    canvas.drawLine(
-      Offset(size.width * 0.17, size.height * 0.86),
-      Offset(size.width * 0.83, size.height * 0.86),
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.9)
-        ..strokeWidth = 2.0,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_CourtPhotoPainter old) => false;
-}

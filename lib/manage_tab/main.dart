@@ -5,7 +5,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../core/sport_selector.dart';
 import '../core/state/pro_mode_state.dart';
-import '../currency/da_appbar_button.dart';
 import '../professional/controller.dart';
 import '../professional/pro_mode/booking_history_main.dart';
 import '../professional/pro_mode/pending_requests_main.dart';
@@ -27,14 +26,8 @@ class ManageTab extends StatefulWidget {
   }
 
   static const manageSections = <FTabEntry>[
-    FTabEntry(
-      child: ScheduleSection(),
-      label: Icon(FLucideIcons.calendarDays),
-    ),
-    FTabEntry(
-      child: LobbySubtab(),
-      label: Icon(FLucideIcons.users),
-    ),
+    FTabEntry(child: ScheduleSection(), label: Icon(FLucideIcons.calendarDays)),
+    FTabEntry(child: LobbySubtab(), label: Icon(FLucideIcons.users)),
     FTabEntry(
       child: CoachingSection(),
       label: Icon(FLucideIcons.graduationCap),
@@ -94,19 +87,12 @@ class _ManageTabState extends State<ManageTab> {
         return FScaffold(
           header: FHeader(
             title: Text('nav.manage'.tr()),
-            suffixes: [
-              const DaAppbarButton(),
-              const NotificationIconButton(),
-              const SportSelector(),
-            ],
+            suffixes: [const NotificationIconButton(), const SportSelector()],
           ),
           child: FTabs(
             expands: true,
             contentPhysics: const NeverScrollableScrollPhysics(),
-            control: FTabControl.lifted(
-              index: index,
-              onChange: _onTabChanged,
-            ),
+            control: FTabControl.lifted(index: index, onChange: _onTabChanged),
             children: sections,
           ),
         );

@@ -122,7 +122,7 @@ class _Content extends StatelessWidget {
     if (bookings.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 40),
+        padding: const EdgeInsets.fromLTRB(0, 24, 0, 40),
         children: [
           PEmptySectionPlaceholder(
             title: 'Chưa có buổi tập nào',
@@ -149,7 +149,7 @@ class _Content extends StatelessWidget {
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+      padding: const EdgeInsets.fromLTRB(0, 12, 0, 40),
       children: [
         if (hero != null) ...[
           _Hero(booking: hero, sessionIndex: heroIndex),
@@ -1131,7 +1131,7 @@ class _LoadingSkeleton extends StatelessWidget {
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+      padding: const EdgeInsets.fromLTRB(0, 12, 0, 40),
       children: [
         Container(
           height: 190,

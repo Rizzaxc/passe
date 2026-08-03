@@ -38,7 +38,7 @@ final class IncomingInvitesControllerProvider
 }
 
 String _$incomingInvitesControllerHash() =>
-    r'cc0acc1f6dc52c6a7fe1a466d8a4d677d44e09fc';
+    r'588cb1f430f7f960f885a89a791eb694befa18d0';
 
 abstract class _$IncomingInvitesController
     extends $AsyncNotifier<List<IncomingInvite>> {

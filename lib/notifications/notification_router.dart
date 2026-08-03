@@ -16,6 +16,9 @@ void routeNotificationTap(GoRouter router, Map<String, dynamic>? data) {
   if (kind == null) return;
 
   final lobbyId = data['lobby_id'] as String?;
+  // Friendship pushes carry the *other* party's id — that's who you want to
+  // land on, whether they just asked or just accepted.
+  final userId = data['user_id'] as String?;
 
   final location = switch (kind) {
     // The confirmed activity lives inside its lobby's section.
@@ -41,6 +44,13 @@ void routeNotificationTap(GoRouter router, Map<String, dynamic>? data) {
       const ManageScheduleRoute().location,
     NotificationKind.professionalBookingRejected =>
       const ManageScheduleRoute().location,
+    // Both friendship kinds open the other person's page: the request can be
+    // answered from its CTA, and an acceptance is best celebrated by landing
+    // on the new friend.
+    NotificationKind.friendRequest =>
+      userId == null ? null : UserRoute(id: userId).location,
+    NotificationKind.friendAccepted =>
+      userId == null ? null : UserRoute(id: userId).location,
   };
 
   if (location != null) router.go(location);

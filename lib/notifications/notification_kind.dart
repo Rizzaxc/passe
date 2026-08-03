@@ -10,7 +10,9 @@ enum NotificationKind {
   lobbyInvite('lobby_invite'),
   professionalBookingRequested('professional_booking_requested'),
   professionalBookingConfirmed('professional_booking_confirmed'),
-  professionalBookingRejected('professional_booking_rejected');
+  professionalBookingRejected('professional_booking_rejected'),
+  friendRequest('friend_request'),
+  friendAccepted('friend_accepted');
 
   const NotificationKind(this.value);
 

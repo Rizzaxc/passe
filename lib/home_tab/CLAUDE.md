@@ -1,4 +1,4 @@
-# Home Tab — discovery
+# Home Tab — Discover
 
 Read the root [`CLAUDE.md`](../../CLAUDE.md) first for project-wide conventions (build_runner,
 navigation, the `selectedSportStateProvider` context sport, forui/theme, identity rules). This file
@@ -6,15 +6,22 @@ covers what's specific to the home screen.
 
 ## Purpose
 
-The discovery surface. Four subtabs, all driven by the same `selectedSportStateProvider` (context
-sport) and the same shared `FilterData`. Each feed returns `[]` when no sport is selected.
+Home is the **Discover** surface: four subtabs sharing one filter, all scoped to the context sport
+(`selectedSportStateProvider`). Each feed returns `[]` when no sport is selected.
+
+The social surface (**Feed**) is a separate, first-positioned main tab — see
+[`lib/feed_tab/CLAUDE.md`](../feed_tab/CLAUDE.md). It used to live here behind a header pill toggle;
+it moved out to its own tab (a TikTok-style vertical feed doesn't compose well as a sub-segment of
+another screen), so `HomeTab` is back to being single-purpose.
 
 ## Layout
 
-- `main.dart` — `HomeTab`: `FScaffold` + `FTabs` hosting the 4 subtabs. Appbar suffixes are shared
-  app-wide (`DaAppbarButton`, `NotificationIconButton`, `SportSelector`). `HomeTab.withInitialTab(i)`
-  deep-links a subtab (`0` teammate, `1` challenger, `2` professional, `3` location — see the
-  `Home*Route` classes in `router.dart`).
+- `main.dart` — `HomeTab`: `FScaffold` + `_DiscoverView` (the four `FTabs`).
+  - `HomeTab.withInitialTab(i)` deep-links a subtab (`0` teammate, `1` challenger, `2` professional,
+    `3` location — see the `Home*Route` classes in `router.dart`).
+- Appbar suffixes: `NotificationIconButton`, `SportSelector`. (`DaAppbarButton` — the đá-balance
+  pill — is hidden app-wide; the currency system is deferred/unbuilt, see root CLAUDE.md ▸ Activity
+  & Currency System. The widget still exists in `lib/currency/` for when that ships.)
 - `filter.dart` / `filter_controller.dart` — the **shared filter** across all four subtabs.
 - `lobby_feed_card.dart` — `LobbyFeedCard`, the shared card for the lobby-shaped subtabs.
   **Design rule: the teammate and challenger cards must stay visually identical** — same name,

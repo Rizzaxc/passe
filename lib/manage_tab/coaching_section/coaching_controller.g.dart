@@ -11,8 +11,10 @@ part of 'coaching_controller.dart';
 /// The signed-in user's coach bookings (`professional_booking` rows where
 /// the linked professional's role is `coach`) — real data behind Manage ▸
 /// Coaching, replacing the fully-mocked course/session prototype. Referee
-/// bookings surface elsewhere (via `lobby_match.referee_booking_id`), so
-/// this excludes them.
+/// bookings surface elsewhere (attached to a lobby activity via
+/// `activity.referee_booking_id`, shown on the activity hero card; and on a
+/// recorded match via `lobby_match.referee_booking_id`), so this coach-only
+/// view excludes them.
 
 @ProviderFor(coachingBookings)
 final coachingBookingsProvider = CoachingBookingsProvider._();
@@ -20,8 +22,10 @@ final coachingBookingsProvider = CoachingBookingsProvider._();
 /// The signed-in user's coach bookings (`professional_booking` rows where
 /// the linked professional's role is `coach`) — real data behind Manage ▸
 /// Coaching, replacing the fully-mocked course/session prototype. Referee
-/// bookings surface elsewhere (via `lobby_match.referee_booking_id`), so
-/// this excludes them.
+/// bookings surface elsewhere (attached to a lobby activity via
+/// `activity.referee_booking_id`, shown on the activity hero card; and on a
+/// recorded match via `lobby_match.referee_booking_id`), so this coach-only
+/// view excludes them.
 
 final class CoachingBookingsProvider
     extends
@@ -36,8 +40,10 @@ final class CoachingBookingsProvider
   /// The signed-in user's coach bookings (`professional_booking` rows where
   /// the linked professional's role is `coach`) — real data behind Manage ▸
   /// Coaching, replacing the fully-mocked course/session prototype. Referee
-  /// bookings surface elsewhere (via `lobby_match.referee_booking_id`), so
-  /// this excludes them.
+  /// bookings surface elsewhere (attached to a lobby activity via
+  /// `activity.referee_booking_id`, shown on the activity hero card; and on a
+  /// recorded match via `lobby_match.referee_booking_id`), so this coach-only
+  /// view excludes them.
   CoachingBookingsProvider._()
     : super(
         from: null,

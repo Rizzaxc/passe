@@ -2,8 +2,45 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/model/activity.dart';
+import '../../../core/model/enum.dart';
 
 part 'upcoming_controller.g.dart';
+
+/// A professional (coach or referee) hired for a lobby activity, resolved from
+/// the `coach_booking_id` / `referee_booking_id` embed. Enough to render the
+/// hero card's attachment row and deep-link to the pro's profile.
+class AttachedProfessional {
+  final String bookingId;
+  final String professionalId;
+  final String name;
+  final bool verified;
+  final ProfessionalBookingStatus status;
+
+  const AttachedProfessional({
+    required this.bookingId,
+    required this.professionalId,
+    required this.name,
+    required this.verified,
+    required this.status,
+  });
+
+  /// Parse one embedded `professional_booking` row (with a nested
+  /// `professional`). Returns null when the embed is absent or RLS hid it.
+  static AttachedProfessional? fromEmbed(Object? embed) {
+    if (embed is! Map<String, dynamic>) return null;
+    final pro = embed['professional'] as Map<String, dynamic>?;
+    if (pro == null) return null;
+    return AttachedProfessional(
+      bookingId: embed['id'] as String,
+      professionalId: embed['professional_id'] as String,
+      name: (pro['display_name'] as String?) ?? '',
+      verified: (pro['is_verified'] as bool?) ?? false,
+      status:
+          ProfessionalBookingStatus.fromValue(embed['status'] as String?) ??
+          ProfessionalBookingStatus.requested,
+    );
+  }
+}
 
 /// The next "live" activity for a lobby — either an upcoming one-off or
 /// the next virtual occurrence of a recurring series.
@@ -35,6 +72,11 @@ class UpcomingActivity {
   final int? confirmationThreshold;
   final DateTime? confirmationDeadline;
 
+  /// Attached professionals (null when no coach / referee is hired for this
+  /// session). See schema/activity_professional_attachment.sql.
+  final AttachedProfessional? coach;
+  final AttachedProfessional? referee;
+
   const UpcomingActivity({
     required this.activity,
     required this.nextStart,
@@ -47,6 +89,8 @@ class UpcomingActivity {
     required this.prepaymentAmount,
     required this.confirmationThreshold,
     required this.confirmationDeadline,
+    required this.coach,
+    required this.referee,
   });
 
   bool get isRecurring => recurrenceDayOfWeek != null;
@@ -81,7 +125,15 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
 
     final response = await supabase
         .from('activity')
-        .select('*, location(name, district)')
+        .select(
+          '*, location(name, district), '
+          'coach:professional_booking!activity_coach_booking_id_fkey('
+          'id, status, professional_id, '
+          'professional:professional_id(display_name, is_verified)), '
+          'referee:professional_booking!activity_referee_booking_id_fkey('
+          'id, status, professional_id, '
+          'professional:professional_id(display_name, is_verified))',
+        )
         .eq('lobby_id', lobbyId)
         .or(
           'start_time.gt.${nowUtc.toIso8601String()},'
@@ -119,6 +171,8 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
           confirmationDeadline: row['confirmation_deadline'] != null
               ? DateTime.parse(row['confirmation_deadline'] as String)
               : null,
+          coach: AttachedProfessional.fromEmbed(row['coach']),
+          referee: AttachedProfessional.fromEmbed(row['referee']),
         );
       }
     }
@@ -132,6 +186,8 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
   Map<String, dynamic> _stripExtras(Map<String, dynamic> row) {
     return {...row}
       ..remove('location')
+      ..remove('coach')
+      ..remove('referee')
       ..remove('recurrence_day_of_week')
       ..remove('location_id')
       ..remove('prepayment_required')

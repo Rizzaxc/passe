@@ -20,14 +20,15 @@ void _openDetail(BuildContext context, ProfessionalFeedItem item) {
   ProfessionalDetailRoute(id: item.id, $extra: item).push(context);
 }
 
+final _titlePrefixPattern = RegExp(
+  r'^(hlv|coach|trọng tài)\s+',
+  caseSensitive: false,
+);
+final _whitespacePattern = RegExp(r'\s+');
+
 String _initialsOf(String displayName) {
-  final cleaned = displayName
-      .replaceAll(
-        RegExp(r'^(hlv|coach|trọng tài)\s+', caseSensitive: false),
-        '',
-      )
-      .trim();
-  final parts = cleaned.split(RegExp(r'\s+'));
+  final cleaned = displayName.replaceAll(_titlePrefixPattern, '').trim();
+  final parts = cleaned.split(_whitespacePattern);
   if (parts.isEmpty || parts.first.isEmpty) return '?';
   if (parts.length == 1) return parts.first[0].toUpperCase();
   return (parts.first[0] + parts.last[0]).toUpperCase();

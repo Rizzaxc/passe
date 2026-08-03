@@ -1363,7 +1363,7 @@ ALTER FUNCTION public.activity_confirmation_status(p_activity_id uuid) OWNER TO 
 -- Name: activity_health_data(bigint); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.activity_health_data(p_sport_id bigint) RETURNS TABLE(activity_id uuid, start_time timestamp with time zone, end_time timestamp with time zone, duration_minutes integer, location_label text, source text, steps integer, distance_meters real, active_calories real, avg_heart_rate integer, max_heart_rate integer, min_heart_rate integer, hrv_sdnn_ms real, hr_zone_easy_seconds integer, hr_zone_moderate_seconds integer, hr_zone_hard_seconds integer, training_load real, effort_score real, workout_type text, recorded_at timestamp with time zone)
+CREATE FUNCTION public.activity_health_data(p_sport_id bigint) RETURNS TABLE(activity_id uuid, start_time timestamp with time zone, end_time timestamp with time zone, duration_minutes integer, location_label text, source text, steps integer, distance_meters real, active_calories real, avg_heart_rate integer, max_heart_rate integer, min_heart_rate integer, hrv_sdnn_ms real, hrv_rmssd_ms real, hr_zone_easy_seconds integer, hr_zone_moderate_seconds integer, hr_zone_hard_seconds integer, training_load real, effort_score real, workout_type text, recorded_at timestamp with time zone)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -1391,6 +1391,7 @@ BEGIN
     m.max_heart_rate,
     m.min_heart_rate,
     m.hrv_sdnn_ms,
+    m.hrv_rmssd_ms,
     m.hr_zone_easy_seconds,
     m.hr_zone_moderate_seconds,
     m.hr_zone_hard_seconds,
@@ -5837,6 +5838,7 @@ CREATE TABLE public.daily_health_summary (
     activity_count integer DEFAULT 0,
     total_activity_minutes integer DEFAULT 0,
     synced_at timestamp with time zone DEFAULT now() NOT NULL,
+    hrv_rmssd_ms real,
     CONSTRAINT resting_hr_validity CHECK (((resting_heart_rate IS NULL) OR ((resting_heart_rate >= 30) AND (resting_heart_rate <= 150))))
 );
 

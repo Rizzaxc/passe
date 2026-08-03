@@ -73,6 +73,10 @@ dependencies:
   flutter_map: ^8.1.1
   latlong2: ^0.9.1
   url_launcher: ^6.3.1
+  # Disk-backed image cache. Flutter's built-in NetworkImage cache is
+  # memory-only and dies on restart — for the wall/feed photo grid that means
+  # re-downloading every image on every cold start.
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   supabase: ^2.7.0
@@ -182,7 +186,7 @@ flutter_native_splash:
   # of your splash screen to a solid color.  Use background_image to set the background of your
   # splash screen to a png image.  This is useful for gradients. The image will be stretch to the
   # size of the app. Only one parameter can be used, color and background_image cannot both be set.
-  color: "#E11D48"
+  color: "#0C0508"
   image: branding/splash.png
   #background_image: "assets/background.png"
 
@@ -220,7 +224,7 @@ flutter_native_splash:
   # Following are specific parameters for Android 12+.
   android_12:
     image: branding/splash.png
-    color: "#E11D48"
+    color: "#0C0508"
   # The image parameter sets the splash screen icon image.  If this parameter is not specified,
   # the app's launcher icon will be used instead.
   # Please note that the splash screen will be clipped to a circle on the center of the screen.

@@ -8,14 +8,22 @@ part 'ad_service.g.dart';
 
 final _talker = Talker();
 
-/// One-shot SDK init. Called from `main()` before `runApp`.
+/// One-shot SDK init. Called after the first frame (see `main.dart`) so a
+/// slow native init (disk I/O / GMA config fetch, well-documented as a
+/// multi-hundred-ms-to-low-seconds cold-start cost) never delays `runApp` or
+/// Home's first paint. Errors are logged, not rethrown — ads are best-effort;
+/// banners/interstitials simply won't serve until (if) this later succeeds.
 ///
 /// On debug builds we don't need a `RequestConfiguration` with test device ids
 /// because we ship Google's test unit ids (see [AdConfig]); when you swap in
 /// real unit ids, register your physical test devices here to avoid serving —
 /// and accidentally clicking — live ads during development.
 Future<void> initMobileAds() async {
-  await MobileAds.instance.initialize();
+  try {
+    await MobileAds.instance.initialize();
+  } catch (e, st) {
+    _talker.handle(e, st, 'AdMob init failed');
+  }
 }
 
 /// Preloads and serves interstitials.

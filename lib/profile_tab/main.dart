@@ -13,10 +13,11 @@ import '../core/model/user_details.dart';
 import '../core/sport_selector.dart';
 import '../core/state/pro_mode_state.dart';
 import '../core/state/selected_sport_state.dart';
-import '../currency/da_appbar_button.dart';
 import '../notification/notification_icon_button.dart';
 import '../professional/controller.dart';
 import '../professional/pro_mode/service_editor_main.dart';
+import '../social/friends_screen.dart';
+import '../social/friendship_controller.dart';
 import '../ui/main.dart';
 import 'age_group_selection_screen.dart';
 import 'change_password_screen.dart';
@@ -43,11 +44,7 @@ class ProfileTab extends ConsumerWidget {
     return FScaffold(
       header: FHeader(
         title: Text('nav.profile'.tr()),
-        suffixes: [
-          const DaAppbarButton(),
-          const NotificationIconButton(),
-          const SportSelector(),
-        ],
+        suffixes: [const NotificationIconButton(), const SportSelector()],
       ),
       child: userAsync.when(
         data: (user) {
@@ -109,6 +106,10 @@ class ProfileTab extends ConsumerWidget {
 
                   // Section 3: Network & Industry Info
                   _buildNetworkIndustrySection(context, ref, profileState),
+                  const SizedBox(height: 24),
+
+                  // Section 3b: Friends
+                  _buildSocialSection(context, ref),
                   const SizedBox(height: 24),
 
                   // Section 4: Sport-Specific Info
@@ -333,6 +334,31 @@ class ProfileTab extends ConsumerWidget {
           details: Icon(
             FLucideIcons.logOut,
             color: context.theme.colors.destructive,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Friends hub entry. The badge counts requests waiting on the user — the
+  /// only place in the app that surfaces them, so it has to be visible here.
+  Widget _buildSocialSection(BuildContext context, WidgetRef ref) {
+    final pending = ref.watch(incomingFriendRequestsProvider).length;
+
+    return FTileGroup(
+      children: [
+        FTile(
+          prefix: const Icon(FLucideIcons.users),
+          title: Text('social.friends'.tr()),
+          details: pending > 0
+              ? FBadge(child: Text('$pending'))
+              : Text(
+                  '${ref.watch(friendsProvider).length}',
+                  style: TextStyle(color: context.theme.colors.primary),
+                ),
+          suffix: const Icon(FLucideIcons.chevronRight),
+          onPress: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const FriendsScreen()),
           ),
         ),
       ],

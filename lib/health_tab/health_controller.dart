@@ -10,8 +10,17 @@ import 'model/user_health_link.dart';
 
 part 'health_controller.g.dart';
 
+/// HRV record type to request/read. Health Connect (Android) has no
+/// SDNN-based record — only `HeartRateVariabilityRmssdRecord` — so requesting
+/// SDNN there is a silent no-op (the `health` plugin logs "Datatype
+/// HEART_RATE_VARIABILITY_SDNN not found in HC" and returns nothing). iOS
+/// HealthKit is the reverse: SDNN is its native HRV metric.
+HealthDataType get hrvDataType => Platform.isIOS
+    ? HealthDataType.HEART_RATE_VARIABILITY_SDNN
+    : HealthDataType.HEART_RATE_VARIABILITY_RMSSD;
+
 /// Health data types we request permission for
-const _healthDataTypes = <HealthDataType>[
+List<HealthDataType> get _healthDataTypes => <HealthDataType>[
   // Activity
   HealthDataType.STEPS,
   HealthDataType.DISTANCE_DELTA,
@@ -21,11 +30,7 @@ const _healthDataTypes = <HealthDataType>[
   // Heart rate
   HealthDataType.HEART_RATE,
   HealthDataType.RESTING_HEART_RATE,
-  HealthDataType.HEART_RATE_VARIABILITY_SDNN,
-
-  // Sleep
-  HealthDataType.SLEEP_ASLEEP,
-  HealthDataType.SLEEP_IN_BED,
+  hrvDataType,
 
   // Body
   HealthDataType.WEIGHT,

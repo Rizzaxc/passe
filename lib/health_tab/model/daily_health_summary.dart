@@ -11,7 +11,10 @@ abstract class DailyHealthSummary with _$DailyHealthSummary {
 
     // Resting vitals
     @JsonKey(name: 'resting_heart_rate') int? restingHeartRate,
+    // iOS reports SDNN, Android/Health Connect reports RMSSD — only one is
+    // ever populated per platform. See health_controller.dart's hrvDataType.
     @JsonKey(name: 'hrv_sdnn_ms') double? hrvSdnnMs,
+    @JsonKey(name: 'hrv_rmssd_ms') double? hrvRmssdMs,
 
     // Daily totals
     int? steps,

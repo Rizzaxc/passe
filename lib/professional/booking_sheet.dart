@@ -166,6 +166,13 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
     final activityId = ref
         .read(pendingActivityBookingStateProvider.notifier)
         .consume();
+    // When this booking came from a lobby activity's "Đặt HLV / Trọng tài"
+    // action, attach it to that activity in the slot matching this pro's role
+    // (coach vs referee) — never professional_booking_id, which the
+    // activity_source_exclusivity CHECK forbids on a lobby activity.
+    final activityAttachColumn = activityId == null
+        ? null
+        : (_isCoach ? 'coach_booking_id' : 'referee_booking_id');
 
     try {
       await ref
@@ -182,6 +189,7 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
             newPackageSessionCount: service.isPackage ? service.sessionCount : null,
             newPackageTotalPrice: packageTotalPrice,
             activityId: activityId,
+            activityAttachColumn: activityAttachColumn,
           );
     } catch (e, st) {
       Talker().handle(e, st, 'Professional booking failed');

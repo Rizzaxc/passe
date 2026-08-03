@@ -1,0 +1,108 @@
+# Feed Tab — the social surface
+
+Read the root [`CLAUDE.md`](../../CLAUDE.md) first for project-wide conventions (build_runner,
+navigation, forui/theme, identity rules). This file covers what's specific to the Feed screen.
+
+## Purpose
+
+Feed is a **main tab in its own right, first in the bottom nav** — ephemeral photo posts from you,
+your friends, your lobby mates, and any post a friend of yours is tagged in. **Cross-sport** by
+design: a social feed that hid a friend's badminton photo while you happen to be in soccer mode
+would be wrong.
+
+It presents as a **vertically snapping, one-post-per-screen pager** rather than a continuously
+scrolling list — swiping up always lands on the next *whole* post, never mid-scroll through one.
+That's the whole reason it's a standalone tab and not a segment of Home: the pacing is different
+from Discover's feeds, not the visual language. Unlike a literal TikTok/Reels clone, this is **not**
+a full-bleed black immersive surface — every page is the app's normal light theme, and each page is
+just the same `PostCard` used everywhere else, centered in the viewport. `PageView`'s default
+physics already snap one page per swipe; no custom scroll physics were needed.
+
+`post_card.dart` (the shared card renderer) is used identically by three surfaces: this pager, a
+user's wall (`/user/:id`, see [`lib/social/CLAUDE.md`](../social/CLAUDE.md)), and the lobby activity
+feed (`lib/manage_tab/lobby_section/activity/feed.dart`). Don't fork it or give the pager a
+different-looking card — the point of reusing `PostCard` here is that a post looks the same
+wherever it's seen.
+
+## Layout
+
+- `main.dart` — `FeedTab`: `FScaffold` + `FHeader` (title, `NotificationIconButton`, and — for
+  signed-in users — a compose `+` button), matching every other tab's header convention exactly.
+  - **Guest / loading / error / empty states** all go through `_CenteredEmpty`: a hero `Icon` +
+    `PEmptySectionPlaceholder(title, subtitle)` + an optional direct CTA button, vertically centered
+    via `LayoutBuilder` + `ConstrainedBox(minHeight: ...)` + `Center` inside a `SingleChildScrollView`
+    (`AlwaysScrollableScrollPhysics`, so `RefreshIndicator` still works even when the content is
+    shorter than the screen). This mirrors the `hero:`+title+subtitle convention every other tab's
+    empty state uses (e.g. `home_tab/challenger_section/main.dart`'s `_NoLobbyState`) — just centered
+    instead of pinned to the top of a list, since here it's the *entire* tab rather than one section
+    among several. Guest → "Đăng nhập" CTA (`WelcomeRoute`); empty (signed in, no posts) →
+    "Tìm bạn bè" CTA (pushes `social/friends_screen.dart`'s `FriendsScreen`).
+  - **Data state** (`_FeedPager`): a vertical `PageView.builder`, one `PostCard` per page, wrapped in
+    a `RefreshIndicator` (a vertical `PageView` is still a `Scrollable`, so overscrolling past the
+    first post refreshes, same as every other feed in the app).
+- `feed_controller.dart` — `WallFeedController` (`wall_feed_data` RPC), `userWall` (`user_wall_data`,
+  used by `/user/:id`), and `FeedSportFilter` — deliberately **not** `selectedSportStateProvider`
+  (see Purpose above). `null` = all sports. There's currently no UI entry point to *set*
+  `FeedSportFilter` in the pager (the old card-list feed had chips); it defaults to all sports.
+- `post_card.dart` / `reaction_bar.dart` — the shared card renderer (see Purpose above). Reactions
+  are a fixed 5-emoji palette (`kWallReactions`), one per person (upsert), applied optimistically and
+  rolled back on failure. The card's own overflow menu handles delete-own/report-other.
+- `compose_post_sheet.dart` + `compose_controller.dart` + `tag_picker_sheet.dart` — `showComposePostSheet`
+  pushes a **full-screen page** (`MaterialPageRoute(fullscreenDialog: true)`, `FHeader.nested` with an
+  `FHeaderAction.x` close button) — **not** a `showPSheet` bottom sheet, despite the misleading
+  filename (kept to avoid touching every call site). A bottom sheet sized to content would look like
+  a small, half-empty sheet on the compose flow's first step; the flow also has enough steps to
+  deserve a real page. **Every field renders up front** (session, photos, caption, tags, TTL, submit)
+  — nothing is gated behind picking a session first, so the form doesn't visually grow/shift as you
+  fill it in. The one exception is the **Tags tile**, which is genuinely blocked on a session (its
+  candidate list is that session's attendees/lobby members) — it shows `onPress: null` + a
+  "Chọn buổi chơi trước" hint instead of hiding. Submit itself is disabled until session + ≥1 image.
+  - The **session picker (`_SessionPicker`) is an `FSelect<PostableSession>.rich` dropdown**, not an
+    inline list of tiles — `format:` shows the picked session's label in the closed field; each
+    `FSelectItem` carries a `prefix` icon (lesson vs. group), `title` (source label) and `subtitle`
+    (date · venue, generated by `_SessionPicker._subtitle`), and `enabled: !alreadyPosted` so an
+    already-posted session is visible-but-unpickable rather than absent. `PostableSession` has no
+    `==` override, so the picked session must stay the *same instance* as the one in the
+    `FSelectItem.value`/dropdown list — it always does here since both come from the same
+    `postableSessionsProvider` snapshot.
+  - **The dropdown itself always renders** — loading, errored, and zero-sessions are all still the
+    same `FSelect` shell (just `enabled: false` with an empty `children:`), never swapped out for a
+    `PEmptySectionPlaceholder`. Why it's unusable right now (still loading / failed to load / "you
+    have no postable sessions from the last 7 days") is a **tooltip** (`FTooltip`) on a small `(i)`
+    icon next to the label, not a state that replaces the field — the field's presence and position
+    should never depend on whether there happens to be something in it. The icon is wrapped in its
+    own `GestureDetector(behavior: opaque)` + 8px padding so tap-to-open isn't limited to the ~15px
+    glyph itself (`FTooltip`'s built-in long-press trigger still works too).
+- `report_post_sheet.dart` — report reasons must stay in sync with the CHECK on
+  `wall_post_report.reason`. This one *is* a normal `showPSheet` bottom sheet (a short, single-step
+  form) — don't confuse it with the compose flow above.
+
+## Wall post rules (enforced server-side, mirrored in the UI)
+
+- **Postable** = a lobby activity that started in the last 7 days which you RSVP'd `going` to, or a
+  coach `professional_booking` you were the client on in the same window. `postable_activities()`
+  is the single source for the picker so it can never offer something `create_wall_post` rejects.
+- **One post per author per session**, 1–4 images, ≤140-char caption, ≤5 tags.
+- **The activity link is a label, not integrity.** `source_label` / `source_start_time` /
+  `source_venue_name` are snapshotted onto the post; both FKs are `ON DELETE SET NULL`. This is why
+  `expire_past_activities()` needed no carve-out — it can delete the activity and the card still
+  renders. Never re-resolve the activity to render a post.
+- **Visibility**: self, the author's friends, the author's lobby mates, anyone tagged, and the
+  **friends of anyone tagged**. Tagging is the audience-widening mechanism; sharing a lobby with a
+  friend of the author grants nothing. One predicate (`fn_can_see_wall_post`) backs the RLS policy,
+  the feed RPC and the wall RPC — change one, change all three.
+- **Storage is not access control.** The `wall_post` bucket is public with unguessable UUID paths,
+  chosen for load time (a stable URL is a cache key; a signed URL's rotating token would force a
+  re-download every session). Row visibility is enforced on the post, never the bytes; the TTL
+  sweep really deletes the object, so maximum exposure is one TTL.
+- **TTL** is enforced twice: an `expires_at` filter on every read (so an expired post is invisible
+  immediately) plus an hourly `pg_cron` sweep that deletes rows and queues the storage objects
+  (`wall_post_gc` → a `gc-wall-images` Edge Function, same pattern as `send-push`).
+
+## Gotchas
+
+- All RPCs/queries carry the mandatory `.timeout(const Duration(seconds: 5))`.
+- `router.dart`'s `FeedRoute` (`/feed`) is its own top-level `TypedStatefulShellBranch`, positioned
+  **first** so it's also the first bottom-nav item (`lib/main.dart`'s `ScaffoldWithNavBar`, icon
+  `FLucideIcons.clapperboard`). It does not nest under `/home` — don't reintroduce
+  `HomeFeedRoute`/`HomeTab.feed()`; those were removed when Feed became a standalone tab.

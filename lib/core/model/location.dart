@@ -94,12 +94,23 @@ abstract class Location with _$Location {
         if (city != null) city,
       ].whereType<String>().join(', ');
 
+  /// Cached result of [_parseTags], keyed by instance identity — computed
+  /// once per instance instead of on every getter access (each venue card
+  /// reads `sports`/`amenityKeys` multiple times per build, and the raw
+  /// string parsing showed up as repeated main-thread work in the location
+  /// feed). An `Expando` is used because `Location`'s generated constructor
+  /// is `const`, which rules out a `late final` field.
+  static final _tagCache = Expando<Map<String, List<String>>>();
+
+  Map<String, List<String>> get _parsedTags =>
+      _tagCache[this] ??= _parseTags(tags);
+
   /// Whether the raw tags declare a sport at all, regardless of whether any
   /// declared sport is one Passe supports. Used to distinguish "explicitly
   /// tagged for a different sport" (hide) from "no sport info" (keep — could
   /// still be a general facility).
   bool get hasDeclaredSport =>
-      _parseTags(tags).containsKey('sport') ||
+      _parsedTags.containsKey('sport') ||
       tags.any((t) => !t.contains(':') && _osmSportToAppSport.containsKey(t));
 
   /// The Passe [Sport]s this venue's tags claim to support. Empty if
@@ -107,7 +118,7 @@ abstract class Location with _$Location {
   /// volleyball).
   Set<Sport> get sports {
     final values = <String>{
-      ...?_parseTags(tags)['sport'],
+      ...?_parsedTags['sport'],
       for (final t in tags)
         if (!t.contains(':') && _osmSportToAppSport.containsKey(t)) t,
     };
@@ -124,7 +135,7 @@ abstract class Location with _$Location {
   /// `["pitch", "sports_centre"]`. Unrecognized/administrative tags are
   /// dropped rather than shown as raw OSM junk.
   List<String> get amenityKeys => [
-    for (final l in _parseTags(tags)['leisure'] ?? const <String>[])
+    for (final l in _parsedTags['leisure'] ?? const <String>[])
       if (_recognizedLeisure.contains(l)) l,
   ];
 }

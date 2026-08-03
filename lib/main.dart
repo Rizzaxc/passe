@@ -51,11 +51,6 @@ Future<void> main() async {
 
   await EasyLocalization.ensureInitialized();
 
-  // Google AdMob. Init is independent of the UI; banners/interstitials won't
-  // serve until this completes. Test unit ids are used until real ones land
-  // in .env (see lib/ads/ad_config.dart).
-  await initMobileAds();
-
   final sentryDSN = dotenv.env['SENTRY_DSN']!;
   const Map<String, double?> sampleRates = {
     envLocal: null,
@@ -85,27 +80,35 @@ Future<void> main() async {
       options.profilesSampleRate = 1.0;
       options.environment = env;
     },
-    appRunner: () => runApp(
-      ProviderScope(
-        observers: [
-          TalkerRiverpodObserver(
-            talker: talker,
-            settings: TalkerRiverpodLoggerSettings(
-              printProviderDisposed: env != envLive,
-              printProviderAdded: env != envLive,
-              printProviderUpdated: env != envLive,
-              printProviderFailed: env != envLive,
+    appRunner: () {
+      runApp(
+        ProviderScope(
+          observers: [
+            TalkerRiverpodObserver(
+              talker: talker,
+              settings: TalkerRiverpodLoggerSettings(
+                printProviderDisposed: env != envLive,
+                printProviderAdded: env != envLive,
+                printProviderUpdated: env != envLive,
+                printProviderFailed: env != envLive,
+              ),
             ),
+          ],
+          child: EasyLocalization(
+            supportedLocales: const [Locale('vi'), Locale('en')],
+            path: 'assets/translations',
+            startLocale: const Locale('vi'),
+            child: const Passe(),
           ),
-        ],
-        child: EasyLocalization(
-          supportedLocales: const [Locale('vi'), Locale('en')],
-          path: 'assets/translations',
-          startLocale: const Locale('vi'),
-          child: const Passe(),
         ),
-      ),
-    ),
+      );
+      // Google AdMob. Deferred past the first frame — see initMobileAds doc.
+      // Test unit ids are used until real ones land in .env (see
+      // lib/ads/ad_config.dart).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(initMobileAds());
+      });
+    },
   );
 }
 
@@ -154,11 +157,17 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
     // One-shot, non-blocking device→Supabase health sync on app launch. The
     // shell only mounts for an authed session; the sync controller self-guards
     // guests / unlinked / revoked permissions, so this is safe to fire blind.
+    // The short delay (rather than firing in the post-frame callback itself)
+    // keeps the multi-day backfill loop from competing with Home's first
+    // paint for the UI isolate's event loop right as the app opens.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(healthSyncControllerProvider.notifier)
-          .syncNow()
-          .catchError((_) => const HealthSyncResult());
+      Future.delayed(const Duration(seconds: 2), () {
+        if (!mounted) return;
+        ref
+            .read(healthSyncControllerProvider.notifier)
+            .syncNow()
+            .catchError((_) => const HealthSyncResult());
+      });
     });
   }
 
@@ -171,8 +180,12 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
         onChange: (index) => _onTap(context, index),
         children: [
           FBottomNavigationBarItem(
+            icon: Icon(FLucideIcons.clapperboard),
+            label: Text('nav.feed'.tr()),
+          ),
+          FBottomNavigationBarItem(
             icon: Icon(FLucideIcons.house),
-            label: Text('nav.home'.tr()),
+            label: Text('nav.discover'.tr()),
           ),
           FBottomNavigationBarItem(
             icon: Icon(FLucideIcons.calendar),

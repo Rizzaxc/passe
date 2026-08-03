@@ -16,6 +16,7 @@ import 'currency/wallet_intro_screen.dart';
 import 'currency/wallet_purchase_history_screen.dart';
 import 'currency/wallet_spending_history_screen.dart';
 import 'currency/wallet_topup_screen.dart';
+import 'feed_tab/main.dart';
 import 'health_tab/main.dart';
 import 'home_tab/main.dart';
 import 'main.dart';
@@ -24,6 +25,7 @@ import 'manage_tab/main.dart';
 import 'notification/main.dart';
 import 'professional/main.dart';
 import 'profile_tab/main.dart';
+import 'social/user_page.dart';
 import 'splash/main.dart';
 
 part 'router.g.dart';
@@ -49,7 +51,8 @@ GoRouter router(Ref ref) {
   ref.listen(authControllerProvider, (_, next) {
     final currentUser = next.value;
     final currentIsError = next is AsyncError;
-    final hasAuthStateChanged = isFirstUpdate ||
+    final hasAuthStateChanged =
+        isFirstUpdate ||
         (previousUser == null) != (currentUser == null) ||
         (previousUser?.isGuest != currentUser?.isGuest) ||
         // Propagate error transitions so the redirect's AsyncError branch can
@@ -81,9 +84,11 @@ GoRouter router(Ref ref) {
       // past the redirect below to actually use it.
       // (`/reset-password` is matched by path only because it carries an
       // `?email=` query.)
-      final isPasswordRecoveryFlow = state.uri.path == const ForgotPasswordRoute().location ||
+      final isPasswordRecoveryFlow =
+          state.uri.path == const ForgotPasswordRoute().location ||
           state.uri.path == '/reset-password';
-      final isAuthFlow = state.uri.path == const AuthRoute().location ||
+      final isAuthFlow =
+          state.uri.path == const AuthRoute().location ||
           state.uri.path == const WelcomeRoute().location ||
           isPasswordRecoveryFlow;
       switch (user.value) {
@@ -259,8 +264,29 @@ class ProfessionalDetailRoute extends GoRouteData
       ProfessionalDetailPage(id: id, initialItem: $extra);
 }
 
+/// Another player's page — wall, identity, and the friend CTA.
+///
+/// Like [ProfessionalDetailRoute] this is push-only, never a tab. Reached from
+/// a lobby member row, a friend search result, a feed post author or a tag
+/// chip. Pass the username as `$extra` so the header has something to show
+/// before `user_profile_data` returns.
+@TypedGoRoute<UserRoute>(path: '/user/:id')
+@immutable
+class UserRoute extends GoRouteData with $UserRoute {
+  final String id;
+  // ignore: library_private_types_in_public_api
+  final String? $extra;
+
+  const UserRoute({required this.id, this.$extra});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      UserPage(userId: id, initialName: $extra);
+}
+
 @TypedStatefulShellRoute<MainRoute>(
   branches: [
+    TypedStatefulShellBranch(routes: [TypedGoRoute<FeedRoute>(path: '/feed')]),
     TypedStatefulShellBranch(
       routes: [
         TypedGoRoute<HomeRoute>(
@@ -283,9 +309,7 @@ class ProfessionalDetailRoute extends GoRouteData
             TypedGoRoute<ManageRequestsRoute>(path: 'requests'),
             TypedGoRoute<ManageLobbyRoute>(
               path: 'lobby',
-              routes: [
-                TypedGoRoute<LobbyDetailRoute>(path: ':id'),
-              ],
+              routes: [TypedGoRoute<LobbyDetailRoute>(path: ':id')],
             ),
           ],
         ),
@@ -304,9 +328,7 @@ class ProfessionalDetailRoute extends GoRouteData
       ],
     ),
     TypedStatefulShellBranch(
-      routes: [
-        TypedGoRoute<ProfileRoute>(path: '/profile'),
-      ],
+      routes: [TypedGoRoute<ProfileRoute>(path: '/profile')],
     ),
   ],
 )
@@ -322,6 +344,16 @@ class MainRoute extends StatefulShellRouteData {
   ) {
     return ScaffoldWithNavBar(navigationShell: navigationShell);
   }
+}
+
+/// Feed — a main tab in its own right, first in the bottom nav. A TikTok-style
+/// vertical feed of wall posts; see `lib/feed_tab/main.dart`.
+@immutable
+class FeedRoute extends GoRouteData with $FeedRoute {
+  const FeedRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) => const FeedTab();
 }
 
 @immutable
@@ -373,8 +405,7 @@ class ManageRoute extends GoRouteData with $ManageRoute {
   const ManageRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) =>
-      const ManageTab();
+  Widget build(BuildContext context, GoRouterState state) => const ManageTab();
 }
 
 @immutable
@@ -425,8 +456,7 @@ class HealthRoute extends GoRouteData with $HealthRoute {
   const HealthRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) =>
-      const HealthTab();
+  Widget build(BuildContext context, GoRouterState state) => const HealthTab();
 }
 
 @immutable
@@ -439,7 +469,8 @@ class HealthUserHealthRoute extends GoRouteData with $HealthUserHealthRoute {
 }
 
 @immutable
-class HealthActivityDataRoute extends GoRouteData with $HealthActivityDataRoute {
+class HealthActivityDataRoute extends GoRouteData
+    with $HealthActivityDataRoute {
   const HealthActivityDataRoute();
 
   @override
@@ -448,7 +479,8 @@ class HealthActivityDataRoute extends GoRouteData with $HealthActivityDataRoute 
 }
 
 @immutable
-class HealthAchievementsRoute extends GoRouteData with $HealthAchievementsRoute {
+class HealthAchievementsRoute extends GoRouteData
+    with $HealthAchievementsRoute {
   const HealthAchievementsRoute();
 
   @override
@@ -461,6 +493,5 @@ class ProfileRoute extends GoRouteData with $ProfileRoute {
   const ProfileRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) =>
-      const ProfileTab();
+  Widget build(BuildContext context, GoRouterState state) => const ProfileTab();
 }

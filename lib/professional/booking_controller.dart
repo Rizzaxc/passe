@@ -107,9 +107,13 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
   /// instead creates a fresh `professional_booking_package` container plus
   /// this one first session. Neither set = a plain single booking.
   /// [participantUserIds] populates `booking_additional_users` for a group
-  /// service. [activityId] links the new booking back to a lobby activity
-  /// (`activity.professional_booking_id`) for a captain/coordinator's
-  /// lobby-scoped booking.
+  /// service. [activityId] + [activityAttachColumn] link the new booking back
+  /// to a *lobby* activity as an attached professional — the column is
+  /// `coach_booking_id` or `referee_booking_id` (chosen by the pro's role),
+  /// NOT `professional_booking_id` (which is reserved for a standalone
+  /// client pro-session and is mutually exclusive with `lobby_id` via
+  /// `activity_source_exclusivity`). See
+  /// schema/activity_professional_attachment.sql.
   Future<void> book({
     required String serviceId,
     required DateTime start,
@@ -122,6 +126,7 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
     int? newPackageSessionCount,
     double? newPackageTotalPrice,
     String? activityId,
+    String? activityAttachColumn,
   }) async {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
@@ -178,10 +183,10 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
             .timeout(const Duration(seconds: 5));
       }
 
-      if (activityId != null) {
+      if (activityId != null && activityAttachColumn != null) {
         await supabase
             .from('activity')
-            .update({'professional_booking_id': bookingId})
+            .update({activityAttachColumn: bookingId})
             .eq('id', activityId)
             .timeout(const Duration(seconds: 5));
       }

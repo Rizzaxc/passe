@@ -8,6 +8,7 @@ import '../../../../auth/auth_controller.dart';
 import '../../../../professional/pending_activity_booking_state.dart';
 import '../../../../ui/sheet.dart';
 import '../../../../ui/theme.dart';
+import '../../../feed_tab/compose_post_sheet.dart';
 import '../../../router.dart';
 import '../invite_member_sheet.dart';
 import '../schedule_activity_sheet.dart';
@@ -130,6 +131,15 @@ const _sharedActions = [
     icon: Icons.person_add_alt_1_outlined,
     tone: 'blue',
     label: 'Mời thành viên',
+  ),
+  // Restored now that wall posts exist. This was pulled in the 2026-07 pass
+  // for want of a storage bucket; it now opens the wall composer scoped to
+  // this lobby rather than writing a lobby-only photo item.
+  _ActionDef(
+    id: 'photo',
+    icon: Icons.photo_camera_outlined,
+    tone: 'amber',
+    label: 'Đăng ảnh buổi chơi',
   ),
 ];
 
@@ -447,6 +457,8 @@ class _ActionRow extends ConsumerWidget {
     switch (def.id) {
       case 'invite':
         showInviteMemberSheet(context, lobbyId!);
+      case 'photo':
+        showComposePostSheet(context, lobbyId: lobbyId);
       case 'poll':
         showCreatePollSheet(context, lobbyId!);
       case 'reschedule':

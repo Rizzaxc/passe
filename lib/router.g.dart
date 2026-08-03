@@ -19,6 +19,7 @@ List<RouteBase> get $appRoutes => [
   $walletSpendingHistoryRoute,
   $walletTopupRoute,
   $professionalDetailRoute,
+  $userRoute,
   $mainRoute,
 ];
 
@@ -336,9 +337,45 @@ mixin $ProfessionalDetailRoute on GoRouteData {
       context.replace(location, extra: _self.$extra);
 }
 
+RouteBase get $userRoute =>
+    GoRouteData.$route(path: '/user/:id', factory: $UserRoute._fromState);
+
+mixin $UserRoute on GoRouteData {
+  static UserRoute _fromState(GoRouterState state) => UserRoute(
+    id: state.pathParameters['id']!,
+    $extra: state.extra as String?,
+  );
+
+  UserRoute get _self => this as UserRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/user/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location, extra: _self.$extra);
+
+  @override
+  Future<T?> push<T>(BuildContext context) =>
+      context.push<T>(location, extra: _self.$extra);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location, extra: _self.$extra);
+
+  @override
+  void replace(BuildContext context) =>
+      context.replace(location, extra: _self.$extra);
+}
+
 RouteBase get $mainRoute => StatefulShellRouteData.$route(
   factory: $MainRouteExtension._fromState,
   branches: [
+    StatefulShellBranchData.$branch(
+      routes: [
+        GoRouteData.$route(path: '/feed', factory: $FeedRoute._fromState),
+      ],
+    ),
     StatefulShellBranchData.$branch(
       routes: [
         GoRouteData.$route(
@@ -425,6 +462,26 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
 
 extension $MainRouteExtension on MainRoute {
   static MainRoute _fromState(GoRouterState state) => const MainRoute();
+}
+
+mixin $FeedRoute on GoRouteData {
+  static FeedRoute _fromState(GoRouterState state) => const FeedRoute();
+
+  @override
+  String get location => GoRouteData.$location('/feed');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
 }
 
 mixin $HomeRoute on GoRouteData {

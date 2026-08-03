@@ -13,9 +13,11 @@ Complex operations are done at SQL functions and called using Supabase
 User will choose a "context sport" (frontend variable). The app will help them
 find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
 
-4 Main Tabs:
+5 Main Tabs (in bottom-nav order):
 
-- Home: split into 4 subtabs. they share a filter
+- Feed: a TikTok-style, one-post-per-screen vertical feed of ephemeral photo posts from you, your
+  friends and your lobby mates (cross-sport). First tab — the social/discovery entry point.
+- Home (Discover): 4 subtabs sharing one filter, all scoped to the context sport
     - Teammates: find people/ lobbies to play with
     - Challengers: put up your lobby for challengers or look for them
     - Neutrals: hire coaches, referees, etc for your sport
@@ -33,8 +35,12 @@ find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
     - their consistent schedule for matchmaking
     - network and industry: allow user to choose from preset choices and improve matchmaking
 
+`lib/social/` (friendship + `/user/:id`) also ships one:
+[`lib/social/CLAUDE.md`](lib/social/CLAUDE.md).
+
 Each tab folder ships its own `CLAUDE.md` with the file map, providers, and screen-specific
 gotchas — read it before touching that screen:
+[`lib/feed_tab/CLAUDE.md`](lib/feed_tab/CLAUDE.md),
 [`lib/home_tab/CLAUDE.md`](lib/home_tab/CLAUDE.md),
 [`lib/manage_tab/CLAUDE.md`](lib/manage_tab/CLAUDE.md),
 [`lib/health_tab/CLAUDE.md`](lib/health_tab/CLAUDE.md),
@@ -61,8 +67,17 @@ primary glossary until a `CONTEXT.md` exists (see `docs/agents/domain.md`).
 - **Homeground** — a lobby's default venue; `lobby.home_ground` FK → `location`.
 - **Searchable id** — a short human-shareable lobby code (`lobby.searchable_id`, a `nanoid(8)`),
   distinct from the UUID `lobby.id`.
-- **Befriend** — the join/pairing handshake (`lobby_befriend_record`). Three `interaction_type`s:
-  *request* (user → lobby), *invite* (lobby → user), *pair* (user ↔ user, creates a new lobby).
+- **Befriend** — the lobby join handshake (`lobby_befriend_record`): *request* (user → lobby) and
+  *invite* (lobby → user). A third type, *pair* (user ↔ user, created a new lobby on accept),
+  is **retired** — see *Friend* below. Distinct from **Friend**, which is user ↔ user.
+- **Friend** — a mutual user↔user relationship (`friendship`, request → accept). The supported way
+  to connect two people; it replaced the never-used `pair` befriend interaction. Blocking
+  (`user_block`) severs it and hides both parties from each other.
+- **Wall** — a user's own ephemeral posts, shown on `/user/:id` alongside a *tagged* segment.
+- **Post** — a `wall_post`: 1–4 photos + an optional ≤140-char caption, hooked to a lobby activity
+  or coach lesson from the last 7 days, living 1/3/7 days before being swept.
+- **Tag** — up to 5 people named on a post (`wall_post_tag`), drawn from that session's attendees
+  and lobby members. Tagging is also what widens a post's audience to the tagged person's friends.
 - **Challenge / Challenger** — team-vs-team matchmaking (one lobby challenges another). Distinct from
   befriend; has its own `lobby_challenge` table + `send_challenge`/`respond_challenge`/`cancel_challenge`
   RPCs (`schema/lobby_challenge.sql`). A lobby opts in via `open_to_challengers`. See "Challenger
@@ -120,6 +135,9 @@ Tables are `snake_case`, singular. Client identity is `auth.uid()`; RLS enforces
 **Lobby & social**
 - `lobby` — the party (captain_id, searchable_id, sport_id, playtime/details jsonb, home_ground FK,
   visibility).
+- `friendship` — mutual user↔user edges (`schema/friendship.sql`); `user_block` sits alongside it.
+- `wall_post` (+ `wall_post_tag`, `wall_post_reaction`, `wall_post_report`, `wall_post_gc`) — the
+  ephemeral photo feed (`schema/wall_post.sql`). See *Friends & Feed* below.
 - `lobby_member` — user↔lobby join.
 - `lobby_befriend_record` — request/invite/pair handshake; CHECK constraints enforce the shape of
   each interaction type; triggers auto-accept reciprocals and add members on accept.
@@ -327,6 +345,30 @@ managers). Matches played out are recorded via `lobby_match` (see Activity & Cur
   top-up screen is labelled test-only. Bill-splitting with đá is likewise unbuilt. When a real ledger +
   payment provider land, wire debit-on-confirm / refund / split and replace the local int.
   `activity.prepayment_amount` is a captain-set informational deposit label, not a charge.
+  `DaAppbarButton` (`lib/currency/da_appbar_button.dart`) — the đá-balance pill — is hidden from
+  every tab's appbar for the same reason; the widget and wallet routes still exist, just unlinked
+  from the main nav until the ledger is real.
+
+### Friends & Feed
+
+Friendship is a mutual `friendship` edge; the `pair` befriend interaction is **retired**
+(`schema/friendship.sql` rejects new ones). `/user/:id` is the only page showing another user.
+
+Wall posts (`schema/wall_post.sql`) are ephemeral photo posts hooked to a lobby activity you
+RSVP'd `going` to, or a coach lesson you booked, in the last 7 days. Three rules matter most:
+
+1. **The hook is a label, not integrity.** Display fields are snapshotted onto the post and both
+   FKs are `ON DELETE SET NULL`, so `expire_past_activities()` deleting the activity doesn't
+   break the card. Never re-resolve the activity when rendering.
+2. **Tagging widens the audience.** A post reaches the author's friends and lobby mates, anyone
+   tagged, and the friends of anyone tagged. Lobby proximity to the author alone grants nothing.
+   `fn_can_see_wall_post` is the single predicate behind RLS, the feed RPC and the wall RPC.
+3. **The public bucket is not privacy.** Public + UUID paths are a load-time decision; row
+   visibility is enforced on the post, and the TTL sweep really deletes the object, so maximum
+   exposure is one TTL.
+
+Full client contract: [`lib/feed_tab/CLAUDE.md`](lib/feed_tab/CLAUDE.md) and
+[`lib/social/CLAUDE.md`](lib/social/CLAUDE.md).
 
 ### Notifications
 
@@ -341,8 +383,11 @@ Push (raw FCM HTTP v1, iOS + Android) is **built**. Design + remaining provision
   marks `sent`/`failed` (retry cap 3). Schema: `schema/push_notifications.sql`.
 - **Flag system = data-driven allowlist** `enabled_notification_kind`. Each `notification_kind`
   is dark-launched / kill-switched by toggling its `enabled` flag (no redeploy). Live kinds:
-  `activity_confirmed`, `pro_session_reminder`, `lobby_invite`, `professional_booking_*`, and (with
-  the challenge handshake) `challenger_confirmed`, `challenge_received`, `challenge_declined`.
+  `activity_confirmed`, `pro_session_reminder`, `lobby_invite`, `professional_booking_*`, (with
+  the challenge handshake) `challenger_confirmed`, `challenge_received`, `challenge_declined`, and
+  (with friendship) `friend_request`, `friend_accepted`. There is deliberately **no** "a friend
+  posted" or "someone reacted" kind — the first is the highest-volume, most mutable-worthy push in
+  any social app and neither is worth the noise in v1.
   Note: `fn_emit_activity_confirmed` counts **going-only** confirmations and fires on INSERT *or*
   UPDATE of `activity_confirmation` (an out→going switch can cross quorum) — see
   `schema/push_notifications.sql`.

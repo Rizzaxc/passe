@@ -6,12 +6,13 @@ import '../model/daily_health_summary.dart';
 part 'health_metric.g.dart';
 
 /// A body-trend metric the dashboard can surface. Backed by a populated
-/// `daily_health_summary` column. `sleep_quality_score` / `activity_count` are
-/// intentionally excluded (no reliable device source).
+/// `daily_health_summary` column. `sleep_minutes` / `sleep_quality_score` /
+/// `activity_count` are intentionally excluded — sleep isn't tracked (Health
+/// Connect has no reliable sleep-stage source; see health_controller.dart),
+/// and `activity_count` has no reliable device source.
 enum HealthMetric {
   restingHr('health.metric.restingHr', 'bpm'),
   hrv('health.metric.hrv', 'ms'),
-  sleep('health.metric.sleep', ''),
   weight('health.metric.weight', 'kg'),
   steps('health.metric.steps', ''),
   distance('health.metric.distance', 'km'),
@@ -24,13 +25,12 @@ enum HealthMetric {
   final String unit;
 
   /// Recovery-leaning default set.
-  static const List<HealthMetric> defaults = [restingHr, hrv, sleep, weight];
+  static const List<HealthMetric> defaults = [restingHr, hrv, weight];
 
   /// The raw numeric value for charting (null when the day lacks the metric).
   double? value(DailyHealthSummary s) => switch (this) {
     restingHr => s.restingHeartRate?.toDouble(),
-    hrv => s.hrvSdnnMs,
-    sleep => s.sleepMinutes?.toDouble(),
+    hrv => s.hrvSdnnMs ?? s.hrvRmssdMs,
     weight => s.weightKg,
     steps => s.steps?.toDouble(),
     distance => s.distanceMeters,
@@ -40,7 +40,6 @@ enum HealthMetric {
 
   /// Human-facing display of a value (without unit).
   String format(double v) => switch (this) {
-    sleep => '${(v ~/ 60)}h ${(v % 60).round()}m',
     distance => (v / 1000).toStringAsFixed(1),
     weight => v.toStringAsFixed(1),
     hrv => v.toStringAsFixed(0),

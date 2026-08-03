@@ -20,7 +20,10 @@ abstract class ActivityHealthRow with _$ActivityHealthRow {
     @JsonKey(name: 'avg_heart_rate') int? avgHeartRate,
     @JsonKey(name: 'max_heart_rate') int? maxHeartRate,
     @JsonKey(name: 'min_heart_rate') int? minHeartRate,
+    // iOS reports SDNN, Android/Health Connect reports RMSSD — only one is
+    // ever populated per platform. See health_controller.dart's hrvDataType.
     @JsonKey(name: 'hrv_sdnn_ms') double? hrvSdnnMs,
+    @JsonKey(name: 'hrv_rmssd_ms') double? hrvRmssdMs,
     @JsonKey(name: 'hr_zone_easy_seconds') int? hrZoneEasySeconds,
     @JsonKey(name: 'hr_zone_moderate_seconds') int? hrZoneModerateSeconds,
     @JsonKey(name: 'hr_zone_hard_seconds') int? hrZoneHardSeconds,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../router.dart';
 import '../../../ui/empty_section_placeholder.dart';
 import 'controller.dart';
 
@@ -65,29 +66,35 @@ class _MemberChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 4,
-      children: [
-        CircleAvatar(
-          radius: 24,
-          backgroundColor: context.theme.colors.secondary,
-          child: Text(
-            member.username.isNotEmpty
-                ? member.username[0].toUpperCase()
-                : '?',
-            style: context.theme.typography.body.md.copyWith(
-              color: context.theme.colors.secondaryForeground,
-              fontWeight: FontWeight.w600,
+    // Lobby mates are the highest-intent source of friend requests — people
+    // you've actually played with — so the chip is a link to their page.
+    return GestureDetector(
+      onTap: () =>
+          UserRoute(id: member.userId, $extra: member.username).push(context),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 4,
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: context.theme.colors.secondary,
+            child: Text(
+              member.username.isNotEmpty
+                  ? member.username[0].toUpperCase()
+                  : '?',
+              style: context.theme.typography.body.md.copyWith(
+                color: context.theme.colors.secondaryForeground,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
-        Text(
-          member.username,
-          style: context.theme.typography.body.xs,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
+          Text(
+            member.username,
+            style: context.theme.typography.body.xs,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }

@@ -133,18 +133,10 @@ class _InviteRowState extends ConsumerState<_InviteRow> {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final invite = widget.invite;
-    final isPair = invite.kind == LobbyBefriendKind.pair;
 
-    // Title: for an invite, the lobby name (fallback to inviter); for a pair,
-    // the inviter proposing to team up.
-    final title = isPair
-        ? 'lobby.invites.pairFrom'
-            .tr(namedArgs: {'name': invite.inviterUsername})
-        : (invite.lobbyName ?? invite.inviterUsername);
-    final subtitle = isPair
-        ? '#${invite.inviterTag}'
-        : 'lobby.invites.invitedBy'
-            .tr(namedArgs: {'name': invite.inviterUsername});
+    final title = invite.lobbyName ?? invite.inviterUsername;
+    final subtitle = 'lobby.invites.invitedBy'
+        .tr(namedArgs: {'name': invite.inviterUsername});
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -159,8 +151,7 @@ class _InviteRowState extends ConsumerState<_InviteRow> {
             ),
             alignment: Alignment.center,
             child: invite.sport?.getIcon(size: 18) ??
-                Icon(isPair ? FLucideIcons.userPlus : FLucideIcons.users,
-                    size: 16, color: colors.primary),
+                Icon(FLucideIcons.users, size: 16, color: colors.primary),
           ),
           const SizedBox(width: 10),
           Expanded(

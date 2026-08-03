@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Activity {
 
- String? get id;@JsonKey(name: 'user_id') String get userId;@JsonKey(name: 'sport_id') int get sportId;@JsonKey(name: 'start_time') DateTime get startTime;@JsonKey(name: 'end_time') DateTime? get endTime;@JsonKey(name: 'lobby_id') String? get lobbyId;@JsonKey(name: 'professional_booking_id') String? get professionalBookingId;@JsonKey(name: 'created_at') DateTime? get createdAt;
+ String? get id;@JsonKey(name: 'user_id') String get userId;@JsonKey(name: 'sport_id') int get sportId;@JsonKey(name: 'start_time') DateTime get startTime;@JsonKey(name: 'end_time') DateTime? get endTime;@JsonKey(name: 'lobby_id') String? get lobbyId;@JsonKey(name: 'professional_booking_id') String? get professionalBookingId;@JsonKey(name: 'coach_booking_id') String? get coachBookingId;@JsonKey(name: 'referee_booking_id') String? get refereeBookingId;@JsonKey(name: 'created_at') DateTime? get createdAt;
 /// Create a copy of Activity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $ActivityCopyWith<Activity> get copyWith => _$ActivityCopyWithImpl<Activity>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Activity&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.sportId, sportId) || other.sportId == sportId)&&(identical(other.startTime, startTime) || other.startTime == startTime)&&(identical(other.endTime, endTime) || other.endTime == endTime)&&(identical(other.lobbyId, lobbyId) || other.lobbyId == lobbyId)&&(identical(other.professionalBookingId, professionalBookingId) || other.professionalBookingId == professionalBookingId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Activity&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.sportId, sportId) || other.sportId == sportId)&&(identical(other.startTime, startTime) || other.startTime == startTime)&&(identical(other.endTime, endTime) || other.endTime == endTime)&&(identical(other.lobbyId, lobbyId) || other.lobbyId == lobbyId)&&(identical(other.professionalBookingId, professionalBookingId) || other.professionalBookingId == professionalBookingId)&&(identical(other.coachBookingId, coachBookingId) || other.coachBookingId == coachBookingId)&&(identical(other.refereeBookingId, refereeBookingId) || other.refereeBookingId == refereeBookingId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,sportId,startTime,endTime,lobbyId,professionalBookingId,createdAt);
+int get hashCode => Object.hash(runtimeType,id,userId,sportId,startTime,endTime,lobbyId,professionalBookingId,coachBookingId,refereeBookingId,createdAt);
 
 @override
 String toString() {
-  return 'Activity(id: $id, userId: $userId, sportId: $sportId, startTime: $startTime, endTime: $endTime, lobbyId: $lobbyId, professionalBookingId: $professionalBookingId, createdAt: $createdAt)';
+  return 'Activity(id: $id, userId: $userId, sportId: $sportId, startTime: $startTime, endTime: $endTime, lobbyId: $lobbyId, professionalBookingId: $professionalBookingId, coachBookingId: $coachBookingId, refereeBookingId: $refereeBookingId, createdAt: $createdAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $ActivityCopyWith<$Res>  {
   factory $ActivityCopyWith(Activity value, $Res Function(Activity) _then) = _$ActivityCopyWithImpl;
 @useResult
 $Res call({
- String? id,@JsonKey(name: 'user_id') String userId,@JsonKey(name: 'sport_id') int sportId,@JsonKey(name: 'start_time') DateTime startTime,@JsonKey(name: 'end_time') DateTime? endTime,@JsonKey(name: 'lobby_id') String? lobbyId,@JsonKey(name: 'professional_booking_id') String? professionalBookingId,@JsonKey(name: 'created_at') DateTime? createdAt
+ String? id,@JsonKey(name: 'user_id') String userId,@JsonKey(name: 'sport_id') int sportId,@JsonKey(name: 'start_time') DateTime startTime,@JsonKey(name: 'end_time') DateTime? endTime,@JsonKey(name: 'lobby_id') String? lobbyId,@JsonKey(name: 'professional_booking_id') String? professionalBookingId,@JsonKey(name: 'coach_booking_id') String? coachBookingId,@JsonKey(name: 'referee_booking_id') String? refereeBookingId,@JsonKey(name: 'created_at') DateTime? createdAt
 });
 
 
@@ -65,7 +65,7 @@ class _$ActivityCopyWithImpl<$Res>
 
 /// Create a copy of Activity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? userId = null,Object? sportId = null,Object? startTime = null,Object? endTime = freezed,Object? lobbyId = freezed,Object? professionalBookingId = freezed,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? userId = null,Object? sportId = null,Object? startTime = null,Object? endTime = freezed,Object? lobbyId = freezed,Object? professionalBookingId = freezed,Object? coachBookingId = freezed,Object? refereeBookingId = freezed,Object? createdAt = freezed,}) {
   return _then(_self.copyWith(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String?,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -74,6 +74,8 @@ as int,startTime: null == startTime ? _self.startTime : startTime // ignore: cas
 as DateTime,endTime: freezed == endTime ? _self.endTime : endTime // ignore: cast_nullable_to_non_nullable
 as DateTime?,lobbyId: freezed == lobbyId ? _self.lobbyId : lobbyId // ignore: cast_nullable_to_non_nullable
 as String?,professionalBookingId: freezed == professionalBookingId ? _self.professionalBookingId : professionalBookingId // ignore: cast_nullable_to_non_nullable
+as String?,coachBookingId: freezed == coachBookingId ? _self.coachBookingId : coachBookingId // ignore: cast_nullable_to_non_nullable
+as String?,refereeBookingId: freezed == refereeBookingId ? _self.refereeBookingId : refereeBookingId // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
@@ -160,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id, @JsonKey(name: 'user_id')  String userId, @JsonKey(name: 'sport_id')  int sportId, @JsonKey(name: 'start_time')  DateTime startTime, @JsonKey(name: 'end_time')  DateTime? endTime, @JsonKey(name: 'lobby_id')  String? lobbyId, @JsonKey(name: 'professional_booking_id')  String? professionalBookingId, @JsonKey(name: 'created_at')  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id, @JsonKey(name: 'user_id')  String userId, @JsonKey(name: 'sport_id')  int sportId, @JsonKey(name: 'start_time')  DateTime startTime, @JsonKey(name: 'end_time')  DateTime? endTime, @JsonKey(name: 'lobby_id')  String? lobbyId, @JsonKey(name: 'professional_booking_id')  String? professionalBookingId, @JsonKey(name: 'coach_booking_id')  String? coachBookingId, @JsonKey(name: 'referee_booking_id')  String? refereeBookingId, @JsonKey(name: 'created_at')  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Activity() when $default != null:
-return $default(_that.id,_that.userId,_that.sportId,_that.startTime,_that.endTime,_that.lobbyId,_that.professionalBookingId,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.sportId,_that.startTime,_that.endTime,_that.lobbyId,_that.professionalBookingId,_that.coachBookingId,_that.refereeBookingId,_that.createdAt);case _:
   return orElse();
 
 }
@@ -181,10 +183,10 @@ return $default(_that.id,_that.userId,_that.sportId,_that.startTime,_that.endTim
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id, @JsonKey(name: 'user_id')  String userId, @JsonKey(name: 'sport_id')  int sportId, @JsonKey(name: 'start_time')  DateTime startTime, @JsonKey(name: 'end_time')  DateTime? endTime, @JsonKey(name: 'lobby_id')  String? lobbyId, @JsonKey(name: 'professional_booking_id')  String? professionalBookingId, @JsonKey(name: 'created_at')  DateTime? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id, @JsonKey(name: 'user_id')  String userId, @JsonKey(name: 'sport_id')  int sportId, @JsonKey(name: 'start_time')  DateTime startTime, @JsonKey(name: 'end_time')  DateTime? endTime, @JsonKey(name: 'lobby_id')  String? lobbyId, @JsonKey(name: 'professional_booking_id')  String? professionalBookingId, @JsonKey(name: 'coach_booking_id')  String? coachBookingId, @JsonKey(name: 'referee_booking_id')  String? refereeBookingId, @JsonKey(name: 'created_at')  DateTime? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _Activity():
-return $default(_that.id,_that.userId,_that.sportId,_that.startTime,_that.endTime,_that.lobbyId,_that.professionalBookingId,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.sportId,_that.startTime,_that.endTime,_that.lobbyId,_that.professionalBookingId,_that.coachBookingId,_that.refereeBookingId,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +203,10 @@ return $default(_that.id,_that.userId,_that.sportId,_that.startTime,_that.endTim
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id, @JsonKey(name: 'user_id')  String userId, @JsonKey(name: 'sport_id')  int sportId, @JsonKey(name: 'start_time')  DateTime startTime, @JsonKey(name: 'end_time')  DateTime? endTime, @JsonKey(name: 'lobby_id')  String? lobbyId, @JsonKey(name: 'professional_booking_id')  String? professionalBookingId, @JsonKey(name: 'created_at')  DateTime? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id, @JsonKey(name: 'user_id')  String userId, @JsonKey(name: 'sport_id')  int sportId, @JsonKey(name: 'start_time')  DateTime startTime, @JsonKey(name: 'end_time')  DateTime? endTime, @JsonKey(name: 'lobby_id')  String? lobbyId, @JsonKey(name: 'professional_booking_id')  String? professionalBookingId, @JsonKey(name: 'coach_booking_id')  String? coachBookingId, @JsonKey(name: 'referee_booking_id')  String? refereeBookingId, @JsonKey(name: 'created_at')  DateTime? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Activity() when $default != null:
-return $default(_that.id,_that.userId,_that.sportId,_that.startTime,_that.endTime,_that.lobbyId,_that.professionalBookingId,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.sportId,_that.startTime,_that.endTime,_that.lobbyId,_that.professionalBookingId,_that.coachBookingId,_that.refereeBookingId,_that.createdAt);case _:
   return null;
 
 }
@@ -216,7 +218,7 @@ return $default(_that.id,_that.userId,_that.sportId,_that.startTime,_that.endTim
 @JsonSerializable()
 
 class _Activity implements Activity {
-  const _Activity({this.id, @JsonKey(name: 'user_id') required this.userId, @JsonKey(name: 'sport_id') required this.sportId, @JsonKey(name: 'start_time') required this.startTime, @JsonKey(name: 'end_time') this.endTime, @JsonKey(name: 'lobby_id') this.lobbyId, @JsonKey(name: 'professional_booking_id') this.professionalBookingId, @JsonKey(name: 'created_at') this.createdAt});
+  const _Activity({this.id, @JsonKey(name: 'user_id') required this.userId, @JsonKey(name: 'sport_id') required this.sportId, @JsonKey(name: 'start_time') required this.startTime, @JsonKey(name: 'end_time') this.endTime, @JsonKey(name: 'lobby_id') this.lobbyId, @JsonKey(name: 'professional_booking_id') this.professionalBookingId, @JsonKey(name: 'coach_booking_id') this.coachBookingId, @JsonKey(name: 'referee_booking_id') this.refereeBookingId, @JsonKey(name: 'created_at') this.createdAt});
   factory _Activity.fromJson(Map<String, dynamic> json) => _$ActivityFromJson(json);
 
 @override final  String? id;
@@ -226,6 +228,8 @@ class _Activity implements Activity {
 @override@JsonKey(name: 'end_time') final  DateTime? endTime;
 @override@JsonKey(name: 'lobby_id') final  String? lobbyId;
 @override@JsonKey(name: 'professional_booking_id') final  String? professionalBookingId;
+@override@JsonKey(name: 'coach_booking_id') final  String? coachBookingId;
+@override@JsonKey(name: 'referee_booking_id') final  String? refereeBookingId;
 @override@JsonKey(name: 'created_at') final  DateTime? createdAt;
 
 /// Create a copy of Activity
@@ -241,16 +245,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Activity&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.sportId, sportId) || other.sportId == sportId)&&(identical(other.startTime, startTime) || other.startTime == startTime)&&(identical(other.endTime, endTime) || other.endTime == endTime)&&(identical(other.lobbyId, lobbyId) || other.lobbyId == lobbyId)&&(identical(other.professionalBookingId, professionalBookingId) || other.professionalBookingId == professionalBookingId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Activity&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.sportId, sportId) || other.sportId == sportId)&&(identical(other.startTime, startTime) || other.startTime == startTime)&&(identical(other.endTime, endTime) || other.endTime == endTime)&&(identical(other.lobbyId, lobbyId) || other.lobbyId == lobbyId)&&(identical(other.professionalBookingId, professionalBookingId) || other.professionalBookingId == professionalBookingId)&&(identical(other.coachBookingId, coachBookingId) || other.coachBookingId == coachBookingId)&&(identical(other.refereeBookingId, refereeBookingId) || other.refereeBookingId == refereeBookingId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,sportId,startTime,endTime,lobbyId,professionalBookingId,createdAt);
+int get hashCode => Object.hash(runtimeType,id,userId,sportId,startTime,endTime,lobbyId,professionalBookingId,coachBookingId,refereeBookingId,createdAt);
 
 @override
 String toString() {
-  return 'Activity(id: $id, userId: $userId, sportId: $sportId, startTime: $startTime, endTime: $endTime, lobbyId: $lobbyId, professionalBookingId: $professionalBookingId, createdAt: $createdAt)';
+  return 'Activity(id: $id, userId: $userId, sportId: $sportId, startTime: $startTime, endTime: $endTime, lobbyId: $lobbyId, professionalBookingId: $professionalBookingId, coachBookingId: $coachBookingId, refereeBookingId: $refereeBookingId, createdAt: $createdAt)';
 }
 
 
@@ -261,7 +265,7 @@ abstract mixin class _$ActivityCopyWith<$Res> implements $ActivityCopyWith<$Res>
   factory _$ActivityCopyWith(_Activity value, $Res Function(_Activity) _then) = __$ActivityCopyWithImpl;
 @override @useResult
 $Res call({
- String? id,@JsonKey(name: 'user_id') String userId,@JsonKey(name: 'sport_id') int sportId,@JsonKey(name: 'start_time') DateTime startTime,@JsonKey(name: 'end_time') DateTime? endTime,@JsonKey(name: 'lobby_id') String? lobbyId,@JsonKey(name: 'professional_booking_id') String? professionalBookingId,@JsonKey(name: 'created_at') DateTime? createdAt
+ String? id,@JsonKey(name: 'user_id') String userId,@JsonKey(name: 'sport_id') int sportId,@JsonKey(name: 'start_time') DateTime startTime,@JsonKey(name: 'end_time') DateTime? endTime,@JsonKey(name: 'lobby_id') String? lobbyId,@JsonKey(name: 'professional_booking_id') String? professionalBookingId,@JsonKey(name: 'coach_booking_id') String? coachBookingId,@JsonKey(name: 'referee_booking_id') String? refereeBookingId,@JsonKey(name: 'created_at') DateTime? createdAt
 });
 
 
@@ -278,7 +282,7 @@ class __$ActivityCopyWithImpl<$Res>
 
 /// Create a copy of Activity
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? userId = null,Object? sportId = null,Object? startTime = null,Object? endTime = freezed,Object? lobbyId = freezed,Object? professionalBookingId = freezed,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? userId = null,Object? sportId = null,Object? startTime = null,Object? endTime = freezed,Object? lobbyId = freezed,Object? professionalBookingId = freezed,Object? coachBookingId = freezed,Object? refereeBookingId = freezed,Object? createdAt = freezed,}) {
   return _then(_Activity(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String?,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -287,6 +291,8 @@ as int,startTime: null == startTime ? _self.startTime : startTime // ignore: cas
 as DateTime,endTime: freezed == endTime ? _self.endTime : endTime // ignore: cast_nullable_to_non_nullable
 as DateTime?,lobbyId: freezed == lobbyId ? _self.lobbyId : lobbyId // ignore: cast_nullable_to_non_nullable
 as String?,professionalBookingId: freezed == professionalBookingId ? _self.professionalBookingId : professionalBookingId // ignore: cast_nullable_to_non_nullable
+as String?,coachBookingId: freezed == coachBookingId ? _self.coachBookingId : coachBookingId // ignore: cast_nullable_to_non_nullable
+as String?,refereeBookingId: freezed == refereeBookingId ? _self.refereeBookingId : refereeBookingId // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));

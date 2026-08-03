@@ -4,7 +4,6 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../core/sport_selector.dart';
-import '../currency/da_appbar_button.dart';
 import '../ui/main.dart';
 import 'achievements_section/achievements_controller.dart';
 import 'achievements_section/main.dart';
@@ -85,7 +84,6 @@ class _HealthTabState extends ConsumerState<HealthTab> {
         suffixes: [
           // Sync button (device → Supabase) only makes sense once linked.
           if (isLinked) const _SyncButton(),
-          const DaAppbarButton(),
           const NotificationIconButton(),
           const SportSelector(),
         ],

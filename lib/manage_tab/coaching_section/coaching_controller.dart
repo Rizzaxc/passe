@@ -19,8 +19,10 @@ const _selectColumns = '''
 /// The signed-in user's coach bookings (`professional_booking` rows where
 /// the linked professional's role is `coach`) — real data behind Manage ▸
 /// Coaching, replacing the fully-mocked course/session prototype. Referee
-/// bookings surface elsewhere (via `lobby_match.referee_booking_id`), so
-/// this excludes them.
+/// bookings surface elsewhere (attached to a lobby activity via
+/// `activity.referee_booking_id`, shown on the activity hero card; and on a
+/// recorded match via `lobby_match.referee_booking_id`), so this coach-only
+/// view excludes them.
 @riverpod
 Future<List<ProfessionalBookingItem>> coachingBookings(Ref ref) async {
   final userId = ref.watch(currentUserIdProvider);

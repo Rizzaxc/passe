@@ -11,3 +11,4 @@ export 'segmented_button.dart';
 export 'sheet.dart';
 export 'theme.dart';
 export 'typography.dart';
+export 'user_avatar.dart';
