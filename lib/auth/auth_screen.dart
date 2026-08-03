@@ -128,9 +128,24 @@ class _AuthFormState extends ConsumerState<AuthForm> {
       state.save();
 
       try {
-        await ref
+        final result = await ref
             .read(authControllerProvider.notifier)
             .signUpWithPassword(email: email, password: pass);
+        if (!context.mounted) return;
+        // A null result means the sign-up succeeded but there's no session yet
+        // (email-confirmation flow). Without feedback the button looks dead, so
+        // tell the user to check their inbox. When a session IS created the auth
+        // state change routes to Home on its own.
+        if (result == null) {
+          showFToast(
+            context: context,
+            icon: const Icon(FLucideIcons.mailCheck),
+            title: Text('auth.checkEmailTitle'.tr()),
+            description: Text('auth.checkEmailBody'.tr(namedArgs: {'email': email})),
+            alignment: .bottomCenter,
+            duration: const Duration(seconds: 8),
+          );
+        }
       } catch (e) {
         if (!context.mounted) return;
         String message = 'errorGeneric';
@@ -164,7 +179,7 @@ class _AuthFormState extends ConsumerState<AuthForm> {
               if (value == null || value.isEmpty) {
                 return 'auth.emailEmpty'.tr();
               }
-              final emailRegex = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
+              final emailRegex = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$');
               if (!emailRegex.hasMatch(value)) {
                 return 'auth.emailInvalid'.tr();
               }

@@ -14,6 +14,12 @@ import '../../../core/state/selected_sport_state.dart';
 part 'lobby_controller.freezed.dart';
 part 'lobby_controller.g.dart';
 
+/// Thrown by [LobbyFormController.commit] when trying to create a lobby with no
+/// context sport selected (`Sport.others`).
+class LobbySportNotSelected implements Exception {
+  const LobbySportNotSelected();
+}
+
 @freezed
 abstract class LobbyFormState with _$LobbyFormState {
   const factory LobbyFormState({
@@ -68,10 +74,9 @@ class UserLobbiesController extends _$UserLobbiesController {
     final sport = ref.watch(selectedSportStateProvider).value;
     if (sport == null) return [];
 
-    // Housekeeping: delete past unconfirmed lobby activities.
-    await supabase
-        .rpc('expire_past_activities')
-        .timeout(const Duration(seconds: 5));
+    // Housekeeping (expiring past unconfirmed activities) runs server-side on a
+    // pg_cron schedule ('expire_past_activities' job) — it must NOT run as a
+    // mutation on this read path.
 
     final lobbyRows = await supabase
         .from('lobby')
@@ -237,7 +242,9 @@ class LobbyFormController extends _$LobbyFormController {
   @override
   LobbyFormState build(String? lobbyId) {
     _lobbyId = lobbyId;
-    final sport = ref.read(selectedSportStateProvider).value ?? Sport.soccer;
+    // Default to the context sport; if it isn't resolved yet, leave it as
+    // `others` so commit() blocks rather than silently creating a Soccer lobby.
+    final sport = ref.read(selectedSportStateProvider).value ?? Sport.others;
     return LobbyFormState(
       lobby: Lobby(name: '', sport: sport),
     );
@@ -400,6 +407,13 @@ class LobbyFormController extends _$LobbyFormController {
         lobby = state.lobby.copyWith(id: _lobbyId, details: details);
         ref.invalidate(userLobbiesControllerProvider);
       } else {
+        // Block creating a lobby with no real sport (Sport.others = index 0):
+        // the whole app is scoped to a context sport, and a sportless lobby
+        // corrupts every sport-filtered feed. Previously this silently fell back
+        // to Soccer.
+        if (state.lobby.sport == Sport.others) {
+          throw const LobbySportNotSelected();
+        }
         // Create path — always use the RPC so the captain is added as first member atomically.
         final params = <String, dynamic>{
           'p_name': state.lobby.name,

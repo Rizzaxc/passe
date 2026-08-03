@@ -61,12 +61,19 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
       final tagNumber =
           parts.length > 1 ? parts[1].trim() : (tagOnly ? parts[0].replaceAll('#', '').trim() : null);
 
+      final myId = ref.read(currentUserIdProvider);
+
       var query = supabase.from('user').select('id, username, tag_number');
       if (username != null && username.isNotEmpty) {
-        query = query.eq('username', username);
+        // Partial (case-insensitive) match so users don't need the exact name.
+        query = query.ilike('username', '%$username%');
       }
       if (tagNumber != null && tagNumber.isNotEmpty) {
         query = query.eq('tag_number', tagNumber);
+      }
+      // Never surface yourself as an invite target.
+      if (myId != null) {
+        query = query.neq('id', myId);
       }
       final rows =
           await query.limit(10).timeout(const Duration(seconds: 5));

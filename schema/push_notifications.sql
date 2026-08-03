@@ -224,9 +224,14 @@ create trigger notification_outbox_poke
     for each statement execute function public.fn_outbox_poke();
 
 -- ── 8. Emitter: activity_confirmed (fires on the quorum-crossing RSVP) ───────
--- One push to every lobby member the moment count(activity_confirmation) first
--- reaches confirmation_threshold. Always-confirmed (NULL threshold) and non-lobby
--- (booking) activities have no quorum event and are skipped.
+-- One push to every lobby member the moment the count of GOING confirmations
+-- first reaches confirmation_threshold. Only 'going' counts toward quorum (see
+-- activity_attendance.sql), and the crossing can come from an INSERT or an
+-- attendance UPDATE (out/maybe -> going), so the trigger fires on both.
+-- Always-confirmed (NULL threshold) and non-lobby (booking) activities have no
+-- quorum event and are skipped.
+-- (Superseded the earlier count(*)-over-all-rows, INSERT-only version — see
+-- migration fix_activity_confirmed_push_going_only.)
 create or replace function public.fn_emit_activity_confirmed()
     returns trigger
     language plpgsql security definer set search_path to ''
@@ -234,7 +239,7 @@ as $$
 declare
     v_threshold  int;
     v_lobby_id   uuid;
-    v_count      int;
+    v_going      int;
     v_recipients uuid[];
     v_lobby_name text;
 begin
@@ -247,11 +252,19 @@ begin
         return new;
     end if;
 
-    select count(*) into v_count
+    -- Only a transition that ADDS a 'going' can cross the quorum upward.
+    if new.attendance <> 'going' then
+        return new;
+    end if;
+    if tg_op = 'UPDATE' and old.attendance = 'going' then
+        return new;  -- was already going; count unchanged
+    end if;
+
+    select count(*) filter (where attendance = 'going') into v_going
         from public.activity_confirmation
         where activity_id = new.activity_id;
 
-    if v_count <> v_threshold then
+    if v_going <> v_threshold then
         return new;  -- below quorum, or already crossed on an earlier row
     end if;
 
@@ -274,8 +287,9 @@ end;
 $$;
 
 drop trigger if exists activity_confirmation_emit_confirmed on public.activity_confirmation;
-create trigger activity_confirmation_emit_confirmed
-    after insert on public.activity_confirmation
+drop trigger if exists activity_confirmed_emit on public.activity_confirmation;
+create trigger activity_confirmed_emit
+    after insert or update on public.activity_confirmation
     for each row execute function public.fn_emit_activity_confirmed();
 
 -- ── 9. Emitter: pro_session_reminder (T-1h, cron-driven, single-shot) ────────

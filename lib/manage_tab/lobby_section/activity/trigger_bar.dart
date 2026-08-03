@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../../auth/auth_controller.dart';
 import '../../../../professional/pending_activity_booking_state.dart';
 import '../../../../ui/sheet.dart';
 import '../../../../ui/theme.dart';
@@ -134,7 +135,7 @@ const _sharedActions = [
 
 // ─── Chat trigger bar ──────────────────────────────────────────
 
-class ChatTriggerBar extends StatelessWidget {
+class ChatTriggerBar extends ConsumerWidget {
   final bool isLeader;
   final VoidCallback onOpen;
 
@@ -145,8 +146,10 @@ class ChatTriggerBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
+    final username = ref.watch(authControllerProvider).value?.username ?? '';
+    final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
 
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
@@ -164,9 +167,9 @@ class ChatTriggerBar extends StatelessWidget {
               color: Color(0xFF6366F1),
             ),
             alignment: Alignment.center,
-            child: const Text(
-              'B',
-              style: TextStyle(
+            child: Text(
+              initial,
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
@@ -454,9 +457,11 @@ class _ActionRow extends ConsumerWidget {
         // Deep-links to the general Neutrals/professional discovery tab —
         // there's still no dedicated lobby-scoped browse screen. The
         // activity id is stashed as a one-shot hand-off consumed by the
-        // next booking sheet submission (see
-        // PendingActivityBookingState), which links the resulting
-        // booking back via `activity.professional_booking_id`.
+        // next booking sheet submission (see PendingActivityBookingState),
+        // which links the resulting booking back via the activity's
+        // coach_booking_id / referee_booking_id (per the booked pro's role) —
+        // NOT professional_booking_id, which activity_source_exclusivity
+        // forbids on a lobby activity.
         if (upcoming != null) {
           ref
               .read(pendingActivityBookingStateProvider.notifier)

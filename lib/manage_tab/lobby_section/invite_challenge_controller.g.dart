@@ -8,30 +8,30 @@ part of 'invite_challenge_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Send a challenge invite from one lobby to another.
+/// Send a challenge from one lobby to another (lobby-vs-lobby "Thách đấu").
 ///
-/// TODO(challenger-system): the `lobby_challenge` table hasn't been
-/// designed yet (see CLAUDE.md ▸ Challenger System). Today this is a
-/// no-op so the empty-hero CTA flow runs end-to-end. Once the table
-/// + handshake RPC land, wire the insert here.
+/// Backed by the `send_challenge` RPC (schema/lobby_challenge.sql), which
+/// validates that the caller manages the initiating lobby, the target is
+/// `open_to_challengers` in the same sport, and enqueues a `challenge_received`
+/// push to the target's managers.
 
 @ProviderFor(InviteChallengeController)
 final inviteChallengeControllerProvider = InviteChallengeControllerFamily._();
 
-/// Send a challenge invite from one lobby to another.
+/// Send a challenge from one lobby to another (lobby-vs-lobby "Thách đấu").
 ///
-/// TODO(challenger-system): the `lobby_challenge` table hasn't been
-/// designed yet (see CLAUDE.md ▸ Challenger System). Today this is a
-/// no-op so the empty-hero CTA flow runs end-to-end. Once the table
-/// + handshake RPC land, wire the insert here.
+/// Backed by the `send_challenge` RPC (schema/lobby_challenge.sql), which
+/// validates that the caller manages the initiating lobby, the target is
+/// `open_to_challengers` in the same sport, and enqueues a `challenge_received`
+/// push to the target's managers.
 final class InviteChallengeControllerProvider
     extends $NotifierProvider<InviteChallengeController, bool> {
-  /// Send a challenge invite from one lobby to another.
+  /// Send a challenge from one lobby to another (lobby-vs-lobby "Thách đấu").
   ///
-  /// TODO(challenger-system): the `lobby_challenge` table hasn't been
-  /// designed yet (see CLAUDE.md ▸ Challenger System). Today this is a
-  /// no-op so the empty-hero CTA flow runs end-to-end. Once the table
-  /// + handshake RPC land, wire the insert here.
+  /// Backed by the `send_challenge` RPC (schema/lobby_challenge.sql), which
+  /// validates that the caller manages the initiating lobby, the target is
+  /// `open_to_challengers` in the same sport, and enqueues a `challenge_received`
+  /// push to the target's managers.
   InviteChallengeControllerProvider._({
     required InviteChallengeControllerFamily super.from,
     required String super.argument,
@@ -78,14 +78,14 @@ final class InviteChallengeControllerProvider
 }
 
 String _$inviteChallengeControllerHash() =>
-    r'c9d73aecfccc1077b571449878286f9ecaada12c';
+    r'0cf5c45767e351a948be73131e11a5bc658e870c';
 
-/// Send a challenge invite from one lobby to another.
+/// Send a challenge from one lobby to another (lobby-vs-lobby "Thách đấu").
 ///
-/// TODO(challenger-system): the `lobby_challenge` table hasn't been
-/// designed yet (see CLAUDE.md ▸ Challenger System). Today this is a
-/// no-op so the empty-hero CTA flow runs end-to-end. Once the table
-/// + handshake RPC land, wire the insert here.
+/// Backed by the `send_challenge` RPC (schema/lobby_challenge.sql), which
+/// validates that the caller manages the initiating lobby, the target is
+/// `open_to_challengers` in the same sport, and enqueues a `challenge_received`
+/// push to the target's managers.
 
 final class InviteChallengeControllerFamily extends $Family
     with
@@ -105,12 +105,12 @@ final class InviteChallengeControllerFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Send a challenge invite from one lobby to another.
+  /// Send a challenge from one lobby to another (lobby-vs-lobby "Thách đấu").
   ///
-  /// TODO(challenger-system): the `lobby_challenge` table hasn't been
-  /// designed yet (see CLAUDE.md ▸ Challenger System). Today this is a
-  /// no-op so the empty-hero CTA flow runs end-to-end. Once the table
-  /// + handshake RPC land, wire the insert here.
+  /// Backed by the `send_challenge` RPC (schema/lobby_challenge.sql), which
+  /// validates that the caller manages the initiating lobby, the target is
+  /// `open_to_challengers` in the same sport, and enqueues a `challenge_received`
+  /// push to the target's managers.
 
   InviteChallengeControllerProvider call(String initiatorLobbyId) =>
       InviteChallengeControllerProvider._(
@@ -122,12 +122,12 @@ final class InviteChallengeControllerFamily extends $Family
   String toString() => r'inviteChallengeControllerProvider';
 }
 
-/// Send a challenge invite from one lobby to another.
+/// Send a challenge from one lobby to another (lobby-vs-lobby "Thách đấu").
 ///
-/// TODO(challenger-system): the `lobby_challenge` table hasn't been
-/// designed yet (see CLAUDE.md ▸ Challenger System). Today this is a
-/// no-op so the empty-hero CTA flow runs end-to-end. Once the table
-/// + handshake RPC land, wire the insert here.
+/// Backed by the `send_challenge` RPC (schema/lobby_challenge.sql), which
+/// validates that the caller manages the initiating lobby, the target is
+/// `open_to_challengers` in the same sport, and enqueues a `challenge_received`
+/// push to the target's managers.
 
 abstract class _$InviteChallengeController extends $Notifier<bool> {
   late final _$args = ref.$arg as String;

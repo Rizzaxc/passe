@@ -23,8 +23,13 @@ void routeNotificationTap(GoRouter router, Map<String, dynamic>? data) {
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
     // The booking surfaces on the Manage → schedule calendar.
     NotificationKind.proSessionReminder => const ManageScheduleRoute().location,
-    // Reserved/dormant; route to the lobby when the handshake ships.
+    // Challenge accepted → open the initiator lobby (recipient's own).
     NotificationKind.challengerConfirmed =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    // Incoming challenge / declined → open the relevant lobby to act/see.
+    NotificationKind.challengeReceived =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    NotificationKind.challengeDeclined =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
     // Lobby invite — go to the manage/lobby tab so they see their pending invites.
     NotificationKind.lobbyInvite => const ManageLobbyRoute().location,

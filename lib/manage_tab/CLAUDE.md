@@ -105,9 +105,19 @@ Judgment calls made along the way, in case they need revisiting:
 - **Photo** action was removed from the picker rather than wired — posting `kind: 'photo'` needs an
   actual uploaded file (a storage bucket + storage RLS policies that don't currently exist), which is
   a bigger unit of infra than this pass covers. Left as a gap rather than a decoy tile.
-- **"Book coach" (bookCoach)** navigates to the general Neutrals/professional discovery tab
-  (`HomeProfessionalRoute`) — there's no lobby-scoped "book a coach for this session, auto-linked to
-  the activity" flow built yet.
+- **"Đặt HLV / Trọng tài" (bookCoach)** navigates to the general Neutrals/professional discovery tab
+  (`HomeProfessionalRoute`) after stashing the upcoming activity id in `PendingActivityBookingState`.
+  The next booking submitted attaches back to that activity — into `coach_booking_id` **or**
+  `referee_booking_id` depending on the booked pro's **role** (never `professional_booking_id`, which
+  `activity_source_exclusivity` forbids on a lobby activity). The attached pro then surfaces on the
+  hero card (`_AttachedProRow`), name + booking status, tap → `ProfessionalDetailRoute`. Members other
+  than the captain can read the attached booking via the "Lobby members can view attached bookings"
+  RLS policy (`schema/activity_professional_attachment.sql`). **Not yet wired:** carrying the
+  activity's `referee_booking_id` into `lobby_match.referee_booking_id` when a match result is recorded.
+  A client match-recording write path **now exists** (`history/record_match_controller.dart` +
+  `record_match_sheet.dart`, captain-only) but v1 records free-text opponents only — it does not yet set
+  `opponent_lobby_id` (which the referee-required CHECK ties to a `referee_booking_id`), so linking a
+  recorded match back to a challenge + referee is still open.
 - **System feed items removed, not wired**: `SystemItem.hasApprove` (in-feed "Đồng Ý"/"Từ Chối" on a
   join-request card) had no producer anywhere — RLS doesn't even allow a client `INSERT` of
   `kind = 'system'`, and no trigger creates one either — so it was unreachable dead UI, not a stub

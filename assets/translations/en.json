@@ -120,6 +120,10 @@
             "title": "Challengers",
             "challenge": "Challenge",
             "challengingAs": "Challenging as",
+            "sent": "Sent",
+            "alreadyPending": "A challenge is already pending",
+            "sportMismatch": "The two lobbies play different sports",
+            "sendFailed": "Couldn't send the challenge",
             "mmr": "MMR",
             "favorability": {
                 "underdog": "Underdog",
@@ -225,12 +229,34 @@
                 "title": "No lobbies found",
                 "message": "Create a lobby to start playing with others"
             }
+        },
+        "recordMatch": {
+            "cta": "Record match result",
+            "title": "Record Result",
+            "win": "Win",
+            "loss": "Loss",
+            "practice": "Practice",
+            "opponent": "Opponent",
+            "opponentHint": "Opposing team name",
+            "sets": "Set scores",
+            "addSet": "Add set",
+            "mvp": "MVP",
+            "venue": "Venue",
+            "venueHint": "Court name",
+            "venueRequired": "Enter a venue",
+            "setsInvalid": "Invalid set score",
+            "note": "Note",
+            "noteHint": "Optional",
+            "submit": "Save result",
+            "success": "Match result saved"
         }
     },
     "lobby": {
         "create": "Create Lobby",
         "edit": "Edit Lobby",
         "leader": "Leader",
+        "us": "Us",
+        "sportNotSelected": "Pick a sport before creating a lobby",
         "noActivity": "No upcoming activity",
         "nameRequired": "Lobby name is required",
         "nameTooShort": "Name must be at least 3 characters",
@@ -310,6 +336,23 @@
         "joinRequests": {
             "title": "Join Requests",
             "empty": "No pending join requests."
+        },
+        "invites": {
+            "title": "Invites",
+            "empty": "You have no pending invites.",
+            "invitedBy": "{name} invited you to their lobby",
+            "pairFrom": "{name} wants to pair up",
+            "accepted": "Joined the lobby"
+        },
+        "challenges": {
+            "title": "Challenges",
+            "empty": "No challenges yet.",
+            "incoming": "Awaiting your response",
+            "outgoing": "Sent · pending",
+            "accepted": "Accepted",
+            "accept": "Accept",
+            "decline": "Decline",
+            "cancelBtn": "Cancel"
         },
         "inviteUser": {
             "label": "Username",
@@ -445,6 +488,13 @@
         "signUp": "Sign Up",
         "loginFailed": "Login Failed",
         "signUpFailed": "Sign Up Failed",
+        "checkEmailTitle": "Check your email",
+        "checkEmailBody": "We sent a confirmation link to {email}. Confirm it to finish signing up.",
+        "guestPrompt": {
+            "title": "Sign in required",
+            "body": "Sign in or create an account to join lobbies, confirm sessions and more.",
+            "cta": "Sign in"
+        },
         "orDivider": "or",
         "googleContinue": "Continue with Google",
         "appleContinue": "Continue with Apple",
@@ -628,7 +678,6 @@
         "metric": {
             "restingHr": "Resting HR",
             "hrv": "HRV",
-            "sleep": "Sleep",
             "weight": "Weight",
             "steps": "Steps",
             "distance": "Distance",
@@ -692,6 +741,30 @@
         "page3": {
             "title": "Improve your skills",
             "description": "Track your progress, connect with coaches and improve your performance"
+        }
+    },
+    "onboarding": {
+        "next": "Continue",
+        "pickSportHint": "Pick a sport to get started",
+        "home": {
+            "title": "Discover",
+            "body": "Find teammates, lobbies to play with, rivals to challenge, coaches/referees and venues — all scoped to your chosen sport."
+        },
+        "manage": {
+            "title": "Manage lobbies",
+            "body": "Create or join a lobby, schedule sessions, confirm attendance, and review your team's match history."
+        },
+        "health": {
+            "title": "Health",
+            "body": "Link a wearable to auto-capture your sessions, track heart rate, and unlock achievements."
+        },
+        "profile": {
+            "title": "Profile",
+            "body": "Set your skill level, availability, networks and industry so matchmaking gets you better matches."
+        },
+        "sport": {
+            "title": "Choose a sport",
+            "body": "Passe works one sport at a time. Pick the one you want to start with — you can switch anytime from the top bar."
         }
     }
 }

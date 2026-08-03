@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/model/enum.dart';
 import '../../../core/model/lobby.dart';
 import '../../../core/model/timeslot.dart';
+import '../../../notifications/notification_service.dart';
 import '../../../ui/main.dart';
 import '../lobby_avatar.dart';
 import 'home_ground_selector.dart';
@@ -238,7 +239,24 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
           .commit();
 
       if (!context.mounted) return;
+      // Creating a lobby is a strong first action → soft-ask for push
+      // permission (no-op if already decided / guest).
+      if (widget.lobbyId == null) {
+        await ref
+            .read(notificationServiceProvider)
+            .maybePromptAndRegister(context, ref);
+        if (!context.mounted) return;
+      }
       Navigator.of(context).pop(lobby);
+    } on LobbySportNotSelected {
+      if (!context.mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleAlert),
+        variant: .destructive,
+        title: Text('lobby.sportNotSelected'.tr()),
+        alignment: .bottomCenter,
+      );
     } catch (e) {
       if (!context.mounted) return;
       showFToast(
@@ -400,7 +418,6 @@ class _TimeslotSection extends StatelessWidget {
                         onTap: () => onRemove(timeslot),
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            // TODO: check
                             borderRadius: context.theme.style.borderRadius.md,
                             color: context.theme.colors.secondary,
                           ),

@@ -84,7 +84,15 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
                     ),
                     FTabEntry(
                       label: const Icon(FLucideIcons.clock),
-                      child: HistoryView(lobbyId: widget.lobbyId),
+                      child: HistoryView(
+                        lobbyId: widget.lobbyId,
+                        lobbyName: lobbyName,
+                        canRecord: ref
+                                .watch(myLobbyPermissionProvider(widget.lobbyId))
+                                .value
+                                ?.isCaptain ??
+                            false,
+                      ),
                     ),
                   ],
                 ),
@@ -150,10 +158,10 @@ class _LobbyHeader extends StatelessWidget {
           Expanded(
             child: Text(
               lobbyName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF09090B),
+                color: colors.foreground,
                 letterSpacing: -0.3,
               ),
               overflow: TextOverflow.ellipsis,

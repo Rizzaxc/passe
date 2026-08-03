@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:health/health.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/model/activity.dart';
+import 'health_controller.dart';
 import 'model/activity_health_metrics.dart';
 import 'model/daily_health_summary.dart';
 import 'model/hr_sample.dart';
@@ -88,7 +91,7 @@ class HealthDataService extends _$HealthDataService {
           endTime: endTime,
         ),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.HEART_RATE_VARIABILITY_SDNN],
+          types: [hrvDataType],
           startTime: startTime,
           endTime: endTime,
         ),
@@ -182,7 +185,8 @@ class HealthDataService extends _$HealthDataService {
         avgHeartRate: avgHr,
         maxHeartRate: maxHr,
         minHeartRate: minHr,
-        hrvSdnnMs: avgHrv,
+        hrvSdnnMs: Platform.isIOS ? avgHrv : null,
+        hrvRmssdMs: Platform.isIOS ? null : avgHrv,
         hrZoneEasySeconds: easy,
         hrZoneModerateSeconds: moderate,
         hrZoneHardSeconds: hard,
@@ -239,13 +243,8 @@ class HealthDataService extends _$HealthDataService {
           endTime: endOfDay,
         ),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.HEART_RATE_VARIABILITY_SDNN],
+          types: [hrvDataType],
           startTime: startOfDay,
-          endTime: endOfDay,
-        ),
-        _health.getHealthDataFromTypes(
-          types: [HealthDataType.SLEEP_ASLEEP],
-          startTime: startOfDay.subtract(const Duration(hours: 12)),
           endTime: endOfDay,
         ),
         _health.getHealthDataFromTypes(
@@ -270,9 +269,7 @@ class HealthDataService extends _$HealthDataService {
           ? hrvValues.reduce((a, b) => a + b) / hrvValues.length
           : null;
 
-      final sleepMinutes = _sumNumericValues(results[6])?.round();
-
-      final weightData = results[7];
+      final weightData = results[6];
       final weight = weightData.isNotEmpty
           ? _extractNumericValue(weightData.last)
           : null;
@@ -285,8 +282,8 @@ class HealthDataService extends _$HealthDataService {
         activeCalories: activeCalories,
         totalCalories: totalCalories,
         restingHeartRate: restingHr,
-        hrvSdnnMs: hrv,
-        sleepMinutes: sleepMinutes,
+        hrvSdnnMs: Platform.isIOS ? hrv : null,
+        hrvRmssdMs: Platform.isIOS ? null : hrv,
         weightKg: weight,
         syncedAt: DateTime.now(),
       );
@@ -365,12 +362,14 @@ class HealthDataService extends _$HealthDataService {
     required String activityId,
     required List<HrSamplePoint> points,
   }) async {
+    // Nothing new to write → leave any existing curve intact (deleting first
+    // would wipe a good curve and replace it with nothing).
+    if (points.isEmpty) return;
     await _supabase
         .from('activity_hr_sample')
         .delete()
         .eq('activity_id', activityId)
         .timeout(const Duration(seconds: 5));
-    if (points.isEmpty) return;
     await _supabase
         .from('activity_hr_sample')
         .insert(

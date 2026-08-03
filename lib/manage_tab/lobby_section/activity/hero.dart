@@ -6,8 +6,11 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../../auth/guest_prompt.dart';
 import '../../../../core/model/enum.dart';
 import '../../../../ui/button_styles.dart';
+import '../../../../ui/theme.dart';
+import '../../../router.dart';
 import '../invite_challenge_sheet.dart';
 import '../invite_member_sheet.dart';
 import '../schedule_activity_controller.dart';
@@ -24,6 +27,8 @@ const _crimson = Color(0xFFDC143C);
 const _crimsonTint = Color(0xFFFFEBED);
 const _green = Color(0xFF959D54);
 const _greenTint = Color(0xFFEEF2E4);
+const _amber = Color(0xFFC58A1A);
+const _amberTint = Color(0xFFFDF3DC);
 
 // ─── Entry point ───────────────────────────────────────────────
 
@@ -584,6 +589,24 @@ class _HeroExpanded extends ConsumerWidget {
                       ],
                     ),
                   ],
+                  // Hired neutrals (referee / coach) attached to this session.
+                  if (upcoming.referee != null || upcoming.coach != null) ...[
+                    const SizedBox(height: 10),
+                    if (upcoming.referee != null)
+                      _AttachedProRow(
+                        label: 'Trọng tài',
+                        icon: Icons.sports,
+                        pro: upcoming.referee!,
+                      ),
+                    if (upcoming.coach != null) ...[
+                      if (upcoming.referee != null) const SizedBox(height: 6),
+                      _AttachedProRow(
+                        label: 'HLV',
+                        icon: Icons.school_outlined,
+                        pro: upcoming.coach!,
+                      ),
+                    ],
+                  ],
                   const SizedBox(height: 12),
                   // Confirmation summary — status from the
                   // ActivityConfirmationController. While loading
@@ -606,6 +629,7 @@ class _HeroExpanded extends ConsumerWidget {
                     onChange: (v) {
                       final next = Attendance.fromValue(v);
                       if (next == null) return;
+                      if (!ensureSignedIn(context, ref)) return;
                       ref
                           .read(
                             activityConfirmationControllerProvider(
@@ -936,6 +960,123 @@ class _QuickAction extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: colors.secondaryForeground,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Attached professional (referee / coach) ───────────────────
+
+class _AttachedProRow extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final AttachedProfessional pro;
+
+  const _AttachedProRow({
+    required this.label,
+    required this.icon,
+    required this.pro,
+  });
+
+  (String, Color, Color) _statusStyle(BuildContext context) {
+    final colors = context.theme.colors;
+    return switch (pro.status) {
+      ProfessionalBookingStatus.requested => (
+        'Chờ xác nhận',
+        _amber,
+        _amberTint,
+      ),
+      ProfessionalBookingStatus.confirmed => (
+        'Đã xác nhận',
+        _green,
+        _greenTint,
+      ),
+      ProfessionalBookingStatus.completed => (
+        'Hoàn thành',
+        _green,
+        _greenTint,
+      ),
+      // rejected / cancelled_by_client / cancelled_by_pro
+      _ => ('Đã huỷ', colors.mutedForeground, colors.secondary),
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final (statusLabel, statusFg, statusBg) = _statusStyle(context);
+
+    return GestureDetector(
+      onTap: () =>
+          ProfessionalDetailRoute(id: pro.professionalId).push(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: colors.secondary.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: colors.border.withValues(alpha: 0.6)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 15, color: colors.secondaryForeground),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: colors.mutedForeground,
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Name (+ verified) — the flexible span that ellipsizes first.
+            Flexible(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      pro.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF09090B),
+                      ),
+                    ),
+                  ),
+                  if (pro.verified) ...[
+                    const SizedBox(width: 3),
+                    const Icon(FLucideIcons.badgeCheck, size: 13, color: pbBlue),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: statusBg,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                statusLabel,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  color: statusFg,
+                ),
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: 14,
+              color: colors.mutedForeground,
             ),
           ],
         ),

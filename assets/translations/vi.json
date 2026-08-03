@@ -119,6 +119,10 @@
             "title": "Đối thủ",
             "challenge": "Thách Đấu",
             "challengingAs": "Thách đấu với tư cách",
+            "sent": "Đã gửi",
+            "alreadyPending": "Đã có lời thách đấu đang chờ",
+            "sportMismatch": "Hai lobby khác môn thể thao",
+            "sendFailed": "Không thể gửi lời thách đấu",
             "mmr": "MMR",
             "favorability": {
                 "underdog": "Cửa dưới",
@@ -227,12 +231,34 @@
                 "title": "Không tìm thấy lobby",
                 "message": "Tạo lobby để bắt đầu chơi với người khác"
             }
+        },
+        "recordMatch": {
+            "cta": "Ghi kết quả trận",
+            "title": "Ghi kết quả",
+            "win": "Thắng",
+            "loss": "Thua",
+            "practice": "Tập nội bộ",
+            "opponent": "Đối thủ",
+            "opponentHint": "Tên đội đối thủ",
+            "sets": "Tỉ số các set",
+            "addSet": "Thêm set",
+            "mvp": "MVP",
+            "venue": "Địa điểm",
+            "venueHint": "Tên sân",
+            "venueRequired": "Nhập địa điểm thi đấu",
+            "setsInvalid": "Tỉ số set không hợp lệ",
+            "note": "Ghi chú",
+            "noteHint": "Tùy chọn",
+            "submit": "Lưu kết quả",
+            "success": "Đã lưu kết quả trận"
         }
     },
     "lobby": {
         "create": "Tạo Lobby",
         "edit": "Chỉnh Sửa Lobby",
         "leader": "Đội trưởng",
+        "us": "Đội mình",
+        "sportNotSelected": "Hãy chọn môn thể thao trước khi tạo lobby",
         "noActivity": "Chưa có lịch chơi",
         "nameRequired": "Tên lobby là bắt buộc",
         "nameTooShort": "Tên phải có ít nhất 3 ký tự",
@@ -312,6 +338,23 @@
         "joinRequests": {
             "title": "Xin gia nhập",
             "empty": "Không có ai đang xin vào."
+        },
+        "invites": {
+            "title": "Lời mời",
+            "empty": "Bạn chưa có lời mời nào.",
+            "invitedBy": "{name} mời bạn vào lobby",
+            "pairFrom": "{name} muốn ghép đôi",
+            "accepted": "Đã tham gia lobby"
+        },
+        "challenges": {
+            "title": "Lời thách đấu",
+            "empty": "Chưa có lời thách đấu nào.",
+            "incoming": "Đang chờ bạn phản hồi",
+            "outgoing": "Đã gửi · đang chờ",
+            "accepted": "Đã được chấp nhận",
+            "accept": "Chấp nhận",
+            "decline": "Từ chối",
+            "cancelBtn": "Huỷ"
         },
         "inviteUser": {
             "label": "Tên người dùng",
@@ -445,6 +488,13 @@
         "signUp": "Đăng ký",
         "loginFailed": "Đăng nhập thất bại",
         "signUpFailed": "Đăng ký thất bại",
+        "checkEmailTitle": "Kiểm tra email của bạn",
+        "checkEmailBody": "Đã gửi liên kết xác nhận tới {email}. Xác nhận để hoàn tất đăng ký.",
+        "guestPrompt": {
+            "title": "Cần đăng nhập",
+            "body": "Đăng nhập hoặc tạo tài khoản để tham gia lobby, xác nhận buổi chơi và nhiều hơn nữa.",
+            "cta": "Đăng nhập"
+        },
         "orDivider": "hoặc",
         "googleContinue": "Tiếp tục với Google",
         "appleContinue": "Tiếp tục với Apple",
@@ -628,7 +678,6 @@
         "metric": {
             "restingHr": "Nhịp tim nghỉ",
             "hrv": "HRV",
-            "sleep": "Giấc ngủ",
             "weight": "Cân nặng",
             "steps": "Số bước",
             "distance": "Quãng đường",
@@ -692,6 +741,30 @@
         "page3": {
             "title": "Nâng cao kỹ năng",
             "description": "Theo dõi tiến bộ, kết nối với huấn luyện viên và cải thiện phong độ"
+        }
+    },
+    "onboarding": {
+        "next": "Tiếp tục",
+        "pickSportHint": "Chọn một môn để bắt đầu",
+        "home": {
+            "title": "Khám phá",
+            "body": "Tìm đồng đội, lobby để chơi cùng, đối thủ để thách đấu, huấn luyện viên/trọng tài và sân bãi — tất cả theo môn bạn chọn."
+        },
+        "manage": {
+            "title": "Quản lý lobby",
+            "body": "Tạo hoặc tham gia lobby, lên lịch buổi chơi, xác nhận tham gia, và xem lịch sử trận đấu của đội."
+        },
+        "health": {
+            "title": "Sức khỏe",
+            "body": "Kết nối thiết bị đeo để tự động ghi lại buổi tập, theo dõi nhịp tim, và mở khóa thành tích."
+        },
+        "profile": {
+            "title": "Hồ sơ",
+            "body": "Thiết lập trình độ, lịch rảnh, mạng lưới và ngành nghề để hệ thống ghép đôi chính xác hơn."
+        },
+        "sport": {
+            "title": "Chọn môn thể thao",
+            "body": "Passe hoạt động theo từng môn. Chọn môn bạn muốn bắt đầu — có thể đổi bất cứ lúc nào ở thanh trên cùng."
         }
     }
 }

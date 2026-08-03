@@ -112,6 +112,16 @@ Health-only, **global** fitness level (cap 50). Schema/RPCs in
 - v1 is **sport-agnostic** (`sport=NULL`); the back half of the level cap (25→50) is the
   reserved runway for a future competitive achievement track.
 
+## Vitality Score
+
+A second health subsystem alongside achievements (separate from XP/level). Backed by
+`schema/vitality_score.sql` (tables `vitality_daily_load` + `vitality_score`, RPCs
+`evaluate_vitality_score` / `vitality_score_summary`), invoked at the end of `syncNow()`
+(`health_sync_service.dart`). Client: `vitality_score_controller.dart`,
+`user_health_section/vitality_score_card.dart`, `model/vitality_score.dart`. Like achievements, the
+evaluator is the sole mutator and runs only on sync; the read path is a cheap summary the card
+renders. (Previously undocumented — added in the 2026-07 audit pass.)
+
 ## Gotchas
 
 - **Permissions are READ-only and can be revoked out of band** — never assume a cached `linked`
@@ -125,8 +135,23 @@ Health-only, **global** fitness level (cap 50). Schema/RPCs in
 - Identity via `currentUserIdProvider`; bail when null (guest/signed-out has no health link).
 - `user_health_link.platform` is a `@JsonEnum`-style value (`HealthPlatform.dbValue`) — follow the
   DB-id-as-enum-value rule when extending it.
-- Health data types requested are the `_healthDataTypes` const list in `health_controller.dart` —
-  add to that list (and the OS entitlements/Info.plist) when you need a new metric.
+- Health data types requested are the `_healthDataTypes` getter in `health_controller.dart` — add
+  to that list (and the OS entitlements/Info.plist) when you need a new metric.
+- **Sleep is not tracked.** Health Connect (Android) has no `SLEEP_IN_BED` mapping and no reliable
+  in-bed/asleep distinction at all (`Datatype SLEEP_IN_BED not found in HC`), so sleep collection was
+  dropped app-wide rather than special-cased per platform like HRV was: `_healthDataTypes` no longer
+  requests `SLEEP_ASLEEP`/`SLEEP_IN_BED`, `readDailyHealthSummary` doesn't query it, and `HealthMetric`
+  has no `sleep` entry. `daily_health_summary.sleep_minutes`/`sleep_quality_score` DB columns and the
+  matching (now write-only-historically) Dart fields were left in place — old data isn't wiped, just no
+  longer collected. Re-enabling sleep would need a real per-platform strategy, not a naive re-add.
+- **HRV is platform-split, not one metric.** Health Connect (Android) has no SDNN record type —
+  only `HeartRateVariabilityRmssdRecord` — so requesting `HEART_RATE_VARIABILITY_SDNN` there is a
+  silent no-op (the `health` plugin logs `Datatype HEART_RATE_VARIABILITY_SDNN not found in HC` and
+  returns nothing). `health_controller.dart`'s `hrvDataType` getter resolves to SDNN on iOS / RMSSD
+  on Android; `health_data_service.dart` reads that type and writes the value to the matching
+  `hrvSdnnMs`/`hrvRmssdMs` field (only one is ever populated per platform) on
+  `ActivityHealthMetrics`/`DailyHealthSummary`/`ActivityHealthRow`. UI reads that want a
+  platform-agnostic value should coalesce both (see `HealthMetric.hrv.value()`).
 - **HR zones are a 3-zone LT model** (easy/moderate/hard by `lt1_bpm`/`lt2_bpm`). Defaults estimate
   LT1≈80% / LT2≈88% of an age-bucket max HR; `HrThresholds.estimated` drives the "estimated" tag in
   the recap sheet until the user declares real thresholds on `user_health_link`.

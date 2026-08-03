@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../ui/sheet.dart';
 import 'invite_challenge_controller.dart';
 
-/// "Invite another lobby to a challenge" flow.
-///
-/// Pure UI for now — the `lobby_challenge` schema is still on the
-/// roadmap (see CLAUDE.md ▸ Challenger System), so the send button
-/// goes through a no-op controller and pops with a toast.
+/// "Invite another lobby to a challenge" flow — sends a real challenge via the
+/// `send_challenge` RPC to the target lobby resolved from its SearchID.
 void showInviteChallengeSheet(BuildContext context, String initiatorLobbyId) {
   showPSheet(
     context: context,
@@ -84,25 +82,57 @@ class _InviteChallengeSheetState
       return;
     }
 
-    await ref
-        .read(inviteChallengeControllerProvider(widget.initiatorLobbyId)
-            .notifier)
-        .invite(
-          targetSearchId: searchId,
-          proposedAt: _proposedAt,
-          note: _noteController.text.trim().isEmpty
-              ? null
-              : _noteController.text.trim(),
-        );
-
-    if (!mounted) return;
-    Navigator.of(context).pop();
-    showFToast(
-      context: context,
-      icon: const Icon(FLucideIcons.flag),
-      title: const Text('Đã gửi lời thách đấu'),
-      alignment: .bottomCenter,
-    );
+    try {
+      await ref
+          .read(inviteChallengeControllerProvider(widget.initiatorLobbyId)
+              .notifier)
+          .invite(
+            targetSearchId: searchId,
+            proposedAt: _proposedAt,
+            note: _noteController.text.trim().isEmpty
+                ? null
+                : _noteController.text.trim(),
+          );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.flag),
+        title: const Text('Đã gửi lời thách đấu'),
+        alignment: .bottomCenter,
+      );
+    } on ChallengeTargetNotFound {
+      if (!mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: const Text('Không tìm thấy lobby với SearchID này'),
+        alignment: .bottomCenter,
+      );
+    } catch (e, st) {
+      Talker().handle(e, st, 'send challenge failed');
+      if (!mounted) return;
+      // Surface the server-side guard message (sport mismatch, not open,
+      // duplicate) without dumping the raw Postgres error.
+      final msg = e.toString();
+      final friendly = msg.contains('not open to challengers')
+          ? 'Lobby này không mở nhận thách đấu'
+          : msg.contains('sport mismatch')
+              ? 'Hai lobby khác môn thể thao'
+              : msg.contains('already pending')
+                  ? 'Đã có lời thách đấu đang chờ'
+                  : msg.contains('own lobby')
+                      ? 'Không thể tự thách đấu lobby của mình'
+                      : 'Không thể gửi lời thách đấu';
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: Text(friendly),
+        alignment: .bottomCenter,
+      );
+    }
   }
 
   @override
@@ -133,7 +163,7 @@ class _InviteChallengeSheetState
             hint: 'vd. r4nb0xx7',
             control: FTextFieldControl.managed(controller: _searchController),
             description: const Text(
-              'Đội trưởng lobby kia sẽ nhận được thông báo và có thể chấp nhận, từ chối hoặc đề xuất khác.',
+              'Đội trưởng lobby kia sẽ nhận được thông báo và có thể chấp nhận hoặc từ chối.',
             ),
           ),
 

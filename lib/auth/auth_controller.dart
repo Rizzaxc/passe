@@ -322,14 +322,18 @@ class AuthController extends _$AuthController {
     state = const AsyncValue.loading();
     try {
       await supabase.auth.signOut().timeout(const Duration(seconds: 5));
+      // On success the onAuthStateChange SIGNED_OUT handler in build() emits
+      // AsyncData(null); no need to set state here.
     } on AuthException catch (e, st) {
       talker.handle(e, st);
-      state = AsyncValue.error(e, st);
+      // A failed sign-out doesn't mean the session is gone — re-derive the real
+      // state instead of an error state, which would eject a still-valid session
+      // to Welcome.
+      state = AsyncData(await _loadFromServer());
       rethrow;
     } catch (e, st) {
       talker.handle(e, st);
-      state = AsyncValue.error(e, st);
-      // report the exception
+      state = AsyncData(await _loadFromServer());
     }
   }
 

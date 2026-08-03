@@ -2,7 +2,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../manage_tab/lobby_section/invite_challenge_controller.dart';
 import '../../router.dart';
 import '../../ui/main.dart';
 import '../filter.dart';
@@ -36,7 +38,7 @@ class ChallengerSubtab extends ConsumerWidget {
               },
               child: feed.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (_, __) => ListView(
+                error: (_, _) => ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
                     PEmptySectionPlaceholder(
@@ -69,18 +71,12 @@ class ChallengerSubtab extends ConsumerWidget {
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         itemCount: items.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final item = items[index];
                           return LobbyFeedCard(
                             item: item,
-                            action: FButton(
-                              size: .sm,
-                              variant: .secondary,
-                              onPress:
-                                  null, // TODO: challenge flow pending lobby_challenge table
-                              child: Text('homeTab.challenger.challenge'.tr()),
-                            ),
+                            action: _ChallengeButton(targetLobbyId: item.id),
                           );
                         },
                       ),
@@ -88,6 +84,78 @@ class ChallengerSubtab extends ConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// The per-card "Thách đấu" CTA. Sends a real challenge from the user's
+/// effective context lobby (the "challenging as" pick) to the tapped opponent
+/// via the `send_challenge` RPC, then flips to a sent state.
+class _ChallengeButton extends ConsumerStatefulWidget {
+  final String targetLobbyId;
+
+  const _ChallengeButton({required this.targetLobbyId});
+
+  @override
+  ConsumerState<_ChallengeButton> createState() => _ChallengeButtonState();
+}
+
+class _ChallengeButtonState extends ConsumerState<_ChallengeButton> {
+  bool _sent = false;
+  bool _busy = false;
+
+  Future<void> _send() async {
+    final ctx = await ref.read(contextLobbyProvider.future);
+    if (ctx == null || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(inviteChallengeControllerProvider(ctx.id).notifier)
+          .invite(targetLobbyId: widget.targetLobbyId);
+      if (!mounted) return;
+      setState(() => _sent = true);
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.flag),
+        title: Text('homeTab.challenger.sent'.tr()),
+        alignment: .bottomCenter,
+      );
+    } catch (e, st) {
+      Talker().handle(e, st, 'challenge failed');
+      if (!mounted) return;
+      final msg = e.toString();
+      final friendly = msg.contains('already pending')
+          ? 'homeTab.challenger.alreadyPending'.tr()
+          : msg.contains('sport mismatch')
+              ? 'homeTab.challenger.sportMismatch'.tr()
+              : 'homeTab.challenger.sendFailed'.tr();
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: Text(friendly),
+        alignment: .bottomCenter,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FButton(
+      size: .sm,
+      variant: .secondary,
+      onPress: (_sent || _busy) ? null : _send,
+      child: _busy
+          ? const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Text(_sent
+              ? 'homeTab.challenger.sent'.tr()
+              : 'homeTab.challenger.challenge'.tr()),
     );
   }
 }
@@ -103,7 +171,7 @@ class _ContextLobbyPicker extends ConsumerWidget {
 
     return optionsAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (options) {
         if (options.isEmpty) return const SizedBox.shrink();
 

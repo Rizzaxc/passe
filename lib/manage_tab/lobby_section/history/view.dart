@@ -1,10 +1,12 @@
 // Match history tab — stats header + filter pills + match cards
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'match.dart';
 import 'match_history_controller.dart';
+import 'record_match_sheet.dart';
 
 const _crimson = Color(0xFFDC143C);
 const _green = Color(0xFF959D54);
@@ -17,8 +19,15 @@ enum _HistoryFilter { all, challenge, practice, win, loss }
 
 class HistoryView extends ConsumerStatefulWidget {
   final String lobbyId;
+  final String lobbyName;
+  final bool canRecord;
 
-  const HistoryView({super.key, required this.lobbyId});
+  const HistoryView({
+    super.key,
+    required this.lobbyId,
+    this.lobbyName = '',
+    this.canRecord = false,
+  });
 
   @override
   ConsumerState<HistoryView> createState() => _HistoryViewState();
@@ -29,8 +38,10 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
 
   List<LobbyMatch> _applyFilter(List<LobbyMatch> matches) {
     return switch (_filter) {
+      // A "challenge" is any competitive (non-practice) match — derived from
+      // the result enum, not a display-string match.
       _HistoryFilter.challenge =>
-        matches.where((h) => h.opponentTag == 'thách đấu').toList(),
+        matches.where((h) => !h.isPractice).toList(),
       _HistoryFilter.practice => matches.where((h) => h.isPractice).toList(),
       _HistoryFilter.win => matches.where((h) => h.isWin).toList(),
       _HistoryFilter.loss => matches.where((h) => h.isLoss).toList(),
@@ -66,6 +77,21 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
             ),
           ),
 
+          // Record-match CTA (captain-only).
+          if (widget.canRecord)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+                child: FButton(
+                  variant: .outline,
+                  onPress: () =>
+                      showRecordMatchSheet(context, widget.lobbyId),
+                  prefix: const Icon(FLucideIcons.plus, size: 16),
+                  child: Text('manageTab.recordMatch.cta'.tr()),
+                ),
+              ),
+            ),
+
           // Filter pills
           SliverToBoxAdapter(
             child: SizedBox(
@@ -94,7 +120,8 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
             sliver: SliverList.separated(
               itemCount: filtered.length,
               separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, i) => _HistoryCard(match: filtered[i]),
+              itemBuilder: (context, i) =>
+                  _HistoryCard(match: filtered[i], lobbyName: widget.lobbyName),
             ),
           ),
         ],
@@ -287,8 +314,9 @@ class _FilterPill extends StatelessWidget {
 
 class _HistoryCard extends StatelessWidget {
   final LobbyMatch match;
+  final String lobbyName;
 
-  const _HistoryCard({required this.match});
+  const _HistoryCard({required this.match, required this.lobbyName});
 
   @override
   Widget build(BuildContext context) {
@@ -398,12 +426,14 @@ class _HistoryCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Bách Khoa Smash',
+                              lobbyName.isNotEmpty ? lobbyName : 'lobby.us'.tr(),
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: colors.foreground,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),
                             Text(

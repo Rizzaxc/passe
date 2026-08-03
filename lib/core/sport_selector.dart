@@ -1,8 +1,8 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../onboarding/onboarding_flow.dart';
 import 'model/enum.dart';
 import 'state/selected_sport_state.dart';
 
@@ -21,33 +21,11 @@ class SportSelector extends ConsumerWidget {
     if (selectedSportAsync.value == Sport.others && !alertShown) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!ref.read(othersAlertShownProvider)) {
+          // Mark shown up-front so a rebuild mid-navigation doesn't double-open.
+          // The onboarding flow itself calls setShown() again on completion
+          // (harmless) and is what actually sets the context sport.
           ref.read(othersAlertShownProvider.notifier).setShown();
-          showFDialog(
-            context: context,
-            barrierDismissible: false,
-            useRootNavigator: true,
-            builder: (dialogContext, style, animation) => PopScope(
-              canPop: false,
-              child: FDialog(
-                animation: animation,
-                title: Text(tr('sport.sportNotSelected')),
-                body: Text(tr('sport.othersAlertDescription')),
-                direction: Axis.vertical,
-                actions: [
-                  for (final sport in Sport.values.where((s) => s != Sport.others))
-                    FButton(
-                      variant: .outline,
-                      prefix: sport.getIcon(),
-                      onPress: () {
-                        ref.read(selectedSportStateProvider.notifier).change(sport);
-                        Navigator.of(dialogContext).pop();
-                      },
-                      child: Text(sport.getLocalizedName(dialogContext)),
-                    ),
-                ],
-              ),
-            ),
-          );
+          showOnboarding(context);
         }
       });
     }

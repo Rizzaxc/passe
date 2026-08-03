@@ -5,6 +5,8 @@ enum NotificationKind {
   activityConfirmed('activity_confirmed'),
   proSessionReminder('pro_session_reminder'),
   challengerConfirmed('challenger_confirmed'),
+  challengeReceived('challenge_received'),
+  challengeDeclined('challenge_declined'),
   lobbyInvite('lobby_invite'),
   professionalBookingRequested('professional_booking_requested'),
   professionalBookingConfirmed('professional_booking_confirmed'),

@@ -1,7 +1,6 @@
 /// A played-out match for a lobby — the row model behind the
-/// "Lịch sử trận đấu" tab. Not in the DB schema yet; once a
-/// `match` table lands (results, sets, MVP, opponent lobby), wire
-/// `LobbyMatchHistoryController` to it.
+/// "Lịch sử trận đấu" tab. Backed by the `lobby_match` table via the
+/// `lobby_match_history_data` RPC (read) and `RecordMatchController` (write).
 class LobbyMatch {
   final String id;
   final String date;

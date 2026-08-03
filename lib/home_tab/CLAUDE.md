@@ -50,7 +50,7 @@ Quick map, then the full contract for each:
 | Subtab | Source | Model | Action |
 |---|---|---|---|
 | Teammate | `home_teammate_lobby_data` RPC | `LobbyFeedItem` | "Xin vào" → insert `lobby_befriend_record` (`request`) |
-| Challenger | `home_challenger_lobby_data` RPC | `LobbyFeedItem` (`memberCount` set) | "Thách đấu" — **disabled placeholder** (no `lobby_challenge` table yet) |
+| Challenger | `home_challenger_lobby_data` RPC | `LobbyFeedItem` (`memberCount` set) | "Thách đấu" → `send_challenge` RPC from the "challenging as" context lobby (see root CLAUDE.md ▸ Challenger System) |
 | Professional | `home_professional_data` RPC (sport + soft city/district/schedule + role toggle; ranked verified/rating/reviews; `price_from` from `professional_service`) | `ProfessionalFeedItem` | tap → `ProfessionalDetailRoute`; book = "coming soon" toast |
 | Location | `location` table, or `search_locations` RPC when `search` is set | `Location` (freezed) | list/map toggle; tap → detail sheet; "Chỉ đường" launches external maps |
 
@@ -99,8 +99,9 @@ freezed) — edit them by hand, no build_runner.
   Params: `p_sport_id`, `p_city`, `p_districts`, `p_page_size`, `p_page_number` (no timeslot filter).
   Same return shape as teammate plus `member_count`; excludes the user's own lobbies.
 - **Challenge interaction uses a SEPARATE table** — do NOT reuse `lobby_befriend_record` (that is
-  user↔lobby / user↔user pairing only). A `lobby_challenge` table is still to be designed; until
-  then the "Thách đấu" button is a disabled placeholder. See root CLAUDE.md "Challenger System".
+  user↔lobby / user↔user pairing only). The `lobby_challenge` table + `send_challenge` RPC are now
+  built; the "Thách đấu" CTA sends a real challenge (`_ChallengeButton` in `challenger_section/main.dart`)
+  from the user's effective "challenging as" context lobby. See root CLAUDE.md "Challenger System (built)".
 - Model: reuses `LobbyFeedItem` (with `memberCount` populated).
 
 ### Professional (Neutral) subtab

@@ -1,170 +1,13 @@
 import 'model.dart';
 
-/// Sample Đá purchase ledger — money paid in to buy Đá.
-const sampleDaPurchases = <DaPurchase>[
-  DaPurchase(
-    id: 'pu7',
-    date: '24/05',
-    time: '21:14',
-    amount: 500,
-    bonus: 25,
-    paid: 500000,
-    method: DaPayMethod.momo,
-    label: 'Nạp gói 500 Đá',
-    status: DaPurchaseStatus.success,
-  ),
-  DaPurchase(
-    id: 'pu6',
-    date: '11/05',
-    time: '08:32',
-    amount: 200,
-    bonus: 0,
-    paid: 200000,
-    method: DaPayMethod.vietqr,
-    label: 'Nạp gói 200 Đá',
-    status: DaPurchaseStatus.success,
-  ),
-  DaPurchase(
-    id: 'pu5',
-    date: '02/05',
-    time: '19:48',
-    amount: 1000,
-    bonus: 100,
-    paid: 1000000,
-    method: DaPayMethod.apple,
-    label: 'Nạp gói 1.000 Đá',
-    status: DaPurchaseStatus.success,
-  ),
-  DaPurchase(
-    id: 'pu4',
-    date: '17/04',
-    time: '14:02',
-    amount: 50,
-    bonus: 0,
-    paid: 50000,
-    method: DaPayMethod.zalopay,
-    label: 'Nạp gói 50 Đá',
-    status: DaPurchaseStatus.success,
-  ),
-  DaPurchase(
-    id: 'pu3',
-    date: '03/04',
-    time: '07:11',
-    amount: 0,
-    bonus: 30,
-    paid: 0,
-    method: DaPayMethod.promo,
-    label: 'Khuyến mãi — Giới thiệu bạn bè',
-    status: DaPurchaseStatus.success,
-  ),
-  DaPurchase(
-    id: 'pu2',
-    date: '21/03',
-    time: '23:08',
-    amount: 200,
-    bonus: 0,
-    paid: 200000,
-    method: DaPayMethod.momo,
-    label: 'Nạp gói 200 Đá',
-    status: DaPurchaseStatus.failed,
-  ),
-  DaPurchase(
-    id: 'pu1',
-    date: '15/03',
-    time: '10:24',
-    amount: 100,
-    bonus: 0,
-    paid: 100000,
-    method: DaPayMethod.vietqr,
-    label: 'Nạp gói 100 Đá',
-    status: DaPurchaseStatus.success,
-  ),
-];
+// The đá currency ledger is not in the DB yet (see lib/currency/controller.dart
+// and root CLAUDE.md). Until a real server-side ledger + payment provider land,
+// there is no transaction history to show — these lists are intentionally empty
+// rather than fabricated, so the wallet never presents fake purchases/spends as
+// if they were real. The history screens render an honest empty state instead.
+const sampleDaPurchases = <DaPurchase>[];
 
-const sampleDaSpending = <DaSpending>[
-  DaSpending(
-    id: 'sp9',
-    date: '25/05',
-    time: '06:42',
-    amount: 10,
-    kind: DaSpendKind.confirm,
-    label: 'Xác nhận tham gia',
-    detail: 'CLB Cầu Lông Bách Khoa · hôm nay 18:00',
-    status: DaSpendStatus.pending,
-  ),
-  DaSpending(
-    id: 'sp8',
-    date: '24/05',
-    time: '21:50',
-    amount: 300,
-    kind: DaSpendKind.coach,
-    label: 'Đặt lịch HLV Trần Hữu Thắng',
-    detail: 'Buổi 3/10 — Khoá Smash cơ bản',
-  ),
-  DaSpending(
-    id: 'sp7',
-    date: '23/05',
-    time: '19:10',
-    amount: 150,
-    kind: DaSpendKind.venue,
-    label: 'Đặt sân NTĐ Bách Khoa',
-    detail: '2 giờ · Sân 4 · 20:00 Thứ Bảy',
-  ),
-  DaSpending(
-    id: 'sp6',
-    date: '22/05',
-    time: '07:30',
-    amount: 10,
-    kind: DaSpendKind.refund,
-    label: 'Hoàn xác nhận — Smash Squad',
-    detail: 'Đã tham gia · cọc 10 Đá hoàn lại',
-  ),
-  DaSpending(
-    id: 'sp5',
-    date: '20/05',
-    time: '11:24',
-    amount: 25,
-    kind: DaSpendKind.split,
-    label: 'Split bill — Lobby cuối tuần',
-    detail: 'Chia 6 người · sân Mỹ Đình',
-  ),
-  DaSpending(
-    id: 'sp4',
-    date: '18/05',
-    time: '20:01',
-    amount: 10,
-    kind: DaSpendKind.confirm,
-    label: 'Xác nhận tham gia',
-    detail: 'Lobby cuối tuần · Sân Mỹ Đình',
-  ),
-  DaSpending(
-    id: 'sp3',
-    date: '15/05',
-    time: '14:45',
-    amount: 80,
-    kind: DaSpendKind.venue,
-    label: 'Đặt sân Vincom Bà Triệu',
-    detail: '1 giờ · Sân 2 · 19:00 Thứ Năm',
-  ),
-  DaSpending(
-    id: 'sp2',
-    date: '12/05',
-    time: '08:00',
-    amount: 50,
-    kind: DaSpendKind.fee,
-    label: 'Phí trọng tài Bích Hà',
-    detail: 'Trận thách đấu · Vĩnh Phú Smash',
-  ),
-  DaSpending(
-    id: 'sp1',
-    date: '08/05',
-    time: '12:33',
-    amount: 10,
-    kind: DaSpendKind.refund,
-    label: 'Hoàn xác nhận — Bách Khoa',
-    detail: 'Đã tham gia · cọc 10 Đá hoàn lại',
-  ),
-];
+const sampleDaSpending = <DaSpending>[];
 
 const daPackages = <DaPackage>[
   DaPackage(id: 'pkg50', da: 50, price: 50000, bonus: 0),
@@ -194,4 +37,7 @@ const daPurchasablePayMethods = <DaPayMethod>[
   DaPayMethod.apple,
 ];
 
-const defaultDaBalance = 1240;
+// Local, non-functional balance (no server ledger yet). Starts at zero so the
+// wallet never shows đá the user never actually acquired; the test-only top-up
+// screen can still credit it locally.
+const defaultDaBalance = 0;

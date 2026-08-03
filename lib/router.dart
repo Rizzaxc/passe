@@ -41,18 +41,25 @@ GoRouter router(Ref ref) {
   ref.onDispose(user.dispose);
 
   // Only update the listenable when there's a meaningful auth state change
-  // (logged in vs logged out), not on every AsyncValue change
+  // (logged in vs logged out, or an error appearing/clearing), not on every
+  // AsyncValue change.
   PasseUser? previousUser;
+  bool previousIsError = false;
   bool isFirstUpdate = true;
   ref.listen(authControllerProvider, (_, next) {
     final currentUser = next.value;
+    final currentIsError = next is AsyncError;
     final hasAuthStateChanged = isFirstUpdate ||
         (previousUser == null) != (currentUser == null) ||
-        (previousUser?.isGuest != currentUser?.isGuest);
+        (previousUser?.isGuest != currentUser?.isGuest) ||
+        // Propagate error transitions so the redirect's AsyncError branch can
+        // fire (e.g. an initial load failure), not just null/guest changes.
+        (previousIsError != currentIsError);
 
     if (hasAuthStateChanged) {
       user.value = next;
       previousUser = currentUser;
+      previousIsError = currentIsError;
       isFirstUpdate = false;
     }
   });

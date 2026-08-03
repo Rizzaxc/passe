@@ -53,14 +53,20 @@ primary glossary until a `CONTEXT.md` exists (see `docs/agents/domain.md`).
 - **Captain** — the lobby owner (`lobby.captain_id`). Captain-only actions: schedule activities,
   edit the lobby, manage members. A captain cannot leave their own lobby.
 - **Member** — a user belonging to a lobby (`lobby_member` join table).
+- **Coordinator** — a member the captain has promoted (`lobby_member.role = 'coordinator'`, see
+  `schema/lobby_coordinator_role.sql`). Can do the "manage" tier — schedule/reschedule/cancel
+  activities, manage join requests, send/answer challenges — but **not** the captain-only tier
+  (kick members, edit lobby info, transfer/delete). Gate manage-tier UI on `lobby_can_manage()` /
+  `LobbyPermission.canManage`; captain-only UI on `isCaptain`.
 - **Homeground** — a lobby's default venue; `lobby.home_ground` FK → `location`.
 - **Searchable id** — a short human-shareable lobby code (`lobby.searchable_id`, a `nanoid(8)`),
   distinct from the UUID `lobby.id`.
 - **Befriend** — the join/pairing handshake (`lobby_befriend_record`). Three `interaction_type`s:
   *request* (user → lobby), *invite* (lobby → user), *pair* (user ↔ user, creates a new lobby).
 - **Challenge / Challenger** — team-vs-team matchmaking (one lobby challenges another). Distinct from
-  befriend; its own (still-to-be-built) `lobby_challenge` table. A lobby opts in via
-  `open_to_challengers`.
+  befriend; has its own `lobby_challenge` table + `send_challenge`/`respond_challenge`/`cancel_challenge`
+  RPCs (`schema/lobby_challenge.sql`). A lobby opts in via `open_to_challengers`. See "Challenger
+  System (built)" below.
 - **Activity** — a scheduled play session (`activity`), linked to *either* a lobby *or* a
   professional booking. Members propose; the captain vetoes/edits; members confirm.
 - **Match** — a recorded result of a played activity (`lobby_match`): result, sets, MVP, venue.
@@ -120,7 +126,12 @@ Tables are `snake_case`, singular. Client identity is `auth.uid()`; RLS enforces
 - `lobby_feed_item` (+ `lobby_feed_poll_vote`) — a lobby's action-stream; `payload` jsonb shape varies
   by `kind` (update/personal/system/poll/photo) per a CHECK. Canonical shapes:
   `lib/manage_tab/lobby_section/activity/feed.dart`.
-- `activity` — a play session; CHECK forbids linking to both a lobby and a booking at once.
+- `activity` — a play session. `professional_booking_id` marks a *standalone* client pro-session
+  (the coach branch of `my_schedule_data`) and is mutually exclusive with `lobby_id`
+  (`activity_source_exclusivity` CHECK). Separately, a lobby activity may **attach** a hired
+  `coach_booking_id` and/or `referee_booking_id` (FK → `professional_booking`, *coexist* with
+  `lobby_id`, role-guarded by a trigger) — these surface on the activity hero card. See
+  `schema/activity_professional_attachment.sql`.
 - `lobby_match` — recorded results; `sets` is a JSON array of `[us, them]`; challenge matches require
   a `referee_booking_id`.
 
@@ -286,19 +297,36 @@ Three interaction types:
 
 A before-insert trigger auto-accepts reciprocal request/invite pairs and enforces uniqueness.
 
-### Challenger System (to be designed)
+### Challenger System (built)
 
-Separate from `lobby_befriend_record`. Needs a new `lobby_challenge` table with at minimum:
-`id, initiator_lobby_id, target_lobby_id, sport_id, status (enum), proposed_time?, created_at, updated_at`.
-The handshake (accept/decline/counter-propose) is TBD.
+Separate from `lobby_befriend_record`. Table `lobby_challenge`
+(`id, initiator_lobby_id, target_lobby_id, sport_id, status, proposed_time?, proposed_location?,
+note, created_at, updated_at`; status enum `requested/accepted/declined/cancelled`) — schema in
+[`schema/lobby_challenge.sql`](schema/lobby_challenge.sql). Writes go through SECURITY DEFINER RPCs
+(`send_challenge`, `respond_challenge`, `cancel_challenge`); clients get SELECT via RLS (member of
+either lobby) and read a lobby's challenges via `lobby_challenge_data(p_lobby_id)`. Accept/decline is
+built; **counter-propose is intentionally not implemented** (v1 is accept/decline only). Client:
+`invite_challenge_controller.dart` (send), `challenges_controller.dart` + `challenges_sheet.dart`
+(incoming/outgoing list, surfaced from the lobby info sheet with an incoming badge), and the Home
+"Thách đấu" CTA (`challenger_section/main.dart`). Notifications: `challenge_received` (to target
+managers), `challenger_confirmed` (to initiator on accept), `challenge_declined` (to initiator
+managers). Matches played out are recorded via `lobby_match` (see Activity & Currency below).
 
 ### Activity & Currency System
 
-- Anyone in a lobby can propose a play session (activity). The lobby captain can veto or edit.
-- Once enough members confirm, the activity becomes official.
-- Confirming an activity costs "đá" (rocks) — the app's internal currency.
-- "đá" also handles bill splitting after sessions.
-- Currency system is not yet in the DB schema; needs to be designed.
+- **As actually built**, scheduling is captain/coordinator-only end to end (the "member proposes →
+  captain vetoes" flow was never implemented — see `lib/manage_tab/CLAUDE.md`). Members RSVP
+  (going/maybe/out); the activity becomes official once enough **going** confirmations reach the
+  threshold, which also fires the `activity_confirmed` push.
+- **Match recording**: a played activity's result is recorded into `lobby_match` via
+  `RecordMatchController` (`history/record_match_controller.dart` + `record_match_sheet.dart`,
+  captain-only "Ghi kết quả" on the History tab). History reads via `lobby_match_history_data`.
+- **đá currency is deferred, not built.** There is still no server-side ledger — `DaBalance`
+  (`lib/currency/`) is a local SharedPreferences int and confirming an activity does **not** actually
+  debit đá. The wallet's purchase/spending history is intentionally **empty** (not fabricated) and the
+  top-up screen is labelled test-only. Bill-splitting with đá is likewise unbuilt. When a real ledger +
+  payment provider land, wire debit-on-confirm / refund / split and replace the local int.
+  `activity.prepayment_amount` is a captain-set informational deposit label, not a charge.
 
 ### Notifications
 
@@ -313,8 +341,11 @@ Push (raw FCM HTTP v1, iOS + Android) is **built**. Design + remaining provision
   marks `sent`/`failed` (retry cap 3). Schema: `schema/push_notifications.sql`.
 - **Flag system = data-driven allowlist** `enabled_notification_kind`. Each `notification_kind`
   is dark-launched / kill-switched by toggling its `enabled` flag (no redeploy). Live kinds:
-  `activity_confirmed`, `pro_session_reminder`. `challenger_confirmed` is reserved but
-  **disabled** (no `lobby_challenge` table yet).
+  `activity_confirmed`, `pro_session_reminder`, `lobby_invite`, `professional_booking_*`, and (with
+  the challenge handshake) `challenger_confirmed`, `challenge_received`, `challenge_declined`.
+  Note: `fn_emit_activity_confirmed` counts **going-only** confirmations and fires on INSERT *or*
+  UPDATE of `activity_confirmation` (an out→going switch can cross quorum) — see
+  `schema/push_notifications.sql`.
 - **Client (`lib/notifications/`):** `notification_service.dart` (FCM init, token register/refresh
   tied to `authControllerProvider`, foreground display via `flutter_local_notifications`, the
   permission **soft-ask**), `notification_router.dart` (`kind` → typed `go_router` route),

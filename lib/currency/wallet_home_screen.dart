@@ -91,18 +91,34 @@ class WalletHomeScreen extends ConsumerWidget {
           ),
           WalletCard(
             clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                for (var i = 0; i < recent.length; i++) ...[
-                  _RecentRow(entry: recent[i]),
-                  if (i < recent.length - 1)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 52),
-                      child: Container(height: 1, color: colors.border),
+            child: recent.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 28),
+                    child: Center(
+                      child: Text(
+                        'Chưa có giao dịch nào',
+                        style: TextStyle(
+                          fontFamily: 'Bitter',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: colors.mutedForeground,
+                        ),
+                      ),
                     ),
-                ],
-              ],
-            ),
+                  )
+                : Column(
+                    children: [
+                      for (var i = 0; i < recent.length; i++) ...[
+                        _RecentRow(entry: recent[i]),
+                        if (i < recent.length - 1)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 52),
+                            child: Container(height: 1, color: colors.border),
+                          ),
+                      ],
+                    ],
+                  ),
           ),
         ],
       ),

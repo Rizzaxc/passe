@@ -34,6 +34,34 @@ class _WalletTopupScreenState extends ConsumerState<WalletTopupScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 4, bottom: 16),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: colors.blueTint,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(FLucideIcons.info,
+                          size: 16, color: Color(0xFF3090F2)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Thanh toán thật chưa khả dụng — nạp ở đây chỉ là thử nghiệm, chưa trừ tiền.',
+                          style: TextStyle(
+                            fontFamily: 'Bitter',
+                            fontSize: 12,
+                            height: 1.35,
+                            fontWeight: FontWeight.w500,
+                            color: colors.foreground,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const WalletSectionLabel('Chọn gói'),
                 const SizedBox(height: 12),
                 GridView.count(

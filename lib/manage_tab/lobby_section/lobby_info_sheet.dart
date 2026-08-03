@@ -9,6 +9,8 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../auth/auth_controller.dart';
 import '../../core/model/lobby.dart';
 import '../../ui/sheet.dart';
+import 'challenges_controller.dart';
+import 'challenges_sheet.dart';
 import 'feed/lobby_controller.dart';
 import 'feed/lobby_form_sheet.dart';
 import 'invite_member_sheet.dart';
@@ -209,6 +211,12 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
         ?.length;
     if (count == null || count == 0) return null;
     return 'lobby.pendingRequests'.tr(namedArgs: {'count': count.toString()});
+  }
+
+  String? _challengeBadge(WidgetRef ref, String lobbyId) {
+    final count = ref.watch(incomingChallengeCountProvider(lobbyId)).value;
+    if (count == null || count == 0) return null;
+    return count.toString();
   }
 
   Future<void> _editLobby(BuildContext context, Lobby lobby) async {
@@ -558,8 +566,8 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                         color: colors.border.withValues(alpha: 0.5),
                       ),
                     ],
-                    // Managing join requests is coordinator-eligible — it's
-                    // neither kicking a member nor editing lobby info.
+                    // Managing join requests + challenges is coordinator-
+                    // eligible — neither kicks a member nor edits lobby info.
                     if (canManage) ...[
                       _SettingsRow(
                         icon: FLucideIcons.userPlus,
@@ -573,22 +581,19 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                         indent: 50,
                         color: colors.border.withValues(alpha: 0.5),
                       ),
-                    ],
-                    _SettingsRow(
-                      icon: FLucideIcons.bell,
-                      label: 'lobby.notifications'.tr(),
-                      onTap: () => showFToast(
-                        context: context,
-                        icon: const Icon(FLucideIcons.bell),
-                        title: Text('lobby.comingSoon'.tr()),
-                        alignment: .bottomCenter,
+                      _SettingsRow(
+                        icon: FLucideIcons.swords,
+                        label: 'lobby.challenges.title'.tr(),
+                        badge: _challengeBadge(ref, widget.lobbyId),
+                        onTap: () =>
+                            showChallengesSheet(context, widget.lobbyId),
                       ),
-                    ),
-                    Divider(
-                      height: 1,
-                      indent: 50,
-                      color: colors.border.withValues(alpha: 0.5),
-                    ),
+                      Divider(
+                        height: 1,
+                        indent: 50,
+                        color: colors.border.withValues(alpha: 0.5),
+                      ),
+                    ],
                     if (isCaptain) ...[
                       _SettingsRow(
                         icon: FLucideIcons.crown,

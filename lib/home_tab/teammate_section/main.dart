@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../auth/guest_prompt.dart';
 import '../../core/model/lobby_feed_item.dart';
 import '../../notifications/notification_service.dart';
 import '../../ui/main.dart';
@@ -121,6 +122,9 @@ class _JoinButton extends ConsumerWidget {
       size: .sm,
       variant: .primary,
       onPress: () async {
+        // Guests can't send a join request (RLS/NOT NULL) — prompt sign-in
+        // instead of letting the tap fail silently.
+        if (!ensureSignedIn(context, ref)) return;
         try {
           await ref.read(joinRequestStateProvider.notifier).request(lobbyId);
           // First meaningful action → soft-ask for push permission (no-op if
