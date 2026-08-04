@@ -63,7 +63,7 @@ class _GuestState extends StatelessWidget {
       title: 'feed.guestTitle'.tr(),
       subtitle: 'feed.guest'.tr(),
       cta: FButton(
-        onPress: () => const WelcomeRoute().go(context),
+        onPress: () => const ProfileRoute().go(context),
         child: Text('auth.guestPrompt.cta'.tr()),
       ),
     );

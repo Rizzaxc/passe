@@ -135,7 +135,7 @@
             },
             "noLobby": {
                 "title": "Bạn chưa có lobby nào",
-                "message": "Thách đấu là lobby đấu lobby. Tạo lobby của riêng bạn hoặc tham gia một lobby để bắt đầu thách đấu người khác.",
+                "message": "Thách đấu là giữa 2 lobby. Tạo lobby của riêng bạn hoặc tham gia một lobby để bắt đầu thách đấu người khác.",
                 "findLobby": "Tìm Lobby",
                 "createLobby": "Tạo Lobby"
             }
@@ -144,6 +144,7 @@
             "viewMap": "Xem Bản Đồ",
             "directions": "Chỉ Đường",
             "directionsFailed": "Không mở được ứng dụng bản đồ",
+            "unnamed": "Địa điểm chưa đặt tên",
             "address": "Địa Chỉ",
             "amenities": "Tiện Ích",
             "amenity": {
@@ -230,6 +231,10 @@
             "empty": {
                 "title": "Không tìm thấy lobby",
                 "message": "Tạo lobby để bắt đầu chơi với người khác"
+            },
+            "guest": {
+                "title": "Bạn chưa đăng nhập",
+                "message": "Đăng nhập để tạo và quản lý lobby của bạn."
             }
         },
         "recordMatch": {
@@ -259,6 +264,7 @@
         "leader": "Đội trưởng",
         "us": "Đội mình",
         "sportNotSelected": "Hãy chọn môn thể thao trước khi tạo lobby",
+        "signInRequired": "Đăng nhập để tạo lobby",
         "noActivity": "Chưa có lịch chơi",
         "nameRequired": "Tên lobby là bắt buộc",
         "nameTooShort": "Tên phải có ít nhất 3 ký tự",
@@ -782,26 +788,55 @@
     },
     "onboarding": {
         "next": "Tiếp tục",
-        "pickSportHint": "Chọn một môn để bắt đầu",
-        "home": {
-            "title": "Khám phá",
-            "body": "Tìm đồng đội, lobby để chơi cùng, đối thủ để thách đấu, huấn luyện viên/trọng tài và sân bãi — tất cả theo môn bạn chọn."
-        },
-        "manage": {
-            "title": "Quản lý lobby",
-            "body": "Tạo hoặc tham gia lobby, lên lịch buổi chơi, xác nhận tham gia, và xem lịch sử trận đấu của đội."
-        },
-        "health": {
-            "title": "Sức khỏe",
-            "body": "Kết nối thiết bị đeo để tự động ghi lại buổi tập, theo dõi nhịp tim, và mở khóa thành tích."
-        },
-        "profile": {
-            "title": "Hồ sơ",
-            "body": "Thiết lập trình độ, lịch rảnh, mạng lưới và ngành nghề để hệ thống ghép đôi chính xác hơn."
+        "back": "Quay lại",
+        "skip": "Skip",
+        "done": "Bắt đầu",
+        "story": {
+            "s1": {
+                "title": "Hẹn phủi, dễ như hẹn cà phê",
+                "body": "Passe kết nối bạn với đồng đội, đối thủ và sân bãi quanh bạn — theo đúng môn bạn chơi."
+            },
+            "s2": {
+                "title": "Lobby là đội của bạn",
+                "body": "Lập lobby, rủ bạn bè, lên lịch buổi chơi và theo dõi lịch sử trận đấu ở một nơi."
+            },
+            "s3": {
+                "title": "Càng chơi càng hợp",
+                "body": "Trình độ, lịch rảnh và các mối quan hệ của bạn giúp Passe ghép đôi ngày một chính xác hơn."
+            }
         },
         "sport": {
             "title": "Chọn môn thể thao",
-            "body": "Passe hoạt động theo từng môn. Chọn môn bạn muốn bắt đầu — có thể đổi bất cứ lúc nào ở thanh trên cùng."
+            "body": "Passe hoạt động theo từng môn. Chọn môn bạn muốn bắt đầu — có thể đổi bất cứ lúc nào ở thanh trên cùng.",
+            "hint": "Chọn một môn để bắt đầu"
+        },
+        "profile": {
+            "title": "Vài thông tin để ghép đôi tốt hơn",
+            "body": "Chỉ mất 30 giây. Bạn có thể chỉnh lại bất cứ lúc nào ở tab Hồ sơ.",
+            "gender": "Giới tính",
+            "ageGroup": "Nhóm tuổi",
+            "playtime": "Lịch rảnh",
+            "addPlaytime": "Thêm khung giờ",
+            "skillLockWarning": "Trình độ ban đầu chỉ đặt được một lần và không thể đổi sau khi lưu.",
+            "save": "Lưu & tiếp tục",
+            "saveError": "Không lưu được hồ sơ. Bạn có thể thử lại ở tab Hồ sơ."
+        },
+        "guest": {
+            "title": "Xem qua Passe hoạt động thế nào?",
+            "body": "Một vòng ngắn qua các tính năng chính. Bạn có thể bỏ qua và tự khám phá.",
+            "accept": "Xem thử",
+            "decline": "Để sau"
+        },
+        "coach": {
+            "title": "Nhanh thôi!",
+            "feed": "Feed — ảnh mới nhất từ bạn bè và lobby của bạn.",
+            "discover": "Khám phá — tìm đồng đội, đối thủ, HLV và sân bãi.",
+            "manage": "Quản lý — lobby, lịch chơi và lịch sử trận đấu.",
+            "health": "Sức khỏe — kết nối thiết bị đeo và mở khóa thành tích.",
+            "profile": "Hồ sơ — chỉnh trình độ, lịch rảnh và mạng lưới.",
+            "next": "Tiếp",
+            "skip": "Bỏ qua",
+            "finish": "Xong"
         }
     },
     "social": {
@@ -864,7 +899,7 @@
         "ttl": "Tự động xóa sau",
         "ttlDays": "{count} ngày",
         "emptyTitle": "Chưa có bài viết",
-        "empty": "Feed của bạn trống hoặc chưa có ai đăng bài. Kết thêm bạn hoặc tham gia thêm lobby để chia sẻ và kết nối đến mọi người.",
+        "empty": "Chưa có bạn bè hoặc chưa có ai đăng bài. Kết thêm bạn hoặc tham gia thêm lobby để chia sẻ và kết nối đến mọi người.",
         "findFriends": "Tìm bạn bè",
         "error": "Không tải được Feed",
         "guestTitle": "Bạn chưa đăng nhập",

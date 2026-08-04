@@ -15,20 +15,6 @@ import 'tennis.dart' show TennisProfileWidget;
 class SportProfileScreen extends ConsumerWidget {
   const SportProfileScreen({super.key});
 
-  Future<void> _commit(WidgetRef ref, Sport sport) => switch (sport) {
-        Sport.soccer =>
-          ref.read(soccerProfileControllerProvider.notifier).commit(),
-        Sport.basketball =>
-          ref.read(basketballProfileControllerProvider.notifier).commit(),
-        Sport.badminton =>
-          ref.read(badmintonProfileControllerProvider.notifier).commit(),
-        Sport.tennis =>
-          ref.read(tennisProfileControllerProvider.notifier).commit(),
-        Sport.pickleball =>
-          ref.read(pickleballProfileControllerProvider.notifier).commit(),
-        Sport.others => Future.value(),
-      };
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sportAsync = ref.watch(selectedSportStateProvider);
@@ -68,7 +54,7 @@ class SportProfileScreen extends ConsumerWidget {
                 final sport = sportAsync.asData?.value;
                 if (sport == null) return;
                 try {
-                  await _commit(ref, sport);
+                  await commitSportProfile(ref, sport);
                   if (context.mounted) Navigator.of(context).pop();
                 } catch (e) {
                   if (!context.mounted) return;

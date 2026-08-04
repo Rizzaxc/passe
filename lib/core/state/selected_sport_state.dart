@@ -28,11 +28,3 @@ class SelectedSportState extends _$SelectedSportState {
     await localStorage.setInt(_prefKey, id);
   }
 }
-
-@riverpod
-class OthersAlertShown extends _$OthersAlertShown {
-  @override
-  bool build() => false;
-
-  void setShown() => state = true;
-}

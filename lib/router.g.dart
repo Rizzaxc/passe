@@ -12,6 +12,7 @@ List<RouteBase> get $appRoutes => [
   $welcomeRoute,
   $forgotPasswordRoute,
   $resetPasswordRoute,
+  $onboardingRoute,
   $notificationRoute,
   $walletHomeRoute,
   $walletIntroRoute,
@@ -134,6 +135,32 @@ mixin $ResetPasswordRoute on GoRouteData {
     '/reset-password',
     queryParams: {'email': _self.email},
   );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $onboardingRoute => GoRouteData.$route(
+  path: '/onboarding',
+  factory: $OnboardingRoute._fromState,
+);
+
+mixin $OnboardingRoute on GoRouteData {
+  static OnboardingRoute _fromState(GoRouterState state) =>
+      const OnboardingRoute();
+
+  @override
+  String get location => GoRouteData.$location('/onboarding');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -858,4 +885,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'24dd6a30321bc87f97a09e19fee29cf81cd110e9';
+String _$routerHash() => r'5cf39c0e81676ec03b7f6cb890a40c1c912adb70';

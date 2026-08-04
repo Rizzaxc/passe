@@ -23,6 +23,9 @@ import 'main.dart';
 import 'manage_tab/lobby_section/lobby_detail_page.dart';
 import 'manage_tab/main.dart';
 import 'notification/main.dart';
+import 'onboarding/onboarding_controller.dart';
+import 'onboarding/onboarding_prefs.dart';
+import 'onboarding/onboarding_screen.dart';
 import 'professional/main.dart';
 import 'profile_tab/main.dart';
 import 'social/user_page.dart';
@@ -67,16 +70,28 @@ GoRouter router(Ref ref) {
     }
   });
 
+  // Mirrors the `user` notifier above: only `redirect` needs a synchronous,
+  // always-current read of onboarding status, so its provider value is
+  // mirrored into a plain `ValueNotifier` the router can watch.
+  final onboarding = ValueNotifier<AsyncValue<OnboardingStatus>>(
+    const AsyncLoading(),
+  );
+  ref.onDispose(onboarding.dispose);
+  ref.listen(onboardingStateProvider, (_, next) {
+    onboarding.value = next;
+  }, fireImmediately: true);
+
   final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     observers: [TalkerRouteObserver(talker)],
     restorationScopeId: 'router',
-    refreshListenable: user,
+    refreshListenable: Listenable.merge([user, onboarding]),
     initialLocation: const SplashRoute().location,
     // debugLogDiagnostics: true,
     routes: $appRoutes,
     redirect: (context, state) {
       final isSplash = state.uri.path == const SplashRoute().location;
+      final isOnboarding = state.uri.path == const OnboardingRoute().location;
       // Password-recovery screens carry their own flag: unlike the rest of
       // the auth flow, guests must be able to reach them too — the "Forgot
       // password?" link is only ever shown from the embedded form in
@@ -91,6 +106,38 @@ GoRouter router(Ref ref) {
           state.uri.path == const AuthRoute().location ||
           state.uri.path == const WelcomeRoute().location ||
           isPasswordRecoveryFlow;
+
+      // Only reachable once `user.value` is `AsyncData` with a real identity
+      // (guest or signed-in) — the auth branches below gate that. Returns
+      // `null` when the current location is already correct for onboarding
+      // status, otherwise the path to redirect to. `coreDone` (sport picked)
+      // is the only thing that blocks entry to the shell — the rest of the
+      // guide (story/profile/coach-marks, and whether a guest declined it)
+      // runs afterward as sheets/coach-marks over the real shell, so it
+      // doesn't gate routing at all. See `onboarding/follow_up.dart`.
+      String? gateOnboarding() {
+        switch (onboarding.value) {
+          case AsyncLoading():
+            // Always claim `/splash` — never `null` — even when already
+            // there. Returning `null` while already on `/splash` let the
+            // callers' own `isSplash -> Home` fallback fire mid-load
+            // (`OnboardingState` goes back through `AsyncLoading` on every
+            // `authControllerProvider` change, e.g. the auth refresh a
+            // profile-sheet save triggers), which then immediately bounced
+            // back to `/splash` on the next pass — a `/splash <-> /home`
+            // redirect loop go_router detects and throws on.
+            return const SplashRoute().location;
+          case AsyncError():
+            // Fail open — never trap the user on a broken onboarding read.
+            return isOnboarding ? HomeRoute().location : null;
+          case AsyncData(value: final status):
+            if (!status.coreDone) {
+              return isOnboarding ? null : const OnboardingRoute().location;
+            }
+            return isOnboarding ? HomeRoute().location : null;
+        }
+      }
+
       switch (user.value) {
         case AsyncError():
           if (isAuthFlow) return null;
@@ -104,10 +151,14 @@ GoRouter router(Ref ref) {
         case AsyncData(value: final user):
           if (user!.isGuest) {
             if (isPasswordRecoveryFlow) return null;
+            final onboardingRedirect = gateOnboarding();
+            if (onboardingRedirect != null) return onboardingRedirect;
             if (isSplash || isAuthFlow) return HomeRoute().location;
             return null;
           }
 
+          final onboardingRedirect = gateOnboarding();
+          if (onboardingRedirect != null) return onboardingRedirect;
           if (isSplash || isAuthFlow) return HomeRoute().location;
           return null;
       }
@@ -177,6 +228,21 @@ class ResetPasswordRoute extends GoRouteData with $ResetPasswordRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       ResetPasswordScreen(email: email);
+}
+
+/// Post-auth onboarding journey (app story → select sport → improve profile
+/// → the feature-intro coach-marks run separately, over the live shell).
+/// Top-level, outside [MainRoute]'s shell — no bottom nav while it's up.
+/// Gated by `redirect`'s `gateOnboarding`, not reachable/leavable by hand.
+@TypedGoRoute<OnboardingRoute>(path: '/onboarding')
+@immutable
+class OnboardingRoute extends GoRouteData with $OnboardingRoute {
+  const OnboardingRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const OnboardingScreen();
+  }
 }
 
 @TypedGoRoute<NotificationRoute>(path: '/notifications')

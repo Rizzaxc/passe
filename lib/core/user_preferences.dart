@@ -103,16 +103,56 @@ class UserPreferences {
     return prefs.remove(_namespaceKey(key));
   }
 
+  /// Copies [key]'s value from the device's guest namespace into the current
+  /// user's namespace, only if the current user has no value for it yet.
+  /// No-op when the current user *is* the guest namespace.
+  ///
+  /// Guests share a single `'guest'`-prefixed namespace and gain a stable id
+  /// only once they sign up (see [_userPrefix]), so state written while
+  /// guest (e.g. "has seen onboarding") doesn't automatically carry over to
+  /// the new namespace a sign-up creates. This is the bridge for that.
+  Future<void> adoptGuestValue(String key) async {
+    final currentPrefix = _userPrefix;
+    if (currentPrefix == _guestPrefix) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final currentKey = '${currentPrefix}_$key';
+    if (prefs.containsKey(currentKey)) return;
+
+    final guestKey = '${_guestPrefix}_$key';
+    final value = prefs.get(guestKey);
+    switch (value) {
+      case bool v:
+        await prefs.setBool(currentKey, v);
+      case int v:
+        await prefs.setInt(currentKey, v);
+      case double v:
+        await prefs.setDouble(currentKey, v);
+      case String v:
+        await prefs.setString(currentKey, v);
+      case List<String> v:
+        await prefs.setStringList(currentKey, v);
+      case null:
+        break;
+    }
+  }
+
   /// Clears all key-value pairs that belong to the current user.
   ///
   /// This method finds all keys in SharedPreferences that start with the current
   /// user's prefix and removes them. It's useful for cleaning up user data
   /// during logout.
   ///
+  /// Pass [prefix] to clear a specific namespace (e.g. the just-signed-out
+  /// user's id, captured before their session ends) instead of whatever
+  /// [_userPrefix] resolves to *now* — by the time a sign-out completes,
+  /// `auth.currentUser` is already null and this would otherwise wipe the
+  /// shared `'guest'` namespace instead.
+  ///
   /// Returns a Future`<bool>` indicating whether all user data was successfully cleared.
-  Future<bool> clearUserData() async {
+  Future<bool> clearUserData([String? prefix]) async {
     final prefs = await SharedPreferences.getInstance();
-    final userPrefix = _userPrefix;
+    final userPrefix = prefix ?? _userPrefix;
     final prefixPattern = '${userPrefix}_';
 
     // Get all keys and filter for current user's keys

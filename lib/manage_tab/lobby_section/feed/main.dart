@@ -21,6 +21,7 @@ class LobbySubtab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lobbiesAsync = ref.watch(userLobbiesControllerProvider);
+    final isGuest = ref.watch(authControllerProvider).value?.isGuest ?? true;
 
     ref.listen(userLobbiesControllerProvider, (_, next) {
       if (next is AsyncError && context.mounted) {
@@ -49,44 +50,104 @@ class LobbySubtab extends ConsumerWidget {
               _InvitesButton(count: inviteCount),
               FButton.icon(
                 variant: .ghost,
-                onPress: () => showLobbyFormSheet(
-                    context: context, ref: ref, lobbyId: null),
+                onPress: () {
+                  if (isGuest) {
+                    showFToast(
+                      context: context,
+                      icon: const Icon(FLucideIcons.circleAlert),
+                      variant: .destructive,
+                      title: Text('lobby.signInRequired'.tr()),
+                      alignment: .bottomCenter,
+                    );
+                    return;
+                  }
+                  showLobbyFormSheet(context: context, ref: ref, lobbyId: null);
+                },
                 child: const Icon(FLucideIcons.plus),
               ),
             ],
           ),
         ),
         Expanded(
-          child: lobbiesAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, _) => const SizedBox.shrink(),
-            data: (lobbies) => lobbies.isEmpty
-                ? PEmptySectionPlaceholder(
-                    hero: Icon(
-                      FLucideIcons.users,
-                      size: 64,
-                      color: context.theme.colors.mutedForeground,
-                    ),
-                    title: 'manageTab.lobby.empty.title'.tr(),
-                    subtitle: 'manageTab.lobby.empty.message'.tr(),
-                  )
-                : RefreshIndicator(
-                    onRefresh: () async {
-                      ref.invalidate(userLobbiesControllerProvider);
-                      await ref.read(userLobbiesControllerProvider.future);
-                    },
-                    child: ListView.separated(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      itemCount: lobbies.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) =>
-                          _LobbyCard(item: lobbies[index]),
-                    ),
-                  ),
-          ),
+          child: isGuest
+              ? const _GuestLobbyState()
+              : lobbiesAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (_, _) => const SizedBox.shrink(),
+                  data: (lobbies) => lobbies.isEmpty
+                      ? PEmptySectionPlaceholder(
+                          hero: Icon(
+                            FLucideIcons.users,
+                            size: 64,
+                            color: context.theme.colors.mutedForeground,
+                          ),
+                          title: 'manageTab.lobby.empty.title'.tr(),
+                          subtitle: 'manageTab.lobby.empty.message'.tr(),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () async {
+                            ref.invalidate(userLobbiesControllerProvider);
+                            await ref.read(
+                              userLobbiesControllerProvider.future,
+                            );
+                          },
+                          child: ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            itemCount: lobbies.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 8),
+                            itemBuilder: (context, index) =>
+                                _LobbyCard(item: lobbies[index]),
+                          ),
+                        ),
+                ),
         ),
       ],
+    );
+  }
+}
+
+/// A guest has no lobbies and can't create one, so the generic "create a
+/// lobby to start playing" empty state (which implies a working CTA) would
+/// be misleading — mirrors `feed_tab/main.dart`'s `_GuestState`: hero icon +
+/// title + subtitle + a direct sign-in CTA, centered rather than pinned to
+/// the top of a list since there's nothing else in this section for a guest.
+class _GuestLobbyState extends StatelessWidget {
+  const _GuestLobbyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                PEmptySectionPlaceholder(
+                  hero: Icon(
+                    FLucideIcons.userX,
+                    size: 64,
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                  title: 'manageTab.lobby.guest.title'.tr(),
+                  subtitle: 'manageTab.lobby.guest.message'.tr(),
+                ),
+                const SizedBox(height: 16),
+                FButton(
+                  onPress: () => const ProfileRoute().go(context),
+                  child: Text('auth.guestPrompt.cta'.tr()),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

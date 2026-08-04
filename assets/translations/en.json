@@ -145,6 +145,7 @@
             "viewMap": "View Map",
             "directions": "Directions",
             "directionsFailed": "Couldn't open a maps app",
+            "unnamed": "Unnamed venue",
             "address": "Address",
             "amenities": "Amenities",
             "amenity": {
@@ -228,6 +229,10 @@
             "empty": {
                 "title": "No lobbies found",
                 "message": "Create a lobby to start playing with others"
+            },
+            "guest": {
+                "title": "You're not signed in",
+                "message": "Sign in to create and manage your lobbies."
             }
         },
         "recordMatch": {
@@ -257,6 +262,7 @@
         "leader": "Leader",
         "us": "Us",
         "sportNotSelected": "Pick a sport before creating a lobby",
+        "signInRequired": "Sign in to create a lobby",
         "noActivity": "No upcoming activity",
         "nameRequired": "Lobby name is required",
         "nameTooShort": "Name must be at least 3 characters",
@@ -782,26 +788,55 @@
     },
     "onboarding": {
         "next": "Continue",
-        "pickSportHint": "Pick a sport to get started",
-        "home": {
-            "title": "Discover",
-            "body": "Find teammates, lobbies to play with, rivals to challenge, coaches/referees and venues — all scoped to your chosen sport."
-        },
-        "manage": {
-            "title": "Manage lobbies",
-            "body": "Create or join a lobby, schedule sessions, confirm attendance, and review your team's match history."
-        },
-        "health": {
-            "title": "Health",
-            "body": "Link a wearable to auto-capture your sessions, track heart rate, and unlock achievements."
-        },
-        "profile": {
-            "title": "Profile",
-            "body": "Set your skill level, availability, networks and industry so matchmaking gets you better matches."
+        "back": "Back",
+        "skip": "Skip",
+        "done": "Get started",
+        "story": {
+            "s1": {
+                "title": "Playing sports, as easy as scheduling coffee",
+                "body": "Passe connects you with teammates, rivals and venues nearby — scoped to the sport you play."
+            },
+            "s2": {
+                "title": "Your lobby is your team",
+                "body": "Form a lobby, invite friends, schedule sessions and track match history — all in one place."
+            },
+            "s3": {
+                "title": "The more you play, the better the matches",
+                "body": "Your skill level, free time and network help Passe match you more accurately over time."
+            }
         },
         "sport": {
             "title": "Choose a sport",
-            "body": "Passe works one sport at a time. Pick the one you want to start with — you can switch anytime from the top bar."
+            "body": "Passe works one sport at a time. Pick the one you want to start with — you can switch anytime from the top bar.",
+            "hint": "Pick a sport to get started"
+        },
+        "profile": {
+            "title": "A few details for better matches",
+            "body": "Takes 30 seconds. You can always change this later from the Profile tab.",
+            "gender": "Gender",
+            "ageGroup": "Age group",
+            "playtime": "Free time",
+            "addPlaytime": "Add a time slot",
+            "skillLockWarning": "Your starting skill level can only be set once and can't be changed after saving.",
+            "save": "Save & continue",
+            "saveError": "Couldn't save your profile. You can try again from the Profile tab."
+        },
+        "guest": {
+            "title": "Want a quick look at how Passe works?",
+            "body": "A short walkthrough of the main features. You can skip it and explore on your own.",
+            "accept": "Show me",
+            "decline": "Not now"
+        },
+        "coach": {
+            "title": "Quick tour",
+            "feed": "Feed — the latest photos from your friends and lobby.",
+            "discover": "Discover — find teammates, rivals, coaches/referees and venues.",
+            "manage": "Manage — your lobbies, schedule and match history.",
+            "health": "Health — link a wearable and unlock achievements.",
+            "profile": "Profile — edit your skill level, free time and network.",
+            "next": "Next",
+            "skip": "Skip",
+            "finish": "Done"
         }
     },
     "social": {

@@ -133,42 +133,7 @@ class ProfileTab extends ConsumerWidget {
                         await Future.wait([
                           ref.read(profileControllerProvider.notifier).commit(),
                           if (sport != null && sport != Sport.others)
-                            switch (sport) {
-                              Sport.soccer =>
-                                ref
-                                    .read(
-                                      soccerProfileControllerProvider.notifier,
-                                    )
-                                    .commit(),
-                              Sport.basketball =>
-                                ref
-                                    .read(
-                                      basketballProfileControllerProvider
-                                          .notifier,
-                                    )
-                                    .commit(),
-                              Sport.badminton =>
-                                ref
-                                    .read(
-                                      badmintonProfileControllerProvider
-                                          .notifier,
-                                    )
-                                    .commit(),
-                              Sport.tennis =>
-                                ref
-                                    .read(
-                                      tennisProfileControllerProvider.notifier,
-                                    )
-                                    .commit(),
-                              Sport.pickleball =>
-                                ref
-                                    .read(
-                                      pickleballProfileControllerProvider
-                                          .notifier,
-                                    )
-                                    .commit(),
-                              Sport.others => Future.value(),
-                            },
+                            commitSportProfile(ref, sport),
                         ]);
                       } on AvatarUploadFailedException {
                         if (!context.mounted) return;

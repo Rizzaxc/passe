@@ -41,9 +41,8 @@ user's `details.location` and `details.playtime`** on build, defaulting to `City
 Changing the city clears districts. Feeds `ref.watch(filterStateProvider)` so they refetch on any
 filter change. `FilterState.onCommit()` (persisting the filter server-side) is a TODO.
 
-**`search` (`p_search`) is now wired into all four RPCs** (`schema/home_feed_search.sql` —
-**written but not yet applied to prod**, blocked by the safety policy on live-DB function
-migrations; apply it before relying on search): teammate/challenger match `lobby.name` OR
+**`search` (`p_search`) is wired into all four RPCs** (`schema/home_feed_search.sql`, applied to
+prod): teammate/challenger match `lobby.name` OR
 `lobby.searchable_id`; professional matches `professional.display_name`; location matches
 name/address via the existing `search_locations` fuzzy match. All four are diacritic-insensitive
 (`extensions.unaccent`). **Location is the one exception to "search narrows the result set"**: its
@@ -170,6 +169,16 @@ freezed) — edit them by hand, no build_runner.
 - **Directions** hand off to the device's maps app via a `geo:` URI (falls back to a Google Maps web
   URL) using `url_launcher` — no API key / billing, the OS routes the intent. Disabled when the
   venue has no `lat/lon`. Google Maps SDK was deliberately *not* used (poor VN coverage + cost).
+- **OSM tile usage policy compliance**: identifying `User-Agent` (`_tileUserAgent`) and visible
+  attribution (`_OsmAttribution`) are set in `main.dart` of this folder; the 7-day-minimum tile
+  cache the policy requires is flutter_map's built-in `NetworkTileProvider` disk cache (on by
+  default, no extra package needed — BSD-3-Clause, not `flutter_map_tile_caching`/FMTC which is
+  GPL-3.0), with its freshness floor forced to 7 days via `BuiltInMapCachingProvider
+  .getOrCreateInstance(overrideFreshAge: ...)` in `lib/main.dart` (must run before any `TileLayer`
+  builds). This does **not** cover aggregate-traffic risk as the user base grows — OSM enforces
+  against the app as an identifiable operator (by `User-Agent`), not per-device, so a real
+  user-growth push should trigger migrating off `tile.openstreetmap.org` to a self-hosted or
+  commercial OSM-derived tile provider rather than relying on caching alone.
 - **Coordinates & tags**: the `Location` freezed model carries `lat`, `lon`, `tags`, `cityCluster`,
   plus `coord` (→ `LatLng?`) and `displayAddress` helpers.
 - **Sport-scoped** (`Location.matchesSport`/`.sports`/`hasDeclaredSport` in `core/model/location.dart`):
@@ -195,16 +204,20 @@ freezed) — edit them by hand, no build_runner.
   normalization pass on the source data (which is a 3rd-party API re-fetch, not something to migrate
   by hand — see root CLAUDE.md district-model note).
 - If `FilterData.search` **or** `filter.districts` is non-empty, route through the
-  `search_locations(search_term, p_districts)` RPC instead of the direct city-only query — the two
-  are **OR'd**, not AND'd (picking a district broadens results rather than narrowing a name search;
-  `p_districts` uses the same `legacyDistrict` + `id` label set as the direct-query path above).
-  City filtering is skipped on this path (a pre-existing gap, low-risk since district labels are
-  already city-specific).
+  `search_locations(search_term, p_districts, p_city_cluster)` RPC instead of the direct city-only
+  query — search and district are **OR'd**, not AND'd (picking a district broadens results rather
+  than narrowing a name search; `p_districts` uses the same `legacyDistrict` + `id` label set as the
+  direct-query path above), while `p_city_cluster` is a hard **AND** on top of that OR (added by
+  `schema/location_search_city_filter.sql` — the RPC originally ignored city on this path, so a
+  district pick could leak the other supported city's venues whenever a district label coincided).
 - **Migration**: `schema/home_feed_search.sql` widens `search_locations` to also return
   `lat/lon/tags/city_cluster` (so searched venues are pinnable) and adds the `p_districts` OR-match;
-  also adds `p_search` to the other 3 RPCs (see "Shared filter" above). **Not yet applied to
-  prod** — apply it before relying on search or map pins in *search* results (the direct-query path
-  already returns lat/lon/tags). Supersedes the retired `location_map_support.sql`.
+  also adds `p_search` to the other 3 RPCs (see "Shared filter" above), applied to prod. Supersedes
+  the retired `location_map_support.sql`. `schema/location_search_city_filter.sql` (also applied)
+  layers the `p_city_cluster` AND on top.
+- **Unnamed venues**: ~20% of scraped rows have `name = ''` (not null — every one still has an
+  address). `Location.hasName` gates the fallback; both the card and the detail sheet show
+  `'homeTab.location.unnamed'.tr()` instead of a blank title.
 - Roadmap: we don't own venue data yet; booking arrives with local-business integration. The detail
   sheet states this (`homeTab.location.roadmapNote`).
 - Model: the `Location` freezed model in `core/model/location.dart`.

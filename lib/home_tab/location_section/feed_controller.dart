@@ -37,13 +37,15 @@ class LocationFeed extends _$LocationFeed {
     if (filter.search.isNotEmpty || districtLabels.isNotEmpty) {
       // `search_locations` OR's the name/address search against the
       // district filter (not AND's) — picking a district should broaden
-      // results, not narrow a name search down further.
+      // results, not narrow a name search down further. City is a hard AND
+      // on top of that OR (schema/location_search_city_filter.sql).
       final response = await Supabase.instance.client
           .rpc(
             'search_locations',
             params: {
               'search_term': filter.search,
               'p_districts': districtLabels,
+              if (filter.city != City.none) 'p_city_cluster': filter.city.dbIndex,
             },
           )
           .timeout(const Duration(seconds: 5));
@@ -74,6 +76,16 @@ class LocationFeed extends _$LocationFeed {
     // normalization migration. `Sport.others` (no sport chosen) skips
     // filtering entirely rather than hiding everything.
     if (sport == Sport.others) return results;
-    return results.where((l) => l.matchesSport(sport)).toList();
+    final matched = results.where((l) => l.matchesSport(sport)).toList();
+
+    // Venues explicitly tagged for the context sport surface first; untagged
+    // ones (kept above since we can't confirm irrelevance) trail behind —
+    // stable sort preserves each group's original (search-rank/limit) order.
+    matched.sort((a, b) {
+      final aTagged = a.sports.contains(sport) ? 0 : 1;
+      final bTagged = b.sports.contains(sport) ? 0 : 1;
+      return aTagged.compareTo(bTagged);
+    });
+    return matched;
   }
 }

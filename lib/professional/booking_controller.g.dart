@@ -286,7 +286,7 @@ final class ProfessionalBookingControllerProvider
 }
 
 String _$professionalBookingControllerHash() =>
-    r'c7a137c1268edade909de0a90156f72deec682be';
+    r'cfc580e164d2b18d9e96d0de4944e6a02bb06d7d';
 
 /// Creates a `professional_booking` row for one professional. RLS ("Clients
 /// can manage their own bookings") scopes the insert to the caller as

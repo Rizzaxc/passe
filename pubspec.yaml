@@ -80,6 +80,7 @@ dependencies:
   share_plus: ^12.0.2
   http: any
   cross_file: any
+  tutorial_coach_mark: ^1.3.3
 
 dev_dependencies:
   supabase: ^2.7.0

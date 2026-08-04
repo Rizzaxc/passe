@@ -35,7 +35,10 @@ wherever it's seen.
     shorter than the screen). This mirrors the `hero:`+title+subtitle convention every other tab's
     empty state uses (e.g. `home_tab/challenger_section/main.dart`'s `_NoLobbyState`) — just centered
     instead of pinned to the top of a list, since here it's the *entire* tab rather than one section
-    among several. Guest → "Đăng nhập" CTA (`WelcomeRoute`); empty (signed in, no posts) →
+    among several. Guest → "Đăng nhập" CTA (`ProfileRoute` — not `WelcomeRoute`, which the router's
+    `redirect` immediately bounces a guest away from back to Home since a guest already has a
+    session; the Profile tab is what actually renders the sign-in form, via `GuestProfileView`);
+    empty (signed in, no posts) →
     "Tìm bạn bè" CTA (pushes `social/friends_screen.dart`'s `FriendsScreen`).
   - **Data state** (`_FeedPager`): a vertical `PageView.builder`, one `PostCard` per page, wrapped in
     a `RefreshIndicator` (a vertical `PageView` is still a `Scrollable`, so overscrolling past the

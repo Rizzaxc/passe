@@ -83,6 +83,12 @@ abstract class Location with _$Location {
   /// (community/roadmap data is often incomplete). Guard map pins on this.
   LatLng? get coord => (lat != null && lon != null) ? LatLng(lat!, lon!) : null;
 
+  /// `name` is a required DB column but ~20% of scraped rows store it as an
+  /// empty string (no null in the data, just blank text) — every one of
+  /// those rows still has an address, so the card falls back to a localized
+  /// placeholder rather than rendering a blank title.
+  bool get hasName => name.trim().isNotEmpty;
+
   /// Human-readable address assembled from the structured parts, falling back
   /// to the pre-joined [fullAddress] when present.
   String get displayAddress =>

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../onboarding/onboarding_flow.dart';
 import 'model/enum.dart';
 import 'state/selected_sport_state.dart';
 
@@ -11,24 +10,9 @@ enum Notification { all, direct, nothing }
 class SportSelector extends ConsumerWidget {
   const SportSelector({super.key});
 
-
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedSportAsync = ref.watch(selectedSportStateProvider);
-    final alertShown = ref.watch(othersAlertShownProvider);
-
-    if (selectedSportAsync.value == Sport.others && !alertShown) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!ref.read(othersAlertShownProvider)) {
-          // Mark shown up-front so a rebuild mid-navigation doesn't double-open.
-          // The onboarding flow itself calls setShown() again on completion
-          // (harmless) and is what actually sets the context sport.
-          ref.read(othersAlertShownProvider.notifier).setShown();
-          showOnboarding(context);
-        }
-      });
-    }
 
     return selectedSportAsync.when(
       data: (selectedSport) {

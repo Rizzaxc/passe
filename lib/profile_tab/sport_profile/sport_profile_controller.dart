@@ -1,11 +1,92 @@
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../auth/auth_controller.dart';
+import '../../core/model/enum.dart';
 import '../../core/model/sport_profile.dart';
 
 part 'sport_profile_controller.g.dart';
+
+/// Shared dispatch used by both [SportProfileScreen] and the onboarding
+/// profile step so there's one place that knows how to commit/read a sport's
+/// profile instead of a private switch duplicated per call site.
+Future<void> commitSportProfile(WidgetRef ref, Sport sport) => switch (sport) {
+      Sport.soccer =>
+        ref.read(soccerProfileControllerProvider.notifier).commit(),
+      Sport.basketball =>
+        ref.read(basketballProfileControllerProvider.notifier).commit(),
+      Sport.badminton =>
+        ref.read(badmintonProfileControllerProvider.notifier).commit(),
+      Sport.tennis =>
+        ref.read(tennisProfileControllerProvider.notifier).commit(),
+      Sport.pickleball =>
+        ref.read(pickleballProfileControllerProvider.notifier).commit(),
+      Sport.others => Future.value(),
+    };
+
+/// Current `elo_seed` value + whether it's locked (already committed) for
+/// [sport]. Locking is permanent once set — see `EloSeedField`.
+({EloSeed? seed, bool locked}) readSportEloSeed(WidgetRef ref, Sport sport) =>
+    switch (sport) {
+      Sport.soccer => (
+          seed: ref.watch(soccerProfileControllerProvider).profile.eloSeed,
+          locked: ref.watch(soccerProfileControllerProvider).eloSeedLocked,
+        ),
+      Sport.basketball => (
+          seed:
+              ref.watch(basketballProfileControllerProvider).profile.eloSeed,
+          locked: ref.watch(basketballProfileControllerProvider).eloSeedLocked,
+        ),
+      Sport.badminton => (
+          seed: ref.watch(badmintonProfileControllerProvider).profile.eloSeed,
+          locked: ref.watch(badmintonProfileControllerProvider).eloSeedLocked,
+        ),
+      Sport.tennis => (
+          seed: ref.watch(tennisProfileControllerProvider).profile.eloSeed,
+          locked: ref.watch(tennisProfileControllerProvider).eloSeedLocked,
+        ),
+      Sport.pickleball => (
+          seed: ref.watch(pickleballProfileControllerProvider).profile.eloSeed,
+          locked: ref.watch(pickleballProfileControllerProvider).eloSeedLocked,
+        ),
+      Sport.others => (seed: null, locked: false),
+    };
+
+/// Sets only the draft `elo_seed` for [sport], leaving its other fields
+/// untouched. Does not persist — call [commitSportProfile] to write it.
+void setSportEloSeed(WidgetRef ref, Sport sport, EloSeed seed) {
+  switch (sport) {
+    case Sport.soccer:
+      final notifier = ref.read(soccerProfileControllerProvider.notifier);
+      notifier.updateDraft(
+        ref.read(soccerProfileControllerProvider).profile.copyWith(eloSeed: seed),
+      );
+    case Sport.basketball:
+      final notifier = ref.read(basketballProfileControllerProvider.notifier);
+      notifier.updateDraft(
+        ref.read(basketballProfileControllerProvider).profile.copyWith(eloSeed: seed),
+      );
+    case Sport.badminton:
+      final notifier = ref.read(badmintonProfileControllerProvider.notifier);
+      notifier.updateDraft(
+        ref.read(badmintonProfileControllerProvider).profile.copyWith(eloSeed: seed),
+      );
+    case Sport.tennis:
+      final notifier = ref.read(tennisProfileControllerProvider.notifier);
+      notifier.updateDraft(
+        ref.read(tennisProfileControllerProvider).profile.copyWith(eloSeed: seed),
+      );
+    case Sport.pickleball:
+      final notifier = ref.read(pickleballProfileControllerProvider.notifier);
+      notifier.updateDraft(
+        ref.read(pickleballProfileControllerProvider).profile.copyWith(eloSeed: seed),
+      );
+    case Sport.others:
+      break;
+  }
+}
 
 // ─── Soccer ───────────────────────────────────────────────────────────────────
 

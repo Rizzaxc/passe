@@ -20,6 +20,13 @@ enum _VenueView { list, map }
 
 /// User agent sent to the OpenStreetMap tile server (their usage policy asks
 /// for an identifying UA). Uses the app bundle id.
+///
+/// Neither `TileLayer` below sets `tileProvider:`, so both use flutter_map's
+/// default `NetworkTileProvider`, which disk-caches tiles via its built-in
+/// `BuiltInMapCachingProvider` automatically — no extra wiring needed here.
+/// The 7-day minimum freshness floor OSM's tile usage policy asks for is
+/// configured once, in `main()` (`lib/main.dart`), before this screen can
+/// ever build a `TileLayer`.
 const _tileUserAgent = 'passe.vn.passe';
 
 /// Ho Chi Minh City centre — the map's fallback focus when no venue in the
@@ -163,104 +170,124 @@ class _VenueCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final address = location.displayAddress;
-    final sports = location.sports;
     final amenities = location.amenityKeys;
+    final displayName = location.hasName
+        ? location.name
+        : 'homeTab.location.unnamed'.tr();
 
-    return FCard(
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.card,
+        border: Border.all(color: colors.border),
+        borderRadius: context.theme.style.borderRadius.md,
+        boxShadow: context.theme.style.shadow,
+      ),
+      clipBehavior: Clip.antiAlias,
       child: FTappable(
         onPress: () => _showVenueSheet(context, location),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 6,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 8,
-              children: [
-                Expanded(
-                  child: Text(
-                    location.name,
-                    style: context.theme.typography.body.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.primary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Icon(
-                  FLucideIcons.chevronRight,
-                  size: 16,
-                  color: colors.mutedForeground,
-                ),
-              ],
-            ),
-            if (address.isNotEmpty)
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 10,
+            children: [
               Row(
-                spacing: 4,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: 10,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 1),
-                    child: Icon(
-                      FLucideIcons.mapPin,
-                      size: 12,
-                      color: colors.mutedForeground,
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        FLucideIcons.mapPin,
+                        size: 16,
+                        color: colors.primary,
+                      ),
                     ),
                   ),
                   Expanded(
-                    child: Text(
-                      address,
-                      style: context.theme.typography.body.sm.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 2,
+                      children: [
+                        Text(
+                          displayName,
+                          style: context.theme.typography.body.sm.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: location.hasName
+                                ? colors.foreground
+                                : colors.mutedForeground,
+                            fontStyle: location.hasName
+                                ? FontStyle.normal
+                                : FontStyle.italic,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (address.isNotEmpty)
+                          Text(
+                            address,
+                            style: context.theme.typography.body.xs.copyWith(
+                              color: colors.mutedForeground,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    FLucideIcons.chevronRight,
+                    size: 16,
+                    color: colors.mutedForeground,
+                  ),
+                ],
+              ),
+              if (amenities.isNotEmpty)
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final a in amenities)
+                      _TagChip(label: 'homeTab.location.amenity.$a'.tr()),
+                  ],
+                ),
+              FDivider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FButton(
+                    size: .sm,
+                    variant: .secondary,
+                    onPress: location.coord == null
+                        ? null
+                        : () => _openDirections(context, location),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 4,
+                      children: [
+                        const Icon(FLucideIcons.navigation, size: 14),
+                        Text('homeTab.location.directions'.tr()),
+                      ],
                     ),
                   ),
                 ],
               ),
-            if (sports.isNotEmpty || amenities.isNotEmpty)
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final s in sports) _SportChip(sport: s),
-                  for (final a in amenities)
-                    _TagChip(label: 'homeTab.location.amenity.$a'.tr()),
-                ],
-              ),
-            const FDivider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              spacing: 8,
-              children: [
-                FButton(
-                  size: .sm,
-                  variant: .secondary,
-                  onPress: location.coord == null
-                      ? null
-                      : () => _openDirections(context, location),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    spacing: 4,
-                    children: [
-                      const Icon(FLucideIcons.navigation, size: 14),
-                      Text('homeTab.location.directions'.tr()),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Matches the professional subtab's `_SportChip` pill styling for a
-/// consistent visual language across the home tab.
+/// Pill styling matches the professional subtab's `_SportChip`, minus the
+/// leading icon — a venue can carry several of these in the detail sheet's
+/// amenity row, and the icon-per-chip repetition read as noisy there.
 class _SportChip extends StatelessWidget {
   final Sport sport;
 
@@ -275,19 +302,12 @@ class _SportChip extends StatelessWidget {
         color: colors.secondary,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 5,
-        children: [
-          sport.getIcon(size: 12),
-          Text(
-            sport.getLocalizedName(context),
-            style: context.theme.typography.body.xs.copyWith(
-              color: colors.secondaryForeground,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+      child: Text(
+        sport.getLocalizedName(context),
+        style: context.theme.typography.body.xs.copyWith(
+          color: colors.secondaryForeground,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -479,7 +499,9 @@ class _VenueDetailSheet extends StatelessWidget {
         spacing: 16,
         children: [
           PSheetTitle(
-            label: location.name,
+            label: location.hasName
+                ? location.name
+                : 'homeTab.location.unnamed'.tr(),
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),

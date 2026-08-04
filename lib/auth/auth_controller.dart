@@ -92,9 +92,14 @@ class AuthController extends _$AuthController {
         // then refreshes state and lets the router proceed. See
         // ResetPasswordScreen.
       } else if (event == AuthChangeEvent.signedOut) {
-        // Clear state
+        // Clear state. Capture the outgoing user's id *before* clearing —
+        // `UserPreferences._userPrefix` reads `auth.currentUser` live, which
+        // is already null by the time this event fires, so without this the
+        // clear would wipe the shared 'guest' namespace instead of the
+        // user who actually signed out.
+        final outgoingUserId = state.value?.id;
         state = const AsyncValue.loading();
-        await _userPrefs.clearUserData();
+        await _userPrefs.clearUserData(outgoingUserId);
         state = const AsyncValue.data(null);
       }
     });

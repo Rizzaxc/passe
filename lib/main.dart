@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -21,6 +22,8 @@ import 'firebase_options.dart';
 import 'health_tab/health_sync_service.dart';
 import 'logger/observer.dart';
 import 'notifications/notification_service.dart';
+import 'onboarding/coach_marks.dart';
+import 'onboarding/follow_up.dart';
 import 'router.dart';
 import 'ui/main.dart' as ui;
 
@@ -33,6 +36,17 @@ Future<void> main() async {
   });
 
   await dotenv.load();
+
+  // OSM's tile usage policy requires caching tiles locally for at least 7
+  // days; tile.openstreetmap.org's own Cache-Control header (~24h) is
+  // shorter than that, so this overrides the freshness window rather than
+  // trusting the server's shorter one. Must run before the first TileLayer
+  // builds — NetworkTileProvider (the default for both TileLayers in
+  // home_tab/location_section/main.dart) lazily creates this same singleton
+  // on first use otherwise, with no override applied.
+  BuiltInMapCachingProvider.getOrCreateInstance(
+    overrideFreshAge: const Duration(days: 7),
+  );
 
   final env = dotenv.env['ENV'] ?? 'local';
   const envLocal = 'local';
@@ -168,6 +182,12 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
             .syncNow()
             .catchError((_) => const HealthSyncResult());
       });
+
+      // The shell's first frame has just laid out the nav bar, so the coach
+      // keys have a `currentContext` by now — safe to run the rest of the
+      // onboarding journey (story sheet → profile sheet → coach-marks)
+      // right away; each step self-guards on its own persisted status.
+      runOnboardingFollowUps(context, ref);
     });
   }
 
@@ -180,22 +200,27 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
         onChange: (index) => _onTap(context, index),
         children: [
           FBottomNavigationBarItem(
+            key: NavCoachKeys.feed,
             icon: Icon(FLucideIcons.clapperboard),
             label: Text('nav.feed'.tr()),
           ),
           FBottomNavigationBarItem(
+            key: NavCoachKeys.discover,
             icon: Icon(FLucideIcons.house),
             label: Text('nav.discover'.tr()),
           ),
           FBottomNavigationBarItem(
+            key: NavCoachKeys.manage,
             icon: Icon(FLucideIcons.calendar),
             label: Text('nav.manage'.tr()),
           ),
           FBottomNavigationBarItem(
+            key: NavCoachKeys.health,
             icon: Icon(FLucideIcons.heartPulse),
             label: Text('nav.health'.tr()),
           ),
           FBottomNavigationBarItem(
+            key: NavCoachKeys.profile,
             icon: Icon(FLucideIcons.userCog),
             label: Text('nav.profile'.tr()),
           ),

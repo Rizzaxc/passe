@@ -270,4 +270,4 @@ final class DetectedWorkoutsProvider
   }
 }
 
-String _$detectedWorkoutsHash() => r'8a0fc3671240e663c66f85394b80d367f30d4e07';
+String _$detectedWorkoutsHash() => r'56016c6d1d6f4bcb4bd4d2e5ff29436dfa7e68b5';
