@@ -76,6 +76,7 @@ class ActivityTab extends HookConsumerWidget {
           upcoming: upcomingActivity,
           sport: sport,
           isLeader: isLeader,
+          captainId: captainId,
           compact: compact.value,
         ),
         Expanded(

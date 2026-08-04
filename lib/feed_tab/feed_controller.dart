@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/achievement_evaluator.dart';
 import '../core/model/wall_post.dart';
 
 part 'feed_controller.g.dart';
@@ -69,6 +70,12 @@ class WallFeedController extends _$WallFeedController {
     } catch (_) {
       if (previous != null) state = AsyncData(previous);
       rethrow;
+    }
+
+    // Only reacting (not clearing) can move the "react to N posts" badge.
+    final userId = ref.read(currentUserIdProvider);
+    if (emoji != null && userId != null) {
+      await evaluateAchievements(ref, userId);
     }
   }
 

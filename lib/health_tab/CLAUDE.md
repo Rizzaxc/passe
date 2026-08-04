@@ -76,26 +76,39 @@ Capture is sport-agnostic; only the recap-list display filters by the context sp
 
 ## Gamification (achievements + XP/level)
 
-Health-only, **global** fitness level (cap 50). Schema/RPCs in
-`schema/achievement_gamification.sql`; catalog in `schema/achievement_seed.sql`
-(both applied via MCP — **re-dump `passe.sql`** when you next can).
+One **global** fitness+social level (cap 50), no longer health-only — a `social` criteria
+source (Feed engagement) was added alongside `daily`/`activity`/`special`. Schema/RPCs in
+`schema/achievement_gamification.sql` + `schema/social_achievements.sql`; catalog in
+`schema/achievement_seed.sql` (all applied via MCP — **re-dump `passe.sql`**, which is
+currently stale beyond just this: it predates the whole `wall_post`/friendship system too).
 
 - **Criteria are data, not code.** Each `achievement.criteria` jsonb is a constrained
   rule `{source, agg, metric, window, threshold, comparator?, row_min?, session_min?}`
   interpreted by one SQL function. Add/tune a badge = `INSERT`/`UPDATE` a row in the
   seed (keyed by the stable `code` slug) — no Dart change. CHECK-constrained vocabulary:
-  `source ∈ daily|activity|special`, `agg ∈ sum|count|max|session_streak|special`,
+  `source ∈ daily|activity|special|social`, `agg ∈ sum|count|max|session_streak|special`,
   `window ∈ day|week|month|all_time` (calendar only — no rolling). `repeatable ⇒
   window ∈ {week,month}`.
 - **`session_load`** is a *virtual* metric = 3-zone TRIMP `(easy + 2·mod + 3·hard)/60`,
   computed inline from `activity_health_metrics` zone seconds — the intensity-fair
   spine for hard/streak badges. No column.
-- **Evaluator is the sole mutator.** `evaluate_achievements(uid)` (SECURITY DEFINER) runs
-  at the end of `syncNow()` *only* — health data only changes on sync. It persists
-  unlocks to `user_achievement` (`ON CONFLICT DO NOTHING`, keyed by `period_key`), banks
-  `xp_granted` (a **snapshot** of `xp_reward`, so retuning the catalog never rewrites
-  history), recomputes `user.xp`/`user.level`, and returns the newly-unlocked payload.
-  RLS gives clients **no** write path anywhere.
+- **`source=social`** reads `social_event` (`schema/social_achievements.sql`), an
+  append-only log populated by triggers on `wall_post`/`wall_post_reaction` insert —
+  **not** those tables directly, since posts/reactions are TTL-swept and would
+  undercount a lifetime/monthly badge. `metric ∈ post_created|reaction_received|
+  reaction_given`; self-reactions are excluded from `reaction_received`/`reaction_given`
+  so an author can't farm their own badges. See [`lib/feed_tab/CLAUDE.md`](../feed_tab/CLAUDE.md).
+- **Evaluator is the sole mutator, called from every surface that can move a criteria
+  forward** — `HealthSyncController.syncNow()` for health/vitality badges, and the
+  Feed compose/react controllers for social badges (via the shared
+  `evaluateAchievements()` helper in `lib/core/achievement_evaluator.dart`). Health data
+  only changes on sync, so that call site is unchanged; social data changes on
+  post/react, so those call it right after their write instead. `evaluate_achievements(uid)`
+  (SECURITY DEFINER) itself doesn't care who called it — it scores every criteria row
+  for that user regardless. It persists unlocks to `user_achievement` (`ON CONFLICT DO
+  NOTHING`, keyed by `period_key`), banks `xp_granted` (a **snapshot** of `xp_reward`,
+  so retuning the catalog never rewrites history), recomputes `user.xp`/`user.level`,
+  and returns the newly-unlocked payload. RLS gives clients **no** write path anywhere.
 - **Curve lives only in SQL**: `C(L)=25·L·(L−1)`, cap 50. `user_level_summary` returns
   `{level, xp_total, current_floor, next_floor}`; the client renders the bar, never the
   formula. **Only ratchet the constant (25) *down*** — raising it de-levels users.
@@ -104,13 +117,19 @@ Health-only, **global** fitness level (cap 50). Schema/RPCs in
   invalidates the read providers, **never** `syncNow()`.
 - **Backfill floor**: achievements only count data since `greatest(user.created_at,
   now()−90d)`, so a new user can't farm pre-app watch history; repeatable badges only
-  ever evaluate the current calendar period.
-- **Surfacing**: sync → toast + trophy-tab dot (`unseenAchievementsProvider`, persisted)
-  + a pending `AchievementCelebrationController` payload the subtab shows as a `PSheet`
-  on entry. **TODO(notifications)**: replace the launch-sync toast with a push
-  notification once that system exists (the dot→sheet flow stays).
-- v1 is **sport-agnostic** (`sport=NULL`); the back half of the level cap (25→50) is the
-  reserved runway for a future competitive achievement track.
+  ever evaluate the current calendar period. Applies uniformly to `social_event` too,
+  though it's moot in practice — that log only ever grows forward from signup.
+- **Surfacing**: an evaluation that unlocks something → trophy-tab dot
+  (`unseenAchievementsProvider`, persisted) + a pending `AchievementCelebrationController`
+  payload the subtab shows as a `PSheet` on entry — from *any* call site, not just a
+  health sync. Only the explicit Sync button additionally shows a toast.
+  **TODO(notifications)**: replace that launch-sync toast with a push notification once
+  that system exists (the dot→sheet flow stays).
+- Only the health/vitality half is sport-scoped data; achievements themselves are
+  **sport-agnostic** (`sport=NULL`) across the board, social included (Feed is
+  cross-sport by design — see [`lib/feed_tab/CLAUDE.md`](../feed_tab/CLAUDE.md)). The
+  back half of the level cap (25→50) is the reserved runway for a future competitive
+  achievement track.
 
 ## Vitality Score
 

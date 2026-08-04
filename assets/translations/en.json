@@ -532,6 +532,14 @@
         "discover": "Discover",
         "feed": "Feed"
     },
+    "notification": {
+        "title": "Notifications",
+        "markAllRead": "Mark all read",
+        "empty": {
+            "title": "No notifications yet",
+            "subtitle": "Activity, invites and requests will show up here"
+        }
+    },
     "home": {
         "teammate": "Teammates",
         "challenger": "Challengers",
@@ -597,7 +605,34 @@
         "removeAvatar": "Remove",
         "uploadPhoto": "Upload Photo",
         "uploadFailed": "Failed to upload photo",
-        "networkMaxReached": "Maximum 2 networks. Remove one first."
+        "networkMaxReached": "Maximum 2 networks. Remove one first.",
+        "paymentInfo": "Payment Info",
+        "paymentInfoExplanation": "Add banks or e-wallets you can receive money on. This is shown to your friends and lobby mates so they can pay you outside the app — Passe does not process any payments.",
+        "paymentInfoEmpty": "No payment info added yet. Add a bank or e-wallet so friends and lobby mates can pay you.",
+        "addPaymentInfo": "Add Payment Info",
+        "paymentInfoDeleteConfirmTitle": "Remove this payment info?",
+        "paymentInfoDeleteConfirmBody": "This will remove it from your profile. This can't be undone.",
+        "paymentInfoDeleteCancel": "Cancel",
+        "paymentInfoDeleteConfirmAction": "Remove"
+    },
+    "payment": {
+        "bankOrWallet": "Bank or e-wallet",
+        "accountNumber": "Account / phone number",
+        "accountHolderName": "Account holder name (optional)",
+        "copy": "Copy",
+        "copied": "Copied",
+        "share": "Share",
+        "openInApp": "Open in {} app",
+        "openInAppFailed": "Couldn't open the app. Is it installed?",
+        "autofillHint": "The app will pre-fill the transfer details.",
+        "disclaimer": "Passe does not verify or take responsibility for transfers made outside the app. Double-check the recipient's info before sending money.",
+        "payHost": "Pay Host",
+        "payCoach": "Pay Coach",
+        "hostNoPaymentInfo": "The lobby captain hasn't set up payment info yet.",
+        "coachNoPaymentInfo": "This coach hasn't set up payment info yet.",
+        "chooseAccount": "Choose an account",
+        "depositNote": "Deposit for {}",
+        "lessonNote": "Payment for lesson with {}"
     },
     "health": {
         "title": "Health",

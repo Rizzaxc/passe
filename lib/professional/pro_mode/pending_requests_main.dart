@@ -10,19 +10,57 @@ import 'pro_bookings_controller.dart';
 /// Manage ▸ pro mode's "pending requests" subtab — accept/reject bookings
 /// still at `requested`. Reachable from the `professional_booking_requested`
 /// push notification via `ManageRequestsRoute`.
-class ProPendingRequestsSection extends ConsumerWidget {
+class ProPendingRequestsSection extends ConsumerStatefulWidget {
   final String professionalId;
 
-  const ProPendingRequestsSection({super.key, required this.professionalId});
+  /// Set when reached via a professional_booking_requested notification tap
+  /// — the matching card scrolls into view and highlights once.
+  final String? highlightBookingId;
+
+  const ProPendingRequestsSection({
+    super.key,
+    required this.professionalId,
+    this.highlightBookingId,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final requestsAsync = ref.watch(proPendingRequestsProvider(professionalId));
+  ConsumerState<ProPendingRequestsSection> createState() =>
+      _ProPendingRequestsSectionState();
+}
+
+class _ProPendingRequestsSectionState
+    extends ConsumerState<ProPendingRequestsSection> {
+  final _cardKeys = <String, GlobalKey>{};
+  bool _scrolledToHighlight = false;
+
+  void _maybeScrollToHighlight(List<ProBookingItem> requests) {
+    final targetId = widget.highlightBookingId;
+    if (targetId == null || _scrolledToHighlight) return;
+    if (!requests.any((r) => r.id == targetId)) return;
+    _scrolledToHighlight = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final key = _cardKeys[targetId];
+      final ctx = key?.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 300),
+          alignment: 0.1,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final requestsAsync = ref.watch(
+      proPendingRequestsProvider(widget.professionalId),
+    );
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(proPendingRequestsProvider(professionalId));
-        await ref.read(proPendingRequestsProvider(professionalId).future);
+        ref.invalidate(proPendingRequestsProvider(widget.professionalId));
+        await ref.read(proPendingRequestsProvider(widget.professionalId).future);
       },
       child: requestsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -45,15 +83,22 @@ class ProPendingRequestsSection extends ConsumerWidget {
               ],
             );
           }
+          _maybeScrollToHighlight(requests);
           return ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
             itemCount: requests.length,
             separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder: (context, i) => _RequestCard(
-              professionalId: professionalId,
-              request: requests[i],
-            ),
+            itemBuilder: (context, i) {
+              final request = requests[i];
+              final key = _cardKeys.putIfAbsent(request.id, () => GlobalKey());
+              return _RequestCard(
+                key: key,
+                professionalId: widget.professionalId,
+                request: request,
+                highlighted: request.id == widget.highlightBookingId,
+              );
+            },
           );
         },
       ),
@@ -64,8 +109,14 @@ class ProPendingRequestsSection extends ConsumerWidget {
 class _RequestCard extends ConsumerWidget {
   final String professionalId;
   final ProBookingItem request;
+  final bool highlighted;
 
-  const _RequestCard({required this.professionalId, required this.request});
+  const _RequestCard({
+    super.key,
+    required this.professionalId,
+    required this.request,
+    this.highlighted = false,
+  });
 
   Future<void> _accept(BuildContext context, WidgetRef ref) async {
     try {
@@ -144,7 +195,7 @@ class _RequestCard extends ConsumerWidget {
       proBookingActionControllerProvider(professionalId),
     );
 
-    return FCard(
+    final card = FCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 8,
@@ -232,6 +283,15 @@ class _RequestCard extends ConsumerWidget {
           ),
         ],
       ),
+    );
+
+    if (!highlighted) return card;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.primary, width: 2),
+      ),
+      child: card,
     );
   }
 }

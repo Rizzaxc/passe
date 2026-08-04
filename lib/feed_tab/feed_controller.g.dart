@@ -121,7 +121,7 @@ final class WallFeedControllerProvider
 }
 
 String _$wallFeedControllerHash() =>
-    r'46720af9a4ec7ee71422fc74e700da149958db39';
+    r'b13d9a1ee987d7a0b9e024c3c423d7d83132ded1';
 
 /// Posts from the caller, their friends, their lobby mates, and any post a
 /// friend of theirs is tagged in. Visibility is resolved server-side in

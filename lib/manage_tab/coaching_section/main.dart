@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -5,12 +6,33 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../core/format.dart';
 import '../../core/model/enum.dart';
+import '../../core/payment/pay_recipient.dart';
 import '../../professional/next_session_sheet.dart';
 import '../../professional/professional_booking.dart';
 import '../../router.dart';
 import '../../ui/main.dart';
 import 'coaching_controller.dart';
 import 'review_sheet.dart';
+
+/// Whether a "pay coach" affordance makes sense for this booking: there's an
+/// agreed rate, the coach's account is linked (so there's somewhere to look
+/// up payment info), and the booking hasn't been rejected/cancelled.
+bool _canPayCoach(ProfessionalBookingItem booking) =>
+    booking.agreedRate != null &&
+    booking.professionalLinkedUserId != null &&
+    booking.status != ProfessionalBookingStatus.rejected &&
+    booking.status != ProfessionalBookingStatus.cancelledByClient &&
+    booking.status != ProfessionalBookingStatus.cancelledByPro;
+
+Future<void> _payCoach(BuildContext context, ProfessionalBookingItem booking) {
+  return payRecipient(
+    context,
+    recipientUserId: booking.professionalLinkedUserId!,
+    amount: booking.agreedRate!,
+    note: 'payment.lessonNote'.tr(args: [booking.professionalName]),
+    emptyMessage: 'payment.coachNoPaymentInfo'.tr(),
+  );
+}
 
 /// Manage ▸ Coaching: the signed-in user's coach bookings
 /// (`professional_booking` rows where the professional's role is coach).
@@ -501,6 +523,30 @@ class _Hero extends ConsumerWidget {
                         ),
                       ),
                     const Spacer(),
+                    if (_canPayCoach(booking)) ...[
+                      FTappable(
+                        onPress: () => _payCoach(context, booking),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            'payment.payCoach'.tr(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     FTappable(
                       onPress: () =>
                           _confirmCancelBooking(context, ref, booking),
@@ -815,6 +861,13 @@ class _SessionPreviewSheet extends ConsumerWidget {
             ],
           ),
         ),
+        if (_canPayCoach(session))
+          FButton(
+            variant: .outline,
+            onPress: () => _payCoach(context, session),
+            prefix: const Icon(FLucideIcons.qrCode, size: 16),
+            child: Text('payment.payCoach'.tr()),
+          ),
         if (session.clientNotes != null && session.clientNotes!.isNotEmpty)
           _NoteBlock(label: 'GHI CHÚ CỦA BẠN', text: session.clientNotes!),
         if (session.professionalNotes != null &&

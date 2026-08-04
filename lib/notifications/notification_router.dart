@@ -3,24 +3,26 @@ import 'package:go_router/go_router.dart';
 import '../router.dart';
 import 'notification_kind.dart';
 
-/// Maps a push `data` payload to a destination and navigates there.
+/// Maps a push/outbox `data` payload to a destination location, or null if
+/// it doesn't resolve (missing data, or an unhandled kind). Pure — no
+/// navigation — so both the push-tap handler and the in-app notification
+/// center list can share this single routing table.
 ///
 /// The `data` map is the FCM message's data block — the server's routing
 /// contract `{kind, target_id, lobby_id?}` (see fn_enqueue_notification in
-/// schema/push_notifications.sql). Driven by [GoRouter] directly (not a
-/// `BuildContext`) so it works from a notification tap that launched the app
-/// from a terminated state, before any widget context exists.
-void routeNotificationTap(GoRouter router, Map<String, dynamic>? data) {
-  if (data == null) return;
+/// schema/push_notifications.sql).
+String? resolveNotificationLocation(Map<String, dynamic>? data) {
+  if (data == null) return null;
   final kind = NotificationKind.fromValue(data['kind'] as String?);
-  if (kind == null) return;
+  if (kind == null) return null;
 
   final lobbyId = data['lobby_id'] as String?;
   // Friendship pushes carry the *other* party's id — that's who you want to
   // land on, whether they just asked or just accepted.
   final userId = data['user_id'] as String?;
+  final bookingId = data['booking_id'] as String?;
 
-  final location = switch (kind) {
+  return switch (kind) {
     // The confirmed activity lives inside its lobby's section.
     NotificationKind.activityConfirmed =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
@@ -36,9 +38,10 @@ void routeNotificationTap(GoRouter router, Map<String, dynamic>? data) {
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
     // Lobby invite — go to the manage/lobby tab so they see their pending invites.
     NotificationKind.lobbyInvite => const ManageLobbyRoute().location,
-    // A new request came in for the linked professional — their pending-requests subtab.
+    // A new request came in for the linked professional — their
+    // pending-requests subtab, scrolled/highlighted to this one booking.
     NotificationKind.professionalBookingRequested =>
-      const ManageRequestsRoute().location,
+      ManageRequestsRoute(highlightBookingId: bookingId).location,
     // The professional responded — the client's own booking lives in their schedule/coaching view.
     NotificationKind.professionalBookingConfirmed =>
       const ManageScheduleRoute().location,
@@ -52,6 +55,12 @@ void routeNotificationTap(GoRouter router, Map<String, dynamic>? data) {
     NotificationKind.friendAccepted =>
       userId == null ? null : UserRoute(id: userId).location,
   };
+}
 
+/// Push-tap entry point: resolve and navigate. Driven by [GoRouter] directly
+/// (not a `BuildContext`) so it works from a notification tap that launched
+/// the app from a terminated state, before any widget context exists.
+void routeNotificationTap(GoRouter router, Map<String, dynamic>? data) {
+  final location = resolveNotificationLocation(data);
   if (location != null) router.go(location);
 }

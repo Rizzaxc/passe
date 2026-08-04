@@ -237,6 +237,11 @@ JSON — parse with `double.tryParse`. Complex reads go through Postgres functio
 - `flutter analyze` is the lint gate (`flutter_lints`). Suppress a single line with
   `// ignore: rule_name` only when genuinely warranted.
 - Run the app with `flutter run`; tests with `flutter test`.
+- **This is strictly an iOS + Android app.** Never attempt to build or run for web, Windows, macOS,
+  or Linux (`flutter run -d chrome/windows/macos/linux`) — those targets aren't supported and
+  aren't a meaningful way to verify a change here, even as a smoke test. Verify changes on an
+  iOS/Android device or simulator/emulator, or by reasoning through the code/`flutter analyze`
+  when a device isn't available.
 - **Environment**: config is loaded from `.env` via `flutter_dotenv` (`dotenv.load()` in `main`).
   `ENV` is one of `local | test | live`. `.env.example` documents the keys
   (`SUPABASE_URL`, `SUPABASE_PUBLIC_KEY`, `SENTRY_DSN`, `GOOGLE_IOS_CLIENT_ID`,
@@ -402,8 +407,16 @@ Push (raw FCM HTTP v1, iOS + Android) is **built**. Design + remaining provision
 - **Device tokens:** `user_device_token` (fcm_token PK); registering via the `register_device_token`
   RPC moves the token to the current user (handles account-switch on a shared device); deleted on
   logout and server-side on FCM `UNREGISTERED`.
-- **Forward-compat:** `notification_outbox` has `read_at` + a recipient self-`SELECT` RLS policy,
-  so an in-app notification centre is a pure frontend add (the `/notifications` route already exists).
+- **Notification centre (built):** `/notifications` (`lib/notification/`) is a passive, cross-kind
+  chronological log of `notification_outbox` rows — unread badge on the bell (`NotificationIconButton`,
+  live-updated on a foreground push), tap-to-navigate via the same `resolveNotificationLocation`
+  routing table `notification_router.dart` uses for push taps, mark-read (`fn_mark_notification_read`)
+  / mark-all-read (`fn_mark_all_notifications_read`, `schema/notification_center.sql`). Read state
+  also clears on an OS push-banner tap, not just an in-center tap — the `send-push` Edge Function
+  forwards the outbox row's own id as `data.notification_id` for this. This is **history, not the
+  primary way to act** on a pending item: the existing per-surface actionable queues — the
+  Manage▸Lobby invites button, a lobby's challenges/join-requests rows, the Profile Friends badge —
+  are unchanged and still where accept/decline actually happens.
 
 ## Agent skills
 

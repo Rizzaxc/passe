@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/achievement_evaluator.dart';
 import '../core/model/wall_post.dart';
 import 'feed_controller.dart';
 
@@ -150,6 +151,7 @@ class ComposePostController extends _$ComposePostController {
 
       ref.invalidate(wallFeedControllerProvider);
       ref.invalidate(postableSessionsProvider);
+      await evaluateAchievements(ref, userId);
       return id as String;
     } catch (_) {
       // The images are already in the bucket but no post owns them. Queue them

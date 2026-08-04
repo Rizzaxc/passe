@@ -17,12 +17,19 @@ import 'schedule_section/main.dart';
 class ManageTab extends StatefulWidget {
   final int initialIndex;
 
-  const ManageTab({super.key, this.initialIndex = 0});
+  // Set from a professional_booking_requested notification tap — threaded
+  // down to ProPendingRequestsSection to scroll/highlight that one card.
+  final String? highlightBookingId;
+
+  const ManageTab({super.key, this.initialIndex = 0, this.highlightBookingId});
 
   static final instance = ManageTab();
 
-  factory ManageTab.withInitialTab(int initialIndex) {
-    return ManageTab(initialIndex: initialIndex);
+  factory ManageTab.withInitialTab(int initialIndex, {String? highlightBookingId}) {
+    return ManageTab(
+      initialIndex: initialIndex,
+      highlightBookingId: highlightBookingId,
+    );
   }
 
   static const manageSections = <FTabEntry>[
@@ -39,13 +46,19 @@ class ManageTab extends StatefulWidget {
   // `my_schedule_data`), index 1 is pending requests (what
   // `ManageRequestsRoute` deep-links to), index 2 is history — no lobby or
   // client-side coaching subtab while in pro mode.
-  static List<FTabEntry> proManageSections(String professionalId) => [
+  static List<FTabEntry> proManageSections(
+    String professionalId, {
+    String? highlightBookingId,
+  }) => [
     FTabEntry(
       child: ProScheduleSection(professionalId: professionalId),
       label: const Icon(FLucideIcons.calendarDays),
     ),
     FTabEntry(
-      child: ProPendingRequestsSection(professionalId: professionalId),
+      child: ProPendingRequestsSection(
+        professionalId: professionalId,
+        highlightBookingId: highlightBookingId,
+      ),
       label: const Icon(FLucideIcons.inbox),
     ),
     FTabEntry(
@@ -80,7 +93,10 @@ class _ManageTabState extends State<ManageTab> {
         final proModeActive =
             ref.watch(proModeStateProvider).asData?.value ?? false;
         final sections = linkedProfessionalId != null && proModeActive
-            ? ManageTab.proManageSections(linkedProfessionalId)
+            ? ManageTab.proManageSections(
+                linkedProfessionalId,
+                highlightBookingId: widget.highlightBookingId,
+              )
             : ManageTab.manageSections;
         final index = _currentIndex.clamp(0, sections.length - 1);
 

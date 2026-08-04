@@ -11,6 +11,12 @@ class ProfessionalBookingItem {
   final String professionalId;
   final String professionalName;
   final bool professionalVerified;
+
+  /// `professional.linked_user_id` — the coach's own signed-in account, if
+  /// they've linked one (set out-of-app). Null means there's no `user` row
+  /// to look up payment info for — hide "pay coach" rather than show a
+  /// dead button.
+  final String? professionalLinkedUserId;
   final double professionalRating;
   final int professionalReviewCount;
   final String? serviceType;
@@ -40,6 +46,7 @@ class ProfessionalBookingItem {
     required this.professionalId,
     required this.professionalName,
     required this.professionalVerified,
+    this.professionalLinkedUserId,
     required this.professionalRating,
     required this.professionalReviewCount,
     this.serviceType,
@@ -115,6 +122,7 @@ class ProfessionalBookingItem {
       professionalId: json['professional_id'] as String,
       professionalName: (pro?['display_name'] ?? '') as String,
       professionalVerified: pro?['is_verified'] as bool? ?? false,
+      professionalLinkedUserId: pro?['linked_user_id'] as String?,
       professionalRating:
           double.tryParse(pro?['average_rating']?.toString() ?? '') ?? 0,
       professionalReviewCount: (pro?['review_count'] as num?)?.toInt() ?? 0,

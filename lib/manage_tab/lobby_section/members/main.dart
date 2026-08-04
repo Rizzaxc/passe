@@ -21,7 +21,7 @@ class MembersSection extends ConsumerWidget {
         height: 80,
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (_, __) => Padding(
+      error: (_, _) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(
           'errorGeneric'.tr(),
@@ -52,7 +52,7 @@ class _MembersRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
         itemCount: members.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (context, i) => _MemberChip(member: members[i]),
       ),
     );

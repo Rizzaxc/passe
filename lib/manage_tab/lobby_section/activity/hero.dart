@@ -1,4 +1,5 @@
 // Pinned activity hero — empty state and expanded state
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -6,8 +7,10 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../../auth/auth_controller.dart';
 import '../../../../auth/guest_prompt.dart';
 import '../../../../core/model/enum.dart';
+import '../../../../core/payment/pay_recipient.dart';
 import '../../../../ui/button_styles.dart';
 import '../../../../ui/theme.dart';
 import '../../../router.dart';
@@ -37,6 +40,7 @@ class ActivityHero extends ConsumerWidget {
   final UpcomingActivity? upcoming;
   final Sport? sport;
   final bool isLeader;
+  final String? captainId;
 
   /// True once the feed below has scrolled away from the newest message
   /// (i.e. the user overscrolled into older history) — collapses the
@@ -50,6 +54,7 @@ class ActivityHero extends ConsumerWidget {
     required this.upcoming,
     required this.sport,
     required this.isLeader,
+    this.captainId,
     this.compact = false,
   });
 
@@ -78,6 +83,7 @@ class ActivityHero extends ConsumerWidget {
         upcoming: activity,
         sport: sport,
         isLeader: isLeader,
+        captainId: captainId,
         status: status,
         compact: compact,
       ),
@@ -298,6 +304,7 @@ class _HeroExpanded extends ConsumerWidget {
   final UpcomingActivity upcoming;
   final Sport? sport;
   final bool isLeader;
+  final String? captainId;
   final ActivityConfirmationStatus? status;
   final bool compact;
 
@@ -307,6 +314,7 @@ class _HeroExpanded extends ConsumerWidget {
     required this.upcoming,
     required this.sport,
     required this.isLeader,
+    required this.captainId,
     required this.status,
     required this.compact,
   });
@@ -365,6 +373,20 @@ class _HeroExpanded extends ConsumerWidget {
 
   void _openReschedule(BuildContext context) {
     showScheduleActivitySheet(context, lobbyId, existing: upcoming);
+  }
+
+  Future<void> _payHost(BuildContext context) async {
+    final hostId = captainId;
+    final amount = upcoming.prepaymentAmount;
+    if (hostId == null || amount == null) return;
+
+    await payRecipient(
+      context,
+      recipientUserId: hostId,
+      amount: amount,
+      note: 'payment.depositNote'.tr(args: [_dateLabel()]),
+      emptyMessage: 'payment.hostNoPaymentInfo'.tr(),
+    );
   }
 
   void _confirmCancel(BuildContext context, WidgetRef ref) {
@@ -455,6 +477,15 @@ class _HeroExpanded extends ConsumerWidget {
 
     final activityId = _activityId;
     final prepaymentLabel = _prepaymentLabel();
+    final currentUserId = ref.watch(currentUserIdProvider);
+    // 'da' (đá) deposits aren't real money yet (no ledger) — only a
+    // 'manual' (out-of-app) prepayment has an actual bank/wallet transfer
+    // to make. Never show this to the captain paying themselves.
+    final canPayHost = upcoming.prepaymentRequired &&
+        upcoming.prepaymentAmount != null &&
+        upcoming.paymentType != 'da' &&
+        captainId != null &&
+        captainId != currentUserId;
 
     return Padding(
       // See _HeroEmpty above — 4-px inset aligns with tab pill edges.
@@ -671,6 +702,14 @@ class _HeroExpanded extends ConsumerWidget {
                                 onTap: () =>
                                     showInviteMemberSheet(context, lobbyId),
                               ),
+                              if (canPayHost) ...[
+                                const SizedBox(width: 6),
+                                _QuickAction(
+                                  icon: Icons.qr_code_rounded,
+                                  label: 'Trả Tiền',
+                                  onTap: () => _payHost(context),
+                                ),
+                              ],
                             ],
                           ),
                         ),

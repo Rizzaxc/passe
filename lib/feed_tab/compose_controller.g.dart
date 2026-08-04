@@ -203,7 +203,7 @@ final class ComposePostControllerProvider
 }
 
 String _$composePostControllerHash() =>
-    r'aa36e0ea6a3d6a1829aeed2f6002acf038d97fc3';
+    r'49cf68cd1fa420f49cccd9f4c6d57e1d3e2a5287';
 
 /// Uploads the picked images, then creates the post.
 ///

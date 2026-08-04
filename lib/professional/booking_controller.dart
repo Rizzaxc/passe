@@ -145,8 +145,7 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
               'professional_id': professionalId,
               'service_id': serviceId,
               'sessions_total': newPackageSessionCount,
-              if (newPackageTotalPrice != null)
-                'total_price': newPackageTotalPrice,
+              'total_price': ?newPackageTotalPrice,
             })
             .select('id')
             .single()
@@ -162,11 +161,11 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
             'service_id': serviceId,
             'booking_time_start': start.toUtc().toIso8601String(),
             'booking_time_end': end.toUtc().toIso8601String(),
-            if (agreedRate != null) 'agreed_rate': agreedRate,
+            'agreed_rate': ?agreedRate,
             if (notes != null && notes.isNotEmpty) 'client_notes': notes,
             if (locationId != null && locationId.isNotEmpty)
               'location_id': locationId,
-            if (packageId != null) 'package_id': packageId,
+            'package_id': ?packageId,
           })
           .select('id')
           .single()

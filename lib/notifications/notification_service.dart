@@ -12,6 +12,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../notification/notification_center_controller.dart';
+import '../notification/notification_unread_count_controller.dart';
 import '../router.dart';
 import '../ui/main.dart';
 import 'notification_router.dart';
@@ -132,6 +134,9 @@ class NotificationService {
   Future<void> _onForegroundMessage(RemoteMessage message) async {
     final notification = message.notification;
     if (notification == null) return;
+    // A notification arrived while the app is open — refresh the bell badge
+    // live rather than waiting for the next screen visit, on both platforms.
+    _ref.invalidate(notificationUnreadCountProvider);
     // iOS already draws the banner (presentation options); only Android needs us.
     if (Platform.isIOS) return;
     await _local.show(
@@ -156,6 +161,25 @@ class NotificationService {
       routeNotificationTap(_ref.read(routerProvider), data);
     } catch (e, st) {
       _talker.handle(e, st, 'notification routing failed');
+    }
+    // Acting on a push directly (banner/cold-start tap) should clear its
+    // unread state too, not just tapping it inside the notification center.
+    // Fire-and-forget — don't block navigation on this.
+    unawaited(_markReadFromTapData(data));
+  }
+
+  Future<void> _markReadFromTapData(Map<String, dynamic> data) async {
+    final rawId = data['notification_id'] as String?;
+    final id = rawId == null ? null : int.tryParse(rawId);
+    if (id == null) return;
+    try {
+      await _supabase
+          .rpc('fn_mark_notification_read', params: {'p_id': id})
+          .timeout(const Duration(seconds: 5));
+      _ref.invalidate(notificationUnreadCountProvider);
+      _ref.invalidate(notificationCenterControllerProvider);
+    } catch (e, st) {
+      _talker.handle(e, st, 'mark notification read from tap failed');
     }
   }
 

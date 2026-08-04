@@ -203,7 +203,7 @@ class _SuggestionDropdown<T> extends StatelessWidget {
             padding: EdgeInsets.zero,
             shrinkWrap: true,
             itemCount: suggestions.length,
-            separatorBuilder: (_, __) => Divider(
+            separatorBuilder: (_, _) => Divider(
               height: 1,
               color: colors.border,
             ),

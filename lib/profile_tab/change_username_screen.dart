@@ -115,7 +115,7 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
                 label: Text('profile.confirmUsername'.tr()),
                 maxLength: 16,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
-                suffixBuilder: (context, _, __) => Padding(
+                suffixBuilder: (context, _, _) => Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Text(

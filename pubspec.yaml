@@ -77,6 +77,9 @@ dependencies:
   # memory-only and dies on restart — for the wall/feed photo grid that means
   # re-downloading every image on every cold start.
   cached_network_image: ^3.4.1
+  share_plus: ^12.0.2
+  http: any
+  cross_file: any
 
 dev_dependencies:
   supabase: ^2.7.0
@@ -97,7 +100,6 @@ dev_dependencies:
   # following page: https://dart.dev/tools/pub/pubspec
 
   # The following section is specific to Flutter packages.
-  http: any
   intl: any
   go_router_builder:
   build_runner:

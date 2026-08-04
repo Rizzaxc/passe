@@ -631,10 +631,20 @@ mixin $ManageScheduleRoute on GoRouteData {
 
 mixin $ManageRequestsRoute on GoRouteData {
   static ManageRequestsRoute _fromState(GoRouterState state) =>
-      const ManageRequestsRoute();
+      ManageRequestsRoute(
+        highlightBookingId: state.uri.queryParameters['highlight-booking-id'],
+      );
+
+  ManageRequestsRoute get _self => this as ManageRequestsRoute;
 
   @override
-  String get location => GoRouteData.$location('/manage/requests');
+  String get location => GoRouteData.$location(
+    '/manage/requests',
+    queryParams: {
+      if (_self.highlightBookingId != null)
+        'highlight-booking-id': _self.highlightBookingId,
+    },
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

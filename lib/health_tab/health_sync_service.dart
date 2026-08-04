@@ -3,8 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/achievement_evaluator.dart';
 import '../core/model/activity.dart';
-import 'achievements_section/achievements_controller.dart';
 import 'achievements_section/model/achievement_celebration.dart';
 import 'health_controller.dart';
 import 'health_data_controller.dart';
@@ -56,8 +56,9 @@ class HealthSyncController extends _$HealthSyncController {
 
     final status = await ref.read(healthControllerProvider.future);
     if (!ref.mounted) return const HealthSyncResult(skipped: true);
-    if (status != HealthLinkStatus.linked)
+    if (status != HealthLinkStatus.linked) {
       return const HealthSyncResult(skipped: true);
+    }
 
     state = HealthSyncPhase.syncing;
     try {
@@ -68,11 +69,12 @@ class HealthSyncController extends _$HealthSyncController {
       if (!ref.mounted) return HealthSyncResult(daysSynced: daysSynced);
 
       final captured = await _captureActivities(userId, thresholds);
-      if (!ref.mounted)
+      if (!ref.mounted) {
         return HealthSyncResult(
           daysSynced: daysSynced,
           activitiesCaptured: captured,
         );
+      }
 
       final celebration = await _evaluateAchievements(userId);
       if (!ref.mounted) {
@@ -97,8 +99,6 @@ class HealthSyncController extends _$HealthSyncController {
       ref.invalidate(dailyHealthTrendProvider);
       ref.invalidate(activityHealthListProvider);
       ref.invalidate(detectedWorkoutsProvider);
-      ref.invalidate(achievementProgressListProvider);
-      ref.invalidate(levelSummaryProvider);
       ref.invalidate(vitalityScoreSummaryProvider);
 
       return HealthSyncResult(
@@ -203,29 +203,11 @@ class HealthSyncController extends _$HealthSyncController {
   }
 
   /// Re-run the achievement evaluator after fresh data lands. Persists unlocks
-  /// + banks XP server-side; on the client it stashes the celebration payload
-  /// (consumed by the achievements subtab) and lights the unseen dot.
-  Future<AchievementCelebration?> _evaluateAchievements(String userId) async {
-    try {
-      final res = await _supabase
-          .rpc('evaluate_achievements', params: {'p_user_id': userId})
-          .timeout(const Duration(seconds: 5));
-      if (res is! Map) return null;
-      final celebration = AchievementCelebration.fromRpc(
-        Map<String, dynamic>.from(res),
-      );
-      if (!celebration.isEmpty && ref.mounted) {
-        ref
-            .read(achievementCelebrationControllerProvider.notifier)
-            .show(celebration);
-        await ref.read(unseenAchievementsProvider.notifier).mark();
-      }
-      return celebration;
-    } catch (e, st) {
-      _talker.handle(e, st, 'Achievement evaluation failed');
-      return null;
-    }
-  }
+  /// + banks XP server-side; the shared [evaluateAchievements] helper stashes
+  /// the celebration payload (consumed by the achievements subtab) and lights
+  /// the unseen dot.
+  Future<AchievementCelebration?> _evaluateAchievements(String userId) =>
+      evaluateAchievements(ref, userId);
 
   /// Re-run the vitality-score evaluator after fresh data lands. Own
   /// try/catch, mirroring [_evaluateAchievements] — a failure here must never

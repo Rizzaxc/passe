@@ -26,6 +26,8 @@ import 'guest_profile_view.dart';
 import 'industry_selection_screen.dart';
 import 'location_selection_screen.dart';
 import 'network_selection_screen.dart';
+import 'payment_info_controller.dart';
+import 'payment_info_selection_screen.dart';
 import 'playtime_selection_screen.dart';
 import 'profile_controller.dart';
 import 'sport_profile/sport_profile_controller.dart';
@@ -102,6 +104,10 @@ class ProfileTab extends ConsumerWidget {
 
                   // Section 2: General Info
                   _buildGeneralInfoSection(context, ref, profileState.details),
+                  const SizedBox(height: 24),
+
+                  // Section 2b: Payment Info
+                  _buildPaymentInfoSection(context, ref),
                   const SizedBox(height: 24),
 
                   // Section 3: Network & Industry Info
@@ -341,7 +347,9 @@ class ProfileTab extends ConsumerWidget {
   }
 
   /// Friends hub entry. The badge counts requests waiting on the user — the
-  /// only place in the app that surfaces them, so it has to be visible here.
+  /// only place in the app that lets you *act* on them (accept/decline). The
+  /// notification centre (`/notifications`) also lists `friend_request`
+  /// events as passive history, but doesn't replace this actionable queue.
   Widget _buildSocialSection(BuildContext context, WidgetRef ref) {
     final pending = ref.watch(incomingFriendRequestsProvider).length;
 
@@ -446,6 +454,35 @@ class ProfileTab extends ConsumerWidget {
           onPress: () => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => const PlaytimeSelectionScreen(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentInfoSection(BuildContext context, WidgetRef ref) {
+    final entriesAsync = ref.watch(paymentInfoControllerProvider);
+    final count = entriesAsync.asData?.value.length ?? 0;
+
+    return FTileGroup(
+      children: [
+        FTile(
+          prefix: const Icon(FLucideIcons.landmark),
+          title: Text('profile.paymentInfo'.tr()),
+          details: count > 0
+              ? Text(
+                  '$count',
+                  style: TextStyle(color: context.theme.colors.primary),
+                )
+              : Text(
+                  'notSet'.tr(),
+                  style: TextStyle(color: context.theme.colors.mutedForeground),
+                ),
+          suffix: const Icon(FLucideIcons.chevronRight),
+          onPress: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const PaymentInfoSelectionScreen(),
             ),
           ),
         ),

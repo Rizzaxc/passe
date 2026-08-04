@@ -9,7 +9,7 @@ part 'coaching_controller.g.dart';
 const _selectColumns = '''
   id, professional_id, service_id, booking_time_start, booking_time_end, agreed_rate, status,
   client_notes, professional_notes, package_id,
-  professional!inner(display_name, professional_role, is_verified, average_rating, review_count),
+  professional!inner(display_name, professional_role, is_verified, linked_user_id, average_rating, review_count),
   professional_service(service_type, max_participants),
   location(name),
   professional_booking_review(rating),

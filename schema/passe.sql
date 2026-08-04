@@ -1092,6 +1092,16 @@ BEGIN
     ) THEN 1 ELSE 0 END;
   END IF;
 
+  IF v_source = 'social' THEN
+    IF v_agg = 'count' THEN
+      SELECT COUNT(*) INTO v_result
+      FROM public.social_event e
+      WHERE e.user_id = p_user_id AND e.kind = v_metric
+        AND e.created_at >= v_start AND e.created_at <= now();
+    END IF;
+    RETURN v_result;
+  END IF;
+
   IF v_source = 'daily' THEN
     IF v_agg = 'sum' THEN
       SELECT COALESCE(SUM(CASE v_metric
@@ -5636,7 +5646,7 @@ CREATE TABLE public.achievement (
     criteria jsonb NOT NULL,
     difficulty smallint,
     consistency smallint,
-    CONSTRAINT achievement_criteria_valid CHECK (((criteria IS NULL) OR (((criteria ->> 'source'::text) = ANY (ARRAY['daily'::text, 'activity'::text, 'special'::text])) AND ((criteria ->> 'agg'::text) = ANY (ARRAY['sum'::text, 'count'::text, 'max'::text, 'session_streak'::text, 'special'::text])) AND (((criteria ->> 'window'::text) IS NULL) OR ((criteria ->> 'window'::text) = ANY (ARRAY['day'::text, 'week'::text, 'month'::text, 'all_time'::text]))) AND ((repeatable IS NOT TRUE) OR ((criteria ->> 'window'::text) = ANY (ARRAY['week'::text, 'month'::text]))) AND (((criteria ->> 'agg'::text) <> 'session_streak'::text) OR (((criteria ->> 'source'::text) = 'activity'::text) AND (criteria ? 'session_min'::text))) AND (((criteria ->> 'source'::text) = 'special'::text) = ((criteria ->> 'agg'::text) = 'special'::text))))),
+    CONSTRAINT achievement_criteria_valid CHECK (((criteria IS NULL) OR (((criteria ->> 'source'::text) = ANY (ARRAY['daily'::text, 'activity'::text, 'special'::text, 'social'::text])) AND ((criteria ->> 'agg'::text) = ANY (ARRAY['sum'::text, 'count'::text, 'max'::text, 'session_streak'::text, 'special'::text])) AND (((criteria ->> 'window'::text) IS NULL) OR ((criteria ->> 'window'::text) = ANY (ARRAY['day'::text, 'week'::text, 'month'::text, 'all_time'::text]))) AND ((repeatable IS NOT TRUE) OR ((criteria ->> 'window'::text) = ANY (ARRAY['week'::text, 'month'::text]))) AND (((criteria ->> 'agg'::text) <> 'session_streak'::text) OR (((criteria ->> 'source'::text) = 'activity'::text) AND (criteria ? 'session_min'::text))) AND (((criteria ->> 'source'::text) = 'special'::text) = ((criteria ->> 'agg'::text) = 'special'::text))))),
     CONSTRAINT achievement_tier_valid CHECK ((((difficulty IS NULL) OR ((difficulty >= 1) AND (difficulty <= 3))) AND ((consistency IS NULL) OR ((consistency >= 1) AND (consistency <= 3)))))
 );
 

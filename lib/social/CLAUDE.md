@@ -56,3 +56,6 @@ Before this existed there was no `/user/:id` route at all and no way to connect 
   cache-busted, unlike the profile tab's own avatar: a `?t=<millis>` changes the URL every build,
   which would defeat the disk and CDN cache for every avatar in a feed.
 - All RPCs carry `.timeout(const Duration(seconds: 5))`.
+- The Profile tab's Friends badge (`incomingFriendRequestsProvider`) is still the only place to
+  *act* on a pending request. The notification centre (`/notifications`) also lists `friend_request`
+  / `friend_accepted` events, but only as passive history — it doesn't replace this badge.

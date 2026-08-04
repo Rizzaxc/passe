@@ -7,13 +7,20 @@
 -- curve constant (25) ratchets DOWN only; per-badge XP here is free to move.
 --
 -- criteria grammar:
---   source:      daily | activity | special
+--   source:      daily | activity | special | social
 --   agg:         sum | count | max | session_streak | special
 --   window:      day | week | month | all_time     (calendar only)
---   metric:      a column name, or virtual 'session_load' (3-zone TRIMP)
+--   metric:      a column name, or virtual 'session_load' (3-zone TRIMP);
+--                for source=social: post_created | reaction_received | reaction_given
 --   threshold:   target value           comparator: >= (default) | >
 --   row_min:     per-row qualifier for `count`     (e.g. activity_count >= 1)
 --   session_min: per-session qualifier for `session_streak`
+--
+-- Social badges (source=social) read from `social_event`, an append-only log
+-- populated by triggers in schema/social_achievements.sql — NOT from
+-- wall_post/wall_post_reaction directly, since posts and reactions are
+-- ephemeral (TTL-swept) and would silently undercount. Sport-agnostic like
+-- the rest of v1 (Feed is cross-sport by design).
 
 INSERT INTO public.achievement (code, name, description, sport, xp_reward, repeatable, difficulty, consistency, criteria) VALUES
 -- ── Repeatable (the XP engine) ───────────────────────────────────────────────
@@ -41,7 +48,12 @@ INSERT INTO public.achievement (code, name, description, sport, xp_reward, repea
 ('calories_50k',         'Vạn ngọn lửa',        'Đốt tổng cộng 50.000 kcal trong các buổi tập.',    NULL, 350, false, 2, 3, '{"source":"activity","agg":"sum","metric":"active_calories","window":"all_time","threshold":50000}'),
 ('first_hard_hour',      'Nếm mùi cực hạn',     'Tích lũy 1 giờ ở vùng nhịp tim cao.',              NULL, 200, false, 3, 1, '{"source":"activity","agg":"sum","metric":"hr_zone_hard_seconds","window":"all_time","threshold":3600}'),
 ('single_cal_1000',      'Bùng nổ',             'Đốt 1.000 kcal trong một buổi tập.',               NULL, 200, false, 3, 1, '{"source":"activity","agg":"max","metric":"active_calories","window":"all_time","threshold":1000}'),
-('load_pr',              'Đỉnh của chóp',       'Đạt 120 điểm tải luyện tập trong một buổi.',       NULL, 200, false, 3, 1, '{"source":"activity","agg":"max","metric":"session_load","window":"all_time","threshold":120}')
+('load_pr',              'Đỉnh của chóp',       'Đạt 120 điểm tải luyện tập trong một buổi.',       NULL, 200, false, 3, 1, '{"source":"activity","agg":"max","metric":"session_load","window":"all_time","threshold":120}'),
+-- ── Social ────────────────────────────────────────────────────────────────────
+('first_post',           'Khoe ảnh đầu tiên',   'Đăng bài đầu tiên lên tường.',                     NULL,  60, false, 1, 1, '{"source":"social","agg":"count","metric":"post_created","window":"all_time","threshold":1}'),
+('react_10_posts',       'Người bạn nhiệt tình','Thả cảm xúc cho 10 bài đăng.',                     NULL,  80, false, 1, 2, '{"source":"social","agg":"count","metric":"reaction_given","window":"all_time","threshold":10}'),
+('reactions_100',        'Ngôi sao của tường',  'Nhận tổng cộng 100 lượt thả cảm xúc trên các bài đăng.', NULL, 200, false, 2, 3, '{"source":"social","agg":"count","metric":"reaction_received","window":"all_time","threshold":100}'),
+('posts_4_month',        'Chăm chỉ tường nhà',  'Đăng 4 bài trong tháng này.',                       NULL,  90, true,  1, 2, '{"source":"social","agg":"count","metric":"post_created","window":"month","threshold":4}')
 ON CONFLICT (code) DO UPDATE SET
   name        = EXCLUDED.name,
   description = EXCLUDED.description,

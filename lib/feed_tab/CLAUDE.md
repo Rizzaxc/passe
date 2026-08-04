@@ -99,6 +99,19 @@ wherever it's seen.
   immediately) plus an hourly `pg_cron` sweep that deletes rows and queues the storage objects
   (`wall_post_gc` → a `gc-wall-images` Edge Function, same pattern as `send-push`).
 
+## Achievements
+
+Posting and reacting can unlock a social badge (`first_post`, `posts_4_month`,
+`react_10_posts`, `reactions_100` — `schema/social_achievements.sql`). Both
+`compose_controller.dart`'s `submit()` and `feed_controller.dart`'s `react()` call the
+shared `evaluateAchievements()` helper (`lib/core/achievement_evaluator.dart`) right
+after their RPC succeeds — same evaluator the health tab's sync uses, just triggered
+here instead of on a sync pass, since that's when social data actually changes. It only
+touches the *acting* user's own badges (e.g. reacting evaluates the reactor's
+`react_10_posts`, not the post author's `reactions_100` — the author's own client
+catches that up next time they post/react/sync). See the Gamification section in
+[`lib/health_tab/CLAUDE.md`](../health_tab/CLAUDE.md) for the full criteria design.
+
 ## Gotchas
 
 - All RPCs/queries carry the mandatory `.timeout(const Duration(seconds: 5))`.

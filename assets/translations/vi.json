@@ -532,6 +532,14 @@
         "discover": "Discover",
         "feed": "Feed"
     },
+    "notification": {
+        "title": "Thông báo",
+        "markAllRead": "Đánh dấu đã đọc",
+        "empty": {
+            "title": "Chưa có thông báo",
+            "subtitle": "Hoạt động, lời mời và yêu cầu sẽ xuất hiện ở đây"
+        }
+    },
     "home": {
         "teammate": "Đồng đội",
         "challenger": "Đối thủ",
@@ -597,7 +605,34 @@
         "removeAvatar": "Gỡ bỏ",
         "uploadPhoto": "Tải ảnh lên",
         "uploadFailed": "Tải ảnh thất bại",
-        "networkMaxReached": "Tối đa 2 tổ chức. Hãy xoá bớt 1 trước."
+        "networkMaxReached": "Tối đa 2 tổ chức. Hãy xoá bớt 1 trước.",
+        "paymentInfo": "Thông tin thanh toán",
+        "paymentInfoExplanation": "Thêm ngân hàng hoặc ví điện tử để nhận tiền. Thông tin này chỉ hiển thị cho bạn bè và thành viên cùng lobby để họ chuyển khoản cho bạn ngoài ứng dụng — Passe không xử lý bất kỳ giao dịch thanh toán nào.",
+        "paymentInfoEmpty": "Chưa có thông tin thanh toán nào. Thêm ngân hàng hoặc ví điện tử để bạn bè và thành viên lobby có thể chuyển khoản cho bạn.",
+        "addPaymentInfo": "Thêm thông tin thanh toán",
+        "paymentInfoDeleteConfirmTitle": "Xoá thông tin thanh toán này?",
+        "paymentInfoDeleteConfirmBody": "Thao tác này sẽ xoá khỏi hồ sơ của bạn và không thể hoàn tác.",
+        "paymentInfoDeleteCancel": "Huỷ",
+        "paymentInfoDeleteConfirmAction": "Xoá"
+    },
+    "payment": {
+        "bankOrWallet": "Ngân hàng hoặc ví điện tử",
+        "accountNumber": "Số tài khoản / số điện thoại",
+        "accountHolderName": "Tên chủ tài khoản (không bắt buộc)",
+        "copy": "Sao chép",
+        "copied": "Đã sao chép",
+        "share": "Chia sẻ",
+        "openInApp": "Mở app {}",
+        "openInAppFailed": "Không thể mở app. Bạn đã cài đặt app này chưa?",
+        "autofillHint": "App sẽ tự động điền sẵn thông tin chuyển khoản.",
+        "disclaimer": "Passe không xác minh hoặc chịu trách nhiệm cho các giao dịch chuyển khoản thực hiện ngoài ứng dụng. Hãy kiểm tra kỹ thông tin người nhận trước khi chuyển tiền.",
+        "payHost": "Trả tiền cho chủ nhóm",
+        "payCoach": "Thanh toán cho HLV",
+        "hostNoPaymentInfo": "Chủ nhóm chưa thiết lập thông tin thanh toán.",
+        "coachNoPaymentInfo": "HLV này chưa thiết lập thông tin thanh toán.",
+        "chooseAccount": "Chọn tài khoản",
+        "depositNote": "Đặt cọc {}",
+        "lessonNote": "Thanh toán buổi tập với {}"
     },
     "health": {
         "title": "Health",

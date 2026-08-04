@@ -55,7 +55,14 @@ class SoccerProfileController extends _$SoccerProfileController {
           .from('soccer_profile')
           .upsert({'user_id': user!.id!, ...state.profile.toJson()})
           .timeout(const Duration(seconds: 5));
-      if (state.profile.eloSeed != null) {
+      // `commit()` runs alongside `ProfileController.commit()` via
+      // `Future.wait` on the profile screen's commit button, whose `finally`
+      // refreshes `authControllerProvider` — which this controller watches.
+      // That refresh can dispose/rebuild this controller before this upsert's
+      // await returns, so the state write below must be `ref.mounted`-gated
+      // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
+      // after disposed" on the stale instance.
+      if (state.profile.eloSeed != null && ref.mounted) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
     } catch (e, st) {
@@ -116,7 +123,14 @@ class BasketballProfileController extends _$BasketballProfileController {
           .from('basketball_profile')
           .upsert({'user_id': user!.id!, ...state.profile.toJson()})
           .timeout(const Duration(seconds: 5));
-      if (state.profile.eloSeed != null) {
+      // `commit()` runs alongside `ProfileController.commit()` via
+      // `Future.wait` on the profile screen's commit button, whose `finally`
+      // refreshes `authControllerProvider` — which this controller watches.
+      // That refresh can dispose/rebuild this controller before this upsert's
+      // await returns, so the state write below must be `ref.mounted`-gated
+      // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
+      // after disposed" on the stale instance.
+      if (state.profile.eloSeed != null && ref.mounted) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
     } catch (e, st) {
@@ -177,7 +191,14 @@ class BadmintonProfileController extends _$BadmintonProfileController {
           .from('badminton_profile')
           .upsert({'user_id': user!.id!, ...state.profile.toJson()})
           .timeout(const Duration(seconds: 5));
-      if (state.profile.eloSeed != null) {
+      // `commit()` runs alongside `ProfileController.commit()` via
+      // `Future.wait` on the profile screen's commit button, whose `finally`
+      // refreshes `authControllerProvider` — which this controller watches.
+      // That refresh can dispose/rebuild this controller before this upsert's
+      // await returns, so the state write below must be `ref.mounted`-gated
+      // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
+      // after disposed" on the stale instance.
+      if (state.profile.eloSeed != null && ref.mounted) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
     } catch (e, st) {
@@ -235,7 +256,14 @@ class TennisProfileController extends _$TennisProfileController {
           .from('tennis_profile')
           .upsert({'user_id': user!.id!, ...state.profile.toJson()})
           .timeout(const Duration(seconds: 5));
-      if (state.profile.eloSeed != null) {
+      // `commit()` runs alongside `ProfileController.commit()` via
+      // `Future.wait` on the profile screen's commit button, whose `finally`
+      // refreshes `authControllerProvider` — which this controller watches.
+      // That refresh can dispose/rebuild this controller before this upsert's
+      // await returns, so the state write below must be `ref.mounted`-gated
+      // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
+      // after disposed" on the stale instance.
+      if (state.profile.eloSeed != null && ref.mounted) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
     } catch (e, st) {
@@ -296,7 +324,14 @@ class PickleballProfileController extends _$PickleballProfileController {
           .from('pickleball_profile')
           .upsert({'user_id': user!.id!, ...state.profile.toJson()})
           .timeout(const Duration(seconds: 5));
-      if (state.profile.eloSeed != null) {
+      // `commit()` runs alongside `ProfileController.commit()` via
+      // `Future.wait` on the profile screen's commit button, whose `finally`
+      // refreshes `authControllerProvider` — which this controller watches.
+      // That refresh can dispose/rebuild this controller before this upsert's
+      // await returns, so the state write below must be `ref.mounted`-gated
+      // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
+      // after disposed" on the stale instance.
+      if (state.profile.eloSeed != null && ref.mounted) {
         state = (profile: state.profile, eloSeedLocked: true);
       }
     } catch (e, st) {

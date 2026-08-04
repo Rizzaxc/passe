@@ -181,8 +181,9 @@ Future<List<DetectedWorkout>> detectedWorkouts(Ref ref) async {
 
   final detected = <DetectedWorkout>[];
   for (final r in rows as List) {
-    if (r['confirmed'] == true)
+    if (r['confirmed'] == true) {
       continue; // confirmed ones are auto-captured by sync
+    }
     final activity = Activity(
       userId: userId,
       id: r['activity_id'] as String,

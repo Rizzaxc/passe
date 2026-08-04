@@ -432,14 +432,18 @@ class ManageScheduleRoute extends GoRouteData with $ManageScheduleRoute {
 
 @immutable
 class ManageRequestsRoute extends GoRouteData with $ManageRequestsRoute {
-  const ManageRequestsRoute();
+  // Set from a professional_booking_requested notification tap so the
+  // pending-requests list can scroll to and highlight that one card.
+  final String? highlightBookingId;
+
+  const ManageRequestsRoute({this.highlightBookingId});
 
   // In pro mode, ManageTab's subtab list is [schedule, pending requests,
   // history] instead of [schedule, lobby, coaching] — index 1 lands on
   // pending requests only when pro mode is active (see ManageTab.build).
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      ManageTab.withInitialTab(1);
+      ManageTab.withInitialTab(1, highlightBookingId: highlightBookingId);
 }
 
 @immutable
