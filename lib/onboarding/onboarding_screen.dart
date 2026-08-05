@@ -8,10 +8,10 @@ import 'sport_step.dart';
 
 /// Host for the two screens that must block entry to the app: a guest's
 /// opt-in question, and the mandatory sport pick every feed depends on.
-/// The rest of the journey — app story, improve profile, feature intro —
-/// runs *after* this, as sheets/coach-marks layered over the real shell
-/// (see `follow_up.dart`), so the user sees the real app instead of being
-/// walled off behind a multi-screen carousel.
+/// The rest of the journey — app story, improve profile, feature intro,
+/// get-started choices — runs *after* this, as sheets/coach-marks layered
+/// over the real shell (see `follow_up.dart`), so the user sees the real
+/// app instead of being walled off behind a multi-screen carousel.
 ///
 /// Barrier-locked — there's always a valid next step (including the
 /// mandatory sport pick for a declining guest), so there's nothing sensible

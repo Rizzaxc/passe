@@ -19,6 +19,16 @@
 --
 -- Every function pins `search_path` to '' and every SECURITY DEFINER one is
 -- gated on `lobby_can_manage` / an explicit identity check.
+--
+-- Follow-up pass (notification-center audit): fn_sweep_challenges' lapse push
+-- and record_challenge_match's result push each originally sent ONE shared
+-- `lobby_id` to BOTH lobbies' recipients — every recipient's push routed to
+-- whichever lobby happened to be named, not their own. Both are now two calls,
+-- one per lobby. Also added: `challenge_scheduled` (the real "it's locked in"
+-- signal — both sides confirmed), and a challenge-aware guard on
+-- fn_emit_activity_confirmed so RSVP quorum alone no longer sends a
+-- misleading "it's locked in" push for a challenge activity, whose real
+-- "official" also requires a manager confirmation on both sides.
 -- ============================================================================
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -414,6 +424,8 @@ DECLARE
     v_threshold integer;
     v_going     integer;
     v_pending   integer;
+    v_init      uuid;
+    v_target    uuid;
 BEGIN
     IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
 
@@ -446,12 +458,110 @@ BEGIN
     IF v_pending = 0 THEN
         UPDATE public.lobby_challenge
            SET status = 'scheduled', updated_at = now()
-         WHERE id = v_challenge AND status = 'accepted';
+         WHERE id = v_challenge AND status = 'accepted'
+        RETURNING initiator_lobby_id, target_lobby_id INTO v_init, v_target;
+
+        -- This is the real "it's locked in" moment for a challenge — quorum
+        -- alone (fn_emit_activity_confirmed, guarded off challenge activities
+        -- below) isn't, since a manager still has to confirm and the other
+        -- lobby might not have quorum yet. Two calls, one per lobby, each
+        -- carrying that lobby's OWN id — a single shared lobby_id would route
+        -- one side's push straight to their opponent's lobby.
+        IF v_init IS NOT NULL THEN
+            PERFORM public.fn_enqueue_notification(
+                'challenge_scheduled',
+                ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = v_init),
+                'Trận đấu đã được chốt',
+                'Cả hai đội đã xác nhận — trận thách đấu chính thức được lên lịch',
+                jsonb_build_object('lobby_id', v_init, 'challenge_id', v_challenge));
+            PERFORM public.fn_enqueue_notification(
+                'challenge_scheduled',
+                ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = v_target),
+                'Trận đấu đã được chốt',
+                'Cả hai đội đã xác nhận — trận thách đấu chính thức được lên lịch',
+                jsonb_build_object('lobby_id', v_target, 'challenge_id', v_challenge));
+
+            -- Mirrors the accept-time feed item in respond_challenge — the
+            -- next entry in the same scheduling lifecycle (not a match
+            -- outcome), so it belongs in the lobby feed the way schedule/
+            -- reschedule/cancel already do.
+            INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+            SELECT l.id, l.captain_id, 'update',
+                   jsonb_build_object(
+                       'title', 'Trận đấu đã được chốt',
+                       'kind',  'match_confirmed',
+                       'tone',  'green',
+                       'fields', jsonb_build_array(
+                           jsonb_build_array('Trạng thái', 'Cả hai đội đã xác nhận')))
+              FROM public.lobby l
+             WHERE l.id IN (v_init, v_target);
+        END IF;
     END IF;
 END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.confirm_challenge_activity(uuid) TO authenticated;
+
+-- fn_emit_activity_confirmed (originally defined in push_notifications.sql)
+-- fires on RSVP quorum for ANY activity — but for a challenge activity, quorum
+-- is only half of "official" (the manager still has to confirm, per both
+-- sides, above). Redefined here, challenge-aware: skip it entirely for a
+-- challenge activity and let confirm_challenge_activity's `challenge_scheduled`
+-- push be the one true "it's locked in" signal instead of a premature,
+-- misleading "Hoạt động đã được chốt".
+CREATE OR REPLACE FUNCTION public.fn_emit_activity_confirmed()
+    RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER SET search_path TO ''
+AS $$
+DECLARE
+    v_threshold  int;
+    v_lobby_id   uuid;
+    v_challenge  uuid;
+    v_going      int;
+    v_recipients uuid[];
+    v_lobby_name text;
+BEGIN
+    SELECT a.confirmation_threshold, a.lobby_id, a.challenge_id
+        INTO v_threshold, v_lobby_id, v_challenge
+        FROM public.activity a
+        WHERE a.id = NEW.activity_id;
+
+    IF v_threshold IS NULL OR v_lobby_id IS NULL OR v_challenge IS NOT NULL THEN
+        RETURN NEW;
+    END IF;
+
+    IF NEW.attendance <> 'going' THEN
+        RETURN NEW;
+    END IF;
+    IF TG_OP = 'UPDATE' AND OLD.attendance = 'going' THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT count(*) FILTER (WHERE attendance = 'going') INTO v_going
+        FROM public.activity_confirmation
+        WHERE activity_id = NEW.activity_id;
+
+    IF v_going <> v_threshold THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT array_agg(lm.user_id) INTO v_recipients
+        FROM public.lobby_member lm
+        WHERE lm.lobby_id = v_lobby_id;
+
+    SELECT l.name INTO v_lobby_name FROM public.lobby l WHERE l.id = v_lobby_id;
+
+    PERFORM public.fn_enqueue_notification(
+        'activity_confirmed',
+        v_recipients,
+        'Hoạt động đã được chốt',
+        COALESCE(v_lobby_name, 'Lobby') || ' đã đủ người tham gia',
+        jsonb_build_object('lobby_id', v_lobby_id, 'activity_id', NEW.activity_id)
+    );
+
+    RETURN NEW;
+END;
+$$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 6. "ref = rated" — narrow the CHECK that made challenge matches unrecordable
@@ -498,7 +608,6 @@ DECLARE
     v_ref_book   uuid;
     v_venue      text;
     v_match      uuid;
-    v_recipients uuid[];
 BEGIN
     IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
     IF p_result NOT IN ('win', 'loss', 'draw') THEN
@@ -563,14 +672,20 @@ BEGIN
     UPDATE public.lobby_challenge
        SET status = 'played', updated_at = now() WHERE id = p_challenge_id;
 
-    SELECT array_agg(user_id) INTO v_recipients
-      FROM public.lobby_member WHERE lobby_id IN (v_home, v_away);
-
+    -- Two calls, one per lobby, each carrying its OWN lobby_id — a single
+    -- shared lobby_id would route the away side's push into the home lobby.
     PERFORM public.fn_enqueue_notification(
-        'match_result_recorded', v_recipients,
+        'match_result_recorded',
+        ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = v_home),
         'Kết quả trận đấu',
         'Trọng tài đã ghi nhận kết quả trận thách đấu',
         jsonb_build_object('lobby_id', v_home, 'challenge_id', p_challenge_id));
+    PERFORM public.fn_enqueue_notification(
+        'match_result_recorded',
+        ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = v_away),
+        'Kết quả trận đấu',
+        'Trọng tài đã ghi nhận kết quả trận thách đấu',
+        jsonb_build_object('lobby_id', v_away, 'challenge_id', p_challenge_id));
 
     RETURN v_match;
 END;
@@ -1012,13 +1127,32 @@ BEGIN
         UPDATE public.lobby_challenge
            SET status = 'lapsed', updated_at = now() WHERE id = r.id;
 
+        -- One call per lobby, each carrying its OWN lobby_id — a single
+        -- shared lobby_id (as this originally shipped) routed every
+        -- initiator-side member's tap straight to the TARGET lobby.
         PERFORM public.fn_enqueue_notification(
             'challenge_lapsed',
-            ARRAY(SELECT user_id FROM public.lobby_member
-                   WHERE lobby_id IN (r.initiator_lobby_id, r.target_lobby_id)),
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = r.initiator_lobby_id),
+            'Trận thách đấu bị huỷ',
+            'Không đủ xác nhận trước hạn chót nên trận đấu đã bị huỷ',
+            jsonb_build_object('lobby_id', r.initiator_lobby_id, 'challenge_id', r.id));
+        PERFORM public.fn_enqueue_notification(
+            'challenge_lapsed',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = r.target_lobby_id),
             'Trận thách đấu bị huỷ',
             'Không đủ xác nhận trước hạn chót nên trận đấu đã bị huỷ',
             jsonb_build_object('lobby_id', r.target_lobby_id, 'challenge_id', r.id));
+
+        INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+        SELECT l.id, l.captain_id, 'update',
+               jsonb_build_object(
+                   'title', 'Trận thách đấu bị huỷ',
+                   'kind',  'cancelled',
+                   'tone',  'crimson',
+                   'fields', jsonb_build_array(
+                       jsonb_build_array('Lý do', 'Không đủ xác nhận trước hạn chót')))
+          FROM public.lobby l
+         WHERE l.id IN (r.initiator_lobby_id, r.target_lobby_id);
     END LOOP;
 
     -- (c) A match that was played but never scored — no referee was booked, or
@@ -1047,6 +1181,22 @@ BEGIN
 
         UPDATE public.lobby_challenge
            SET status = 'played', updated_at = now() WHERE id = r.id;
+
+        -- Neither lobby was told anything when this shipped — a match that
+        -- passed unrefereed just silently turned into a scoreless row. One
+        -- call per lobby, its own lobby_id.
+        PERFORM public.fn_enqueue_notification(
+            'match_result_recorded',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = r.home),
+            'Trận đấu đã diễn ra',
+            'Không có trọng tài nên trận đấu được ghi nhận nhưng không tính điểm',
+            jsonb_build_object('lobby_id', r.home, 'challenge_id', r.id));
+        PERFORM public.fn_enqueue_notification(
+            'match_result_recorded',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = r.away),
+            'Trận đấu đã diễn ra',
+            'Không có trọng tài nên trận đấu được ghi nhận nhưng không tính điểm',
+            jsonb_build_object('lobby_id', r.away, 'challenge_id', r.id));
     END LOOP;
 END;
 $$;
@@ -1095,7 +1245,8 @@ CREATE POLICY "Linked professionals can view their attached activities"
 -- ─────────────────────────────────────────────────────────────────────────────
 INSERT INTO public.enabled_notification_kind (kind, enabled) VALUES
     ('challenge_lapsed',      true),
-    ('match_result_recorded', true)
+    ('match_result_recorded', true),
+    ('challenge_scheduled',   true)
 ON CONFLICT (kind) DO UPDATE SET enabled = excluded.enabled, updated_at = now();
 
 -- ─────────────────────────────────────────────────────────────────────────────

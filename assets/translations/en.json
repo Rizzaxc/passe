@@ -830,6 +830,12 @@
             "ageGroup": "Age group",
             "playtime": "Free time",
             "addPlaytime": "Add a time slot",
+            "skillIntro": "Your starting skill level helps Passe match you against opponents around your level from your very first game.",
+            "skillLevels": {
+                "beginner": "New to the sport or still learning the basics.",
+                "casual": "Play regularly and know the fundamentals.",
+                "tryhard": "Play competitively and want evenly matched opponents."
+            },
             "skillLockWarning": "Your starting skill level can only be set once and can't be changed after saving.",
             "save": "Save & continue",
             "saveError": "Couldn't save your profile. You can try again from the Profile tab."
@@ -850,6 +856,32 @@
             "next": "Next",
             "skip": "Skip",
             "finish": "Done"
+        },
+        "getStarted": {
+            "title": "What do you want to do first?",
+            "body": "Pick one to jump right in — you can always come back for the rest.",
+            "createLobby": {
+                "title": "Create a lobby with your group",
+                "subtitle": "Already have people to play with? Set it up and schedule a session now",
+                "badge": "Recommended"
+            },
+            "friends": {
+                "title": "Add friends",
+                "subtitle": "See their posts and invite them to play"
+            },
+            "lobby": {
+                "title": "Find teammates",
+                "subtitle": "Join a lobby or look for people to play with"
+            },
+            "coach": {
+                "title": "Hire a coach or referee",
+                "subtitle": "Book someone to train or officiate"
+            },
+            "wearable": {
+                "title": "Connect a wearable",
+                "subtitle": "Track heart rate and effort during sessions",
+                "optional": "Optional"
+            }
         }
     },
     "social": {

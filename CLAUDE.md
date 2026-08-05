@@ -353,7 +353,12 @@ referee → the referee records the result → both lobbies' history and Elo upd
   the target's offer, and auto-declines its other pending challenges (a lobby can't accept two matches
   for one evening). The activity becomes official on RSVP quorum **and** an explicit manager
   confirmation (`confirm_challenge_activity`, `activity.manager_confirmed_at`) — quorum alone isn't
-  enough for a challenge. Once **both** sides confirm, the challenge flips to `scheduled`.
+  enough for a challenge. Once **both** sides confirm, the challenge flips to `scheduled` — the real
+  "it's locked in" moment, announced by a `challenge_scheduled` push to both lobbies (sent as two
+  calls, one per lobby, each carrying that lobby's own id) and a `lobby_feed_item` on each side. RSVP
+  quorum alone does **not** fire the generic `activity_confirmed` push for a challenge activity
+  (`fn_emit_activity_confirmed` is guarded off `challenge_id IS NOT NULL`) — that would be premature,
+  since a manager still has to confirm on both sides.
 - **The referee is home-hired, optional, and is what makes a match rated.** The home (accepting)
   lobby's activity hero prompts "Đặt Trọng Tài", reusing the existing `PendingActivityBookingState`
   hand-off into `activity.referee_booking_id`. A match with no referee still gets logged for **both**
@@ -378,8 +383,9 @@ referee → the referee records the result → both lobbies' history and Elo upd
   (`LobbyFeedItem.hasProvisionalMmr`, `rated_match_count` from the feed RPC) rather than presenting a
   seed-derived number as earned.
 - **Sweeps**: an accepted challenge whose confirmation deadline passes with either side short of
-  quorum is auto-voided (both activities deleted, challenge → `lapsed`, both pushed); a `scheduled`
-  match past `end_time` with no result becomes the scoreless encounter above. Both run off the
+  quorum is auto-voided (both activities deleted, challenge → `lapsed`, both lobbies pushed +
+  fed); a `scheduled` match past `end_time` with no result becomes the scoreless encounter above,
+  which also pushes `match_result_recorded` to both lobbies (previously silent). Both run off the
   existing 1-minute `fn_cron_tick`/`fn_sweep_challenges` — no new cron job.
 - Client: `challenger_section/send_challenge_controller.dart` (send — moved here from
   `manage_tab/lobby_section/`, its only consumer now that the in-lobby "Mời Thách Đấu" SearchID-invite
@@ -390,7 +396,10 @@ referee → the referee records the result → both lobbies' history and Elo upd
   `activity/hero.dart`'s `_ChallengeBlock` (opponent context, confirm, book-referee), and the Home
   "Thách đấu" CTA (`challenger_section/main.dart`, now a confirm-these-terms sheet, not a bare
   fire-and-forget button). Notifications: `challenge_received`, `challenger_confirmed`,
-  `challenge_declined`, `challenge_lapsed`, `match_result_recorded`.
+  `challenge_declined`, `challenge_scheduled`, `challenge_lapsed`, `match_result_recorded` — see
+  root CLAUDE.md ▸ Notifications for the per-lobby-routing rule these all follow. Client-side kind
+  mirror: `notifications/notification_kind.dart`; tap routing:
+  `notifications/notification_router.dart`; center icon: `notification/main.dart`'s `_iconFor`.
 
 ### Activity & Currency System
 
@@ -449,13 +458,25 @@ Push (raw FCM HTTP v1, iOS + Android) is **built**. Design + remaining provision
 - **Flag system = data-driven allowlist** `enabled_notification_kind`. Each `notification_kind`
   is dark-launched / kill-switched by toggling its `enabled` flag (no redeploy). Live kinds:
   `activity_confirmed`, `pro_session_reminder`, `lobby_invite`, `professional_booking_*`, (with
-  the challenge handshake) `challenger_confirmed`, `challenge_received`, `challenge_declined`, and
-  (with friendship) `friend_request`, `friend_accepted`. There is deliberately **no** "a friend
-  posted" or "someone reacted" kind — the first is the highest-volume, most mutable-worthy push in
-  any social app and neither is worth the noise in v1.
+  the challenge handshake) `challenger_confirmed`, `challenge_received`, `challenge_declined`,
+  `challenge_scheduled`, `challenge_lapsed`, `match_result_recorded`, and (with friendship)
+  `friend_request`, `friend_accepted`. There is deliberately **no** "a friend posted" or "someone
+  reacted" kind — the first is the highest-volume, most mutable-worthy push in any social app and
+  neither is worth the noise in v1.
   Note: `fn_emit_activity_confirmed` counts **going-only** confirmations and fires on INSERT *or*
   UPDATE of `activity_confirmation` (an out→going switch can cross quorum) — see
-  `schema/push_notifications.sql`.
+  `schema/push_notifications.sql`. **It skips challenge activities entirely** (redefined
+  challenge-aware in `schema/challenge_flow.sql`) — RSVP quorum is only half of "official" for a
+  challenge (a manager still has to confirm, on both sides), so firing the generic "Hoạt động đã
+  được chốt" off quorum alone would be premature and misleading. `challenge_scheduled`
+  (`confirm_challenge_activity`, once both sides have confirmed) is the real "it's locked in" signal
+  for a challenge match.
+  **A recipient's push always carries their OWN lobby's id.** Any event that touches both lobbies
+  of a challenge (accept, both-confirmed, lapse, result) sends **two** separate
+  `fn_enqueue_notification` calls, one per lobby — a single shared `lobby_id` across a combined
+  recipient list would route the other side's tap into the wrong lobby (this shipped broken for the
+  lapse and match-result pushes in the initial pass and was fixed once the notification-center
+  integration was audited).
 - **Client (`lib/notifications/`):** `notification_service.dart` (FCM init, token register/refresh
   tied to `authControllerProvider`, foreground display via `flutter_local_notifications`, the
   permission **soft-ask**), `notification_router.dart` (`kind` → typed `go_router` route),

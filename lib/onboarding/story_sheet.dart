@@ -7,6 +7,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../ui/sheet.dart';
 import 'onboarding_controller.dart';
+import 'onboarding_step_badge.dart';
 
 /// Shows the "how Passe works" story as a half-height sheet over the real,
 /// already sport-scoped shell — rather than a full-screen carousel that
@@ -51,6 +52,11 @@ class _StorySheetContent extends HookWidget {
       height: MediaQuery.sizeOf(context).height * 0.5,
       child: Column(
         children: [
+          const Align(
+            alignment: Alignment.centerRight,
+            child: OnboardingStepBadge(step: 1, total: 4),
+          ),
+          const SizedBox(height: 4),
           Expanded(
             child: PageView(
               controller: pageController,

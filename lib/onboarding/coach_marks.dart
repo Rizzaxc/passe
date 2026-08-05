@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -5,6 +7,7 @@ import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../auth/auth_controller.dart';
 import 'onboarding_controller.dart';
+import 'onboarding_step_badge.dart';
 
 /// GlobalKeys for the live bottom-nav icons the feature-intro tour points
 /// at. Owned here (not in `main.dart`) so the target list below and the
@@ -26,6 +29,12 @@ class NavCoachKeys {
 /// the pass hasn't already run itself, and every target has actually laid
 /// out (a `null` `currentContext` means the shell's first frame hasn't
 /// happened yet — call again on a later frame).
+///
+/// The returned future only resolves once the tour is actually finished or
+/// skipped (bridged from `TutorialCoachMark`'s callbacks via a [Completer],
+/// since `.show()` itself returns `void`) — `follow_up.dart` awaits this so
+/// the closing get-started sheet appears right after, not while the tour is
+/// still on screen.
 Future<void> maybeShowCoachMarks(BuildContext context, WidgetRef ref) async {
   final status = ref.read(onboardingStateProvider).value;
   if (status == null || !status.coreDone || !status.storyDone) return;
@@ -50,10 +59,14 @@ Future<void> maybeShowCoachMarks(BuildContext context, WidgetRef ref) async {
     'onboarding.coach.profile',
   ];
 
+  final completer = Completer<void>();
+
   // Dismissing mid-tour (skip) counts the same as finishing it — either way
   // the user has seen it and it shouldn't run again.
-  Future<void> complete() =>
-      ref.read(onboardingStateProvider.notifier).completeCoachMarks();
+  Future<void> complete() async {
+    await ref.read(onboardingStateProvider.notifier).completeCoachMarks();
+    if (!completer.isCompleted) completer.complete();
+  }
 
   final targets = [
     for (var i = 0; i < keys.length; i++)
@@ -75,9 +88,17 @@ Future<void> maybeShowCoachMarks(BuildContext context, WidgetRef ref) async {
         contents: [
           TargetContent(
             align: ContentAlign.top,
-            builder: (context, controller) => Text(
-              labelKeys[i].tr(),
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+            builder: (context, controller) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const OnboardingStepBadge(step: 3, total: 4, light: true),
+                const SizedBox(height: 4),
+                Text(
+                  labelKeys[i].tr(),
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ],
             ),
           ),
         ],
@@ -93,4 +114,6 @@ Future<void> maybeShowCoachMarks(BuildContext context, WidgetRef ref) async {
       return true;
     },
   ).show(context: context);
+
+  return completer.future;
 }

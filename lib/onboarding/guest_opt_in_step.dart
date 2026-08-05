@@ -9,8 +9,9 @@ import 'onboarding_controller.dart';
 /// Guests-only first step: ask before spending their time on a guide they
 /// may not want. Both answers lead straight to the mandatory sport pick;
 /// the only difference is whether the story sheet / profile nudge / coach
-/// marks run afterward, once inside the shell (accept) or not (decline —
-/// and the full guide is offered again, for real, once they sign up).
+/// marks / get-started choices run afterward, once inside the shell
+/// (accept) or not (decline — and the full guide is offered again, for
+/// real, once they sign up).
 class GuestOptInStep extends ConsumerWidget {
   const GuestOptInStep({super.key});
 

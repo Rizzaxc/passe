@@ -36,6 +36,15 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
     NotificationKind.challengeDeclined =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    // Both sides confirmed / a deadline lapsed / a result landed — all three
+    // are per-recipient (the server sends one enqueue call per lobby with
+    // that lobby's own id), so this always opens the recipient's own lobby.
+    NotificationKind.challengeScheduled =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    NotificationKind.challengeLapsed =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    NotificationKind.matchResultRecorded =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
     // Lobby invite — go to the manage/lobby tab so they see their pending invites.
     NotificationKind.lobbyInvite => const ManageLobbyRoute().location,
     // A new request came in for the linked professional — their

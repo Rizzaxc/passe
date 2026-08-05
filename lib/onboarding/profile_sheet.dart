@@ -14,6 +14,7 @@ import '../profile_tab/sport_profile/sport_profile_controller.dart';
 import '../ui/dual_button.dart';
 import '../ui/sheet.dart';
 import 'onboarding_controller.dart';
+import 'onboarding_step_badge.dart';
 
 /// Shows the condensed profile step as a sheet over the real shell.
 /// Signed-in only — guests can't persist profile edits (`GuestProfileView`
@@ -78,7 +79,10 @@ class ProfileStep extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          PSheetTitle(label: 'onboarding.profile.title'.tr()),
+          PSheetTitle(
+            label: 'onboarding.profile.title'.tr(),
+            trailing: const OnboardingStepBadge(step: 2, total: 4),
+          ),
           const SizedBox(height: 4),
           Text(
             'onboarding.profile.body'.tr(),
@@ -144,6 +148,40 @@ class ProfileStep extends ConsumerWidget {
           _PlaytimeField(details: details),
           if (sport != Sport.others) ...[
             const SizedBox(height: 12),
+            // Skill level locks permanently after the first save (see
+            // EloSeedField), so — unlike every other field on this sheet —
+            // it's worth explaining rather than just picking quickly. Each
+            // level gets its own line instead of leaving the pick to the
+            // bare enum label.
+            Text(
+              'onboarding.profile.skillIntro'.tr(),
+              style: context.theme.typography.body.sm
+                  .copyWith(color: colors.mutedForeground, height: 1.4),
+            ),
+            const SizedBox(height: 8),
+            for (final seed in EloSeed.values)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${seed.getLocalizedName(context)}: ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: colors.foreground,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'onboarding.profile.skillLevels.${seed.name}'.tr(),
+                      ),
+                    ],
+                  ),
+                  style: context.theme.typography.body.sm
+                      .copyWith(color: colors.mutedForeground),
+                ),
+              ),
+            const SizedBox(height: 8),
             EloSeedField(
               value: eloSeed.seed,
               locked: eloSeed.locked,

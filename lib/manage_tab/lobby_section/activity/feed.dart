@@ -31,6 +31,10 @@ enum UpdateKind {
   scheduled('scheduled', Icons.calendar_month_outlined),
   coachBooked('coach_booked', Icons.school_outlined),
   refereeBooked('referee_booked', Icons.sports_score_outlined),
+  // Posted by confirm_challenge_activity once BOTH lobbies have confirmed a
+  // challenge match — the next entry after the accept-time 'scheduled' one,
+  // not a rename of it (that fires earlier, on accept).
+  matchConfirmed('match_confirmed', Icons.check_circle_outline),
   rescheduled('rescheduled', Icons.update_outlined),
   venueChanged('venue_changed', Icons.swap_horiz_outlined),
   cancelled('cancelled', Icons.event_busy_outlined),

@@ -94,7 +94,10 @@ IconData _iconFor(NotificationKind? kind) => switch (kind) {
   NotificationKind.proSessionReminder => FLucideIcons.clock,
   NotificationKind.challengerConfirmed ||
   NotificationKind.challengeReceived ||
-  NotificationKind.challengeDeclined => FLucideIcons.swords,
+  NotificationKind.challengeDeclined ||
+  NotificationKind.challengeScheduled => FLucideIcons.swords,
+  NotificationKind.challengeLapsed => FLucideIcons.calendarX,
+  NotificationKind.matchResultRecorded => FLucideIcons.trophy,
   NotificationKind.lobbyInvite => FLucideIcons.users,
   NotificationKind.professionalBookingRequested ||
   NotificationKind.professionalBookingConfirmed ||

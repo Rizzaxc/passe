@@ -10,6 +10,7 @@ typedef OnboardingStatus = ({
   bool storyDone,
   bool profileDone,
   bool coachMarksDone,
+  bool getStartedDone,
   bool guestDeclined,
 });
 
@@ -20,6 +21,7 @@ class OnboardingPrefs {
   static const storyKey = 'ONBOARDING_STORY_DONE';
   static const profileKey = 'ONBOARDING_PROFILE_DONE';
   static const coachMarksKey = 'ONBOARDING_COACHMARKS_DONE';
+  static const getStartedKey = 'ONBOARDING_GET_STARTED_DONE';
   static const guestDeclinedKey = 'ONBOARDING_GUEST_DECLINED';
 
   // Mirrors SelectedSportState's own pref key
@@ -34,12 +36,14 @@ class OnboardingPrefs {
     final storyDone = await _prefs.getBool(storyKey) ?? false;
     final profileDone = await _prefs.getBool(profileKey) ?? false;
     final coachMarksDone = await _prefs.getBool(coachMarksKey) ?? false;
+    final getStartedDone = await _prefs.getBool(getStartedKey) ?? false;
     final guestDeclined = await _prefs.getBool(guestDeclinedKey) ?? false;
     return (
       coreDone: coreDone,
       storyDone: storyDone,
       profileDone: profileDone,
       coachMarksDone: coachMarksDone,
+      getStartedDone: getStartedDone,
       guestDeclined: guestDeclined,
     );
   }
@@ -53,6 +57,9 @@ class OnboardingPrefs {
   static Future<void> markCoachMarksDone() =>
       _prefs.setBool(coachMarksKey, true);
 
+  static Future<void> markGetStartedDone() =>
+      _prefs.setBool(getStartedKey, true);
+
   static Future<void> markGuestDeclined() =>
       _prefs.setBool(guestDeclinedKey, true);
 
@@ -61,16 +68,20 @@ class OnboardingPrefs {
   /// the just-signed-up real user's namespace, so a guest who already saw
   /// the guide (and already picked a sport) isn't re-onboarded after
   /// registering. A guest who *declined* never wrote these flags, so
-  /// nothing is adopted for them — they get the full guide as a new user.
-  /// `profileKey` is never written under the guest namespace at all — the
-  /// profile sheet is signed-in only (see `follow_up.dart`) — so this is a
-  /// no-op for it either way, and every newly-signed-up account correctly
-  /// gets the real, editable profile sheet regardless of guest history.
+  /// nothing is adopted for them — they get the full guide as a new user
+  /// (`guestDeclinedKey` itself is deliberately never adopted either, for
+  /// the same reason: a signed-up account never even reaches the guest
+  /// opt-in step, so the flag would be meaningless there). `profileKey` is
+  /// never written under the guest namespace at all — the profile sheet is
+  /// signed-in only (see `follow_up.dart`) — so this is a no-op for it
+  /// either way, and every newly-signed-up account correctly gets the
+  /// real, editable profile sheet regardless of guest history.
   static Future<void> bridgeGuestFlagsToCurrentUser() async {
     await _prefs.adoptGuestValue(completedKey);
     await _prefs.adoptGuestValue(storyKey);
     await _prefs.adoptGuestValue(profileKey);
     await _prefs.adoptGuestValue(coachMarksKey);
+    await _prefs.adoptGuestValue(getStartedKey);
     await _prefs.adoptGuestValue(_sportKey);
   }
 }

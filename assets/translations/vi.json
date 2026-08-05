@@ -787,7 +787,7 @@
         "next": "Tiếp",
         "getStarted": "Bắt đầu",
         "page1": {
-            "title": "Kết nối cộng đồng",
+            "title": "Kết nối cộng đồng thể thao",
             "description": "Tìm kiếm đồng đội và đối thủ phù hợp với trình độ và lịch trình của bạn"
         },
         "page2": {
@@ -802,7 +802,7 @@
     "onboarding": {
         "next": "Tiếp tục",
         "back": "Quay lại",
-        "skip": "Skip",
+        "skip": "Bỏ qua",
         "done": "Bắt đầu",
         "story": {
             "s1": {
@@ -811,7 +811,7 @@
             },
             "s2": {
                 "title": "Lobby là đội của bạn",
-                "body": "Lập lobby, rủ bạn bè, lên lịch buổi chơi và theo dõi lịch sử trận đấu ở một nơi."
+                "body": "Lập lobby, rủ bạn bè, lên lịch, tổng kết chi phí và theo dõi quá trình thi đấu của đội."
             },
             "s3": {
                 "title": "Càng chơi càng hợp",
@@ -830,6 +830,12 @@
             "ageGroup": "Nhóm tuổi",
             "playtime": "Lịch rảnh",
             "addPlaytime": "Thêm khung giờ",
+            "skillIntro": "Trình độ ban đầu giúp Passe ghép bạn với đối thủ vừa sức ngay từ trận đầu tiên.",
+            "skillLevels": {
+                "beginner": "Mới làm quen hoặc còn đang học luật, kỹ thuật cơ bản.",
+                "casual": "Chơi đều đặn, đã nắm kỹ thuật căn bản.",
+                "tryhard": "Thi đấu nghiêm túc, muốn gặp đối thủ ngang tầm."
+            },
             "skillLockWarning": "Trình độ ban đầu chỉ đặt được một lần và không thể đổi sau khi lưu.",
             "save": "Lưu & tiếp tục",
             "saveError": "Không lưu được hồ sơ. Bạn có thể thử lại ở tab Hồ sơ."
@@ -850,6 +856,32 @@
             "next": "Tiếp",
             "skip": "Bỏ qua",
             "finish": "Xong"
+        },
+        "getStarted": {
+            "title": "Bạn muốn làm gì trước?",
+            "body": "Chọn một việc để bắt đầu ngay — bạn luôn có thể quay lại làm các việc còn lại sau.",
+            "createLobby": {
+                "title": "Tạo lobby với nhóm của bạn",
+                "subtitle": "Đã có sẵn nhóm chơi? Tạo lobby và lên lịch ngay",
+                "badge": "Khuyến nghị"
+            },
+            "friends": {
+                "title": "Kết bạn",
+                "subtitle": "Xem story và rủ bạn bè cùng chơi"
+            },
+            "lobby": {
+                "title": "Tìm đồng đội",
+                "subtitle": "Xin vào lobby hoặc tìm người chơi cùng"
+            },
+            "coach": {
+                "title": "Thuê HLV / trọng tài",
+                "subtitle": "Tiến bộ hơn mỗi ngày"
+            },
+            "wearable": {
+                "title": "Kết nối thiết bị đeo",
+                "subtitle": "Theo dõi thay đổi của cơ thể bạn và chinh phục thử thách",
+                "optional": "Tuỳ chọn"
+            }
         }
     },
     "social": {

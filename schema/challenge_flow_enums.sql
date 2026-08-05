@@ -27,3 +27,8 @@ ALTER TYPE public.lobby_challenge_status ADD VALUE IF NOT EXISTS 'lapsed';
 -- ─── Notification kinds ─────────────────────────────────────────────────────
 ALTER TYPE public.notification_kind ADD VALUE IF NOT EXISTS 'challenge_lapsed';
 ALTER TYPE public.notification_kind ADD VALUE IF NOT EXISTS 'match_result_recorded';
+-- Added in a follow-up pass once quorum-only `activity_confirmed` was found to
+-- be a misleading "it's locked in" signal for a challenge activity (quorum is
+-- only half of official — see fn_emit_activity_confirmed's challenge_id guard
+-- in challenge_flow.sql). This is the real "both sides confirmed" signal.
+ALTER TYPE public.notification_kind ADD VALUE IF NOT EXISTS 'challenge_scheduled';

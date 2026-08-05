@@ -11,9 +11,10 @@ part 'onboarding_controller.g.dart';
 /// DEBUG-ONLY: forces the onboarding guide to run on every app launch,
 /// ignoring persisted completion, so it can be clicked through repeatedly
 /// while testing without reinstalling or clearing app storage. Guarded by
-/// `kDebugMode` so it can never affect a release build even if left on.
-/// Flip to `false` once manual testing is done.
-const _forceShowOnboarding = true;
+/// `kDebugMode` so it can never affect a release build even if left on, and
+/// off by default so a plain `flutter run` sees real persisted state — opt
+/// in with `flutter run --dart-define=FORCE_ONBOARDING=true`.
+const _forceShowOnboarding = bool.fromEnvironment('FORCE_ONBOARDING');
 
 /// Tracks whether the force-override above has already fired once in this
 /// process. `build()` re-runs every time `authControllerProvider` changes —
@@ -42,6 +43,7 @@ class OnboardingState extends _$OnboardingState {
         storyDone: false,
         profileDone: false,
         coachMarksDone: false,
+        getStartedDone: false,
         guestDeclined: false,
       );
     }
@@ -72,11 +74,13 @@ class OnboardingState extends _$OnboardingState {
         await OnboardingPrefs.markStoryDone();
         await OnboardingPrefs.markProfileDone();
         await OnboardingPrefs.markCoachMarksDone();
+        await OnboardingPrefs.markGetStartedDone();
         status = (
           coreDone: true,
           storyDone: true,
           profileDone: true,
           coachMarksDone: true,
+          getStartedDone: true,
           guestDeclined: status.guestDeclined,
         );
       }
@@ -94,6 +98,7 @@ class OnboardingState extends _$OnboardingState {
       storyDone: current?.storyDone ?? false,
       profileDone: current?.profileDone ?? false,
       coachMarksDone: current?.coachMarksDone ?? false,
+      getStartedDone: current?.getStartedDone ?? false,
       guestDeclined: current?.guestDeclined ?? false,
     ));
   }
@@ -108,6 +113,7 @@ class OnboardingState extends _$OnboardingState {
       storyDone: true,
       profileDone: current.profileDone,
       coachMarksDone: current.coachMarksDone,
+      getStartedDone: current.getStartedDone,
       guestDeclined: current.guestDeclined,
     ));
   }
@@ -122,6 +128,7 @@ class OnboardingState extends _$OnboardingState {
       storyDone: current.storyDone,
       profileDone: true,
       coachMarksDone: current.coachMarksDone,
+      getStartedDone: current.getStartedDone,
       guestDeclined: current.guestDeclined,
     ));
   }
@@ -136,6 +143,22 @@ class OnboardingState extends _$OnboardingState {
       storyDone: current.storyDone,
       profileDone: current.profileDone,
       coachMarksDone: true,
+      getStartedDone: current.getStartedDone,
+      guestDeclined: current.guestDeclined,
+    ));
+  }
+
+  Future<void> completeGetStarted() async {
+    await OnboardingPrefs.markGetStartedDone();
+    if (!ref.mounted) return;
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData((
+      coreDone: current.coreDone,
+      storyDone: current.storyDone,
+      profileDone: current.profileDone,
+      coachMarksDone: current.coachMarksDone,
+      getStartedDone: true,
       guestDeclined: current.guestDeclined,
     ));
   }
@@ -149,6 +172,7 @@ class OnboardingState extends _$OnboardingState {
       storyDone: current?.storyDone ?? false,
       profileDone: current?.profileDone ?? false,
       coachMarksDone: current?.coachMarksDone ?? false,
+      getStartedDone: current?.getStartedDone ?? false,
       guestDeclined: true,
     ));
   }
@@ -159,8 +183,9 @@ class OnboardingState extends _$OnboardingState {
 /// sport pick every feed depends on). Not persisted — a killed app just
 /// restarts at the beginning (the router redirects back to `/onboarding`
 /// since [OnboardingState]'s `coreDone` is still false). The rest of the
-/// guide (story, profile, feature intro) runs *after* this, as sheets/
-/// coach-marks layered over the real shell — see `follow_up.dart`.
+/// guide (story, profile, feature intro, get-started choices) runs *after*
+/// this, as sheets/coach-marks layered over the real shell — see
+/// `follow_up.dart`.
 enum OnboardingStep { guestOptIn, sport }
 
 @riverpod
