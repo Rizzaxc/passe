@@ -92,7 +92,10 @@ Future<void> maybeShowCoachMarks(BuildContext context, WidgetRef ref) async {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const OnboardingStepBadge(step: 3, total: 4, light: true),
+                // Tracks which of the 5 nav targets is currently spotlit —
+                // a badge fixed at one number while the tour visibly moves
+                // between icons reads as broken.
+                OnboardingStepBadge(step: i + 1, total: keys.length, light: true),
                 const SizedBox(height: 4),
                 Text(
                   labelKeys[i].tr(),

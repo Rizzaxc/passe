@@ -10,6 +10,7 @@ import '../../router.dart';
 import '../../ui/main.dart';
 import '../filter.dart';
 import '../lobby_feed_card.dart';
+import '../main.dart';
 import 'feed_controller.dart';
 import 'send_challenge_controller.dart';
 
@@ -400,7 +401,8 @@ class _NoLobbyState extends ConsumerWidget {
                   style: FButtonStyleExtension.accentBlueStyle(
                     context.theme.buttonStyles.primary.base,
                   ),
-                  onPress: () => HomeTeammateRoute().go(context),
+                  onPress: () =>
+                      ref.read(homeSubtabRequestProvider.notifier).state = 0,
                   child: Text('homeTab.challenger.noLobby.findLobby'.tr()),
                 ),
               ),

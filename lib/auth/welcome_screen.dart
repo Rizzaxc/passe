@@ -107,7 +107,9 @@ class WelcomeScreen extends HookConsumerWidget {
   }
 }
 
-/// Hides chrome on the auth page without letting it swallow taps.
+/// Collapses chrome on the auth page. This must remove the *space*, not just
+/// the paint — fading with [AnimatedOpacity] alone leaves an empty band where
+/// the lockup was and pushes the auth screen's own header down below it.
 class _FadeOnAuth extends StatelessWidget {
   final bool hidden;
   final Widget child;
@@ -117,10 +119,12 @@ class _FadeOnAuth extends StatelessWidget {
   @override
   Widget build(BuildContext context) => IgnorePointer(
         ignoring: hidden,
-        child: AnimatedOpacity(
-          opacity: hidden ? 0 : 1,
-          duration: const Duration(milliseconds: 200),
-          child: child,
+        child: AnimatedCrossFade(
+          firstChild: child,
+          secondChild: const SizedBox(width: double.infinity),
+          crossFadeState: hidden ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 220),
+          sizeCurve: Curves.easeOut,
         ),
       );
 }
@@ -236,9 +240,11 @@ class _StoryPage extends StatelessWidget {
   }
 }
 
-/// A warm tinted card holding one illustration. The decoration is painted
-/// rather than shipped as art so it re-tints per beat and costs no assets:
-/// a soft blob, a halftone field, a broken ring and scattered confetti.
+/// One illustration dressed with painted decoration — a soft glow, blurred
+/// blobs, a halftone field, a broken ring and scattered confetti. Deliberately
+/// *frameless*: nothing clips or encloses the art, so the decoration bleeds
+/// into the page instead of sitting inside a card. Painted rather than shipped
+/// as art so it re-tints per beat and costs no assets.
 class _StoryPlate extends StatelessWidget {
   final Widget illustration;
   final Color accent;
@@ -251,10 +257,6 @@ class _StoryPlate extends StatelessWidget {
     required this.cool,
     required this.beat,
   });
-
-  /// Warm cream the accent is washed over — never plain white, so the plate
-  /// separates from the app's own light ground.
-  static const _cream = Color(0xFFFFF7EF);
 
   /// The wash is the accent pulled toward the brand's amber, so every plate
   /// lands warm. Without this pbGreen washes out to a drab khaki next to the
@@ -269,55 +271,28 @@ class _StoryPlate extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final w = constraints.maxWidth;
-          final radius = BorderRadius.circular(w * 0.14);
 
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              boxShadow: [
-                BoxShadow(
-                  color: accent.withValues(alpha: 0.20),
-                  blurRadius: w * 0.13,
-                  offset: Offset(0, w * 0.055),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: radius,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color.lerp(_cream, _wash, 0.34)!,
-                      Color.lerp(_cream, _wash, 0.06)!,
-                    ],
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _PlateDecorPainter(
+                    accent: accent,
+                    wash: _wash,
+                    cool: cool,
+                    spark: pbStar,
+                    beat: beat,
                   ),
                 ),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _PlateDecorPainter(
-                          accent: accent,
-                          cool: cool,
-                          spark: pbStar,
-                          beat: beat,
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: SizedBox(
-                        width: w * 0.60,
-                        height: w * 0.60,
-                        child: illustration,
-                      ),
-                    ),
-                  ],
+              ),
+              Center(
+                child: SizedBox(
+                  width: w * 0.62,
+                  height: w * 0.62,
+                  child: illustration,
                 ),
               ),
-            ),
+            ],
           );
         },
       ),
@@ -329,12 +304,14 @@ class _StoryPlate extends StatelessWidget {
 /// per [beat] rather than random, so a rebuild never reshuffles the confetti.
 class _PlateDecorPainter extends CustomPainter {
   final Color accent;
+  final Color wash;
   final Color cool;
   final Color spark;
   final int beat;
 
   const _PlateDecorPainter({
     required this.accent,
+    required this.wash,
     required this.cool,
     required this.spark,
     required this.beat,
@@ -366,28 +343,35 @@ class _PlateDecorPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // Two overlapping blobs behind the art give the surface depth.
+    final centre = Offset(w * 0.5, h * 0.5);
+
+    // Warm glow instead of a card: fades to nothing, so the art has no edge.
+    canvas.drawCircle(
+      centre,
+      w * 0.62,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [wash.withValues(alpha: 0.34), wash.withValues(alpha: 0.0)],
+          stops: const [0.18, 1.0],
+        ).createShader(Rect.fromCircle(center: centre, radius: w * 0.62)),
+    );
+
+    // Blurred blobs give the glow some structure without drawing a boundary.
+    final blur = MaskFilter.blur(BlurStyle.normal, w * 0.05);
     canvas.drawPath(
-      _blob(Offset(w * 0.50, h * 0.50), w * 0.36, beat * 0.7),
-      Paint()..color = Colors.white.withValues(alpha: 0.55),
+      _blob(centre, w * 0.36, beat * 0.7),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.60)
+        ..maskFilter = blur,
     );
     canvas.drawPath(
       _blob(Offset(w * 0.60, h * 0.40), w * 0.30, 0.9 + beat * 0.5),
-      Paint()..color = accent.withValues(alpha: 0.10),
+      Paint()
+        ..color = accent.withValues(alpha: 0.12)
+        ..maskFilter = blur,
     );
 
-    // Broken ring around the art — the gap rotates per beat.
-    canvas.drawArc(
-      Rect.fromCircle(center: Offset(w * 0.5, h * 0.5), radius: w * 0.40),
-      -2.1 + beat * 0.8,
-      4.7,
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = w * 0.012
-        ..strokeCap = StrokeCap.round
-        ..color = accent.withValues(alpha: 0.35),
-    );
+    // Deliberately no ring or frame around the art — nothing encloses it.
 
     // Halftone field in the lower-left, dots fading out as they rise.
     final dot = Paint()..color = accent.withValues(alpha: 0.22);
@@ -456,7 +440,11 @@ class _PlateDecorPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_PlateDecorPainter old) =>
-      old.accent != accent || old.cool != cool || old.spark != spark || old.beat != beat;
+      old.accent != accent ||
+      old.wash != wash ||
+      old.cool != cool ||
+      old.spark != spark ||
+      old.beat != beat;
 }
 
 enum _Kind { dot, ring, chevron }

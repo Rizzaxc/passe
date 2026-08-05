@@ -295,7 +295,7 @@ class _DaySection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
               child: Text(
-                'Không có lịch',
+                'manageTab.schedule.noEvents'.tr(),
                 style: context.theme.typography.body.xs.copyWith(
                   color: colors.mutedForeground.withValues(alpha: 0.55),
                   fontStyle: FontStyle.italic,
@@ -334,7 +334,7 @@ class _EmptyDayCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Không có lịch',
+            'manageTab.schedule.noEvents'.tr(),
             style: context.theme.typography.body.sm.copyWith(
               color: colors.mutedForeground,
               fontWeight: FontWeight.w600,
@@ -383,7 +383,7 @@ class _CollapsedBlock extends StatelessWidget {
           const SizedBox(width: 10),
           Text('$from – $to',
               style: style.copyWith(fontWeight: FontWeight.w600)),
-          Text('  ·  Không có lịch', style: style),
+          Text('  ·  ${'manageTab.schedule.noEvents'.tr()}', style: style),
           const SizedBox(width: 10),
           Expanded(
               child: Container(

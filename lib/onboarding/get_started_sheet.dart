@@ -62,7 +62,9 @@ class _GetStartedContent extends ConsumerWidget {
 
     void findTeammates() {
       Navigator.of(context).pop();
-      const HomeTeammateRoute().go(context);
+      // Opens straight into the filter sheet rather than a bare (possibly
+      // empty) list — see TeammateSubtab.openFilter.
+      const HomeTeammateRoute(openFilter: true).go(context);
     }
 
     void findCoach() {

@@ -1,4 +1,4 @@
-// One-off generator: rasterises the reference glass three-blade mark to the branding PNGs
+// One-off generator: rasterises the brand mark and lockup to the branding PNGs
 // consumed by flutter_launcher_icons / flutter_native_splash. It writes files, so it is
 // SKIPPED in the normal suite and only runs when opted in:
 //   GEN_BRAND=1 flutter test test/gen_brand_pngs.dart
@@ -12,10 +12,14 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
+import 'package:passe/ui/logo.dart';
+import 'package:passe/ui/theme.dart' as ui2;
 
 // Reference glass defs (no caustic). Content bbox ≈ x 385..1941, y 440..1610; centre (1163,1025).
 const _defs = '''
@@ -83,7 +87,10 @@ String _canvas({required double s, required bool bg}) {
 
 final _iconFull = _canvas(s: 0.476, bg: true);
 final _iconFg = _canvas(s: 0.42, bg: false);
-final _splash = _canvas(s: 0.40, bg: false);
+
+/// Android 12+ clips the splash image to a centred circle, so that platform
+/// keeps the bare mark. The wide lockup would lose its wordmark to the mask.
+final _splashIcon = _canvas(s: 0.40, bg: false);
 const _iconBg =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" '
     'height="1024"><defs>$_defs</defs><rect width="1024" height="1024" fill="url(#bgd)"/></svg>';
@@ -111,13 +118,76 @@ Future<void> _rasterise(WidgetTester tester, String svg, String path) async {
   image.dispose();
 }
 
+/// Rasterises a widget rather than an SVG string — used for the splash lockup,
+/// which needs the real Bitter wordmark and slogan that only [PLogo] draws.
+Future<void> _rasteriseWidget(
+  WidgetTester tester,
+  Widget child,
+  String path, {
+  required Size canvas,
+}) async {
+  await tester.binding.setSurfaceSize(canvas);
+  final key = GlobalKey();
+  await tester.pumpWidget(
+    Directionality(
+      textDirection: TextDirection.ltr,
+      child: RepaintBoundary(
+        key: key,
+        child: SizedBox(
+          width: canvas.width,
+          height: canvas.height,
+          child: FTheme(
+            data: ui2.pbThemeLight,
+            child: Center(child: child),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+
+  final boundary = key.currentContext!.findRenderObject() as RenderRepaintBoundary;
+  final image = boundary.toImageSync(pixelRatio: 1.0);
+  final bytes = await tester.runAsync(
+    () => image.toByteData(format: ui.ImageByteFormat.png),
+  );
+  File(path).writeAsBytesSync(bytes!.buffer.asUint8List());
+  image.dispose();
+}
+
 void main() {
   testWidgets('generate branding PNGs (reference glass three-blade mark)', (tester) async {
+    // Widget tests ship no custom fonts, so the wordmark would rasterise as
+    // tofu boxes without this. Both faces are registered so the w900 wordmark
+    // and the w700 slogan each resolve to their real weight.
+    final fonts = FontLoader('Bitter')
+      ..addFont(rootBundle.load('assets/google_fonts/Bitter-ExtraBold.ttf'))
+      ..addFont(rootBundle.load('assets/google_fonts/Bitter-Bold.ttf'));
+    await fonts.load();
+
     await tester.binding.setSurfaceSize(const Size(1024, 1024));
     await _rasterise(tester, _iconFull, 'branding/icon_full.png');
     await _rasterise(tester, _iconBg, 'branding/icon_bg.png');
     await _rasterise(tester, _iconFg, 'branding/icon_fg.png');
-    await _rasterise(tester, _splash, 'branding/splash.png');
+    await _rasterise(tester, _splashIcon, 'branding/splash_icon.png');
+    // Landscape canvas sized to the lockup: the slogan is a single long line,
+    // so a square canvas forces it to wrap and throws the stack off centre.
+    await _rasteriseWidget(
+      tester,
+      const PLogo(variant: PLogoVariant.stacked, size: 230),
+      'branding/splash.png',
+      canvas: const Size(1200, 640),
+    );
+    // Android 12+ branding strip: the OS masks the splash icon to a circle, so
+    // the wordmark and slogan ride below it as a separate, unclipped image.
+    // Google caps the branding area at ~200x80dp, hence the 2.5:1 canvas.
+    await _rasteriseWidget(
+      tester,
+      const PLogo(variant: PLogoVariant.wordmark, size: 120),
+      'branding/splash_brand.png',
+      canvas: const Size(800, 260),
+    );
     expect(File('branding/icon_full.png').existsSync(), isTrue);
+    expect(File('branding/splash.png').existsSync(), isTrue);
   }, skip: Platform.environment['GEN_BRAND'] != '1');
 }

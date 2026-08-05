@@ -532,11 +532,25 @@ mixin $HomeRoute on GoRouteData {
 }
 
 mixin $HomeTeammateRoute on GoRouteData {
-  static HomeTeammateRoute _fromState(GoRouterState state) =>
-      const HomeTeammateRoute();
+  static HomeTeammateRoute _fromState(GoRouterState state) => HomeTeammateRoute(
+    openFilter:
+        _$convertMapValue(
+          'open-filter',
+          state.uri.queryParameters,
+          _$boolConverter,
+        ) ??
+        false,
+  );
+
+  HomeTeammateRoute get _self => this as HomeTeammateRoute;
 
   @override
-  String get location => GoRouteData.$location('/home/teammate');
+  String get location => GoRouteData.$location(
+    '/home/teammate',
+    queryParams: {
+      if (_self.openFilter != false) 'open-filter': _self.openFilter.toString(),
+    },
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -837,6 +851,26 @@ mixin $ProfileRoute on GoRouteData {
 
   @override
   void replace(BuildContext context) => context.replace(location);
+}
+
+T? _$convertMapValue<T>(
+  String key,
+  Map<String, String> map,
+  T? Function(String) converter,
+) {
+  final value = map[key];
+  return value == null ? null : converter(value);
+}
+
+bool _$boolConverter(String value) {
+  switch (value) {
+    case 'true':
+      return true;
+    case 'false':
+      return false;
+    default:
+      throw UnsupportedError('Cannot convert "$value" into a bool.');
+  }
 }
 
 // **************************************************************************

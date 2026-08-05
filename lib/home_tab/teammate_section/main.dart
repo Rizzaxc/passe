@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -12,12 +13,38 @@ import '../filter.dart';
 import '../lobby_feed_card.dart';
 import 'feed_controller.dart';
 
-class TeammateSubtab extends ConsumerWidget {
-  const TeammateSubtab({super.key});
+/// Guards [TeammateSubtab]'s auto-open-filter effect so it only ever fires
+/// once per app process — `_builtIndices` in `home_tab/main.dart` tears
+/// down and remounts this widget every time the user leaves and returns to
+/// this subtab, and `widget.openFilter` stays `true` for the whole life of
+/// the `HomeTab` instance it came from, so without this latch switching
+/// tabs away and back would reopen the sheet every time.
+bool _autoFilterConsumed = false;
+
+class TeammateSubtab extends HookConsumerWidget {
+  /// Auto-opens the shared filter sheet once, right after this subtab lays
+  /// out — set when arriving via the onboarding Get Started sheet's "Tìm
+  /// đồng đội" tile, so a new user sets real search criteria instead of
+  /// landing on whatever the default (profile-seeded) filter returns.
+  final bool openFilter;
+
+  const TeammateSubtab({super.key, this.openFilter = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final feed = ref.watch(teammateFeedProvider);
+
+    useEffect(() {
+      if (openFilter && !_autoFilterConsumed) {
+        _autoFilterConsumed = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted) {
+            showPSheet(context: context, builder: (_) => const FilterSheet());
+          }
+        });
+      }
+      return null;
+    }, const []);
 
     return Column(
       children: [

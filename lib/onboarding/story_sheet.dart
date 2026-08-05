@@ -52,9 +52,15 @@ class _StorySheetContent extends HookWidget {
       height: MediaQuery.sizeOf(context).height * 0.5,
       child: Column(
         children: [
-          const Align(
+          Align(
             alignment: Alignment.centerRight,
-            child: OnboardingStepBadge(step: 1, total: 4),
+            // Tracks the slide the user is actually on (not a fixed macro
+            // step number) — a badge that never moves while the slide
+            // content visibly changes underneath it reads as broken.
+            child: OnboardingStepBadge(
+              step: currentPage.value + 1,
+              total: _slideCount,
+            ),
           ),
           const SizedBox(height: 4),
           Expanded(

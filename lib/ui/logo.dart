@@ -14,6 +14,11 @@ enum PLogoVariant {
 
   /// Mark on top, wordmark + slogan centered beneath.
   stacked,
+
+  /// Wordmark + slogan with no mark. For surfaces that already show the mark
+  /// separately — notably the Android 12+ splash, where the OS masks the icon
+  /// to a circle and the brand text has to ride below it as a branding image.
+  wordmark,
 }
 
 /// The Passe brand lockup: the glass arrow mark (SVG) paired with the "Passe"
@@ -85,6 +90,16 @@ class PLogo extends StatelessWidget {
         ),
       ),
     );
+
+    if (variant == PLogoVariant.wordmark) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          wordmark,
+          if (showSlogan) ...[SizedBox(height: size * 0.12), slogan],
+        ],
+      );
+    }
 
     if (variant == PLogoVariant.stacked) {
       return Column(

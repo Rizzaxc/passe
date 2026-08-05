@@ -99,7 +99,10 @@
             "any": "Tất cả",
             "schedule": "Thời gian",
             "scheduleHint": "Để trống",
-            "close": "Đóng"
+            "close": "Đóng",
+            "coach": {
+                "body": "Tinh chỉnh tiêu chí tìm kiếm để có kết quả phù hợp hơn"
+            }
         },
         "empty": {
             "title": "Không có kết quả phù hợp",
@@ -225,6 +228,7 @@
             "participants": "{count} người tham gia",
             "selectDate": "Chọn ngày để xem lịch",
             "stub": "Nội dung lịch trình sắp có",
+            "noEvents": "Lịch trống",
             "empty": {
                 "title": "Không có lịch hẹn",
                 "message": "Các cuộc hẹn sắp tới sẽ hiển thị ở đây"
@@ -841,7 +845,7 @@
             "saveError": "Không lưu được hồ sơ. Bạn có thể thử lại ở tab Hồ sơ."
         },
         "guest": {
-            "title": "Xem qua Passe hoạt động thế nào?",
+            "title": "Xem hướng dẫn các tính năng của app?",
             "body": "Một vòng ngắn qua các tính năng chính. Bạn có thể bỏ qua và tự khám phá.",
             "accept": "Xem thử",
             "decline": "Để sau"

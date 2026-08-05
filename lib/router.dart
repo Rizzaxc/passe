@@ -116,25 +116,46 @@ GoRouter router(Ref ref) {
       // runs afterward as sheets/coach-marks over the real shell, so it
       // doesn't gate routing at all. See `onboarding/follow_up.dart`.
       String? gateOnboarding() {
+        // `OnboardingState` re-runs `build()` (and its exposed value passes
+        // back through `AsyncLoading`) on every `authControllerProvider`
+        // change — e.g. a guest signing in from the Profile tab's embedded
+        // form, or the auth refresh a profile-sheet save triggers — even
+        // though the *previous* resolved status (`AsyncValue.value`, kept
+        // through a reload via Riverpod's `copyWithPrevious`) is almost
+        // always still valid and available. Use that cached status instead
+        // of treating every such
+        // reload as "unknown": bouncing to `/splash` unconditionally here
+        // used to unmount the whole shell (`/splash` sits outside the
+        // `StatefulShellRoute`) and remount a new one moments later, and if
+        // the old shell hadn't finished disposing yet, the static
+        // `NavCoachKeys` GlobalKeys attached to its nav bar briefly existed
+        // on two Elements at once — "Duplicate GlobalKeys detected" crash,
+        // reliably reproducible right after a guest converts to a real
+        // account. Only a genuine cold read (nothing resolved yet, or
+        // resolved-then-cleared, e.g. sign-out) falls through to the
+        // splash/error handling below.
+        final cached = onboarding.value.value;
+        if (cached != null) {
+          if (!cached.coreDone) {
+            return isOnboarding ? null : const OnboardingRoute().location;
+          }
+          return isOnboarding ? HomeRoute().location : null;
+        }
+
         switch (onboarding.value) {
           case AsyncLoading():
             // Always claim `/splash` — never `null` — even when already
             // there. Returning `null` while already on `/splash` let the
-            // callers' own `isSplash -> Home` fallback fire mid-load
-            // (`OnboardingState` goes back through `AsyncLoading` on every
-            // `authControllerProvider` change, e.g. the auth refresh a
-            // profile-sheet save triggers), which then immediately bounced
-            // back to `/splash` on the next pass — a `/splash <-> /home`
-            // redirect loop go_router detects and throws on.
+            // callers' own `isSplash -> Home` fallback fire mid-load, which
+            // then immediately bounced back to `/splash` on the next pass —
+            // a `/splash <-> /home` redirect loop go_router detects and
+            // throws on.
             return const SplashRoute().location;
           case AsyncError():
             // Fail open — never trap the user on a broken onboarding read.
             return isOnboarding ? HomeRoute().location : null;
-          case AsyncData(value: final status):
-            if (!status.coreDone) {
-              return isOnboarding ? null : const OnboardingRoute().location;
-            }
-            return isOnboarding ? HomeRoute().location : null;
+          case AsyncData():
+            return null; // Unreachable: AsyncData always has a value.
         }
       }
 
@@ -432,11 +453,13 @@ class HomeRoute extends GoRouteData with $HomeRoute {
 
 @immutable
 class HomeTeammateRoute extends GoRouteData with $HomeTeammateRoute {
-  const HomeTeammateRoute();
+  final bool openFilter;
+
+  const HomeTeammateRoute({this.openFilter = false});
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(0);
+      HomeTab.withInitialTab(0, openFilter: openFilter);
 }
 
 @immutable

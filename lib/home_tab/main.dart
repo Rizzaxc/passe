@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod/legacy.dart';
 import '../core/sport_selector.dart';
 import '../ui/main.dart';
 import 'challenger_section/main.dart';
@@ -12,13 +13,30 @@ import 'location_section/main.dart';
 import 'professional_section/main.dart';
 import 'teammate_section/main.dart';
 
+/// Set (then immediately consumed) to switch the Discover subtab from a
+/// widget that isn't `_DiscoverView` itself — e.g. a CTA inside one subtab
+/// that wants to send the user to another (`0` teammate, `1` challenger,
+/// `2` professional, `3` location). Do NOT navigate via the `Home*Route`s for
+/// this — those are nested routes *within* the home branch, so `.go()`ing
+/// between them from inside Home pushes a new stacked page instead of just
+/// switching the tab (the `Home*Route`s exist for deep-linking into Home
+/// *from another tab*, where crossing branches is the correct, expected nav).
+final homeSubtabRequestProvider = StateProvider<int?>((ref) => null);
+
 /// Home ▸ Discover — four subtabs sharing one filter, all scoped to the
 /// context sport. Feed (the social surface) moved out to its own main tab —
 /// see `lib/feed_tab/` — so this is back to being a single-purpose screen.
 class HomeTab extends ConsumerWidget {
   final int initialIndex;
 
-  const HomeTab({super.key, this.initialIndex = 0})
+  /// Auto-opens the shared filter sheet once the teammate subtab has laid
+  /// out — used by the onboarding Get Started sheet's "Tìm đồng đội" tile so
+  /// a new user sets real search criteria instead of landing on whatever
+  /// the default (profile-seeded) filter happens to return. Only wired for
+  /// the teammate subtab; ignored on any other `initialIndex`.
+  final bool openFilter;
+
+  const HomeTab({super.key, this.initialIndex = 0, this.openFilter = false})
     : assert(initialIndex >= 0 && initialIndex <= 3);
 
   static final instance = HomeTab();
@@ -26,8 +44,8 @@ class HomeTab extends ConsumerWidget {
   /// Deep-links a Discover subtab (`0` teammate, `1` challenger,
   /// `2` professional, `3` location — see the `Home*Route` classes in
   /// `router.dart`).
-  factory HomeTab.withInitialTab(int initialIndex) {
-    return HomeTab(initialIndex: initialIndex);
+  factory HomeTab.withInitialTab(int initialIndex, {bool openFilter = false}) {
+    return HomeTab(initialIndex: initialIndex, openFilter: openFilter);
   }
 
   @override
@@ -37,7 +55,7 @@ class HomeTab extends ConsumerWidget {
         title: Text('nav.discover'.tr()),
         suffixes: [const NotificationIconButton(), const SportSelector()],
       ),
-      child: _DiscoverView(initialIndex: initialIndex),
+      child: _DiscoverView(initialIndex: initialIndex, openFilter: openFilter),
     );
   }
 }
@@ -45,8 +63,9 @@ class HomeTab extends ConsumerWidget {
 /// Four subtabs over a shared filter.
 class _DiscoverView extends ConsumerStatefulWidget {
   final int initialIndex;
+  final bool openFilter;
 
-  const _DiscoverView({required this.initialIndex});
+  const _DiscoverView({required this.initialIndex, this.openFilter = false});
 
   @override
   ConsumerState<_DiscoverView> createState() => _DiscoverViewState();
@@ -64,11 +83,13 @@ class _DiscoverViewState extends ConsumerState<_DiscoverView> {
   late final Set<int> _builtIndices;
   Timer? _settleTimer;
 
-  static const _sections = [
-    (titleKey: 'home.teammate', child: TeammateSubtab()),
-    (titleKey: 'home.challenger', child: ChallengerSubtab()),
-    (titleKey: 'home.professional', child: ProfessionalSubtab()),
-    (titleKey: 'home.location', child: LocationSubtab()),
+  // Instance getter (not `static const`) because the teammate entry needs
+  // `widget.openFilter` threaded in.
+  List<({String titleKey, Widget child})> get _sections => [
+    (titleKey: 'home.teammate', child: TeammateSubtab(openFilter: widget.openFilter)),
+    (titleKey: 'home.challenger', child: const ChallengerSubtab()),
+    (titleKey: 'home.professional', child: const ProfessionalSubtab()),
+    (titleKey: 'home.location', child: const LocationSubtab()),
   ];
 
   static const _icons = [
@@ -124,6 +145,12 @@ class _DiscoverViewState extends ConsumerState<_DiscoverView> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<int?>(homeSubtabRequestProvider, (_, requested) {
+      if (requested == null) return;
+      ref.read(homeSubtabRequestProvider.notifier).state = null;
+      if (requested != _currentIndex) _onTabChanged(requested);
+    });
+
     return FTabs(
       expands: true,
       contentPhysics: const NeverScrollableScrollPhysics(),

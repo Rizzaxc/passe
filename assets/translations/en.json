@@ -100,7 +100,10 @@
             "any": "Any",
             "schedule": "Schedule",
             "scheduleHint": "Leave blank",
-            "close": "Close"
+            "close": "Close",
+            "coach": {
+                "body": "Fine tune your search params for better results"
+            }
         },
         "empty": {
             "title": "No results found",
@@ -223,6 +226,7 @@
             "participants": "{count} participants",
             "selectDate": "Select a date to view schedule",
             "stub": "Schedule content coming soon",
+            "noEvents": "No events",
             "empty": {
                 "title": "No appointments scheduled",
                 "message": "Your upcoming appointments will appear here"

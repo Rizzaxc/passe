@@ -2,14 +2,30 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../core/model/enum.dart';
 import '../core/model/timeslot.dart';
+import '../core/user_preferences.dart';
 import '../ui/district_select.dart';
 import '../ui/search_field.dart';
 import '../ui/sheet.dart';
 import 'filter_controller.dart';
 
 export 'filter_controller.dart' show FilterData, filterStateProvider;
+
+/// Persisted "has anyone ever seen the filter-fields coach mark" flag —
+/// shown once, the very first time [FilterSheet] opens for a user,
+/// regardless of which subtab/entry point triggered it.
+class _FilterCoachMarkPrefs {
+  _FilterCoachMarkPrefs._();
+
+  static const _key = 'FILTER_FIELDS_COACH_SEEN';
+
+  static Future<bool> hasSeen() async =>
+      await UserPreferences.instance.getBool(_key) ?? false;
+
+  static Future<void> markSeen() => UserPreferences.instance.setBool(_key, true);
+}
 
 class FilterWidget extends ConsumerWidget {
   /// When true, the sheet also shows a coach/referee role toggle (professional
@@ -89,12 +105,56 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
   DayChunk _pendingDayChunk = DayChunk.night;
   DayOfWeek _pendingDayOfWeek = DayOfWeek.weekend;
 
+  final _confirmKey = GlobalKey(debugLabel: 'filter.confirm');
+
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController(
       text: ref.read(filterStateProvider).search,
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowCoachMark());
+  }
+
+  // Single hint over the confirm button rather than one per field — a full
+  // per-field tour was more coach-mark than this sheet's three fairly
+  // self-explanatory sections warranted.
+  Future<void> _maybeShowCoachMark() async {
+    if (await _FilterCoachMarkPrefs.hasSeen()) return;
+    if (!mounted) return;
+
+    final targets = [
+      TargetFocus(
+        identify: 'filter_confirm',
+        keyTarget: _confirmKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 12,
+        // Default (10) made the highlight box visibly bigger than the
+        // button itself, spilling past its bottom edge.
+        paddingFocus: 4,
+        // The confirm button isn't a field a user needs to interact with
+        // mid-tour, so a tap anywhere just finishes the tour either way.
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            builder: (context, controller) => Text(
+              'homeTab.filter.coach.body'.tr(),
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    ];
+
+    TutorialCoachMark(
+      targets: targets,
+      // A single-target tour has nothing to skip *to* — any tap already
+      // finishes it (enableOverlayTab above) — so a separate Skip button is
+      // redundant chrome, not a real choice.
+      hideSkip: true,
+      onFinish: () => _FilterCoachMarkPrefs.markSeen(),
+    ).show(context: context);
   }
 
   @override
@@ -411,6 +471,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
             ],
           ),
           FButton(
+            key: _confirmKey,
             onPress: () => Navigator.of(context).pop(),
             child: Icon(FLucideIcons.check),
           ),

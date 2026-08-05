@@ -49,6 +49,29 @@ Two phases:
 whole guide on every launch for manual testing; off by default, opt in with
 `flutter run --dart-define=FORCE_ONBOARDING=true`.
 
+6. **The progress badges track real sub-progress, not a fixed macro step number.** Story sheet's
+   badge is `currentPage + 1 / 3` (live with the `PageView`); the coach-mark tour's badge is
+   `i + 1 / keys.length` per target — a badge that doesn't move while the content underneath it
+   visibly changes reads as broken. Profile and get-started sheets have no internal sub-progress, so
+   they keep a plain step-in-the-4-stage-sequence number.
+7. **`get_started_sheet.dart`'s "Tìm đồng đội" tile opens straight into the filter sheet**, not a
+   bare list — `HomeTeammateRoute(openFilter: true)` → `HomeTab` → `TeammateSubtab.openFilter`
+   (guarded by the module-level `_autoFilterConsumed` latch in `teammate_section/main.dart` so
+   revisiting the tab later doesn't reopen it). The filter sheet itself (`home_tab/filter.dart`)
+   shows a **one-time** single-target `TutorialCoachMark` over its confirm button ("tinh chỉnh tiêu
+   chí tìm kiếm...") the very first time anyone ever opens it (persisted `FILTER_FIELDS_COACH_SEEN`
+   flag, `_FilterCoachMarkPrefs`) — not gated to the onboarding entry point, since the hint is useful
+   however a user first reaches the sheet. A per-field tour was tried first and dropped: every field
+   here is a live interactive control (text field / dropdown), so tapping the target itself got
+   captured by the field instead of advancing the tour — `enableOverlayTab: true` on the remaining
+   target works around the same issue for the confirm button too, but a single hint sidesteps the
+   whole class of problem. `hideSkip: true` — a single-target tour has nothing to skip *to*, any tap
+   already finishes it, so a separate Skip button was redundant chrome. `paddingFocus: 4` (not the
+   package default of 10) keeps the highlight tight around the button instead of spilling past its
+   edges. Steering a new user to actually set their filter (especially location/
+   schedule) before browsing also directly improves their odds of a real match on a thin-liquidity
+   launch — see the "why a hero action" note above.
+
 ## Analytics — documented, not implemented
 
 There is currently **no product-analytics instrumentation** anywhere in this flow (or the app) —
