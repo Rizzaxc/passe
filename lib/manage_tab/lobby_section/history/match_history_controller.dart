@@ -60,6 +60,7 @@ class LobbyMatchHistoryController extends _$LobbyMatchHistoryController {
   LobbyMatchResult _parseResult(String db) => switch (db) {
         'win' => LobbyMatchResult.win,
         'loss' => LobbyMatchResult.loss,
+        'draw' => LobbyMatchResult.draw,
         'practice' => LobbyMatchResult.practice,
         _ => throw StateError('Unknown lobby_match_result: $db'),
       };

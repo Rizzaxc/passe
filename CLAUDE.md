@@ -110,7 +110,8 @@ primary glossary until a `CONTEXT.md` exists (see `docs/agents/domain.md`).
 - **Compat score** — matchmaking output on a lobby feed row: `timeslot_compat_score` (schedule
   overlap) and `profile_compat_score` (networks/industries/skill proximity, 0–5).
 - **ELO / elo seed** — skill rating. `elo_seed` (beginner/casual/tryhard) is the self-declared
-  starting point per sport profile; `user_rating` holds the live ELO per sport/format.
+  starting point per sport profile; `user_rating` holds the live ELO per sport/format, updated by
+  `fn_apply_match_rating` on a scored, refereed challenge match (see "Challenger System").
 - **Guest** — an unauthenticated session (`PasseUser.isGuest`); read-only across most of the app.
 - **Tag number** — the 4-digit discriminator appended to a username (`username#tag_number`);
   uniqueness is on the *pair*.
@@ -320,20 +321,76 @@ Three interaction types:
 
 A before-insert trigger auto-accepts reciprocal request/invite pairs and enforces uniqueness.
 
-### Challenger System (built)
+### Challenger System (built, full flow)
 
-Separate from `lobby_befriend_record`. Table `lobby_challenge`
-(`id, initiator_lobby_id, target_lobby_id, sport_id, status, proposed_time?, proposed_location?,
-note, created_at, updated_at`; status enum `requested/accepted/declined/cancelled`) — schema in
-[`schema/lobby_challenge.sql`](schema/lobby_challenge.sql). Writes go through SECURITY DEFINER RPCs
-(`send_challenge`, `respond_challenge`, `cancel_challenge`); clients get SELECT via RLS (member of
-either lobby) and read a lobby's challenges via `lobby_challenge_data(p_lobby_id)`. Accept/decline is
-built; **counter-propose is intentionally not implemented** (v1 is accept/decline only). Client:
-`invite_challenge_controller.dart` (send), `challenges_controller.dart` + `challenges_sheet.dart`
-(incoming/outgoing list, surfaced from the lobby info sheet with an incoming badge), and the Home
-"Thách đấu" CTA (`challenger_section/main.dart`). Notifications: `challenge_received` (to target
-managers), `challenger_confirmed` (to initiator on accept), `challenge_declined` (to initiator
-managers). Matches played out are recorded via `lobby_match` (see Activity & Currency below).
+Separate from `lobby_befriend_record`. The flow: a lobby **publishes an offer** (opts in with terms)
+→ it surfaces on Discover ▸ Challenger → another lobby's manager sends a challenge, accepting those
+terms → accepting materialises a linked activity for each side → both confirm → the home side hires a
+referee → the referee records the result → both lobbies' history and Elo update. Schema:
+[`schema/lobby_challenge.sql`](schema/lobby_challenge.sql) +
+[`schema/challenge_flow.sql`](schema/challenge_flow.sql) (+ its enum prelude
+[`schema/challenge_flow_enums.sql`](schema/challenge_flow_enums.sql)).
+
+- **Opting in is publishing an offer, not flipping a boolean.** `lobby.open_to_challengers` alone
+  can't say when/where/how much, so `lobby.challenge_offer_time` / `_location` / `_cost` (per team,
+  **excluding** the referee fee) travel with it, enforced as a set by the
+  `lobby_challenge_offer_complete` CHECK — an open lobby always has all three, so no feed card can
+  ever render a blank offer. Write path: `set_lobby_challenge_offer` (manage-tier gated). Client: the
+  "Nhận Thách Đấu" checkbox-that's-a-button (`ChallengeOfferControl` /
+  `challenge_offer_sheet.dart`), rendered on **both** the lobby activity hero's empty state and the
+  lobby info sheet (the hero's empty state stops rendering once there's an upcoming session — the
+  info sheet is the always-reachable copy). A stale unaccepted offer past its own kickoff is cleared
+  by the cron sweep (see below), not left advertising a match in the past.
+- **`lobby_challenge`** (`id, initiator_lobby_id, target_lobby_id, sport_id, status, proposed_time,
+  proposed_location, agreed_cost, note, created_at, updated_at`; status enum now
+  `requested/accepted/scheduled/played/lapsed/declined/cancelled`). `send_challenge` **snapshots**
+  the target's current offer onto the challenge row rather than taking a client-supplied proposal —
+  the challenger accepts stated terms, they don't negotiate (**counter-propose is intentionally not
+  implemented**, v1 is accept/decline only), and the snapshot means a manager editing the lobby's
+  offer afterwards can't rewrite the terms an in-flight challenge was sent under.
+- **Accepting materialises the match.** `respond_challenge('accept')` inserts one `activity` row per
+  lobby (same `challenge_id`, snapshotted time/venue, the agreed cost as `prepayment_amount`), clears
+  the target's offer, and auto-declines its other pending challenges (a lobby can't accept two matches
+  for one evening). The activity becomes official on RSVP quorum **and** an explicit manager
+  confirmation (`confirm_challenge_activity`, `activity.manager_confirmed_at`) — quorum alone isn't
+  enough for a challenge. Once **both** sides confirm, the challenge flips to `scheduled`.
+- **The referee is home-hired, optional, and is what makes a match rated.** The home (accepting)
+  lobby's activity hero prompts "Đặt Trọng Tài", reusing the existing `PendingActivityBookingState`
+  hand-off into `activity.referee_booking_id`. A match with no referee still gets logged for **both**
+  sides — as a scoreless `practice`-result encounter, inserted automatically by the cron sweep once
+  the match's `end_time` passes with no recorded result — but moves no rating. The CHECK
+  `lobby_match_referee_required_for_scored_challenge` encodes this: a *scored* (win/loss/draw) match
+  against an opponent lobby requires a referee booking; a scoreless one doesn't.
+- **The referee records the result**, not the captain — from pro mode's schedule tab
+  (`professional/pro_mode/pro_schedule_main.dart` + `record_result_sheet.dart`), gated on the
+  activity's `end_time`, via `record_challenge_match`. Entry is **final** — no dispute window, no
+  edit path. This closes the referee booking (existing `lobby_match_complete_referee_booking`
+  trigger) and fires the Elo engine.
+- **Both-sided history + Elo, live at last.** `lobby_match_history_data` now `UNION ALL`s the
+  opponent-side rows and flips the perspective on read (win↔loss, sets inverted) — one row, two
+  readings, no mirror row to drift. `fn_apply_match_rating` (an `AFTER INSERT` trigger on
+  `lobby_match`, firing only on a scored+refereed challenge match) applies an equal, margin-scaled Elo
+  delta to every member who RSVP'd `going` on their side's linked activity — the only "who played"
+  signal that exists (`activity_confirmation.attendance` is RSVP intent, there's no check-in). This
+  is the write side `challenger_support.sql`'s header deferred; the existing
+  `trg_user_rating_recompute` → lobby `mmr` cache trigger fires off it unchanged. A lobby with too few
+  rated matches shows its MMR with a "tạm tính" (provisional) qualifier client-side
+  (`LobbyFeedItem.hasProvisionalMmr`, `rated_match_count` from the feed RPC) rather than presenting a
+  seed-derived number as earned.
+- **Sweeps**: an accepted challenge whose confirmation deadline passes with either side short of
+  quorum is auto-voided (both activities deleted, challenge → `lapsed`, both pushed); a `scheduled`
+  match past `end_time` with no result becomes the scoreless encounter above. Both run off the
+  existing 1-minute `fn_cron_tick`/`fn_sweep_challenges` — no new cron job.
+- Client: `challenger_section/send_challenge_controller.dart` (send — moved here from
+  `manage_tab/lobby_section/`, its only consumer now that the in-lobby "Mời Thách Đấu" SearchID-invite
+  is **retired**: challenges start from Discover, against a lobby that actually opted in, not by
+  paste-a-code from inside your own lobby), `challenges_controller.dart` + `challenges_sheet.dart`
+  (incoming/outgoing list, agreed terms, referee state, surfaced from the lobby info sheet with an
+  incoming badge), `challenge_offer_controller.dart` / `challenge_offer_sheet.dart` (the offer),
+  `activity/hero.dart`'s `_ChallengeBlock` (opponent context, confirm, book-referee), and the Home
+  "Thách đấu" CTA (`challenger_section/main.dart`, now a confirm-these-terms sheet, not a bare
+  fire-and-forget button). Notifications: `challenge_received`, `challenger_confirmed`,
+  `challenge_declined`, `challenge_lapsed`, `match_result_recorded`.
 
 ### Activity & Currency System
 
@@ -341,9 +398,12 @@ managers). Matches played out are recorded via `lobby_match` (see Activity & Cur
   captain vetoes" flow was never implemented — see `lib/manage_tab/CLAUDE.md`). Members RSVP
   (going/maybe/out); the activity becomes official once enough **going** confirmations reach the
   threshold, which also fires the `activity_confirmed` push.
-- **Match recording**: a played activity's result is recorded into `lobby_match` via
-  `RecordMatchController` (`history/record_match_controller.dart` + `record_match_sheet.dart`,
-  captain-only "Ghi kết quả" on the History tab). History reads via `lobby_match_history_data`.
+- **Match recording**: an ordinary (non-challenge) activity's result is recorded into `lobby_match`
+  via `RecordMatchController` (`history/record_match_controller.dart` + `record_match_sheet.dart`,
+  captain/coordinator "Ghi kết quả" on the History tab) — free-text opponent only, `opponent_lobby_id`
+  stays null, so this path never touches the referee CHECK or moves Elo. A **challenge** match's
+  result is recorded by the referee instead — see "Challenger System" above. History reads via
+  `lobby_match_history_data` for either path, from either lobby's side.
 - **đá currency is deferred, not built.** There is still no server-side ledger — `DaBalance`
   (`lib/currency/`) is a local SharedPreferences int and confirming an activity does **not** actually
   debit đá. The wallet's purchase/spending history is intentionally **empty** (not fabricated) and the

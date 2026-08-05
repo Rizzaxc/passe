@@ -69,7 +69,7 @@ final class LobbyMatchHistoryControllerProvider
 }
 
 String _$lobbyMatchHistoryControllerHash() =>
-    r'0bc4e09333ab5987ee831343610217f55ea96386';
+    r'13c236a7993a9cc4a12c67bba1f5586ed7cfdd13';
 
 /// Played-match history for a lobby — wins, losses, practice sessions.
 ///

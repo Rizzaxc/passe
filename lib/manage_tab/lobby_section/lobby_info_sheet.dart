@@ -9,6 +9,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../auth/auth_controller.dart';
 import '../../core/model/lobby.dart';
 import '../../ui/sheet.dart';
+import 'challenge_offer_sheet.dart';
 import 'challenges_controller.dart';
 import 'challenges_sheet.dart';
 import 'feed/lobby_controller.dart';
@@ -544,6 +545,19 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
             children: [
               PSheetSectionLabel(label: 'lobby.settings'.tr()),
               const SizedBox(height: 8),
+              // The offer control also sits on the activity hero, but that
+              // empty state stops rendering the moment the lobby has an
+              // upcoming session — which would leave exactly the active lobbies
+              // most likely to want challengers unable to opt in. This is the
+              // always-reachable copy; both read the same provider.
+              if (canManage) ...[
+                ChallengeOfferControl(
+                  lobbyId: widget.lobbyId,
+                  canManage: canManage,
+                  dense: true,
+                ),
+                const SizedBox(height: 8),
+              ],
               Container(
                 decoration: BoxDecoration(
                   color: colors.card,

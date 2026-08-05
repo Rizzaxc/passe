@@ -26,9 +26,13 @@ coaching courses. Unlike Home (discovery), this is about entities the user is al
     `trigger_bar`, `confirmation_controller`, `poll_sheet`. The activity feed is the `lobby_feed_data`
     RPC (keyed `p_lobby_id`); confirmation state comes from `activity` / `activity_confirmation` tables
     and the `activity_confirmation_status` RPC.
-  - `history/` — past matches (`lobby_match_history_data` RPC), `match.dart` / `view.dart`.
-  - `invite_challenge_sheet.dart`, `schedule_activity_sheet.dart`, `lobby_info_sheet.dart`,
-    `lobby_banner.dart` — sheets/widgets pushed from the detail page.
+  - `history/` — past matches (`lobby_match_history_data` RPC, now both-sided — see root CLAUDE.md ▸
+    Challenger System), `match.dart` / `view.dart`.
+  - `challenge_offer_sheet.dart` / `challenge_offer_controller.dart` — the "Nhận Thách Đấu" opt-in
+    offer (when/where/cost), `schedule_activity_sheet.dart`, `lobby_info_sheet.dart`,
+    `lobby_banner.dart` — sheets/widgets pushed from the detail page. (`invite_challenge_sheet.dart`
+    is **retired** — challenging by SearchID from inside your own lobby bypassed the offer/matching
+    system; see root CLAUDE.md ▸ Challenger System.)
 
 ## Domain model
 
@@ -117,12 +121,16 @@ Judgment calls made along the way, in case they need revisiting:
   `activity_source_exclusivity` forbids on a lobby activity). The attached pro then surfaces on the
   hero card (`_AttachedProRow`), name + booking status, tap → `ProfessionalDetailRoute`. Members other
   than the captain can read the attached booking via the "Lobby members can view attached bookings"
-  RLS policy (`schema/activity_professional_attachment.sql`). **Not yet wired:** carrying the
-  activity's `referee_booking_id` into `lobby_match.referee_booking_id` when a match result is recorded.
-  A client match-recording write path **now exists** (`history/record_match_controller.dart` +
-  `record_match_sheet.dart`, captain-only) but v1 records free-text opponents only — it does not yet set
-  `opponent_lobby_id` (which the referee-required CHECK ties to a `referee_booking_id`), so linking a
-  recorded match back to a challenge + referee is still open.
+  RLS policy (`schema/activity_professional_attachment.sql` — this migration was applied to prod
+  ad-hoc and had never been committed to the repo until the challenger-flow pass below; it's now
+  checked in verbatim from the live schema). **Now wired end to end**: a challenge activity's hero
+  prompts the home side to book a referee (`_ChallengeBlock` in `activity/hero.dart`); the referee
+  records the result from pro mode via `record_challenge_match`, which inserts the `lobby_match` row
+  with `opponent_lobby_id` **and** `referee_booking_id` set together (the CHECK requires exactly
+  that pairing for a scored match) and fires the Elo trigger. The free-text
+  `history/record_match_controller.dart` / `record_match_sheet.dart` path (captain/coordinator, "Ghi
+  kết quả" on the History tab) is unchanged and still records opponent-less/free-text matches only —
+  see root CLAUDE.md ▸ Challenger System for the full referee-records-a-challenge-match path.
 - **System feed items removed, not wired**: `SystemItem.hasApprove` (in-feed "Đồng Ý"/"Từ Chối" on a
   join-request card) had no producer anywhere — RLS doesn't even allow a client `INSERT` of
   `kind = 'system'`, and no trigger creates one either — so it was unreachable dead UI, not a stub

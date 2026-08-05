@@ -39,37 +39,47 @@ class LobbyMatch {
 
   bool get isWin => result == LobbyMatchResult.win;
   bool get isLoss => result == LobbyMatchResult.loss;
+  bool get isDraw => result == LobbyMatchResult.draw;
   bool get isPractice => result == LobbyMatchResult.practice;
 
-  /// A challenge is any match against an opponent lobby. The DB
-  /// enforces that these always have a referee booking.
+  /// A challenge is any match against an opponent lobby. A *scored* one
+  /// (win/loss/draw) always carries a referee booking — the DB enforces
+  /// that ("ref = rated"). An unrefereed challenge is still logged for both
+  /// sides, just with no score: it's a challenge match with `result ==
+  /// practice`, indistinguishable at the DB level from an internal scrimmage
+  /// except for [opponent] being set — [isScorelessEncounter] is that case.
   bool get isChallenge => opponent != null;
+  bool get isScorelessEncounter => isChallenge && isPractice;
 }
 
-enum LobbyMatchResult { win, loss, practice }
+enum LobbyMatchResult { win, loss, draw, practice }
 
-/// Win / loss / total / win-rate roll-up across a match list.
+/// Win / loss / draw / total / win-rate roll-up across a match list.
 class LobbyMatchStats {
   final int total;
   final int wins;
   final int losses;
+  final int draws;
   final int winRate; // 0–100, computed against decisive matches only
 
   const LobbyMatchStats({
     required this.total,
     required this.wins,
     required this.losses,
+    required this.draws,
     required this.winRate,
   });
 
   factory LobbyMatchStats.from(List<LobbyMatch> matches) {
     final wins = matches.where((m) => m.isWin).length;
     final losses = matches.where((m) => m.isLoss).length;
-    final decided = wins + losses;
+    final draws = matches.where((m) => m.isDraw).length;
+    final decided = wins + losses + draws;
     return LobbyMatchStats(
       total: matches.length,
       wins: wins,
       losses: losses,
+      draws: draws,
       winRate: decided > 0 ? (wins * 100 ~/ decided) : 0,
     );
   }

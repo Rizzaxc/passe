@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../core/format.dart';
 import '../core/model/enum.dart';
 import '../core/model/lobby_feed_item.dart';
 import '../ui/theme.dart';
@@ -190,12 +191,20 @@ class LobbyFeedCard extends StatelessWidget {
                                     letterSpacing: 0.7,
                                   ),
                                 ),
+                                // A lobby with no rated matches still has an
+                                // MMR, but it's derived from what its members
+                                // declared at signup — qualify it rather than
+                                // presenting a seed as an earned rating.
                                 Text(
-                                  '${item.lobbyMmr}',
+                                  item.hasProvisionalMmr
+                                      ? '${item.lobbyMmr} · ${'homeTab.challenger.provisional'.tr()}'
+                                      : '${item.lobbyMmr}',
                                   style: context.theme.typography.body.xs
                                       .copyWith(
                                         fontWeight: FontWeight.w700,
-                                        color: colors.foreground,
+                                        color: item.hasProvisionalMmr
+                                            ? colors.mutedForeground
+                                            : colors.foreground,
                                       ),
                                 ),
                                 if (item.favorability != null)
@@ -211,6 +220,11 @@ class LobbyFeedCard extends StatelessWidget {
                   ),
                 ],
 
+                // Challenger only: the match this lobby is actually offering.
+                // The CTA below accepts these exact terms, so they have to be
+                // on the card, not behind a tap.
+                if (item.offerTime != null) _OfferStrip(item: item),
+
                 FDivider(),
 
                 // CTA
@@ -220,6 +234,63 @@ class LobbyFeedCard extends StatelessWidget {
           ),
           // Bottom tier sliver
           SizedBox(height: 4, child: ColoredBox(color: sliverColor)),
+        ],
+      ),
+    );
+  }
+}
+
+/// The published offer: kickoff, venue, cost per team. Every value here is
+/// dynamic-length (a venue name and a formatted amount have no bound), so each
+/// row lets its value ellipsize rather than letting the card overflow on a
+/// narrow phone.
+class _OfferStrip extends StatelessWidget {
+  final LobbyFeedItem item;
+
+  const _OfferStrip({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+
+    Widget line(IconData icon, String value, {bool strong = false}) => Row(
+          children: [
+            Icon(icon, size: 13, color: colors.mutedForeground),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.theme.typography.body.xs.copyWith(
+                  color: strong ? colors.foreground : colors.secondaryForeground,
+                  fontWeight: strong ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.secondary.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 4,
+        children: [
+          line(FLucideIcons.calendar, formatMatchDateTime(item.offerTime!),
+              strong: true),
+          if (item.offerLocationName != null)
+            line(FLucideIcons.mapPin, item.offerLocationName!),
+          if (item.offerCost != null)
+            line(
+              FLucideIcons.wallet,
+              'homeTab.challenger.costPerTeam'
+                  .tr(args: [formatVnd(item.offerCost!)]),
+            ),
         ],
       ),
     );

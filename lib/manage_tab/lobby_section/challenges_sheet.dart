@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../core/format.dart';
 import '../../ui/sheet.dart';
 import 'challenges_controller.dart';
 
@@ -76,6 +77,35 @@ class _ChallengesSheet extends ConsumerWidget {
   }
 }
 
+/// One agreed term. The value is a venue name or formatted money — unbounded,
+/// so it ellipsizes rather than overflowing the sheet on a narrow phone.
+class _TermLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _TermLine({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Row(
+      children: [
+        Icon(icon, size: 13, color: colors.mutedForeground),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.theme.typography.body.xs
+                .copyWith(color: colors.secondaryForeground),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ChallengeRow extends ConsumerStatefulWidget {
   final String lobbyId;
   final LobbyChallenge item;
@@ -115,7 +145,9 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow> {
     final notifier =
         ref.read(lobbyChallengesControllerProvider(widget.lobbyId).notifier);
 
-    final accepted = c.status == 'accepted';
+    // Anything past 'requested' is a match in motion — the accept/decline pair
+    // is replaced by its state.
+    final accepted = !c.isOpen;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -148,6 +180,30 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow> {
                         .copyWith(color: colors.mutedForeground)),
             ],
           ),
+          // The agreed terms, snapshotted when the challenge was sent — not a
+          // live read of the home lobby's current offer.
+          if (c.proposedTime != null)
+            _TermLine(
+              icon: FLucideIcons.calendar,
+              text: formatMatchDateTime(c.proposedTime!),
+            ),
+          if (c.proposedLocationName != null)
+            _TermLine(
+              icon: FLucideIcons.mapPin,
+              text: c.proposedLocationName!,
+            ),
+          if (c.agreedCost != null)
+            _TermLine(
+              icon: FLucideIcons.wallet,
+              text: '${formatVnd(c.agreedCost!)}đ/đội',
+            ),
+          if (accepted)
+            _TermLine(
+              icon: FLucideIcons.userCheck,
+              text: c.refereeBooked
+                  ? 'Đã có trọng tài — trận sẽ được tính điểm'
+                  : 'Chưa có trọng tài — trận sẽ không tính điểm',
+            ),
           if (c.note != null && c.note!.isNotEmpty)
             Text(c.note!,
                 style: context.theme.typography.body.xs
@@ -156,11 +212,13 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow> {
             children: [
               Expanded(
                 child: Text(
-                  accepted
-                      ? 'lobby.challenges.accepted'.tr()
-                      : c.isIncoming
-                          ? 'lobby.challenges.incoming'.tr()
-                          : 'lobby.challenges.outgoing'.tr(),
+                  c.isScheduled
+                      ? 'lobby.challenges.scheduled'.tr()
+                      : accepted
+                          ? 'lobby.challenges.accepted'.tr()
+                          : c.isIncoming
+                              ? 'lobby.challenges.incoming'.tr()
+                              : 'lobby.challenges.outgoing'.tr(),
                   style: context.theme.typography.body.xs.copyWith(
                     color: accepted ? colors.primary : colors.mutedForeground,
                     fontWeight: FontWeight.w600,

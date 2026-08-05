@@ -62,7 +62,7 @@ final class LobbyChallengesControllerProvider
 }
 
 String _$lobbyChallengesControllerHash() =>
-    r'0adbfafd968d2cf2b72a7dcb9104f8bbfab06fd7';
+    r'a47a1291ee062aba17ca255dde6258b8993e0743';
 
 /// Open + accepted challenges for a lobby, both directions. Managers accept /
 /// decline incoming ones and cancel their own outgoing ones.
@@ -118,6 +118,151 @@ abstract class _$LobbyChallengesController
                 List<LobbyChallenge>
               >,
               AsyncValue<List<LobbyChallenge>>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, () => build(_$args));
+  }
+}
+
+/// Locks in this lobby's half of an accepted challenge.
+///
+/// RSVP quorum alone doesn't make a challenge official — a manager has to
+/// confirm too, and the match only flips to `scheduled` once *both* lobbies
+/// have. The RPC enforces the quorum and the manager gate; this just surfaces
+/// the outcome and refreshes what the hero shows.
+
+@ProviderFor(ConfirmChallengeActivityController)
+final confirmChallengeActivityControllerProvider =
+    ConfirmChallengeActivityControllerFamily._();
+
+/// Locks in this lobby's half of an accepted challenge.
+///
+/// RSVP quorum alone doesn't make a challenge official — a manager has to
+/// confirm too, and the match only flips to `scheduled` once *both* lobbies
+/// have. The RPC enforces the quorum and the manager gate; this just surfaces
+/// the outcome and refreshes what the hero shows.
+final class ConfirmChallengeActivityControllerProvider
+    extends $NotifierProvider<ConfirmChallengeActivityController, bool> {
+  /// Locks in this lobby's half of an accepted challenge.
+  ///
+  /// RSVP quorum alone doesn't make a challenge official — a manager has to
+  /// confirm too, and the match only flips to `scheduled` once *both* lobbies
+  /// have. The RPC enforces the quorum and the manager gate; this just surfaces
+  /// the outcome and refreshes what the hero shows.
+  ConfirmChallengeActivityControllerProvider._({
+    required ConfirmChallengeActivityControllerFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'confirmChallengeActivityControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() =>
+      _$confirmChallengeActivityControllerHash();
+
+  @override
+  String toString() {
+    return r'confirmChallengeActivityControllerProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  ConfirmChallengeActivityController create() =>
+      ConfirmChallengeActivityController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ConfirmChallengeActivityControllerProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$confirmChallengeActivityControllerHash() =>
+    r'bc4b122aac09b8b53eabb9c41325de12e4cbb17d';
+
+/// Locks in this lobby's half of an accepted challenge.
+///
+/// RSVP quorum alone doesn't make a challenge official — a manager has to
+/// confirm too, and the match only flips to `scheduled` once *both* lobbies
+/// have. The RPC enforces the quorum and the manager gate; this just surfaces
+/// the outcome and refreshes what the hero shows.
+
+final class ConfirmChallengeActivityControllerFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          ConfirmChallengeActivityController,
+          bool,
+          bool,
+          bool,
+          String
+        > {
+  ConfirmChallengeActivityControllerFamily._()
+    : super(
+        retry: null,
+        name: r'confirmChallengeActivityControllerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Locks in this lobby's half of an accepted challenge.
+  ///
+  /// RSVP quorum alone doesn't make a challenge official — a manager has to
+  /// confirm too, and the match only flips to `scheduled` once *both* lobbies
+  /// have. The RPC enforces the quorum and the manager gate; this just surfaces
+  /// the outcome and refreshes what the hero shows.
+
+  ConfirmChallengeActivityControllerProvider call(String lobbyId) =>
+      ConfirmChallengeActivityControllerProvider._(
+        argument: lobbyId,
+        from: this,
+      );
+
+  @override
+  String toString() => r'confirmChallengeActivityControllerProvider';
+}
+
+/// Locks in this lobby's half of an accepted challenge.
+///
+/// RSVP quorum alone doesn't make a challenge official — a manager has to
+/// confirm too, and the match only flips to `scheduled` once *both* lobbies
+/// have. The RPC enforces the quorum and the manager gate; this just surfaces
+/// the outcome and refreshes what the hero shows.
+
+abstract class _$ConfirmChallengeActivityController extends $Notifier<bool> {
+  late final _$args = ref.$arg as String;
+  String get lobbyId => _$args;
+
+  bool build(String lobbyId);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
               Object?,
               Object?
             >;

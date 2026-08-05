@@ -124,13 +124,24 @@
             "sportMismatch": "Hai lobby khác môn thể thao",
             "sendFailed": "Không thể gửi lời thách đấu",
             "mmr": "MMR",
+            "provisional": "tạm tính",
+            "costPerTeam": "{}đ/đội",
+            "confirmTitle": "Xác Nhận Thách Đấu",
+            "confirmBody": "Bạn đang thách đấu với tư cách {}. Nếu {} chấp nhận, cả hai lobby sẽ có một buổi thi đấu theo đúng điều kiện dưới đây.",
+            "kickoff": "Giờ thi đấu",
+            "venue": "Sân",
+            "cost": "Chi phí mỗi đội",
+            "refNote": "Chi phí trên chưa gồm phí trọng tài — đội chủ nhà sẽ thuê trọng tài riêng sau khi chấp nhận.",
+            "note": "Lời nhắn (tuỳ chọn)",
+            "noteHint": "vd. BO3, tự mang bóng",
+            "confirmCta": "Gửi Lời Thách Đấu",
             "favorability": {
                 "underdog": "Cửa dưới",
                 "even": "Cân sức",
                 "favored": "Cửa trên"
             },
             "empty": {
-                "title": "Không có đối thủ nào",
+                "title": "Chưa tìm được đối thủ",
                 "message": "Thử điều chỉnh filter hoặc quay lại sau"
             },
             "noLobby": {
@@ -242,6 +253,7 @@
             "title": "Ghi kết quả",
             "win": "Thắng",
             "loss": "Thua",
+            "draw": "Hoà",
             "practice": "Tập nội bộ",
             "opponent": "Đối thủ",
             "opponentHint": "Tên đội đối thủ",
@@ -358,6 +370,7 @@
             "incoming": "Đang chờ bạn phản hồi",
             "outgoing": "Đã gửi · đang chờ",
             "accepted": "Đã được chấp nhận",
+            "scheduled": "Đã chốt",
             "accept": "Chấp nhận",
             "decline": "Từ chối",
             "cancelBtn": "Huỷ"

@@ -21,6 +21,12 @@ class ProBookingItem {
   final String? locationName;
   final String? packageId;
 
+  /// Set only when this booking is a referee hire attached to a lobby-vs-lobby
+  /// challenge activity — the case where the professional is the one who
+  /// records the result. Null on every coach booking, so the ordinary card
+  /// path is untouched.
+  final RefereedMatch? match;
+
   const ProBookingItem({
     required this.id,
     required this.clientName,
@@ -33,6 +39,7 @@ class ProBookingItem {
     this.professionalNotes,
     this.locationName,
     this.packageId,
+    this.match,
   });
 
   factory ProBookingItem.fromJson(Map<String, dynamic> json) {
@@ -53,6 +60,58 @@ class ProBookingItem {
       professionalNotes: json['professional_notes'] as String?,
       locationName: location?['name'] as String?,
       packageId: json['package_id'] as String?,
+      match: RefereedMatch.fromEmbed(json['activity']),
+    );
+  }
+}
+
+/// The lobby-vs-lobby match a referee booking is attached to.
+///
+/// Resolved through `activity.referee_booking_id` → `lobby_challenge`. The
+/// referee is not a member of either lobby, so reading that activity depends on
+/// the "Linked professionals can view their attached activities" RLS policy —
+/// without it this embed comes back null and the whole result-entry affordance
+/// silently disappears.
+class RefereedMatch {
+  final String challengeId;
+  final String homeLobbyName;
+  final String awayLobbyName;
+
+  /// End of the match itself, which gates result entry. Falls back to the
+  /// booking's own window when the activity has no end time.
+  final DateTime? activityEnd;
+
+  /// True once a result exists — the challenge has reached `played`.
+  final bool resultRecorded;
+
+  const RefereedMatch({
+    required this.challengeId,
+    required this.homeLobbyName,
+    required this.awayLobbyName,
+    required this.activityEnd,
+    required this.resultRecorded,
+  });
+
+  static RefereedMatch? fromEmbed(Object? embed) {
+    // PostgREST returns a list for a reverse embed (many activities could in
+    // principle cite one booking); take the first.
+    final row = embed is List
+        ? (embed.isEmpty ? null : embed.first as Map<String, dynamic>?)
+        : embed as Map<String, dynamic>?;
+    if (row == null) return null;
+    final challenge = row['challenge'] as Map<String, dynamic>?;
+    if (challenge == null) return null;
+
+    final end = row['end_time'] as String?;
+    return RefereedMatch(
+      challengeId: challenge['id'] as String,
+      homeLobbyName:
+          (challenge['target'] as Map<String, dynamic>?)?['name'] as String? ?? '—',
+      awayLobbyName:
+          (challenge['initiator'] as Map<String, dynamic>?)?['name'] as String? ??
+              '—',
+      activityEnd: end != null ? DateTime.parse(end).toLocal() : null,
+      resultRecorded: challenge['status'] == 'played',
     );
   }
 }
@@ -62,7 +121,13 @@ const _proSelectColumns = '''
   client_notes, professional_notes, package_id,
   client:client_user_id(username),
   professional_service(service_type),
-  location(name)
+  location(name),
+  activity!activity_referee_booking_id_fkey(
+    id, end_time,
+    challenge:lobby_challenge(
+      id, status,
+      initiator:initiator_lobby_id(name),
+      target:target_lobby_id(name)))
 ''';
 
 /// Pending requests for the linked professional — `status = requested`.
@@ -125,6 +190,57 @@ Future<List<ProBookingItem>> proBookingHistory(
   return (response as List)
       .map((e) => ProBookingItem.fromJson(e as Map<String, dynamic>))
       .toList();
+}
+
+/// Records the result of a refereed challenge match.
+///
+/// Only the booked referee can call this (`record_challenge_match` checks the
+/// caller against the booking's professional), and only after the match has
+/// ended. The insert it performs also flips the booking to `completed` through
+/// the existing `lobby_match_complete_referee_booking` trigger and moves both
+/// lobbies' Elo — which is why the entry is final and has no edit affordance.
+@riverpod
+class RecordChallengeResultController
+    extends _$RecordChallengeResultController {
+  @override
+  bool build(String professionalId) => false; // in-flight flag
+
+  /// [result] is from the HOME side: 'win' | 'draw' | 'loss'.
+  Future<void> record({
+    required String challengeId,
+    required String result,
+    required List<(int home, int away)> sets,
+    String? note,
+  }) async {
+    state = true;
+    try {
+      await Supabase.instance.client.rpc('record_challenge_match', params: {
+        'p_challenge_id': challengeId,
+        'p_result': result,
+        'p_sets': sets.isEmpty
+            ? null
+            : sets.map((s) => [s.$1, s.$2]).toList(),
+        'p_note': note,
+      }).timeout(const Duration(seconds: 5));
+      _invalidateAll(ref, professionalId);
+    } finally {
+      state = false;
+    }
+  }
+}
+
+/// Maps `record_challenge_match`'s guards onto Vietnamese copy.
+String recordResultErrorMessage(Object e) {
+  final msg = e.toString();
+  if (msg.contains('already has a result')) return 'Trận này đã có kết quả';
+  if (msg.contains('not finished')) return 'Trận đấu chưa kết thúc';
+  if (msg.contains('only the booked referee')) {
+    return 'Chỉ trọng tài được thuê mới ghi được kết quả';
+  }
+  if (msg.contains('no referee is booked')) {
+    return 'Trận này chưa có trọng tài';
+  }
+  return 'Không thể ghi kết quả';
 }
 
 void _invalidateAll(Ref ref, String professionalId) {

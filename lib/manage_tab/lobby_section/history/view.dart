@@ -12,8 +12,10 @@ const _crimson = Color(0xFFDC143C);
 const _green = Color(0xFF959D54);
 const _greenTint = Color(0xFFEEF2E4);
 const _orange = Color(0xFFF97316);
+const _slate = Color(0xFF71717A);
+const _slateTint = Color(0x1A71717A);
 
-enum _HistoryFilter { all, challenge, practice, win, loss }
+enum _HistoryFilter { all, challenge, practice, win, loss, draw }
 
 // ─── History view ───────────────────────────────────────────────
 
@@ -45,6 +47,7 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
       _HistoryFilter.practice => matches.where((h) => h.isPractice).toList(),
       _HistoryFilter.win => matches.where((h) => h.isWin).toList(),
       _HistoryFilter.loss => matches.where((h) => h.isLoss).toList(),
+      _HistoryFilter.draw => matches.where((h) => h.isDraw).toList(),
       _HistoryFilter.all => matches,
     };
   }
@@ -135,6 +138,7 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
         _HistoryFilter.practice => 'Tập nội bộ',
         _HistoryFilter.win => 'Thắng',
         _HistoryFilter.loss => 'Thua',
+        _HistoryFilter.draw => 'Hoà',
       };
 }
 
@@ -152,76 +156,56 @@ class _StatsCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
         color: c.card,
-        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: c.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: context.theme.style.borderRadius.md,
+        boxShadow: context.theme.style.shadow,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Text(
+            'THÀNH TÍCH',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: c.mutedForeground,
+              letterSpacing: 0.7,
+            ),
+          ),
+          const SizedBox(height: 4),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const ClampingScrollPhysics(),
+            child: Row(
+              spacing: 14,
               children: [
-                Text(
-                  'THÀNH TÍCH',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: c.mutedForeground,
-                    letterSpacing: 0.7,
-                  ),
+                _HStat(
+                  value: '${stats.total}',
+                  label: 'trận',
+                  color: c.foreground,
                 ),
-                const SizedBox(height: 4),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const ClampingScrollPhysics(),
-                  child: Row(
-                    spacing: 14,
-                    children: [
-                      _HStat(
-                        value: '${stats.total}',
-                        label: 'trận',
-                        color: c.foreground,
-                      ),
-                      _HStat(
-                        value: '${stats.wins}',
-                        label: 'thắng',
-                        color: _green,
-                      ),
-                      _HStat(
-                        value: '${stats.losses}',
-                        label: 'thua',
-                        color: _orange,
-                      ),
-                      _HStat(
-                        value: '${stats.winRate}%',
-                        label: 'win rate',
-                        color: _crimson,
-                      ),
-                    ],
+                _HStat(
+                  value: '${stats.wins}',
+                  label: 'thắng',
+                  color: _green,
+                ),
+                _HStat(
+                  value: '${stats.losses}',
+                  label: 'thua',
+                  color: _orange,
+                ),
+                if (stats.draws > 0)
+                  _HStat(
+                    value: '${stats.draws}',
+                    label: 'hoà',
+                    color: _slate,
                   ),
+                _HStat(
+                  value: '${stats.winRate}%',
+                  label: 'win rate',
+                  color: _crimson,
                 ),
               ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: c.background,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: c.border.withValues(alpha: 0.6)),
-            ),
-            child: const Center(
-              child: Icon(Icons.sports_tennis, size: 28,
-                  color: Color(0xFF71717A)),
             ),
           ),
         ],
@@ -323,20 +307,36 @@ class _HistoryCard extends StatelessWidget {
     final colors = context.theme.colors;
     final isWin = match.isWin;
     final isLoss = match.isLoss;
+    final isDraw = match.isDraw;
     final isPractice = match.isPractice;
+    final isScoreless = match.isScorelessEncounter;
 
     final Color stripBg = isWin
         ? _greenTint
         : isLoss
             ? const Color(0x1AF97316)
-            : colors.secondary;
+            : isDraw
+                ? _slateTint
+                : colors.secondary;
     final Color stripFg = isWin
         ? _green
         : isLoss
             ? _orange
-            : colors.mutedForeground;
-    final String stripLabel =
-        isWin ? 'Thắng' : isLoss ? 'Thua' : 'Tập nội bộ';
+            : isDraw
+                ? _slate
+                : colors.mutedForeground;
+    final String stripLabel = isWin
+        ? 'Thắng'
+        : isLoss
+            ? 'Thua'
+            : isDraw
+                ? 'Hoà'
+                // A scoreless encounter is still a challenge — the match was
+                // played, just unrefereed — so it reads differently from an
+                // internal scrimmage even though both share `result: practice`.
+                : isScoreless
+                    ? 'Không tính điểm'
+                    : 'Tập nội bộ';
 
     // Set tallies
     int? usWins, themWins;
@@ -348,15 +348,9 @@ class _HistoryCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: context.theme.style.borderRadius.md,
+        boxShadow: context.theme.style.shadow,
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -370,7 +364,7 @@ class _HistoryCard extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  isPractice
+                  isPractice && !isScoreless
                       ? Icons.groups_outlined
                       : Icons.emoji_events_outlined,
                   size: 12,
@@ -418,7 +412,48 @@ class _HistoryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Matchup
-                if (!isPractice && usWins != null)
+                if (isScoreless)
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: colors.secondary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.sports_outlined,
+                            size: 18, color: colors.mutedForeground),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'vs ${match.opponent ?? match.opponentTag}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: colors.foreground,
+                              ),
+                            ),
+                            Text(
+                              'Không có trọng tài — trận không tính điểm',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: colors.mutedForeground,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                else if (!isPractice && usWins != null)
                   Row(
                     children: [
                       Expanded(
@@ -551,7 +586,7 @@ class _HistoryCard extends StatelessWidget {
                   ),
                 ],
 
-                // Venue + members
+                // Venue (+ referee, when this match had one) + members
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -560,11 +595,14 @@ class _HistoryCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        match.venue,
+                        match.refereeName != null
+                            ? '${match.venue} · TT ${match.refereeName}'
+                            : match.venue,
                         style: TextStyle(
                           fontSize: 11,
                           color: colors.mutedForeground,
                         ),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -653,11 +691,20 @@ class _SetChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final weWon = us > them;
+    final Color tone = us > them
+        ? _green
+        : us < them
+            ? _orange
+            : _slate;
+    final Color tint = us > them
+        ? _greenTint
+        : us < them
+            ? const Color(0x1AF97316)
+            : _slateTint;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 5),
       decoration: BoxDecoration(
-        color: weWon ? _greenTint : const Color(0x1AF97316),
+        color: tint,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -667,9 +714,7 @@ class _SetChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w500,
-              color: weWon
-                  ? _green.withValues(alpha: 0.7)
-                  : _orange.withValues(alpha: 0.7),
+              color: tone.withValues(alpha: 0.7),
               letterSpacing: 0.7,
             ),
           ),
@@ -679,7 +724,7 @@ class _SetChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: weWon ? _green : _orange,
+              color: tone,
             ),
           ),
         ],

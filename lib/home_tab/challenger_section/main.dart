@@ -4,12 +4,14 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
-import '../../manage_tab/lobby_section/invite_challenge_controller.dart';
+import '../../core/format.dart';
+import '../../core/model/lobby_feed_item.dart';
 import '../../router.dart';
 import '../../ui/main.dart';
 import '../filter.dart';
 import '../lobby_feed_card.dart';
 import 'feed_controller.dart';
+import 'send_challenge_controller.dart';
 
 class ChallengerSubtab extends ConsumerWidget {
   const ChallengerSubtab({super.key});
@@ -76,7 +78,7 @@ class ChallengerSubtab extends ConsumerWidget {
                           final item = items[index];
                           return LobbyFeedCard(
                             item: item,
-                            action: _ChallengeButton(targetLobbyId: item.id),
+                            action: _ChallengeButton(item: item),
                           );
                         },
                       ),
@@ -88,13 +90,17 @@ class ChallengerSubtab extends ConsumerWidget {
   }
 }
 
-/// The per-card "Thách đấu" CTA. Sends a real challenge from the user's
-/// effective context lobby (the "challenging as" pick) to the tapped opponent
-/// via the `send_challenge` RPC, then flips to a sent state.
+/// The per-card "Thách đấu" CTA. Opens a confirmation sheet for the terms the
+/// home lobby published, then sends the challenge from the user's effective
+/// context lobby (the "challenging as" pick).
+///
+/// It deliberately does not collect a time or venue: the home team set those in
+/// its offer and `send_challenge` snapshots them. All the challenger adds is an
+/// optional note.
 class _ChallengeButton extends ConsumerStatefulWidget {
-  final String targetLobbyId;
+  final LobbyFeedItem item;
 
-  const _ChallengeButton({required this.targetLobbyId});
+  const _ChallengeButton({required this.item});
 
   @override
   ConsumerState<_ChallengeButton> createState() => _ChallengeButtonState();
@@ -102,18 +108,75 @@ class _ChallengeButton extends ConsumerStatefulWidget {
 
 class _ChallengeButtonState extends ConsumerState<_ChallengeButton> {
   bool _sent = false;
-  bool _busy = false;
 
-  Future<void> _send() async {
+  Future<void> _open() async {
     final ctx = await ref.read(contextLobbyProvider.future);
     if (ctx == null || !mounted) return;
+
+    final sent = await showPSheet<bool>(
+      context: context,
+      builder: (_) => _ConfirmChallengeSheet(
+        item: widget.item,
+        contextLobbyId: ctx.id,
+        contextLobbyName: ctx.name,
+      ),
+    );
+    if (sent == true && mounted) setState(() => _sent = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FButton(
+      size: .sm,
+      variant: .secondary,
+      onPress: _sent ? null : _open,
+      child: Text(_sent
+          ? 'homeTab.challenger.sent'.tr()
+          : 'homeTab.challenger.challenge'.tr()),
+    );
+  }
+}
+
+/// "You're accepting these terms" — the challenger's half of the handshake.
+class _ConfirmChallengeSheet extends ConsumerStatefulWidget {
+  final LobbyFeedItem item;
+  final String contextLobbyId;
+  final String contextLobbyName;
+
+  const _ConfirmChallengeSheet({
+    required this.item,
+    required this.contextLobbyId,
+    required this.contextLobbyName,
+  });
+
+  @override
+  ConsumerState<_ConfirmChallengeSheet> createState() =>
+      _ConfirmChallengeSheetState();
+}
+
+class _ConfirmChallengeSheetState
+    extends ConsumerState<_ConfirmChallengeSheet> {
+  final _noteController = TextEditingController();
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
     setState(() => _busy = true);
     try {
+      final note = _noteController.text.trim();
       await ref
-          .read(inviteChallengeControllerProvider(ctx.id).notifier)
-          .invite(targetLobbyId: widget.targetLobbyId);
+          .read(sendChallengeControllerProvider(widget.contextLobbyId).notifier)
+          .send(
+            targetLobbyId: widget.item.id,
+            note: note.isEmpty ? null : note,
+          );
       if (!mounted) return;
-      setState(() => _sent = true);
+      Navigator.of(context).pop(true);
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.flag),
@@ -123,17 +186,11 @@ class _ChallengeButtonState extends ConsumerState<_ChallengeButton> {
     } catch (e, st) {
       Talker().handle(e, st, 'challenge failed');
       if (!mounted) return;
-      final msg = e.toString();
-      final friendly = msg.contains('already pending')
-          ? 'homeTab.challenger.alreadyPending'.tr()
-          : msg.contains('sport mismatch')
-              ? 'homeTab.challenger.sportMismatch'.tr()
-              : 'homeTab.challenger.sendFailed'.tr();
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
-        title: Text(friendly),
+        title: Text(challengeErrorMessage(e)),
         alignment: .bottomCenter,
       );
     } finally {
@@ -143,19 +200,111 @@ class _ChallengeButtonState extends ConsumerState<_ChallengeButton> {
 
   @override
   Widget build(BuildContext context) {
-    return FButton(
-      size: .sm,
-      variant: .secondary,
-      onPress: (_sent || _busy) ? null : _send,
-      child: _busy
-          ? const SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Text(_sent
-              ? 'homeTab.challenger.sent'.tr()
-              : 'homeTab.challenger.challenge'.tr()),
+    final colors = context.theme.colors;
+    final item = widget.item;
+
+    Widget term(IconData icon, String label, String value) => Row(
+          children: [
+            Icon(icon, size: 16, color: colors.mutedForeground),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: context.theme.typography.body.sm
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+            ),
+            Flexible(
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
+                style: context.theme.typography.body.sm.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.secondaryForeground,
+                ),
+              ),
+            ),
+          ],
+        );
+
+    return SingleChildScrollView(
+      primary: false,
+      child: Column(
+        spacing: 16,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PSheetTitle(
+            label: 'homeTab.challenger.confirmTitle'.tr(),
+            trailing: FButton.icon(
+              variant: .ghost,
+              onPress: () => Navigator.of(context).pop(),
+              child: const Icon(FLucideIcons.x),
+            ),
+          ),
+
+          Text(
+            'homeTab.challenger.confirmBody'.tr(
+              args: [widget.contextLobbyName, item.name],
+            ),
+            style: context.theme.typography.body.xs
+                .copyWith(color: colors.mutedForeground, height: 1.45),
+          ),
+
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: colors.card,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colors.border),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 10,
+              children: [
+                if (item.offerTime != null)
+                  term(FLucideIcons.calendar, 'homeTab.challenger.kickoff'.tr(),
+                      formatMatchDateTime(item.offerTime!)),
+                if (item.offerLocationName != null)
+                  term(FLucideIcons.mapPin, 'homeTab.challenger.venue'.tr(),
+                      item.offerLocationName!),
+                if (item.offerCost != null)
+                  term(FLucideIcons.wallet, 'homeTab.challenger.cost'.tr(),
+                      '${formatVnd(item.offerCost!)}đ'),
+              ],
+            ),
+          ),
+
+          Text(
+            'homeTab.challenger.refNote'.tr(),
+            style: context.theme.typography.body.xs
+                .copyWith(color: colors.mutedForeground, height: 1.45),
+          ),
+
+          FTextField(
+            label: Text('homeTab.challenger.note'.tr()),
+            hint: 'homeTab.challenger.noteHint'.tr(),
+            maxLines: 3,
+            control: FTextFieldControl.managed(controller: _noteController),
+          ),
+
+          FButton(
+            onPress: _busy ? null : _send,
+            child: _busy
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text('homeTab.challenger.confirmCta'.tr()),
+          ),
+          const SizedBox(height: 4),
+        ],
+      ),
     );
   }
 }

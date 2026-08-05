@@ -6,6 +6,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../core/format.dart';
 import '../../ui/main.dart';
 import 'pro_bookings_controller.dart';
+import 'record_result_sheet.dart';
 
 /// Manage ▸ pro mode's "schedule" subtab — the pro's own confirmed
 /// sessions. A simple date-grouped list rather than the player Manage tab's
@@ -89,15 +90,33 @@ class _BookingCard extends ConsumerWidget {
     }
   }
 
+  /// Read-only match context, shown when the booking is a refereed match that
+  /// hasn't finished yet — the tap has to say *why* there's nothing to do
+  /// rather than be silently inert.
+  void _showMatchContext(BuildContext context, RefereedMatch match) {
+    showFToast(
+      context: context,
+      icon: const Icon(FLucideIcons.swords),
+      title: Text('${match.homeLobbyName} vs ${match.awayLobbyName}'),
+      description: const Text('Ghi kết quả sau khi trận kết thúc'),
+      alignment: .bottomCenter,
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final saving = ref.watch(
       proBookingActionControllerProvider(professionalId),
     );
-    final isPastDue = booking.end.isBefore(DateTime.now());
+    final match = booking.match;
 
-    return FCard(
+    // Gate on the match's own end time when this is a refereed match (the
+    // booking window can be billed wider than the match), else the booking's.
+    final endsAt = match?.activityEnd ?? booking.end;
+    final isPastDue = endsAt.isBefore(DateTime.now());
+
+    final card = FCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 6,
@@ -106,12 +125,20 @@ class _BookingCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  booking.clientName,
+                  // A refereed match is between two lobbies, not with the
+                  // client who happened to book it.
+                  match == null
+                      ? booking.clientName
+                      : '${match.homeLobbyName} vs ${match.awayLobbyName}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: context.theme.typography.body.sm.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
+              if (match != null)
+                Icon(FLucideIcons.swords, size: 14, color: colors.mutedForeground),
               if (booking.packageId != null)
                 Icon(FLucideIcons.package, size: 14, color: colors.mutedForeground),
             ],
@@ -142,7 +169,35 @@ class _BookingCard extends ConsumerWidget {
                 color: colors.primary,
               ),
             ),
-          if (isPastDue)
+          // A refereed match completes itself: recording the result inserts
+          // the lobby_match row, which flips this booking to `completed` via
+          // the lobby_match_complete_referee_booking trigger. Offering
+          // "Đánh Dấu Hoàn Thành" alongside would be two buttons for one
+          // outcome, so for a match booking it is *replaced*, not joined.
+          if (match != null)
+            if (match.resultRecorded)
+              Text(
+                'Đã ghi kết quả',
+                style: context.theme.typography.body.xs
+                    .copyWith(color: colors.mutedForeground),
+              )
+            else if (isPastDue)
+              FButton(
+                variant: .secondary,
+                onPress: () => showRecordResultSheet(
+                  context,
+                  professionalId: professionalId,
+                  match: match,
+                ),
+                child: const Text('Ghi Kết Quả'),
+              )
+            else
+              Text(
+                'Ghi kết quả sau khi trận kết thúc',
+                style: context.theme.typography.body.xs
+                    .copyWith(color: colors.mutedForeground),
+              )
+          else if (isPastDue)
             FButton(
               variant: .secondary,
               onPress: saving ? null : () => _markComplete(context, ref),
@@ -156,6 +211,22 @@ class _BookingCard extends ConsumerWidget {
             ),
         ],
       ),
+    );
+
+    // Tapping a match card is the entry point: it opens result entry once the
+    // match has ended, and explains itself before that.
+    if (match == null) return card;
+    return FTappable(
+      onPress: match.resultRecorded
+          ? null
+          : () => isPastDue
+              ? showRecordResultSheet(
+                  context,
+                  professionalId: professionalId,
+                  match: match,
+                )
+              : _showMatchContext(context, match),
+      child: card,
     );
   }
 }

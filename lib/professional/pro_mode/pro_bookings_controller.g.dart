@@ -268,6 +268,155 @@ final class ProBookingHistoryFamily extends $Family
   String toString() => r'proBookingHistoryProvider';
 }
 
+/// Records the result of a refereed challenge match.
+///
+/// Only the booked referee can call this (`record_challenge_match` checks the
+/// caller against the booking's professional), and only after the match has
+/// ended. The insert it performs also flips the booking to `completed` through
+/// the existing `lobby_match_complete_referee_booking` trigger and moves both
+/// lobbies' Elo — which is why the entry is final and has no edit affordance.
+
+@ProviderFor(RecordChallengeResultController)
+final recordChallengeResultControllerProvider =
+    RecordChallengeResultControllerFamily._();
+
+/// Records the result of a refereed challenge match.
+///
+/// Only the booked referee can call this (`record_challenge_match` checks the
+/// caller against the booking's professional), and only after the match has
+/// ended. The insert it performs also flips the booking to `completed` through
+/// the existing `lobby_match_complete_referee_booking` trigger and moves both
+/// lobbies' Elo — which is why the entry is final and has no edit affordance.
+final class RecordChallengeResultControllerProvider
+    extends $NotifierProvider<RecordChallengeResultController, bool> {
+  /// Records the result of a refereed challenge match.
+  ///
+  /// Only the booked referee can call this (`record_challenge_match` checks the
+  /// caller against the booking's professional), and only after the match has
+  /// ended. The insert it performs also flips the booking to `completed` through
+  /// the existing `lobby_match_complete_referee_booking` trigger and moves both
+  /// lobbies' Elo — which is why the entry is final and has no edit affordance.
+  RecordChallengeResultControllerProvider._({
+    required RecordChallengeResultControllerFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'recordChallengeResultControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$recordChallengeResultControllerHash();
+
+  @override
+  String toString() {
+    return r'recordChallengeResultControllerProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  RecordChallengeResultController create() => RecordChallengeResultController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is RecordChallengeResultControllerProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$recordChallengeResultControllerHash() =>
+    r'e280cc095830388b0ca1ff3ffa7a20d173d2879d';
+
+/// Records the result of a refereed challenge match.
+///
+/// Only the booked referee can call this (`record_challenge_match` checks the
+/// caller against the booking's professional), and only after the match has
+/// ended. The insert it performs also flips the booking to `completed` through
+/// the existing `lobby_match_complete_referee_booking` trigger and moves both
+/// lobbies' Elo — which is why the entry is final and has no edit affordance.
+
+final class RecordChallengeResultControllerFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          RecordChallengeResultController,
+          bool,
+          bool,
+          bool,
+          String
+        > {
+  RecordChallengeResultControllerFamily._()
+    : super(
+        retry: null,
+        name: r'recordChallengeResultControllerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Records the result of a refereed challenge match.
+  ///
+  /// Only the booked referee can call this (`record_challenge_match` checks the
+  /// caller against the booking's professional), and only after the match has
+  /// ended. The insert it performs also flips the booking to `completed` through
+  /// the existing `lobby_match_complete_referee_booking` trigger and moves both
+  /// lobbies' Elo — which is why the entry is final and has no edit affordance.
+
+  RecordChallengeResultControllerProvider call(String professionalId) =>
+      RecordChallengeResultControllerProvider._(
+        argument: professionalId,
+        from: this,
+      );
+
+  @override
+  String toString() => r'recordChallengeResultControllerProvider';
+}
+
+/// Records the result of a refereed challenge match.
+///
+/// Only the booked referee can call this (`record_challenge_match` checks the
+/// caller against the booking's professional), and only after the match has
+/// ended. The insert it performs also flips the booking to `completed` through
+/// the existing `lobby_match_complete_referee_booking` trigger and moves both
+/// lobbies' Elo — which is why the entry is final and has no edit affordance.
+
+abstract class _$RecordChallengeResultController extends $Notifier<bool> {
+  late final _$args = ref.$arg as String;
+  String get professionalId => _$args;
+
+  bool build(String professionalId);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, () => build(_$args));
+  }
+}
+
 /// Accept/reject/mark-complete actions for the professional side, backed by
 /// the validated `accept_professional_booking`/`reject_professional_booking`
 /// RPCs (accept needs an atomic overlap check a bare UPDATE can't express).

@@ -56,7 +56,7 @@ Quick map, then the full contract for each:
 | Subtab | Source | Model | Action |
 |---|---|---|---|
 | Teammate | `home_teammate_lobby_data` RPC | `LobbyFeedItem` | "Xin vào" → insert `lobby_befriend_record` (`request`) |
-| Challenger | `home_challenger_lobby_data` RPC | `LobbyFeedItem` (`memberCount` set) | "Thách đấu" → `send_challenge` RPC from the "challenging as" context lobby (see root CLAUDE.md ▸ Challenger System) |
+| Challenger | `home_challenger_lobby_data` RPC | `LobbyFeedItem` (`memberCount` + offer terms set) | "Thách đấu" → confirm-terms sheet → `send_challenge` RPC from the "challenging as" context lobby (see root CLAUDE.md ▸ Challenger System) |
 | Professional | `home_professional_data` RPC (sport + soft city/district/schedule + role toggle; ranked verified/rating/reviews; `price_from` from `professional_service`) | `ProfessionalFeedItem` | tap → `ProfessionalDetailRoute`; book = "coming soon" toast |
 | Location | `location` table, or `search_locations` RPC when `search` is set | `Location` (freezed) | list/map toggle; tap → detail sheet; "Chỉ đường" launches external maps |
 
@@ -98,17 +98,27 @@ freezed) — edit them by hand, no build_runner.
 
 ### Challenger subtab
 
-- Shows lobbies **open to being challenged** (team vs team).
-- Requires `open_to_challengers boolean DEFAULT false NOT NULL` on the `lobby` table.
-  Migration: `schema/challenger_support.sql`.
-- Data: `home_challenger_lobby_data` function (same migration file).
-  Params: `p_sport_id`, `p_city`, `p_districts`, `p_page_size`, `p_page_number` (no timeslot filter).
-  Same return shape as teammate plus `member_count`; excludes the user's own lobbies.
+- Shows lobbies that have **published a challenge offer** (team vs team, with stated terms — see
+  root CLAUDE.md ▸ Challenger System for the full flow).
+- Requires `open_to_challengers boolean DEFAULT false NOT NULL` **plus** `challenge_offer_time` /
+  `_location` / `_cost` on the `lobby` table, enforced together by a CHECK. Migration:
+  `schema/challenger_support.sql` (the flag + MMR cache) +
+  `schema/challenge_flow.sql` (the offer columns).
+- Data: `home_challenger_lobby_data` function (`schema/challenge_flow.sql`).
+  Params: `p_sport_id`, `p_city`, `p_districts`, `p_search`, `p_page_size`, `p_page_number` (no
+  timeslot filter). Same return shape as teammate plus `member_count`, `offer_time`,
+  `offer_location_name`, `offer_cost`, `rated_match_count`; excludes the user's own lobbies and
+  offers whose kickoff has already passed.
 - **Challenge interaction uses a SEPARATE table** — do NOT reuse `lobby_befriend_record` (that is
-  user↔lobby / user↔user pairing only). The `lobby_challenge` table + `send_challenge` RPC are now
-  built; the "Thách đấu" CTA sends a real challenge (`_ChallengeButton` in `challenger_section/main.dart`)
-  from the user's effective "challenging as" context lobby. See root CLAUDE.md "Challenger System (built)".
-- Model: reuses `LobbyFeedItem` (with `memberCount` populated).
+  user↔lobby / user↔user pairing only). The "Thách đấu" CTA opens a confirm-these-terms sheet (the
+  home lobby already set time/venue/cost — the challenger accepts, doesn't propose) and calls
+  `send_challenge` from the user's effective "challenging as" context lobby
+  (`_ChallengeButton` / `_ConfirmChallengeSheet` in `challenger_section/main.dart`, backed by
+  `send_challenge_controller.dart`). See root CLAUDE.md "Challenger System" for everything past send
+  — accept, activity materialisation, referee, result, Elo.
+- Model: reuses `LobbyFeedItem` (with `memberCount`, `offerTime`/`offerLocationName`/`offerCost`,
+  and `ratedMatchCount` populated — `hasProvisionalMmr` qualifies the MMR display below
+  `LobbyFeedItem.provisionalMatchThreshold` rated matches).
 
 ### Professional (Neutral) subtab
 
@@ -145,10 +155,15 @@ freezed) — edit them by hand, no build_runner.
   hidden overscroll-drag, which remains as a bonus).
 - **Booking is real** (`professional_booking` / `professional_service`, `lib/professional/booking_sheet.dart` +
   `booking_controller.dart`): "Đặt lịch" opens a sheet to pick an active service + date/time + optional
-  note, then inserts a `professional_booking` row (`status` defaults `requested`; the professional
-  accepts/rejects out of band — no in-app professional-side flow yet). Payment is out-of-band
-  (`agreed_rate` is informational, not an đá charge). See Manage ▸ Coaching for where a client's
-  bookings surface afterward. **Messaging has no backing flow** (no message/conversation table at
+  note, then inserts a `professional_booking` row (`status` defaults `requested`). **The professional
+  does accept/reject in-app** — `lib/professional/pro_mode/` is a real mode switch
+  (`core/state/pro_mode_state.dart`) that replaces the Manage tab with the pro's own schedule
+  (`pro_schedule_main.dart`), pending requests (`pending_requests_main.dart`, `accept_professional_booking`
+  / `reject_professional_booking`), and booking history. Payment is out-of-band (`agreed_rate` is
+  informational, not an đá charge). See Manage ▸ Coaching for where a client's bookings surface
+  afterward. A referee's confirmed booking that's attached to a lobby-vs-lobby challenge activity
+  additionally offers "Ghi Kết Quả" once the match ends (`record_result_sheet.dart`) — see root
+  CLAUDE.md ▸ Challenger System. **Messaging has no backing flow** (no message/conversation table at
   all) — "Nhắn tin" still shows a "sẽ sớm có mặt" toast.
 - States: loading = skeleton list; empty = `PEmptySectionPlaceholder`; error = `showFToast`
   (destructive) + empty sections (matches the schedule feed). Avatars are initials-on-`primary`;

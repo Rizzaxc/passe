@@ -163,6 +163,7 @@ class _RecordMatchSheetState extends ConsumerState<_RecordMatchSheet> {
             format: (v) => Text(switch (v) {
               LobbyMatchResult.win => 'manageTab.recordMatch.win'.tr(),
               LobbyMatchResult.loss => 'manageTab.recordMatch.loss'.tr(),
+              LobbyMatchResult.draw => 'manageTab.recordMatch.draw'.tr(),
               LobbyMatchResult.practice =>
                 'manageTab.recordMatch.practice'.tr(),
             }),

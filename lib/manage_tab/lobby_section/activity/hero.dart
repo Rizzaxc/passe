@@ -2,7 +2,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -13,8 +12,10 @@ import '../../../../core/model/enum.dart';
 import '../../../../core/payment/pay_recipient.dart';
 import '../../../../ui/button_styles.dart';
 import '../../../../ui/theme.dart';
+import '../../../professional/pending_activity_booking_state.dart';
 import '../../../router.dart';
-import '../invite_challenge_sheet.dart';
+import '../challenge_offer_sheet.dart';
+import '../challenges_controller.dart';
 import '../invite_member_sheet.dart';
 import '../schedule_activity_controller.dart';
 import '../schedule_activity_sheet.dart';
@@ -181,7 +182,7 @@ class _HeroEmpty extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(
               isLeader
-                  ? 'Lên lịch buổi mới hoặc mời lobby khác thách đấu để khởi động.'
+                  ? 'Lên lịch buổi mới, hoặc mở nhận thách đấu để đội khác tìm tới.'
                   : 'Đội trưởng chưa lên lịch buổi nào. Bạn có thể nhắc.',
               style: TextStyle(
                 fontSize: 12.5,
@@ -211,22 +212,11 @@ class _HeroEmpty extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FButton(
-                      size: .sm,
-                      onPress: () => showInviteChallengeSheet(context, lobbyId),
-                      // Match the icon used in Discover ▸ Challenger.
-                      child: const _CTALabel(
-                        icon: FaIcon(
-                          FontAwesomeIcons.fireFlameCurved,
-                          size: 16,
-                        ),
-                        label: 'Mời Thách Đấu',
-                        iconTrailing: true,
-                      ),
-                    ),
-                  ),
+                  // Was "Mời Thách Đấu" — challenging by SearchID from inside
+                  // your own lobby is retired (challenges start from Discover,
+                  // against a lobby that actually opted in). What replaces it
+                  // is the other half of that flow: opting *this* lobby in.
+                  ChallengeOfferControl(lobbyId: lobbyId, canManage: isLeader),
                 ],
               )
             else
@@ -275,26 +265,20 @@ class _HeroEmpty extends ConsumerWidget {
 class _CTALabel extends StatelessWidget {
   final Widget icon;
   final String label;
-  final bool iconTrailing;
 
-  const _CTALabel({
-    required this.icon,
-    required this.label,
-    this.iconTrailing = false,
-  });
+  const _CTALabel({required this.icon, required this.label});
 
   @override
-  Widget build(BuildContext context) {
-    final text = Flexible(
-      child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-    );
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 6,
-      children: iconTrailing ? [text, icon] : [icon, text],
-    );
-  }
+  Widget build(BuildContext context) => Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 6,
+        children: [
+          icon,
+          Flexible(
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+        ],
+      );
 }
 
 // ─── Expanded state ────────────────────────────────────────────
@@ -620,6 +604,17 @@ class _HeroExpanded extends ConsumerWidget {
                       ],
                     ),
                   ],
+                  // Lobby-vs-lobby match: who we're playing, and the manager
+                  // actions that turn an accepted challenge into a real one.
+                  if (upcoming.challenge != null) ...[
+                    const SizedBox(height: 10),
+                    _ChallengeBlock(
+                      lobbyId: lobbyId,
+                      upcoming: upcoming,
+                      challenge: upcoming.challenge!,
+                      isLeader: isLeader,
+                    ),
+                  ],
                   // Hired neutrals (referee / coach) attached to this session.
                   if (upcoming.referee != null || upcoming.coach != null) ...[
                     const SizedBox(height: 10),
@@ -746,6 +741,159 @@ class _HeroExpanded extends ConsumerWidget {
 }
 
 // ─── RSVP avatar strip ──────────────────────────────────────────
+
+/// The challenge half of the hero: opponent + MMR, and the two manager actions
+/// that move an accepted challenge forward.
+///
+/// "Xác nhận trận" is the manager half of official — the RPC refuses until RSVP
+/// quorum is met, and the match only becomes `scheduled` once *both* lobbies
+/// confirm. "Đặt trọng tài" is home-side only (the home team hires the
+/// official) and reuses the existing `PendingActivityBookingState` hand-off,
+/// which already attaches the resulting booking to `referee_booking_id` by the
+/// booked pro's role.
+class _ChallengeBlock extends ConsumerWidget {
+  final String lobbyId;
+  final UpcomingActivity upcoming;
+  final ChallengeContext challenge;
+  final bool isLeader;
+
+  const _ChallengeBlock({
+    required this.lobbyId,
+    required this.upcoming,
+    required this.challenge,
+    required this.isLeader,
+  });
+
+  Future<void> _confirm(BuildContext context, WidgetRef ref) async {
+    final activityId = upcoming.activity.id;
+    if (activityId == null) return;
+    try {
+      await ref
+          .read(confirmChallengeActivityControllerProvider(lobbyId).notifier)
+          .confirm(activityId);
+    } catch (e, st) {
+      Talker().handle(e, st, 'confirm challenge activity failed');
+      if (!context.mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: Text(confirmChallengeErrorMessage(e)),
+        alignment: .bottomCenter,
+      );
+    }
+  }
+
+  void _bookReferee(BuildContext context, WidgetRef ref) {
+    final activityId = upcoming.activity.id;
+    if (activityId != null) {
+      ref.read(pendingActivityBookingStateProvider.notifier).set(activityId);
+    }
+    const HomeProfessionalRoute().go(context);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final busy =
+        ref.watch(confirmChallengeActivityControllerProvider(lobbyId));
+    final confirmed = upcoming.managerConfirmedAt != null;
+    final locked = challenge.status == 'scheduled';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: _crimsonTint,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.sports_kabaddi_outlined, size: 16, color: _crimson),
+              const SizedBox(width: 8),
+              // Opponent names are user-supplied and unbounded — this whole
+              // group has to be able to shrink before the MMR chip does.
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${challenge.weAreHome ? 'Tiếp' : 'Làm khách'} ',
+                        style: TextStyle(color: colors.mutedForeground),
+                      ),
+                      TextSpan(
+                        text: challenge.opponentName,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13, color: _crimson),
+                ),
+              ),
+              if (challenge.opponentMmr != null) ...[
+                const SizedBox(width: 6),
+                Text(
+                  '${challenge.opponentMmr} MMR',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: colors.mutedForeground,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (isLeader && !locked) ...[
+            const SizedBox(height: 8),
+            Row(
+              spacing: 8,
+              children: [
+                Expanded(
+                  child: FButton(
+                    size: .sm,
+                    variant: confirmed ? .outline : .primary,
+                    onPress:
+                        (busy || confirmed) ? null : () => _confirm(context, ref),
+                    child: Text(
+                      confirmed ? 'Chờ đối thủ' : 'Xác Nhận Trận',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                // Only the home side hires the official.
+                if (challenge.weAreHome && upcoming.referee == null)
+                  Expanded(
+                    child: FButton(
+                      size: .sm,
+                      variant: .outline,
+                      onPress: () => _bookReferee(context, ref),
+                      child: const Text(
+                        'Đặt Trọng Tài',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+          if (locked && upcoming.referee == null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Chưa có trọng tài — trận sẽ được ghi nhận nhưng không tính điểm.',
+              style: TextStyle(fontSize: 11, color: colors.mutedForeground),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
 
 class _RsvpAvatarRow extends ConsumerWidget {
   final String activityId;

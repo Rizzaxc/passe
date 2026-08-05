@@ -90,7 +90,7 @@ final class LobbyUpcomingActivityControllerProvider
 }
 
 String _$lobbyUpcomingActivityControllerHash() =>
-    r'b9405d360fba74c316e10a26e6793893690fb0ce';
+    r'fb97413d52720b4b57f0d7a0bb4491fabb75cdf0';
 
 /// Soonest upcoming activity for a lobby, accounting for weekly
 /// recurrence.

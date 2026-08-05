@@ -42,6 +42,47 @@ class AttachedProfessional {
   }
 }
 
+/// The lobby-vs-lobby match behind a challenge activity, resolved from the
+/// `lobby_challenge` embed and flattened to *this* lobby's point of view: who
+/// the opponent is, and whether we are the home (challenged) side.
+///
+/// Home matters twice over: the home lobby set the terms, and it is the side
+/// prompted to hire the referee.
+class ChallengeContext {
+  final String challengeId;
+  final String status; // requested | accepted | scheduled | played | lapsed
+  final String opponentName;
+  final int? opponentMmr;
+  final bool weAreHome;
+  final double? costPerTeam;
+
+  const ChallengeContext({
+    required this.challengeId,
+    required this.status,
+    required this.opponentName,
+    required this.opponentMmr,
+    required this.weAreHome,
+    required this.costPerTeam,
+  });
+
+  /// Parse the embedded `lobby_challenge` row from the perspective of
+  /// [myLobbyId]. Returns null when the activity isn't a challenge one.
+  static ChallengeContext? fromEmbed(Object? embed, String myLobbyId) {
+    if (embed is! Map<String, dynamic>) return null;
+    final weAreHome = embed['target_lobby_id'] == myLobbyId;
+    final opponent =
+        (weAreHome ? embed['initiator'] : embed['target']) as Map<String, dynamic>?;
+    return ChallengeContext(
+      challengeId: embed['id'] as String,
+      status: (embed['status'] as String?) ?? 'accepted',
+      opponentName: (opponent?['name'] as String?) ?? '—',
+      opponentMmr: (opponent?['mmr'] as num?)?.toInt(),
+      weAreHome: weAreHome,
+      costPerTeam: double.tryParse(embed['agreed_cost']?.toString() ?? ''),
+    );
+  }
+}
+
 /// The next "live" activity for a lobby — either an upcoming one-off or
 /// the next virtual occurrence of a recurring series.
 ///
@@ -77,6 +118,15 @@ class UpcomingActivity {
   final AttachedProfessional? coach;
   final AttachedProfessional? referee;
 
+  /// Set when this activity was materialised by accepting a lobby-vs-lobby
+  /// challenge (schema/challenge_flow.sql). Both lobbies get one activity each,
+  /// linked by the same `challenge_id`.
+  final ChallengeContext? challenge;
+
+  /// A challenge activity is official only once RSVP quorum is met *and* a
+  /// manager confirms; this is the second half. Null on ordinary activities.
+  final DateTime? managerConfirmedAt;
+
   const UpcomingActivity({
     required this.activity,
     required this.nextStart,
@@ -91,6 +141,8 @@ class UpcomingActivity {
     required this.confirmationDeadline,
     required this.coach,
     required this.referee,
+    this.challenge,
+    this.managerConfirmedAt,
   });
 
   bool get isRecurring => recurrenceDayOfWeek != null;
@@ -132,7 +184,10 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
           'professional:professional_id(display_name, is_verified)), '
           'referee:professional_booking!activity_referee_booking_id_fkey('
           'id, status, professional_id, '
-          'professional:professional_id(display_name, is_verified))',
+          'professional:professional_id(display_name, is_verified)), '
+          'challenge:lobby_challenge(id, status, target_lobby_id, agreed_cost, '
+          'initiator:initiator_lobby_id(name, mmr), '
+          'target:target_lobby_id(name, mmr))',
         )
         .eq('lobby_id', lobbyId)
         .or(
@@ -173,6 +228,10 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
               : null,
           coach: AttachedProfessional.fromEmbed(row['coach']),
           referee: AttachedProfessional.fromEmbed(row['referee']),
+          challenge: ChallengeContext.fromEmbed(row['challenge'], lobbyId),
+          managerConfirmedAt: row['manager_confirmed_at'] != null
+              ? DateTime.parse(row['manager_confirmed_at'] as String).toLocal()
+              : null,
         );
       }
     }
@@ -188,6 +247,9 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
       ..remove('location')
       ..remove('coach')
       ..remove('referee')
+      ..remove('challenge')
+      ..remove('challenge_id')
+      ..remove('manager_confirmed_at')
       ..remove('recurrence_day_of_week')
       ..remove('location_id')
       ..remove('prepayment_required')
