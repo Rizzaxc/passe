@@ -11,7 +11,7 @@ import 'schedule_activity_controller.dart';
 /// Captain-side "schedule the next play session" flow.
 ///
 /// Opens a form sheet asking for the full activity spec (date / time,
-/// location, recurrence, prepayment, confirmation threshold + deadline)
+/// location, recurrence, cost, confirmation threshold + deadline)
 /// and fires the schedule (or, when [existing] is passed, reschedule)
 /// mutation on the lobby's `ScheduleActivityController`, which inserts
 /// (or updates) the `activity` row and posts a matching feed item.
@@ -57,9 +57,9 @@ class _ScheduleActivitySheetState
 
   bool _recurring = false;
 
-  bool _prepaymentRequired = false;
-  ActivityPaymentType _paymentType = ActivityPaymentType.da;
-  final _amountController = TextEditingController(text: '50');
+  bool _costEnabled = false;
+  ActivityCostType _costType = ActivityCostType.perPax;
+  final _amountController = TextEditingController(text: '50000');
 
   int _confirmationThreshold = 4;
 
@@ -101,12 +101,12 @@ class _ScheduleActivitySheetState
         : _addHours(_start, 2);
     _locationId = existing.locationId;
     _recurring = existing.isRecurring;
-    _prepaymentRequired = existing.prepaymentRequired;
-    _paymentType = existing.paymentType == 'manual'
-        ? ActivityPaymentType.manual
-        : ActivityPaymentType.da;
-    if (existing.prepaymentAmount != null) {
-      _amountController.text = existing.prepaymentAmount!.toString();
+    _costEnabled = existing.costType != null && existing.costAmount != null;
+    _costType = existing.costType == 'total'
+        ? ActivityCostType.total
+        : ActivityCostType.perPax;
+    if (existing.costAmount != null) {
+      _amountController.text = existing.costAmount!.toString();
     }
     _confirmationThreshold = existing.confirmationThreshold ?? 4;
     _deadlineManuallyOff = existing.confirmationDeadline == null;
@@ -227,13 +227,13 @@ class _ScheduleActivitySheetState
     );
 
     final amountText = _amountController.text.trim();
-    final amount = _prepaymentRequired ? num.tryParse(amountText) : null;
-    if (_prepaymentRequired && (amount == null || amount <= 0)) {
+    final amount = _costEnabled ? num.tryParse(amountText) : null;
+    if (_costEnabled && (amount == null || amount <= 0)) {
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.circleAlert),
         variant: .destructive,
-        title: const Text('Số tiền đặt cọc không hợp lệ'),
+        title: const Text('Chi phí không hợp lệ'),
         alignment: .bottomCenter,
       );
       return;
@@ -252,9 +252,8 @@ class _ScheduleActivitySheetState
         start: start,
         end: end,
         locationId: _locationId,
-        prepaymentRequired: _prepaymentRequired,
-        paymentType: _prepaymentRequired ? _paymentType : null,
-        prepaymentAmount: amount,
+        costType: _costEnabled ? _costType : null,
+        costAmount: amount,
         confirmationThreshold: _confirmationThreshold,
         confirmationDeadline: _confirmationDeadline,
         recurrenceDayOfWeek: dayOfWeek,
@@ -264,9 +263,8 @@ class _ScheduleActivitySheetState
         start: start,
         end: end,
         locationId: _locationId,
-        prepaymentRequired: _prepaymentRequired,
-        paymentType: _prepaymentRequired ? _paymentType : null,
-        prepaymentAmount: amount,
+        costType: _costEnabled ? _costType : null,
+        costAmount: amount,
         confirmationThreshold: _confirmationThreshold,
         confirmationDeadline: _confirmationDeadline,
         recurrenceDayOfWeek: dayOfWeek,
@@ -375,27 +373,27 @@ class _ScheduleActivitySheetState
             ],
           ),
 
-          // ── Prepayment section ──────────────────────────────
+          // ── Cost section ─────────────────────────────────────
           _Section(
-            label: 'Đặt cọc',
+            label: 'Chi phí',
             children: [
               _SwitchRow(
                 icon: FLucideIcons.wallet,
-                label: 'Yêu cầu đặt cọc trước',
-                sub: _prepaymentRequired
-                    ? 'Thành viên phải đặt cọc để xác nhận'
-                    : 'Xác nhận miễn phí',
-                value: _prepaymentRequired,
-                onChanged: (v) => setState(() => _prepaymentRequired = v),
+                label: 'Buổi chơi có chi phí',
+                sub: _costEnabled
+                    ? 'Chia tiền tự động sau khi kết thúc'
+                    : 'Miễn phí',
+                value: _costEnabled,
+                onChanged: (v) => setState(() => _costEnabled = v),
               ),
-              if (_prepaymentRequired) ...[
-                _PaymentTypePicker(
-                  value: _paymentType,
-                  onChanged: (v) => setState(() => _paymentType = v),
+              if (_costEnabled) ...[
+                _CostTypePicker(
+                  value: _costType,
+                  onChanged: (v) => setState(() => _costType = v),
                 ),
                 _AmountRow(
                   controller: _amountController,
-                  suffix: _paymentType == ActivityPaymentType.da ? 'Đá' : 'đ',
+                  suffix: 'đ',
                 ),
               ],
             ],
@@ -437,8 +435,8 @@ class _ScheduleActivitySheetState
           ),
           Text(
             'Mọi thành viên sẽ thấy buổi này ở Hoạt động và '
-            '${_prepaymentRequired ? "phải đặt cọc" : "có thể xác nhận"} '
-            'để tham gia.',
+            'có thể xác nhận để tham gia'
+            '${_costEnabled ? ", tiền sẽ được chia sau khi buổi chơi kết thúc" : ""}.',
             style: context.theme.typography.body.sm
                 .copyWith(color: colors.mutedForeground),
           ),
@@ -614,11 +612,11 @@ class _SwitchRow extends StatelessWidget {
   }
 }
 
-class _PaymentTypePicker extends StatelessWidget {
-  final ActivityPaymentType value;
-  final ValueChanged<ActivityPaymentType> onChanged;
+class _CostTypePicker extends StatelessWidget {
+  final ActivityCostType value;
+  final ValueChanged<ActivityCostType> onChanged;
 
-  const _PaymentTypePicker({required this.value, required this.onChanged});
+  const _CostTypePicker({required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -632,15 +630,15 @@ class _PaymentTypePicker extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _PaymentTypeOption(
-            label: 'Đá (app)',
-            active: value == ActivityPaymentType.da,
-            onTap: () => onChanged(ActivityPaymentType.da),
+          _CostTypeOption(
+            label: 'Mỗi người',
+            active: value == ActivityCostType.perPax,
+            onTap: () => onChanged(ActivityCostType.perPax),
           ),
-          _PaymentTypeOption(
-            label: 'Thủ công',
-            active: value == ActivityPaymentType.manual,
-            onTap: () => onChanged(ActivityPaymentType.manual),
+          _CostTypeOption(
+            label: 'Tổng cộng',
+            active: value == ActivityCostType.total,
+            onTap: () => onChanged(ActivityCostType.total),
           ),
         ],
       ),
@@ -648,12 +646,12 @@ class _PaymentTypePicker extends StatelessWidget {
   }
 }
 
-class _PaymentTypeOption extends StatelessWidget {
+class _CostTypeOption extends StatelessWidget {
   final String label;
   final bool active;
   final VoidCallback onTap;
 
-  const _PaymentTypeOption({
+  const _CostTypeOption({
     required this.label,
     required this.active,
     required this.onTap,
@@ -701,7 +699,7 @@ class _AmountRow extends StatelessWidget {
         Expanded(
           child: FTextField(
             label: const Text('Số tiền'),
-            hint: '50',
+            hint: '50000',
             control: FTextFieldControl.managed(controller: controller),
             keyboardType: const TextInputType.numberWithOptions(decimal: false),
           ),

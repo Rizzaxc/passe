@@ -2,18 +2,23 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../ui/main.dart';
 import '../model/user_payment_info.dart';
+import 'preferred_sending_bank_state.dart';
 import 'vietqr_bank.dart';
 import 'vietqr_link_builder.dart';
 
 /// Shows a bottom sheet with a transfer target's VietQR code, a copy button,
-/// a share button, and — where VietQR has a registered deeplink for the
-/// bank — an "open app" button.
+/// a share button, and — once the sender has picked their own banking app
+/// (see [PreferredSendingBankState]) — an "open app" button that opens
+/// *that* app prefilled to pay this target, not the recipient's own bank.
+/// The QR itself is a universal interbank code, scannable by any app, so
+/// that stays the primary way to pay regardless.
 ///
 /// [amount]/[note] prefill the QR/deeplink for a specific payment (e.g. an
 /// activity deposit or a coaching fee); omit both for a plain static display
@@ -30,7 +35,7 @@ Future<void> showPaymentQrSheet(
   );
 }
 
-class _PaymentQrSheetContent extends StatelessWidget {
+class _PaymentQrSheetContent extends ConsumerWidget {
   final UserPaymentInfo info;
   final num? amount;
   final String? note;
@@ -38,9 +43,10 @@ class _PaymentQrSheetContent extends StatelessWidget {
   const _PaymentQrSheetContent({required this.info, this.amount, this.note});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
-    final bank = vietqrBankByBin(info.bankId);
+    final beneficiaryBank = vietqrBankByBin(info.bankId);
+    final preferredBank = ref.watch(preferredSendingBankStateProvider).value;
     final imageUrl = buildVietqrImageUrl(
       bankId: info.bankId,
       accountNo: info.value,
@@ -48,10 +54,11 @@ class _PaymentQrSheetContent extends StatelessWidget {
       amount: amount,
       note: note,
     );
-    final appDeeplink = bank == null
+    final appDeeplink = (beneficiaryBank == null || preferredBank == null)
         ? null
         : buildVietqrAppDeeplink(
-            bank: bank,
+            openWith: preferredBank,
+            beneficiaryBank: beneficiaryBank,
             accountNo: info.value,
             accountName: info.accountName,
             amount: amount,
@@ -123,9 +130,9 @@ class _PaymentQrSheetContent extends StatelessWidget {
             FButton(
               onPress: () => _openApp(context, appDeeplink),
               prefix: const Icon(FLucideIcons.externalLink, size: 16),
-              child: Text('payment.openInApp'.tr(args: [info.bankDisplayName])),
+              child: Text('payment.openInApp'.tr(args: [preferredBank!.shortName])),
             ),
-            if (bank!.autofill)
+            if (preferredBank.autofill)
               Text(
                 'payment.autofillHint'.tr(),
                 textAlign: TextAlign.center,
@@ -133,7 +140,13 @@ class _PaymentQrSheetContent extends StatelessWidget {
                   color: colors.mutedForeground,
                 ),
               ),
-          ],
+          ] else if (preferredBank == null)
+            FButton(
+              variant: .ghost,
+              onPress: () => _choosePreferredBank(context, ref),
+              prefix: const Icon(FLucideIcons.landmark, size: 16),
+              child: Text('payment.setPreferredBank'.tr()),
+            ),
           const SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,4 +215,44 @@ class _PaymentQrSheetContent extends StatelessWidget {
       );
     }
   }
+
+  Future<void> _choosePreferredBank(BuildContext context, WidgetRef ref) async {
+    final chosen = await showPreferredSendingBankPicker(context);
+    if (chosen != null) {
+      ref.read(preferredSendingBankStateProvider.notifier).set(chosen);
+    }
+  }
+}
+
+/// Bottom sheet listing every [VietqrBank] that can be deep-linked into
+/// (i.e. has an [VietqrBank.appId]), for picking a "preferred sending bank".
+/// Shared by the QR sheet's inline prompt and the payment-info settings screen.
+Future<VietqrBank?> showPreferredSendingBankPicker(BuildContext context) {
+  final openableBanks = kVietqrBanks.where((bank) => bank.appId != null).toList();
+  return showPSheet<VietqrBank>(
+    context: context,
+    builder: (context) => SingleChildScrollView(
+      primary: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 12,
+        children: [
+          PSheetTitle(label: 'payment.choosePreferredBank'.tr()),
+          FTileGroup(
+            children: openableBanks
+                .map(
+                  (bank) => FTile(
+                    prefix: const Icon(FLucideIcons.landmark),
+                    title: Text(bank.shortName),
+                    onPress: () => Navigator.of(context).pop(bank),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
 }

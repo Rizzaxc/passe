@@ -23,23 +23,29 @@ String buildVietqrImageUrl({
 }
 
 /// Builds VietQR's app-deeplink redirector URL
-/// (`https://dl.vietqr.io/pay?app=...`) for opening the bank's own app
-/// directly, if that bank has a registered deeplink for the current
-/// platform. Returns null when it doesn't — the caller should hide the
-/// "open app" action in that case rather than show a dead button.
+/// (`https://dl.vietqr.io/pay?app=...`) that opens [openWith] — the
+/// *sender's* own banking app, not necessarily the recipient's — prefilled
+/// to transfer into [beneficiaryBank]'s account. `app` picks which app gets
+/// opened (requires [VietqrBank.appId]); the `ba` beneficiary token is
+/// [beneficiaryBank]'s [VietqrBank.bankCode] regardless of which app that
+/// is, so paying a Vietcombank — or MoMo — recipient by opening your own
+/// Techcombank app still lands the money in the right place. Returns null
+/// when [openWith] has no registered app-deeplink id — the caller should
+/// hide the "open app" action in that case rather than show a dead button.
 Uri? buildVietqrAppDeeplink({
-  required VietqrBank bank,
+  required VietqrBank openWith,
+  required VietqrBank beneficiaryBank,
   required String accountNo,
   String? accountName,
   num? amount,
   String? note,
 }) {
-  final appId = bank.appId;
+  final appId = openWith.appId;
   if (appId == null) return null;
 
   return Uri.https('dl.vietqr.io', '/pay', {
     'app': appId,
-    'ba': '$accountNo@$appId',
+    'ba': '$accountNo@${beneficiaryBank.bankCode}',
     if (accountName != null && accountName.isNotEmpty) 'bn': accountName,
     if (amount != null) 'am': amount.round().toString(),
     if (note != null && note.isNotEmpty) 'tn': note,

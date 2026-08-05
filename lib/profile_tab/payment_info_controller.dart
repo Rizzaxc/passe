@@ -8,8 +8,9 @@ import '../core/payment/vietqr_bank.dart';
 
 part 'payment_info_controller.g.dart';
 
-/// The signed-in user's own payment info list — a plain immediately-
-/// persisted list (add/delete write straight through), unlike
+/// The signed-in user's own payment info — capped to one row per user
+/// (`user_payment_info_user_id_key`), so this list is always 0 or 1 long.
+/// Plain immediately-persisted writes (add upserts, delete clears), unlike
 /// `ProfileController`'s draft/commit pattern, since there's no batching
 /// benefit here and an add can involve picking a bank from a live form.
 @riverpod

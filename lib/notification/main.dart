@@ -104,6 +104,8 @@ IconData _iconFor(NotificationKind? kind) => switch (kind) {
   NotificationKind.professionalBookingRejected => FLucideIcons.briefcase,
   NotificationKind.friendRequest ||
   NotificationKind.friendAccepted => FLucideIcons.userPlus,
+  NotificationKind.paymentRequested ||
+  NotificationKind.debtCollected => FLucideIcons.wallet,
   null => FLucideIcons.bell,
 };
 

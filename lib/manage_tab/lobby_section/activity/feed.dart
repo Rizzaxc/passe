@@ -5,7 +5,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../ui/theme.dart';
+import '../../../auth/auth_controller.dart';
 import '../../../core/model/wall_post.dart';
+import '../../../core/payment/pay_recipient.dart';
 import '../../../feed_tab/post_card.dart';
 import 'feed_controller.dart';
 
@@ -214,6 +216,26 @@ sealed class FeedItem {
           myVote: (row['my_vote'] as num?)?.toInt(),
         );
 
+      case 'payment_request':
+        final payeesRaw = row['payment_payees'] as List?;
+        return PaymentRequestItem(
+          id: row['id'] as String,
+          author: author,
+          authorId: authorId,
+          time: time,
+          type: payload['type'] as String,
+          sourceActivityId: payload['source_activity_id'] as String?,
+          recipientId: payload['recipient_id'] as String,
+          costType: payload['cost_type'] as String?,
+          totalAmount: payload['total_amount'] as num,
+          perPersonAmount: payload['per_person_amount'] as num,
+          note: payload['note'] as String?,
+          payees: payeesRaw
+                  ?.map((p) => PaymentPayee.fromJson(p as Map<String, dynamic>))
+                  .toList() ??
+              const [],
+        );
+
       // `photo` is no longer a natively-written kind — lobby_feed_data
       // synthesises these rows from `wall_post` (see
       // schema/lobby_feed_wall_posts.sql), so the payload is a full wall post,
@@ -312,6 +334,66 @@ final class WallPostItem extends FeedItem {
   const WallPostItem({required this.post});
 }
 
+/// One tagged payer on a [PaymentRequestItem] — who owes what, and whether
+/// they've self-reported paying (a `lobby_feed_item_reaction` row, best
+/// effort, no ledger behind it).
+class PaymentPayee {
+  final String userId;
+  final String username;
+  final num amountOwed;
+  final bool paid;
+
+  const PaymentPayee({
+    required this.userId,
+    required this.username,
+    required this.amountOwed,
+    required this.paid,
+  });
+
+  factory PaymentPayee.fromJson(Map<String, dynamic> j) => PaymentPayee(
+    userId: j['user_id'] as String,
+    username: j['username'] as String,
+    amountOwed: j['amount_owed'] as num,
+    paid: j['paid'] as bool,
+  );
+}
+
+/// A payment request — either `split` (chia tiền, auto-created after a
+/// session with a cost ends) or `ancillary` (đòi tiền trà đá, started by hand
+/// by any attendee). `recipientId` is who the money is owed to; `payees` is
+/// who owes it. See schema/lobby_payment_requests.sql.
+final class PaymentRequestItem extends FeedItem {
+  final String id;
+  final String author;
+  final String? authorId;
+  final String time;
+  final String type; // 'split' | 'ancillary'
+  final String? sourceActivityId;
+  final String recipientId;
+  final String? costType; // 'per_pax' | 'total' — split only
+  final num totalAmount;
+  final num perPersonAmount;
+  final String? note;
+  final List<PaymentPayee> payees;
+
+  const PaymentRequestItem({
+    required this.id,
+    required this.author,
+    required this.authorId,
+    required this.time,
+    required this.type,
+    required this.sourceActivityId,
+    required this.recipientId,
+    required this.costType,
+    required this.totalAmount,
+    required this.perPersonAmount,
+    required this.note,
+    required this.payees,
+  });
+
+  bool get isFullyPaid => payees.isNotEmpty && payees.every((p) => p.paid);
+}
+
 // ─── Feed item widget router ────────────────────────────────────
 
 class FeedItemWidget extends StatelessWidget {
@@ -334,6 +416,11 @@ class FeedItemWidget extends StatelessWidget {
       final SystemItem s => _SystemEvent(item: s),
       final PollItem po => _PollCard(
         item: po,
+        lobbyId: lobbyId,
+        captainId: captainId,
+      ),
+      final PaymentRequestItem pr => _PaymentRequestCard(
+        item: pr,
         lobbyId: lobbyId,
         captainId: captainId,
       ),
@@ -1008,6 +1095,273 @@ class _PollOption extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Payment request card (chia tiền / đòi tiền trà đá) ────────
+
+class _PaymentRequestCard extends ConsumerStatefulWidget {
+  final PaymentRequestItem item;
+  final String lobbyId;
+  final String? captainId;
+  const _PaymentRequestCard({
+    required this.item,
+    required this.lobbyId,
+    required this.captainId,
+  });
+
+  @override
+  ConsumerState<_PaymentRequestCard> createState() => _PaymentRequestCardState();
+}
+
+class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
+  bool _marking = false;
+
+  Future<void> _markPaid() async {
+    if (_marking) return;
+    setState(() => _marking = true);
+    try {
+      await ref
+          .read(lobbyFeedControllerProvider(widget.lobbyId).notifier)
+          .markPaymentRequestPaid(widget.item.id);
+    } catch (e, st) {
+      Talker().handle(e, st, 'Mark payment request paid failed');
+      if (mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: const Text('Không thể xác nhận đã trả'),
+          alignment: .bottomCenter,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _marking = false);
+    }
+  }
+
+  Future<void> _pay(num amount) async {
+    await payRecipient(
+      context,
+      recipientUserId: widget.item.recipientId,
+      amount: amount,
+      note: widget.item.note ?? 'Chia tiền buổi chơi',
+      emptyMessage: 'Người nhận chưa có thông tin thanh toán',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final item = widget.item;
+    final currentUserId = ref.watch(currentUserIdProvider);
+    PaymentPayee? myPayee;
+    if (currentUserId != null) {
+      for (final p in item.payees) {
+        if (p.userId == currentUserId) {
+          myPayee = p;
+          break;
+        }
+      }
+    }
+    final isSplit = item.type == 'split';
+    final fg = item.isFullyPaid ? pbGreen : _amber;
+    final bg = item.isFullyPaid ? _greenTint : _amberTint;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _AuthorRow(
+            name: item.author,
+            authorId: item.authorId,
+            captainId: widget.captainId,
+            time: item.time,
+          ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.only(left: 35),
+            child: Container(
+              decoration: BoxDecoration(
+                color: colors.card,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: colors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 6,
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    color: bg,
+                    child: Row(
+                      children: [
+                        Icon(
+                          isSplit
+                              ? Icons.pie_chart_outline_rounded
+                              : Icons.local_cafe_outlined,
+                          size: 13,
+                          color: fg,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          isSplit ? 'CHIA TIỀN' : 'ĐÒI TIỀN',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: fg,
+                            letterSpacing: 0.7,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (item.isFullyPaid)
+                          Text(
+                            'Đã thu đủ',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: fg,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(13),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (item.note != null && item.note!.isNotEmpty) ...[
+                          Text(
+                            item.note!,
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF09090B),
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                        ],
+                        Text(
+                          '${item.perPersonAmount.toStringAsFixed(0)}đ / người'
+                          ' · Tổng ${item.totalAmount.toStringAsFixed(0)}đ',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            color: colors.mutedForeground,
+                          ),
+                        ),
+                        const SizedBox(height: 9),
+                        for (final payee in item.payees)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 22,
+                                  height: 22,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: _memberColor(payee.username),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    payee.username.isNotEmpty
+                                        ? payee.username[0].toUpperCase()
+                                        : '?',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 7),
+                                Expanded(
+                                  child: Text(
+                                    payee.username,
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  payee.paid
+                                      ? 'Đã trả'
+                                      : '${payee.amountOwed.toStringAsFixed(0)}đ',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color:
+                                        payee.paid ? pbGreen : colors.mutedForeground,
+                                  ),
+                                ),
+                                if (payee.paid) ...[
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    Icons.check_circle,
+                                    size: 14,
+                                    color: pbGreen,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        if (myPayee case final payee? when !payee.paid) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: FButton(
+                                  variant: .outline,
+                                  onPress: () => _pay(payee.amountOwed),
+                                  child: const Text('Thanh Toán'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: FButton(
+                                  onPress: _marking ? null : _markPaid,
+                                  child: _marking
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text('Tôi Đã Trả'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

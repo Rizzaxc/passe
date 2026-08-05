@@ -76,11 +76,15 @@ Judgment calls made along the way, in case they need revisiting:
   member's hero card / upcoming-activity query silently returned nothing. **This migration needs to be
   applied to the live Supabase project** (schema files here are dumped for review, not auto-applied).
 - **Countdown/date/time/location** on the hero card now come from `upcoming_controller.dart`'s
-  `UpcomingActivity` (extended with a `location(name, district)` join + the prepayment/confirmation
+  `UpcomingActivity` (extended with a `location(name, district)` join + the cost/confirmation
   columns that used to be fetched then thrown away by `_stripExtras`). The old mock also showed a
   pitch/court-number and match-format tag ("Sân 3", "Đôi nam nữ") — there's no such column on
-  `activity`, so those are just gone rather than faked; only a prepayment tag shows now, and only when
-  `prepayment_required` is true.
+  `activity`, so those are just gone rather than faked; only a cost tag shows now, and only when
+  `cost_type`/`cost_amount` are set. **(2026-08 pass)** the old pre-session `prepayment_required`/
+  `payment_type`/`prepayment_amount` deposit model (and its dead `'da'` branch — đá was never wired)
+  is gone; `cost_type` (`per_pax`/`total`) + `cost_amount` are purely informational at scheduling
+  time, and money actually changes hands post-session via the payment-request feature (chia tiền /
+  đòi tiền trà đá — see root CLAUDE.md).
 - **RSVP avatar strip** (`_RsvpAvatarRow`) now queries a small sample of `activity_confirmation` rows
   (new `activityAttendeesProvider` in `confirmation_controller.dart`) instead of 5 hardcoded
   letter/color pairs. It's capped at 6 rows and not paginated — fine for a decorative strip, not meant

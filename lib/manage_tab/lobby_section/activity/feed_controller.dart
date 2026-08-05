@@ -100,4 +100,38 @@ class LobbyFeedController extends _$LobbyFeedController {
     ref.invalidateSelf();
     await future;
   }
+
+  /// Start an ancillary payment request ("đòi tiền trà đá") against tagged
+  /// lobby mates — any confirmed (going) attendee of [activityId] can call
+  /// this, not just the captain/coordinator. Splits [amount] equally
+  /// (rounded up to the nearest 1000đ, server-side) across [taggedUserIds].
+  Future<void> createAncillaryPaymentRequest({
+    required String activityId,
+    required num amount,
+    String? note,
+    required List<String> taggedUserIds,
+  }) async {
+    await supabase.rpc('create_ancillary_payment_request', params: {
+      'p_activity_id': activityId,
+      'p_total_amount': amount,
+      'p_note': note,
+      'p_tagged_users': taggedUserIds,
+    }).timeout(const Duration(seconds: 5));
+
+    ref.invalidateSelf();
+    await future;
+  }
+
+  /// Self-report "I've paid" on a payment-request feed item
+  /// (`mark_payment_request_paid`). Best-effort — no ledger backs this, it's
+  /// just a per-user ack the RPC turns into a `lobby_feed_item_reaction` row.
+  /// Once every tagged payee has acked, the RPC notifies the recipient.
+  Future<void> markPaymentRequestPaid(String feedItemId) async {
+    await supabase
+        .rpc('mark_payment_request_paid', params: {'p_feed_item_id': feedItemId})
+        .timeout(const Duration(seconds: 5));
+
+    ref.invalidateSelf();
+    await future;
+  }
 }

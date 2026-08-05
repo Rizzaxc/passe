@@ -63,6 +63,13 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
       userId == null ? null : UserRoute(id: userId).location,
     NotificationKind.friendAccepted =>
       userId == null ? null : UserRoute(id: userId).location,
+    // Both payment-request kinds land wherever the feed item lives — the
+    // recipient's own lobby (the server sends one enqueue call per lobby,
+    // same convention as the challenge kinds above).
+    NotificationKind.paymentRequested =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    NotificationKind.debtCollected =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
   };
 }
 

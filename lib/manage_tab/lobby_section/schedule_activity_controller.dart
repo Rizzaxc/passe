@@ -8,15 +8,16 @@ import 'lobby_detail_controller.dart';
 
 part 'schedule_activity_controller.g.dart';
 
-/// Payment surface picked when an activity requires a deposit.
+/// Shape of an activity's informational cost, settled post-session via the
+/// payment-request feature (chia tiền), not collected at scheduling time.
 ///
-/// Mirrors the `activity_payment_type` enum on the DB side.
-enum ActivityPaymentType {
-  manual('manual'),
-  da('da');
+/// Mirrors the `activity_cost_type` enum on the DB side.
+enum ActivityCostType {
+  perPax('per_pax'),
+  total('total');
 
   final String db;
-  const ActivityPaymentType(this.db);
+  const ActivityCostType(this.db);
 }
 
 @riverpod
@@ -30,9 +31,8 @@ class ScheduleActivityController extends _$ScheduleActivityController {
     required DateTime start,
     required DateTime end,
     String? locationId,
-    bool prepaymentRequired = false,
-    ActivityPaymentType? paymentType,
-    num? prepaymentAmount,
+    ActivityCostType? costType,
+    num? costAmount,
     int? confirmationThreshold,
     DateTime? confirmationDeadline,
 
@@ -53,13 +53,12 @@ class ScheduleActivityController extends _$ScheduleActivityController {
         'lobby_id': lobbyId,
         'start_time': start.toUtc().toIso8601String(),
         'end_time': end.toUtc().toIso8601String(),
-        'prepayment_required': prepaymentRequired,
       };
 
       if (locationId != null) params['location_id'] = locationId;
-      if (prepaymentRequired && paymentType != null) {
-        params['payment_type'] = paymentType.db;
-        params['prepayment_amount'] = prepaymentAmount;
+      if (costType != null && costAmount != null) {
+        params['cost_type'] = costType.db;
+        params['cost_amount'] = costAmount;
       }
       if (confirmationThreshold != null) {
         params['confirmation_threshold'] = confirmationThreshold;
@@ -95,10 +94,12 @@ class ScheduleActivityController extends _$ScheduleActivityController {
                 ['Ngày', _fmtDate(start)],
                 ['Giờ', '${_fmtTime(start)} - ${_fmtTime(end)}'],
                 if (recurrenceDayOfWeek != null) ['Lặp lại', 'Hằng tuần'],
-                if (prepaymentRequired && prepaymentAmount != null)
+                if (costType != null && costAmount != null)
                   [
-                    'Đặt cọc',
-                    '$prepaymentAmount ${paymentType == ActivityPaymentType.da ? 'Đá' : 'đ'}',
+                    'Chi phí',
+                    costType == ActivityCostType.perPax
+                        ? '$costAmount đ/người'
+                        : '$costAmount đ (tổng)',
                   ],
               ],
             },
@@ -122,9 +123,8 @@ class ScheduleActivityController extends _$ScheduleActivityController {
     required DateTime start,
     required DateTime end,
     String? locationId,
-    bool prepaymentRequired = false,
-    ActivityPaymentType? paymentType,
-    num? prepaymentAmount,
+    ActivityCostType? costType,
+    num? costAmount,
     int? confirmationThreshold,
     DateTime? confirmationDeadline,
 
@@ -142,9 +142,8 @@ class ScheduleActivityController extends _$ScheduleActivityController {
             'start_time': start.toUtc().toIso8601String(),
             'end_time': end.toUtc().toIso8601String(),
             'location_id': locationId,
-            'prepayment_required': prepaymentRequired,
-            'payment_type': prepaymentRequired ? paymentType?.db : null,
-            'prepayment_amount': prepaymentRequired ? prepaymentAmount : null,
+            'cost_type': costType != null && costAmount != null ? costType.db : null,
+            'cost_amount': costType != null && costAmount != null ? costAmount : null,
             'confirmation_threshold': confirmationThreshold,
             'confirmation_deadline': confirmationDeadline
                 ?.toUtc()

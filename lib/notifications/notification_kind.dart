@@ -15,7 +15,9 @@ enum NotificationKind {
   professionalBookingConfirmed('professional_booking_confirmed'),
   professionalBookingRejected('professional_booking_rejected'),
   friendRequest('friend_request'),
-  friendAccepted('friend_accepted');
+  friendAccepted('friend_accepted'),
+  paymentRequested('payment_requested'),
+  debtCollected('debt_collected');
 
   const NotificationKind(this.value);
 

@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../core/model/user_payment_info.dart';
 import '../core/payment/payment_qr_sheet.dart';
+import '../core/payment/preferred_sending_bank_state.dart';
 import '../core/payment/vietqr_bank.dart';
 import '../ui/main.dart';
 import 'payment_info_controller.dart';
@@ -66,9 +67,7 @@ class PaymentInfoSelectionScreen extends ConsumerWidget {
                   : Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: FTileGroup(
-                        children: entries
-                            .map((entry) => _buildTile(context, ref, entry))
-                            .toList(),
+                        children: [_buildTile(context, ref, entries.first)],
                       ),
                     ),
               loading: () => const Padding(
@@ -87,7 +86,43 @@ class PaymentInfoSelectionScreen extends ConsumerWidget {
                 variant: .outline,
                 onPress: () => _showAddPaymentInfoSheet(context, ref),
                 prefix: const Icon(FLucideIcons.plus, size: 16),
-                child: Text('profile.addPaymentInfo'.tr()),
+                child: Text(
+                  (entriesAsync.value?.isNotEmpty ?? false)
+                      ? 'profile.changePaymentInfo'.tr()
+                      : 'profile.addPaymentInfo'.tr(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              child: Text(
+                'payment.preferredBankExplanation'.tr(),
+                style: context.theme.typography.body.sm.copyWith(
+                  color: context.theme.colors.mutedForeground,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: FTileGroup(
+                children: [
+                  FTile(
+                    prefix: const Icon(FLucideIcons.smartphone),
+                    title: Text('payment.preferredBank'.tr()),
+                    subtitle: Text(
+                      ref.watch(preferredSendingBankStateProvider).value?.shortName ??
+                          'payment.preferredBankNotSet'.tr(),
+                    ),
+                    onPress: () async {
+                      final chosen = await showPreferredSendingBankPicker(context);
+                      if (chosen != null) {
+                        ref.read(preferredSendingBankStateProvider.notifier).set(chosen);
+                      }
+                    },
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),

@@ -90,7 +90,7 @@ class ChallengeContext {
 /// stored row's `start_time` when the row is a recurring template
 /// whose first occurrence has already happened).
 ///
-/// The fields below (location, prepayment, confirmation) come straight off
+/// The fields below (location, cost, confirmation) come straight off
 /// the `activity` row / its `location` join but aren't part of the shared
 /// `Activity` freezed model, so they're carried here instead of bloating a
 /// model used elsewhere in the app.
@@ -106,9 +106,10 @@ class UpcomingActivity {
   final String? locationName;
   final String? locationDistrict;
 
-  final bool prepaymentRequired;
-  final String? paymentType; // 'manual' | 'da'
-  final num? prepaymentAmount;
+  /// Informational cost, settled post-session via the payment-request
+  /// feature (chia tiền) — not collected at scheduling time.
+  final String? costType; // 'per_pax' | 'total'
+  final num? costAmount;
 
   final int? confirmationThreshold;
   final DateTime? confirmationDeadline;
@@ -134,9 +135,8 @@ class UpcomingActivity {
     required this.locationId,
     required this.locationName,
     required this.locationDistrict,
-    required this.prepaymentRequired,
-    required this.paymentType,
-    required this.prepaymentAmount,
+    required this.costType,
+    required this.costAmount,
     required this.confirmationThreshold,
     required this.confirmationDeadline,
     required this.coach,
@@ -218,9 +218,8 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
           locationId: row['location_id'] as String?,
           locationName: location?['name'] as String?,
           locationDistrict: location?['district'] as String?,
-          prepaymentRequired: (row['prepayment_required'] as bool?) ?? false,
-          paymentType: row['payment_type'] as String?,
-          prepaymentAmount: row['prepayment_amount'] as num?,
+          costType: row['cost_type'] as String?,
+          costAmount: row['cost_amount'] as num?,
           confirmationThreshold:
               (row['confirmation_threshold'] as num?)?.toInt(),
           confirmationDeadline: row['confirmation_deadline'] != null
@@ -240,7 +239,7 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
 
   /// Strip columns the freezed `Activity.fromJson` doesn't know about
   /// so the deserialisation succeeds. The augmented fields (location join,
-  /// recurrence, prepayment, confirmation) are read directly from the row
+  /// recurrence, cost, confirmation) are read directly from the row
   /// above and carried on `UpcomingActivity` instead.
   Map<String, dynamic> _stripExtras(Map<String, dynamic> row) {
     return {...row}
@@ -252,9 +251,8 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
       ..remove('manager_confirmed_at')
       ..remove('recurrence_day_of_week')
       ..remove('location_id')
-      ..remove('prepayment_required')
-      ..remove('payment_type')
-      ..remove('prepayment_amount')
+      ..remove('cost_type')
+      ..remove('cost_amount')
       ..remove('confirmation_threshold')
       ..remove('confirmation_deadline');
   }

@@ -1,15 +1,12 @@
 // Pinned activity hero — empty state and expanded state
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
-import '../../../../auth/auth_controller.dart';
 import '../../../../auth/guest_prompt.dart';
 import '../../../../core/model/enum.dart';
-import '../../../../core/payment/pay_recipient.dart';
 import '../../../../ui/button_styles.dart';
 import '../../../../ui/theme.dart';
 import '../../../professional/pending_activity_booking_state.dart';
@@ -21,6 +18,7 @@ import '../schedule_activity_controller.dart';
 import '../schedule_activity_sheet.dart';
 import 'confirmation_controller.dart';
 import 'feed_controller.dart';
+import 'payment_request_sheet.dart';
 import 'upcoming_controller.dart';
 
 // ─── Color tokens ──────────────────────────────────────────────
@@ -332,11 +330,12 @@ class _HeroExpanded extends ConsumerWidget {
         '${start.minute.toString().padLeft(2, '0')}';
   }
 
-  String? _prepaymentLabel() {
-    final amount = upcoming.prepaymentAmount;
-    if (!upcoming.prepaymentRequired || amount == null) return null;
-    final unit = upcoming.paymentType == 'da' ? 'Đá' : 'đ';
-    return '${amount.toStringAsFixed(0)} $unit';
+  String? _costLabel() {
+    final amount = upcoming.costAmount;
+    if (upcoming.costType == null || amount == null) return null;
+    return upcoming.costType == 'per_pax'
+        ? '${amount.toStringAsFixed(0)}đ/người'
+        : '${amount.toStringAsFixed(0)}đ (tổng)';
   }
 
   Future<void> _copyAddress(BuildContext context) async {
@@ -357,20 +356,6 @@ class _HeroExpanded extends ConsumerWidget {
 
   void _openReschedule(BuildContext context) {
     showScheduleActivitySheet(context, lobbyId, existing: upcoming);
-  }
-
-  Future<void> _payHost(BuildContext context) async {
-    final hostId = captainId;
-    final amount = upcoming.prepaymentAmount;
-    if (hostId == null || amount == null) return;
-
-    await payRecipient(
-      context,
-      recipientUserId: hostId,
-      amount: amount,
-      note: 'payment.depositNote'.tr(args: [_dateLabel()]),
-      emptyMessage: 'payment.hostNoPaymentInfo'.tr(),
-    );
   }
 
   void _confirmCancel(BuildContext context, WidgetRef ref) {
@@ -460,16 +445,7 @@ class _HeroExpanded extends ConsumerWidget {
     }
 
     final activityId = _activityId;
-    final prepaymentLabel = _prepaymentLabel();
-    final currentUserId = ref.watch(currentUserIdProvider);
-    // 'da' (đá) deposits aren't real money yet (no ledger) — only a
-    // 'manual' (out-of-app) prepayment has an actual bank/wallet transfer
-    // to make. Never show this to the captain paying themselves.
-    final canPayHost = upcoming.prepaymentRequired &&
-        upcoming.prepaymentAmount != null &&
-        upcoming.paymentType != 'da' &&
-        captainId != null &&
-        captainId != currentUserId;
+    final costLabel = _costLabel();
 
     return Padding(
       // See _HeroEmpty above — 4-px inset aligns with tab pill edges.
@@ -591,13 +567,13 @@ class _HeroExpanded extends ConsumerWidget {
                       ],
                     ),
                   ],
-                  if (prepaymentLabel != null) ...[
+                  if (costLabel != null) ...[
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 6,
                       children: [
                         _Tag(
-                          text: 'Đặt cọc $prepaymentLabel',
+                          text: 'Chi phí $costLabel',
                           icon: Icons.account_balance_wallet_outlined,
                           tone: 'neutral',
                         ),
@@ -697,12 +673,16 @@ class _HeroExpanded extends ConsumerWidget {
                                 onTap: () =>
                                     showInviteMemberSheet(context, lobbyId),
                               ),
-                              if (canPayHost) ...[
+                              if (status?.myAttendance == Attendance.going) ...[
                                 const SizedBox(width: 6),
                                 _QuickAction(
-                                  icon: Icons.qr_code_rounded,
-                                  label: 'Trả Tiền',
-                                  onTap: () => _payHost(context),
+                                  icon: Icons.local_cafe_outlined,
+                                  label: 'Đòi Tiền',
+                                  onTap: () => showPaymentRequestSheet(
+                                    context,
+                                    lobbyId: lobbyId,
+                                    activityId: _activityId,
+                                  ),
                                 ),
                               ],
                             ],
