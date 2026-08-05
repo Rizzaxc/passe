@@ -19,9 +19,15 @@ class LobbyDetailController extends _$LobbyDetailController {
   Future<LobbyDetailInfo> build(String lobbyId) async {
     final supabase = Supabase.instance.client;
 
+    // `lobby` has two FKs to `location` (`home_ground` and
+    // `challenge_offer_location`, the latter added for the Challenger
+    // System's offer terms), so an unqualified `location(...)` embed is
+    // ambiguous — PostgREST rejects it with a 300/PGRST201 ("more than one
+    // relationship was found"). Pin the FK explicitly to keep resolving the
+    // homeground, not the challenge-offer venue.
     final row = await supabase
         .from('lobby')
-        .select('*, location(name)')
+        .select('*, location!lobby_home_ground_fkey(name)')
         .eq('id', lobbyId)
         .single()
         .timeout(const Duration(seconds: 5));

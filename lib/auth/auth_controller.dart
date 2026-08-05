@@ -66,6 +66,18 @@ class AuthController extends _$AuthController {
 
   @override
   Future<PasseUser?> build() async {
+    // `onAuthStateChange` is backed by a `BehaviorSubject` (see
+    // gotrue_client.dart), so it replays the already-fired `initialSession`
+    // event to us the instant we `.listen()` below — potentially *during*
+    // this very `build()` call, before its return value has been applied as
+    // the provider's state. Riverpod doesn't allow assigning `state` before
+    // the initial build resolves, so letting that replayed event through
+    // here races (and can wedge) the resolution step 4 below already
+    // performs for that exact case. Skip only that one first delivery —
+    // step 4 already covers it — while still handling every later real
+    // event (a subsequent sign-in, token refresh, etc.) normally.
+    var skippedReplayedInitialEvent = false;
+
     // 1. Setup Auth Subscription
     final authSubscription = supabase.auth.onAuthStateChange.listen((data) async {
       final event = data.event;
@@ -73,6 +85,10 @@ class AuthController extends _$AuthController {
           event == AuthChangeEvent.signedIn ||
           event == AuthChangeEvent.userUpdated ||
           event == AuthChangeEvent.tokenRefreshed) {
+        if (!skippedReplayedInitialEvent) {
+          skippedReplayedInitialEvent = true;
+          return;
+        }
         // Reload state from server; if offline/unreachable, fall back to cached data (within TTL).
         state = const AsyncValue.loading();
 
@@ -117,9 +133,25 @@ class AuthController extends _$AuthController {
       }
     });
 
-    // 4. Guest and/or offline-safe logic
-    // Always return cached data (if fresh). Fresh data will be loaded by the
-    // auth listener when `initialSession`/`signedIn` fires.
+    // 4. Resolve the initial state.
+    // `Supabase.initialize()` in `main()` awaits its own session restoration,
+    // so `currentSession` is already populated here for a returning user —
+    // load the real user now instead of trusting only our app-level cache.
+    // That cache carries its own 24h TTL (`_offlineTtl`) independent of the
+    // Supabase session, so it can be empty/expired while the session is
+    // still perfectly valid; returning `null` in that case used to resolve
+    // `build()` to a signed-out state for one frame, which the router reads
+    // as "no user" and bounces to `/welcome` — visible as the welcome
+    // flow's first slide flashing before the `initialSession` auth event
+    // (handled below) corrects it moments later. Going straight to the
+    // server when a session exists avoids that detour entirely.
+    if (supabase.auth.currentSession != null) {
+      try {
+        return await _loadFromServer();
+      } catch (_) {
+        return _loadFromStorage();
+      }
+    }
     return _loadFromStorage();
   }
 

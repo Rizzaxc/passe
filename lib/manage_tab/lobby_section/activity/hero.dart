@@ -18,6 +18,7 @@ import '../schedule_activity_controller.dart';
 import '../schedule_activity_sheet.dart';
 import 'confirmation_controller.dart';
 import 'feed_controller.dart';
+import 'hero_collapse_state.dart';
 import 'payment_request_sheet.dart';
 import 'upcoming_controller.dart';
 
@@ -59,6 +60,18 @@ class ActivityHero extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // User-controlled density preference (persisted) — collapses the whole
+    // hero, empty or not, into one slim "Lên Lịch" button. Independent of
+    // `compact`, the transient scroll-driven collapse.
+    final collapsed = ref.watch(heroCollapsedStateProvider).value ?? false;
+    if (collapsed) {
+      return _HeroCollapsedButton(
+        lobbyId: lobbyId,
+        upcoming: upcoming,
+        isLeader: isLeader,
+      );
+    }
+
     final activity = upcoming;
     if (activity == null) {
       return _HeroEmpty(lobbyId: lobbyId, isLeader: isLeader);
@@ -134,124 +147,139 @@ class _HeroEmpty extends ConsumerWidget {
       // card edge lines up with the tab pill edge (the FTabs widget
       // itself is wrapped by Padding(horizontal: 14) at the page level).
       padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(12),
-          // Solid border instead of a hand-painted dashed one — the
-          // dashed painter produced visibly stepped corners at this
-          // width because the dash spacing didn't divide evenly around
-          // the perimeter and used butt caps on the rounded arcs.
-          border: Border.all(color: colors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+            decoration: BoxDecoration(
+              color: colors.card,
+              borderRadius: BorderRadius.circular(12),
+              // Solid border instead of a hand-painted dashed one — the
+              // dashed painter produced visibly stepped corners at this
+              // width because the dash spacing didn't divide evenly around
+              // the perimeter and used butt caps on the rounded arcs.
+              border: Border.all(color: colors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: const BoxDecoration(
-                color: _crimsonTint,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.calendar_today_outlined,
-                size: 22,
-                color: _crimson,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Chưa có buổi chơi nào',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF09090B),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              isLeader
-                  ? 'Lên lịch buổi mới, hoặc mở nhận thách đấu để đội khác tìm tới.'
-                  : 'Đội trưởng chưa lên lịch buổi nào. Bạn có thể nhắc.',
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w400,
-                color: colors.mutedForeground,
-                height: 1.45,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            if (isLeader)
-              Column(
-                spacing: 8,
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: FButton(
-                      size: .sm,
-                      style: FButtonStyleExtension.accentBlueStyle(
-                        context.theme.buttonStyles.primary.base,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: _crimsonTint,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 22,
+                    color: _crimson,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Chưa có buổi chơi nào',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF09090B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isLeader
+                      ? 'Lên lịch buổi mới, hoặc mở nhận thách đấu để đội khác tìm tới.'
+                      : 'Đội trưởng chưa lên lịch buổi nào. Bạn có thể nhắc.',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w400,
+                    color: colors.mutedForeground,
+                    height: 1.45,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                if (isLeader)
+                  Column(
+                    spacing: 8,
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: FButton(
+                          size: .sm,
+                          style: FButtonStyleExtension.accentBlueStyle(
+                            context.theme.buttonStyles.primary.base,
+                          ),
+                          onPress: () =>
+                              showScheduleActivitySheet(context, lobbyId),
+                          child: const _CTALabel(
+                            icon: Icon(Icons.calendar_month_outlined, size: 16),
+                            label: 'Lên Lịch',
+                          ),
+                        ),
                       ),
-                      onPress: () =>
-                          showScheduleActivitySheet(context, lobbyId),
-                      child: const _CTALabel(
-                        icon: Icon(Icons.calendar_month_outlined, size: 16),
-                        label: 'Lên Lịch',
+                      // Was "Mời Thách Đấu" — challenging by SearchID from inside
+                      // your own lobby is retired (challenges start from Discover,
+                      // against a lobby that actually opted in). What replaces it
+                      // is the other half of that flow: opting *this* lobby in.
+                      ChallengeOfferControl(
+                        lobbyId: lobbyId,
+                        canManage: isLeader,
+                      ),
+                    ],
+                  )
+                else
+                  GestureDetector(
+                    onTap: () => _remindCaptain(context, ref),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.secondary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            FLucideIcons.bell,
+                            size: 14,
+                            color: colors.secondaryForeground,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Nhắc đội trưởng',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: colors.secondaryForeground,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  // Was "Mời Thách Đấu" — challenging by SearchID from inside
-                  // your own lobby is retired (challenges start from Discover,
-                  // against a lobby that actually opted in). What replaces it
-                  // is the other half of that flow: opting *this* lobby in.
-                  ChallengeOfferControl(lobbyId: lobbyId, canManage: isLeader),
-                ],
-              )
-            else
-              GestureDetector(
-                onTap: () => _remindCaptain(context, ref),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.secondary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        FLucideIcons.bell,
-                        size: 14,
-                        color: colors.secondaryForeground,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Nhắc đội trưởng',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: colors.secondaryForeground,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 10,
+            right: 10,
+            child: _HeroCollapseIcon(
+              onTap: () =>
+                  ref.read(heroCollapsedStateProvider.notifier).toggle(),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -268,15 +296,132 @@ class _CTALabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 6,
+    mainAxisSize: MainAxisSize.min,
+    spacing: 6,
+    children: [
+      icon,
+      Flexible(
+        child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ),
+    ],
+  );
+}
+
+// ─── Collapse toggle ───────────────────────────────────────────
+
+/// Small inline affordance shown on the full empty/expanded hero that
+/// switches the persisted [heroCollapsedStateProvider] on.
+class _HeroCollapseIcon extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _HeroCollapseIcon({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        // Padding widens the tap target beyond the icon's own bounds
+        // without affecting layout.
+        padding: const EdgeInsets.all(4),
+        child: Icon(
+          Icons.unfold_less_rounded,
+          size: 15,
+          color: colors.mutedForeground,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Collapsed state ───────────────────────────────────────────
+
+/// The hero collapsed down to one full-width "Lên Lịch" button, per the
+/// persisted [heroCollapsedStateProvider] density toggle. Only a captain
+/// gets the scheduling action here (mirrors the isLeader gate on every
+/// other schedule/reschedule entry point); members instead get a plain
+/// date/status strip that just re-expands the full card.
+class _HeroCollapsedButton extends ConsumerWidget {
+  final String lobbyId;
+  final UpcomingActivity? upcoming;
+  final bool isLeader;
+
+  const _HeroCollapsedButton({
+    required this.lobbyId,
+    required this.upcoming,
+    required this.isLeader,
+  });
+
+  void _expand(WidgetRef ref) =>
+      ref.read(heroCollapsedStateProvider.notifier).toggle();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final activity = upcoming;
+
+    final String label;
+    final VoidCallback onPress;
+    if (isLeader) {
+      label = activity == null ? 'Lên Lịch' : 'Đổi Giờ Buổi Chơi';
+      onPress = () =>
+          showScheduleActivitySheet(context, lobbyId, existing: activity);
+    } else {
+      label = activity == null
+          ? 'Chưa có buổi chơi'
+          : '${_wdShort(activity.nextStart.toLocal())} · '
+                '${_hm(activity.nextStart.toLocal())}';
+      onPress = () => _expand(ref);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
+      child: Row(
         children: [
-          icon,
-          Flexible(
-            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          Expanded(
+            child: SizedBox(
+              height: 44,
+              child: FButton(
+                style: FButtonStyleExtension.accentBlueStyle(
+                  context.theme.buttonStyles.primary.base,
+                ),
+                onPress: onPress,
+                child: _CTALabel(
+                  icon: const Icon(Icons.calendar_month_outlined, size: 16),
+                  label: label,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => _expand(ref),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: colors.card,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: colors.border),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.unfold_more_rounded,
+                size: 18,
+                color: colors.mutedForeground,
+              ),
+            ),
           ),
         ],
-      );
+      ),
+    );
+  }
+
+  static const _wd = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+  static String _wdShort(DateTime d) => _wd[d.weekday - 1];
+  static String _hm(DateTime d) =>
+      '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 }
 
 // ─── Expanded state ────────────────────────────────────────────
@@ -488,6 +633,12 @@ class _HeroExpanded extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                           color: colors.mutedForeground,
                         ),
+                      ),
+                      const Spacer(),
+                      _HeroCollapseIcon(
+                        onTap: () => ref
+                            .read(heroCollapsedStateProvider.notifier)
+                            .toggle(),
                       ),
                     ],
                   ),
@@ -775,8 +926,7 @@ class _ChallengeBlock extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
-    final busy =
-        ref.watch(confirmChallengeActivityControllerProvider(lobbyId));
+    final busy = ref.watch(confirmChallengeActivityControllerProvider(lobbyId));
     final confirmed = upcoming.managerConfirmedAt != null;
     final locked = challenge.status == 'scheduled';
 
@@ -791,7 +941,11 @@ class _ChallengeBlock extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.sports_kabaddi_outlined, size: 16, color: _crimson),
+              const Icon(
+                Icons.sports_kabaddi_outlined,
+                size: 16,
+                color: _crimson,
+              ),
               const SizedBox(width: 8),
               // Opponent names are user-supplied and unbounded — this whole
               // group has to be able to shrink before the MMR chip does.
@@ -836,8 +990,9 @@ class _ChallengeBlock extends ConsumerWidget {
                   child: FButton(
                     size: .sm,
                     variant: confirmed ? .outline : .primary,
-                    onPress:
-                        (busy || confirmed) ? null : () => _confirm(context, ref),
+                    onPress: (busy || confirmed)
+                        ? null
+                        : () => _confirm(context, ref),
                     child: Text(
                       confirmed ? 'Chờ đối thủ' : 'Xác Nhận Trận',
                       maxLines: 1,
@@ -1161,11 +1316,7 @@ class _AttachedProRow extends StatelessWidget {
         _green,
         _greenTint,
       ),
-      ProfessionalBookingStatus.completed => (
-        'Hoàn thành',
-        _green,
-        _greenTint,
-      ),
+      ProfessionalBookingStatus.completed => ('Hoàn thành', _green, _greenTint),
       // rejected / cancelled_by_client / cancelled_by_pro
       _ => ('Đã huỷ', colors.mutedForeground, colors.secondary),
     };
@@ -1218,7 +1369,11 @@ class _AttachedProRow extends StatelessWidget {
                   ),
                   if (pro.verified) ...[
                     const SizedBox(width: 3),
-                    const Icon(FLucideIcons.badgeCheck, size: 13, color: pbBlue),
+                    const Icon(
+                      FLucideIcons.badgeCheck,
+                      size: 13,
+                      color: pbBlue,
+                    ),
                   ],
                 ],
               ),

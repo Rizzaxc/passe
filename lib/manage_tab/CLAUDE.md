@@ -135,6 +135,20 @@ Judgment calls made along the way, in case they need revisiting:
   `history/record_match_controller.dart` / `record_match_sheet.dart` path (captain/coordinator, "Ghi
   kết quả" on the History tab) is unchanged and still records opponent-less/free-text matches only —
   see root CLAUDE.md ▸ Challenger System for the full referee-records-a-challenge-match path.
+  **(2026-08 pass)** that same "Lobby members can view attached bookings" policy on
+  `professional_booking` and `activity`'s own "Linked professionals can view their attached
+  activities" policy referenced each other's table directly — a mutual RLS recursion that made
+  **every** `select` against `activity` or `professional_booking` throw `infinite recursion detected
+  in policy for relation "activity"` (Postgres error `42P17`) for any authenticated user, silently
+  500ing the Manage▸Lobby list/detail's `activity` lookups (surfacing client-side as an endless
+  loading spinner — Riverpod auto-retrying a `build()` that fails every time) along with anything
+  else touching those two tables (RSVP confirmations, referee/coach attachment reads). Fixed live and
+  checked in as `schema/fix_activity_professional_booking_rls_recursion.sql`: the
+  `professional_booking` policy's `activity` lookup now goes through a `SECURITY DEFINER` `plpgsql`
+  function (`is_booking_attached_to_my_lobby_activity`) instead of an inline subquery, breaking the
+  cycle the same way `get_my_lobby_ids()` already did for every *other* lobby-membership check
+  (also converted from `language sql` to `plpgsql` in the same pass, matching Supabase's documented
+  recursion-avoidance pattern, though that alone didn't fix this specific cycle).
 - **System feed items removed, not wired**: `SystemItem.hasApprove` (in-feed "Đồng Ý"/"Từ Chối" on a
   join-request card) had no producer anywhere — RLS doesn't even allow a client `INSERT` of
   `kind = 'system'`, and no trigger creates one either — so it was unreachable dead UI, not a stub

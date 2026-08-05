@@ -81,6 +81,18 @@ GoRouter router(Ref ref) {
     onboarding.value = next;
   }, fireImmediately: true);
 
+  // The destination a cold start actually asked for, when it isn't the
+  // literal `/splash` route — e.g. `restorationScopeId: 'router'` restoring
+  // iOS's last-visited route straight into `/manage/lobby`, or a future
+  // deep link. `gateOnboarding()`'s `AsyncLoading` branch below detours any
+  // such request through `/splash` while auth/onboarding resolve; without
+  // remembering it here, every `isSplash -> Home` fallback further down only
+  // knows "we're currently sitting on /splash" and permanently loses the
+  // real destination, always landing the user on Home instead — which is
+  // indistinguishable from "the requested screen doesn't load" to anyone
+  // hitting a cold start already deep in the app (Manage▸Lobby included).
+  String? pendingDestination;
+
   final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     observers: [TalkerRouteObserver(talker)],
@@ -106,6 +118,14 @@ GoRouter router(Ref ref) {
           state.uri.path == const AuthRoute().location ||
           state.uri.path == const WelcomeRoute().location ||
           isPasswordRecoveryFlow;
+
+      // Track the latest genuine (non-splash, non-auth-flow) location this
+      // pass has been asked to resolve, so a later `isSplash -> Home`
+      // fallback can send the user back to it instead of Home. Splash/auth
+      // routes themselves are never "destinations" worth restoring.
+      if (!isSplash && !isAuthFlow) {
+        pendingDestination = state.uri.toString();
+      }
 
       // Only reachable once `user.value` is `AsyncData` with a real identity
       // (guest or signed-in) — the auth branches below gate that. Returns
@@ -174,13 +194,21 @@ GoRouter router(Ref ref) {
             if (isPasswordRecoveryFlow) return null;
             final onboardingRedirect = gateOnboarding();
             if (onboardingRedirect != null) return onboardingRedirect;
-            if (isSplash || isAuthFlow) return HomeRoute().location;
+            if (isSplash || isAuthFlow) {
+              final destination = pendingDestination ?? HomeRoute().location;
+              pendingDestination = null;
+              return destination;
+            }
             return null;
           }
 
           final onboardingRedirect = gateOnboarding();
           if (onboardingRedirect != null) return onboardingRedirect;
-          if (isSplash || isAuthFlow) return HomeRoute().location;
+          if (isSplash || isAuthFlow) {
+            final destination = pendingDestination ?? HomeRoute().location;
+            pendingDestination = null;
+            return destination;
+          }
           return null;
       }
     },

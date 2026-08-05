@@ -39,6 +39,11 @@ class ScheduleActivityController extends _$ScheduleActivityController {
     /// 0 = Mon … 6 = Sun (ISO ordering). null = one-off session.
     int? recurrenceDayOfWeek,
   }) async {
+    // Pin this autoDispose provider alive for the duration: callers may
+    // reach this via a bare `ref.read(...).schedule(...)` with no active
+    // `ref.watch`, and without this the instance can be disposed mid-flight
+    // (see the identical fix in `cancel` for why that crashes).
+    final keepAliveLink = ref.keepAlive();
     state = true;
     try {
       final user = ref.read(authControllerProvider).value;
@@ -110,6 +115,7 @@ class ScheduleActivityController extends _$ScheduleActivityController {
       ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
     } finally {
       state = false;
+      keepAliveLink.close();
     }
   }
 
@@ -131,6 +137,7 @@ class ScheduleActivityController extends _$ScheduleActivityController {
     /// 0 = Mon … 6 = Sun (ISO ordering). null = one-off session.
     int? recurrenceDayOfWeek,
   }) async {
+    final keepAliveLink = ref.keepAlive();
     state = true;
     try {
       final user = ref.read(authControllerProvider).value;
@@ -175,13 +182,23 @@ class ScheduleActivityController extends _$ScheduleActivityController {
       ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
     } finally {
       state = false;
+      keepAliveLink.close();
     }
   }
 
   /// Cancels an activity: deletes the row (same RLS as reschedule — owner
   /// or any captain/coordinator of the lobby) and posts a `cancelled`
   /// update feed item so members see why the pinned activity disappeared.
+  ///
+  /// Unlike `schedule`/`reschedule` (always invoked from a sheet that
+  /// `ref.watch`es this provider for its saving spinner), this is called
+  /// from the hero card via a bare `ref.read(...).cancel(...)` with no
+  /// active watcher — so without `ref.keepAlive()` this autoDispose
+  /// provider gets disposed mid-flight (right after `state = true`
+  /// yields at the first `await`, since nothing is subscribed) and the
+  /// `state = false` below throws on the disposed Ref.
   Future<void> cancel(String activityId) async {
+    final keepAliveLink = ref.keepAlive();
     state = true;
     try {
       final user = ref.read(authControllerProvider).value;
@@ -212,6 +229,7 @@ class ScheduleActivityController extends _$ScheduleActivityController {
       ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
     } finally {
       state = false;
+      keepAliveLink.close();
     }
   }
 

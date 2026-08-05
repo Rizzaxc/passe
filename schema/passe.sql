@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dXnchi3sijuOVkXgi6HCzTdWqATIO4RDKYhAte2aXmfRtJAYZtkbJR90kFB56T1
+\restrict C2QwSEso5H7O50rxpzmvg0mu8GVIZDeTJTfTtmVzsmppxnOAExnMjoQvPcCgxOb
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.9 (Homebrew)
@@ -20,58 +20,74 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: auth; Type: SCHEMA; Schema: -; Owner: supabase_admin
+-- Name: auth; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA auth;
 
 
-ALTER SCHEMA auth OWNER TO supabase_admin;
+--
+-- Name: pg_cron; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA pg_catalog;
+
 
 --
--- Name: extensions; Type: SCHEMA; Schema: -; Owner: postgres
+-- Name: EXTENSION pg_cron; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_cron IS 'Job scheduler for PostgreSQL';
+
+
+--
+-- Name: extensions; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA extensions;
 
 
-ALTER SCHEMA extensions OWNER TO postgres;
-
 --
--- Name: graphql; Type: SCHEMA; Schema: -; Owner: supabase_admin
+-- Name: graphql; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA graphql;
 
 
-ALTER SCHEMA graphql OWNER TO supabase_admin;
-
 --
--- Name: graphql_public; Type: SCHEMA; Schema: -; Owner: supabase_admin
+-- Name: graphql_public; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA graphql_public;
 
 
-ALTER SCHEMA graphql_public OWNER TO supabase_admin;
+--
+-- Name: pg_net; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA public;
+
 
 --
--- Name: pgbouncer; Type: SCHEMA; Schema: -; Owner: pgbouncer
+-- Name: EXTENSION pg_net; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_net IS 'Async HTTP';
+
+
+--
+-- Name: pgbouncer; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA pgbouncer;
 
 
-ALTER SCHEMA pgbouncer OWNER TO pgbouncer;
-
 --
--- Name: pgsodium; Type: SCHEMA; Schema: -; Owner: supabase_admin
+-- Name: pgsodium; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA pgsodium;
 
-
-ALTER SCHEMA pgsodium OWNER TO supabase_admin;
 
 --
 -- Name: pgsodium; Type: EXTENSION; Schema: -; Owner: -
@@ -81,47 +97,39 @@ CREATE EXTENSION IF NOT EXISTS pgsodium WITH SCHEMA pgsodium;
 
 
 --
--- Name: EXTENSION pgsodium; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION pgsodium; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION pgsodium IS 'Pgsodium is a modern cryptography library for Postgres.';
 
 
 --
--- Name: realtime; Type: SCHEMA; Schema: -; Owner: supabase_admin
+-- Name: realtime; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA realtime;
 
 
-ALTER SCHEMA realtime OWNER TO supabase_admin;
-
 --
--- Name: storage; Type: SCHEMA; Schema: -; Owner: supabase_admin
+-- Name: storage; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA storage;
 
 
-ALTER SCHEMA storage OWNER TO supabase_admin;
-
 --
--- Name: supabase_migrations; Type: SCHEMA; Schema: -; Owner: postgres
+-- Name: supabase_migrations; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA supabase_migrations;
 
 
-ALTER SCHEMA supabase_migrations OWNER TO postgres;
-
 --
--- Name: vault; Type: SCHEMA; Schema: -; Owner: supabase_admin
+-- Name: vault; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA vault;
 
-
-ALTER SCHEMA vault OWNER TO supabase_admin;
 
 --
 -- Name: pg_graphql; Type: EXTENSION; Schema: -; Owner: -
@@ -131,7 +139,7 @@ CREATE EXTENSION IF NOT EXISTS pg_graphql WITH SCHEMA graphql;
 
 
 --
--- Name: EXTENSION pg_graphql; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION pg_graphql; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION pg_graphql IS 'pg_graphql: GraphQL support';
@@ -145,7 +153,7 @@ CREATE EXTENSION IF NOT EXISTS pg_jsonschema WITH SCHEMA extensions;
 
 
 --
--- Name: EXTENSION pg_jsonschema; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION pg_jsonschema; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION pg_jsonschema IS 'pg_jsonschema';
@@ -159,7 +167,7 @@ CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA extensions;
 
 
 --
--- Name: EXTENSION pg_stat_statements; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION pg_stat_statements; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION pg_stat_statements IS 'track planning and execution statistics of all SQL statements executed';
@@ -173,7 +181,7 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA extensions;
 
 
 --
--- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
@@ -187,7 +195,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 
 
 --
--- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
@@ -201,7 +209,7 @@ CREATE EXTENSION IF NOT EXISTS supabase_vault WITH SCHEMA vault;
 
 
 --
--- Name: EXTENSION supabase_vault; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION supabase_vault; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION supabase_vault IS 'Supabase Vault Extension';
@@ -215,7 +223,7 @@ CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA extensions;
 
 
 --
--- Name: EXTENSION unaccent; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION unaccent; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION unaccent IS 'text search dictionary that removes accents';
@@ -229,14 +237,14 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA extensions;
 
 
 --
--- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
 
 
 --
--- Name: aal_level; Type: TYPE; Schema: auth; Owner: supabase_auth_admin
+-- Name: aal_level; Type: TYPE; Schema: auth; Owner: -
 --
 
 CREATE TYPE auth.aal_level AS ENUM (
@@ -246,10 +254,8 @@ CREATE TYPE auth.aal_level AS ENUM (
 );
 
 
-ALTER TYPE auth.aal_level OWNER TO supabase_auth_admin;
-
 --
--- Name: code_challenge_method; Type: TYPE; Schema: auth; Owner: supabase_auth_admin
+-- Name: code_challenge_method; Type: TYPE; Schema: auth; Owner: -
 --
 
 CREATE TYPE auth.code_challenge_method AS ENUM (
@@ -258,10 +264,8 @@ CREATE TYPE auth.code_challenge_method AS ENUM (
 );
 
 
-ALTER TYPE auth.code_challenge_method OWNER TO supabase_auth_admin;
-
 --
--- Name: factor_status; Type: TYPE; Schema: auth; Owner: supabase_auth_admin
+-- Name: factor_status; Type: TYPE; Schema: auth; Owner: -
 --
 
 CREATE TYPE auth.factor_status AS ENUM (
@@ -270,10 +274,8 @@ CREATE TYPE auth.factor_status AS ENUM (
 );
 
 
-ALTER TYPE auth.factor_status OWNER TO supabase_auth_admin;
-
 --
--- Name: factor_type; Type: TYPE; Schema: auth; Owner: supabase_auth_admin
+-- Name: factor_type; Type: TYPE; Schema: auth; Owner: -
 --
 
 CREATE TYPE auth.factor_type AS ENUM (
@@ -283,10 +285,8 @@ CREATE TYPE auth.factor_type AS ENUM (
 );
 
 
-ALTER TYPE auth.factor_type OWNER TO supabase_auth_admin;
-
 --
--- Name: oauth_authorization_status; Type: TYPE; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_authorization_status; Type: TYPE; Schema: auth; Owner: -
 --
 
 CREATE TYPE auth.oauth_authorization_status AS ENUM (
@@ -297,10 +297,8 @@ CREATE TYPE auth.oauth_authorization_status AS ENUM (
 );
 
 
-ALTER TYPE auth.oauth_authorization_status OWNER TO supabase_auth_admin;
-
 --
--- Name: oauth_client_type; Type: TYPE; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_client_type; Type: TYPE; Schema: auth; Owner: -
 --
 
 CREATE TYPE auth.oauth_client_type AS ENUM (
@@ -309,10 +307,8 @@ CREATE TYPE auth.oauth_client_type AS ENUM (
 );
 
 
-ALTER TYPE auth.oauth_client_type OWNER TO supabase_auth_admin;
-
 --
--- Name: oauth_registration_type; Type: TYPE; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_registration_type; Type: TYPE; Schema: auth; Owner: -
 --
 
 CREATE TYPE auth.oauth_registration_type AS ENUM (
@@ -321,10 +317,8 @@ CREATE TYPE auth.oauth_registration_type AS ENUM (
 );
 
 
-ALTER TYPE auth.oauth_registration_type OWNER TO supabase_auth_admin;
-
 --
--- Name: oauth_response_type; Type: TYPE; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_response_type; Type: TYPE; Schema: auth; Owner: -
 --
 
 CREATE TYPE auth.oauth_response_type AS ENUM (
@@ -332,10 +326,8 @@ CREATE TYPE auth.oauth_response_type AS ENUM (
 );
 
 
-ALTER TYPE auth.oauth_response_type OWNER TO supabase_auth_admin;
-
 --
--- Name: one_time_token_type; Type: TYPE; Schema: auth; Owner: supabase_auth_admin
+-- Name: one_time_token_type; Type: TYPE; Schema: auth; Owner: -
 --
 
 CREATE TYPE auth.one_time_token_type AS ENUM (
@@ -348,10 +340,8 @@ CREATE TYPE auth.one_time_token_type AS ENUM (
 );
 
 
-ALTER TYPE auth.one_time_token_type OWNER TO supabase_auth_admin;
-
 --
--- Name: activity_attendance; Type: TYPE; Schema: public; Owner: postgres
+-- Name: activity_attendance; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.activity_attendance AS ENUM (
@@ -361,29 +351,25 @@ CREATE TYPE public.activity_attendance AS ENUM (
 );
 
 
-ALTER TYPE public.activity_attendance OWNER TO postgres;
-
 --
--- Name: activity_payment_type; Type: TYPE; Schema: public; Owner: postgres
+-- Name: activity_cost_type; Type: TYPE; Schema: public; Owner: -
 --
 
-CREATE TYPE public.activity_payment_type AS ENUM (
-    'manual',
-    'da'
+CREATE TYPE public.activity_cost_type AS ENUM (
+    'per_pax',
+    'total'
 );
 
 
-ALTER TYPE public.activity_payment_type OWNER TO postgres;
-
 --
--- Name: TYPE activity_payment_type; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TYPE activity_cost_type; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.activity_payment_type IS 'How prepayment for a scheduled activity is collected: ''manual'' = out-of-band (cash / bank transfer organised by the captain); ''da'' = held by the app via the Đá ledger.';
+COMMENT ON TYPE public.activity_cost_type IS 'per_pax: cost_amount is what each attendee owes. total: cost_amount is split equally (rounded up to the nearest 1000 VND) across confirmed (going) attendees, including the organizer.';
 
 
 --
--- Name: country; Type: TYPE; Schema: public; Owner: postgres
+-- Name: country; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.country AS ENUM (
@@ -391,10 +377,20 @@ CREATE TYPE public.country AS ENUM (
 );
 
 
-ALTER TYPE public.country OWNER TO postgres;
+--
+-- Name: friendship_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.friendship_status AS ENUM (
+    'pending',
+    'accepted',
+    'declined',
+    'cancelled'
+);
+
 
 --
--- Name: gender; Type: TYPE; Schema: public; Owner: postgres
+-- Name: gender; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.gender AS ENUM (
@@ -403,10 +399,8 @@ CREATE TYPE public.gender AS ENUM (
 );
 
 
-ALTER TYPE public.gender OWNER TO postgres;
-
 --
--- Name: health_platform; Type: TYPE; Schema: public; Owner: postgres
+-- Name: health_platform; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.health_platform AS ENUM (
@@ -416,10 +410,8 @@ CREATE TYPE public.health_platform AS ENUM (
 );
 
 
-ALTER TYPE public.health_platform OWNER TO postgres;
-
 --
--- Name: lobby_befriend_interaction; Type: TYPE; Schema: public; Owner: postgres
+-- Name: lobby_befriend_interaction; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.lobby_befriend_interaction AS ENUM (
@@ -429,10 +421,8 @@ CREATE TYPE public.lobby_befriend_interaction AS ENUM (
 );
 
 
-ALTER TYPE public.lobby_befriend_interaction OWNER TO postgres;
-
 --
--- Name: lobby_befriend_status; Type: TYPE; Schema: public; Owner: postgres
+-- Name: lobby_befriend_status; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.lobby_befriend_status AS ENUM (
@@ -443,10 +433,23 @@ CREATE TYPE public.lobby_befriend_status AS ENUM (
 );
 
 
-ALTER TYPE public.lobby_befriend_status OWNER TO postgres;
+--
+-- Name: lobby_challenge_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.lobby_challenge_status AS ENUM (
+    'requested',
+    'accepted',
+    'declined',
+    'cancelled',
+    'scheduled',
+    'played',
+    'lapsed'
+);
+
 
 --
--- Name: lobby_feed_item_kind; Type: TYPE; Schema: public; Owner: postgres
+-- Name: lobby_feed_item_kind; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.lobby_feed_item_kind AS ENUM (
@@ -454,27 +457,35 @@ CREATE TYPE public.lobby_feed_item_kind AS ENUM (
     'personal',
     'system',
     'poll',
-    'photo'
+    'photo',
+    'payment_request'
 );
 
 
-ALTER TYPE public.lobby_feed_item_kind OWNER TO postgres;
-
 --
--- Name: lobby_match_result; Type: TYPE; Schema: public; Owner: postgres
+-- Name: lobby_match_result; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.lobby_match_result AS ENUM (
     'win',
     'loss',
-    'practice'
+    'practice',
+    'draw'
 );
 
 
-ALTER TYPE public.lobby_match_result OWNER TO postgres;
+--
+-- Name: lobby_member_role; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.lobby_member_role AS ENUM (
+    'member',
+    'coordinator'
+);
+
 
 --
--- Name: lobby_visibility; Type: TYPE; Schema: public; Owner: postgres
+-- Name: lobby_visibility; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.lobby_visibility AS ENUM (
@@ -484,10 +495,32 @@ CREATE TYPE public.lobby_visibility AS ENUM (
 );
 
 
-ALTER TYPE public.lobby_visibility OWNER TO postgres;
+--
+-- Name: notification_kind; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.notification_kind AS ENUM (
+    'activity_confirmed',
+    'pro_session_reminder',
+    'challenger_confirmed',
+    'lobby_invite',
+    'professional_booking_requested',
+    'professional_booking_confirmed',
+    'professional_booking_rejected',
+    'challenge_received',
+    'challenge_declined',
+    'friend_request',
+    'friend_accepted',
+    'challenge_lapsed',
+    'match_result_recorded',
+    'challenge_scheduled',
+    'payment_requested',
+    'debt_collected'
+);
+
 
 --
--- Name: professional_booking_status; Type: TYPE; Schema: public; Owner: postgres
+-- Name: professional_booking_status; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.professional_booking_status AS ENUM (
@@ -500,10 +533,8 @@ CREATE TYPE public.professional_booking_status AS ENUM (
 );
 
 
-ALTER TYPE public.professional_booking_status OWNER TO postgres;
-
 --
--- Name: professional_role; Type: TYPE; Schema: public; Owner: postgres
+-- Name: professional_role; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.professional_role AS ENUM (
@@ -512,10 +543,8 @@ CREATE TYPE public.professional_role AS ENUM (
 );
 
 
-ALTER TYPE public.professional_role OWNER TO postgres;
-
 --
--- Name: action; Type: TYPE; Schema: realtime; Owner: supabase_admin
+-- Name: action; Type: TYPE; Schema: realtime; Owner: -
 --
 
 CREATE TYPE realtime.action AS ENUM (
@@ -527,10 +556,8 @@ CREATE TYPE realtime.action AS ENUM (
 );
 
 
-ALTER TYPE realtime.action OWNER TO supabase_admin;
-
 --
--- Name: equality_op; Type: TYPE; Schema: realtime; Owner: supabase_admin
+-- Name: equality_op; Type: TYPE; Schema: realtime; Owner: -
 --
 
 CREATE TYPE realtime.equality_op AS ENUM (
@@ -540,27 +567,30 @@ CREATE TYPE realtime.equality_op AS ENUM (
     'lte',
     'gt',
     'gte',
-    'in'
+    'in',
+    'like',
+    'ilike',
+    'is',
+    'match',
+    'imatch',
+    'isdistinct'
 );
 
 
-ALTER TYPE realtime.equality_op OWNER TO supabase_admin;
-
 --
--- Name: user_defined_filter; Type: TYPE; Schema: realtime; Owner: supabase_admin
+-- Name: user_defined_filter; Type: TYPE; Schema: realtime; Owner: -
 --
 
 CREATE TYPE realtime.user_defined_filter AS (
 	column_name text,
 	op realtime.equality_op,
-	value text
+	value text,
+	negate boolean
 );
 
 
-ALTER TYPE realtime.user_defined_filter OWNER TO supabase_admin;
-
 --
--- Name: wal_column; Type: TYPE; Schema: realtime; Owner: supabase_admin
+-- Name: wal_column; Type: TYPE; Schema: realtime; Owner: -
 --
 
 CREATE TYPE realtime.wal_column AS (
@@ -573,10 +603,8 @@ CREATE TYPE realtime.wal_column AS (
 );
 
 
-ALTER TYPE realtime.wal_column OWNER TO supabase_admin;
-
 --
--- Name: wal_rls; Type: TYPE; Schema: realtime; Owner: supabase_admin
+-- Name: wal_rls; Type: TYPE; Schema: realtime; Owner: -
 --
 
 CREATE TYPE realtime.wal_rls AS (
@@ -587,10 +615,8 @@ CREATE TYPE realtime.wal_rls AS (
 );
 
 
-ALTER TYPE realtime.wal_rls OWNER TO supabase_admin;
-
 --
--- Name: buckettype; Type: TYPE; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckettype; Type: TYPE; Schema: storage; Owner: -
 --
 
 CREATE TYPE storage.buckettype AS ENUM (
@@ -600,10 +626,8 @@ CREATE TYPE storage.buckettype AS ENUM (
 );
 
 
-ALTER TYPE storage.buckettype OWNER TO supabase_storage_admin;
-
 --
--- Name: email(); Type: FUNCTION; Schema: auth; Owner: supabase_auth_admin
+-- Name: email(); Type: FUNCTION; Schema: auth; Owner: -
 --
 
 CREATE FUNCTION auth.email() RETURNS text
@@ -617,17 +641,15 @@ CREATE FUNCTION auth.email() RETURNS text
 $$;
 
 
-ALTER FUNCTION auth.email() OWNER TO supabase_auth_admin;
-
 --
--- Name: FUNCTION email(); Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: FUNCTION email(); Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON FUNCTION auth.email() IS 'Deprecated. Use auth.jwt() -> ''email'' instead.';
 
 
 --
--- Name: jwt(); Type: FUNCTION; Schema: auth; Owner: supabase_auth_admin
+-- Name: jwt(); Type: FUNCTION; Schema: auth; Owner: -
 --
 
 CREATE FUNCTION auth.jwt() RETURNS jsonb
@@ -641,10 +663,8 @@ CREATE FUNCTION auth.jwt() RETURNS jsonb
 $$;
 
 
-ALTER FUNCTION auth.jwt() OWNER TO supabase_auth_admin;
-
 --
--- Name: role(); Type: FUNCTION; Schema: auth; Owner: supabase_auth_admin
+-- Name: role(); Type: FUNCTION; Schema: auth; Owner: -
 --
 
 CREATE FUNCTION auth.role() RETURNS text
@@ -658,17 +678,15 @@ CREATE FUNCTION auth.role() RETURNS text
 $$;
 
 
-ALTER FUNCTION auth.role() OWNER TO supabase_auth_admin;
-
 --
--- Name: FUNCTION role(); Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: FUNCTION role(); Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON FUNCTION auth.role() IS 'Deprecated. Use auth.jwt() -> ''role'' instead.';
 
 
 --
--- Name: uid(); Type: FUNCTION; Schema: auth; Owner: supabase_auth_admin
+-- Name: uid(); Type: FUNCTION; Schema: auth; Owner: -
 --
 
 CREATE FUNCTION auth.uid() RETURNS uuid
@@ -682,17 +700,15 @@ CREATE FUNCTION auth.uid() RETURNS uuid
 $$;
 
 
-ALTER FUNCTION auth.uid() OWNER TO supabase_auth_admin;
-
 --
--- Name: FUNCTION uid(); Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: FUNCTION uid(); Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON FUNCTION auth.uid() IS 'Deprecated. Use auth.jwt() -> ''sub'' instead.';
 
 
 --
--- Name: grant_pg_cron_access(); Type: FUNCTION; Schema: extensions; Owner: supabase_admin
+-- Name: grant_pg_cron_access(); Type: FUNCTION; Schema: extensions; Owner: -
 --
 
 CREATE FUNCTION extensions.grant_pg_cron_access() RETURNS event_trigger
@@ -728,17 +744,15 @@ END;
 $$;
 
 
-ALTER FUNCTION extensions.grant_pg_cron_access() OWNER TO supabase_admin;
-
 --
--- Name: FUNCTION grant_pg_cron_access(); Type: COMMENT; Schema: extensions; Owner: supabase_admin
+-- Name: FUNCTION grant_pg_cron_access(); Type: COMMENT; Schema: extensions; Owner: -
 --
 
 COMMENT ON FUNCTION extensions.grant_pg_cron_access() IS 'Grants access to pg_cron';
 
 
 --
--- Name: grant_pg_graphql_access(); Type: FUNCTION; Schema: extensions; Owner: supabase_admin
+-- Name: grant_pg_graphql_access(); Type: FUNCTION; Schema: extensions; Owner: -
 --
 
 CREATE FUNCTION extensions.grant_pg_graphql_access() RETURNS event_trigger
@@ -795,17 +809,15 @@ END;
 $_$;
 
 
-ALTER FUNCTION extensions.grant_pg_graphql_access() OWNER TO supabase_admin;
-
 --
--- Name: FUNCTION grant_pg_graphql_access(); Type: COMMENT; Schema: extensions; Owner: supabase_admin
+-- Name: FUNCTION grant_pg_graphql_access(); Type: COMMENT; Schema: extensions; Owner: -
 --
 
 COMMENT ON FUNCTION extensions.grant_pg_graphql_access() IS 'Grants access to pg_graphql';
 
 
 --
--- Name: grant_pg_net_access(); Type: FUNCTION; Schema: extensions; Owner: supabase_admin
+-- Name: grant_pg_net_access(); Type: FUNCTION; Schema: extensions; Owner: -
 --
 
 CREATE FUNCTION extensions.grant_pg_net_access() RETURNS event_trigger
@@ -855,17 +867,15 @@ END;
 $$;
 
 
-ALTER FUNCTION extensions.grant_pg_net_access() OWNER TO supabase_admin;
-
 --
--- Name: FUNCTION grant_pg_net_access(); Type: COMMENT; Schema: extensions; Owner: supabase_admin
+-- Name: FUNCTION grant_pg_net_access(); Type: COMMENT; Schema: extensions; Owner: -
 --
 
 COMMENT ON FUNCTION extensions.grant_pg_net_access() IS 'Grants access to pg_net';
 
 
 --
--- Name: nanoid(integer, text); Type: FUNCTION; Schema: extensions; Owner: postgres
+-- Name: nanoid(integer, text); Type: FUNCTION; Schema: extensions; Owner: -
 --
 
 CREATE FUNCTION extensions.nanoid(size integer DEFAULT 10, alphabet text DEFAULT '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'::text) RETURNS text
@@ -899,10 +909,8 @@ END
 $$;
 
 
-ALTER FUNCTION extensions.nanoid(size integer, alphabet text) OWNER TO postgres;
-
 --
--- Name: pgrst_ddl_watch(); Type: FUNCTION; Schema: extensions; Owner: supabase_admin
+-- Name: pgrst_ddl_watch(); Type: FUNCTION; Schema: extensions; Owner: -
 --
 
 CREATE FUNCTION extensions.pgrst_ddl_watch() RETURNS event_trigger
@@ -934,10 +942,8 @@ BEGIN
 END; $$;
 
 
-ALTER FUNCTION extensions.pgrst_ddl_watch() OWNER TO supabase_admin;
-
 --
--- Name: pgrst_drop_watch(); Type: FUNCTION; Schema: extensions; Owner: supabase_admin
+-- Name: pgrst_drop_watch(); Type: FUNCTION; Schema: extensions; Owner: -
 --
 
 CREATE FUNCTION extensions.pgrst_drop_watch() RETURNS event_trigger
@@ -967,10 +973,8 @@ BEGIN
 END; $$;
 
 
-ALTER FUNCTION extensions.pgrst_drop_watch() OWNER TO supabase_admin;
-
 --
--- Name: set_graphql_placeholder(); Type: FUNCTION; Schema: extensions; Owner: supabase_admin
+-- Name: set_graphql_placeholder(); Type: FUNCTION; Schema: extensions; Owner: -
 --
 
 CREATE FUNCTION extensions.set_graphql_placeholder() RETURNS event_trigger
@@ -1026,17 +1030,15 @@ CREATE FUNCTION extensions.set_graphql_placeholder() RETURNS event_trigger
 $_$;
 
 
-ALTER FUNCTION extensions.set_graphql_placeholder() OWNER TO supabase_admin;
-
 --
--- Name: FUNCTION set_graphql_placeholder(); Type: COMMENT; Schema: extensions; Owner: supabase_admin
+-- Name: FUNCTION set_graphql_placeholder(); Type: COMMENT; Schema: extensions; Owner: -
 --
 
 COMMENT ON FUNCTION extensions.set_graphql_placeholder() IS 'Reintroduces placeholder function for graphql_public.graphql';
 
 
 --
--- Name: get_auth(text); Type: FUNCTION; Schema: pgbouncer; Owner: supabase_admin
+-- Name: get_auth(text); Type: FUNCTION; Schema: pgbouncer; Owner: -
 --
 
 CREATE FUNCTION pgbouncer.get_auth(p_usename text) RETURNS TABLE(username text, password text)
@@ -1058,10 +1060,8 @@ end;
 $_$;
 
 
-ALTER FUNCTION pgbouncer.get_auth(p_usename text) OWNER TO supabase_admin;
-
 --
--- Name: _achievement_current_value(uuid, jsonb, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: _achievement_current_value(uuid, jsonb, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public._achievement_current_value(p_user_id uuid, p_criteria jsonb, p_eligible_from timestamp with time zone) RETURNS numeric
@@ -1182,10 +1182,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public._achievement_current_value(p_user_id uuid, p_criteria jsonb, p_eligible_from timestamp with time zone) OWNER TO postgres;
-
 --
--- Name: _achievement_level_floor(integer); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: _achievement_level_floor(integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public._achievement_level_floor(p_level integer) RETURNS bigint
@@ -1196,10 +1194,8 @@ CREATE FUNCTION public._achievement_level_floor(p_level integer) RETURNS bigint
 $$;
 
 
-ALTER FUNCTION public._achievement_level_floor(p_level integer) OWNER TO postgres;
-
 --
--- Name: _achievement_level_for_xp(bigint); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: _achievement_level_for_xp(bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public._achievement_level_for_xp(p_xp bigint) RETURNS integer
@@ -1211,10 +1207,8 @@ CREATE FUNCTION public._achievement_level_for_xp(p_xp bigint) RETURNS integer
 $$;
 
 
-ALTER FUNCTION public._achievement_level_for_xp(p_xp bigint) OWNER TO postgres;
-
 --
--- Name: _achievement_period_key(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: _achievement_period_key(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public._achievement_period_key(p_criteria jsonb) RETURNS text
@@ -1229,14 +1223,12 @@ CREATE FUNCTION public._achievement_period_key(p_criteria jsonb) RETURNS text
 $$;
 
 
-ALTER FUNCTION public._achievement_period_key(p_criteria jsonb) OWNER TO postgres;
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: activity_health_metrics; Type: TABLE; Schema: public; Owner: postgres
+-- Name: activity_health_metrics; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.activity_health_metrics (
@@ -1264,24 +1256,22 @@ CREATE TABLE public.activity_health_metrics (
 );
 
 
-ALTER TABLE public.activity_health_metrics OWNER TO postgres;
-
 --
--- Name: TABLE activity_health_metrics; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE activity_health_metrics; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.activity_health_metrics IS 'Aggregated health metrics for user activities';
 
 
 --
--- Name: COLUMN activity_health_metrics.dismissed; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN activity_health_metrics.dismissed; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.activity_health_metrics.dismissed IS 'Tombstone: true rows carry no metrics and mark a detected workout the user dismissed, so it is not re-prompted. Excluded from activity_health_data.';
 
 
 --
--- Name: _activity_metric_value(public.activity_health_metrics, text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: _activity_metric_value(public.activity_health_metrics, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public._activity_metric_value(m public.activity_health_metrics, p_metric text) RETURNS numeric
@@ -1305,10 +1295,159 @@ CREATE FUNCTION public._activity_metric_value(m public.activity_health_metrics, 
 $$;
 
 
-ALTER FUNCTION public._activity_metric_value(m public.activity_health_metrics, p_metric text) OWNER TO postgres;
+--
+-- Name: _fn_social_event_on_post(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public._fn_social_event_on_post() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  INSERT INTO public.social_event (user_id, kind) VALUES (NEW.author_id, 'post_created');
+  RETURN NEW;
+END;
+$$;
+
 
 --
--- Name: achievement_progress(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: _fn_social_event_on_reaction(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public._fn_social_event_on_reaction() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_author uuid;
+BEGIN
+  SELECT author_id INTO v_author FROM public.wall_post WHERE id = NEW.post_id;
+
+  IF v_author IS NOT NULL AND v_author IS DISTINCT FROM NEW.user_id THEN
+    INSERT INTO public.social_event (user_id, kind) VALUES (v_author, 'reaction_received');
+    INSERT INTO public.social_event (user_id, kind) VALUES (NEW.user_id, 'reaction_given');
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: _vitality_daily_load_series(uuid, date, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public._vitality_daily_load_series(p_user_id uuid, p_from date, p_to date) RETURNS TABLE(date date, session_load real)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT gs.d::date, COALESCE(vdl.session_load, 0)
+  FROM generate_series(p_from, p_to, interval '1 day') AS gs(d)
+  LEFT JOIN public.vitality_daily_load vdl
+    ON vdl.user_id = p_user_id AND vdl.date = gs.d::date
+  ORDER BY gs.d;
+$$;
+
+
+--
+-- Name: _vitality_ewma(uuid, date, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public._vitality_ewma(p_user_id uuid, p_as_of date, p_window_days integer) RETURNS real
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  WITH RECURSIVE series AS (
+    SELECT date, session_load
+    FROM public._vitality_daily_load_series(
+      p_user_id, p_as_of - (p_window_days * 3), p_as_of
+    )
+  ),
+  ewma AS (
+    SELECT date, session_load::real AS value
+    FROM series WHERE date = (SELECT MIN(date) FROM series)
+    UNION ALL
+    SELECT s.date,
+      (e.value + (s.session_load - e.value) / p_window_days)::real
+    FROM series s
+    JOIN ewma e ON s.date = e.date + 1
+  )
+  SELECT value FROM ewma WHERE date = p_as_of;
+$$;
+
+
+--
+-- Name: _vitality_scale(real, real[], real[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public._vitality_scale(p_value real, p_breaks real[], p_scores real[]) RETURNS real
+    LANGUAGE plpgsql IMMUTABLE
+    SET search_path TO ''
+    AS $$
+DECLARE
+  n integer := array_length(p_breaks, 1);
+BEGIN
+  IF p_value <= p_breaks[1] THEN RETURN p_scores[1]; END IF;
+  IF p_value >= p_breaks[n] THEN RETURN p_scores[n]; END IF;
+  FOR i IN 1..n - 1 LOOP
+    IF p_value >= p_breaks[i] AND p_value <= p_breaks[i + 1] THEN
+      RETURN p_scores[i] + (p_value - p_breaks[i])
+        / (p_breaks[i + 1] - p_breaks[i]) * (p_scores[i + 1] - p_scores[i]);
+    END IF;
+  END LOOP;
+  RETURN p_scores[n];
+END;
+$$;
+
+
+--
+-- Name: accept_professional_booking(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.accept_professional_booking(p_booking_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_professional_id uuid;
+    v_start timestamptz;
+    v_end timestamptz;
+BEGIN
+    SELECT pb.professional_id, pb.booking_time_start, pb.booking_time_end
+    INTO v_professional_id, v_start, v_end
+    FROM public.professional_booking pb
+    WHERE pb.id = p_booking_id;
+
+    IF v_professional_id IS NULL THEN
+        RAISE EXCEPTION 'accept_professional_booking: booking % not found', p_booking_id;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM public.professional p
+        WHERE p.id = v_professional_id AND p.linked_user_id = auth.uid()
+    ) THEN
+        RAISE EXCEPTION 'accept_professional_booking: caller is not the linked professional';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM public.professional_booking pb2
+        WHERE pb2.professional_id = v_professional_id
+          AND pb2.id <> p_booking_id
+          AND pb2.status = 'confirmed'
+          AND pb2.booking_time_start < v_end
+          AND pb2.booking_time_end > v_start
+    ) THEN
+        RAISE EXCEPTION 'accept_professional_booking: overlaps another confirmed booking';
+    END IF;
+
+    UPDATE public.professional_booking
+    SET status = 'confirmed'
+    WHERE id = p_booking_id;
+END;
+$$;
+
+
+--
+-- Name: achievement_progress(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.achievement_progress(p_user_id uuid) RETURNS TABLE(achievement_id uuid, code text, name text, description text, difficulty smallint, consistency smallint, xp_reward bigint, repeatable boolean, current_value numeric, threshold numeric, progress numeric, state text, period_key text)
@@ -1347,10 +1486,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.achievement_progress(p_user_id uuid) OWNER TO postgres;
-
 --
--- Name: activity_confirmation_status(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: activity_confirmation_status(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.activity_confirmation_status(p_activity_id uuid) RETURNS TABLE(confirmed_count integer, maybe_count integer, threshold integer, my_attendance text, activity_confirmed boolean)
@@ -1367,10 +1504,8 @@ BEGIN
 END; $$;
 
 
-ALTER FUNCTION public.activity_confirmation_status(p_activity_id uuid) OWNER TO postgres;
-
 --
--- Name: activity_health_data(bigint); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: activity_health_data(bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.activity_health_data(p_sport_id bigint) RETURNS TABLE(activity_id uuid, start_time timestamp with time zone, end_time timestamp with time zone, duration_minutes integer, location_label text, source text, steps integer, distance_meters real, active_calories real, avg_heart_rate integer, max_heart_rate integer, min_heart_rate integer, hrv_sdnn_ms real, hrv_rmssd_ms real, hr_zone_easy_seconds integer, hr_zone_moderate_seconds integer, hr_zone_hard_seconds integer, training_load real, effort_score real, workout_type text, recorded_at timestamp with time zone)
@@ -1420,10 +1555,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.activity_health_data(p_sport_id bigint) OWNER TO postgres;
-
 --
--- Name: activity_is_confirmed(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: activity_is_confirmed(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.activity_is_confirmed(p_activity_id uuid) RETURNS boolean
@@ -1440,10 +1573,78 @@ BEGIN
 END; $$;
 
 
-ALTER FUNCTION public.activity_is_confirmed(p_activity_id uuid) OWNER TO postgres;
+--
+-- Name: add_payment_info(text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.add_payment_info(p_bank_id text, p_bank_display_name text, p_value text, p_account_name text DEFAULT NULL::text) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+    v_value_secret_id uuid := vault.create_secret(p_value);
+    v_name_secret_id uuid;
+    v_old_value_secret_id uuid;
+    v_old_name_secret_id uuid;
+    v_id uuid;
+BEGIN
+    IF p_account_name IS NOT NULL THEN
+        v_name_secret_id := vault.create_secret(p_account_name);
+    END IF;
+
+    SELECT value_secret_id, account_name_secret_id
+      INTO v_old_value_secret_id, v_old_name_secret_id
+      FROM public.user_payment_info WHERE user_id = auth.uid();
+
+    INSERT INTO public.user_payment_info
+        (user_id, bank_id, bank_display_name, value_secret_id, account_name_secret_id)
+    VALUES (auth.uid(), p_bank_id, p_bank_display_name, v_value_secret_id, v_name_secret_id)
+    ON CONFLICT (user_id) DO UPDATE SET
+        bank_id                = excluded.bank_id,
+        bank_display_name      = excluded.bank_display_name,
+        value_secret_id        = excluded.value_secret_id,
+        account_name_secret_id = excluded.account_name_secret_id,
+        created_at              = now()
+    RETURNING id INTO v_id;
+
+    IF v_old_value_secret_id IS NOT NULL THEN
+        DELETE FROM vault.secrets WHERE id IN (v_old_value_secret_id, v_old_name_secret_id);
+    END IF;
+
+    RETURN v_id;
+END;
+$$;
+
 
 --
--- Name: calculate_profile_compat(uuid, uuid, bigint); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: block_user(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.block_user(p_user_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_uid uuid := auth.uid();
+begin
+    if v_uid is null then raise exception 'not authenticated'; end if;
+    if p_user_id = v_uid then raise exception 'cannot block yourself'; end if;
+
+    insert into public.user_block (blocker_id, blocked_id)
+        values (v_uid, p_user_id)
+        on conflict do nothing;
+
+    update public.friendship
+        set status = 'cancelled', responded_at = now()
+        where status in ('pending', 'accepted')
+          and least(requester_id, addressee_id) = least(v_uid, p_user_id)
+          and greatest(requester_id, addressee_id) = greatest(v_uid, p_user_id);
+end;
+$$;
+
+
+--
+-- Name: calculate_profile_compat(uuid, uuid, bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.calculate_profile_compat(p_user_id uuid, p_target_id uuid, p_sport_id bigint) RETURNS jsonb
@@ -1641,10 +1842,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.calculate_profile_compat(p_user_id uuid, p_target_id uuid, p_sport_id bigint) OWNER TO postgres;
-
 --
--- Name: calculate_profile_compat_score(uuid, uuid, bigint); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: calculate_profile_compat_score(uuid, uuid, bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.calculate_profile_compat_score(p_user_id uuid, p_target_id uuid, p_sport_id bigint) RETURNS numeric
@@ -1655,10 +1854,8 @@ CREATE FUNCTION public.calculate_profile_compat_score(p_user_id uuid, p_target_i
 $$;
 
 
-ALTER FUNCTION public.calculate_profile_compat_score(p_user_id uuid, p_target_id uuid, p_sport_id bigint) OWNER TO postgres;
-
 --
--- Name: calculate_timeslot_compat_score(jsonb, jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: calculate_timeslot_compat_score(jsonb, jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.calculate_timeslot_compat_score(source jsonb, target jsonb) RETURNS integer
@@ -1698,10 +1895,190 @@ END;
 $$;
 
 
-ALTER FUNCTION public.calculate_timeslot_compat_score(source jsonb, target jsonb) OWNER TO postgres;
+--
+-- Name: cancel_challenge(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cancel_challenge(p_challenge_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_uid  uuid := auth.uid();
+    v_init uuid;
+begin
+    if v_uid is null then raise exception 'not authenticated'; end if;
+    select initiator_lobby_id into v_init
+        from public.lobby_challenge
+        where id = p_challenge_id and status = 'requested';
+    if v_init is null then raise exception 'no open challenge to cancel'; end if;
+    if not public.lobby_can_manage(v_init, v_uid) then
+        raise exception 'not a manager of the initiating lobby';
+    end if;
+    update public.lobby_challenge
+        set status = 'cancelled', updated_at = now() where id = p_challenge_id;
+end;
+$$;
+
 
 --
--- Name: create_lobby_with_location(text, integer, text, jsonb, jsonb, uuid, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: confirm_challenge_activity(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.confirm_challenge_activity(p_activity_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid       uuid := auth.uid();
+    v_lobby     uuid;
+    v_challenge uuid;
+    v_threshold integer;
+    v_going     integer;
+    v_pending   integer;
+    v_init      uuid;
+    v_target    uuid;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+
+    SELECT lobby_id, challenge_id, confirmation_threshold
+      INTO v_lobby, v_challenge, v_threshold
+      FROM public.activity WHERE id = p_activity_id;
+
+    IF v_challenge IS NULL THEN RAISE EXCEPTION 'not a challenge activity'; END IF;
+    IF NOT public.lobby_can_manage(v_lobby, v_uid) THEN
+        RAISE EXCEPTION 'not a manager of this lobby';
+    END IF;
+
+    SELECT count(*) INTO v_going
+      FROM public.activity_confirmation
+     WHERE activity_id = p_activity_id AND attendance = 'going';
+
+    IF v_threshold IS NOT NULL AND v_going < v_threshold THEN
+        RAISE EXCEPTION 'not enough confirmations yet (% of %)', v_going, v_threshold;
+    END IF;
+
+    UPDATE public.activity
+       SET manager_confirmed_at = now()
+     WHERE id = p_activity_id AND manager_confirmed_at IS NULL;
+
+    SELECT count(*) INTO v_pending
+      FROM public.activity
+     WHERE challenge_id = v_challenge AND manager_confirmed_at IS NULL;
+
+    IF v_pending = 0 THEN
+        UPDATE public.lobby_challenge
+           SET status = 'scheduled', updated_at = now()
+         WHERE id = v_challenge AND status = 'accepted'
+        RETURNING initiator_lobby_id, target_lobby_id INTO v_init, v_target;
+
+        IF v_init IS NOT NULL THEN
+            PERFORM public.fn_enqueue_notification(
+                'challenge_scheduled',
+                ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = v_init),
+                'Trận đấu đã được chốt',
+                'Cả hai đội đã xác nhận — trận thách đấu chính thức được lên lịch',
+                jsonb_build_object('lobby_id', v_init, 'challenge_id', v_challenge));
+            PERFORM public.fn_enqueue_notification(
+                'challenge_scheduled',
+                ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = v_target),
+                'Trận đấu đã được chốt',
+                'Cả hai đội đã xác nhận — trận thách đấu chính thức được lên lịch',
+                jsonb_build_object('lobby_id', v_target, 'challenge_id', v_challenge));
+
+            -- Mirrors the accept-time feed item (respond_challenge) — this is
+            -- the next entry in the same scheduling lifecycle, not a match
+            -- outcome, so it belongs in the lobby feed the way schedule/
+            -- reschedule/cancel already do.
+            INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+            SELECT l.id, l.captain_id, 'update',
+                   jsonb_build_object(
+                       'title', 'Trận đấu đã được chốt',
+                       'kind',  'match_confirmed',
+                       'tone',  'green',
+                       'fields', jsonb_build_array(
+                           jsonb_build_array('Trạng thái', 'Cả hai đội đã xác nhận')))
+              FROM public.lobby l
+             WHERE l.id IN (v_init, v_target);
+        END IF;
+    END IF;
+END;
+$$;
+
+
+--
+-- Name: create_ancillary_payment_request(uuid, numeric, text, uuid[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.create_ancillary_payment_request(p_activity_id uuid, p_total_amount numeric, p_note text, p_tagged_users uuid[]) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid uuid := auth.uid();
+    v_lobby_id uuid;
+    v_tagged uuid[];
+    v_payee_count int;
+    v_per_person numeric(10, 2);
+    v_feed_item_id uuid;
+BEGIN
+    IF v_uid IS NULL THEN
+        RAISE EXCEPTION 'not authenticated';
+    END IF;
+
+    IF p_total_amount IS NULL OR p_total_amount <= 0 THEN
+        RAISE EXCEPTION 'amount must be positive';
+    END IF;
+
+    v_tagged := ARRAY(SELECT DISTINCT u FROM unnest(p_tagged_users) AS u WHERE u <> v_uid);
+    v_payee_count := COALESCE(array_length(v_tagged, 1), 0);
+    IF v_payee_count = 0 THEN
+        RAISE EXCEPTION 'must tag at least one lobby mate';
+    END IF;
+
+    SELECT a.lobby_id INTO v_lobby_id
+      FROM public.activity a
+      JOIN public.activity_confirmation ac
+        ON ac.activity_id = a.id AND ac.user_id = v_uid AND ac.attendance = 'going'
+     WHERE a.id = p_activity_id;
+
+    IF v_lobby_id IS NULL THEN
+        RAISE EXCEPTION 'must be a confirmed attendee of this session';
+    END IF;
+
+    v_per_person := CEIL(p_total_amount / v_payee_count / 1000) * 1000;
+
+    INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+    VALUES (
+        v_lobby_id, v_uid, 'payment_request',
+        jsonb_build_object(
+            'type',               'ancillary',
+            'source_activity_id', p_activity_id,
+            'recipient_id',       v_uid,
+            'total_amount',       p_total_amount,
+            'per_person_amount',  v_per_person,
+            'note',               p_note
+        )
+    )
+    RETURNING id INTO v_feed_item_id;
+
+    INSERT INTO public.lobby_payment_request_payee (feed_item_id, user_id, amount_owed)
+    SELECT v_feed_item_id, u, v_per_person FROM unnest(v_tagged) AS u;
+
+    PERFORM public.fn_enqueue_notification(
+        'payment_requested',
+        v_tagged,
+        'Yêu cầu thanh toán',
+        COALESCE(p_note, 'Bạn được yêu cầu thanh toán ' || v_per_person::text || 'đ'),
+        jsonb_build_object('lobby_id', v_lobby_id, 'feed_item_id', v_feed_item_id));
+
+    RETURN v_feed_item_id;
+END;
+$$;
+
+
+--
+-- Name: create_lobby_with_location(text, integer, text, jsonb, jsonb, uuid, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text DEFAULT 'discoverable'::text, p_playtime jsonb DEFAULT NULL::jsonb, p_details jsonb DEFAULT NULL::jsonb, p_home_ground_id uuid DEFAULT NULL::uuid, p_location_name text DEFAULT NULL::text, p_street_number text DEFAULT NULL::text, p_street_name text DEFAULT NULL::text, p_district text DEFAULT NULL::text, p_city text DEFAULT NULL::text) RETURNS jsonb
@@ -1758,10 +2135,146 @@ END;
 $$;
 
 
-ALTER FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text) OWNER TO postgres;
+--
+-- Name: create_wall_post(uuid, uuid, text[], text, smallint, uuid[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.create_wall_post(p_activity_id uuid, p_booking_id uuid, p_image_paths text[], p_caption text DEFAULT NULL::text, p_ttl_days smallint DEFAULT 7, p_tagged_users uuid[] DEFAULT '{}'::uuid[]) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_uid    uuid := auth.uid();
+    v_id     uuid;
+    v_sport  bigint;
+    v_lobby  uuid;
+    v_label  text;
+    v_start  timestamptz;
+    v_venue  text;
+    v_tag    uuid;
+begin
+    if v_uid is null then raise exception 'not authenticated'; end if;
+    if num_nonnulls(p_activity_id, p_booking_id) <> 1 then
+        raise exception 'reference exactly one activity or booking';
+    end if;
+    if coalesce(array_length(p_image_paths, 1), 0) not between 1 and 4 then
+        raise exception 'a post needs between 1 and 4 images';
+    end if;
+    if array_length(p_tagged_users, 1) > 5 then
+        raise exception 'a post can tag at most 5 people';
+    end if;
+
+    if p_activity_id is not null then
+        select a.sport_id, a.lobby_id, l.name, a.start_time, loc.name
+            into v_sport, v_lobby, v_label, v_start, v_venue
+            from public.activity a
+            left join public.lobby l on l.id = a.lobby_id
+            left join public.location loc on loc.id = a.location_id
+            where a.id = p_activity_id
+              and a.start_time < now()
+              and a.start_time > now() - interval '7 days'
+              and exists (
+                select 1 from public.activity_confirmation c
+                where c.activity_id = a.id
+                  and c.user_id = v_uid
+                  and c.attendance = 'going'
+              );
+
+        if v_start is null then
+            raise exception
+                'activity is not postable (must be within 7 days and RSVP''d going)';
+        end if;
+    else
+        select b.booking_time_start, p.display_name, loc.name,
+               (select s.sport_id from public.professional_service s
+                 where s.id = b.service_id)
+            into v_start, v_label, v_venue, v_sport
+            from public.professional_booking b
+            join public.professional p on p.id = b.professional_id
+            left join public.location loc on loc.id = b.location_id
+            where b.id = p_booking_id
+              and b.client_user_id = v_uid
+              and p.professional_role = 'coach'
+              and b.status in ('confirmed', 'completed')
+              and b.booking_time_end < now()
+              and b.booking_time_end > now() - interval '7 days';
+
+        if v_start is null then
+            raise exception 'lesson is not postable (must be yours and within 7 days)';
+        end if;
+    end if;
+
+    insert into public.wall_post (
+        author_id, activity_id, professional_booking_id,
+        sport_id, lobby_id, source_label, source_start_time, source_venue_name,
+        caption, image_paths, ttl_days, expires_at
+    ) values (
+        v_uid, p_activity_id, p_booking_id,
+        coalesce(v_sport, 0), v_lobby, v_label, v_start, v_venue,
+        nullif(btrim(p_caption), ''), p_image_paths, p_ttl_days,
+        now() + (p_ttl_days || ' days')::interval
+    ) returning id into v_id;
+
+    foreach v_tag in array coalesce(p_tagged_users, '{}'::uuid[]) loop
+        insert into public.wall_post_tag (post_id, user_id)
+            values (v_id, v_tag)
+            on conflict do nothing;
+    end loop;
+
+    return v_id;
+end;
+$$;
+
 
 --
--- Name: evaluate_achievements(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: delete_payment_info(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.delete_payment_info(p_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+    v_value_secret_id uuid;
+    v_name_secret_id uuid;
+begin
+    delete from public.user_payment_info
+    where id = p_id and user_id = auth.uid()
+    returning value_secret_id, account_name_secret_id
+    into v_value_secret_id, v_name_secret_id;
+
+    delete from vault.secrets where id in (v_value_secret_id, v_name_secret_id);
+end;
+$$;
+
+
+--
+-- Name: delete_wall_post(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.delete_wall_post(p_post_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_paths text[];
+begin
+    select image_paths into v_paths
+        from public.wall_post
+        where id = p_post_id and author_id = auth.uid();
+    if v_paths is null then raise exception 'not your post'; end if;
+
+    insert into public.wall_post_gc (path)
+        select unnest(v_paths)
+        on conflict do nothing;
+
+    delete from public.wall_post where id = p_post_id;
+end;
+$$;
+
+
+--
+-- Name: evaluate_achievements(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.evaluate_achievements(p_user_id uuid) RETURNS jsonb
@@ -1836,10 +2349,716 @@ END;
 $$;
 
 
-ALTER FUNCTION public.evaluate_achievements(p_user_id uuid) OWNER TO postgres;
+--
+-- Name: evaluate_vitality_score(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.evaluate_vitality_score(p_user_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_today             date := now()::date;
+  v_eligible_from      date;
+  v_has_prior_load     boolean;
+  v_recompute_from     date;
+
+  v_ctl_today          real;
+  v_ctl_28ago          real;
+  v_atl_today          real;
+
+  v_sessions_28d       integer;
+  v_freq_weekly        real;
+  v_consistency        real;
+
+  v_load_28d           real;
+  v_load_weekly        real;
+  v_load               real;
+
+  v_rhr_7d             real;
+  v_rhr_56d            real;
+  v_rhr_stddev         real;
+  v_rhr_z              real;
+  v_recovery           real;
+
+  v_cal_28d            real;
+  v_cal_weekly         real;
+  v_volume             real;
+
+  v_streak_weeks       integer;
+  v_streak_bonus       real;
+
+  v_score_sum          real;
+  v_weight_sum         real;
+  v_score              real;
+BEGIN
+  IF p_user_id IS DISTINCT FROM auth.uid() THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+
+  SELECT GREATEST(u.created_at::date, v_today - 90)
+    INTO v_eligible_from
+    FROM public."user" u WHERE u.id = p_user_id;
+
+  v_has_prior_load := EXISTS(
+    SELECT 1 FROM public.vitality_daily_load WHERE user_id = p_user_id
+  );
+  v_recompute_from := GREATEST(
+    CASE WHEN v_has_prior_load THEN v_today - 7 ELSE v_eligible_from END,
+    v_eligible_from
+  );
+
+  INSERT INTO public.vitality_daily_load (user_id, date, session_load, session_count, computed_at)
+  SELECT
+    p_user_id,
+    a.start_time::date,
+    SUM(public._activity_metric_value(m, 'session_load')),
+    COUNT(*),
+    now()
+  FROM public.activity_health_metrics m
+  JOIN public.activity a ON a.id = m.activity_id
+  WHERE m.user_id = p_user_id AND NOT m.dismissed
+    AND a.start_time::date BETWEEN v_recompute_from AND v_today
+  GROUP BY a.start_time::date
+  ON CONFLICT (user_id, date) DO UPDATE
+    SET session_load  = EXCLUDED.session_load,
+        session_count = EXCLUDED.session_count,
+        computed_at   = now();
+
+  INSERT INTO public.vitality_daily_load (user_id, date, session_load, session_count, computed_at)
+  SELECT p_user_id, gs.d::date, 0, 0, now()
+  FROM generate_series(v_recompute_from, v_today, interval '1 day') AS gs(d)
+  ON CONFLICT (user_id, date) DO NOTHING;
+
+  v_ctl_today := public._vitality_ewma(p_user_id, v_today, 42);
+  v_ctl_28ago := public._vitality_ewma(p_user_id, v_today - 28, 42);
+  v_atl_today := public._vitality_ewma(p_user_id, v_today, 7);
+
+  SELECT COUNT(*) INTO v_sessions_28d
+    FROM public.activity_health_metrics m
+    JOIN public.activity a ON a.id = m.activity_id
+    WHERE m.user_id = p_user_id AND NOT m.dismissed
+      AND a.start_time::date BETWEEN v_today - 27 AND v_today;
+
+  v_freq_weekly := v_sessions_28d / 4.0;
+  v_consistency := public._vitality_scale(
+    v_freq_weekly,
+    ARRAY[0, 1, 2, 3, 4, 5, 6],
+    ARRAY[20, 45, 55, 65, 75, 85, 92]
+  );
+
+  SELECT COALESCE(SUM(public._activity_metric_value(m, 'session_load')), 0) INTO v_load_28d
+    FROM public.activity_health_metrics m
+    JOIN public.activity a ON a.id = m.activity_id
+    WHERE m.user_id = p_user_id AND NOT m.dismissed
+      AND a.start_time::date BETWEEN v_today - 27 AND v_today;
+
+  v_load_weekly := v_load_28d / 4.0;
+  v_load := public._vitality_scale(
+    v_load_weekly,
+    ARRAY[0, 60, 120, 200, 320, 450],
+    ARRAY[20, 38, 55, 68, 80, 92]
+  );
+
+  SELECT AVG(resting_heart_rate) INTO v_rhr_7d
+    FROM public.daily_health_summary
+    WHERE user_id = p_user_id AND date BETWEEN v_today - 6 AND v_today
+      AND resting_heart_rate IS NOT NULL;
+
+  SELECT AVG(resting_heart_rate), STDDEV(resting_heart_rate) INTO v_rhr_56d, v_rhr_stddev
+    FROM public.daily_health_summary
+    WHERE user_id = p_user_id AND date BETWEEN v_today - 55 AND v_today
+      AND resting_heart_rate IS NOT NULL;
+
+  IF v_rhr_7d IS NULL OR v_rhr_56d IS NULL THEN
+    v_recovery := NULL;
+  ELSE
+    v_rhr_z := (v_rhr_56d - v_rhr_7d) / GREATEST(COALESCE(v_rhr_stddev, 0), 2.0);
+    v_recovery := LEAST(100, GREATEST(0, 50 + v_rhr_z * 25));
+  END IF;
+
+  SELECT SUM(active_calories) INTO v_cal_28d
+    FROM public.daily_health_summary
+    WHERE user_id = p_user_id AND date BETWEEN v_today - 27 AND v_today;
+
+  IF v_cal_28d IS NULL THEN
+    v_volume := NULL;
+  ELSE
+    v_cal_weekly := v_cal_28d / 4.0;
+    v_volume := public._vitality_scale(
+      v_cal_weekly,
+      ARRAY[0, 500, 1000, 2000, 3200, 4500],
+      ARRAY[20, 35, 55, 70, 85, 93]
+    );
+  END IF;
+
+  v_streak_weeks := 0;
+  FOR i IN 0..7 LOOP
+    EXIT WHEN NOT EXISTS(
+      SELECT 1 FROM public.activity_health_metrics m
+      JOIN public.activity a ON a.id = m.activity_id
+      WHERE m.user_id = p_user_id AND NOT m.dismissed
+        AND date_trunc('week', a.start_time::date)
+          = date_trunc('week', v_today) - (i || ' weeks')::interval
+    );
+    v_streak_weeks := v_streak_weeks + 1;
+  END LOOP;
+  v_streak_bonus := CASE WHEN v_streak_weeks >= 4 THEN 3 ELSE 0 END;
+
+  v_score_sum := v_consistency * 0.40;
+  v_weight_sum := 0.40;
+  v_score_sum := v_score_sum + v_load * 0.30;
+  v_weight_sum := v_weight_sum + 0.30;
+  IF v_recovery IS NOT NULL THEN
+    v_score_sum := v_score_sum + v_recovery * 0.15;
+    v_weight_sum := v_weight_sum + 0.15;
+  END IF;
+  IF v_volume IS NOT NULL THEN
+    v_score_sum := v_score_sum + v_volume * 0.15;
+    v_weight_sum := v_weight_sum + 0.15;
+  END IF;
+
+  IF (v_today - v_eligible_from) < 14 THEN
+    v_score := NULL;
+  ELSE
+    v_score := LEAST(100, (v_score_sum / v_weight_sum) + v_streak_bonus);
+  END IF;
+
+  INSERT INTO public.vitality_score (
+    user_id, date, score, consistency_component, load_component,
+    recovery_component, volume_component, streak_bonus, ctl, atl, computed_at
+  ) VALUES (
+    p_user_id, v_today, v_score, v_consistency, v_load,
+    v_recovery, v_volume, v_streak_bonus, v_ctl_today, v_atl_today, now()
+  )
+  ON CONFLICT (user_id, date) DO UPDATE
+    SET score                 = EXCLUDED.score,
+        consistency_component = EXCLUDED.consistency_component,
+        load_component        = EXCLUDED.load_component,
+        recovery_component    = EXCLUDED.recovery_component,
+        volume_component      = EXCLUDED.volume_component,
+        streak_bonus          = EXCLUDED.streak_bonus,
+        ctl                   = EXCLUDED.ctl,
+        atl                   = EXCLUDED.atl,
+        computed_at           = now();
+
+  RETURN jsonb_build_object(
+    'date', v_today,
+    'score', v_score,
+    'consistency_component', v_consistency,
+    'load_component', v_load,
+    'recovery_component', v_recovery,
+    'volume_component', v_volume,
+    'streak_bonus', v_streak_bonus,
+    'ctl', v_ctl_today,
+    'atl', v_atl_today
+  );
+END;
+$$;
+
 
 --
--- Name: fn_lobby_playtime_keys(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: expire_past_activities(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.expire_past_activities() RETURNS integer
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid   uuid := auth.uid();
+  v_count int;
+BEGIN
+  DELETE FROM public.activity a
+  WHERE a.lobby_id IS NOT NULL
+    AND a.start_time < now()
+    AND a.recurrence_day_of_week IS NULL
+    AND NOT public.activity_is_confirmed(a.id)
+    AND NOT EXISTS (
+      SELECT 1 FROM public.lobby_match lm WHERE lm.activity_id = a.id
+    )
+    AND EXISTS (
+      SELECT 1 FROM public.lobby_member m
+      WHERE m.lobby_id = a.lobby_id AND m.user_id = v_uid
+    );
+
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  RETURN v_count;
+END;
+$$;
+
+
+--
+-- Name: fn_activity_attachment_role_check(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_activity_attachment_role_check() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  IF NEW.coach_booking_id IS NOT NULL AND NOT EXISTS (
+      SELECT 1
+      FROM public.professional_booking pb
+      JOIN public.professional p ON p.id = pb.professional_id
+      WHERE pb.id = NEW.coach_booking_id
+        AND p.professional_role = 'coach'
+  ) THEN
+    RAISE EXCEPTION 'coach_booking_id % must reference a coach booking', NEW.coach_booking_id;
+  END IF;
+
+  IF NEW.referee_booking_id IS NOT NULL AND NOT EXISTS (
+      SELECT 1
+      FROM public.professional_booking pb
+      JOIN public.professional p ON p.id = pb.professional_id
+      WHERE pb.id = NEW.referee_booking_id
+        AND p.professional_role = 'referee'
+  ) THEN
+    RAISE EXCEPTION 'referee_booking_id % must reference a referee booking', NEW.referee_booking_id;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: fn_apply_match_rating(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_apply_match_rating(p_match_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    c_home_adv    constant integer := 50;
+    c_k_new       constant numeric := 32;
+    c_k_settled   constant numeric := 20;
+    c_provisional constant integer := 10;
+    c_margin_cap  constant numeric := 2.0;
+
+    v_home     uuid;
+    v_away     uuid;
+    v_result   public.lobby_match_result;
+    v_sets     jsonb;
+    v_activity uuid;
+    v_challenge uuid;
+    v_sport    text;
+    v_home_mmr integer;
+    v_away_mmr integer;
+    v_expected numeric;
+    v_score    numeric;
+    v_margin   numeric := 0;
+    v_mult     numeric := 1;
+    r          record;
+BEGIN
+    SELECT m.lobby_id, m.opponent_lobby_id, m.result, m.sets, m.activity_id
+      INTO v_home, v_away, v_result, v_sets, v_activity
+      FROM public.lobby_match m WHERE m.id = p_match_id;
+
+    IF v_away IS NULL OR v_result = 'practice' THEN RETURN; END IF;
+
+    SELECT challenge_id INTO v_challenge FROM public.activity WHERE id = v_activity;
+    IF v_challenge IS NULL THEN RETURN; END IF;
+
+    SELECT public.fn_sport_name(sport_id), mmr INTO v_sport, v_home_mmr
+      FROM public.lobby WHERE id = v_home;
+    SELECT mmr INTO v_away_mmr FROM public.lobby WHERE id = v_away;
+    IF v_sport IS NULL THEN RETURN; END IF;
+
+    v_expected := 1.0 / (1.0 + power(10.0,
+        ((v_away_mmr - (v_home_mmr + c_home_adv))::numeric / 400.0)));
+    v_score := CASE v_result WHEN 'win' THEN 1.0 WHEN 'draw' THEN 0.5 ELSE 0.0 END;
+
+    IF v_sets IS NOT NULL AND jsonb_typeof(v_sets) = 'array' THEN
+        SELECT COALESCE(abs(sum((s->>0)::numeric - (s->>1)::numeric)), 0)
+          INTO v_margin
+          FROM jsonb_array_elements(v_sets) s;
+    END IF;
+    IF v_margin > 1 THEN
+        v_mult := LEAST(c_margin_cap, 1 + 0.5 * ln(v_margin));
+    END IF;
+
+    FOR r IN
+        SELECT a.lobby_id,
+               ac.user_id,
+               CASE WHEN a.lobby_id = v_home THEN v_score ELSE 1.0 - v_score END AS s,
+               CASE WHEN a.lobby_id = v_home THEN v_expected ELSE 1.0 - v_expected END AS e
+          FROM public.activity a
+          JOIN public.activity_confirmation ac ON ac.activity_id = a.id
+         WHERE a.challenge_id = v_challenge AND ac.attendance = 'going'
+    LOOP
+        IF NOT EXISTS (
+            SELECT 1 FROM public.user_rating
+             WHERE user_id = r.user_id AND sport = v_sport AND format IS NULL
+        ) THEN
+            INSERT INTO public.user_rating (user_id, sport, elo, games_played)
+            VALUES (r.user_id, v_sport, 1000, 0);
+        END IF;
+
+        UPDATE public.user_rating ur
+           SET elo = GREATEST(100, ur.elo + round(
+                   (CASE WHEN ur.games_played < c_provisional THEN c_k_new ELSE c_k_settled END)
+                   * v_mult * (r.s - r.e))::integer),
+               games_played = ur.games_played + 1,
+               updated_at = now()
+         WHERE ur.user_id = r.user_id AND ur.sport = v_sport AND ur.format IS NULL;
+    END LOOP;
+END;
+$$;
+
+
+--
+-- Name: fn_can_see_wall_post(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_can_see_wall_post(p_post_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select exists (
+        select 1
+        from public.wall_post p
+        where p.id = p_post_id
+          and (
+            p.author_id = auth.uid()
+            or (
+                p.hidden_at is null
+                and p.expires_at > now()
+                and not public.fn_is_blocked(auth.uid(), p.author_id)
+                and (
+                    p.author_id in (select public.get_my_friend_ids())
+                    or p.author_id in (select public.get_my_lobbymate_ids())
+                    or exists (
+                        select 1 from public.wall_post_tag t
+                        where t.post_id = p.id
+                          and (
+                            t.user_id = auth.uid()
+                            or t.user_id in (select public.get_my_friend_ids())
+                          )
+                    )
+                )
+            )
+          )
+    );
+$$;
+
+
+--
+-- Name: notification_outbox; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notification_outbox (
+    id bigint NOT NULL,
+    kind public.notification_kind NOT NULL,
+    recipient_user_id uuid NOT NULL,
+    title text NOT NULL,
+    body text NOT NULL,
+    data jsonb DEFAULT '{}'::jsonb NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    attempt_count integer DEFAULT 0 NOT NULL,
+    last_error text,
+    read_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT notification_outbox_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'sending'::text, 'sent'::text, 'failed'::text])))
+);
+
+
+--
+-- Name: fn_claim_outbox(integer, integer, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_claim_outbox(p_limit integer DEFAULT 100, p_max_attempts integer DEFAULT 3, p_stale text DEFAULT '2 minutes'::text) RETURNS SETOF public.notification_outbox
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+    return query
+    update public.notification_outbox o
+       set status        = 'sending',
+           attempt_count = o.attempt_count + 1,
+           updated_at    = now()
+     where o.id in (
+        select id from public.notification_outbox
+         where attempt_count < p_max_attempts
+           and (status = 'pending'
+                or (status = 'sending' and updated_at < now() - p_stale::interval))
+         order by created_at
+         limit p_limit
+         for update skip locked
+     )
+    returning o.*;
+end;
+$$;
+
+
+--
+-- Name: fn_complete_professional_booking_on_match(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_complete_professional_booking_on_match() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    IF NEW.referee_booking_id IS NOT NULL THEN
+        UPDATE public.professional_booking
+        SET status = 'completed'
+        WHERE id = NEW.referee_booking_id
+          AND status = 'confirmed';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: fn_cron_tick(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_cron_tick() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    PERFORM public.fn_sweep_challenges();
+    PERFORM public.fn_sweep_activity_payment_requests();
+    PERFORM public.fn_process_reminders();
+    IF EXISTS (SELECT 1 FROM public.notification_outbox
+                WHERE status IN ('pending', 'sending')) THEN
+        PERFORM public.fn_invoke_send_push();
+    END IF;
+END;
+$$;
+
+
+--
+-- Name: fn_emit_activity_confirmed(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_emit_activity_confirmed() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_threshold  int;
+    v_lobby_id   uuid;
+    v_challenge  uuid;
+    v_going      int;
+    v_recipients uuid[];
+    v_lobby_name text;
+begin
+    select a.confirmation_threshold, a.lobby_id, a.challenge_id
+        into v_threshold, v_lobby_id, v_challenge
+        from public.activity a
+        where a.id = new.activity_id;
+
+    if v_threshold is null or v_lobby_id is null or v_challenge is not null then
+        return new;
+    end if;
+
+    if new.attendance <> 'going' then
+        return new;
+    end if;
+    if tg_op = 'UPDATE' and old.attendance = 'going' then
+        return new;
+    end if;
+
+    select count(*) filter (where attendance = 'going') into v_going
+        from public.activity_confirmation
+        where activity_id = new.activity_id;
+
+    if v_going <> v_threshold then
+        return new;
+    end if;
+
+    select array_agg(lm.user_id) into v_recipients
+        from public.lobby_member lm
+        where lm.lobby_id = v_lobby_id;
+
+    select l.name into v_lobby_name from public.lobby l where l.id = v_lobby_id;
+
+    perform public.fn_enqueue_notification(
+        'activity_confirmed',
+        v_recipients,
+        'Hoạt động đã được chốt',
+        coalesce(v_lobby_name, 'Lobby') || ' đã đủ người tham gia',
+        jsonb_build_object('lobby_id', v_lobby_id, 'activity_id', new.activity_id)
+    );
+
+    return new;
+end;
+$$;
+
+
+--
+-- Name: fn_enqueue_notification(public.notification_kind, uuid[], text, text, jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_enqueue_notification(p_kind public.notification_kind, p_recipients uuid[], p_title text, p_body text, p_data jsonb DEFAULT '{}'::jsonb) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_enabled boolean;
+    v_inserted int;
+begin
+    select enabled into v_enabled
+        from public.enabled_notification_kind
+        where kind = p_kind;
+    if not coalesce(v_enabled, false) then
+        return;
+    end if;
+    insert into public.notification_outbox (kind, recipient_user_id, title, body, data)
+    select p_kind, r, p_title, p_body,
+           coalesce(p_data, '{}'::jsonb) || jsonb_build_object('kind', p_kind::text)
+    from unnest(p_recipients) as r
+    where r is not null;
+    get diagnostics v_inserted = row_count;
+    if v_inserted > 0 then
+        perform public.fn_invoke_send_push();
+    end if;
+end;
+$$;
+
+
+--
+-- Name: fn_increment_package_sessions_used(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_increment_package_sessions_used() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    IF NEW.package_id IS NOT NULL THEN
+        UPDATE public.professional_booking_package
+        SET sessions_used = sessions_used + 1,
+            updated_at = now()
+        WHERE id = NEW.package_id;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: fn_invoke_send_invite_email(uuid, text, uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_invoke_send_invite_email(p_invite_id uuid, p_email text, p_inviter_id uuid, p_lobby_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_url          text;
+    v_key          text;
+    v_inviter_name text;
+    v_lobby_name   text;
+    v_sport_name   text;
+BEGIN
+    SELECT decrypted_secret INTO v_url
+        FROM vault.decrypted_secrets WHERE name = 'edge_invite_email_url';
+    SELECT decrypted_secret INTO v_key
+        FROM vault.decrypted_secrets WHERE name = 'edge_invite_email_key';
+
+    IF v_url IS NULL OR v_key IS NULL THEN
+        RETURN;
+    END IF;
+
+    SELECT u.username INTO v_inviter_name
+        FROM public."user" u WHERE u.id = p_inviter_id;
+
+    SELECT l.name, s.name INTO v_lobby_name, v_sport_name
+        FROM public.lobby l
+        LEFT JOIN public.sport s ON s.id = l.sport_id
+        WHERE l.id = p_lobby_id;
+
+    PERFORM net.http_post(
+        url     := v_url,
+        headers := jsonb_build_object(
+            'Content-Type',  'application/json',
+            'Authorization', 'Bearer ' || v_key
+        ),
+        body    := jsonb_build_object(
+            'invite_id',    p_invite_id,
+            'email',        p_email,
+            'inviter_name', COALESCE(v_inviter_name, 'Ai đó'),
+            'lobby_name',   COALESCE(v_lobby_name, 'một lobby'),
+            'sport_name',   COALESCE(v_sport_name, '')
+        )
+    );
+END;
+$$;
+
+
+--
+-- Name: fn_invoke_send_push(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_invoke_send_push() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_url text;
+    v_key text;
+begin
+    select decrypted_secret into v_url
+        from vault.decrypted_secrets where name = 'edge_send_push_url';
+    select decrypted_secret into v_key
+        from vault.decrypted_secrets where name = 'edge_service_role_key';
+    if v_url is null or v_key is null then
+        return;
+    end if;
+    perform net.http_post(
+        url     := v_url,
+        headers := jsonb_build_object(
+            'Content-Type',  'application/json',
+            'Authorization', 'Bearer ' || v_key
+        ),
+        body    := '{}'::jsonb
+    );
+end;
+$$;
+
+
+--
+-- Name: fn_is_blocked(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_is_blocked(p_a uuid, p_b uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select exists (
+        select 1 from public.user_block
+        where (blocker_id = p_a and blocked_id = p_b)
+           or (blocker_id = p_b and blocked_id = p_a)
+    );
+$$;
+
+
+--
+-- Name: fn_lobby_email_invite_send(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_lobby_email_invite_send() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    PERFORM public.fn_invoke_send_invite_email(
+        NEW.id, NEW.email, NEW.inviter_user_id, NEW.lobby_id
+    );
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: fn_lobby_playtime_keys(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) RETURNS text[]
@@ -1866,10 +3085,28 @@ CREATE FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) RETURNS text[]
 $$;
 
 
-ALTER FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) OWNER TO postgres;
+--
+-- Name: fn_lobby_recompute_rated_matches(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_lobby_recompute_rated_matches(p_lobby_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    IF p_lobby_id IS NULL THEN RETURN; END IF;
+    UPDATE public.lobby l
+       SET rated_match_count = (
+            SELECT count(*) FROM public.lobby_match m
+             WHERE m.result <> 'practice'
+               AND (m.lobby_id = p_lobby_id OR m.opponent_lobby_id = p_lobby_id))
+     WHERE l.id = p_lobby_id;
+END;
+$$;
+
 
 --
--- Name: fn_lobby_recompute_stats(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: fn_lobby_recompute_stats(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.fn_lobby_recompute_stats(p_lobby_id uuid) RETURNS void
@@ -1930,10 +3167,168 @@ END;
 $$;
 
 
-ALTER FUNCTION public.fn_lobby_recompute_stats(p_lobby_id uuid) OWNER TO postgres;
+--
+-- Name: fn_mark_all_notifications_read(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_mark_all_notifications_read() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+    update public.notification_outbox
+        set read_at = now()
+        where recipient_user_id = auth.uid() and read_at is null;
+end;
+$$;
+
 
 --
--- Name: fn_playtime_to_dict(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: fn_mark_notification_read(bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_mark_notification_read(p_id bigint) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+    update public.notification_outbox
+        set read_at = now()
+        where id = p_id and recipient_user_id = auth.uid() and read_at is null;
+end;
+$$;
+
+
+--
+-- Name: fn_notify_lobby_invite(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_notify_lobby_invite() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_inviter_name text;
+    v_lobby_name   text;
+BEGIN
+    IF NEW.interaction_type != 'invite' OR NEW.target_user_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT u.username INTO v_inviter_name
+    FROM public."user" u WHERE u.id = NEW.initiator_user_id;
+
+    IF NEW.target_lobby_id IS NOT NULL THEN
+        SELECT l.name INTO v_lobby_name
+        FROM public.lobby l WHERE l.id = NEW.target_lobby_id;
+    END IF;
+
+    PERFORM public.fn_enqueue_notification(
+        'lobby_invite',
+        ARRAY[NEW.target_user_id],
+        COALESCE(v_inviter_name, 'Ai đó') || ' mời bạn vào lobby',
+        COALESCE(v_lobby_name, 'một lobby'),
+        jsonb_build_object(
+            'lobby_id', NEW.target_lobby_id,
+            'record_id', NEW.id
+        )
+    );
+
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: fn_notify_professional_booking_created(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_notify_professional_booking_created() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_professional_user_id uuid;
+    v_client_name text;
+BEGIN
+    SELECT linked_user_id INTO v_professional_user_id
+    FROM public.professional
+    WHERE id = NEW.professional_id;
+
+    IF v_professional_user_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT u.username INTO v_client_name
+    FROM public."user" u WHERE u.id = NEW.client_user_id;
+
+    PERFORM public.fn_enqueue_notification(
+        'professional_booking_requested',
+        ARRAY[v_professional_user_id],
+        COALESCE(v_client_name, 'Một học viên') || ' vừa gửi yêu cầu đặt lịch',
+        'Chạm để xem chi tiết và xác nhận',
+        jsonb_build_object('booking_id', NEW.id)
+    );
+
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: fn_notify_professional_booking_status_changed(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_notify_professional_booking_status_changed() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_professional_name text;
+BEGIN
+    SELECT display_name INTO v_professional_name
+    FROM public.professional WHERE id = NEW.professional_id;
+
+    IF NEW.status = 'confirmed' THEN
+        PERFORM public.fn_enqueue_notification(
+            'professional_booking_confirmed',
+            ARRAY[NEW.client_user_id],
+            COALESCE(v_professional_name, 'Chuyên gia') || ' đã xác nhận lịch hẹn',
+            'Buổi tập của bạn đã được xác nhận',
+            jsonb_build_object('booking_id', NEW.id)
+        );
+    ELSIF NEW.status = 'rejected' THEN
+        PERFORM public.fn_enqueue_notification(
+            'professional_booking_rejected',
+            ARRAY[NEW.client_user_id],
+            COALESCE(v_professional_name, 'Chuyên gia') || ' đã từ chối yêu cầu đặt lịch',
+            COALESCE(NEW.professional_notes, 'Bạn có thể thử đặt một khung giờ khác'),
+            jsonb_build_object('booking_id', NEW.id)
+        );
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: fn_outbox_poke(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_outbox_poke() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+    perform public.fn_invoke_send_push();
+    return null;
+end;
+$$;
+
+
+--
+-- Name: fn_playtime_to_dict(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.fn_playtime_to_dict(p_playtime jsonb) RETURNS jsonb
@@ -1966,10 +3361,105 @@ CREATE FUNCTION public.fn_playtime_to_dict(p_playtime jsonb) RETURNS jsonb
 $$;
 
 
-ALTER FUNCTION public.fn_playtime_to_dict(p_playtime jsonb) OWNER TO postgres;
+--
+-- Name: fn_poke_wall_gc(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_poke_wall_gc() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_url text;
+    v_key text;
+begin
+    if not exists (select 1 from public.wall_post_gc limit 1) then
+        return;
+    end if;
+
+    select decrypted_secret into v_url
+        from vault.decrypted_secrets where name = 'edge_wall_gc_url';
+    select decrypted_secret into v_key
+        from vault.decrypted_secrets where name = 'edge_service_role_key';
+
+    if v_url is null or v_key is null then
+        return;
+    end if;
+
+    perform net.http_post(
+        url := v_url,
+        headers := jsonb_build_object(
+            'Content-Type', 'application/json',
+            'Authorization', 'Bearer ' || v_key
+        ),
+        body := '{}'::jsonb
+    );
+end;
+$$;
+
 
 --
--- Name: fn_seed_initial_elo(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: fn_process_reminders(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_process_reminders() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    r record;
+begin
+    for r in
+        select b.id, b.booking_time_start, b.client_user_id
+            from public.professional_booking b
+            where b.reminder_sent_at is null
+              and b.status = 'confirmed'
+              and b.booking_time_start >  now()
+              and b.booking_time_start <= now() + interval '1 hour'
+            for update skip locked
+    loop
+        perform public.fn_enqueue_notification(
+            'pro_session_reminder',
+            (select array_agg(uid) from (
+                 select r.client_user_id as uid
+                 union
+                 select au.user_id
+                     from public.booking_additional_users au
+                     where au.booking_id = r.id
+             ) s),
+            'Sắp tới giờ tập với coach',
+            'Buổi tập của bạn bắt đầu lúc '
+                || to_char(r.booking_time_start at time zone 'Asia/Ho_Chi_Minh', 'HH24:MI'),
+            jsonb_build_object('target_id', r.id::text)
+        );
+        update public.professional_booking
+            set reminder_sent_at = now()
+            where id = r.id;
+    end loop;
+end;
+$$;
+
+
+--
+-- Name: fn_reject_pair_befriend(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_reject_pair_befriend() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+begin
+    if new.interaction_type = 'pair' then
+        raise exception
+            'lobby_befriend_record.pair is retired — use send_friend_request()';
+    end if;
+    return new;
+end;
+$$;
+
+
+--
+-- Name: fn_seed_initial_elo(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.fn_seed_initial_elo() RETURNS trigger
@@ -2014,10 +3504,8 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_seed_initial_elo() OWNER TO postgres;
-
 --
--- Name: fn_sport_name(bigint); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: fn_sport_name(bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.fn_sport_name(p_sport_id bigint) RETURNS text
@@ -2035,24 +3523,437 @@ CREATE FUNCTION public.fn_sport_name(p_sport_id bigint) RETURNS text
 $$;
 
 
-ALTER FUNCTION public.fn_sport_name(p_sport_id bigint) OWNER TO postgres;
-
 --
--- Name: get_my_lobby_ids(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: fn_sweep_activity_payment_requests(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_my_lobby_ids() RETURNS SETOF uuid
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
+CREATE FUNCTION public.fn_sweep_activity_payment_requests() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
     AS $$
-  SELECT lobby_id FROM public.lobby_member WHERE user_id = auth.uid();
+DECLARE
+    r record;
+    v_payees uuid[];
+    v_billable uuid[];
+    v_payee_count int;
+    v_per_person numeric(10, 2);
+    v_feed_item_id uuid;
+BEGIN
+    FOR r IN
+        SELECT a.id, a.lobby_id, a.user_id AS organizer_id, a.cost_type, a.cost_amount
+          FROM public.activity a
+         WHERE a.end_time IS NOT NULL
+           AND a.end_time <= now() - interval '15 minutes'
+           AND a.end_time >  now() - interval '1 day'
+           AND a.cost_type IS NOT NULL
+           AND a.manager_confirmed_at IS NOT NULL
+           AND a.lobby_id IS NOT NULL
+           AND NOT EXISTS (
+               SELECT 1 FROM public.lobby_feed_item fi
+                WHERE fi.kind = 'payment_request'
+                  AND fi.payload->>'type' = 'split'
+                  AND fi.payload->>'source_activity_id' = a.id::text
+           )
+    LOOP
+        SELECT array_agg(ac.user_id) INTO v_payees
+          FROM public.activity_confirmation ac
+         WHERE ac.activity_id = r.id AND ac.attendance = 'going';
+
+        v_payee_count := COALESCE(array_length(v_payees, 1), 0);
+        -- n includes the organizer for a fair per-head split even though
+        -- they don't get billed themselves below.
+        IF v_payee_count = 0 THEN
+            CONTINUE;
+        END IF;
+
+        v_per_person := CASE r.cost_type
+            WHEN 'per_pax' THEN r.cost_amount
+            ELSE CEIL(r.cost_amount / v_payee_count / 1000) * 1000
+        END;
+
+        v_billable := ARRAY(SELECT u FROM unnest(v_payees) AS u WHERE u <> r.organizer_id);
+        IF COALESCE(array_length(v_billable, 1), 0) = 0 THEN
+            -- Organizer was the only confirmed attendee — nobody to bill.
+            CONTINUE;
+        END IF;
+
+        INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+        VALUES (
+            r.lobby_id, r.organizer_id, 'payment_request',
+            jsonb_build_object(
+                'type',               'split',
+                'source_activity_id', r.id,
+                'recipient_id',       r.organizer_id,
+                'cost_type',          r.cost_type,
+                'total_amount',       r.cost_amount,
+                'per_person_amount',  v_per_person
+            )
+        )
+        RETURNING id INTO v_feed_item_id;
+
+        INSERT INTO public.lobby_payment_request_payee (feed_item_id, user_id, amount_owed)
+        SELECT v_feed_item_id, u, v_per_person FROM unnest(v_billable) AS u;
+
+        PERFORM public.fn_enqueue_notification(
+            'payment_requested',
+            v_billable,
+            'Chia tiền buổi chơi',
+            'Mỗi người đóng ' || v_per_person::text || 'đ',
+            jsonb_build_object('lobby_id', r.lobby_id, 'feed_item_id', v_feed_item_id));
+    END LOOP;
+END;
 $$;
 
 
-ALTER FUNCTION public.get_my_lobby_ids() OWNER TO postgres;
+--
+-- Name: fn_sweep_challenges(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_sweep_challenges() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    r record;
+BEGIN
+    UPDATE public.lobby
+       SET open_to_challengers    = false,
+           challenge_offer_time     = NULL,
+           challenge_offer_location = NULL,
+           challenge_offer_cost     = NULL
+     WHERE open_to_challengers AND challenge_offer_time <= now();
+
+    FOR r IN
+        SELECT c.id, c.initiator_lobby_id, c.target_lobby_id
+          FROM public.lobby_challenge c
+         WHERE c.status = 'accepted'
+           AND EXISTS (
+               SELECT 1 FROM public.activity a
+                WHERE a.challenge_id = c.id
+                  AND a.confirmation_deadline IS NOT NULL
+                  AND a.confirmation_deadline <= now()
+                  AND a.manager_confirmed_at IS NULL)
+    LOOP
+        DELETE FROM public.activity WHERE challenge_id = r.id;
+        UPDATE public.lobby_challenge
+           SET status = 'lapsed', updated_at = now() WHERE id = r.id;
+
+        PERFORM public.fn_enqueue_notification(
+            'challenge_lapsed',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = r.initiator_lobby_id),
+            'Trận thách đấu bị huỷ',
+            'Không đủ xác nhận trước hạn chót nên trận đấu đã bị huỷ',
+            jsonb_build_object('lobby_id', r.initiator_lobby_id, 'challenge_id', r.id));
+        PERFORM public.fn_enqueue_notification(
+            'challenge_lapsed',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = r.target_lobby_id),
+            'Trận thách đấu bị huỷ',
+            'Không đủ xác nhận trước hạn chót nên trận đấu đã bị huỷ',
+            jsonb_build_object('lobby_id', r.target_lobby_id, 'challenge_id', r.id));
+
+        INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+        SELECT l.id, l.captain_id, 'update',
+               jsonb_build_object(
+                   'title', 'Trận thách đấu bị huỷ',
+                   'kind',  'cancelled',
+                   'tone',  'crimson',
+                   'fields', jsonb_build_array(
+                       jsonb_build_array('Lý do', 'Không đủ xác nhận trước hạn chót')))
+          FROM public.lobby l
+         WHERE l.id IN (r.initiator_lobby_id, r.target_lobby_id);
+    END LOOP;
+
+    FOR r IN
+        SELECT c.id, c.target_lobby_id AS home, c.initiator_lobby_id AS away,
+               a.id AS activity_id, a.start_time, a.location_id
+          FROM public.lobby_challenge c
+          JOIN public.activity a
+            ON a.challenge_id = c.id AND a.lobby_id = c.target_lobby_id
+         WHERE c.status IN ('accepted', 'scheduled')
+           AND COALESCE(a.end_time, a.start_time) <= now()
+           AND NOT EXISTS (SELECT 1 FROM public.lobby_match m WHERE m.activity_id = a.id)
+    LOOP
+        INSERT INTO public.lobby_match
+            (lobby_id, activity_id, opponent_lobby_id, opponent_tag, result,
+             venue_label, played_at)
+        VALUES (r.home, r.activity_id, r.away,
+                COALESCE((SELECT name FROM public.lobby WHERE id = r.away), '—'),
+                'practice',
+                COALESCE((SELECT name FROM public.location WHERE id = r.location_id), '—'),
+                r.start_time);
+
+        UPDATE public.lobby_challenge
+           SET status = 'played', updated_at = now() WHERE id = r.id;
+
+        PERFORM public.fn_enqueue_notification(
+            'match_result_recorded',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = r.home),
+            'Trận đấu đã diễn ra',
+            'Không có trọng tài nên trận đấu được ghi nhận nhưng không tính điểm',
+            jsonb_build_object('lobby_id', r.home, 'challenge_id', r.id));
+        PERFORM public.fn_enqueue_notification(
+            'match_result_recorded',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = r.away),
+            'Trận đấu đã diễn ra',
+            'Không có trọng tài nên trận đấu được ghi nhận nhưng không tính điểm',
+            jsonb_build_object('lobby_id', r.away, 'challenge_id', r.id));
+    END LOOP;
+END;
+$$;
+
 
 --
--- Name: get_popular_networks(integer); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: fn_sweep_expired_wall_posts(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_sweep_expired_wall_posts() RETURNS integer
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_count int;
+begin
+    with expired as (
+        delete from public.wall_post
+        where expires_at <= now()
+        returning image_paths
+    ), queued as (
+        insert into public.wall_post_gc (path)
+        select distinct unnest(image_paths) from expired
+        on conflict do nothing
+        returning 1
+    )
+    select count(*) into v_count from queued;
+
+    return v_count;
+end;
+$$;
+
+
+--
+-- Name: fn_wall_cron_tick(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_wall_cron_tick() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+    perform public.fn_sweep_expired_wall_posts();
+    perform public.fn_poke_wall_gc();
+end;
+$$;
+
+
+--
+-- Name: fn_wall_post_autohide(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_wall_post_autohide() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_reports int;
+begin
+    select count(*) into v_reports
+        from public.wall_post_report where post_id = new.post_id;
+
+    if v_reports >= 5 then
+        update public.wall_post
+            set hidden_at = now()
+            where id = new.post_id and hidden_at is null;
+    end if;
+
+    return new;
+end;
+$$;
+
+
+--
+-- Name: fn_wall_post_source_exclusivity(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_wall_post_source_exclusivity() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+begin
+    if num_nonnulls(new.activity_id, new.professional_booking_id) <> 1 then
+        raise exception
+            'a wall post must reference exactly one activity or booking';
+    end if;
+    return new;
+end;
+$$;
+
+
+--
+-- Name: fn_wall_post_tag_guard(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_wall_post_tag_guard() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_activity uuid;
+    v_booking  uuid;
+    v_lobby    uuid;
+    v_count    int;
+begin
+    select activity_id, professional_booking_id, lobby_id
+        into v_activity, v_booking, v_lobby
+        from public.wall_post where id = new.post_id;
+
+    select count(*) into v_count
+        from public.wall_post_tag where post_id = new.post_id;
+    if v_count >= 5 then
+        raise exception 'a post can tag at most 5 people';
+    end if;
+
+    if v_activity is not null then
+        if not exists (
+            select 1 from public.activity_confirmation c
+                where c.activity_id = v_activity and c.user_id = new.user_id
+            union all
+            select 1 from public.lobby_member m
+                where m.lobby_id = v_lobby and m.user_id = new.user_id
+        ) then
+            raise exception 'can only tag attendees or lobby members';
+        end if;
+    elsif v_booking is not null then
+        if not exists (
+            select 1 from public.professional_booking b
+                where b.id = v_booking and b.client_user_id = new.user_id
+            union all
+            select 1 from public.booking_additional_users a
+                where a.booking_id = v_booking and a.user_id = new.user_id
+            union all
+            select 1 from public.professional p
+                join public.professional_booking b2 on b2.professional_id = p.id
+                where b2.id = v_booking and p.linked_user_id = new.user_id
+        ) then
+            raise exception 'can only tag people on this booking';
+        end if;
+    end if;
+
+    return new;
+end;
+$$;
+
+
+--
+-- Name: friend_data(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.friend_data() RETURNS TABLE(friendship_id uuid, user_id uuid, username text, tag_number text, details jsonb, direction text, created_at timestamp with time zone)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select f.id,
+           case when f.requester_id = auth.uid() then f.addressee_id else f.requester_id end,
+           u.username::text,
+           u.tag_number::text,
+           u.details,
+           case
+               when f.status = 'accepted' then 'friend'
+               when f.addressee_id = auth.uid() then 'incoming'
+               else 'outgoing'
+           end,
+           f.created_at
+    from public.friendship f
+    join public."user" u
+        on u.id = case when f.requester_id = auth.uid()
+                       then f.addressee_id else f.requester_id end
+    where auth.uid() in (f.requester_id, f.addressee_id)
+      and f.status in ('pending', 'accepted')
+      and not public.fn_is_blocked(auth.uid(), u.id)
+    order by f.created_at desc;
+$$;
+
+
+--
+-- Name: get_my_friend_ids(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_my_friend_ids() RETURNS SETOF uuid
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select case when requester_id = auth.uid() then addressee_id else requester_id end
+    from public.friendship
+    where status = 'accepted'
+      and auth.uid() in (requester_id, addressee_id);
+$$;
+
+
+--
+-- Name: get_my_lobby_ids(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_my_lobby_ids() RETURNS SETOF uuid
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+BEGIN
+  RETURN QUERY SELECT lobby_id FROM public.lobby_member WHERE user_id = auth.uid();
+END;
+$$;
+
+
+--
+-- Name: get_my_lobbymate_ids(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_my_lobbymate_ids() RETURNS SETOF uuid
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select distinct m.user_id
+    from public.lobby_member m
+    where m.lobby_id in (select public.get_my_lobby_ids())
+      and m.user_id <> auth.uid();
+$$;
+
+
+--
+-- Name: get_payment_info(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_payment_info(p_user_id uuid) RETURNS TABLE(id uuid, bank_id text, bank_display_name text, value text, account_name text, created_at timestamp with time zone)
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+begin
+    if auth.uid() is null then
+        return;   -- unauthenticated: empty result, not an error
+    end if;
+
+    if p_user_id <> auth.uid() and (
+        public.fn_is_blocked(auth.uid(), p_user_id)
+        or (
+            p_user_id not in (select public.get_my_friend_ids())
+            and p_user_id not in (select public.get_my_lobbymate_ids())
+        )
+    ) then
+        return;   -- not authorized: empty result, not an error
+    end if;
+
+    return query
+    select i.id, i.bank_id, i.bank_display_name,
+           v_value.decrypted_secret, v_name.decrypted_secret, i.created_at
+    from public.user_payment_info i
+    join vault.decrypted_secrets v_value on v_value.id = i.value_secret_id
+    left join vault.decrypted_secrets v_name on v_name.id = i.account_name_secret_id
+    where i.user_id = p_user_id
+    order by i.created_at;
+end;
+$$;
+
+
+--
+-- Name: get_popular_networks(integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.get_popular_networks(limit_count integer DEFAULT 5) RETURNS TABLE(id bigint, name text, category text)
@@ -2071,10 +3972,8 @@ LIMIT limit_count;
 $$;
 
 
-ALTER FUNCTION public.get_popular_networks(limit_count integer) OWNER TO postgres;
-
 --
--- Name: health_capture_candidates(timestamp with time zone); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: health_capture_candidates(timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.health_capture_candidates(p_window_start timestamp with time zone) RETURNS TABLE(activity_id uuid, start_time timestamp with time zone, end_time timestamp with time zone, sport_id bigint, source text, confirmed boolean)
@@ -2133,13 +4032,11 @@ END;
 $$;
 
 
-ALTER FUNCTION public.health_capture_candidates(p_window_start timestamp with time zone) OWNER TO postgres;
-
 --
--- Name: home_challenger_lobby_data(uuid, bigint, integer, character varying[], integer, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: home_challenger_lobby_data(uuid, bigint, integer, character varying[], text, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_mmr_window integer DEFAULT 200, p_page_size integer DEFAULT 10, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, name text, homeground_name text, playtime jsonb, details jsonb, visibility public.lobby_visibility, member_count integer, lobby_mmr integer, favorability text, profile_compat_score numeric, match_factors text[])
+CREATE FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_search text DEFAULT NULL::text, p_mmr_window integer DEFAULT 200, p_page_size integer DEFAULT 10, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, name text, homeground_name text, playtime jsonb, details jsonb, visibility public.lobby_visibility, member_count integer, lobby_mmr integer, favorability text, profile_compat_score numeric, match_factors text[], offer_time timestamp with time zone, offer_location_name text, offer_cost numeric, rated_match_count integer)
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
@@ -2157,7 +4054,8 @@ DECLARE
     v_window  integer := p_mmr_window;
     v_cnt     integer;
 BEGIN
-    SELECT l.mmr, l.network_ids, l.active_network_ids, l.industry_ids, l.playtime_keys, loc.lat, loc.lon
+    SELECT l.mmr, l.network_ids, l.active_network_ids, l.industry_ids, l.playtime_keys,
+           loc.lat, loc.lon
       INTO v_mmr, v_net, v_active, v_ind, v_pt, v_lat, v_lon
       FROM public.lobby l
       LEFT JOIN public.location loc ON l.home_ground = loc.id
@@ -2166,20 +4064,30 @@ BEGIN
 
     SELECT count(*) INTO v_cnt
       FROM public.lobby l
-      JOIN public.location loc ON l.home_ground = loc.id
+      JOIN public.location oloc ON oloc.id = l.challenge_offer_location
      WHERE l.sport_id = p_sport_id AND l.open_to_challengers AND l.visibility <> 'private'
-       AND loc.city_cluster = p_city AND l.id <> p_context_lobby_id
+       AND l.challenge_offer_time > now()
+       AND oloc.city_cluster = p_city AND l.id <> p_context_lobby_id
        AND l.id NOT IN (SELECT public.get_my_lobby_ids())
-       AND l.mmr BETWEEN v_mmr - v_window AND v_mmr + v_window;
+       AND l.mmr BETWEEN v_mmr - v_window AND v_mmr + v_window
+       AND (p_search IS NULL OR p_search = ''
+            OR l.name ILIKE '%' || p_search || '%'
+            OR extensions.unaccent(l.name) ILIKE '%' || extensions.unaccent(p_search) || '%'
+            OR l.searchable_id ILIKE '%' || p_search || '%');
     IF v_cnt < p_page_size THEN
         v_window := v_window * 2;
         SELECT count(*) INTO v_cnt
           FROM public.lobby l
-          JOIN public.location loc ON l.home_ground = loc.id
+          JOIN public.location oloc ON oloc.id = l.challenge_offer_location
          WHERE l.sport_id = p_sport_id AND l.open_to_challengers AND l.visibility <> 'private'
-           AND loc.city_cluster = p_city AND l.id <> p_context_lobby_id
+           AND l.challenge_offer_time > now()
+           AND oloc.city_cluster = p_city AND l.id <> p_context_lobby_id
            AND l.id NOT IN (SELECT public.get_my_lobby_ids())
-           AND l.mmr BETWEEN v_mmr - v_window AND v_mmr + v_window;
+           AND l.mmr BETWEEN v_mmr - v_window AND v_mmr + v_window
+           AND (p_search IS NULL OR p_search = ''
+                OR l.name ILIKE '%' || p_search || '%'
+                OR extensions.unaccent(l.name) ILIKE '%' || extensions.unaccent(p_search) || '%'
+                OR l.searchable_id ILIKE '%' || p_search || '%');
         IF v_cnt < p_page_size THEN
             v_window := 1000000;
         END IF;
@@ -2188,27 +4096,35 @@ BEGIN
     RETURN QUERY
     WITH candidate AS (
         SELECT
-            l.id, l.name, loc.name AS homeground_name, l.playtime, l.details, l.visibility,
+            l.id, l.name, hloc.name AS homeground_name, l.playtime, l.details, l.visibility,
             l.member_count, l.mmr AS cand_mmr,
             l.network_ids, l.active_network_ids, l.industry_ids, l.playtime_keys,
-            loc.district, loc.lat, loc.lon
+            l.challenge_offer_time, l.challenge_offer_cost, l.rated_match_count,
+            oloc.name AS offer_location_name,
+            oloc.district, oloc.lat, oloc.lon
         FROM public.lobby l
-        JOIN public.location loc ON l.home_ground = loc.id
+        JOIN public.location oloc ON oloc.id = l.challenge_offer_location
+        LEFT JOIN public.location hloc ON hloc.id = l.home_ground
         WHERE l.sport_id = p_sport_id AND l.open_to_challengers AND l.visibility <> 'private'
-          AND loc.city_cluster = p_city AND l.id <> p_context_lobby_id
+          AND l.challenge_offer_time > now()
+          AND oloc.city_cluster = p_city AND l.id <> p_context_lobby_id
           AND l.id NOT IN (SELECT public.get_my_lobby_ids())
           AND l.mmr BETWEEN v_mmr - v_window AND v_mmr + v_window
+          AND (p_search IS NULL OR p_search = ''
+               OR l.name ILIKE '%' || p_search || '%'
+               OR extensions.unaccent(l.name) ILIKE '%' || extensions.unaccent(p_search) || '%'
+               OR l.searchable_id ILIKE '%' || p_search || '%')
     ),
     scored AS (
         SELECT
             c.*,
             1.0 / (1.0 + power(10.0, ((c.cand_mmr + c_home_adv - v_mmr)::numeric / 400.0))) AS away_expected,
-            (c.network_ids && v_net)            AS f_network,
+            (c.network_ids && v_net) AS f_network,
             ((SELECT count(*) FROM (SELECT unnest(c.playtime_keys) INTERSECT SELECT unnest(v_pt)) x) > 0) AS f_playtime,
             ((c.district = ANY(p_districts))
                 OR (v_lat IS NOT NULL AND c.lat IS NOT NULL
                     AND abs(c.lat - v_lat) + abs(c.lon - v_lon) < 0.1)) AS f_location,
-            (c.industry_ids && v_ind)           AS f_industry,
+            (c.industry_ids && v_ind) AS f_industry,
             (
                 (CASE WHEN c.network_ids && v_net THEN 3 ELSE 0 END)
               + (CASE WHEN c.active_network_ids && v_active THEN 2 ELSE 0 END)
@@ -2234,7 +4150,9 @@ BEGIN
             CASE WHEN s.f_playtime THEN 'playtime' END,
             CASE WHEN s.f_location THEN 'location' END,
             CASE WHEN s.f_industry THEN 'industry' END
-        ], NULL) AS match_factors
+        ], NULL) AS match_factors,
+        s.challenge_offer_time, s.offer_location_name::text, s.challenge_offer_cost,
+        s.rated_match_count
     FROM scored s
     ORDER BY (
         c_w_compat * (s.compat_raw / 9.0)
@@ -2245,13 +4163,81 @@ END;
 $$;
 
 
-ALTER FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_mmr_window integer, p_page_size integer, p_page_number integer) OWNER TO postgres;
-
 --
--- Name: home_teammate_lobby_data(bigint, jsonb, integer, character varying[], integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: home_professional_data(bigint, jsonb, integer, text[], text, integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_page_size integer DEFAULT 10, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, name text, homeground_name text, playtime jsonb, details jsonb, visibility public.lobby_visibility, member_count integer, timeslot_compat_score integer, profile_compat_score numeric, match_factors text[], already_requested boolean)
+CREATE FUNCTION public.home_professional_data(p_sport_id bigint, p_timeslots jsonb DEFAULT '{}'::jsonb, p_city integer DEFAULT NULL::integer, p_districts text[] DEFAULT NULL::text[], p_search text DEFAULT NULL::text, p_page_size integer DEFAULT 20, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, display_name text, professional_role public.professional_role, bio text, sports bigint[], experience_years integer, average_rating numeric, review_count integer, is_verified boolean, price_from numeric, timeslot_compat_score integer)
+    LANGUAGE plpgsql STABLE
+    SET search_path TO ''
+    AS $$
+BEGIN
+    RETURN QUERY
+        SELECT
+            p.id,
+            p.display_name::text,
+            p.professional_role,
+            p.bio,
+            p.sports,
+            p.experience_years,
+            p.average_rating,
+            p.review_count,
+            p.is_verified,
+            (
+                SELECT min(ps.hourly_rate)
+                FROM public.professional_service ps
+                WHERE ps.professional_id = p.id
+                  AND ps.sport_id = p_sport_id
+                  AND ps.is_active
+            ) AS price_from,
+            COALESCE(ts.ts_score, 0) AS timeslot_compat_score
+        FROM
+            public.professional p
+                CROSS JOIN LATERAL (
+                SELECT public.calculate_timeslot_compat_score(
+                           p_timeslots,
+                           public.fn_playtime_to_dict(COALESCE(p.schedule, '[]'::jsonb))
+                       ) AS ts_score
+                ) ts
+        WHERE
+            p.sports @> ARRAY[p_sport_id]::bigint[]
+          AND (
+                p_city IS NULL
+                OR p.preferred_city_cluster IS NULL
+                OR p.preferred_city_cluster = p_city
+            )
+          AND (
+                p_districts IS NULL OR cardinality(p_districts) = 0
+                OR p.preferred_districts IS NULL
+                OR cardinality(p.preferred_districts) = 0
+                OR p.preferred_districts && p_districts
+            )
+          AND (
+                p_search IS NULL OR p_search = ''
+                OR p.display_name ILIKE '%' || p_search || '%'
+                OR extensions.unaccent(p.display_name) ILIKE '%' || extensions.unaccent(p_search) || '%'
+            )
+          AND (
+                p_timeslots = '{}'::jsonb
+                OR p.schedule IS NULL
+                OR p.schedule = '[]'::jsonb
+                OR ts.ts_score >= 4
+            )
+        ORDER BY
+            p.is_verified DESC,
+            p.average_rating DESC,
+            p.review_count DESC
+        LIMIT p_page_size
+            OFFSET (p_page_number - 1) * p_page_size;
+END;
+$$;
+
+
+--
+-- Name: home_teammate_lobby_data(bigint, jsonb, integer, character varying[], text, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_search text DEFAULT NULL::text, p_page_size integer DEFAULT 10, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, name text, homeground_name text, playtime jsonb, details jsonb, visibility public.lobby_visibility, member_count integer, timeslot_compat_score integer, profile_compat_score numeric, match_factors text[], already_requested boolean)
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
@@ -2294,6 +4280,12 @@ BEGIN
           AND loc.city_cluster = p_city
           AND l.id NOT IN (SELECT public.get_my_lobby_ids())
           AND (p_districts IS NULL OR cardinality(p_districts) = 0 OR loc.district = ANY(p_districts))
+          AND (
+                p_search IS NULL OR p_search = ''
+                OR l.name ILIKE '%' || p_search || '%'
+                OR extensions.unaccent(l.name) ILIKE '%' || extensions.unaccent(p_search) || '%'
+                OR l.searchable_id ILIKE '%' || p_search || '%'
+            )
           AND (p_timeslots = '{}'::jsonb OR ts.ts_score >= 4)
           AND NOT EXISTS (
                 SELECT 1 FROM public.lobby_befriend_record r
@@ -2311,10 +4303,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_page_size integer, p_page_number integer) OWNER TO postgres;
-
 --
--- Name: immutable_unaccent(text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: immutable_unaccent(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.immutable_unaccent(text) RETURNS text
@@ -2325,10 +4315,80 @@ SELECT extensions.unaccent($1)
 $_$;
 
 
-ALTER FUNCTION public.immutable_unaccent(text) OWNER TO postgres;
+--
+-- Name: invite_to_lobby_by_email(uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.invite_to_lobby_by_email(p_lobby_id uuid, p_email text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid        uuid := auth.uid();
+    v_target_uid uuid;
+    v_email      text := lower(trim(p_email));
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM public.lobby_member lm
+        WHERE lm.lobby_id = p_lobby_id AND lm.user_id = v_uid
+    ) THEN
+        RAISE EXCEPTION 'Not a member of this lobby';
+    END IF;
+
+    SELECT au.id INTO v_target_uid
+    FROM auth.users au
+    WHERE au.email = v_email
+    LIMIT 1;
+
+    IF v_target_uid IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.lobby_member lm
+            WHERE lm.lobby_id = p_lobby_id AND lm.user_id = v_target_uid
+        ) THEN
+            RETURN jsonb_build_object('status', 'already_member');
+        END IF;
+
+        INSERT INTO public.lobby_befriend_record (
+            initiator_user_id, target_user_id, target_lobby_id, interaction_type
+        ) VALUES (v_uid, v_target_uid, p_lobby_id, 'invite');
+
+        RETURN jsonb_build_object('status', 'invited_existing');
+    ELSE
+        INSERT INTO public.lobby_email_invite (lobby_id, inviter_user_id, email)
+        VALUES (p_lobby_id, v_uid, v_email)
+        ON CONFLICT (lobby_id, email) DO UPDATE
+        SET status = 'pending',
+            inviter_user_id = v_uid,
+            expires_at = now() + interval '7 days',
+            created_at = now()
+        WHERE public.lobby_email_invite.status != 'pending';
+
+        RETURN jsonb_build_object('status', 'invited_new');
+    END IF;
+END;
+$$;
+
 
 --
--- Name: lobby_add_captain_as_member(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: is_booking_attached_to_my_lobby_activity(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.is_booking_attached_to_my_lobby_activity(p_booking_id uuid) RETURNS boolean
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.activity a
+    WHERE (a.coach_booking_id = p_booking_id OR a.referee_booking_id = p_booking_id)
+      AND a.lobby_id IN (SELECT public.get_my_lobby_ids())
+  );
+END;
+$$;
+
+
+--
+-- Name: lobby_add_captain_as_member(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.lobby_add_captain_as_member() RETURNS trigger
@@ -2344,10 +4404,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.lobby_add_captain_as_member() OWNER TO postgres;
-
 --
--- Name: lobby_before_delete(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: lobby_before_delete(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.lobby_before_delete() RETURNS trigger
@@ -2378,10 +4436,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.lobby_before_delete() OWNER TO postgres;
-
 --
--- Name: lobby_befriend_accepted_trigger_fn(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: lobby_befriend_accepted_trigger_fn(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.lobby_befriend_accepted_trigger_fn() RETURNS trigger
@@ -2437,10 +4493,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.lobby_befriend_accepted_trigger_fn() OWNER TO postgres;
-
 --
--- Name: lobby_befriend_record_before_insert_trigger_fn(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: lobby_befriend_record_before_insert_trigger_fn(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.lobby_befriend_record_before_insert_trigger_fn() RETURNS trigger
@@ -2543,48 +4597,203 @@ END;
 $$;
 
 
-ALTER FUNCTION public.lobby_befriend_record_before_insert_trigger_fn() OWNER TO postgres;
-
 --
--- Name: lobby_feed_data(uuid, integer, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: lobby_can_manage(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.lobby_feed_data(p_lobby_id uuid, p_page_size integer DEFAULT 50, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone) RETURNS TABLE(id uuid, author_id uuid, author_username character varying, kind public.lobby_feed_item_kind, payload jsonb, created_at timestamp with time zone, poll_tallies jsonb)
+CREATE FUNCTION public.lobby_can_manage(p_lobby_id uuid, p_user_id uuid DEFAULT auth.uid()) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.lobby l
+        WHERE l.id = p_lobby_id AND l.captain_id = p_user_id
+    ) OR EXISTS (
+        SELECT 1 FROM public.lobby_member lm
+        WHERE lm.lobby_id = p_lobby_id AND lm.user_id = p_user_id AND lm.role = 'coordinator'
+    );
+$$;
+
+
+--
+-- Name: lobby_challenge_data(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.lobby_challenge_data(p_lobby_id uuid) RETURNS TABLE(id uuid, direction text, other_lobby_id uuid, other_lobby_name text, other_lobby_mmr integer, sport_id bigint, status public.lobby_challenge_status, proposed_time timestamp with time zone, proposed_location_name text, agreed_cost numeric, note text, activity_id uuid, referee_booked boolean, created_at timestamp with time zone)
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+    SELECT c.id,
+           CASE WHEN c.target_lobby_id = p_lobby_id THEN 'incoming' ELSE 'outgoing' END,
+           CASE WHEN c.target_lobby_id = p_lobby_id THEN c.initiator_lobby_id ELSE c.target_lobby_id END,
+           ol.name, ol.mmr, c.sport_id, c.status, c.proposed_time,
+           loc.name::text, c.agreed_cost, c.note,
+           mine.id,
+           EXISTS (SELECT 1 FROM public.activity a2
+                    WHERE a2.challenge_id = c.id AND a2.referee_booking_id IS NOT NULL),
+           c.created_at
+    FROM public.lobby_challenge c
+    JOIN public.lobby ol
+        ON ol.id = CASE WHEN c.target_lobby_id = p_lobby_id
+                        THEN c.initiator_lobby_id ELSE c.target_lobby_id END
+    LEFT JOIN public.location loc ON loc.id = c.proposed_location
+    LEFT JOIN public.activity mine
+        ON mine.challenge_id = c.id AND mine.lobby_id = p_lobby_id
+    WHERE (c.initiator_lobby_id = p_lobby_id OR c.target_lobby_id = p_lobby_id)
+      AND c.status IN ('requested', 'accepted', 'scheduled')
+    ORDER BY c.created_at DESC;
+$$;
+
+
+--
+-- Name: lobby_email_invite_auto_join_fn(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.lobby_email_invite_auto_join_fn() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_email  text;
+    v_invite record;
+BEGIN
+    SELECT au.email INTO v_email
+    FROM auth.users au WHERE au.id = NEW.id;
+
+    IF v_email IS NULL THEN RETURN NEW; END IF;
+
+    FOR v_invite IN
+        SELECT * FROM public.lobby_email_invite lei
+        WHERE lei.email = v_email
+          AND lei.status = 'pending'
+          AND lei.expires_at > now()
+    LOOP
+        -- Create a pending befriend invite (not auto-accept)
+        INSERT INTO public.lobby_befriend_record (
+            initiator_user_id, target_user_id, target_lobby_id, interaction_type
+        ) VALUES (v_invite.inviter_user_id, NEW.id, v_invite.lobby_id, 'invite')
+        ON CONFLICT DO NOTHING;
+
+        -- Mark the email invite as converted
+        UPDATE public.lobby_email_invite
+        SET status = 'accepted'
+        WHERE id = v_invite.id;
+    END LOOP;
+
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: lobby_feed_data(uuid, integer, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.lobby_feed_data(p_lobby_id uuid, p_page_size integer DEFAULT 50, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone) RETURNS TABLE(id uuid, author_id uuid, author_username character varying, kind public.lobby_feed_item_kind, payload jsonb, created_at timestamp with time zone, poll_tallies jsonb, my_vote integer, payment_payees jsonb)
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
 BEGIN
     RETURN QUERY
-        SELECT fi.id,
-               fi.author_id,
-               u.username                             AS author_username,
-               fi.kind,
-               fi.payload,
-               fi.created_at,
-               -- Poll tallies: {option_index: count, …}. Null for non-polls.
-               CASE WHEN fi.kind = 'poll' THEN
-                   (SELECT jsonb_object_agg(option_index::text, c)
-                    FROM (
-                        SELECT option_index, COUNT(*) AS c
+        SELECT * FROM (
+            SELECT fi.id,
+                   fi.author_id,
+                   u.username                             AS author_username,
+                   fi.kind,
+                   fi.payload,
+                   fi.created_at,
+                   CASE WHEN fi.kind = 'poll' THEN
+                       (SELECT jsonb_object_agg(option_index::text, c)
+                        FROM (
+                            SELECT option_index, COUNT(*) AS c
+                            FROM public.lobby_feed_poll_vote v
+                            WHERE v.feed_item_id = fi.id
+                            GROUP BY option_index
+                        ) t)
+                   END                                    AS poll_tallies,
+                   CASE WHEN fi.kind = 'poll' THEN
+                       (SELECT v.option_index
                         FROM public.lobby_feed_poll_vote v
-                        WHERE v.feed_item_id = fi.id
-                        GROUP BY option_index
-                    ) t)
-               END                                    AS poll_tallies
-        FROM public.lobby_feed_item fi
-                 LEFT JOIN public."user" u ON u.id = fi.author_id
-        WHERE fi.lobby_id = p_lobby_id
-          AND (p_before IS NULL OR fi.created_at < p_before)
-        ORDER BY fi.created_at DESC
+                        WHERE v.feed_item_id = fi.id AND v.user_id = auth.uid())
+                   END                                    AS my_vote,
+                   CASE WHEN fi.kind = 'payment_request' THEN
+                       (SELECT jsonb_agg(jsonb_build_object(
+                                  'user_id',     pr.user_id,
+                                  'username',    pu.username,
+                                  'amount_owed', pr.amount_owed,
+                                  'paid',        (r.user_id IS NOT NULL)))
+                          FROM public.lobby_payment_request_payee pr
+                          JOIN public."user" pu ON pu.id = pr.user_id
+                          LEFT JOIN public.lobby_feed_item_reaction r
+                                 ON r.feed_item_id = fi.id AND r.user_id = pr.user_id
+                         WHERE pr.feed_item_id = fi.id)
+                   END                                    AS payment_payees
+            FROM public.lobby_feed_item fi
+                     LEFT JOIN public."user" u ON u.id = fi.author_id
+            WHERE fi.lobby_id = p_lobby_id
+              AND fi.kind <> 'photo'
+              AND (p_before IS NULL OR fi.created_at < p_before)
+
+            UNION ALL
+
+            SELECT p.id,
+                   p.author_id,
+                   au.username                            AS author_username,
+                   'photo'::public.lobby_feed_item_kind   AS kind,
+                   jsonb_build_object(
+                       'id',                p.id,
+                       'author_id',         p.author_id,
+                       'author_username',   au.username,
+                       'author_tag_number', au.tag_number,
+                       'author_details',    au.details,
+                       'sport_id',          p.sport_id,
+                       'lobby_id',          p.lobby_id,
+                       'source_label',      p.source_label,
+                       'source_start_time', p.source_start_time,
+                       'source_venue_name', p.source_venue_name,
+                       'caption',           p.caption,
+                       'image_paths',       to_jsonb(p.image_paths),
+                       'created_at',        p.created_at,
+                       'expires_at',        p.expires_at,
+                       'tags', coalesce((
+                           SELECT jsonb_agg(jsonb_build_object(
+                                      'user_id', tu.id,
+                                      'username', tu.username,
+                                      'tag_number', tu.tag_number))
+                           FROM public.wall_post_tag t
+                           JOIN public."user" tu ON tu.id = t.user_id
+                           WHERE t.post_id = p.id
+                       ), '[]'::jsonb),
+                       'reactions', coalesce((
+                           SELECT jsonb_object_agg(r.emoji, r.n)
+                           FROM (SELECT emoji, count(*) AS n
+                                   FROM public.wall_post_reaction
+                                  WHERE post_id = p.id
+                                  GROUP BY emoji) r
+                       ), '{}'::jsonb),
+                       'my_reaction', (
+                           SELECT emoji FROM public.wall_post_reaction
+                            WHERE post_id = p.id AND user_id = auth.uid())
+                   )                                      AS payload,
+                   p.created_at,
+                   NULL::jsonb                            AS poll_tallies,
+                   NULL::integer                          AS my_vote,
+                   NULL::jsonb                             AS payment_payees
+            FROM public.wall_post p
+                     JOIN public."user" au ON au.id = p.author_id
+            WHERE p.lobby_id = p_lobby_id
+              AND p.hidden_at IS NULL
+              AND p.expires_at > now()
+              AND (p_before IS NULL OR p.created_at < p_before)
+        ) merged
+        ORDER BY merged.created_at DESC
         LIMIT p_page_size;
 END;
 $$;
 
 
-ALTER FUNCTION public.lobby_feed_data(p_lobby_id uuid, p_page_size integer, p_before timestamp with time zone) OWNER TO postgres;
-
 --
--- Name: lobby_match_history_data(uuid, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: lobby_match_history_data(uuid, integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.lobby_match_history_data(p_lobby_id uuid, p_page_size integer DEFAULT 50, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, activity_id uuid, opponent_lobby_id uuid, opponent_name text, opponent_tag text, result public.lobby_match_result, sets jsonb, mvp_username character varying, note text, venue_label text, played_at timestamp with time zone, duration_label text, member_usernames text[], referee_booking_id uuid, referee_name text)
@@ -2593,44 +4802,53 @@ CREATE FUNCTION public.lobby_match_history_data(p_lobby_id uuid, p_page_size int
     AS $$
 BEGIN
     RETURN QUERY
-        SELECT m.id,
-               m.activity_id,
-               m.opponent_lobby_id,
-               ol.name                                AS opponent_name,
-               m.opponent_tag,
-               m.result,
-               m.sets,
-               u.username                             AS mvp_username,
-               m.note,
-               m.venue_label,
-               m.played_at,
-               m.duration_label,
-               ARRAY(
-                   SELECT mu.username
-                   FROM public.lobby_member lm
-                            JOIN public."user" mu ON mu.id = lm.user_id
-                   WHERE lm.lobby_id = m.lobby_id
-               )                                      AS member_usernames,
-               m.referee_booking_id,
-               ref.display_name                       AS referee_name
-        FROM public.lobby_match m
-                 LEFT JOIN public.lobby ol ON ol.id = m.opponent_lobby_id
-                 LEFT JOIN public."user" u ON u.id = m.mvp_user_id
-                 LEFT JOIN public.professional_booking rb
-                     ON rb.id = m.referee_booking_id
-                 LEFT JOIN public.professional ref
-                     ON ref.id = rb.professional_id
-        WHERE m.lobby_id = p_lobby_id
-        ORDER BY m.played_at DESC
-        LIMIT p_page_size OFFSET (p_page_number - 1) * p_page_size;
+    WITH mine AS (
+        SELECT m.*, false AS flipped, m.opponent_lobby_id AS other_id
+          FROM public.lobby_match m
+         WHERE m.lobby_id = p_lobby_id
+        UNION ALL
+        SELECT m.*, true AS flipped, m.lobby_id AS other_id
+          FROM public.lobby_match m
+         WHERE m.opponent_lobby_id = p_lobby_id
+    )
+    SELECT x.id,
+           x.activity_id,
+           x.other_id AS opponent_lobby_id,
+           ol.name::text AS opponent_name,
+           (CASE WHEN x.flipped THEN COALESCE(ol.name, x.opponent_tag) ELSE x.opponent_tag END)::text,
+           CASE WHEN NOT x.flipped THEN x.result
+                WHEN x.result = 'win'  THEN 'loss'::public.lobby_match_result
+                WHEN x.result = 'loss' THEN 'win'::public.lobby_match_result
+                ELSE x.result END AS result,
+           CASE WHEN NOT x.flipped OR x.sets IS NULL THEN x.sets
+                ELSE (SELECT jsonb_agg(jsonb_build_array(s->1, s->0))
+                        FROM jsonb_array_elements(x.sets) s) END AS sets,
+           u.username AS mvp_username,
+           x.note,
+           x.venue_label,
+           x.played_at,
+           x.duration_label,
+           ARRAY(
+               SELECT mu.username::text
+                 FROM public.lobby_member lm
+                 JOIN public."user" mu ON mu.id = lm.user_id
+                WHERE lm.lobby_id = p_lobby_id
+           ) AS member_usernames,
+           x.referee_booking_id,
+           ref.display_name AS referee_name
+      FROM mine x
+      LEFT JOIN public.lobby ol ON ol.id = x.other_id
+      LEFT JOIN public."user" u ON u.id = x.mvp_user_id
+      LEFT JOIN public.professional_booking rb ON rb.id = x.referee_booking_id
+      LEFT JOIN public.professional ref ON ref.id = rb.professional_id
+     ORDER BY x.played_at DESC
+     LIMIT p_page_size OFFSET (p_page_number - 1) * p_page_size;
 END;
 $$;
 
 
-ALTER FUNCTION public.lobby_match_history_data(p_lobby_id uuid, p_page_size integer, p_page_number integer) OWNER TO postgres;
-
 --
--- Name: lobby_match_referee_role_check(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: lobby_match_referee_role_check(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.lobby_match_referee_role_check() RETURNS trigger
@@ -2661,10 +4879,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.lobby_match_referee_role_check() OWNER TO postgres;
-
 --
--- Name: lobby_member_prevent_captain_leave(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: lobby_member_prevent_captain_leave(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.lobby_member_prevent_captain_leave() RETURNS trigger
@@ -2704,10 +4920,68 @@ END;
 $$;
 
 
-ALTER FUNCTION public.lobby_member_prevent_captain_leave() OWNER TO postgres;
+--
+-- Name: mark_payment_request_paid(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.mark_payment_request_paid(p_feed_item_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid uuid := auth.uid();
+    v_payload jsonb;
+    v_lobby_id uuid;
+    v_recipient uuid;
+    v_total_payees int;
+    v_total_paid int;
+BEGIN
+    IF v_uid IS NULL THEN
+        RAISE EXCEPTION 'not authenticated';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM public.lobby_payment_request_payee
+         WHERE feed_item_id = p_feed_item_id AND user_id = v_uid
+    ) THEN
+        RAISE EXCEPTION 'not a payer on this request';
+    END IF;
+
+    INSERT INTO public.lobby_feed_item_reaction (feed_item_id, user_id, emoji)
+    VALUES (p_feed_item_id, v_uid, '✅')
+    ON CONFLICT (feed_item_id, user_id) DO NOTHING;
+
+    SELECT count(*) INTO v_total_payees
+      FROM public.lobby_payment_request_payee WHERE feed_item_id = p_feed_item_id;
+
+    SELECT count(*) INTO v_total_paid
+      FROM public.lobby_feed_item_reaction r
+     WHERE r.feed_item_id = p_feed_item_id
+       AND EXISTS (
+           SELECT 1 FROM public.lobby_payment_request_payee pr
+            WHERE pr.feed_item_id = r.feed_item_id AND pr.user_id = r.user_id
+       );
+
+    IF v_total_payees > 0 AND v_total_paid >= v_total_payees THEN
+        SELECT payload, lobby_id INTO v_payload, v_lobby_id
+          FROM public.lobby_feed_item WHERE id = p_feed_item_id;
+        v_recipient := (v_payload->>'recipient_id')::uuid;
+
+        IF v_recipient IS NOT NULL THEN
+            PERFORM public.fn_enqueue_notification(
+                'debt_collected',
+                ARRAY[v_recipient],
+                'Đã thu đủ tiền',
+                'Mọi người đã xác nhận thanh toán',
+                jsonb_build_object('lobby_id', v_lobby_id, 'feed_item_id', p_feed_item_id));
+        END IF;
+    END IF;
+END;
+$$;
+
 
 --
--- Name: my_schedule_data(bigint, timestamp with time zone, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: my_schedule_data(bigint, timestamp with time zone, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.my_schedule_data(p_sport_id bigint, p_from timestamp with time zone, p_to timestamp with time zone) RETURNS TABLE(id uuid, start_time timestamp with time zone, end_time timestamp with time zone, title text, meta text, tone text, recurrence_day_of_week smallint)
@@ -2742,10 +5016,8 @@ BEGIN
 END; $$;
 
 
-ALTER FUNCTION public.my_schedule_data(p_sport_id bigint, p_from timestamp with time zone, p_to timestamp with time zone) OWNER TO postgres;
-
 --
--- Name: nanoid(integer, text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: nanoid(integer, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.nanoid(size integer DEFAULT 10, alphabet text DEFAULT '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'::text) RETURNS text
@@ -2755,10 +5027,8 @@ CREATE FUNCTION public.nanoid(size integer DEFAULT 10, alphabet text DEFAULT '01
 $$;
 
 
-ALTER FUNCTION public.nanoid(size integer, alphabet text) OWNER TO postgres;
-
 --
--- Name: new_user_created_trigger_fn(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: new_user_created_trigger_fn(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.new_user_created_trigger_fn() RETURNS trigger
@@ -2774,10 +5044,78 @@ end;
 $$;
 
 
-ALTER FUNCTION public.new_user_created_trigger_fn() OWNER TO postgres;
+--
+-- Name: postable_activities(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.postable_activities() RETURNS TABLE(activity_id uuid, booking_id uuid, sport_id bigint, lobby_id uuid, source_label text, start_time timestamp with time zone, venue_name text, already_posted boolean)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select a.id,
+           null::uuid,
+           a.sport_id,
+           a.lobby_id,
+           l.name,
+           a.start_time,
+           loc.name,
+           exists (select 1 from public.wall_post w
+                    where w.activity_id = a.id and w.author_id = auth.uid())
+    from public.activity a
+    join public.activity_confirmation c
+        on c.activity_id = a.id
+       and c.user_id = auth.uid()
+       and c.attendance = 'going'
+    left join public.lobby l on l.id = a.lobby_id
+    left join public.location loc on loc.id = a.location_id
+    where a.start_time < now()
+      and a.start_time > now() - interval '7 days'
+
+    union all
+
+    select null::uuid,
+           b.id,
+           s.sport_id,
+           null::uuid,
+           p.display_name,
+           b.booking_time_start,
+           loc.name,
+           exists (select 1 from public.wall_post w
+                    where w.professional_booking_id = b.id
+                      and w.author_id = auth.uid())
+    from public.professional_booking b
+    join public.professional p on p.id = b.professional_id
+    join public.professional_service s on s.id = b.service_id
+    left join public.location loc on loc.id = b.location_id
+    where b.client_user_id = auth.uid()
+      and p.professional_role = 'coach'
+      and b.status in ('confirmed', 'completed')
+      and b.booking_time_end < now()
+      and b.booking_time_end > now() - interval '7 days'
+
+    order by start_time desc;
+$$;
+
 
 --
--- Name: professional_booking_review_updated_trigger_fn(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: professional_booking_conflicts(uuid, timestamp with time zone, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.professional_booking_conflicts(p_professional_id uuid, p_start timestamp with time zone, p_end timestamp with time zone) RETURNS TABLE(id uuid, booking_time_start timestamp with time zone, booking_time_end timestamp with time zone)
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+    SELECT pb.id, pb.booking_time_start, pb.booking_time_end
+    FROM public.professional_booking pb
+    WHERE pb.professional_id = p_professional_id
+      AND pb.status = 'confirmed'
+      AND pb.booking_time_start < p_end
+      AND pb.booking_time_end > p_start;
+$$;
+
+
+--
+-- Name: professional_booking_review_updated_trigger_fn(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.professional_booking_review_updated_trigger_fn() RETURNS trigger
@@ -2819,21 +5157,372 @@ END;
 $$;
 
 
-ALTER FUNCTION public.professional_booking_review_updated_trigger_fn() OWNER TO postgres;
-
 --
--- Name: search_locations(text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: react_to_wall_post(uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.search_locations(search_term text) RETURNS TABLE(id uuid, name text, full_address text, street_number integer, street_name text, district text, city text)
+CREATE FUNCTION public.react_to_wall_post(p_post_id uuid, p_emoji text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+    if auth.uid() is null then raise exception 'not authenticated'; end if;
+    if not public.fn_can_see_wall_post(p_post_id) then
+        raise exception 'post not visible';
+    end if;
+
+    if p_emoji is null then
+        delete from public.wall_post_reaction
+            where post_id = p_post_id and user_id = auth.uid();
+    else
+        insert into public.wall_post_reaction (post_id, user_id, emoji)
+            values (p_post_id, auth.uid(), p_emoji)
+            on conflict (post_id, user_id)
+            do update set emoji = excluded.emoji, created_at = now();
+    end if;
+end;
+$$;
+
+
+--
+-- Name: record_challenge_match(uuid, text, jsonb, uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.record_challenge_match(p_challenge_id uuid, p_result text, p_sets jsonb DEFAULT NULL::jsonb, p_mvp_user_id uuid DEFAULT NULL::uuid, p_note text DEFAULT NULL::text) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid        uuid := auth.uid();
+    v_home       uuid;
+    v_away       uuid;
+    v_status     public.lobby_challenge_status;
+    v_home_act   uuid;
+    v_end        timestamptz;
+    v_start      timestamptz;
+    v_ref_book   uuid;
+    v_venue      text;
+    v_match      uuid;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+    IF p_result NOT IN ('win', 'loss', 'draw') THEN
+        RAISE EXCEPTION 'invalid result %', p_result;
+    END IF;
+
+    SELECT target_lobby_id, initiator_lobby_id, status
+      INTO v_home, v_away, v_status
+      FROM public.lobby_challenge WHERE id = p_challenge_id;
+    IF v_home IS NULL THEN RAISE EXCEPTION 'challenge not found'; END IF;
+    IF v_status = 'played' THEN RAISE EXCEPTION 'this match already has a result'; END IF;
+    IF v_status NOT IN ('accepted', 'scheduled') THEN
+        RAISE EXCEPTION 'challenge is not in a playable state';
+    END IF;
+
+    SELECT a.id, a.start_time, a.end_time, a.referee_booking_id
+      INTO v_home_act, v_start, v_end, v_ref_book
+      FROM public.activity a
+     WHERE a.challenge_id = p_challenge_id AND a.lobby_id = v_home;
+
+    IF v_ref_book IS NULL THEN
+        SELECT a.referee_booking_id INTO v_ref_book
+          FROM public.activity a
+         WHERE a.challenge_id = p_challenge_id AND a.lobby_id = v_away
+           AND a.referee_booking_id IS NOT NULL;
+    END IF;
+    IF v_ref_book IS NULL THEN
+        RAISE EXCEPTION 'no referee is booked for this match';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+          FROM public.professional_booking pb
+          JOIN public.professional pr ON pr.id = pb.professional_id
+         WHERE pb.id = v_ref_book AND pr.linked_user_id = v_uid
+    ) THEN
+        RAISE EXCEPTION 'only the booked referee can record this result';
+    END IF;
+
+    IF COALESCE(v_end, v_start) > now() THEN
+        RAISE EXCEPTION 'the match has not finished yet';
+    END IF;
+
+    SELECT loc.name INTO v_venue
+      FROM public.activity a
+      LEFT JOIN public.location loc ON loc.id = a.location_id
+     WHERE a.id = v_home_act;
+
+    INSERT INTO public.lobby_match
+        (lobby_id, activity_id, opponent_lobby_id, opponent_tag, result, sets,
+         mvp_user_id, note, venue_label, played_at, referee_booking_id)
+    VALUES (v_home, v_home_act, v_away,
+            COALESCE((SELECT name FROM public.lobby WHERE id = v_away), '—'),
+            p_result::public.lobby_match_result, p_sets,
+            p_mvp_user_id, p_note, COALESCE(v_venue, '—'),
+            COALESCE(v_start, now()), v_ref_book)
+    RETURNING id INTO v_match;
+
+    UPDATE public.lobby_challenge
+       SET status = 'played', updated_at = now() WHERE id = p_challenge_id;
+
+    PERFORM public.fn_enqueue_notification(
+        'match_result_recorded',
+        ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = v_home),
+        'Kết quả trận đấu',
+        'Trọng tài đã ghi nhận kết quả trận thách đấu',
+        jsonb_build_object('lobby_id', v_home, 'challenge_id', p_challenge_id));
+    PERFORM public.fn_enqueue_notification(
+        'match_result_recorded',
+        ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = v_away),
+        'Kết quả trận đấu',
+        'Trọng tài đã ghi nhận kết quả trận thách đấu',
+        jsonb_build_object('lobby_id', v_away, 'challenge_id', p_challenge_id));
+
+    RETURN v_match;
+END;
+$$;
+
+
+--
+-- Name: register_device_token(text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.register_device_token(p_fcm_token text, p_platform text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+    if (select auth.uid()) is null then
+        raise exception 'register_device_token: not authenticated';
+    end if;
+    if p_platform not in ('ios', 'android') then
+        raise exception 'register_device_token: bad platform %', p_platform;
+    end if;
+    insert into public.user_device_token (fcm_token, user_id, platform, updated_at)
+    values (p_fcm_token, (select auth.uid()), p_platform, now())
+    on conflict (fcm_token) do update
+        set user_id    = excluded.user_id,
+            platform   = excluded.platform,
+            updated_at = now();
+end;
+$$;
+
+
+--
+-- Name: reject_professional_booking(uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.reject_professional_booking(p_booking_id uuid, p_reason text DEFAULT NULL::text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_professional_id uuid;
+BEGIN
+    SELECT pb.professional_id INTO v_professional_id
+    FROM public.professional_booking pb
+    WHERE pb.id = p_booking_id;
+
+    IF v_professional_id IS NULL THEN
+        RAISE EXCEPTION 'reject_professional_booking: booking % not found', p_booking_id;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM public.professional p
+        WHERE p.id = v_professional_id AND p.linked_user_id = auth.uid()
+    ) THEN
+        RAISE EXCEPTION 'reject_professional_booking: caller is not the linked professional';
+    END IF;
+
+    UPDATE public.professional_booking
+    SET status = 'rejected',
+        professional_notes = p_reason
+    WHERE id = p_booking_id;
+END;
+$$;
+
+
+--
+-- Name: respond_challenge(uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.respond_challenge(p_challenge_id uuid, p_action text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    c_match_minutes constant integer := 90;
+    v_uid         uuid := auth.uid();
+    v_init        uuid;
+    v_target      uuid;
+    v_status      public.lobby_challenge_status;
+    v_sport       bigint;
+    v_time        timestamptz;
+    v_loc         uuid;
+    v_cost        numeric;
+    v_target_name text;
+    v_init_name   text;
+    v_recipients  uuid[];
+    v_deadline    timestamptz;
+    v_end         timestamptz;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+
+    SELECT initiator_lobby_id, target_lobby_id, status, sport_id,
+           proposed_time, proposed_location, agreed_cost
+      INTO v_init, v_target, v_status, v_sport, v_time, v_loc, v_cost
+      FROM public.lobby_challenge WHERE id = p_challenge_id;
+
+    IF v_init IS NULL THEN RAISE EXCEPTION 'challenge not found'; END IF;
+    IF NOT public.lobby_can_manage(v_target, v_uid) THEN
+        RAISE EXCEPTION 'not a manager of the target lobby';
+    END IF;
+    IF v_status <> 'requested' THEN RAISE EXCEPTION 'challenge is no longer open'; END IF;
+
+    SELECT name INTO v_target_name FROM public.lobby WHERE id = v_target;
+    SELECT name INTO v_init_name   FROM public.lobby WHERE id = v_init;
+
+    IF p_action = 'accept' THEN
+        IF v_time <= now() THEN RAISE EXCEPTION 'that kickoff has already passed'; END IF;
+
+        v_end := v_time + make_interval(mins => c_match_minutes);
+        v_deadline := GREATEST(v_time - interval '2 days', now() + interval '1 hour');
+        IF v_deadline >= v_time THEN
+            v_deadline := v_time - interval '1 minute';
+        END IF;
+
+        UPDATE public.lobby_challenge
+            SET status = 'accepted', updated_at = now() WHERE id = p_challenge_id;
+
+        INSERT INTO public.activity
+            (user_id, sport_id, lobby_id, challenge_id, start_time, end_time, location_id,
+             prepayment_required, payment_type, prepayment_amount,
+             confirmation_threshold, confirmation_deadline)
+        SELECT l.captain_id, v_sport, l.id, p_challenge_id, v_time, v_end, v_loc,
+               (COALESCE(v_cost, 0) > 0),
+               CASE WHEN COALESCE(v_cost, 0) > 0 THEN 'manual'::public.activity_payment_type END,
+               CASE WHEN COALESCE(v_cost, 0) > 0 THEN v_cost END,
+               GREATEST(2, ceil(l.member_count / 2.0)::integer),
+               v_deadline
+          FROM public.lobby l
+         WHERE l.id IN (v_init, v_target);
+
+        UPDATE public.lobby
+           SET open_to_challengers    = false,
+               challenge_offer_time     = NULL,
+               challenge_offer_location = NULL,
+               challenge_offer_cost     = NULL
+         WHERE id = v_target;
+
+        UPDATE public.lobby_challenge
+           SET status = 'declined', updated_at = now()
+         WHERE target_lobby_id = v_target
+           AND status = 'requested'
+           AND id <> p_challenge_id;
+
+        SELECT array_agg(user_id) INTO v_recipients
+            FROM public.lobby_member WHERE lobby_id = v_init;
+        PERFORM public.fn_enqueue_notification(
+            'challenger_confirmed', v_recipients,
+            'Thách đấu được chấp nhận',
+            COALESCE(v_target_name, 'Đối thủ') || ' đã chấp nhận lời thách đấu',
+            jsonb_build_object('lobby_id', v_init, 'challenge_id', p_challenge_id));
+
+        INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+        SELECT l.id, l.captain_id, 'update',
+               jsonb_build_object(
+                   'title', 'Trận thách đấu',
+                   'kind',  'scheduled',
+                   'tone',  'blue',
+                   'fields', jsonb_build_array(
+                       jsonb_build_array('Đối thủ',
+                           CASE WHEN l.id = v_target THEN COALESCE(v_init_name, '—')
+                                ELSE COALESCE(v_target_name, '—') END),
+                       jsonb_build_array('Sân', COALESCE(
+                           (SELECT loc.name FROM public.location loc WHERE loc.id = v_loc), '—'))
+                   ))
+          FROM public.lobby l
+         WHERE l.id IN (v_init, v_target);
+
+    ELSIF p_action = 'decline' THEN
+        UPDATE public.lobby_challenge
+            SET status = 'declined', updated_at = now() WHERE id = p_challenge_id;
+        SELECT array_agg(uid) INTO v_recipients FROM (
+            SELECT captain_id AS uid FROM public.lobby WHERE id = v_init
+            UNION
+            SELECT user_id FROM public.lobby_member
+                WHERE lobby_id = v_init AND role = 'coordinator'
+        ) s;
+        PERFORM public.fn_enqueue_notification(
+            'challenge_declined', v_recipients,
+            'Thách đấu bị từ chối',
+            COALESCE(v_target_name, 'Đối thủ') || ' đã từ chối lời thách đấu',
+            jsonb_build_object('lobby_id', v_init, 'challenge_id', p_challenge_id));
+    ELSE
+        RAISE EXCEPTION 'invalid action %', p_action;
+    END IF;
+END;
+$$;
+
+
+--
+-- Name: respond_friend_request(uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.respond_friend_request(p_friendship_id uuid, p_action text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_uid       uuid := auth.uid();
+    v_requester uuid;
+    v_addressee uuid;
+    v_status    public.friendship_status;
+    v_label     text;
+begin
+    if v_uid is null then raise exception 'not authenticated'; end if;
+
+    select requester_id, addressee_id, status
+        into v_requester, v_addressee, v_status
+        from public.friendship where id = p_friendship_id;
+
+    if v_requester is null then raise exception 'request not found'; end if;
+    if v_addressee <> v_uid then raise exception 'not yours to answer'; end if;
+    if v_status <> 'pending' then raise exception 'request is no longer open'; end if;
+
+    if p_action = 'accept' then
+        update public.friendship
+            set status = 'accepted', responded_at = now()
+            where id = p_friendship_id;
+
+        select u.username || '#' || u.tag_number into v_label
+            from public."user" u where u.id = v_uid;
+
+        perform public.fn_enqueue_notification(
+            'friend_accepted',
+            array[v_requester],
+            'Đã thành bạn bè',
+            coalesce(v_label, 'Một người chơi') || ' đã chấp nhận lời mời kết bạn',
+            jsonb_build_object('user_id', v_uid::text));
+    elsif p_action = 'decline' then
+        update public.friendship
+            set status = 'declined', responded_at = now()
+            where id = p_friendship_id;
+    else
+        raise exception 'invalid action %', p_action;
+    end if;
+end;
+$$;
+
+
+--
+-- Name: search_locations(text, character varying[], bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.search_locations(search_term text, p_districts character varying[] DEFAULT NULL::character varying[], p_city_cluster bigint DEFAULT NULL::bigint) RETURNS TABLE(id uuid, name text, full_address text, street_number integer, street_name text, district text, city text, lat double precision, lon double precision, tags text[], city_cluster bigint)
     LANGUAGE plpgsql STABLE
     SET search_path TO ''
     AS $$
 BEGIN
-    IF char_length(search_term) < 8 THEN
-        RETURN;
-    END IF;
-
     RETURN QUERY
     SELECT
         l.id,
@@ -2842,29 +5531,40 @@ BEGIN
         l.street_number,
         l.street_name,
         l.district,
-        l.city
+        l.city,
+        l.lat,
+        l.lon,
+        l.tags,
+        l.city_cluster
     FROM public.location l
     WHERE
-        extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(l.name))) > 0.3
-        OR extensions.word_similarity(LOWER(search_term), LOWER(l.name)) > 0.3
-        OR extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(l.full_address))) > 0.3
-        OR extensions.word_similarity(LOWER(search_term), LOWER(l.full_address)) > 0.3
+        (p_city_cluster IS NULL OR l.city_cluster = p_city_cluster)
+        AND (
+            (
+                char_length(search_term) >= 8 AND (
+                    extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(l.name))) > 0.3
+                    OR extensions.word_similarity(LOWER(search_term), LOWER(l.name)) > 0.3
+                    OR extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(l.full_address))) > 0.3
+                    OR extensions.word_similarity(LOWER(search_term), LOWER(l.full_address)) > 0.3
+                )
+            )
+            OR (p_districts IS NOT NULL AND cardinality(p_districts) > 0 AND l.district = ANY(p_districts))
+        )
     ORDER BY
         GREATEST(
             extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(l.name))),
             extensions.word_similarity(LOWER(search_term), LOWER(l.name)),
             extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(l.full_address))),
             extensions.word_similarity(LOWER(search_term), LOWER(l.full_address))
-        ) DESC
-    LIMIT 10;
+        ) DESC,
+        l.name ASC
+    LIMIT 60;
 END;
 $$;
 
 
-ALTER FUNCTION public.search_locations(search_term text) OWNER TO postgres;
-
 --
--- Name: search_networks_unaccent(text, integer); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: search_networks_unaccent(text, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.search_networks_unaccent(search_term text, result_limit integer DEFAULT 20) RETURNS TABLE(id bigint, name text, category text, city text)
@@ -2895,10 +5595,8 @@ LIMIT result_limit;
 $$;
 
 
-ALTER FUNCTION public.search_networks_unaccent(search_term text, result_limit integer) OWNER TO postgres;
-
 --
--- Name: search_networks_unaccent(text, integer, bigint[], text[]); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: search_networks_unaccent(text, integer, bigint[], text[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.search_networks_unaccent(search_term text, result_limit integer DEFAULT 20, filter_cities bigint[] DEFAULT NULL::bigint[], filter_categories text[] DEFAULT NULL::text[]) RETURNS TABLE(id bigint, name text, category text, city bigint)
@@ -2928,10 +5626,281 @@ LIMIT result_limit;
 $$;
 
 
-ALTER FUNCTION public.search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]) OWNER TO postgres;
+--
+-- Name: send_challenge(uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.send_challenge(p_initiator_lobby uuid, p_target_lobby uuid, p_note text DEFAULT NULL::text) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid          uuid := auth.uid();
+    v_sport        bigint;
+    v_target_open  boolean;
+    v_target_sport bigint;
+    v_offer_time   timestamptz;
+    v_offer_loc    uuid;
+    v_offer_cost   numeric;
+    v_id           uuid;
+    v_recipients   uuid[];
+    v_init_name    text;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+    IF p_initiator_lobby = p_target_lobby THEN
+        RAISE EXCEPTION 'cannot challenge your own lobby';
+    END IF;
+    IF NOT public.lobby_can_manage(p_initiator_lobby, v_uid) THEN
+        RAISE EXCEPTION 'not a manager of the initiating lobby';
+    END IF;
+
+    SELECT sport_id INTO v_sport FROM public.lobby WHERE id = p_initiator_lobby;
+    SELECT open_to_challengers, sport_id,
+           challenge_offer_time, challenge_offer_location, challenge_offer_cost
+      INTO v_target_open, v_target_sport, v_offer_time, v_offer_loc, v_offer_cost
+      FROM public.lobby WHERE id = p_target_lobby;
+
+    IF v_target_sport IS NULL THEN RAISE EXCEPTION 'target lobby not found'; END IF;
+    IF v_sport IS DISTINCT FROM v_target_sport THEN RAISE EXCEPTION 'sport mismatch'; END IF;
+    IF NOT COALESCE(v_target_open, false) THEN
+        RAISE EXCEPTION 'target lobby is not open to challengers';
+    END IF;
+    IF v_offer_time <= now() THEN
+        RAISE EXCEPTION 'that offer has expired';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM public.lobby_challenge
+        WHERE initiator_lobby_id = p_initiator_lobby
+          AND target_lobby_id = p_target_lobby
+          AND status = 'requested'
+    ) THEN
+        RAISE EXCEPTION 'a challenge is already pending for this lobby';
+    END IF;
+
+    INSERT INTO public.lobby_challenge
+        (initiator_lobby_id, target_lobby_id, sport_id,
+         proposed_time, proposed_location, agreed_cost, note)
+    VALUES (p_initiator_lobby, p_target_lobby, v_sport,
+            v_offer_time, v_offer_loc, v_offer_cost, p_note)
+    RETURNING id INTO v_id;
+
+    SELECT array_agg(uid) INTO v_recipients FROM (
+        SELECT captain_id AS uid FROM public.lobby WHERE id = p_target_lobby
+        UNION
+        SELECT user_id FROM public.lobby_member
+            WHERE lobby_id = p_target_lobby AND role = 'coordinator'
+    ) s;
+
+    SELECT name INTO v_init_name FROM public.lobby WHERE id = p_initiator_lobby;
+
+    PERFORM public.fn_enqueue_notification(
+        'challenge_received',
+        v_recipients,
+        'Lời thách đấu mới',
+        COALESCE(v_init_name, 'Một đội') || ' muốn thách đấu với bạn',
+        jsonb_build_object('lobby_id', p_target_lobby, 'challenge_id', v_id)
+    );
+
+    RETURN v_id;
+END;
+$$;
+
 
 --
--- Name: transfer_lobby_captaincy(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: send_friend_request(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.send_friend_request(p_user_id uuid) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_uid    uuid := auth.uid();
+    v_id     uuid;
+    v_status public.friendship_status;
+    v_owner  uuid;
+    v_label  text;
+begin
+    if v_uid is null then raise exception 'not authenticated'; end if;
+    if p_user_id is null then raise exception 'no target user'; end if;
+    if p_user_id = v_uid then raise exception 'cannot befriend yourself'; end if;
+    if not exists (select 1 from public."user" u where u.id = p_user_id) then
+        raise exception 'user not found';
+    end if;
+    if public.fn_is_blocked(v_uid, p_user_id) then
+        raise exception 'blocked';
+    end if;
+
+    select id, status, requester_id into v_id, v_status, v_owner
+        from public.friendship
+        where status in ('pending', 'accepted')
+          and least(requester_id, addressee_id) = least(v_uid, p_user_id)
+          and greatest(requester_id, addressee_id) = greatest(v_uid, p_user_id);
+
+    if v_status = 'accepted' then
+        return v_id;
+    elsif v_status = 'pending' and v_owner = v_uid then
+        return v_id;
+    elsif v_status = 'pending' then
+        update public.friendship
+            set status = 'accepted', responded_at = now()
+            where id = v_id;
+
+        select u.username || '#' || u.tag_number into v_label
+            from public."user" u where u.id = v_uid;
+
+        perform public.fn_enqueue_notification(
+            'friend_accepted',
+            array[p_user_id],
+            'Đã thành bạn bè',
+            coalesce(v_label, 'Một người chơi') || ' đã chấp nhận lời mời kết bạn',
+            jsonb_build_object('user_id', v_uid::text));
+        return v_id;
+    end if;
+
+    insert into public.friendship (requester_id, addressee_id)
+        values (v_uid, p_user_id)
+        returning id into v_id;
+
+    select u.username || '#' || u.tag_number into v_label
+        from public."user" u where u.id = v_uid;
+
+    perform public.fn_enqueue_notification(
+        'friend_request',
+        array[p_user_id],
+        'Lời mời kết bạn',
+        coalesce(v_label, 'Một người chơi') || ' muốn kết bạn với bạn',
+        jsonb_build_object('user_id', v_uid::text));
+
+    return v_id;
+end;
+$$;
+
+
+--
+-- Name: set_lobby_challenge_offer(uuid, boolean, timestamp with time zone, uuid, numeric); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_lobby_challenge_offer(p_lobby_id uuid, p_open boolean, p_time timestamp with time zone DEFAULT NULL::timestamp with time zone, p_location uuid DEFAULT NULL::uuid, p_cost numeric DEFAULT NULL::numeric) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid uuid := auth.uid();
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+    IF NOT public.lobby_can_manage(p_lobby_id, v_uid) THEN
+        RAISE EXCEPTION 'not a manager of this lobby';
+    END IF;
+
+    IF p_open THEN
+        IF p_time IS NULL OR p_location IS NULL OR p_cost IS NULL THEN
+            RAISE EXCEPTION 'an open challenge offer needs a time, a location and a cost';
+        END IF;
+        IF p_time <= now() THEN
+            RAISE EXCEPTION 'the offered kickoff is in the past';
+        END IF;
+        IF p_cost < 0 THEN
+            RAISE EXCEPTION 'cost cannot be negative';
+        END IF;
+
+        UPDATE public.lobby
+           SET open_to_challengers    = true,
+               challenge_offer_time     = p_time,
+               challenge_offer_location = p_location,
+               challenge_offer_cost     = p_cost
+         WHERE id = p_lobby_id;
+    ELSE
+        UPDATE public.lobby
+           SET open_to_challengers    = false,
+               challenge_offer_time     = NULL,
+               challenge_offer_location = NULL,
+               challenge_offer_cost     = NULL
+         WHERE id = p_lobby_id;
+    END IF;
+END;
+$$;
+
+
+--
+-- Name: set_lobby_member_role(uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_lobby_member_role(p_lobby_id uuid, p_member_user_id uuid, p_role text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM public.lobby WHERE id = p_lobby_id AND captain_id = auth.uid()
+    ) THEN
+        RAISE EXCEPTION 'set_lobby_member_role: caller is not the lobby captain';
+    END IF;
+    IF p_member_user_id = auth.uid() THEN
+        RAISE EXCEPTION 'set_lobby_member_role: captain cannot change their own role';
+    END IF;
+    IF p_role NOT IN ('member', 'coordinator') THEN
+        RAISE EXCEPTION 'set_lobby_member_role: invalid role %', p_role;
+    END IF;
+
+    UPDATE public.lobby_member
+    SET role = p_role::public.lobby_member_role
+    WHERE lobby_id = p_lobby_id AND user_id = p_member_user_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'set_lobby_member_role: % is not a member of this lobby', p_member_user_id;
+    END IF;
+END;
+$$;
+
+
+--
+-- Name: taggable_users(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.taggable_users(p_activity_id uuid DEFAULT NULL::uuid, p_booking_id uuid DEFAULT NULL::uuid) RETURNS TABLE(user_id uuid, username text, tag_number text, details jsonb, attended boolean)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select u.id, u.username::text, u.tag_number::text, u.details,
+           bool_or(x.attended)
+    from (
+        select c.user_id as uid, true as attended
+            from public.activity_confirmation c
+            where p_activity_id is not null
+              and c.activity_id = p_activity_id
+              and c.attendance = 'going'
+        union all
+        select m.user_id, false
+            from public.lobby_member m
+            join public.activity a on a.lobby_id = m.lobby_id
+            where p_activity_id is not null and a.id = p_activity_id
+        union all
+        select b.client_user_id, true
+            from public.professional_booking b
+            where p_booking_id is not null and b.id = p_booking_id
+        union all
+        select au.user_id, true
+            from public.booking_additional_users au
+            where p_booking_id is not null and au.booking_id = p_booking_id
+        union all
+        select p.linked_user_id, true
+            from public.professional p
+            join public.professional_booking b on b.professional_id = p.id
+            where p_booking_id is not null
+              and b.id = p_booking_id
+              and p.linked_user_id is not null
+    ) x
+    join public."user" u on u.id = x.uid
+    where u.id <> auth.uid()
+    group by u.id, u.username, u.tag_number, u.details
+    order by bool_or(x.attended) desc, u.username;
+$$;
+
+
+--
+-- Name: transfer_lobby_captaincy(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.transfer_lobby_captaincy(p_lobby_id uuid, p_new_captain_id uuid) RETURNS void
@@ -2959,10 +5928,45 @@ END;
 $$;
 
 
-ALTER FUNCTION public.transfer_lobby_captaincy(p_lobby_id uuid, p_new_captain_id uuid) OWNER TO postgres;
+--
+-- Name: trg_lobby_match_rated_count(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_lobby_match_rated_count() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    IF TG_OP <> 'INSERT' THEN
+        PERFORM public.fn_lobby_recompute_rated_matches(OLD.lobby_id);
+        PERFORM public.fn_lobby_recompute_rated_matches(OLD.opponent_lobby_id);
+    END IF;
+    IF TG_OP <> 'DELETE' THEN
+        PERFORM public.fn_lobby_recompute_rated_matches(NEW.lobby_id);
+        PERFORM public.fn_lobby_recompute_rated_matches(NEW.opponent_lobby_id);
+    END IF;
+    RETURN COALESCE(NEW, OLD);
+END;
+$$;
+
 
 --
--- Name: trg_lobby_member_recompute(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: trg_lobby_match_rating(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_lobby_match_rating() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    PERFORM public.fn_apply_match_rating(NEW.id);
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: trg_lobby_member_recompute(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.trg_lobby_member_recompute() RETURNS trigger
@@ -2987,10 +5991,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.trg_lobby_member_recompute() OWNER TO postgres;
-
 --
--- Name: trg_lobby_playtime_keys(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: trg_lobby_playtime_keys(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.trg_lobby_playtime_keys() RETURNS trigger
@@ -3004,10 +6006,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.trg_lobby_playtime_keys() OWNER TO postgres;
-
 --
--- Name: trg_user_affiliation_recompute(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: trg_user_affiliation_recompute(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.trg_user_affiliation_recompute() RETURNS trigger
@@ -3028,10 +6028,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.trg_user_affiliation_recompute() OWNER TO postgres;
-
 --
--- Name: trg_user_rating_recompute(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: trg_user_rating_recompute(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.trg_user_rating_recompute() RETURNS trigger
@@ -3058,10 +6056,72 @@ END;
 $$;
 
 
-ALTER FUNCTION public.trg_user_rating_recompute() OWNER TO postgres;
+--
+-- Name: unblock_user(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.unblock_user(p_user_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+    if auth.uid() is null then raise exception 'not authenticated'; end if;
+    delete from public.user_block
+        where blocker_id = auth.uid() and blocked_id = p_user_id;
+end;
+$$;
+
 
 --
--- Name: user_level_summary(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: unfriend(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.unfriend(p_user_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+    v_uid uuid := auth.uid();
+begin
+    if v_uid is null then raise exception 'not authenticated'; end if;
+
+    update public.friendship
+        set status = 'cancelled', responded_at = now()
+        where status in ('pending', 'accepted')
+          and least(requester_id, addressee_id) = least(v_uid, p_user_id)
+          and greatest(requester_id, addressee_id) = greatest(v_uid, p_user_id);
+end;
+$$;
+
+
+--
+-- Name: update_lobby(uuid, text, text, jsonb, jsonb, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb DEFAULT NULL::jsonb, p_details jsonb DEFAULT NULL::jsonb, p_home_ground_id uuid DEFAULT NULL::uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM public.lobby WHERE id = p_lobby_id AND captain_id = auth.uid()
+    ) THEN
+        RAISE EXCEPTION 'update_lobby: caller is not the lobby captain';
+    END IF;
+
+    UPDATE public.lobby
+    SET name        = p_name,
+        visibility  = p_visibility::public.lobby_visibility,
+        playtime    = p_playtime,
+        details     = p_details,
+        home_ground = p_home_ground_id
+    WHERE id = p_lobby_id;
+END;
+$$;
+
+
+--
+-- Name: user_level_summary(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.user_level_summary(p_user_id uuid) RETURNS TABLE(level integer, xp_total bigint, current_floor bigint, next_floor bigint)
@@ -3083,10 +6143,185 @@ END;
 $$;
 
 
-ALTER FUNCTION public.user_level_summary(p_user_id uuid) OWNER TO postgres;
+--
+-- Name: user_profile_data(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.user_profile_data(p_user_id uuid) RETURNS TABLE(user_id uuid, username text, tag_number text, details jsonb, friendship_id uuid, friend_state text, friend_count integer, shared_lobby_count integer)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select u.id,
+           u.username::text,
+           u.tag_number::text,
+           u.details,
+           f.id,
+           case
+               when public.fn_is_blocked(auth.uid(), u.id) then 'blocked'
+               when f.status = 'accepted' then 'friend'
+               when f.status = 'pending' and f.addressee_id = auth.uid() then 'incoming'
+               when f.status = 'pending' then 'outgoing'
+               else 'none'
+           end,
+           (select count(*)::int from public.friendship af
+             where af.status = 'accepted'
+               and u.id in (af.requester_id, af.addressee_id)),
+           (select count(*)::int from public.lobby_member lm
+             where lm.user_id = u.id
+               and lm.lobby_id in (select public.get_my_lobby_ids()))
+    from public."user" u
+    left join public.friendship f
+        on f.status in ('pending', 'accepted')
+       and least(f.requester_id, f.addressee_id) = least(auth.uid(), u.id)
+       and greatest(f.requester_id, f.addressee_id) = greatest(auth.uid(), u.id)
+    where u.id = p_user_id;
+$$;
+
 
 --
--- Name: apply_rls(jsonb, integer); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: user_wall_data(uuid, text, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.user_wall_data(p_user_id uuid, p_mode text DEFAULT 'authored'::text, p_page_size integer DEFAULT 20, p_page_number integer DEFAULT 0) RETURNS TABLE(id uuid, author_id uuid, author_username text, author_tag_number text, author_details jsonb, sport_id bigint, lobby_id uuid, source_label text, source_start_time timestamp with time zone, source_venue_name text, caption text, image_paths text[], created_at timestamp with time zone, expires_at timestamp with time zone, tags jsonb, reactions jsonb, my_reaction text)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select p.id,
+           p.author_id,
+           u.username::text,
+           u.tag_number::text,
+           u.details,
+           p.sport_id,
+           p.lobby_id,
+           p.source_label,
+           p.source_start_time,
+           p.source_venue_name,
+           p.caption,
+           p.image_paths,
+           p.created_at,
+           p.expires_at,
+           coalesce((
+               select jsonb_agg(jsonb_build_object(
+                          'user_id', tu.id,
+                          'username', tu.username,
+                          'tag_number', tu.tag_number))
+               from public.wall_post_tag t
+               join public."user" tu on tu.id = t.user_id
+               where t.post_id = p.id
+           ), '[]'::jsonb),
+           coalesce((
+               select jsonb_object_agg(r.emoji, r.n)
+               from (select emoji, count(*) as n
+                       from public.wall_post_reaction
+                      where post_id = p.id
+                      group by emoji) r
+           ), '{}'::jsonb),
+           (select emoji from public.wall_post_reaction
+             where post_id = p.id and user_id = auth.uid())
+    from public.wall_post p
+    join public."user" u on u.id = p.author_id
+    where public.fn_can_see_wall_post(p.id)
+      and case
+            when p_mode = 'tagged' then exists (
+                select 1 from public.wall_post_tag t
+                where t.post_id = p.id and t.user_id = p_user_id)
+            else p.author_id = p_user_id
+          end
+    order by p.created_at desc
+    limit greatest(p_page_size, 1)
+    offset greatest(p_page_number, 0) * greatest(p_page_size, 1);
+$$;
+
+
+--
+-- Name: vitality_score_summary(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.vitality_score_summary(p_user_id uuid) RETURNS TABLE(date date, score real, consistency_component real, load_component real, recovery_component real, volume_component real, streak_bonus real, ctl real, atl real)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT date, score, consistency_component, load_component,
+         recovery_component, volume_component, streak_bonus, ctl, atl
+  FROM public.vitality_score
+  WHERE user_id = p_user_id AND user_id = auth.uid()
+  ORDER BY date DESC
+  LIMIT 1;
+$$;
+
+
+--
+-- Name: wall_feed_data(bigint, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.wall_feed_data(p_sport_id bigint DEFAULT NULL::bigint, p_page_size integer DEFAULT 20, p_page_number integer DEFAULT 0) RETURNS TABLE(id uuid, author_id uuid, author_username text, author_tag_number text, author_details jsonb, sport_id bigint, lobby_id uuid, source_label text, source_start_time timestamp with time zone, source_venue_name text, caption text, image_paths text[], created_at timestamp with time zone, expires_at timestamp with time zone, tags jsonb, reactions jsonb, my_reaction text)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    with me as (select auth.uid() as uid),
+    friends as (select uid from public.get_my_friend_ids() as uid),
+    lobbymates as (select uid from public.get_my_lobbymate_ids() as uid),
+    visible as (
+        select p.*
+        from public.wall_post p, me
+        where p.hidden_at is null
+          and p.expires_at > now()
+          and not public.fn_is_blocked(me.uid, p.author_id)
+          and (p_sport_id is null or p.sport_id = p_sport_id)
+          and (
+            p.author_id = me.uid
+            or p.author_id in (select uid from friends)
+            or p.author_id in (select uid from lobbymates)
+            or exists (
+                select 1 from public.wall_post_tag t
+                where t.post_id = p.id
+                  and (t.user_id = me.uid
+                       or t.user_id in (select uid from friends))
+            )
+          )
+    )
+    select v.id,
+           v.author_id,
+           u.username::text,
+           u.tag_number::text,
+           u.details,
+           v.sport_id,
+           v.lobby_id,
+           v.source_label,
+           v.source_start_time,
+           v.source_venue_name,
+           v.caption,
+           v.image_paths,
+           v.created_at,
+           v.expires_at,
+           coalesce((
+               select jsonb_agg(jsonb_build_object(
+                          'user_id', tu.id,
+                          'username', tu.username,
+                          'tag_number', tu.tag_number))
+               from public.wall_post_tag t
+               join public."user" tu on tu.id = t.user_id
+               where t.post_id = v.id
+           ), '[]'::jsonb),
+           coalesce((
+               select jsonb_object_agg(r.emoji, r.n)
+               from (select emoji, count(*) as n
+                       from public.wall_post_reaction
+                      where post_id = v.id
+                      group by emoji) r
+           ), '{}'::jsonb),
+           (select emoji from public.wall_post_reaction
+             where post_id = v.id and user_id = (select uid from me))
+    from visible v
+    join public."user" u on u.id = v.author_id
+    order by v.created_at desc
+    limit greatest(p_page_size, 1)
+    offset greatest(p_page_number, 0) * greatest(p_page_size, 1);
+$$;
+
+
+--
+-- Name: apply_rls(jsonb, integer); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.apply_rls(wal jsonb, max_record_bytes integer DEFAULT (1024 * 1024)) RETURNS SETOF realtime.wal_rls
@@ -3311,6 +6546,18 @@ begin
 
                     execute 'execute walrus_rls_stmt' into subscription_has_access;
 
+                    -- Reset the role on every FOR..LOOP batch execution.
+                    -- The first batch of 10 rows is pre-fetched using the current connection role (PG internal behaviour)
+                    -- then we have to reset it again otherwise it would use the role defined in the `set_config` above
+                    -- to fetch the remaining rows when rows>10, which could be a user-defined role that lacks execution grants.
+                    -- The flow is:
+                    --   1. run batch with conn role
+                    --   2. set_config working_role
+                    --   3. execute walrus
+                    --   4. reset role (revert)
+                    --   5. repeat
+                    perform set_config('role', null, true);
+
                     if subscription_has_access then
                         visible_role_sub_ids = visible_role_sub_ids || subscription_id;
                     end if;
@@ -3448,10 +6695,8 @@ end;
 $$;
 
 
-ALTER FUNCTION realtime.apply_rls(wal jsonb, max_record_bytes integer) OWNER TO supabase_admin;
-
 --
--- Name: broadcast_changes(text, text, text, text, text, record, record, text); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: broadcast_changes(text, text, text, text, text, record, record, text); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.broadcast_changes(topic_name text, event_name text, operation text, table_name text, table_schema text, new record, old record, level text DEFAULT 'ROW'::text) RETURNS void
@@ -3479,10 +6724,8 @@ END;
 $$;
 
 
-ALTER FUNCTION realtime.broadcast_changes(topic_name text, event_name text, operation text, table_name text, table_schema text, new record, old record, level text) OWNER TO supabase_admin;
-
 --
--- Name: build_prepared_statement_sql(text, regclass, realtime.wal_column[]); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: build_prepared_statement_sql(text, regclass, realtime.wal_column[]); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.build_prepared_statement_sql(prepared_statement_name text, entity regclass, columns realtime.wal_column[]) RETURNS text
@@ -3514,10 +6757,8 @@ CREATE FUNCTION realtime.build_prepared_statement_sql(prepared_statement_name te
       $$;
 
 
-ALTER FUNCTION realtime.build_prepared_statement_sql(prepared_statement_name text, entity regclass, columns realtime.wal_column[]) OWNER TO supabase_admin;
-
 --
--- Name: cast(text, regtype); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: cast(text, regtype); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime."cast"(val text, type_ regtype) RETURNS jsonb
@@ -3535,89 +6776,149 @@ end
 $$;
 
 
-ALTER FUNCTION realtime."cast"(val text, type_ regtype) OWNER TO supabase_admin;
-
 --
--- Name: check_equality_op(realtime.equality_op, regtype, text, text); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: check_equality_op(realtime.equality_op, regtype, text, text); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text) RETURNS boolean
     LANGUAGE plpgsql IMMUTABLE
     AS $$
-      /*
-      Casts *val_1* and *val_2* as type *type_* and check the *op* condition for truthiness
-      */
-      declare
-          op_symbol text = (
-              case
-                  when op = 'eq' then '='
-                  when op = 'neq' then '!='
-                  when op = 'lt' then '<'
-                  when op = 'lte' then '<='
-                  when op = 'gt' then '>'
-                  when op = 'gte' then '>='
-                  when op = 'in' then '= any'
-                  else 'UNKNOWN OP'
-              end
-          );
-          res boolean;
-      begin
-          execute format(
-              'select %L::'|| type_::text || ' ' || op_symbol
-              || ' ( %L::'
-              || (
-                  case
-                      when op = 'in' then type_::text || '[]'
-                      else type_::text end
-              )
-              || ')', val_1, val_2) into res;
-          return res;
-      end;
-      $$;
+/*
+Casts *val_1* and *val_2* as type *type_* and check the *op* condition for truthiness
+*/
+declare
+    op_symbol text = (
+        case
+            when op = 'eq' then '='
+            when op = 'neq' then '!='
+            when op = 'lt' then '<'
+            when op = 'lte' then '<='
+            when op = 'gt' then '>'
+            when op = 'gte' then '>='
+            when op = 'in' then '= any'
+            else 'UNKNOWN OP'
+        end
+    );
+    res boolean;
+begin
+    execute format(
+        'select %L::'|| type_::text || ' ' || op_symbol
+        || ' ( %L::'
+        || (
+            case
+                when op = 'in' then type_::text || '[]'
+                else type_::text end
+        )
+        || ')', val_1, val_2) into res;
+    return res;
+end;
+$$;
 
-
-ALTER FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text) OWNER TO supabase_admin;
 
 --
--- Name: is_visible_through_filters(realtime.wal_column[], realtime.user_defined_filter[]); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: check_equality_op(realtime.equality_op, regtype, text, text, boolean); Type: FUNCTION; Schema: realtime; Owner: -
+--
+
+CREATE FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text, negate boolean) RETURNS boolean
+    LANGUAGE plpgsql STABLE
+    AS $$
+declare
+    op_symbol text;
+    res boolean;
+begin
+    -- IS DISTINCT FROM / IS NOT DISTINCT FROM: infix, both sides typed literals
+    if op = 'isdistinct' then
+        execute format(
+            'select %L::%s %s %L::%s',
+            val_1,
+            type_::text,
+            case when negate then 'IS NOT DISTINCT FROM' else 'IS DISTINCT FROM' end,
+            val_2,
+            type_::text
+        ) into res;
+        return res;
+    end if;
+
+    -- IS requires a keyword RHS (NULL, TRUE, FALSE, UNKNOWN), not a typed literal
+    if op = 'is' then
+        if val_2 not in ('null', 'true', 'false', 'unknown') then
+            raise exception 'invalid value for is filter: must be null, true, false, or unknown';
+        end if;
+        execute format(
+            'select %L::%s %s %s',
+            val_1,
+            type_::text,
+            case when negate then 'IS NOT' else 'IS' end,
+            upper(val_2)
+        ) into res;
+        return res;
+    end if;
+
+    op_symbol = case
+        when op = 'eq'    then '='
+        when op = 'neq'   then '!='
+        when op = 'lt'    then '<'
+        when op = 'lte'   then '<='
+        when op = 'gt'    then '>'
+        when op = 'gte'   then '>='
+        when op = 'in'    then '= any'
+        when op = 'like'   then 'LIKE'
+        when op = 'ilike'  then 'ILIKE'
+        when op = 'match'  then '~'
+        when op = 'imatch' then '~*'
+        else null
+    end;
+
+    if op_symbol is null then
+        raise exception 'unsupported equality operator: %', op::text;
+    end if;
+
+    execute format(
+        'select %L::%s %s (%L::%s)',
+        val_1,
+        type_::text,
+        op_symbol,
+        val_2,
+        case when op = 'in' then type_::text || '[]' else type_::text end
+    ) into res;
+
+    return case when negate then not res else res end;
+end;
+$$;
+
+
+--
+-- Name: is_visible_through_filters(realtime.wal_column[], realtime.user_defined_filter[]); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]) RETURNS boolean
-    LANGUAGE sql IMMUTABLE
-    AS $_$
-    /*
-    Should the record be visible (true) or filtered out (false) after *filters* are applied
-    */
-        select
-            -- Default to allowed when no filters present
-            $2 is null -- no filters. this should not happen because subscriptions has a default
-            or array_length($2, 1) is null -- array length of an empty array is null
-            or bool_and(
-                coalesce(
-                    realtime.check_equality_op(
-                        op:=f.op,
-                        type_:=coalesce(
-                            col.type_oid::regtype, -- null when wal2json version <= 2.4
-                            col.type_name::regtype
-                        ),
-                        -- cast jsonb to text
-                        val_1:=col.value #>> '{}',
-                        val_2:=f.value
-                    ),
-                    false -- if null, filter does not match
-                )
-            )
-        from
-            unnest(filters) f
-            join unnest(columns) col
-                on f.column_name = col.name;
-    $_$;
+    LANGUAGE sql STABLE
+    AS $$
+    select
+        filters is null
+        or array_length(filters, 1) is null
+        or coalesce(
+            count(col.name) = count(1)
+            and sum(
+                realtime.check_equality_op(
+                    op:=f.op,
+                    type_:=coalesce(col.type_oid::regtype, col.type_name::regtype),
+                    val_1:=col.value #>> '{}',
+                    val_2:=f.value,
+                    negate:=coalesce(f.negate, false)
+                )::int
+            ) filter (where col.name is not null) = count(col.name),
+            false
+        )
+    from
+        unnest(filters) f
+        left join unnest(columns) col
+            on f.column_name = col.name;
+$$;
 
-
-ALTER FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]) OWNER TO supabase_admin;
 
 --
--- Name: list_changes(name, name, integer, integer); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: list_changes(name, name, integer, integer); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer) RETURNS TABLE(wal jsonb, is_rls_enabled boolean, subscription_ids uuid[], errors text[], slot_changes_count bigint)
@@ -3686,10 +6987,8 @@ CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_chan
 $$;
 
 
-ALTER FUNCTION realtime.list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer) OWNER TO supabase_admin;
-
 --
--- Name: quote_wal2json(regclass); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: quote_wal2json(regclass); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.quote_wal2json(entity regclass) RETURNS text
@@ -3705,10 +7004,8 @@ CREATE FUNCTION realtime.quote_wal2json(entity regclass) RETURNS text
 $$;
 
 
-ALTER FUNCTION realtime.quote_wal2json(entity regclass) OWNER TO supabase_admin;
-
 --
--- Name: send(jsonb, text, text, boolean); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: send(jsonb, text, text, boolean); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.send(payload jsonb, event text, topic text, private boolean DEFAULT true) RETURNS void
@@ -3719,7 +7016,6 @@ DECLARE
   final_payload jsonb;
 BEGIN
   BEGIN
-    -- Generate a new UUID for the id
     generated_id := gen_random_uuid();
 
     -- Check if payload has an 'id' key, if not, add the generated UUID
@@ -3732,22 +7028,18 @@ BEGIN
     -- Set the topic configuration
     EXECUTE format('SET LOCAL realtime.topic TO %L', topic);
 
-    -- Attempt to insert the message
     INSERT INTO realtime.messages (id, payload, event, topic, private, extension)
     VALUES (generated_id, final_payload, event, topic, private, 'broadcast');
   EXCEPTION
     WHEN OTHERS THEN
-      -- Capture and notify the error
-      RAISE WARNING 'ErrorSendingBroadcastMessage: %', SQLERRM;
+      RAISE WARNING 'WarnSendingBroadcastMessage: %', SQLERRM;
   END;
 END;
 $$;
 
 
-ALTER FUNCTION realtime.send(payload jsonb, event text, topic text, private boolean) OWNER TO supabase_admin;
-
 --
--- Name: send_binary(bytea, text, text, boolean); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: send_binary(bytea, text, text, boolean); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.send_binary(payload bytea, event text, topic text, private boolean DEFAULT true) RETURNS void
@@ -3765,16 +7057,14 @@ BEGIN
     VALUES (generated_id, payload, event, topic, private, 'broadcast');
   EXCEPTION
     WHEN OTHERS THEN
-      RAISE WARNING 'ErrorSendingBroadcastMessage: %', SQLERRM;
+      RAISE WARNING 'WarnSendingBroadcastMessage: %', SQLERRM;
   END;
 END;
 $$;
 
 
-ALTER FUNCTION realtime.send_binary(payload bytea, event text, topic text, private boolean) OWNER TO supabase_admin;
-
 --
--- Name: subscription_check_filters(); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: subscription_check_filters(); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.subscription_check_filters() RETURNS trigger
@@ -3782,40 +7072,31 @@ CREATE FUNCTION realtime.subscription_check_filters() RETURNS trigger
     AS $$
 declare
     col_names text[] = coalesce(
-            array_agg(c.column_name order by c.ordinal_position),
+            array_agg(a.attname order by a.attnum),
             '{}'::text[]
         )
         from
-            information_schema.columns c
+            pg_catalog.pg_attribute a
         where
-            format('%I.%I', c.table_schema, c.table_name)::regclass = new.entity
+            a.attrelid = new.entity
+            and a.attnum > 0
+            and not a.attisdropped
             and pg_catalog.has_column_privilege(
                 (new.claims ->> 'role'),
-                format('%I.%I', c.table_schema, c.table_name)::regclass,
-                c.column_name,
+                a.attrelid,
+                a.attnum,
                 'SELECT'
             );
-    table_col_names text[] = coalesce(
-            array_agg(pa.attname),
-            '{}'::text[]
-        )
-        from
-            pg_attribute pa
-        where
-            pa.attrelid = new.entity
-            and pa.attnum > 0;
     filter realtime.user_defined_filter;
     col_type regtype;
     in_val jsonb;
     selected_col text;
 begin
     for filter in select * from unnest(new.filters) loop
-        -- Filtered column is valid
         if not filter.column_name = any(col_names) then
             raise exception 'invalid column for filter %', filter.column_name;
         end if;
 
-        -- Type is sanitized and safe for string interpolation
         col_type = (
             select atttypid::regtype
             from pg_catalog.pg_attribute
@@ -3825,18 +7106,58 @@ begin
         if col_type is null then
             raise exception 'failed to lookup type for column %', filter.column_name;
         end if;
+
         if filter.op = 'in'::realtime.equality_op then
             in_val = realtime.cast(filter.value, (col_type::text || '[]')::regtype);
             if coalesce(jsonb_array_length(in_val), 0) > 100 then
                 raise exception 'too many values for `in` filter. Maximum 100';
             end if;
+        elsif filter.op = 'is'::realtime.equality_op then
+            -- `is` requires a keyword RHS rather than a typed literal
+            if filter.value not in ('null', 'true', 'false', 'unknown') then
+                raise exception 'invalid value for is filter: must be null, true, false, or unknown';
+            end if;
+            -- IS NULL works for any type, but IS TRUE/FALSE/UNKNOWN require a boolean
+            -- operand. Reject the non-null keywords on non-boolean columns here so they
+            -- don't abort apply_rls at WAL time.
+            if filter.value <> 'null' and col_type <> 'boolean'::regtype then
+                raise exception 'is % filter requires a boolean column, got %', filter.value, col_type::text;
+            end if;
+        elsif filter.op in ('like'::realtime.equality_op, 'ilike'::realtime.equality_op) then
+            -- like/ilike apply the text pattern operator (~~); reject column types that
+            -- have no such operator instead of failing at WAL time
+            if not exists (
+                select 1 from pg_catalog.pg_operator
+                where oprname = '~~' and oprleft = col_type
+            ) then
+                raise exception 'operator % requires a text-compatible column type, got %', filter.op::text, col_type::text;
+            end if;
+        elsif filter.op in ('match'::realtime.equality_op, 'imatch'::realtime.equality_op) then
+            -- match/imatch apply the regex operators ~ / ~*; reject column types that have
+            -- no such operator (e.g. integer) instead of failing at WAL time, mirroring the
+            -- like/ilike guard above.
+            if not exists (
+                select 1 from pg_catalog.pg_operator
+                where oprname = case when filter.op = 'imatch'::realtime.equality_op then '~*' else '~' end
+                  and oprleft = col_type
+                  and oprright = col_type
+                  and oprresult = 'boolean'::regtype
+            ) then
+                raise exception 'operator % requires a text-compatible column type, got %', filter.op::text, col_type::text;
+            end if;
+            -- validate the regex eagerly so a bad pattern is rejected here, not inside
+            -- apply_rls where it would abort the WAL stream for the entity
+            begin
+                perform '' ~ filter.value;
+            exception when others then
+                raise exception 'invalid regular expression for % filter: %', filter.op::text, sqlerrm;
+            end;
         else
-            -- raises an exception if value is not coercable to type
+            -- eq/neq/lt/lte/gt/gte: value must be coercable to the type
             perform realtime.cast(filter.value, col_type);
         end if;
     end loop;
 
-    -- Validate that selected_columns reference columns the role can SELECT
     if new.selected_columns is not null then
         for selected_col in select * from unnest(new.selected_columns) loop
             if not selected_col = any(col_names) then
@@ -3845,15 +7166,13 @@ begin
         end loop;
     end if;
 
-    -- Apply consistent order to filters so the unique constraint on
-    -- (subscription_id, entity, filters) can't be tricked by a different filter order
+    -- Apply consistent order to filters so the unique constraint can't be tricked by a
+    -- different filter order. negate is part of the sort key.
     new.filters = coalesce(
-        array_agg(f order by f.column_name, f.op, f.value),
+        array_agg(f order by f.column_name, f.op, f.value, f.negate),
         '{}'
     ) from unnest(new.filters) f;
 
-    -- Normalize selected_columns order so ARRAY['a','b'] and ARRAY['b','a'] are
-    -- treated as the same subscription group in apply_rls
     new.selected_columns = (
         select array_agg(c order by c)
         from unnest(new.selected_columns) c
@@ -3864,10 +7183,8 @@ end;
 $$;
 
 
-ALTER FUNCTION realtime.subscription_check_filters() OWNER TO supabase_admin;
-
 --
--- Name: to_regrole(text); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: to_regrole(text); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.to_regrole(role_name text) RETURNS regrole
@@ -3875,10 +7192,8 @@ CREATE FUNCTION realtime.to_regrole(role_name text) RETURNS regrole
     AS $$ select role_name::regrole $$;
 
 
-ALTER FUNCTION realtime.to_regrole(role_name text) OWNER TO supabase_admin;
-
 --
--- Name: topic(); Type: FUNCTION; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: topic(); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.topic() RETURNS text
@@ -3888,10 +7203,8 @@ select nullif(current_setting('realtime.topic', true), '')::text;
 $$;
 
 
-ALTER FUNCTION realtime.topic() OWNER TO supabase_realtime_admin;
-
 --
--- Name: wal2json_escape_identifier(text); Type: FUNCTION; Schema: realtime; Owner: supabase_admin
+-- Name: wal2json_escape_identifier(text); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.wal2json_escape_identifier(name text) RETURNS text
@@ -3902,10 +7215,8 @@ CREATE FUNCTION realtime.wal2json_escape_identifier(name text) RETURNS text
 $$;
 
 
-ALTER FUNCTION realtime.wal2json_escape_identifier(name text) OWNER TO supabase_admin;
-
 --
--- Name: allow_any_operation(text[]); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: allow_any_operation(text[]); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.allow_any_operation(expected_operations text[]) RETURNS boolean
@@ -3935,10 +7246,8 @@ CREATE FUNCTION storage.allow_any_operation(expected_operations text[]) RETURNS 
 $$;
 
 
-ALTER FUNCTION storage.allow_any_operation(expected_operations text[]) OWNER TO supabase_storage_admin;
-
 --
--- Name: allow_only_operation(text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: allow_only_operation(text); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.allow_only_operation(expected_operation text) RETURNS boolean
@@ -3967,10 +7276,8 @@ CREATE FUNCTION storage.allow_only_operation(expected_operation text) RETURNS bo
 $$;
 
 
-ALTER FUNCTION storage.allow_only_operation(expected_operation text) OWNER TO supabase_storage_admin;
-
 --
--- Name: can_insert_object(text, text, uuid, jsonb); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: can_insert_object(text, text, uuid, jsonb); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.can_insert_object(bucketid text, name text, owner uuid, metadata jsonb) RETURNS void
@@ -3986,10 +7293,8 @@ END
 $$;
 
 
-ALTER FUNCTION storage.can_insert_object(bucketid text, name text, owner uuid, metadata jsonb) OWNER TO supabase_storage_admin;
-
 --
--- Name: enforce_bucket_name_length(); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: enforce_bucket_name_length(); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.enforce_bucket_name_length() RETURNS trigger
@@ -4004,10 +7309,8 @@ end;
 $$;
 
 
-ALTER FUNCTION storage.enforce_bucket_name_length() OWNER TO supabase_storage_admin;
-
 --
--- Name: extension(text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: extension(text); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.extension(name text) RETURNS text
@@ -4027,10 +7330,8 @@ END
 $$;
 
 
-ALTER FUNCTION storage.extension(name text) OWNER TO supabase_storage_admin;
-
 --
--- Name: filename(text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: filename(text); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.filename(name text) RETURNS text
@@ -4045,10 +7346,8 @@ END
 $$;
 
 
-ALTER FUNCTION storage.filename(name text) OWNER TO supabase_storage_admin;
-
 --
--- Name: foldername(text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: foldername(text); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.foldername(name text) RETURNS text[]
@@ -4065,10 +7364,8 @@ END
 $$;
 
 
-ALTER FUNCTION storage.foldername(name text) OWNER TO supabase_storage_admin;
-
 --
--- Name: get_common_prefix(text, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: get_common_prefix(text, text, text); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.get_common_prefix(p_key text, p_prefix text, p_delimiter text) RETURNS text
@@ -4082,10 +7379,8 @@ END;
 $$;
 
 
-ALTER FUNCTION storage.get_common_prefix(p_key text, p_prefix text, p_delimiter text) OWNER TO supabase_storage_admin;
-
 --
--- Name: get_size_by_bucket(); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: get_size_by_bucket(); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.get_size_by_bucket() RETURNS TABLE(size bigint, bucket_id text)
@@ -4100,10 +7395,8 @@ END
 $$;
 
 
-ALTER FUNCTION storage.get_size_by_bucket() OWNER TO supabase_storage_admin;
-
 --
--- Name: list_multipart_uploads_with_delimiter(text, text, text, integer, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: list_multipart_uploads_with_delimiter(text, text, text, integer, text, text); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.list_multipart_uploads_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer DEFAULT 100, next_key_token text DEFAULT ''::text, next_upload_token text DEFAULT ''::text) RETURNS TABLE(key text, id text, created_at timestamp with time zone)
@@ -4148,10 +7441,8 @@ END;
 $_$;
 
 
-ALTER FUNCTION storage.list_multipart_uploads_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer, next_key_token text, next_upload_token text) OWNER TO supabase_storage_admin;
-
 --
--- Name: list_objects_with_delimiter(text, text, text, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: list_objects_with_delimiter(text, text, text, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.list_objects_with_delimiter(_bucket_id text, prefix_param text, delimiter_param text, max_keys integer DEFAULT 100, start_after text DEFAULT ''::text, next_token text DEFAULT ''::text, sort_order text DEFAULT 'asc'::text) RETURNS TABLE(name text, id uuid, metadata jsonb, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone)
@@ -4365,10 +7656,8 @@ END;
 $_$;
 
 
-ALTER FUNCTION storage.list_objects_with_delimiter(_bucket_id text, prefix_param text, delimiter_param text, max_keys integer, start_after text, next_token text, sort_order text) OWNER TO supabase_storage_admin;
-
 --
--- Name: operation(); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: operation(); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.operation() RETURNS text
@@ -4380,10 +7669,8 @@ END;
 $$;
 
 
-ALTER FUNCTION storage.operation() OWNER TO supabase_storage_admin;
-
 --
--- Name: protect_delete(); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: protect_delete(); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.protect_delete() RETURNS trigger
@@ -4401,10 +7688,8 @@ END;
 $$;
 
 
-ALTER FUNCTION storage.protect_delete() OWNER TO supabase_storage_admin;
-
 --
--- Name: search(text, text, integer, integer, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: search(text, text, integer, integer, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.search(prefix text, bucketname text, limits integer DEFAULT 100, levels integer DEFAULT 1, offsets integer DEFAULT 0, search text DEFAULT ''::text, sortcolumn text DEFAULT 'name'::text, sortorder text DEFAULT 'asc'::text) RETURNS TABLE(name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb)
@@ -4657,10 +7942,8 @@ END;
 $_$;
 
 
-ALTER FUNCTION storage.search(prefix text, bucketname text, limits integer, levels integer, offsets integer, search text, sortcolumn text, sortorder text) OWNER TO supabase_storage_admin;
-
 --
--- Name: search_by_timestamp(text, text, integer, integer, text, text, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: search_by_timestamp(text, text, integer, integer, text, text, text, text); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.search_by_timestamp(p_prefix text, p_bucket_id text, p_limit integer, p_level integer, p_start_after text, p_sort_order text, p_sort_column text, p_sort_column_after text) RETURNS TABLE(key text, name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb)
@@ -4766,10 +8049,8 @@ END;
 $_$;
 
 
-ALTER FUNCTION storage.search_by_timestamp(p_prefix text, p_bucket_id text, p_limit integer, p_level integer, p_start_after text, p_sort_order text, p_sort_column text, p_sort_column_after text) OWNER TO supabase_storage_admin;
-
 --
--- Name: search_v2(text, text, integer, integer, text, text, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: search_v2(text, text, integer, integer, text, text, text, text); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.search_v2(prefix text, bucket_name text, limits integer DEFAULT 100, levels integer DEFAULT 1, start_after text DEFAULT ''::text, sort_order text DEFAULT 'asc'::text, sort_column text DEFAULT 'name'::text, sort_column_after text DEFAULT ''::text) RETURNS TABLE(key text, name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb)
@@ -4828,10 +8109,8 @@ END;
 $$;
 
 
-ALTER FUNCTION storage.search_v2(prefix text, bucket_name text, limits integer, levels integer, start_after text, sort_order text, sort_column text, sort_column_after text) OWNER TO supabase_storage_admin;
-
 --
--- Name: update_updated_at_column(); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: update_updated_at_column(); Type: FUNCTION; Schema: storage; Owner: -
 --
 
 CREATE FUNCTION storage.update_updated_at_column() RETURNS trigger
@@ -4844,10 +8123,8 @@ END;
 $$;
 
 
-ALTER FUNCTION storage.update_updated_at_column() OWNER TO supabase_storage_admin;
-
 --
--- Name: secrets_encrypt_secret_secret(); Type: FUNCTION; Schema: vault; Owner: supabase_admin
+-- Name: secrets_encrypt_secret_secret(); Type: FUNCTION; Schema: vault; Owner: -
 --
 
 CREATE FUNCTION vault.secrets_encrypt_secret_secret() RETURNS trigger
@@ -4868,10 +8145,8 @@ CREATE FUNCTION vault.secrets_encrypt_secret_secret() RETURNS trigger
 		$$;
 
 
-ALTER FUNCTION vault.secrets_encrypt_secret_secret() OWNER TO supabase_admin;
-
 --
--- Name: vietnamese; Type: TEXT SEARCH CONFIGURATION; Schema: public; Owner: postgres
+-- Name: vietnamese; Type: TEXT SEARCH CONFIGURATION; Schema: public; Owner: -
 --
 
 CREATE TEXT SEARCH CONFIGURATION public.vietnamese (
@@ -4935,10 +8210,8 @@ ALTER TEXT SEARCH CONFIGURATION public.vietnamese
     ADD MAPPING FOR uint WITH simple;
 
 
-ALTER TEXT SEARCH CONFIGURATION public.vietnamese OWNER TO postgres;
-
 --
--- Name: audit_log_entries; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: audit_log_entries; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.audit_log_entries (
@@ -4950,17 +8223,15 @@ CREATE TABLE auth.audit_log_entries (
 );
 
 
-ALTER TABLE auth.audit_log_entries OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE audit_log_entries; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE audit_log_entries; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.audit_log_entries IS 'Auth: Audit trail for user actions.';
 
 
 --
--- Name: custom_oauth_providers; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: custom_oauth_providers; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.custom_oauth_providers (
@@ -4988,6 +8259,7 @@ CREATE TABLE auth.custom_oauth_providers (
     jwks_uri text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    custom_claims_allowlist text[] DEFAULT '{}'::text[] NOT NULL,
     CONSTRAINT custom_oauth_providers_authorization_url_https CHECK (((authorization_url IS NULL) OR (authorization_url ~~ 'https://%'::text))),
     CONSTRAINT custom_oauth_providers_authorization_url_length CHECK (((authorization_url IS NULL) OR (char_length(authorization_url) <= 2048))),
     CONSTRAINT custom_oauth_providers_client_id_length CHECK (((char_length(client_id) >= 1) AND (char_length(client_id) <= 512))),
@@ -5009,10 +8281,8 @@ CREATE TABLE auth.custom_oauth_providers (
 );
 
 
-ALTER TABLE auth.custom_oauth_providers OWNER TO supabase_auth_admin;
-
 --
--- Name: flow_state; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: flow_state; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.flow_state (
@@ -5036,17 +8306,15 @@ CREATE TABLE auth.flow_state (
 );
 
 
-ALTER TABLE auth.flow_state OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE flow_state; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE flow_state; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.flow_state IS 'Stores metadata for all OAuth/SSO login flows';
 
 
 --
--- Name: identities; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: identities; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.identities (
@@ -5062,24 +8330,22 @@ CREATE TABLE auth.identities (
 );
 
 
-ALTER TABLE auth.identities OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE identities; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE identities; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.identities IS 'Auth: Stores identities associated to a user.';
 
 
 --
--- Name: COLUMN identities.email; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: COLUMN identities.email; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON COLUMN auth.identities.email IS 'Auth: Email is a generated column that references the optional email property in the identity_data';
 
 
 --
--- Name: instances; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: instances; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.instances (
@@ -5091,17 +8357,15 @@ CREATE TABLE auth.instances (
 );
 
 
-ALTER TABLE auth.instances OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE instances; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE instances; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.instances IS 'Auth: Manages users across multiple sites.';
 
 
 --
--- Name: mfa_amr_claims; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_amr_claims; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.mfa_amr_claims (
@@ -5113,17 +8377,15 @@ CREATE TABLE auth.mfa_amr_claims (
 );
 
 
-ALTER TABLE auth.mfa_amr_claims OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE mfa_amr_claims; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE mfa_amr_claims; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.mfa_amr_claims IS 'auth: stores authenticator method reference claims for multi factor authentication';
 
 
 --
--- Name: mfa_challenges; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_challenges; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.mfa_challenges (
@@ -5137,17 +8399,15 @@ CREATE TABLE auth.mfa_challenges (
 );
 
 
-ALTER TABLE auth.mfa_challenges OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE mfa_challenges; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE mfa_challenges; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.mfa_challenges IS 'auth: stores metadata about challenge requests made';
 
 
 --
--- Name: mfa_factors; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_factors; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.mfa_factors (
@@ -5167,24 +8427,22 @@ CREATE TABLE auth.mfa_factors (
 );
 
 
-ALTER TABLE auth.mfa_factors OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE mfa_factors; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE mfa_factors; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.mfa_factors IS 'auth: stores metadata about factors';
 
 
 --
--- Name: COLUMN mfa_factors.last_webauthn_challenge_data; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: COLUMN mfa_factors.last_webauthn_challenge_data; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON COLUMN auth.mfa_factors.last_webauthn_challenge_data IS 'Stores the latest WebAuthn challenge data including attestation/assertion for customer verification';
 
 
 --
--- Name: oauth_authorizations; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_authorizations; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.oauth_authorizations (
@@ -5216,10 +8474,8 @@ CREATE TABLE auth.oauth_authorizations (
 );
 
 
-ALTER TABLE auth.oauth_authorizations OWNER TO supabase_auth_admin;
-
 --
--- Name: oauth_client_states; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_client_states; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.oauth_client_states (
@@ -5230,17 +8486,15 @@ CREATE TABLE auth.oauth_client_states (
 );
 
 
-ALTER TABLE auth.oauth_client_states OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE oauth_client_states; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE oauth_client_states; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.oauth_client_states IS 'Stores OAuth states for third-party provider authentication flows where Supabase acts as the OAuth client.';
 
 
 --
--- Name: oauth_clients; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_clients; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.oauth_clients (
@@ -5264,10 +8518,8 @@ CREATE TABLE auth.oauth_clients (
 );
 
 
-ALTER TABLE auth.oauth_clients OWNER TO supabase_auth_admin;
-
 --
--- Name: oauth_consents; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_consents; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.oauth_consents (
@@ -5283,10 +8535,8 @@ CREATE TABLE auth.oauth_consents (
 );
 
 
-ALTER TABLE auth.oauth_consents OWNER TO supabase_auth_admin;
-
 --
--- Name: one_time_tokens; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: one_time_tokens; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.one_time_tokens (
@@ -5301,10 +8551,8 @@ CREATE TABLE auth.one_time_tokens (
 );
 
 
-ALTER TABLE auth.one_time_tokens OWNER TO supabase_auth_admin;
-
 --
--- Name: refresh_tokens; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.refresh_tokens (
@@ -5320,17 +8568,15 @@ CREATE TABLE auth.refresh_tokens (
 );
 
 
-ALTER TABLE auth.refresh_tokens OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE refresh_tokens; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE refresh_tokens; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.refresh_tokens IS 'Auth: Store of tokens used to refresh JWT tokens once they expire.';
 
 
 --
--- Name: refresh_tokens_id_seq; Type: SEQUENCE; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens_id_seq; Type: SEQUENCE; Schema: auth; Owner: -
 --
 
 CREATE SEQUENCE auth.refresh_tokens_id_seq
@@ -5341,17 +8587,15 @@ CREATE SEQUENCE auth.refresh_tokens_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE auth.refresh_tokens_id_seq OWNER TO supabase_auth_admin;
-
 --
--- Name: refresh_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: auth; Owner: -
 --
 
 ALTER SEQUENCE auth.refresh_tokens_id_seq OWNED BY auth.refresh_tokens.id;
 
 
 --
--- Name: saml_providers; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_providers; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.saml_providers (
@@ -5370,17 +8614,15 @@ CREATE TABLE auth.saml_providers (
 );
 
 
-ALTER TABLE auth.saml_providers OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE saml_providers; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE saml_providers; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.saml_providers IS 'Auth: Manages SAML Identity Provider connections.';
 
 
 --
--- Name: saml_relay_states; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_relay_states; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.saml_relay_states (
@@ -5396,17 +8638,15 @@ CREATE TABLE auth.saml_relay_states (
 );
 
 
-ALTER TABLE auth.saml_relay_states OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE saml_relay_states; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE saml_relay_states; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.saml_relay_states IS 'Auth: Contains SAML Relay State information for each Service Provider initiated login.';
 
 
 --
--- Name: schema_migrations; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: schema_migrations; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.schema_migrations (
@@ -5414,17 +8654,15 @@ CREATE TABLE auth.schema_migrations (
 );
 
 
-ALTER TABLE auth.schema_migrations OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE schema_migrations; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE schema_migrations; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.schema_migrations IS 'Auth: Manages updates to the auth system.';
 
 
 --
--- Name: sessions; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: sessions; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.sessions (
@@ -5447,38 +8685,36 @@ CREATE TABLE auth.sessions (
 );
 
 
-ALTER TABLE auth.sessions OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE sessions; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE sessions; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.sessions IS 'Auth: Stores session data associated to a user.';
 
 
 --
--- Name: COLUMN sessions.not_after; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: COLUMN sessions.not_after; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON COLUMN auth.sessions.not_after IS 'Auth: Not after is a nullable column that contains a timestamp after which the session should be regarded as expired.';
 
 
 --
--- Name: COLUMN sessions.refresh_token_hmac_key; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: COLUMN sessions.refresh_token_hmac_key; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON COLUMN auth.sessions.refresh_token_hmac_key IS 'Holds a HMAC-SHA256 key used to sign refresh tokens for this session.';
 
 
 --
--- Name: COLUMN sessions.refresh_token_counter; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: COLUMN sessions.refresh_token_counter; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON COLUMN auth.sessions.refresh_token_counter IS 'Holds the ID (counter) of the last issued refresh token.';
 
 
 --
--- Name: sso_domains; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: sso_domains; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.sso_domains (
@@ -5491,17 +8727,15 @@ CREATE TABLE auth.sso_domains (
 );
 
 
-ALTER TABLE auth.sso_domains OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE sso_domains; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE sso_domains; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.sso_domains IS 'Auth: Manages SSO email address domain mapping to an SSO Identity Provider.';
 
 
 --
--- Name: sso_providers; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: sso_providers; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.sso_providers (
@@ -5514,24 +8748,22 @@ CREATE TABLE auth.sso_providers (
 );
 
 
-ALTER TABLE auth.sso_providers OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE sso_providers; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE sso_providers; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.sso_providers IS 'Auth: Manages SSO identity provider information; see saml_providers for SAML.';
 
 
 --
--- Name: COLUMN sso_providers.resource_id; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: COLUMN sso_providers.resource_id; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON COLUMN auth.sso_providers.resource_id IS 'Auth: Uniquely identifies a SSO provider according to a user-chosen resource ID (case insensitive), useful in infrastructure as code.';
 
 
 --
--- Name: users; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: users; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.users (
@@ -5574,24 +8806,22 @@ CREATE TABLE auth.users (
 );
 
 
-ALTER TABLE auth.users OWNER TO supabase_auth_admin;
-
 --
--- Name: TABLE users; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: TABLE users; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON TABLE auth.users IS 'Auth: Stores user login data within a secure schema.';
 
 
 --
--- Name: COLUMN users.is_sso_user; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: COLUMN users.is_sso_user; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON COLUMN auth.users.is_sso_user IS 'Auth: Set this column to true when the account comes from SSO. These accounts can have duplicate emails.';
 
 
 --
--- Name: webauthn_challenges; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: webauthn_challenges; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.webauthn_challenges (
@@ -5605,10 +8835,8 @@ CREATE TABLE auth.webauthn_challenges (
 );
 
 
-ALTER TABLE auth.webauthn_challenges OWNER TO supabase_auth_admin;
-
 --
--- Name: webauthn_credentials; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+-- Name: webauthn_credentials; Type: TABLE; Schema: auth; Owner: -
 --
 
 CREATE TABLE auth.webauthn_credentials (
@@ -5629,10 +8857,8 @@ CREATE TABLE auth.webauthn_credentials (
 );
 
 
-ALTER TABLE auth.webauthn_credentials OWNER TO supabase_auth_admin;
-
 --
--- Name: achievement; Type: TABLE; Schema: public; Owner: postgres
+-- Name: achievement; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.achievement (
@@ -5651,17 +8877,15 @@ CREATE TABLE public.achievement (
 );
 
 
-ALTER TABLE public.achievement OWNER TO postgres;
-
 --
--- Name: TABLE achievement; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE achievement; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.achievement IS 'activities for users to earn XP and level up';
 
 
 --
--- Name: activity; Type: TABLE; Schema: public; Owner: postgres
+-- Name: activity; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.activity (
@@ -5674,60 +8898,75 @@ CREATE TABLE public.activity (
     professional_booking_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     location_id uuid,
-    prepayment_required boolean DEFAULT false NOT NULL,
-    payment_type public.activity_payment_type,
-    prepayment_amount numeric(10,2),
     confirmation_threshold integer,
     confirmation_deadline timestamp with time zone,
     recurrence_day_of_week smallint,
+    coach_booking_id uuid,
+    referee_booking_id uuid,
+    challenge_id uuid,
+    manager_confirmed_at timestamp with time zone,
+    cost_type public.activity_cost_type,
+    cost_amount numeric(10,2),
     CONSTRAINT activity_confirmation_deadline_validity CHECK (((confirmation_deadline IS NULL) OR (confirmation_deadline < start_time))),
     CONSTRAINT activity_confirmation_threshold_validity CHECK (((confirmation_threshold IS NULL) OR (confirmation_threshold > 0))),
-    CONSTRAINT activity_prepayment_terms_validity CHECK ((((prepayment_required = false) AND (payment_type IS NULL) AND (prepayment_amount IS NULL)) OR ((prepayment_required = true) AND (payment_type IS NOT NULL) AND (prepayment_amount IS NOT NULL) AND (prepayment_amount > (0)::numeric)))),
+    CONSTRAINT activity_cost_validity CHECK ((((cost_type IS NULL) = (cost_amount IS NULL)) AND ((cost_amount IS NULL) OR (cost_amount > (0)::numeric)))),
     CONSTRAINT activity_recurrence_day_validity CHECK (((recurrence_day_of_week IS NULL) OR ((recurrence_day_of_week >= 0) AND (recurrence_day_of_week <= 6)))),
     CONSTRAINT activity_source_exclusivity CHECK ((NOT ((lobby_id IS NOT NULL) AND (professional_booking_id IS NOT NULL)))),
     CONSTRAINT activity_time_validity CHECK (((end_time IS NULL) OR (end_time > start_time)))
 );
 
 
-ALTER TABLE public.activity OWNER TO postgres;
-
 --
--- Name: TABLE activity; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE activity; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.activity IS 'User activity sessions - can be linked to lobby or professional booking';
 
 
 --
--- Name: COLUMN activity.location_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN activity.location_id; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.activity.location_id IS 'Where the session is held. App defaults this to the lobby''s home_ground when creating an activity.';
 
 
 --
--- Name: COLUMN activity.confirmation_threshold; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN activity.confirmation_threshold; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.activity.confirmation_threshold IS 'Minimum confirmed members for the activity to be "official". NULL = no threshold.';
 
 
 --
--- Name: COLUMN activity.confirmation_deadline; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN activity.confirmation_deadline; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.activity.confirmation_deadline IS 'Cutoff for accepting confirmations. NULL = no cutoff. Form defaults this to 2 days before start_time; auto-off when the session is less than 2 days out.';
 
 
 --
--- Name: COLUMN activity.recurrence_day_of_week; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN activity.recurrence_day_of_week; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.activity.recurrence_day_of_week IS 'Weekly recurrence anchor (0=Mon … 6=Sun, ISO ordering). NULL = one-off. Recurrence is virtual — occurrences aren''t materialised; the app derives next-occurrence from start_time + this day.';
 
 
 --
--- Name: activity_confirmation; Type: TABLE; Schema: public; Owner: postgres
+-- Name: COLUMN activity.manager_confirmed_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.activity.manager_confirmed_at IS 'A challenge activity becomes official on RSVP quorum AND an explicit manager confirmation; this is the second half. NULL on ordinary activities, whose "official" is derived from the going-count vs confirmation_threshold alone.';
+
+
+--
+-- Name: COLUMN activity.cost_amount; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.activity.cost_amount IS 'Informational cost, settled post-session by the payment-request feature — not a deposit or a charge at scheduling time.';
+
+
+--
+-- Name: activity_confirmation; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.activity_confirmation (
@@ -5740,17 +8979,15 @@ CREATE TABLE public.activity_confirmation (
 );
 
 
-ALTER TABLE public.activity_confirmation OWNER TO postgres;
-
 --
--- Name: TABLE activity_confirmation; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE activity_confirmation; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.activity_confirmation IS 'Members who have committed to attending an activity. Row count is compared against activity.confirmation_threshold to determine whether the session is "official". deposit_da records the Đá held when activity.payment_type = ''da''.';
 
 
 --
--- Name: activity_hr_sample; Type: TABLE; Schema: public; Owner: postgres
+-- Name: activity_hr_sample; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.activity_hr_sample (
@@ -5762,17 +8999,15 @@ CREATE TABLE public.activity_hr_sample (
 );
 
 
-ALTER TABLE public.activity_hr_sample OWNER TO postgres;
-
 --
--- Name: TABLE activity_hr_sample; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE activity_hr_sample; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.activity_hr_sample IS 'Raw heart rate samples during activities - enables HR curve reconstruction and detailed analysis';
 
 
 --
--- Name: activity_hr_sample_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: activity_hr_sample_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 ALTER TABLE public.activity_hr_sample ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
@@ -5786,7 +9021,7 @@ ALTER TABLE public.activity_hr_sample ALTER COLUMN id ADD GENERATED ALWAYS AS ID
 
 
 --
--- Name: badminton_profile; Type: TABLE; Schema: public; Owner: postgres
+-- Name: badminton_profile; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.badminton_profile (
@@ -5799,10 +9034,8 @@ CREATE TABLE public.badminton_profile (
 );
 
 
-ALTER TABLE public.badminton_profile OWNER TO postgres;
-
 --
--- Name: basketball_profile; Type: TABLE; Schema: public; Owner: postgres
+-- Name: basketball_profile; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.basketball_profile (
@@ -5815,10 +9048,8 @@ CREATE TABLE public.basketball_profile (
 );
 
 
-ALTER TABLE public.basketball_profile OWNER TO postgres;
-
 --
--- Name: booking_additional_users; Type: TABLE; Schema: public; Owner: postgres
+-- Name: booking_additional_users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.booking_additional_users (
@@ -5827,10 +9058,8 @@ CREATE TABLE public.booking_additional_users (
 );
 
 
-ALTER TABLE public.booking_additional_users OWNER TO postgres;
-
 --
--- Name: daily_health_summary; Type: TABLE; Schema: public; Owner: postgres
+-- Name: daily_health_summary; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.daily_health_summary (
@@ -5853,17 +9082,41 @@ CREATE TABLE public.daily_health_summary (
 );
 
 
-ALTER TABLE public.daily_health_summary OWNER TO postgres;
-
 --
--- Name: TABLE daily_health_summary; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE daily_health_summary; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.daily_health_summary IS 'Daily health metrics for long-term trend analysis';
 
 
 --
--- Name: industry; Type: TABLE; Schema: public; Owner: postgres
+-- Name: enabled_notification_kind; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.enabled_notification_kind (
+    kind public.notification_kind NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: friendship; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.friendship (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    requester_id uuid NOT NULL,
+    addressee_id uuid NOT NULL,
+    status public.friendship_status DEFAULT 'pending'::public.friendship_status NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    responded_at timestamp with time zone,
+    CONSTRAINT friendship_distinct CHECK ((requester_id <> addressee_id))
+);
+
+
+--
+-- Name: industry; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.industry (
@@ -5872,10 +9125,8 @@ CREATE TABLE public.industry (
 );
 
 
-ALTER TABLE public.industry OWNER TO postgres;
-
 --
--- Name: industry_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: industry_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.industry_id_seq
@@ -5887,17 +9138,15 @@ CREATE SEQUENCE public.industry_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.industry_id_seq OWNER TO postgres;
-
 --
--- Name: industry_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: industry_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.industry_id_seq OWNED BY public.industry.id;
 
 
 --
--- Name: lobby; Type: TABLE; Schema: public; Owner: postgres
+-- Name: lobby; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.lobby (
@@ -5916,14 +9165,24 @@ CREATE TABLE public.lobby (
     network_ids bigint[] DEFAULT '{}'::bigint[] NOT NULL,
     active_network_ids bigint[] DEFAULT '{}'::bigint[] NOT NULL,
     industry_ids integer[] DEFAULT '{}'::integer[] NOT NULL,
-    playtime_keys text[] DEFAULT '{}'::text[] NOT NULL
+    playtime_keys text[] DEFAULT '{}'::text[] NOT NULL,
+    challenge_offer_time timestamp with time zone,
+    challenge_offer_location uuid,
+    challenge_offer_cost numeric(10,2),
+    rated_match_count integer DEFAULT 0 NOT NULL,
+    CONSTRAINT lobby_challenge_offer_complete CHECK (((NOT open_to_challengers) OR ((challenge_offer_time IS NOT NULL) AND (challenge_offer_location IS NOT NULL) AND (challenge_offer_cost IS NOT NULL))))
 );
 
 
-ALTER TABLE public.lobby OWNER TO postgres;
+--
+-- Name: COLUMN lobby.challenge_offer_cost; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lobby.challenge_offer_cost IS 'Cost per team for the offered match, EXCLUDING the referee fee (the referee is hired separately by the home team and settled out of band). Informational — there is no ledger.';
+
 
 --
--- Name: lobby_befriend_record; Type: TABLE; Schema: public; Owner: postgres
+-- Name: lobby_befriend_record; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.lobby_befriend_record (
@@ -5942,10 +9201,45 @@ CREATE TABLE public.lobby_befriend_record (
 );
 
 
-ALTER TABLE public.lobby_befriend_record OWNER TO postgres;
+--
+-- Name: lobby_challenge; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lobby_challenge (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    initiator_lobby_id uuid NOT NULL,
+    target_lobby_id uuid NOT NULL,
+    sport_id bigint NOT NULL,
+    status public.lobby_challenge_status DEFAULT 'requested'::public.lobby_challenge_status NOT NULL,
+    proposed_time timestamp with time zone,
+    proposed_location uuid,
+    note text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    agreed_cost numeric(10,2),
+    CONSTRAINT lobby_challenge_distinct CHECK ((initiator_lobby_id <> target_lobby_id))
+);
+
 
 --
--- Name: lobby_feed_item; Type: TABLE; Schema: public; Owner: postgres
+-- Name: lobby_email_invite; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lobby_email_invite (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    lobby_id uuid NOT NULL,
+    inviter_user_id uuid NOT NULL,
+    email text NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone DEFAULT (now() + '7 days'::interval) NOT NULL,
+    email_sent boolean DEFAULT false NOT NULL,
+    CONSTRAINT lobby_email_invite_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'expired'::text])))
+);
+
+
+--
+-- Name: lobby_feed_item; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.lobby_feed_item (
@@ -5959,17 +9253,28 @@ CREATE TABLE public.lobby_feed_item (
 );
 
 
-ALTER TABLE public.lobby_feed_item OWNER TO postgres;
-
 --
--- Name: TABLE lobby_feed_item; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE lobby_feed_item; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.lobby_feed_item IS 'Action-stream entries for a lobby''s activity tab. Payload shape varies by kind — see CHECK constraint and lib/manage_tab/lobby_section/activity/feed.dart for the canonical schemas.';
 
 
 --
--- Name: lobby_feed_poll_vote; Type: TABLE; Schema: public; Owner: postgres
+-- Name: lobby_feed_item_reaction; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lobby_feed_item_reaction (
+    feed_item_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    emoji text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT lobby_feed_item_reaction_emoji_check CHECK (((char_length(emoji) >= 1) AND (char_length(emoji) <= 8)))
+);
+
+
+--
+-- Name: lobby_feed_poll_vote; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.lobby_feed_poll_vote (
@@ -5981,17 +9286,15 @@ CREATE TABLE public.lobby_feed_poll_vote (
 );
 
 
-ALTER TABLE public.lobby_feed_poll_vote OWNER TO postgres;
-
 --
--- Name: TABLE lobby_feed_poll_vote; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE lobby_feed_poll_vote; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.lobby_feed_poll_vote IS 'Member votes against a feed-item poll. option_index points into the payload.options array of the parent lobby_feed_item.';
 
 
 --
--- Name: lobby_match; Type: TABLE; Schema: public; Owner: postgres
+-- Name: lobby_match; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.lobby_match (
@@ -6009,49 +9312,46 @@ CREATE TABLE public.lobby_match (
     duration_label text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     referee_booking_id uuid,
-    CONSTRAINT lobby_match_referee_required_for_challenge CHECK (((opponent_lobby_id IS NULL) OR (referee_booking_id IS NOT NULL))),
+    CONSTRAINT lobby_match_referee_required_for_scored_challenge CHECK (((opponent_lobby_id IS NULL) OR (result = 'practice'::public.lobby_match_result) OR (referee_booking_id IS NOT NULL))),
     CONSTRAINT lobby_match_sets_only_when_decided CHECK ((((result = 'practice'::public.lobby_match_result) AND (sets IS NULL)) OR (result <> 'practice'::public.lobby_match_result)))
 );
 
 
-ALTER TABLE public.lobby_match OWNER TO postgres;
-
 --
--- Name: TABLE lobby_match; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE lobby_match; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.lobby_match IS 'Recorded match results for a lobby. sets is a JSON array of [us, them] tuples; venue_label / duration_label are denormalised copies for fast list rendering.';
 
 
 --
--- Name: COLUMN lobby_match.referee_booking_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN lobby_match.referee_booking_id; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.lobby_match.referee_booking_id IS 'FK to the professional_booking that hired the referee for this match. Required for challenge matches (see lobby_match_referee_required_for_challenge). RESTRICT on delete because the booking row is the historical record of the hire — deleting it would orphan the audit trail.';
 
 
 --
--- Name: lobby_member; Type: TABLE; Schema: public; Owner: postgres
+-- Name: lobby_member; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.lobby_member (
     id bigint NOT NULL,
     user_id uuid NOT NULL,
-    lobby_id uuid NOT NULL
+    lobby_id uuid NOT NULL,
+    role public.lobby_member_role DEFAULT 'member'::public.lobby_member_role NOT NULL
 );
 
 
-ALTER TABLE public.lobby_member OWNER TO postgres;
-
 --
--- Name: TABLE lobby_member; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE lobby_member; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.lobby_member IS 'join table between user and lobby';
 
 
 --
--- Name: lobby_member_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: lobby_member_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 ALTER TABLE public.lobby_member ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
@@ -6065,7 +9365,26 @@ ALTER TABLE public.lobby_member ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDEN
 
 
 --
--- Name: location; Type: TABLE; Schema: public; Owner: postgres
+-- Name: lobby_payment_request_payee; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lobby_payment_request_payee (
+    feed_item_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    amount_owed numeric(10,2) NOT NULL,
+    CONSTRAINT lobby_payment_request_payee_amount_owed_check CHECK ((amount_owed > (0)::numeric))
+);
+
+
+--
+-- Name: TABLE lobby_payment_request_payee; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.lobby_payment_request_payee IS 'Who owes what on a lobby_feed_item(kind = payment_request). Written only by create_ancillary_payment_request() / fn_sweep_activity_payment_requests() — no client INSERT policy.';
+
+
+--
+-- Name: location; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.location (
@@ -6084,24 +9403,22 @@ CREATE TABLE public.location (
 );
 
 
-ALTER TABLE public.location OWNER TO postgres;
-
 --
--- Name: COLUMN location.lat; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN location.lat; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.location.lat IS 'latitude';
 
 
 --
--- Name: COLUMN location.lon; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN location.lon; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.location.lon IS 'longitude';
 
 
 --
--- Name: network; Type: TABLE; Schema: public; Owner: postgres
+-- Name: network; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.network (
@@ -6114,17 +9431,15 @@ CREATE TABLE public.network (
 );
 
 
-ALTER TABLE public.network OWNER TO postgres;
-
 --
--- Name: TABLE network; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE network; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.network IS 'entities/ organizations that users may share';
 
 
 --
--- Name: network_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: network_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 ALTER TABLE public.network ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
@@ -6138,7 +9453,21 @@ ALTER TABLE public.network ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY 
 
 
 --
--- Name: pickleball_profile; Type: TABLE; Schema: public; Owner: postgres
+-- Name: notification_outbox_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.notification_outbox ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.notification_outbox_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: pickleball_profile; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.pickleball_profile (
@@ -6151,10 +9480,8 @@ CREATE TABLE public.pickleball_profile (
 );
 
 
-ALTER TABLE public.pickleball_profile OWNER TO postgres;
-
 --
--- Name: professional; Type: TABLE; Schema: public; Owner: postgres
+-- Name: professional; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.professional (
@@ -6174,15 +9501,15 @@ CREATE TABLE public.professional (
     review_count integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    preferred_city_cluster bigint,
+    preferred_districts text[],
     CONSTRAINT professional_experience_years_check CHECK ((experience_years >= 0)),
     CONSTRAINT professional_sports_check CHECK ((array_length(sports, 1) > 0))
 );
 
 
-ALTER TABLE public.professional OWNER TO postgres;
-
 --
--- Name: professional_booking; Type: TABLE; Schema: public; Owner: postgres
+-- Name: professional_booking; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.professional_booking (
@@ -6200,16 +9527,48 @@ CREATE TABLE public.professional_booking (
     professional_notes text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    reminder_sent_at timestamp with time zone,
+    package_id uuid,
     CONSTRAINT booking_times_validity CHECK ((booking_time_end > booking_time_start)),
-    CONSTRAINT professional_booking_agreed_rate_check CHECK ((agreed_rate >= (0)::numeric)),
-    CONSTRAINT professional_booking_status_check CHECK ((status <> 'completed'::public.professional_booking_status))
+    CONSTRAINT professional_booking_agreed_rate_check CHECK ((agreed_rate >= (0)::numeric))
 );
 
 
-ALTER TABLE public.professional_booking OWNER TO postgres;
+--
+-- Name: professional_booking_package; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.professional_booking_package (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    client_user_id uuid NOT NULL,
+    professional_id uuid NOT NULL,
+    service_id uuid NOT NULL,
+    sessions_total integer NOT NULL,
+    sessions_used integer DEFAULT 0 NOT NULL,
+    total_price numeric(10,2),
+    status text DEFAULT 'active'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT professional_booking_package_sessions_total_check CHECK ((sessions_total >= 1)),
+    CONSTRAINT professional_booking_package_sessions_used_check CHECK ((sessions_used >= 0)),
+    CONSTRAINT professional_booking_package_status_check CHECK ((status = ANY (ARRAY['active'::text, 'cancelled'::text]))),
+    CONSTRAINT professional_booking_package_total_price_check CHECK ((total_price >= (0)::numeric)),
+    CONSTRAINT professional_booking_package_used_le_total_check CHECK ((sessions_used <= sessions_total))
+);
+
 
 --
--- Name: professional_booking_review; Type: TABLE; Schema: public; Owner: postgres
+-- Name: TABLE professional_booking_package; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.professional_booking_package IS 'Container for a rolling multi-session package purchase. sessions_used increments as each
+     professional_booking row against this package completes; the client is prompted to schedule
+     the next session (a new professional_booking with this package_id) until sessions_used reaches
+     sessions_total. Cancelable any time (status=cancelled) — no refund logic, no payment tie-in.';
+
+
+--
+-- Name: professional_booking_review; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.professional_booking_review (
@@ -6219,14 +9578,31 @@ CREATE TABLE public.professional_booking_review (
     rating numeric(2,1) NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    comment text,
     CONSTRAINT professional_booking_review_rating_check CHECK (((rating >= 0.5) AND (rating <= 5.0) AND ((rating * (2)::numeric) = floor((rating * (2)::numeric)))))
 );
 
 
-ALTER TABLE public.professional_booking_review OWNER TO postgres;
+--
+-- Name: professional_preferred_location; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.professional_preferred_location (
+    professional_id uuid NOT NULL,
+    location_id uuid NOT NULL
+);
+
 
 --
--- Name: professional_service; Type: TABLE; Schema: public; Owner: postgres
+-- Name: TABLE professional_preferred_location; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.professional_preferred_location IS 'Courts a coach teaches at, surfaced in the booking sheet for the student to pick from. Set
+     out-of-app (admin/DB-direct) — no self-service UI in this pass, mirrors linked_user_id.';
+
+
+--
+-- Name: professional_service; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.professional_service (
@@ -6241,16 +9617,33 @@ CREATE TABLE public.professional_service (
     is_active boolean DEFAULT true NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    session_count integer DEFAULT 1 NOT NULL,
+    pricing_mode text DEFAULT 'per_session'::text NOT NULL,
     CONSTRAINT professional_service_hourly_rate_check CHECK ((hourly_rate >= (0)::numeric)),
     CONSTRAINT professional_service_max_participants_check CHECK ((max_participants >= 1)),
-    CONSTRAINT professional_service_min_duration_minutes_check CHECK ((min_duration_minutes > 0))
+    CONSTRAINT professional_service_min_duration_minutes_check CHECK ((min_duration_minutes > 0)),
+    CONSTRAINT professional_service_pricing_mode_check CHECK ((pricing_mode = ANY (ARRAY['per_session'::text, 'wholesale'::text]))),
+    CONSTRAINT professional_service_session_count_check CHECK ((session_count >= 1))
 );
 
 
-ALTER TABLE public.professional_service OWNER TO postgres;
+--
+-- Name: COLUMN professional_service.session_count; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.professional_service.session_count IS 'Number of sessions in this offering. 1 = a plain single booking; >1 = a rolling package.';
+
 
 --
--- Name: soccer_profile; Type: TABLE; Schema: public; Owner: postgres
+-- Name: COLUMN professional_service.pricing_mode; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.professional_service.pricing_mode IS 'per_session: hourly_rate applies per session (x session_count x participants if group).
+     wholesale: hourly_rate is treated as one flat total price for the whole package/session.';
+
+
+--
+-- Name: soccer_profile; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.soccer_profile (
@@ -6263,10 +9656,35 @@ CREATE TABLE public.soccer_profile (
 );
 
 
-ALTER TABLE public.soccer_profile OWNER TO postgres;
+--
+-- Name: social_event; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.social_event (
+    id bigint NOT NULL,
+    user_id uuid NOT NULL,
+    kind text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT social_event_kind_check CHECK ((kind = ANY (ARRAY['post_created'::text, 'reaction_received'::text, 'reaction_given'::text])))
+);
+
 
 --
--- Name: sport; Type: TABLE; Schema: public; Owner: postgres
+-- Name: social_event_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.social_event ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.social_event_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: sport; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.sport (
@@ -6275,10 +9693,8 @@ CREATE TABLE public.sport (
 );
 
 
-ALTER TABLE public.sport OWNER TO postgres;
-
 --
--- Name: sport_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: sport_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 ALTER TABLE public.sport ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
@@ -6292,7 +9708,7 @@ ALTER TABLE public.sport ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
 
 
 --
--- Name: supported_city_cluster; Type: TABLE; Schema: public; Owner: postgres
+-- Name: supported_city_cluster; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.supported_city_cluster (
@@ -6302,10 +9718,8 @@ CREATE TABLE public.supported_city_cluster (
 );
 
 
-ALTER TABLE public.supported_city_cluster OWNER TO postgres;
-
 --
--- Name: supported_city_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: supported_city_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 ALTER TABLE public.supported_city_cluster ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
@@ -6319,7 +9733,7 @@ ALTER TABLE public.supported_city_cluster ALTER COLUMN id ADD GENERATED BY DEFAU
 
 
 --
--- Name: tennis_profile; Type: TABLE; Schema: public; Owner: postgres
+-- Name: tennis_profile; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.tennis_profile (
@@ -6332,10 +9746,8 @@ CREATE TABLE public.tennis_profile (
 );
 
 
-ALTER TABLE public.tennis_profile OWNER TO postgres;
-
 --
--- Name: user; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public."user" (
@@ -6368,10 +9780,8 @@ CREATE TABLE public."user" (
 );
 
 
-ALTER TABLE public."user" OWNER TO postgres;
-
 --
--- Name: user_achievement; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user_achievement; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.user_achievement (
@@ -6384,17 +9794,40 @@ CREATE TABLE public.user_achievement (
 );
 
 
-ALTER TABLE public.user_achievement OWNER TO postgres;
-
 --
--- Name: TABLE user_achievement; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE user_achievement; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.user_achievement IS 'Per-user achievement unlock ledger; xp_granted snapshots achievement.xp_reward at earn time.';
 
 
 --
--- Name: user_health_link; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user_block; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_block (
+    blocker_id uuid NOT NULL,
+    blocked_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT user_block_distinct CHECK ((blocker_id <> blocked_id))
+);
+
+
+--
+-- Name: user_device_token; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_device_token (
+    fcm_token text NOT NULL,
+    user_id uuid NOT NULL,
+    platform text NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT user_device_token_platform_check CHECK ((platform = ANY (ARRAY['ios'::text, 'android'::text])))
+);
+
+
+--
+-- Name: user_health_link; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.user_health_link (
@@ -6408,31 +9841,29 @@ CREATE TABLE public.user_health_link (
 );
 
 
-ALTER TABLE public.user_health_link OWNER TO postgres;
-
 --
--- Name: TABLE user_health_link; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE user_health_link; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.user_health_link IS 'Tracks user health service (Apple Health/Google Fit) linking status';
 
 
 --
--- Name: COLUMN user_health_link.lt1_bpm; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN user_health_link.lt1_bpm; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.user_health_link.lt1_bpm IS 'User-declared aerobic threshold (bpm). NULL → app estimates ~80% of max HR and renders zones as "estimated".';
 
 
 --
--- Name: COLUMN user_health_link.lt2_bpm; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN user_health_link.lt2_bpm; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.user_health_link.lt2_bpm IS 'User-declared anaerobic threshold (bpm). NULL → app estimates ~88% of max HR.';
 
 
 --
--- Name: user_industry; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user_industry; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.user_industry (
@@ -6442,17 +9873,15 @@ CREATE TABLE public.user_industry (
 );
 
 
-ALTER TABLE public.user_industry OWNER TO postgres;
-
 --
--- Name: TABLE user_industry; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE user_industry; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.user_industry IS 'join table for `user` and `industry`';
 
 
 --
--- Name: user_industry_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: user_industry_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 ALTER TABLE public.user_industry ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
@@ -6466,7 +9895,7 @@ ALTER TABLE public.user_industry ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDE
 
 
 --
--- Name: user_network; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user_network; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.user_network (
@@ -6477,17 +9906,15 @@ CREATE TABLE public.user_network (
 );
 
 
-ALTER TABLE public.user_network OWNER TO postgres;
-
 --
--- Name: TABLE user_network; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE user_network; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.user_network IS 'join table for `user` and `network`';
 
 
 --
--- Name: user_network_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: user_network_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 ALTER TABLE public.user_network ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
@@ -6501,7 +9928,22 @@ ALTER TABLE public.user_network ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDEN
 
 
 --
--- Name: user_rating; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user_payment_info; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_payment_info (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    bank_id text NOT NULL,
+    bank_display_name text NOT NULL,
+    value_secret_id uuid NOT NULL,
+    account_name_secret_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: user_rating; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.user_rating (
@@ -6516,10 +9958,131 @@ CREATE TABLE public.user_rating (
 );
 
 
-ALTER TABLE public.user_rating OWNER TO postgres;
+--
+-- Name: vitality_daily_load; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.vitality_daily_load (
+    user_id uuid NOT NULL,
+    date date NOT NULL,
+    session_load real DEFAULT 0 NOT NULL,
+    session_count integer DEFAULT 0 NOT NULL,
+    computed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
 
 --
--- Name: messages; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: vitality_score; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.vitality_score (
+    user_id uuid NOT NULL,
+    date date NOT NULL,
+    score real,
+    consistency_component real,
+    load_component real,
+    recovery_component real,
+    volume_component real,
+    streak_bonus real DEFAULT 0 NOT NULL,
+    ctl real,
+    atl real,
+    computed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: wall_post; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.wall_post (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    author_id uuid DEFAULT auth.uid() NOT NULL,
+    activity_id uuid,
+    professional_booking_id uuid,
+    sport_id bigint NOT NULL,
+    lobby_id uuid,
+    source_label text,
+    source_start_time timestamp with time zone NOT NULL,
+    source_venue_name text,
+    caption text,
+    image_paths text[] NOT NULL,
+    ttl_days smallint DEFAULT 7 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    hidden_at timestamp with time zone,
+    CONSTRAINT wall_post_caption_length CHECK (((caption IS NULL) OR (char_length(caption) <= 140))),
+    CONSTRAINT wall_post_image_count CHECK (((array_length(image_paths, 1) >= 1) AND (array_length(image_paths, 1) <= 4))),
+    CONSTRAINT wall_post_ttl_choice CHECK ((ttl_days = ANY (ARRAY[1, 3, 7])))
+);
+
+
+--
+-- Name: wall_post_gc; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.wall_post_gc (
+    path text NOT NULL,
+    queued_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: wall_post_moderation_queue; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.wall_post_moderation_queue AS
+SELECT
+    NULL::uuid AS id,
+    NULL::uuid AS author_id,
+    NULL::text AS caption,
+    NULL::text[] AS image_paths,
+    NULL::timestamp with time zone AS created_at,
+    NULL::timestamp with time zone AS expires_at,
+    NULL::timestamp with time zone AS hidden_at,
+    NULL::bigint AS report_count,
+    NULL::text[] AS reasons;
+
+
+--
+-- Name: wall_post_reaction; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.wall_post_reaction (
+    post_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    emoji text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT wall_post_reaction_emoji_length CHECK (((char_length(emoji) >= 1) AND (char_length(emoji) <= 8)))
+);
+
+
+--
+-- Name: wall_post_report; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.wall_post_report (
+    post_id uuid NOT NULL,
+    reporter_id uuid DEFAULT auth.uid() NOT NULL,
+    reason text NOT NULL,
+    note text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT wall_post_report_note_length CHECK (((note IS NULL) OR (char_length(note) <= 280))),
+    CONSTRAINT wall_post_report_reason CHECK ((reason = ANY (ARRAY['spam'::text, 'harassment'::text, 'nudity'::text, 'violence'::text, 'impersonation'::text, 'other'::text])))
+);
+
+
+--
+-- Name: wall_post_tag; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.wall_post_tag (
+    post_id uuid NOT NULL,
+    user_id uuid NOT NULL
+);
+
+
+--
+-- Name: messages; Type: TABLE; Schema: realtime; Owner: -
 --
 
 CREATE TABLE realtime.messages (
@@ -6536,10 +10099,8 @@ CREATE TABLE realtime.messages (
 PARTITION BY RANGE (inserted_at);
 
 
-ALTER TABLE realtime.messages OWNER TO supabase_realtime_admin;
-
 --
--- Name: schema_migrations; Type: TABLE; Schema: realtime; Owner: supabase_admin
+-- Name: schema_migrations; Type: TABLE; Schema: realtime; Owner: -
 --
 
 CREATE TABLE realtime.schema_migrations (
@@ -6548,10 +10109,8 @@ CREATE TABLE realtime.schema_migrations (
 );
 
 
-ALTER TABLE realtime.schema_migrations OWNER TO supabase_admin;
-
 --
--- Name: subscription; Type: TABLE; Schema: realtime; Owner: supabase_admin
+-- Name: subscription; Type: TABLE; Schema: realtime; Owner: -
 --
 
 CREATE TABLE realtime.subscription (
@@ -6568,10 +10127,8 @@ CREATE TABLE realtime.subscription (
 );
 
 
-ALTER TABLE realtime.subscription OWNER TO supabase_admin;
-
 --
--- Name: subscription_id_seq; Type: SEQUENCE; Schema: realtime; Owner: supabase_admin
+-- Name: subscription_id_seq; Type: SEQUENCE; Schema: realtime; Owner: -
 --
 
 ALTER TABLE realtime.subscription ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
@@ -6585,7 +10142,7 @@ ALTER TABLE realtime.subscription ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTI
 
 
 --
--- Name: buckets; Type: TABLE; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckets; Type: TABLE; Schema: storage; Owner: -
 --
 
 CREATE TABLE storage.buckets (
@@ -6603,17 +10160,15 @@ CREATE TABLE storage.buckets (
 );
 
 
-ALTER TABLE storage.buckets OWNER TO supabase_storage_admin;
-
 --
--- Name: COLUMN buckets.owner; Type: COMMENT; Schema: storage; Owner: supabase_storage_admin
+-- Name: COLUMN buckets.owner; Type: COMMENT; Schema: storage; Owner: -
 --
 
 COMMENT ON COLUMN storage.buckets.owner IS 'Field is deprecated, use owner_id instead';
 
 
 --
--- Name: buckets_analytics; Type: TABLE; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckets_analytics; Type: TABLE; Schema: storage; Owner: -
 --
 
 CREATE TABLE storage.buckets_analytics (
@@ -6627,10 +10182,8 @@ CREATE TABLE storage.buckets_analytics (
 );
 
 
-ALTER TABLE storage.buckets_analytics OWNER TO supabase_storage_admin;
-
 --
--- Name: buckets_vectors; Type: TABLE; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckets_vectors; Type: TABLE; Schema: storage; Owner: -
 --
 
 CREATE TABLE storage.buckets_vectors (
@@ -6641,10 +10194,8 @@ CREATE TABLE storage.buckets_vectors (
 );
 
 
-ALTER TABLE storage.buckets_vectors OWNER TO supabase_storage_admin;
-
 --
--- Name: migrations; Type: TABLE; Schema: storage; Owner: supabase_storage_admin
+-- Name: migrations; Type: TABLE; Schema: storage; Owner: -
 --
 
 CREATE TABLE storage.migrations (
@@ -6655,10 +10206,8 @@ CREATE TABLE storage.migrations (
 );
 
 
-ALTER TABLE storage.migrations OWNER TO supabase_storage_admin;
-
 --
--- Name: objects; Type: TABLE; Schema: storage; Owner: supabase_storage_admin
+-- Name: objects; Type: TABLE; Schema: storage; Owner: -
 --
 
 CREATE TABLE storage.objects (
@@ -6677,17 +10226,15 @@ CREATE TABLE storage.objects (
 );
 
 
-ALTER TABLE storage.objects OWNER TO supabase_storage_admin;
-
 --
--- Name: COLUMN objects.owner; Type: COMMENT; Schema: storage; Owner: supabase_storage_admin
+-- Name: COLUMN objects.owner; Type: COMMENT; Schema: storage; Owner: -
 --
 
 COMMENT ON COLUMN storage.objects.owner IS 'Field is deprecated, use owner_id instead';
 
 
 --
--- Name: s3_multipart_uploads; Type: TABLE; Schema: storage; Owner: supabase_storage_admin
+-- Name: s3_multipart_uploads; Type: TABLE; Schema: storage; Owner: -
 --
 
 CREATE TABLE storage.s3_multipart_uploads (
@@ -6704,10 +10251,8 @@ CREATE TABLE storage.s3_multipart_uploads (
 );
 
 
-ALTER TABLE storage.s3_multipart_uploads OWNER TO supabase_storage_admin;
-
 --
--- Name: s3_multipart_uploads_parts; Type: TABLE; Schema: storage; Owner: supabase_storage_admin
+-- Name: s3_multipart_uploads_parts; Type: TABLE; Schema: storage; Owner: -
 --
 
 CREATE TABLE storage.s3_multipart_uploads_parts (
@@ -6724,10 +10269,8 @@ CREATE TABLE storage.s3_multipart_uploads_parts (
 );
 
 
-ALTER TABLE storage.s3_multipart_uploads_parts OWNER TO supabase_storage_admin;
-
 --
--- Name: vector_indexes; Type: TABLE; Schema: storage; Owner: supabase_storage_admin
+-- Name: vector_indexes; Type: TABLE; Schema: storage; Owner: -
 --
 
 CREATE TABLE storage.vector_indexes (
@@ -6743,10 +10286,8 @@ CREATE TABLE storage.vector_indexes (
 );
 
 
-ALTER TABLE storage.vector_indexes OWNER TO supabase_storage_admin;
-
 --
--- Name: schema_migrations; Type: TABLE; Schema: supabase_migrations; Owner: postgres
+-- Name: schema_migrations; Type: TABLE; Schema: supabase_migrations; Owner: -
 --
 
 CREATE TABLE supabase_migrations.schema_migrations (
@@ -6759,10 +10300,8 @@ CREATE TABLE supabase_migrations.schema_migrations (
 );
 
 
-ALTER TABLE supabase_migrations.schema_migrations OWNER TO postgres;
-
 --
--- Name: seed_files; Type: TABLE; Schema: supabase_migrations; Owner: postgres
+-- Name: seed_files; Type: TABLE; Schema: supabase_migrations; Owner: -
 --
 
 CREATE TABLE supabase_migrations.seed_files (
@@ -6771,24 +10310,22 @@ CREATE TABLE supabase_migrations.seed_files (
 );
 
 
-ALTER TABLE supabase_migrations.seed_files OWNER TO postgres;
-
 --
--- Name: refresh_tokens id; Type: DEFAULT; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens id; Type: DEFAULT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.refresh_tokens ALTER COLUMN id SET DEFAULT nextval('auth.refresh_tokens_id_seq'::regclass);
 
 
 --
--- Name: industry id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: industry id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.industry ALTER COLUMN id SET DEFAULT nextval('public.industry_id_seq'::regclass);
 
 
 --
--- Name: mfa_amr_claims amr_id_pk; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_amr_claims amr_id_pk; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.mfa_amr_claims
@@ -6796,7 +10333,7 @@ ALTER TABLE ONLY auth.mfa_amr_claims
 
 
 --
--- Name: audit_log_entries audit_log_entries_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: audit_log_entries audit_log_entries_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.audit_log_entries
@@ -6804,7 +10341,7 @@ ALTER TABLE ONLY auth.audit_log_entries
 
 
 --
--- Name: custom_oauth_providers custom_oauth_providers_identifier_key; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: custom_oauth_providers custom_oauth_providers_identifier_key; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.custom_oauth_providers
@@ -6812,7 +10349,7 @@ ALTER TABLE ONLY auth.custom_oauth_providers
 
 
 --
--- Name: custom_oauth_providers custom_oauth_providers_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: custom_oauth_providers custom_oauth_providers_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.custom_oauth_providers
@@ -6820,7 +10357,7 @@ ALTER TABLE ONLY auth.custom_oauth_providers
 
 
 --
--- Name: flow_state flow_state_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: flow_state flow_state_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.flow_state
@@ -6828,7 +10365,7 @@ ALTER TABLE ONLY auth.flow_state
 
 
 --
--- Name: identities identities_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: identities identities_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.identities
@@ -6836,7 +10373,7 @@ ALTER TABLE ONLY auth.identities
 
 
 --
--- Name: identities identities_provider_id_provider_unique; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: identities identities_provider_id_provider_unique; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.identities
@@ -6844,7 +10381,7 @@ ALTER TABLE ONLY auth.identities
 
 
 --
--- Name: instances instances_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: instances instances_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.instances
@@ -6852,7 +10389,7 @@ ALTER TABLE ONLY auth.instances
 
 
 --
--- Name: mfa_amr_claims mfa_amr_claims_session_id_authentication_method_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_amr_claims mfa_amr_claims_session_id_authentication_method_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.mfa_amr_claims
@@ -6860,7 +10397,7 @@ ALTER TABLE ONLY auth.mfa_amr_claims
 
 
 --
--- Name: mfa_challenges mfa_challenges_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_challenges mfa_challenges_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.mfa_challenges
@@ -6868,7 +10405,7 @@ ALTER TABLE ONLY auth.mfa_challenges
 
 
 --
--- Name: mfa_factors mfa_factors_last_challenged_at_key; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_factors mfa_factors_last_challenged_at_key; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.mfa_factors
@@ -6876,7 +10413,7 @@ ALTER TABLE ONLY auth.mfa_factors
 
 
 --
--- Name: mfa_factors mfa_factors_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_factors mfa_factors_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.mfa_factors
@@ -6884,7 +10421,7 @@ ALTER TABLE ONLY auth.mfa_factors
 
 
 --
--- Name: oauth_authorizations oauth_authorizations_authorization_code_key; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_authorizations oauth_authorizations_authorization_code_key; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.oauth_authorizations
@@ -6892,7 +10429,7 @@ ALTER TABLE ONLY auth.oauth_authorizations
 
 
 --
--- Name: oauth_authorizations oauth_authorizations_authorization_id_key; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_authorizations oauth_authorizations_authorization_id_key; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.oauth_authorizations
@@ -6900,7 +10437,7 @@ ALTER TABLE ONLY auth.oauth_authorizations
 
 
 --
--- Name: oauth_authorizations oauth_authorizations_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_authorizations oauth_authorizations_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.oauth_authorizations
@@ -6908,7 +10445,7 @@ ALTER TABLE ONLY auth.oauth_authorizations
 
 
 --
--- Name: oauth_client_states oauth_client_states_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_client_states oauth_client_states_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.oauth_client_states
@@ -6916,7 +10453,7 @@ ALTER TABLE ONLY auth.oauth_client_states
 
 
 --
--- Name: oauth_clients oauth_clients_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_clients oauth_clients_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.oauth_clients
@@ -6924,7 +10461,7 @@ ALTER TABLE ONLY auth.oauth_clients
 
 
 --
--- Name: oauth_consents oauth_consents_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_consents oauth_consents_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.oauth_consents
@@ -6932,7 +10469,7 @@ ALTER TABLE ONLY auth.oauth_consents
 
 
 --
--- Name: oauth_consents oauth_consents_user_client_unique; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_consents oauth_consents_user_client_unique; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.oauth_consents
@@ -6940,7 +10477,7 @@ ALTER TABLE ONLY auth.oauth_consents
 
 
 --
--- Name: one_time_tokens one_time_tokens_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: one_time_tokens one_time_tokens_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.one_time_tokens
@@ -6948,7 +10485,7 @@ ALTER TABLE ONLY auth.one_time_tokens
 
 
 --
--- Name: refresh_tokens refresh_tokens_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens refresh_tokens_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.refresh_tokens
@@ -6956,7 +10493,7 @@ ALTER TABLE ONLY auth.refresh_tokens
 
 
 --
--- Name: refresh_tokens refresh_tokens_token_unique; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens refresh_tokens_token_unique; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.refresh_tokens
@@ -6964,7 +10501,7 @@ ALTER TABLE ONLY auth.refresh_tokens
 
 
 --
--- Name: saml_providers saml_providers_entity_id_key; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_providers saml_providers_entity_id_key; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.saml_providers
@@ -6972,7 +10509,7 @@ ALTER TABLE ONLY auth.saml_providers
 
 
 --
--- Name: saml_providers saml_providers_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_providers saml_providers_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.saml_providers
@@ -6980,7 +10517,7 @@ ALTER TABLE ONLY auth.saml_providers
 
 
 --
--- Name: saml_relay_states saml_relay_states_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_relay_states saml_relay_states_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.saml_relay_states
@@ -6988,7 +10525,7 @@ ALTER TABLE ONLY auth.saml_relay_states
 
 
 --
--- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.schema_migrations
@@ -6996,7 +10533,7 @@ ALTER TABLE ONLY auth.schema_migrations
 
 
 --
--- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.sessions
@@ -7004,7 +10541,7 @@ ALTER TABLE ONLY auth.sessions
 
 
 --
--- Name: sso_domains sso_domains_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: sso_domains sso_domains_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.sso_domains
@@ -7012,7 +10549,7 @@ ALTER TABLE ONLY auth.sso_domains
 
 
 --
--- Name: sso_providers sso_providers_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: sso_providers sso_providers_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.sso_providers
@@ -7020,7 +10557,7 @@ ALTER TABLE ONLY auth.sso_providers
 
 
 --
--- Name: users users_phone_key; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: users users_phone_key; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.users
@@ -7028,7 +10565,7 @@ ALTER TABLE ONLY auth.users
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.users
@@ -7036,7 +10573,7 @@ ALTER TABLE ONLY auth.users
 
 
 --
--- Name: webauthn_challenges webauthn_challenges_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: webauthn_challenges webauthn_challenges_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.webauthn_challenges
@@ -7044,7 +10581,7 @@ ALTER TABLE ONLY auth.webauthn_challenges
 
 
 --
--- Name: webauthn_credentials webauthn_credentials_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: webauthn_credentials webauthn_credentials_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.webauthn_credentials
@@ -7052,7 +10589,7 @@ ALTER TABLE ONLY auth.webauthn_credentials
 
 
 --
--- Name: achievement achievement_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: achievement achievement_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.achievement
@@ -7060,7 +10597,7 @@ ALTER TABLE ONLY public.achievement
 
 
 --
--- Name: activity_confirmation activity_confirmation_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity_confirmation activity_confirmation_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_confirmation
@@ -7068,7 +10605,7 @@ ALTER TABLE ONLY public.activity_confirmation
 
 
 --
--- Name: activity_health_metrics activity_health_metrics_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity_health_metrics activity_health_metrics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_health_metrics
@@ -7076,7 +10613,7 @@ ALTER TABLE ONLY public.activity_health_metrics
 
 
 --
--- Name: activity_health_metrics activity_health_metrics_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity_health_metrics activity_health_metrics_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_health_metrics
@@ -7084,7 +10621,7 @@ ALTER TABLE ONLY public.activity_health_metrics
 
 
 --
--- Name: activity_hr_sample activity_hr_sample_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity_hr_sample activity_hr_sample_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_hr_sample
@@ -7092,7 +10629,7 @@ ALTER TABLE ONLY public.activity_hr_sample
 
 
 --
--- Name: activity activity_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity activity_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity
@@ -7100,7 +10637,7 @@ ALTER TABLE ONLY public.activity
 
 
 --
--- Name: badminton_profile badminton_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: badminton_profile badminton_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.badminton_profile
@@ -7108,7 +10645,7 @@ ALTER TABLE ONLY public.badminton_profile
 
 
 --
--- Name: basketball_profile basketball_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: basketball_profile basketball_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.basketball_profile
@@ -7116,7 +10653,7 @@ ALTER TABLE ONLY public.basketball_profile
 
 
 --
--- Name: booking_additional_users booking_additional_users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: booking_additional_users booking_additional_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.booking_additional_users
@@ -7124,7 +10661,7 @@ ALTER TABLE ONLY public.booking_additional_users
 
 
 --
--- Name: daily_health_summary daily_health_summary_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: daily_health_summary daily_health_summary_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.daily_health_summary
@@ -7132,7 +10669,23 @@ ALTER TABLE ONLY public.daily_health_summary
 
 
 --
--- Name: industry industry_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: enabled_notification_kind enabled_notification_kind_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.enabled_notification_kind
+    ADD CONSTRAINT enabled_notification_kind_pkey PRIMARY KEY (kind);
+
+
+--
+-- Name: friendship friendship_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.friendship
+    ADD CONSTRAINT friendship_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: industry industry_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.industry
@@ -7140,7 +10693,7 @@ ALTER TABLE ONLY public.industry
 
 
 --
--- Name: industry industry_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: industry industry_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.industry
@@ -7148,7 +10701,7 @@ ALTER TABLE ONLY public.industry
 
 
 --
--- Name: lobby_befriend_record lobby_befriend_record_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_befriend_record lobby_befriend_record_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_befriend_record
@@ -7156,7 +10709,31 @@ ALTER TABLE ONLY public.lobby_befriend_record
 
 
 --
--- Name: lobby_feed_item lobby_feed_item_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_challenge lobby_challenge_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_challenge
+    ADD CONSTRAINT lobby_challenge_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lobby_email_invite lobby_email_invite_lobby_id_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_email_invite
+    ADD CONSTRAINT lobby_email_invite_lobby_id_email_key UNIQUE (lobby_id, email);
+
+
+--
+-- Name: lobby_email_invite lobby_email_invite_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_email_invite
+    ADD CONSTRAINT lobby_email_invite_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lobby_feed_item lobby_feed_item_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_feed_item
@@ -7164,7 +10741,15 @@ ALTER TABLE ONLY public.lobby_feed_item
 
 
 --
--- Name: lobby_feed_poll_vote lobby_feed_poll_vote_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_feed_item_reaction lobby_feed_item_reaction_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_feed_item_reaction
+    ADD CONSTRAINT lobby_feed_item_reaction_pkey PRIMARY KEY (feed_item_id, user_id);
+
+
+--
+-- Name: lobby_feed_poll_vote lobby_feed_poll_vote_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_feed_poll_vote
@@ -7172,7 +10757,7 @@ ALTER TABLE ONLY public.lobby_feed_poll_vote
 
 
 --
--- Name: lobby_match lobby_match_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_match lobby_match_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_match
@@ -7180,7 +10765,7 @@ ALTER TABLE ONLY public.lobby_match
 
 
 --
--- Name: lobby_member lobby_member_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_member lobby_member_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_member
@@ -7188,7 +10773,7 @@ ALTER TABLE ONLY public.lobby_member
 
 
 --
--- Name: lobby_member lobby_member_user_lobby_uniq; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_member lobby_member_user_lobby_uniq; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_member
@@ -7196,7 +10781,15 @@ ALTER TABLE ONLY public.lobby_member
 
 
 --
--- Name: lobby lobby_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_payment_request_payee lobby_payment_request_payee_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_payment_request_payee
+    ADD CONSTRAINT lobby_payment_request_payee_pkey PRIMARY KEY (feed_item_id, user_id);
+
+
+--
+-- Name: lobby lobby_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby
@@ -7204,7 +10797,7 @@ ALTER TABLE ONLY public.lobby
 
 
 --
--- Name: location location_external_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: location location_external_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.location
@@ -7212,7 +10805,7 @@ ALTER TABLE ONLY public.location
 
 
 --
--- Name: location location_full_address_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: location location_full_address_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.location
@@ -7220,7 +10813,7 @@ ALTER TABLE ONLY public.location
 
 
 --
--- Name: location location_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: location location_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.location
@@ -7228,7 +10821,7 @@ ALTER TABLE ONLY public.location
 
 
 --
--- Name: network network_name_city_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: network network_name_city_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.network
@@ -7236,7 +10829,7 @@ ALTER TABLE ONLY public.network
 
 
 --
--- Name: network network_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: network network_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.network
@@ -7244,7 +10837,15 @@ ALTER TABLE ONLY public.network
 
 
 --
--- Name: pickleball_profile pickleball_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: notification_outbox notification_outbox_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_outbox
+    ADD CONSTRAINT notification_outbox_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pickleball_profile pickleball_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.pickleball_profile
@@ -7252,7 +10853,15 @@ ALTER TABLE ONLY public.pickleball_profile
 
 
 --
--- Name: professional_booking professional_booking_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional_booking_package professional_booking_package_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.professional_booking_package
+    ADD CONSTRAINT professional_booking_package_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: professional_booking professional_booking_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking
@@ -7260,7 +10869,7 @@ ALTER TABLE ONLY public.professional_booking
 
 
 --
--- Name: professional_booking_review professional_booking_review_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional_booking_review professional_booking_review_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking_review
@@ -7268,7 +10877,7 @@ ALTER TABLE ONLY public.professional_booking_review
 
 
 --
--- Name: professional professional_linked_user_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional professional_linked_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional
@@ -7276,7 +10885,7 @@ ALTER TABLE ONLY public.professional
 
 
 --
--- Name: professional professional_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional professional_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional
@@ -7284,7 +10893,15 @@ ALTER TABLE ONLY public.professional
 
 
 --
--- Name: professional_service professional_service_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional_preferred_location professional_preferred_location_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.professional_preferred_location
+    ADD CONSTRAINT professional_preferred_location_pkey PRIMARY KEY (professional_id, location_id);
+
+
+--
+-- Name: professional_service professional_service_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_service
@@ -7292,7 +10909,7 @@ ALTER TABLE ONLY public.professional_service
 
 
 --
--- Name: soccer_profile soccer_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: soccer_profile soccer_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.soccer_profile
@@ -7300,7 +10917,15 @@ ALTER TABLE ONLY public.soccer_profile
 
 
 --
--- Name: sport sport_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: social_event social_event_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.social_event
+    ADD CONSTRAINT social_event_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sport sport_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sport
@@ -7308,7 +10933,7 @@ ALTER TABLE ONLY public.sport
 
 
 --
--- Name: sport sport_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: sport sport_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sport
@@ -7316,7 +10941,7 @@ ALTER TABLE ONLY public.sport
 
 
 --
--- Name: supported_city_cluster supported_city_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: supported_city_cluster supported_city_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.supported_city_cluster
@@ -7324,7 +10949,7 @@ ALTER TABLE ONLY public.supported_city_cluster
 
 
 --
--- Name: tennis_profile tennis_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: tennis_profile tennis_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tennis_profile
@@ -7332,7 +10957,7 @@ ALTER TABLE ONLY public.tennis_profile
 
 
 --
--- Name: user_achievement user_achievement_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_achievement user_achievement_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_achievement
@@ -7340,7 +10965,7 @@ ALTER TABLE ONLY public.user_achievement
 
 
 --
--- Name: user_achievement user_achievement_user_id_achievement_id_period_key_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_achievement user_achievement_user_id_achievement_id_period_key_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_achievement
@@ -7348,7 +10973,23 @@ ALTER TABLE ONLY public.user_achievement
 
 
 --
--- Name: user_health_link user_health_link_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_block user_block_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_block
+    ADD CONSTRAINT user_block_pkey PRIMARY KEY (blocker_id, blocked_id);
+
+
+--
+-- Name: user_device_token user_device_token_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_device_token
+    ADD CONSTRAINT user_device_token_pkey PRIMARY KEY (fcm_token);
+
+
+--
+-- Name: user_health_link user_health_link_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_health_link
@@ -7356,7 +10997,7 @@ ALTER TABLE ONLY public.user_health_link
 
 
 --
--- Name: user_industry user_industry_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_industry user_industry_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_industry
@@ -7364,7 +11005,7 @@ ALTER TABLE ONLY public.user_industry
 
 
 --
--- Name: user_network user_network_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_network user_network_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_network
@@ -7372,7 +11013,23 @@ ALTER TABLE ONLY public.user_network
 
 
 --
--- Name: user user_pk; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_payment_info user_payment_info_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_payment_info
+    ADD CONSTRAINT user_payment_info_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_payment_info user_payment_info_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_payment_info
+    ADD CONSTRAINT user_payment_info_user_id_key UNIQUE (user_id);
+
+
+--
+-- Name: user user_pk; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."user"
@@ -7380,7 +11037,7 @@ ALTER TABLE ONLY public."user"
 
 
 --
--- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."user"
@@ -7388,7 +11045,7 @@ ALTER TABLE ONLY public."user"
 
 
 --
--- Name: user_rating user_rating_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_rating user_rating_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_rating
@@ -7396,7 +11053,7 @@ ALTER TABLE ONLY public.user_rating
 
 
 --
--- Name: user_rating user_rating_user_id_sport_format_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_rating user_rating_user_id_sport_format_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_rating
@@ -7404,7 +11061,63 @@ ALTER TABLE ONLY public.user_rating
 
 
 --
--- Name: messages messages_payload_exclusive; Type: CHECK CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: vitality_daily_load vitality_daily_load_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.vitality_daily_load
+    ADD CONSTRAINT vitality_daily_load_pkey PRIMARY KEY (user_id, date);
+
+
+--
+-- Name: vitality_score vitality_score_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.vitality_score
+    ADD CONSTRAINT vitality_score_pkey PRIMARY KEY (user_id, date);
+
+
+--
+-- Name: wall_post_gc wall_post_gc_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post_gc
+    ADD CONSTRAINT wall_post_gc_pkey PRIMARY KEY (path);
+
+
+--
+-- Name: wall_post wall_post_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post
+    ADD CONSTRAINT wall_post_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: wall_post_reaction wall_post_reaction_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post_reaction
+    ADD CONSTRAINT wall_post_reaction_pkey PRIMARY KEY (post_id, user_id);
+
+
+--
+-- Name: wall_post_report wall_post_report_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post_report
+    ADD CONSTRAINT wall_post_report_pkey PRIMARY KEY (post_id, reporter_id);
+
+
+--
+-- Name: wall_post_tag wall_post_tag_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post_tag
+    ADD CONSTRAINT wall_post_tag_pkey PRIMARY KEY (post_id, user_id);
+
+
+--
+-- Name: messages messages_payload_exclusive; Type: CHECK CONSTRAINT; Schema: realtime; Owner: -
 --
 
 ALTER TABLE realtime.messages
@@ -7412,7 +11125,7 @@ ALTER TABLE realtime.messages
 
 
 --
--- Name: messages messages_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages messages_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
 ALTER TABLE ONLY realtime.messages
@@ -7420,7 +11133,7 @@ ALTER TABLE ONLY realtime.messages
 
 
 --
--- Name: subscription pk_subscription; Type: CONSTRAINT; Schema: realtime; Owner: supabase_admin
+-- Name: subscription pk_subscription; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
 ALTER TABLE ONLY realtime.subscription
@@ -7428,7 +11141,7 @@ ALTER TABLE ONLY realtime.subscription
 
 
 --
--- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_admin
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
 ALTER TABLE ONLY realtime.schema_migrations
@@ -7436,7 +11149,7 @@ ALTER TABLE ONLY realtime.schema_migrations
 
 
 --
--- Name: buckets_analytics buckets_analytics_pkey; Type: CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckets_analytics buckets_analytics_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.buckets_analytics
@@ -7444,7 +11157,7 @@ ALTER TABLE ONLY storage.buckets_analytics
 
 
 --
--- Name: buckets buckets_pkey; Type: CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckets buckets_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.buckets
@@ -7452,7 +11165,7 @@ ALTER TABLE ONLY storage.buckets
 
 
 --
--- Name: buckets_vectors buckets_vectors_pkey; Type: CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckets_vectors buckets_vectors_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.buckets_vectors
@@ -7460,7 +11173,7 @@ ALTER TABLE ONLY storage.buckets_vectors
 
 
 --
--- Name: migrations migrations_name_key; Type: CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: migrations migrations_name_key; Type: CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.migrations
@@ -7468,7 +11181,7 @@ ALTER TABLE ONLY storage.migrations
 
 
 --
--- Name: migrations migrations_pkey; Type: CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: migrations migrations_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.migrations
@@ -7476,7 +11189,7 @@ ALTER TABLE ONLY storage.migrations
 
 
 --
--- Name: objects objects_pkey; Type: CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: objects objects_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.objects
@@ -7484,7 +11197,7 @@ ALTER TABLE ONLY storage.objects
 
 
 --
--- Name: s3_multipart_uploads_parts s3_multipart_uploads_parts_pkey; Type: CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: s3_multipart_uploads_parts s3_multipart_uploads_parts_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.s3_multipart_uploads_parts
@@ -7492,7 +11205,7 @@ ALTER TABLE ONLY storage.s3_multipart_uploads_parts
 
 
 --
--- Name: s3_multipart_uploads s3_multipart_uploads_pkey; Type: CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: s3_multipart_uploads s3_multipart_uploads_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.s3_multipart_uploads
@@ -7500,7 +11213,7 @@ ALTER TABLE ONLY storage.s3_multipart_uploads
 
 
 --
--- Name: vector_indexes vector_indexes_pkey; Type: CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: vector_indexes vector_indexes_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.vector_indexes
@@ -7508,7 +11221,7 @@ ALTER TABLE ONLY storage.vector_indexes
 
 
 --
--- Name: schema_migrations schema_migrations_idempotency_key_key; Type: CONSTRAINT; Schema: supabase_migrations; Owner: postgres
+-- Name: schema_migrations schema_migrations_idempotency_key_key; Type: CONSTRAINT; Schema: supabase_migrations; Owner: -
 --
 
 ALTER TABLE ONLY supabase_migrations.schema_migrations
@@ -7516,7 +11229,7 @@ ALTER TABLE ONLY supabase_migrations.schema_migrations
 
 
 --
--- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: supabase_migrations; Owner: postgres
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: supabase_migrations; Owner: -
 --
 
 ALTER TABLE ONLY supabase_migrations.schema_migrations
@@ -7524,7 +11237,7 @@ ALTER TABLE ONLY supabase_migrations.schema_migrations
 
 
 --
--- Name: seed_files seed_files_pkey; Type: CONSTRAINT; Schema: supabase_migrations; Owner: postgres
+-- Name: seed_files seed_files_pkey; Type: CONSTRAINT; Schema: supabase_migrations; Owner: -
 --
 
 ALTER TABLE ONLY supabase_migrations.seed_files
@@ -7532,1022 +11245,1392 @@ ALTER TABLE ONLY supabase_migrations.seed_files
 
 
 --
--- Name: audit_logs_instance_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: audit_logs_instance_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX audit_logs_instance_id_idx ON auth.audit_log_entries USING btree (instance_id);
 
 
 --
--- Name: confirmation_token_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: confirmation_token_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE UNIQUE INDEX confirmation_token_idx ON auth.users USING btree (confirmation_token) WHERE ((confirmation_token)::text !~ '^[0-9 ]*$'::text);
 
 
 --
--- Name: custom_oauth_providers_created_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: custom_oauth_providers_created_at_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX custom_oauth_providers_created_at_idx ON auth.custom_oauth_providers USING btree (created_at);
 
 
 --
--- Name: custom_oauth_providers_enabled_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: custom_oauth_providers_enabled_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX custom_oauth_providers_enabled_idx ON auth.custom_oauth_providers USING btree (enabled);
 
 
 --
--- Name: custom_oauth_providers_identifier_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: custom_oauth_providers_identifier_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX custom_oauth_providers_identifier_idx ON auth.custom_oauth_providers USING btree (identifier);
 
 
 --
--- Name: custom_oauth_providers_provider_type_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: custom_oauth_providers_provider_type_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX custom_oauth_providers_provider_type_idx ON auth.custom_oauth_providers USING btree (provider_type);
 
 
 --
--- Name: email_change_token_current_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: email_change_token_current_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE UNIQUE INDEX email_change_token_current_idx ON auth.users USING btree (email_change_token_current) WHERE ((email_change_token_current)::text !~ '^[0-9 ]*$'::text);
 
 
 --
--- Name: email_change_token_new_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: email_change_token_new_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE UNIQUE INDEX email_change_token_new_idx ON auth.users USING btree (email_change_token_new) WHERE ((email_change_token_new)::text !~ '^[0-9 ]*$'::text);
 
 
 --
--- Name: factor_id_created_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: factor_id_created_at_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX factor_id_created_at_idx ON auth.mfa_factors USING btree (user_id, created_at);
 
 
 --
--- Name: flow_state_created_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: flow_state_created_at_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX flow_state_created_at_idx ON auth.flow_state USING btree (created_at DESC);
 
 
 --
--- Name: identities_email_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: identities_email_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX identities_email_idx ON auth.identities USING btree (email text_pattern_ops);
 
 
 --
--- Name: INDEX identities_email_idx; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: INDEX identities_email_idx; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON INDEX auth.identities_email_idx IS 'Auth: Ensures indexed queries on the email column';
 
 
 --
--- Name: identities_user_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: identities_user_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX identities_user_id_idx ON auth.identities USING btree (user_id);
 
 
 --
--- Name: idx_auth_code; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: idx_auth_code; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX idx_auth_code ON auth.flow_state USING btree (auth_code);
 
 
 --
--- Name: idx_oauth_client_states_created_at; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: idx_oauth_client_states_created_at; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX idx_oauth_client_states_created_at ON auth.oauth_client_states USING btree (created_at);
 
 
 --
--- Name: idx_user_id_auth_method; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: idx_user_id_auth_method; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX idx_user_id_auth_method ON auth.flow_state USING btree (user_id, authentication_method);
 
 
 --
--- Name: mfa_challenge_created_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_challenge_created_at_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX mfa_challenge_created_at_idx ON auth.mfa_challenges USING btree (created_at DESC);
 
 
 --
--- Name: mfa_factors_user_friendly_name_unique; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_factors_user_friendly_name_unique; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE UNIQUE INDEX mfa_factors_user_friendly_name_unique ON auth.mfa_factors USING btree (friendly_name, user_id) WHERE (TRIM(BOTH FROM friendly_name) <> ''::text);
 
 
 --
--- Name: mfa_factors_user_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_factors_user_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX mfa_factors_user_id_idx ON auth.mfa_factors USING btree (user_id);
 
 
 --
--- Name: oauth_auth_pending_exp_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_auth_pending_exp_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX oauth_auth_pending_exp_idx ON auth.oauth_authorizations USING btree (expires_at) WHERE (status = 'pending'::auth.oauth_authorization_status);
 
 
 --
--- Name: oauth_clients_deleted_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_clients_deleted_at_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX oauth_clients_deleted_at_idx ON auth.oauth_clients USING btree (deleted_at);
 
 
 --
--- Name: oauth_consents_active_client_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_consents_active_client_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX oauth_consents_active_client_idx ON auth.oauth_consents USING btree (client_id) WHERE (revoked_at IS NULL);
 
 
 --
--- Name: oauth_consents_active_user_client_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_consents_active_user_client_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX oauth_consents_active_user_client_idx ON auth.oauth_consents USING btree (user_id, client_id) WHERE (revoked_at IS NULL);
 
 
 --
--- Name: oauth_consents_user_order_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_consents_user_order_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX oauth_consents_user_order_idx ON auth.oauth_consents USING btree (user_id, granted_at DESC);
 
 
 --
--- Name: one_time_tokens_relates_to_hash_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: one_time_tokens_relates_to_hash_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX one_time_tokens_relates_to_hash_idx ON auth.one_time_tokens USING hash (relates_to);
 
 
 --
--- Name: one_time_tokens_token_hash_hash_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: one_time_tokens_token_hash_hash_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX one_time_tokens_token_hash_hash_idx ON auth.one_time_tokens USING hash (token_hash);
 
 
 --
--- Name: one_time_tokens_user_id_token_type_key; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: one_time_tokens_user_id_token_type_key; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE UNIQUE INDEX one_time_tokens_user_id_token_type_key ON auth.one_time_tokens USING btree (user_id, token_type);
 
 
 --
--- Name: reauthentication_token_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: reauthentication_token_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE UNIQUE INDEX reauthentication_token_idx ON auth.users USING btree (reauthentication_token) WHERE ((reauthentication_token)::text !~ '^[0-9 ]*$'::text);
 
 
 --
--- Name: recovery_token_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: recovery_token_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE UNIQUE INDEX recovery_token_idx ON auth.users USING btree (recovery_token) WHERE ((recovery_token)::text !~ '^[0-9 ]*$'::text);
 
 
 --
--- Name: refresh_tokens_instance_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens_instance_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX refresh_tokens_instance_id_idx ON auth.refresh_tokens USING btree (instance_id);
 
 
 --
--- Name: refresh_tokens_instance_id_user_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens_instance_id_user_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX refresh_tokens_instance_id_user_id_idx ON auth.refresh_tokens USING btree (instance_id, user_id);
 
 
 --
--- Name: refresh_tokens_parent_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens_parent_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX refresh_tokens_parent_idx ON auth.refresh_tokens USING btree (parent);
 
 
 --
--- Name: refresh_tokens_session_id_revoked_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens_session_id_revoked_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX refresh_tokens_session_id_revoked_idx ON auth.refresh_tokens USING btree (session_id, revoked);
 
 
 --
--- Name: refresh_tokens_updated_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens_updated_at_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX refresh_tokens_updated_at_idx ON auth.refresh_tokens USING btree (updated_at DESC);
 
 
 --
--- Name: saml_providers_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_providers_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX saml_providers_sso_provider_id_idx ON auth.saml_providers USING btree (sso_provider_id);
 
 
 --
--- Name: saml_relay_states_created_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_relay_states_created_at_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX saml_relay_states_created_at_idx ON auth.saml_relay_states USING btree (created_at DESC);
 
 
 --
--- Name: saml_relay_states_for_email_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_relay_states_for_email_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX saml_relay_states_for_email_idx ON auth.saml_relay_states USING btree (for_email);
 
 
 --
--- Name: saml_relay_states_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_relay_states_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX saml_relay_states_sso_provider_id_idx ON auth.saml_relay_states USING btree (sso_provider_id);
 
 
 --
--- Name: sessions_not_after_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: sessions_not_after_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX sessions_not_after_idx ON auth.sessions USING btree (not_after DESC);
 
 
 --
--- Name: sessions_oauth_client_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: sessions_oauth_client_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX sessions_oauth_client_id_idx ON auth.sessions USING btree (oauth_client_id);
 
 
 --
--- Name: sessions_user_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: sessions_user_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX sessions_user_id_idx ON auth.sessions USING btree (user_id);
 
 
 --
--- Name: sso_domains_domain_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: sso_domains_domain_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE UNIQUE INDEX sso_domains_domain_idx ON auth.sso_domains USING btree (lower(domain));
 
 
 --
--- Name: sso_domains_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: sso_domains_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX sso_domains_sso_provider_id_idx ON auth.sso_domains USING btree (sso_provider_id);
 
 
 --
--- Name: sso_providers_resource_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: sso_providers_resource_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE UNIQUE INDEX sso_providers_resource_id_idx ON auth.sso_providers USING btree (lower(resource_id));
 
 
 --
--- Name: sso_providers_resource_id_pattern_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: sso_providers_resource_id_pattern_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX sso_providers_resource_id_pattern_idx ON auth.sso_providers USING btree (resource_id text_pattern_ops);
 
 
 --
--- Name: unique_phone_factor_per_user; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: unique_phone_factor_per_user; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE UNIQUE INDEX unique_phone_factor_per_user ON auth.mfa_factors USING btree (user_id, phone);
 
 
 --
--- Name: user_id_created_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: user_id_created_at_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX user_id_created_at_idx ON auth.sessions USING btree (user_id, created_at);
 
 
 --
--- Name: users_email_partial_key; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: users_email_partial_key; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE UNIQUE INDEX users_email_partial_key ON auth.users USING btree (email) WHERE (is_sso_user = false);
 
 
 --
--- Name: INDEX users_email_partial_key; Type: COMMENT; Schema: auth; Owner: supabase_auth_admin
+-- Name: INDEX users_email_partial_key; Type: COMMENT; Schema: auth; Owner: -
 --
 
 COMMENT ON INDEX auth.users_email_partial_key IS 'Auth: A partial unique index that applies only when is_sso_user is false';
 
 
 --
--- Name: users_instance_id_email_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: users_instance_id_email_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX users_instance_id_email_idx ON auth.users USING btree (instance_id, lower((email)::text));
 
 
 --
--- Name: users_instance_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: users_instance_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX users_instance_id_idx ON auth.users USING btree (instance_id);
 
 
 --
--- Name: users_is_anonymous_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: users_is_anonymous_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX users_is_anonymous_idx ON auth.users USING btree (is_anonymous);
 
 
 --
--- Name: webauthn_challenges_expires_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: webauthn_challenges_expires_at_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX webauthn_challenges_expires_at_idx ON auth.webauthn_challenges USING btree (expires_at);
 
 
 --
--- Name: webauthn_challenges_user_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: webauthn_challenges_user_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX webauthn_challenges_user_id_idx ON auth.webauthn_challenges USING btree (user_id);
 
 
 --
--- Name: webauthn_credentials_credential_id_key; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: webauthn_credentials_credential_id_key; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE UNIQUE INDEX webauthn_credentials_credential_id_key ON auth.webauthn_credentials USING btree (credential_id);
 
 
 --
--- Name: webauthn_credentials_user_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+-- Name: webauthn_credentials_user_id_idx; Type: INDEX; Schema: auth; Owner: -
 --
 
 CREATE INDEX webauthn_credentials_user_id_idx ON auth.webauthn_credentials USING btree (user_id);
 
 
 --
--- Name: achievement_code_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: achievement_code_key; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX achievement_code_key ON public.achievement USING btree (code);
 
 
 --
--- Name: activity_confirmation_user_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: activity_challenge_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activity_challenge_idx ON public.activity USING btree (challenge_id) WHERE (challenge_id IS NOT NULL);
+
+
+--
+-- Name: activity_coach_booking_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activity_coach_booking_id_idx ON public.activity USING btree (coach_booking_id);
+
+
+--
+-- Name: activity_confirmation_user_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX activity_confirmation_user_idx ON public.activity_confirmation USING btree (user_id);
 
 
 --
--- Name: basketball_profile_pitch_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: activity_referee_booking_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX activity_referee_booking_id_idx ON public.activity USING btree (referee_booking_id);
+
+
+--
+-- Name: basketball_profile_pitch_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX basketball_profile_pitch_idx ON public.basketball_profile USING gin (pitch);
 
 
 --
--- Name: basketball_profile_position_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: basketball_profile_position_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX basketball_profile_position_idx ON public.basketball_profile USING gin ("position");
 
 
 --
--- Name: idx_activity_health_metrics_activity_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: friendship_addressee_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX friendship_addressee_idx ON public.friendship USING btree (addressee_id, status);
+
+
+--
+-- Name: friendship_one_live_per_pair; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX friendship_one_live_per_pair ON public.friendship USING btree (LEAST(requester_id, addressee_id), GREATEST(requester_id, addressee_id)) WHERE (status = ANY (ARRAY['pending'::public.friendship_status, 'accepted'::public.friendship_status]));
+
+
+--
+-- Name: friendship_requester_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX friendship_requester_idx ON public.friendship USING btree (requester_id, status);
+
+
+--
+-- Name: idx_activity_health_metrics_activity_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_activity_health_metrics_activity_id ON public.activity_health_metrics USING btree (activity_id);
 
 
 --
--- Name: idx_activity_health_metrics_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_activity_health_metrics_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_activity_health_metrics_user_id ON public.activity_health_metrics USING btree (user_id);
 
 
 --
--- Name: idx_activity_hr_sample_activity_timestamp; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_activity_hr_sample_activity_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_activity_hr_sample_activity_timestamp ON public.activity_hr_sample USING btree (activity_id, "timestamp");
 
 
 --
--- Name: idx_activity_sport_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_activity_sport_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_activity_sport_id ON public.activity USING btree (sport_id);
 
 
 --
--- Name: idx_activity_start_time; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_activity_start_time; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_activity_start_time ON public.activity USING btree (start_time);
 
 
 --
--- Name: idx_activity_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_activity_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_activity_user_id ON public.activity USING btree (user_id);
 
 
 --
--- Name: idx_booking_additional_users_booking_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_booking_additional_users_booking_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_booking_additional_users_booking_id ON public.booking_additional_users USING btree (booking_id);
 
 
 --
--- Name: idx_booking_additional_users_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_booking_additional_users_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_booking_additional_users_user_id ON public.booking_additional_users USING btree (user_id);
 
 
 --
--- Name: idx_bookings_client_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_bookings_client_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_bookings_client_user_id ON public.professional_booking USING btree (client_user_id);
 
 
 --
--- Name: idx_bookings_professional_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_bookings_professional_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_bookings_professional_id ON public.professional_booking USING btree (professional_id);
 
 
 --
--- Name: idx_bookings_service_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_bookings_service_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_bookings_service_id ON public.professional_booking USING btree (service_id);
 
 
 --
--- Name: idx_bookings_status; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_bookings_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_bookings_status ON public.professional_booking USING btree (status);
 
 
 --
--- Name: idx_daily_health_summary_user_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_daily_health_summary_user_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_daily_health_summary_user_date ON public.daily_health_summary USING btree (user_id, date DESC);
 
 
 --
--- Name: idx_listed_professionals_is_verified; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_listed_professionals_is_verified; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_listed_professionals_is_verified ON public.professional USING btree (is_verified);
 
 
 --
--- Name: idx_listed_professionals_linked_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_listed_professionals_linked_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_listed_professionals_linked_user_id ON public.professional USING btree (linked_user_id) WHERE (linked_user_id IS NOT NULL);
 
 
 --
--- Name: idx_listed_professionals_role; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_listed_professionals_role; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_listed_professionals_role ON public.professional USING btree (professional_role);
 
 
 --
--- Name: idx_lobby_befriend_record_initiator; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_lobby_befriend_record_initiator; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_befriend_record_initiator ON public.lobby_befriend_record USING btree (initiator_user_id);
 
 
 --
--- Name: idx_lobby_befriend_record_interaction_type; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_lobby_befriend_record_interaction_type; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_befriend_record_interaction_type ON public.lobby_befriend_record USING btree (interaction_type);
 
 
 --
--- Name: idx_lobby_befriend_record_status; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_lobby_befriend_record_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_befriend_record_status ON public.lobby_befriend_record USING btree (status);
 
 
 --
--- Name: idx_lobby_befriend_record_target_lobby; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_lobby_befriend_record_target_lobby; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_befriend_record_target_lobby ON public.lobby_befriend_record USING btree (target_lobby_id);
 
 
 --
--- Name: idx_lobby_befriend_record_target_user; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_lobby_befriend_record_target_user; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_befriend_record_target_user ON public.lobby_befriend_record USING btree (target_user_id);
 
 
 --
--- Name: idx_lobby_captain_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_lobby_captain_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_captain_id ON public.lobby USING btree (captain_id);
 
 
 --
--- Name: idx_lobby_home_ground; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_lobby_home_ground; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_home_ground ON public.lobby USING btree (home_ground);
 
 
 --
--- Name: idx_lobby_member_lobby_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_lobby_member_lobby_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_member_lobby_id ON public.lobby_member USING btree (lobby_id);
 
 
 --
--- Name: idx_lobby_member_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_lobby_member_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_member_user_id ON public.lobby_member USING btree (user_id);
 
 
 --
--- Name: idx_lobby_sport_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_lobby_sport_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_lobby_sport_id ON public.lobby USING btree (sport_id);
 
 
 --
--- Name: idx_location_city_cluster; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_location_city_cluster; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_location_city_cluster ON public.location USING btree (city_cluster);
 
 
 --
--- Name: idx_location_full_address_trgm; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_location_full_address_trgm; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_location_full_address_trgm ON public.location USING gin (public.immutable_unaccent(lower(full_address)) extensions.gin_trgm_ops);
 
 
 --
--- Name: idx_location_name_trgm; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_location_name_trgm; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_location_name_trgm ON public.location USING gin (public.immutable_unaccent(lower(name)) extensions.gin_trgm_ops);
 
 
 --
--- Name: idx_network_city; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_network_city; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_network_city ON public.network USING btree (city);
 
 
 --
--- Name: idx_professional_booking_location_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_professional_booking_location_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_professional_booking_location_id ON public.professional_booking USING btree (location_id);
 
 
 --
--- Name: idx_professional_review_professional_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_professional_booking_package_client; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_professional_booking_package_client ON public.professional_booking_package USING btree (client_user_id);
+
+
+--
+-- Name: idx_professional_booking_package_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_professional_booking_package_id ON public.professional_booking USING btree (package_id);
+
+
+--
+-- Name: idx_professional_booking_package_professional; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_professional_booking_package_professional ON public.professional_booking_package USING btree (professional_id);
+
+
+--
+-- Name: idx_professional_booking_package_service; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_professional_booking_package_service ON public.professional_booking_package USING btree (service_id);
+
+
+--
+-- Name: idx_professional_preferred_city_cluster; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_professional_preferred_city_cluster ON public.professional USING btree (preferred_city_cluster);
+
+
+--
+-- Name: idx_professional_preferred_location_location; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_professional_preferred_location_location ON public.professional_preferred_location USING btree (location_id);
+
+
+--
+-- Name: idx_professional_review_professional_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_professional_review_professional_id ON public.professional_booking_review USING btree (professional_id);
 
 
 --
--- Name: idx_professional_review_reviewer_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_professional_review_reviewer_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_professional_review_reviewer_user_id ON public.professional_booking_review USING btree (reviewer_user_id);
 
 
 --
--- Name: idx_professional_services_is_active; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_professional_services_is_active; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_professional_services_is_active ON public.professional_service USING btree (is_active);
 
 
 --
--- Name: idx_professional_services_listed_professional_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_professional_services_listed_professional_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_professional_services_listed_professional_id ON public.professional_service USING btree (professional_id);
 
 
 --
--- Name: idx_professional_services_sport_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_professional_services_sport_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_professional_services_sport_id ON public.professional_service USING btree (sport_id);
 
 
 --
--- Name: idx_user_industry_industry_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_user_industry_industry_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_user_industry_industry_id ON public.user_industry USING btree (industry_id);
 
 
 --
--- Name: idx_user_industry_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_user_industry_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_user_industry_user_id ON public.user_industry USING btree (user_id);
 
 
 --
--- Name: idx_user_network_network_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_user_network_network_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_user_network_network_id ON public.user_network USING btree (network_id);
 
 
 --
--- Name: idx_user_network_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_user_network_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_user_network_user_id ON public.user_network USING btree (user_id);
 
 
 --
--- Name: lobby_feed_item_lobby_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_vitality_daily_load_user_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_vitality_daily_load_user_date ON public.vitality_daily_load USING btree (user_id, date DESC);
+
+
+--
+-- Name: idx_vitality_score_user_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_vitality_score_user_date ON public.vitality_score USING btree (user_id, date DESC);
+
+
+--
+-- Name: lobby_challenge_offer_time_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX lobby_challenge_offer_time_idx ON public.lobby USING btree (challenge_offer_time) WHERE open_to_challengers;
+
+
+--
+-- Name: lobby_challenge_one_open; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX lobby_challenge_one_open ON public.lobby_challenge USING btree (initiator_lobby_id, target_lobby_id) WHERE (status = 'requested'::public.lobby_challenge_status);
+
+
+--
+-- Name: lobby_challenge_target_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX lobby_challenge_target_idx ON public.lobby_challenge USING btree (target_lobby_id, status);
+
+
+--
+-- Name: lobby_feed_item_lobby_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX lobby_feed_item_lobby_idx ON public.lobby_feed_item USING btree (lobby_id, created_at DESC);
 
 
 --
--- Name: lobby_match_lobby_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: lobby_match_lobby_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX lobby_match_lobby_idx ON public.lobby_match USING btree (lobby_id, played_at DESC);
 
 
 --
--- Name: lobby_open_challenger_mmr_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: lobby_match_opponent_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX lobby_match_opponent_idx ON public.lobby_match USING btree (opponent_lobby_id, played_at DESC) WHERE (opponent_lobby_id IS NOT NULL);
+
+
+--
+-- Name: lobby_open_challenger_mmr_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX lobby_open_challenger_mmr_idx ON public.lobby USING btree (sport_id, mmr) WHERE open_to_challengers;
 
 
 --
--- Name: network_name_lower_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: lobby_payment_request_payee_user_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX lobby_payment_request_payee_user_idx ON public.lobby_payment_request_payee USING btree (user_id);
+
+
+--
+-- Name: network_name_lower_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX network_name_lower_idx ON public.network USING btree (lower(name) text_pattern_ops);
 
 
 --
--- Name: network_name_partial_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: network_name_partial_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX network_name_partial_idx ON public.network USING btree (name text_pattern_ops);
 
 
 --
--- Name: network_name_trgm_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: network_name_trgm_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX network_name_trgm_idx ON public.network USING gin (lower(name) extensions.gin_trgm_ops);
 
 
 --
--- Name: network_name_unaccent_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: network_name_unaccent_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX network_name_unaccent_idx ON public.network USING btree (public.immutable_unaccent(lower(name)) text_pattern_ops);
 
 
 --
--- Name: network_name_unaccent_trgm_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: network_name_unaccent_trgm_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX network_name_unaccent_trgm_idx ON public.network USING gin (public.immutable_unaccent(lower(name)) extensions.gin_trgm_ops);
 
 
 --
--- Name: soccer_profile_pitch_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: notification_outbox_pending_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX notification_outbox_pending_idx ON public.notification_outbox USING btree (created_at) WHERE (status = ANY (ARRAY['pending'::text, 'sending'::text]));
+
+
+--
+-- Name: notification_outbox_recipient_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX notification_outbox_recipient_idx ON public.notification_outbox USING btree (recipient_user_id, created_at DESC);
+
+
+--
+-- Name: soccer_profile_pitch_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX soccer_profile_pitch_idx ON public.soccer_profile USING gin (pitch);
 
 
 --
--- Name: soccer_profile_position_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: soccer_profile_position_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX soccer_profile_position_idx ON public.soccer_profile USING gin ("position");
 
 
 --
--- Name: user_rating_user_sport_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: social_event_user_kind_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX social_event_user_kind_idx ON public.social_event USING btree (user_id, kind, created_at);
+
+
+--
+-- Name: user_block_blocked_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX user_block_blocked_idx ON public.user_block USING btree (blocked_id);
+
+
+--
+-- Name: user_device_token_user_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX user_device_token_user_idx ON public.user_device_token USING btree (user_id);
+
+
+--
+-- Name: user_payment_info_user_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX user_payment_info_user_idx ON public.user_payment_info USING btree (user_id);
+
+
+--
+-- Name: user_rating_user_sport_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX user_rating_user_sport_idx ON public.user_rating USING btree (user_id, sport);
 
 
 --
--- Name: ix_realtime_subscription_entity; Type: INDEX; Schema: realtime; Owner: supabase_admin
+-- Name: wall_post_author_created_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX wall_post_author_created_idx ON public.wall_post USING btree (author_id, created_at DESC);
+
+
+--
+-- Name: wall_post_expiry_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX wall_post_expiry_idx ON public.wall_post USING btree (expires_at);
+
+
+--
+-- Name: wall_post_lobby_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX wall_post_lobby_idx ON public.wall_post USING btree (lobby_id) WHERE (lobby_id IS NOT NULL);
+
+
+--
+-- Name: wall_post_one_per_activity; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX wall_post_one_per_activity ON public.wall_post USING btree (author_id, activity_id) WHERE (activity_id IS NOT NULL);
+
+
+--
+-- Name: wall_post_one_per_booking; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX wall_post_one_per_booking ON public.wall_post USING btree (author_id, professional_booking_id) WHERE (professional_booking_id IS NOT NULL);
+
+
+--
+-- Name: wall_post_report_post_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX wall_post_report_post_idx ON public.wall_post_report USING btree (post_id);
+
+
+--
+-- Name: wall_post_tag_user_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX wall_post_tag_user_idx ON public.wall_post_tag USING btree (user_id);
+
+
+--
+-- Name: ix_realtime_subscription_entity; Type: INDEX; Schema: realtime; Owner: -
 --
 
 CREATE INDEX ix_realtime_subscription_entity ON realtime.subscription USING btree (entity);
 
 
 --
--- Name: messages_inserted_at_topic_index; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_inserted_at_topic_index; Type: INDEX; Schema: realtime; Owner: -
 --
 
 CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: subscription_subscription_id_entity_filters_action_filter_selec; Type: INDEX; Schema: realtime; Owner: supabase_admin
+-- Name: subscription_subscription_id_entity_filters_action_filter_selec; Type: INDEX; Schema: realtime; Owner: -
 --
 
 CREATE UNIQUE INDEX subscription_subscription_id_entity_filters_action_filter_selec ON realtime.subscription USING btree (subscription_id, entity, filters, action_filter, COALESCE(selected_columns, '{}'::text[]));
 
 
 --
--- Name: bname; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
+-- Name: bname; Type: INDEX; Schema: storage; Owner: -
 --
 
 CREATE UNIQUE INDEX bname ON storage.buckets USING btree (name);
 
 
 --
--- Name: bucketid_objname; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
+-- Name: bucketid_objname; Type: INDEX; Schema: storage; Owner: -
 --
 
 CREATE UNIQUE INDEX bucketid_objname ON storage.objects USING btree (bucket_id, name);
 
 
 --
--- Name: buckets_analytics_unique_name_idx; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckets_analytics_unique_name_idx; Type: INDEX; Schema: storage; Owner: -
 --
 
 CREATE UNIQUE INDEX buckets_analytics_unique_name_idx ON storage.buckets_analytics USING btree (name) WHERE (deleted_at IS NULL);
 
 
 --
--- Name: idx_multipart_uploads_list; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
+-- Name: idx_multipart_uploads_list; Type: INDEX; Schema: storage; Owner: -
 --
 
 CREATE INDEX idx_multipart_uploads_list ON storage.s3_multipart_uploads USING btree (bucket_id, key, created_at);
 
 
 --
--- Name: idx_objects_bucket_id_name; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
+-- Name: idx_objects_bucket_id_name; Type: INDEX; Schema: storage; Owner: -
 --
 
 CREATE INDEX idx_objects_bucket_id_name ON storage.objects USING btree (bucket_id, name COLLATE "C");
 
 
 --
--- Name: idx_objects_bucket_id_name_lower; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
+-- Name: idx_objects_bucket_id_name_lower; Type: INDEX; Schema: storage; Owner: -
 --
 
 CREATE INDEX idx_objects_bucket_id_name_lower ON storage.objects USING btree (bucket_id, lower(name) COLLATE "C");
 
 
 --
--- Name: name_prefix_search; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
+-- Name: name_prefix_search; Type: INDEX; Schema: storage; Owner: -
 --
 
 CREATE INDEX name_prefix_search ON storage.objects USING btree (name text_pattern_ops);
 
 
 --
--- Name: vector_indexes_name_bucket_id_idx; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
+-- Name: vector_indexes_name_bucket_id_idx; Type: INDEX; Schema: storage; Owner: -
 --
 
 CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes USING btree (name, bucket_id);
 
 
 --
--- Name: users on_auth_user_created; Type: TRIGGER; Schema: auth; Owner: supabase_auth_admin
+-- Name: wall_post_moderation_queue _RETURN; Type: RULE; Schema: public; Owner: -
+--
+
+CREATE OR REPLACE VIEW public.wall_post_moderation_queue WITH (security_invoker='true') AS
+ SELECT p.id,
+    p.author_id,
+    p.caption,
+    p.image_paths,
+    p.created_at,
+    p.expires_at,
+    p.hidden_at,
+    count(r.*) AS report_count,
+    array_agg(DISTINCT r.reason) AS reasons
+   FROM (public.wall_post p
+     JOIN public.wall_post_report r ON ((r.post_id = p.id)))
+  GROUP BY p.id
+  ORDER BY (count(r.*)) DESC, p.created_at DESC;
+
+
+--
+-- Name: users on_auth_user_created; Type: TRIGGER; Schema: auth; Owner: -
 --
 
 CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.new_user_created_trigger_fn();
 
 
 --
--- Name: badminton_profile badminton_elo_seed; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: activity activity_attachment_role_check; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER activity_attachment_role_check BEFORE INSERT OR UPDATE OF coach_booking_id, referee_booking_id ON public.activity FOR EACH ROW EXECUTE FUNCTION public.fn_activity_attachment_role_check();
+
+
+--
+-- Name: activity_confirmation activity_confirmed_emit; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER activity_confirmed_emit AFTER INSERT OR UPDATE ON public.activity_confirmation FOR EACH ROW EXECUTE FUNCTION public.fn_emit_activity_confirmed();
+
+
+--
+-- Name: badminton_profile badminton_elo_seed; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER badminton_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.badminton_profile FOR EACH ROW EXECUTE FUNCTION public.fn_seed_initial_elo();
 
 
 --
--- Name: basketball_profile basketball_elo_seed; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: basketball_profile basketball_elo_seed; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER basketball_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.basketball_profile FOR EACH ROW EXECUTE FUNCTION public.fn_seed_initial_elo();
 
 
 --
--- Name: lobby lobby_add_captain_as_member; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: lobby lobby_add_captain_as_member; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER lobby_add_captain_as_member AFTER INSERT ON public.lobby FOR EACH ROW EXECUTE FUNCTION public.lobby_add_captain_as_member();
 
 
 --
--- Name: lobby lobby_before_delete; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: lobby lobby_before_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER lobby_before_delete BEFORE DELETE ON public.lobby FOR EACH ROW EXECUTE FUNCTION public.lobby_before_delete();
 
 
 --
--- Name: lobby_befriend_record lobby_befriend_accepted_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: lobby_befriend_record lobby_befriend_accepted_trigger; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER lobby_befriend_accepted_trigger AFTER UPDATE ON public.lobby_befriend_record FOR EACH ROW EXECUTE FUNCTION public.lobby_befriend_accepted_trigger_fn();
 
 
 --
--- Name: lobby_befriend_record lobby_befriend_record_before_insert; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: lobby_befriend_record lobby_befriend_invite_notify; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lobby_befriend_invite_notify AFTER INSERT ON public.lobby_befriend_record FOR EACH ROW WHEN ((new.interaction_type = 'invite'::public.lobby_befriend_interaction)) EXECUTE FUNCTION public.fn_notify_lobby_invite();
+
+
+--
+-- Name: lobby_befriend_record lobby_befriend_record_before_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER lobby_befriend_record_before_insert BEFORE INSERT ON public.lobby_befriend_record FOR EACH ROW EXECUTE FUNCTION public.lobby_befriend_record_before_insert_trigger_fn();
 
 
 --
--- Name: lobby_match lobby_match_referee_role_check; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: user lobby_email_invite_auto_join; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lobby_email_invite_auto_join AFTER INSERT ON public."user" FOR EACH ROW EXECUTE FUNCTION public.lobby_email_invite_auto_join_fn();
+
+
+--
+-- Name: lobby_email_invite lobby_email_invite_send; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lobby_email_invite_send AFTER INSERT ON public.lobby_email_invite FOR EACH ROW EXECUTE FUNCTION public.fn_lobby_email_invite_send();
+
+
+--
+-- Name: lobby_match lobby_match_apply_rating; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lobby_match_apply_rating AFTER INSERT ON public.lobby_match FOR EACH ROW WHEN (((new.opponent_lobby_id IS NOT NULL) AND (new.result <> 'practice'::public.lobby_match_result) AND (new.referee_booking_id IS NOT NULL))) EXECUTE FUNCTION public.trg_lobby_match_rating();
+
+
+--
+-- Name: lobby_match lobby_match_complete_referee_booking; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lobby_match_complete_referee_booking AFTER INSERT ON public.lobby_match FOR EACH ROW WHEN ((new.referee_booking_id IS NOT NULL)) EXECUTE FUNCTION public.fn_complete_professional_booking_on_match();
+
+
+--
+-- Name: lobby_match lobby_match_rated_count; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lobby_match_rated_count AFTER INSERT OR DELETE OR UPDATE ON public.lobby_match FOR EACH ROW EXECUTE FUNCTION public.trg_lobby_match_rated_count();
+
+
+--
+-- Name: lobby_match lobby_match_referee_role_check; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER lobby_match_referee_role_check BEFORE INSERT OR UPDATE OF referee_booking_id ON public.lobby_match FOR EACH ROW EXECUTE FUNCTION public.lobby_match_referee_role_check();
 
 
 --
--- Name: lobby_member lobby_member_prevent_captain_leave; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: lobby_member lobby_member_prevent_captain_leave; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER lobby_member_prevent_captain_leave BEFORE DELETE ON public.lobby_member FOR EACH ROW EXECUTE FUNCTION public.lobby_member_prevent_captain_leave();
 
 
 --
--- Name: lobby_member lobby_member_recompute_stats; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: lobby_member lobby_member_recompute_stats; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER lobby_member_recompute_stats AFTER INSERT OR DELETE OR UPDATE ON public.lobby_member FOR EACH ROW EXECUTE FUNCTION public.trg_lobby_member_recompute();
 
 
 --
--- Name: lobby lobby_playtime_keys_biu; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: lobby lobby_playtime_keys_biu; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER lobby_playtime_keys_biu BEFORE INSERT OR UPDATE OF playtime ON public.lobby FOR EACH ROW EXECUTE FUNCTION public.trg_lobby_playtime_keys();
 
 
 --
--- Name: pickleball_profile pickleball_elo_seed; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: notification_outbox notification_outbox_poke; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER notification_outbox_poke AFTER INSERT ON public.notification_outbox FOR EACH STATEMENT EXECUTE FUNCTION public.fn_outbox_poke();
+
+
+--
+-- Name: pickleball_profile pickleball_elo_seed; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER pickleball_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.pickleball_profile FOR EACH ROW EXECUTE FUNCTION public.fn_seed_initial_elo();
 
 
 --
--- Name: professional_booking_review professional_review_stats_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: professional_booking professional_booking_created_notify; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER professional_booking_created_notify AFTER INSERT ON public.professional_booking FOR EACH ROW EXECUTE FUNCTION public.fn_notify_professional_booking_created();
+
+
+--
+-- Name: professional_booking professional_booking_increment_package_progress; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER professional_booking_increment_package_progress AFTER UPDATE ON public.professional_booking FOR EACH ROW WHEN (((new.status = 'completed'::public.professional_booking_status) AND (old.status IS DISTINCT FROM 'completed'::public.professional_booking_status) AND (new.package_id IS NOT NULL))) EXECUTE FUNCTION public.fn_increment_package_sessions_used();
+
+
+--
+-- Name: professional_booking professional_booking_status_changed_notify; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER professional_booking_status_changed_notify AFTER UPDATE ON public.professional_booking FOR EACH ROW WHEN (((new.status IS DISTINCT FROM old.status) AND (new.status = ANY (ARRAY['confirmed'::public.professional_booking_status, 'rejected'::public.professional_booking_status])))) EXECUTE FUNCTION public.fn_notify_professional_booking_status_changed();
+
+
+--
+-- Name: professional_booking_review professional_review_stats_trigger; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER professional_review_stats_trigger AFTER INSERT OR DELETE OR UPDATE ON public.professional_booking_review FOR EACH ROW EXECUTE FUNCTION public.professional_booking_review_updated_trigger_fn();
 
 
 --
--- Name: soccer_profile soccer_elo_seed; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: soccer_profile soccer_elo_seed; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER soccer_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.soccer_profile FOR EACH ROW EXECUTE FUNCTION public.fn_seed_initial_elo();
 
 
 --
--- Name: tennis_profile tennis_elo_seed; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: tennis_profile tennis_elo_seed; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER tennis_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.tennis_profile FOR EACH ROW EXECUTE FUNCTION public.fn_seed_initial_elo();
 
 
 --
--- Name: user_industry user_industry_recompute_lobby; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: lobby_befriend_record trg_reject_pair_befriend; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_reject_pair_befriend BEFORE INSERT ON public.lobby_befriend_record FOR EACH ROW EXECUTE FUNCTION public.fn_reject_pair_befriend();
+
+
+--
+-- Name: wall_post trg_social_event_on_post; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_social_event_on_post AFTER INSERT ON public.wall_post FOR EACH ROW EXECUTE FUNCTION public._fn_social_event_on_post();
+
+
+--
+-- Name: wall_post_reaction trg_social_event_on_reaction; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_social_event_on_reaction AFTER INSERT ON public.wall_post_reaction FOR EACH ROW EXECUTE FUNCTION public._fn_social_event_on_reaction();
+
+
+--
+-- Name: wall_post_report trg_wall_post_autohide; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_wall_post_autohide AFTER INSERT ON public.wall_post_report FOR EACH ROW EXECUTE FUNCTION public.fn_wall_post_autohide();
+
+
+--
+-- Name: wall_post trg_wall_post_source_exclusivity; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_wall_post_source_exclusivity BEFORE INSERT ON public.wall_post FOR EACH ROW EXECUTE FUNCTION public.fn_wall_post_source_exclusivity();
+
+
+--
+-- Name: wall_post_tag trg_wall_post_tag_guard; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_wall_post_tag_guard BEFORE INSERT ON public.wall_post_tag FOR EACH ROW EXECUTE FUNCTION public.fn_wall_post_tag_guard();
+
+
+--
+-- Name: user_industry user_industry_recompute_lobby; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER user_industry_recompute_lobby AFTER INSERT OR DELETE OR UPDATE ON public.user_industry FOR EACH ROW EXECUTE FUNCTION public.trg_user_affiliation_recompute();
 
 
 --
--- Name: user_network user_network_recompute_lobby; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: user_network user_network_recompute_lobby; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER user_network_recompute_lobby AFTER INSERT OR DELETE OR UPDATE ON public.user_network FOR EACH ROW EXECUTE FUNCTION public.trg_user_affiliation_recompute();
 
 
 --
--- Name: user_rating user_rating_recompute_lobby; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: user_rating user_rating_recompute_lobby; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER user_rating_recompute_lobby AFTER INSERT OR UPDATE OF elo ON public.user_rating FOR EACH ROW EXECUTE FUNCTION public.trg_user_rating_recompute();
 
 
 --
--- Name: subscription tr_check_filters; Type: TRIGGER; Schema: realtime; Owner: supabase_admin
+-- Name: subscription tr_check_filters; Type: TRIGGER; Schema: realtime; Owner: -
 --
 
 CREATE TRIGGER tr_check_filters BEFORE INSERT OR UPDATE ON realtime.subscription FOR EACH ROW EXECUTE FUNCTION realtime.subscription_check_filters();
 
 
 --
--- Name: buckets enforce_bucket_name_length_trigger; Type: TRIGGER; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckets enforce_bucket_name_length_trigger; Type: TRIGGER; Schema: storage; Owner: -
 --
 
 CREATE TRIGGER enforce_bucket_name_length_trigger BEFORE INSERT OR UPDATE OF name ON storage.buckets FOR EACH ROW EXECUTE FUNCTION storage.enforce_bucket_name_length();
 
 
 --
--- Name: buckets protect_buckets_delete; Type: TRIGGER; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckets protect_buckets_delete; Type: TRIGGER; Schema: storage; Owner: -
 --
 
 CREATE TRIGGER protect_buckets_delete BEFORE DELETE ON storage.buckets FOR EACH STATEMENT EXECUTE FUNCTION storage.protect_delete();
 
 
 --
--- Name: objects protect_objects_delete; Type: TRIGGER; Schema: storage; Owner: supabase_storage_admin
+-- Name: objects protect_objects_delete; Type: TRIGGER; Schema: storage; Owner: -
 --
 
 CREATE TRIGGER protect_objects_delete BEFORE DELETE ON storage.objects FOR EACH STATEMENT EXECUTE FUNCTION storage.protect_delete();
 
 
 --
--- Name: objects update_objects_updated_at; Type: TRIGGER; Schema: storage; Owner: supabase_storage_admin
+-- Name: objects update_objects_updated_at; Type: TRIGGER; Schema: storage; Owner: -
 --
 
 CREATE TRIGGER update_objects_updated_at BEFORE UPDATE ON storage.objects FOR EACH ROW EXECUTE FUNCTION storage.update_updated_at_column();
 
 
 --
--- Name: identities identities_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: identities identities_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.identities
@@ -8555,7 +12638,7 @@ ALTER TABLE ONLY auth.identities
 
 
 --
--- Name: mfa_amr_claims mfa_amr_claims_session_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_amr_claims mfa_amr_claims_session_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.mfa_amr_claims
@@ -8563,7 +12646,7 @@ ALTER TABLE ONLY auth.mfa_amr_claims
 
 
 --
--- Name: mfa_challenges mfa_challenges_auth_factor_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_challenges mfa_challenges_auth_factor_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.mfa_challenges
@@ -8571,7 +12654,7 @@ ALTER TABLE ONLY auth.mfa_challenges
 
 
 --
--- Name: mfa_factors mfa_factors_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_factors mfa_factors_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.mfa_factors
@@ -8579,7 +12662,7 @@ ALTER TABLE ONLY auth.mfa_factors
 
 
 --
--- Name: oauth_authorizations oauth_authorizations_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_authorizations oauth_authorizations_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.oauth_authorizations
@@ -8587,7 +12670,7 @@ ALTER TABLE ONLY auth.oauth_authorizations
 
 
 --
--- Name: oauth_authorizations oauth_authorizations_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_authorizations oauth_authorizations_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.oauth_authorizations
@@ -8595,7 +12678,7 @@ ALTER TABLE ONLY auth.oauth_authorizations
 
 
 --
--- Name: oauth_consents oauth_consents_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_consents oauth_consents_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.oauth_consents
@@ -8603,7 +12686,7 @@ ALTER TABLE ONLY auth.oauth_consents
 
 
 --
--- Name: oauth_consents oauth_consents_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: oauth_consents oauth_consents_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.oauth_consents
@@ -8611,7 +12694,7 @@ ALTER TABLE ONLY auth.oauth_consents
 
 
 --
--- Name: one_time_tokens one_time_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: one_time_tokens one_time_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.one_time_tokens
@@ -8619,7 +12702,7 @@ ALTER TABLE ONLY auth.one_time_tokens
 
 
 --
--- Name: refresh_tokens refresh_tokens_session_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens refresh_tokens_session_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.refresh_tokens
@@ -8627,7 +12710,7 @@ ALTER TABLE ONLY auth.refresh_tokens
 
 
 --
--- Name: saml_providers saml_providers_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_providers saml_providers_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.saml_providers
@@ -8635,7 +12718,7 @@ ALTER TABLE ONLY auth.saml_providers
 
 
 --
--- Name: saml_relay_states saml_relay_states_flow_state_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_relay_states saml_relay_states_flow_state_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.saml_relay_states
@@ -8643,7 +12726,7 @@ ALTER TABLE ONLY auth.saml_relay_states
 
 
 --
--- Name: saml_relay_states saml_relay_states_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_relay_states saml_relay_states_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.saml_relay_states
@@ -8651,7 +12734,7 @@ ALTER TABLE ONLY auth.saml_relay_states
 
 
 --
--- Name: sessions sessions_oauth_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: sessions sessions_oauth_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.sessions
@@ -8659,7 +12742,7 @@ ALTER TABLE ONLY auth.sessions
 
 
 --
--- Name: sessions sessions_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: sessions sessions_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.sessions
@@ -8667,7 +12750,7 @@ ALTER TABLE ONLY auth.sessions
 
 
 --
--- Name: sso_domains sso_domains_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: sso_domains sso_domains_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.sso_domains
@@ -8675,7 +12758,7 @@ ALTER TABLE ONLY auth.sso_domains
 
 
 --
--- Name: webauthn_challenges webauthn_challenges_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: webauthn_challenges webauthn_challenges_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.webauthn_challenges
@@ -8683,7 +12766,7 @@ ALTER TABLE ONLY auth.webauthn_challenges
 
 
 --
--- Name: webauthn_credentials webauthn_credentials_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+-- Name: webauthn_credentials webauthn_credentials_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
 --
 
 ALTER TABLE ONLY auth.webauthn_credentials
@@ -8691,7 +12774,7 @@ ALTER TABLE ONLY auth.webauthn_credentials
 
 
 --
--- Name: achievement achievement_sport_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: achievement achievement_sport_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.achievement
@@ -8699,7 +12782,23 @@ ALTER TABLE ONLY public.achievement
 
 
 --
--- Name: activity_confirmation activity_confirmation_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity activity_challenge_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity
+    ADD CONSTRAINT activity_challenge_id_fkey FOREIGN KEY (challenge_id) REFERENCES public.lobby_challenge(id) ON DELETE SET NULL;
+
+
+--
+-- Name: activity activity_coach_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity
+    ADD CONSTRAINT activity_coach_booking_id_fkey FOREIGN KEY (coach_booking_id) REFERENCES public.professional_booking(id) ON DELETE SET NULL;
+
+
+--
+-- Name: activity_confirmation activity_confirmation_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_confirmation
@@ -8707,7 +12806,7 @@ ALTER TABLE ONLY public.activity_confirmation
 
 
 --
--- Name: activity_confirmation activity_confirmation_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity_confirmation activity_confirmation_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_confirmation
@@ -8715,7 +12814,7 @@ ALTER TABLE ONLY public.activity_confirmation
 
 
 --
--- Name: activity_health_metrics activity_health_metrics_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity_health_metrics activity_health_metrics_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_health_metrics
@@ -8723,7 +12822,7 @@ ALTER TABLE ONLY public.activity_health_metrics
 
 
 --
--- Name: activity_health_metrics activity_health_metrics_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity_health_metrics activity_health_metrics_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_health_metrics
@@ -8731,7 +12830,7 @@ ALTER TABLE ONLY public.activity_health_metrics
 
 
 --
--- Name: activity_hr_sample activity_hr_sample_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity_hr_sample activity_hr_sample_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_hr_sample
@@ -8739,7 +12838,7 @@ ALTER TABLE ONLY public.activity_hr_sample
 
 
 --
--- Name: activity activity_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity activity_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity
@@ -8747,7 +12846,7 @@ ALTER TABLE ONLY public.activity
 
 
 --
--- Name: activity activity_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity activity_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity
@@ -8755,7 +12854,7 @@ ALTER TABLE ONLY public.activity
 
 
 --
--- Name: activity activity_professional_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity activity_professional_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity
@@ -8763,7 +12862,15 @@ ALTER TABLE ONLY public.activity
 
 
 --
--- Name: activity activity_sport_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity activity_referee_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity
+    ADD CONSTRAINT activity_referee_booking_id_fkey FOREIGN KEY (referee_booking_id) REFERENCES public.professional_booking(id) ON DELETE SET NULL;
+
+
+--
+-- Name: activity activity_sport_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity
@@ -8771,7 +12878,7 @@ ALTER TABLE ONLY public.activity
 
 
 --
--- Name: activity activity_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity activity_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity
@@ -8779,7 +12886,7 @@ ALTER TABLE ONLY public.activity
 
 
 --
--- Name: badminton_profile badminton_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: badminton_profile badminton_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.badminton_profile
@@ -8787,7 +12894,7 @@ ALTER TABLE ONLY public.badminton_profile
 
 
 --
--- Name: basketball_profile basketball_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: basketball_profile basketball_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.basketball_profile
@@ -8795,7 +12902,7 @@ ALTER TABLE ONLY public.basketball_profile
 
 
 --
--- Name: booking_additional_users booking_additional_users_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: booking_additional_users booking_additional_users_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.booking_additional_users
@@ -8803,7 +12910,7 @@ ALTER TABLE ONLY public.booking_additional_users
 
 
 --
--- Name: booking_additional_users booking_additional_users_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: booking_additional_users booking_additional_users_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.booking_additional_users
@@ -8811,7 +12918,7 @@ ALTER TABLE ONLY public.booking_additional_users
 
 
 --
--- Name: daily_health_summary daily_health_summary_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: daily_health_summary daily_health_summary_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.daily_health_summary
@@ -8819,7 +12926,23 @@ ALTER TABLE ONLY public.daily_health_summary
 
 
 --
--- Name: lobby_befriend_record lobby_befriend_record_initiator_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: friendship friendship_addressee_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.friendship
+    ADD CONSTRAINT friendship_addressee_id_fkey FOREIGN KEY (addressee_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: friendship friendship_requester_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.friendship
+    ADD CONSTRAINT friendship_requester_id_fkey FOREIGN KEY (requester_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_befriend_record lobby_befriend_record_initiator_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_befriend_record
@@ -8827,7 +12950,7 @@ ALTER TABLE ONLY public.lobby_befriend_record
 
 
 --
--- Name: lobby_befriend_record lobby_befriend_record_target_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_befriend_record lobby_befriend_record_target_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_befriend_record
@@ -8835,7 +12958,7 @@ ALTER TABLE ONLY public.lobby_befriend_record
 
 
 --
--- Name: lobby_befriend_record lobby_befriend_record_target_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_befriend_record lobby_befriend_record_target_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_befriend_record
@@ -8843,7 +12966,7 @@ ALTER TABLE ONLY public.lobby_befriend_record
 
 
 --
--- Name: lobby lobby_captain_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby lobby_captain_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby
@@ -8851,7 +12974,55 @@ ALTER TABLE ONLY public.lobby
 
 
 --
--- Name: lobby_feed_item lobby_feed_item_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_challenge lobby_challenge_initiator_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_challenge
+    ADD CONSTRAINT lobby_challenge_initiator_lobby_id_fkey FOREIGN KEY (initiator_lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby lobby_challenge_offer_location_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby
+    ADD CONSTRAINT lobby_challenge_offer_location_fkey FOREIGN KEY (challenge_offer_location) REFERENCES public.location(id);
+
+
+--
+-- Name: lobby_challenge lobby_challenge_proposed_location_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_challenge
+    ADD CONSTRAINT lobby_challenge_proposed_location_fkey FOREIGN KEY (proposed_location) REFERENCES public.location(id);
+
+
+--
+-- Name: lobby_challenge lobby_challenge_target_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_challenge
+    ADD CONSTRAINT lobby_challenge_target_lobby_id_fkey FOREIGN KEY (target_lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_email_invite lobby_email_invite_inviter_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_email_invite
+    ADD CONSTRAINT lobby_email_invite_inviter_user_id_fkey FOREIGN KEY (inviter_user_id) REFERENCES public."user"(id);
+
+
+--
+-- Name: lobby_email_invite lobby_email_invite_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_email_invite
+    ADD CONSTRAINT lobby_email_invite_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_feed_item lobby_feed_item_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_feed_item
@@ -8859,7 +13030,7 @@ ALTER TABLE ONLY public.lobby_feed_item
 
 
 --
--- Name: lobby_feed_item lobby_feed_item_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_feed_item lobby_feed_item_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_feed_item
@@ -8867,7 +13038,23 @@ ALTER TABLE ONLY public.lobby_feed_item
 
 
 --
--- Name: lobby_feed_poll_vote lobby_feed_poll_vote_feed_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_feed_item_reaction lobby_feed_item_reaction_feed_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_feed_item_reaction
+    ADD CONSTRAINT lobby_feed_item_reaction_feed_item_id_fkey FOREIGN KEY (feed_item_id) REFERENCES public.lobby_feed_item(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_feed_item_reaction lobby_feed_item_reaction_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_feed_item_reaction
+    ADD CONSTRAINT lobby_feed_item_reaction_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_feed_poll_vote lobby_feed_poll_vote_feed_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_feed_poll_vote
@@ -8875,7 +13062,7 @@ ALTER TABLE ONLY public.lobby_feed_poll_vote
 
 
 --
--- Name: lobby_feed_poll_vote lobby_feed_poll_vote_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_feed_poll_vote lobby_feed_poll_vote_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_feed_poll_vote
@@ -8883,7 +13070,7 @@ ALTER TABLE ONLY public.lobby_feed_poll_vote
 
 
 --
--- Name: lobby lobby_home_ground_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby lobby_home_ground_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby
@@ -8891,7 +13078,7 @@ ALTER TABLE ONLY public.lobby
 
 
 --
--- Name: lobby_match lobby_match_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_match lobby_match_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_match
@@ -8899,7 +13086,7 @@ ALTER TABLE ONLY public.lobby_match
 
 
 --
--- Name: lobby_match lobby_match_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_match lobby_match_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_match
@@ -8907,7 +13094,7 @@ ALTER TABLE ONLY public.lobby_match
 
 
 --
--- Name: lobby_match lobby_match_mvp_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_match lobby_match_mvp_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_match
@@ -8915,7 +13102,7 @@ ALTER TABLE ONLY public.lobby_match
 
 
 --
--- Name: lobby_match lobby_match_opponent_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_match lobby_match_opponent_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_match
@@ -8923,7 +13110,7 @@ ALTER TABLE ONLY public.lobby_match
 
 
 --
--- Name: lobby_match lobby_match_referee_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_match lobby_match_referee_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_match
@@ -8931,7 +13118,7 @@ ALTER TABLE ONLY public.lobby_match
 
 
 --
--- Name: lobby_member lobby_member_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_member lobby_member_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_member
@@ -8939,7 +13126,7 @@ ALTER TABLE ONLY public.lobby_member
 
 
 --
--- Name: lobby_member lobby_member_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_member lobby_member_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby_member
@@ -8947,7 +13134,23 @@ ALTER TABLE ONLY public.lobby_member
 
 
 --
--- Name: lobby lobby_sport_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_payment_request_payee lobby_payment_request_payee_feed_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_payment_request_payee
+    ADD CONSTRAINT lobby_payment_request_payee_feed_item_id_fkey FOREIGN KEY (feed_item_id) REFERENCES public.lobby_feed_item(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_payment_request_payee lobby_payment_request_payee_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_payment_request_payee
+    ADD CONSTRAINT lobby_payment_request_payee_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby lobby_sport_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lobby
@@ -8955,7 +13158,7 @@ ALTER TABLE ONLY public.lobby
 
 
 --
--- Name: location location_city_cluster_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: location location_city_cluster_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.location
@@ -8963,7 +13166,7 @@ ALTER TABLE ONLY public.location
 
 
 --
--- Name: network network_city_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: network network_city_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.network
@@ -8971,7 +13174,15 @@ ALTER TABLE ONLY public.network
 
 
 --
--- Name: pickleball_profile pickleball_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: notification_outbox notification_outbox_recipient_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_outbox
+    ADD CONSTRAINT notification_outbox_recipient_user_id_fkey FOREIGN KEY (recipient_user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: pickleball_profile pickleball_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.pickleball_profile
@@ -8979,7 +13190,7 @@ ALTER TABLE ONLY public.pickleball_profile
 
 
 --
--- Name: professional_booking professional_booking_client_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional_booking professional_booking_client_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking
@@ -8987,7 +13198,7 @@ ALTER TABLE ONLY public.professional_booking
 
 
 --
--- Name: professional_booking professional_booking_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional_booking professional_booking_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking
@@ -8995,7 +13206,39 @@ ALTER TABLE ONLY public.professional_booking
 
 
 --
--- Name: professional_booking professional_booking_professional_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional_booking_package professional_booking_package_client_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.professional_booking_package
+    ADD CONSTRAINT professional_booking_package_client_user_id_fkey FOREIGN KEY (client_user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: professional_booking professional_booking_package_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.professional_booking
+    ADD CONSTRAINT professional_booking_package_id_fkey FOREIGN KEY (package_id) REFERENCES public.professional_booking_package(id) ON DELETE SET NULL;
+
+
+--
+-- Name: professional_booking_package professional_booking_package_professional_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.professional_booking_package
+    ADD CONSTRAINT professional_booking_package_professional_id_fkey FOREIGN KEY (professional_id) REFERENCES public.professional(id) ON DELETE CASCADE;
+
+
+--
+-- Name: professional_booking_package professional_booking_package_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.professional_booking_package
+    ADD CONSTRAINT professional_booking_package_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.professional_service(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: professional_booking professional_booking_professional_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking
@@ -9003,7 +13246,7 @@ ALTER TABLE ONLY public.professional_booking
 
 
 --
--- Name: professional_booking_review professional_booking_review_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional_booking_review professional_booking_review_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking_review
@@ -9011,7 +13254,7 @@ ALTER TABLE ONLY public.professional_booking_review
 
 
 --
--- Name: professional_booking_review professional_booking_review_professional_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional_booking_review professional_booking_review_professional_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking_review
@@ -9019,7 +13262,7 @@ ALTER TABLE ONLY public.professional_booking_review
 
 
 --
--- Name: professional_booking_review professional_booking_review_reviewer_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional_booking_review professional_booking_review_reviewer_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking_review
@@ -9027,7 +13270,7 @@ ALTER TABLE ONLY public.professional_booking_review
 
 
 --
--- Name: professional_booking professional_booking_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional_booking professional_booking_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_booking
@@ -9035,7 +13278,7 @@ ALTER TABLE ONLY public.professional_booking
 
 
 --
--- Name: professional professional_linked_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional professional_linked_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional
@@ -9043,7 +13286,31 @@ ALTER TABLE ONLY public.professional
 
 
 --
--- Name: professional_service professional_service_professional_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional professional_preferred_city_cluster_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.professional
+    ADD CONSTRAINT professional_preferred_city_cluster_fkey FOREIGN KEY (preferred_city_cluster) REFERENCES public.supported_city_cluster(id);
+
+
+--
+-- Name: professional_preferred_location professional_preferred_location_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.professional_preferred_location
+    ADD CONSTRAINT professional_preferred_location_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.location(id) ON DELETE CASCADE;
+
+
+--
+-- Name: professional_preferred_location professional_preferred_location_professional_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.professional_preferred_location
+    ADD CONSTRAINT professional_preferred_location_professional_id_fkey FOREIGN KEY (professional_id) REFERENCES public.professional(id) ON DELETE CASCADE;
+
+
+--
+-- Name: professional_service professional_service_professional_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_service
@@ -9051,7 +13318,7 @@ ALTER TABLE ONLY public.professional_service
 
 
 --
--- Name: professional_service professional_service_sport_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: professional_service professional_service_sport_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.professional_service
@@ -9059,7 +13326,7 @@ ALTER TABLE ONLY public.professional_service
 
 
 --
--- Name: soccer_profile soccer_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: soccer_profile soccer_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.soccer_profile
@@ -9067,7 +13334,15 @@ ALTER TABLE ONLY public.soccer_profile
 
 
 --
--- Name: tennis_profile tennis_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: social_event social_event_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.social_event
+    ADD CONSTRAINT social_event_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tennis_profile tennis_profile_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tennis_profile
@@ -9075,7 +13350,7 @@ ALTER TABLE ONLY public.tennis_profile
 
 
 --
--- Name: user_achievement user_achievement_achievement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_achievement user_achievement_achievement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_achievement
@@ -9083,7 +13358,7 @@ ALTER TABLE ONLY public.user_achievement
 
 
 --
--- Name: user_achievement user_achievement_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_achievement user_achievement_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_achievement
@@ -9091,7 +13366,31 @@ ALTER TABLE ONLY public.user_achievement
 
 
 --
--- Name: user_health_link user_health_link_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_block user_block_blocked_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_block
+    ADD CONSTRAINT user_block_blocked_id_fkey FOREIGN KEY (blocked_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_block user_block_blocker_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_block
+    ADD CONSTRAINT user_block_blocker_id_fkey FOREIGN KEY (blocker_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_device_token user_device_token_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_device_token
+    ADD CONSTRAINT user_device_token_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_health_link user_health_link_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_health_link
@@ -9099,7 +13398,7 @@ ALTER TABLE ONLY public.user_health_link
 
 
 --
--- Name: user user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."user"
@@ -9107,7 +13406,7 @@ ALTER TABLE ONLY public."user"
 
 
 --
--- Name: user_industry user_industry_industry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_industry user_industry_industry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_industry
@@ -9115,7 +13414,7 @@ ALTER TABLE ONLY public.user_industry
 
 
 --
--- Name: user_industry user_industry_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_industry user_industry_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_industry
@@ -9123,7 +13422,7 @@ ALTER TABLE ONLY public.user_industry
 
 
 --
--- Name: user_network user_network_network_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_network user_network_network_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_network
@@ -9131,7 +13430,7 @@ ALTER TABLE ONLY public.user_network
 
 
 --
--- Name: user_network user_network_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_network user_network_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_network
@@ -9139,7 +13438,31 @@ ALTER TABLE ONLY public.user_network
 
 
 --
--- Name: user_rating user_rating_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_payment_info user_payment_info_account_name_secret_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_payment_info
+    ADD CONSTRAINT user_payment_info_account_name_secret_id_fkey FOREIGN KEY (account_name_secret_id) REFERENCES vault.secrets(id);
+
+
+--
+-- Name: user_payment_info user_payment_info_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_payment_info
+    ADD CONSTRAINT user_payment_info_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_payment_info user_payment_info_value_secret_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_payment_info
+    ADD CONSTRAINT user_payment_info_value_secret_id_fkey FOREIGN KEY (value_secret_id) REFERENCES vault.secrets(id);
+
+
+--
+-- Name: user_rating user_rating_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_rating
@@ -9147,7 +13470,103 @@ ALTER TABLE ONLY public.user_rating
 
 
 --
--- Name: objects objects_bucketId_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: vitality_daily_load vitality_daily_load_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.vitality_daily_load
+    ADD CONSTRAINT vitality_daily_load_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: vitality_score vitality_score_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.vitality_score
+    ADD CONSTRAINT vitality_score_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: wall_post wall_post_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post
+    ADD CONSTRAINT wall_post_activity_id_fkey FOREIGN KEY (activity_id) REFERENCES public.activity(id) ON DELETE SET NULL;
+
+
+--
+-- Name: wall_post wall_post_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post
+    ADD CONSTRAINT wall_post_author_id_fkey FOREIGN KEY (author_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: wall_post wall_post_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post
+    ADD CONSTRAINT wall_post_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE SET NULL;
+
+
+--
+-- Name: wall_post wall_post_professional_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post
+    ADD CONSTRAINT wall_post_professional_booking_id_fkey FOREIGN KEY (professional_booking_id) REFERENCES public.professional_booking(id) ON DELETE SET NULL;
+
+
+--
+-- Name: wall_post_reaction wall_post_reaction_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post_reaction
+    ADD CONSTRAINT wall_post_reaction_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.wall_post(id) ON DELETE CASCADE;
+
+
+--
+-- Name: wall_post_reaction wall_post_reaction_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post_reaction
+    ADD CONSTRAINT wall_post_reaction_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: wall_post_report wall_post_report_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post_report
+    ADD CONSTRAINT wall_post_report_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.wall_post(id) ON DELETE CASCADE;
+
+
+--
+-- Name: wall_post_report wall_post_report_reporter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post_report
+    ADD CONSTRAINT wall_post_report_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: wall_post_tag wall_post_tag_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post_tag
+    ADD CONSTRAINT wall_post_tag_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.wall_post(id) ON DELETE CASCADE;
+
+
+--
+-- Name: wall_post_tag wall_post_tag_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wall_post_tag
+    ADD CONSTRAINT wall_post_tag_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: objects objects_bucketId_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.objects
@@ -9155,7 +13574,7 @@ ALTER TABLE ONLY storage.objects
 
 
 --
--- Name: s3_multipart_uploads s3_multipart_uploads_bucket_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: s3_multipart_uploads s3_multipart_uploads_bucket_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.s3_multipart_uploads
@@ -9163,7 +13582,7 @@ ALTER TABLE ONLY storage.s3_multipart_uploads
 
 
 --
--- Name: s3_multipart_uploads_parts s3_multipart_uploads_parts_bucket_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: s3_multipart_uploads_parts s3_multipart_uploads_parts_bucket_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.s3_multipart_uploads_parts
@@ -9171,7 +13590,7 @@ ALTER TABLE ONLY storage.s3_multipart_uploads_parts
 
 
 --
--- Name: s3_multipart_uploads_parts s3_multipart_uploads_parts_upload_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: s3_multipart_uploads_parts s3_multipart_uploads_parts_upload_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.s3_multipart_uploads_parts
@@ -9179,7 +13598,7 @@ ALTER TABLE ONLY storage.s3_multipart_uploads_parts
 
 
 --
--- Name: vector_indexes vector_indexes_bucket_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: supabase_storage_admin
+-- Name: vector_indexes vector_indexes_bucket_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: -
 --
 
 ALTER TABLE ONLY storage.vector_indexes
@@ -9187,171 +13606,205 @@ ALTER TABLE ONLY storage.vector_indexes
 
 
 --
--- Name: audit_log_entries; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: audit_log_entries; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.audit_log_entries ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: flow_state; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: flow_state; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.flow_state ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: identities; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: identities; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.identities ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: instances; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: instances; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.instances ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: mfa_amr_claims; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_amr_claims; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.mfa_amr_claims ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: mfa_challenges; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_challenges; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.mfa_challenges ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: mfa_factors; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: mfa_factors; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.mfa_factors ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: one_time_tokens; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: one_time_tokens; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.one_time_tokens ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: refresh_tokens; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: refresh_tokens; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.refresh_tokens ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: saml_providers; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_providers; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.saml_providers ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: saml_relay_states; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: saml_relay_states; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.saml_relay_states ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: schema_migrations; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: schema_migrations; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.schema_migrations ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: sessions; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: sessions; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.sessions ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: sso_domains; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: sso_domains; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.sso_domains ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: sso_providers; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: sso_providers; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.sso_providers ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: users; Type: ROW SECURITY; Schema: auth; Owner: supabase_auth_admin
+-- Name: users; Type: ROW SECURITY; Schema: auth; Owner: -
 --
 
 ALTER TABLE auth.users ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: booking_additional_users Additional users can see bookings they are part of; Type: POLICY; Schema: public; Owner: postgres
+-- Name: booking_additional_users Additional users can see bookings they are part of; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Additional users can see bookings they are part of" ON public.booking_additional_users FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
 
 
 --
--- Name: professional Authenticated users can read professional profiles; Type: POLICY; Schema: public; Owner: postgres
+-- Name: professional Authenticated users can read professional profiles; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Authenticated users can read professional profiles" ON public.professional FOR SELECT TO authenticated USING (true);
 
 
 --
--- Name: lobby_feed_item Author or captain can delete a feed item; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_feed_item Author or captain or coordinator can delete a feed item; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Author or captain can delete a feed item" ON public.lobby_feed_item FOR DELETE TO authenticated USING (((author_id = ( SELECT auth.uid() AS uid)) OR (EXISTS ( SELECT 1
-   FROM public.lobby l
-  WHERE ((l.id = lobby_feed_item.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid)))))));
+CREATE POLICY "Author or captain or coordinator can delete a feed item" ON public.lobby_feed_item FOR DELETE TO authenticated USING (((author_id = auth.uid()) OR public.lobby_can_manage(lobby_id)));
 
 
 --
--- Name: lobby Captain can delete their lobby; Type: POLICY; Schema: public; Owner: postgres
+-- Name: wall_post Authors can delete their own posts; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Authors can delete their own posts" ON public.wall_post FOR DELETE TO authenticated USING ((author_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: wall_post Authors can write their own posts; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Authors can write their own posts" ON public.wall_post FOR INSERT TO authenticated WITH CHECK ((author_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: wall_post_tag Authors manage their post's tags; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Authors manage their post's tags" ON public.wall_post_tag FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
+   FROM public.wall_post p
+  WHERE ((p.id = wall_post_tag.post_id) AND (p.author_id = ( SELECT auth.uid() AS uid))))));
+
+
+--
+-- Name: wall_post_tag Authors remove their post's tags; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Authors remove their post's tags" ON public.wall_post_tag FOR DELETE TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.wall_post p
+  WHERE ((p.id = wall_post_tag.post_id) AND (p.author_id = ( SELECT auth.uid() AS uid))))));
+
+
+--
+-- Name: user_block Blocker can read their blocks; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Blocker can read their blocks" ON public.user_block FOR SELECT TO authenticated USING ((blocker_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: lobby Captain can delete their lobby; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Captain can delete their lobby" ON public.lobby FOR DELETE TO authenticated USING ((captain_id = ( SELECT auth.uid() AS uid)));
 
 
 --
--- Name: lobby_match Captain can delete their lobby's matches; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_match Captain or coordinator can delete their lobby's matches; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Captain can delete their lobby's matches" ON public.lobby_match FOR DELETE TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.lobby l
-  WHERE ((l.id = lobby_match.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid))))));
+CREATE POLICY "Captain or coordinator can delete their lobby's matches" ON public.lobby_match FOR DELETE TO authenticated USING (public.lobby_can_manage(lobby_id));
 
 
 --
--- Name: lobby_match Captain can edit their lobby's matches; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_match Captain or coordinator can edit their lobby's matches; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Captain can edit their lobby's matches" ON public.lobby_match FOR UPDATE TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.lobby l
-  WHERE ((l.id = lobby_match.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid)))))) WITH CHECK ((EXISTS ( SELECT 1
-   FROM public.lobby l
-  WHERE ((l.id = lobby_match.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid))))));
+CREATE POLICY "Captain or coordinator can edit their lobby's matches" ON public.lobby_match FOR UPDATE TO authenticated USING (public.lobby_can_manage(lobby_id)) WITH CHECK (public.lobby_can_manage(lobby_id));
 
 
 --
--- Name: lobby_feed_item Captain can post updates and polls; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_feed_item Captain or coordinator can post updates and polls; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Captain can post updates and polls" ON public.lobby_feed_item FOR INSERT TO authenticated WITH CHECK (((author_id = ( SELECT auth.uid() AS uid)) AND (kind = ANY (ARRAY['update'::public.lobby_feed_item_kind, 'poll'::public.lobby_feed_item_kind])) AND (EXISTS ( SELECT 1
-   FROM public.lobby l
-  WHERE ((l.id = lobby_feed_item.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid)))))));
+CREATE POLICY "Captain or coordinator can post updates and polls" ON public.lobby_feed_item FOR INSERT TO authenticated WITH CHECK (((author_id = auth.uid()) AND (kind = ANY (ARRAY['update'::public.lobby_feed_item_kind, 'poll'::public.lobby_feed_item_kind])) AND public.lobby_can_manage(lobby_id)));
 
 
 --
--- Name: lobby_match Captain can record matches for their lobby; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_match Captain or coordinator can record matches for their lobby; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Captain can record matches for their lobby" ON public.lobby_match FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
-   FROM public.lobby l
-  WHERE ((l.id = lobby_match.lobby_id) AND (l.captain_id = ( SELECT auth.uid() AS uid))))));
+CREATE POLICY "Captain or coordinator can record matches for their lobby" ON public.lobby_match FOR INSERT TO authenticated WITH CHECK (public.lobby_can_manage(lobby_id));
 
 
 --
--- Name: booking_additional_users Client can manage additional users for their bookings; Type: POLICY; Schema: public; Owner: postgres
+-- Name: wall_post_reaction Change your own reaction; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Change your own reaction" ON public.wall_post_reaction FOR UPDATE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: booking_additional_users Client can manage additional users for their bookings; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Client can manage additional users for their bookings" ON public.booking_additional_users TO authenticated USING ((EXISTS ( SELECT 1
@@ -9362,7 +13815,7 @@ CREATE POLICY "Client can manage additional users for their bookings" ON public.
 
 
 --
--- Name: professional_booking_review Clients can create reviews for their completed bookings; Type: POLICY; Schema: public; Owner: postgres
+-- Name: professional_booking_review Clients can create reviews for their completed bookings; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Clients can create reviews for their completed bookings" ON public.professional_booking_review FOR INSERT TO authenticated WITH CHECK (((reviewer_user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1
@@ -9371,98 +13824,112 @@ CREATE POLICY "Clients can create reviews for their completed bookings" ON publi
 
 
 --
--- Name: professional_booking Clients can manage their own bookings; Type: POLICY; Schema: public; Owner: postgres
+-- Name: professional_booking_package Clients can manage their own booking packages; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Clients can manage their own booking packages" ON public.professional_booking_package TO authenticated USING ((( SELECT auth.uid() AS uid) = client_user_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = client_user_id));
+
+
+--
+-- Name: professional_booking Clients can manage their own bookings; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Clients can manage their own bookings" ON public.professional_booking TO authenticated USING ((( SELECT auth.uid() AS uid) = client_user_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = client_user_id));
 
 
 --
--- Name: lobby Enable insert for authenticated users only; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby Enable insert for authenticated users only; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable insert for authenticated users only" ON public.lobby FOR INSERT TO authenticated WITH CHECK (true);
 
 
 --
--- Name: achievement Enable read access for all users; Type: POLICY; Schema: public; Owner: postgres
+-- Name: achievement Enable read access for all users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for all users" ON public.achievement FOR SELECT USING (true);
 
 
 --
--- Name: industry Enable read access for all users; Type: POLICY; Schema: public; Owner: postgres
+-- Name: industry Enable read access for all users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for all users" ON public.industry FOR SELECT USING (true);
 
 
 --
--- Name: lobby Enable read access for all users; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby Enable read access for all users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for all users" ON public.lobby FOR SELECT USING (true);
 
 
 --
--- Name: location Enable read access for all users; Type: POLICY; Schema: public; Owner: postgres
+-- Name: location Enable read access for all users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for all users" ON public.location FOR SELECT USING (true);
 
 
 --
--- Name: network Enable read access for all users; Type: POLICY; Schema: public; Owner: postgres
+-- Name: network Enable read access for all users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for all users" ON public.network FOR SELECT USING (true);
 
 
 --
--- Name: sport Enable read access for all users; Type: POLICY; Schema: public; Owner: postgres
+-- Name: professional_preferred_location Enable read access for all users; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Enable read access for all users" ON public.professional_preferred_location FOR SELECT USING (true);
+
+
+--
+-- Name: sport Enable read access for all users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for all users" ON public.sport FOR SELECT USING (true);
 
 
 --
--- Name: supported_city_cluster Enable read access for all users; Type: POLICY; Schema: public; Owner: postgres
+-- Name: supported_city_cluster Enable read access for all users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for all users" ON public.supported_city_cluster FOR SELECT USING (true);
 
 
 --
--- Name: user_industry Enable read access for authenticated user; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_industry Enable read access for authenticated user; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for authenticated user" ON public.user_industry FOR SELECT TO authenticated USING (true);
 
 
 --
--- Name: user Enable read access for authenticated users; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user Enable read access for authenticated users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for authenticated users" ON public."user" FOR SELECT TO authenticated USING (true);
 
 
 --
--- Name: user_network Enable read access for authenticated users; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_network Enable read access for authenticated users; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for authenticated users" ON public.user_network FOR SELECT TO authenticated USING (true);
 
 
 --
--- Name: professional Enable read access for verified professional profiles; Type: POLICY; Schema: public; Owner: postgres
+-- Name: professional Enable read access for verified professional profiles; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read access for verified professional profiles" ON public.professional FOR SELECT TO anon USING ((is_verified = true));
 
 
 --
--- Name: professional_service Enable read for active services by verified professionals; Type: POLICY; Schema: public; Owner: postgres
+-- Name: professional_service Enable read for active services by verified professionals; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable read for active services by verified professionals" ON public.professional_service FOR SELECT TO anon, authenticated USING (((is_active = true) AND (EXISTS ( SELECT 1
@@ -9471,14 +13938,14 @@ CREATE POLICY "Enable read for active services by verified professionals" ON pub
 
 
 --
--- Name: user Enable user to update their own profile; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user Enable user to update their own profile; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Enable user to update their own profile" ON public."user" FOR UPDATE TO authenticated USING ((( SELECT auth.uid() AS uid) = id)) WITH CHECK ((( SELECT auth.uid() AS uid) = id));
 
 
 --
--- Name: professional_booking Linked professionals can manage their bookings; Type: POLICY; Schema: public; Owner: postgres
+-- Name: professional_booking Linked professionals can manage their bookings; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Linked professionals can manage their bookings" ON public.professional_booking TO authenticated USING ((EXISTS ( SELECT 1
@@ -9489,7 +13956,7 @@ CREATE POLICY "Linked professionals can manage their bookings" ON public.profess
 
 
 --
--- Name: professional_service Linked professionals can manage their own services; Type: POLICY; Schema: public; Owner: postgres
+-- Name: professional_service Linked professionals can manage their own services; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Linked professionals can manage their own services" ON public.professional_service TO authenticated USING ((EXISTS ( SELECT 1
@@ -9500,14 +13967,65 @@ CREATE POLICY "Linked professionals can manage their own services" ON public.pro
 
 
 --
--- Name: professional Linked users can manage their own professional profile; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity Linked professionals can view their attached activities; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Linked professionals can view their attached activities" ON public.activity FOR SELECT TO authenticated USING ((((referee_booking_id IS NOT NULL) OR (coach_booking_id IS NOT NULL)) AND (EXISTS ( SELECT 1
+   FROM (public.professional_booking pb
+     JOIN public.professional pr ON ((pr.id = pb.professional_id)))
+  WHERE ((pb.id = ANY (ARRAY[activity.referee_booking_id, activity.coach_booking_id])) AND (pr.linked_user_id = ( SELECT auth.uid() AS uid)))))));
+
+
+--
+-- Name: professional_booking_package Linked professionals can view their booking packages; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Linked professionals can view their booking packages" ON public.professional_booking_package FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.professional p
+  WHERE ((p.id = professional_booking_package.professional_id) AND (p.linked_user_id = ( SELECT auth.uid() AS uid))))));
+
+
+--
+-- Name: professional Linked users can manage their own professional profile; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Linked users can manage their own professional profile" ON public.professional TO authenticated USING ((( SELECT auth.uid() AS uid) = linked_user_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = linked_user_id));
 
 
 --
--- Name: lobby_member Lobby membership deletion policy; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_feed_item_reaction Lobby members can read feed item reactions; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Lobby members can read feed item reactions" ON public.lobby_feed_item_reaction FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.lobby_feed_item fi
+  WHERE ((fi.id = lobby_feed_item_reaction.feed_item_id) AND (fi.lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids))))));
+
+
+--
+-- Name: lobby_payment_request_payee Lobby members can read payment request payees; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Lobby members can read payment request payees" ON public.lobby_payment_request_payee FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.lobby_feed_item fi
+  WHERE ((fi.id = lobby_payment_request_payee.feed_item_id) AND (fi.lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids))))));
+
+
+--
+-- Name: professional_booking Lobby members can view attached bookings; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Lobby members can view attached bookings" ON public.professional_booking FOR SELECT USING (public.is_booking_attached_to_my_lobby_activity(id));
+
+
+--
+-- Name: activity Lobby members can view their lobby's activities; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Lobby members can view their lobby's activities" ON public.activity FOR SELECT TO authenticated USING (((lobby_id IS NOT NULL) AND (lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids))));
+
+
+--
+-- Name: lobby_member Lobby membership deletion policy; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Lobby membership deletion policy" ON public.lobby_member FOR DELETE TO authenticated USING ((((user_id = ( SELECT auth.uid() AS uid)) AND (NOT (EXISTS ( SELECT 1
@@ -9518,7 +14036,7 @@ CREATE POLICY "Lobby membership deletion policy" ON public.lobby_member FOR DELE
 
 
 --
--- Name: lobby_feed_poll_vote Members can cast a vote in their lobby's polls; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_feed_poll_vote Members can cast a vote in their lobby's polls; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Members can cast a vote in their lobby's polls" ON public.lobby_feed_poll_vote FOR INSERT TO authenticated WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1
@@ -9527,7 +14045,7 @@ CREATE POLICY "Members can cast a vote in their lobby's polls" ON public.lobby_f
 
 
 --
--- Name: activity_confirmation Members can change their own attendance; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity_confirmation Members can change their own attendance; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Members can change their own attendance" ON public.activity_confirmation FOR UPDATE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid))) WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1
@@ -9536,7 +14054,7 @@ CREATE POLICY "Members can change their own attendance" ON public.activity_confi
 
 
 --
--- Name: activity_confirmation Members can confirm their own attendance; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity_confirmation Members can confirm their own attendance; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Members can confirm their own attendance" ON public.activity_confirmation FOR INSERT TO authenticated WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1
@@ -9545,14 +14063,23 @@ CREATE POLICY "Members can confirm their own attendance" ON public.activity_conf
 
 
 --
--- Name: lobby_feed_item Members can post personal or photo items; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_email_invite Members can create email invites; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Members can create email invites" ON public.lobby_email_invite FOR INSERT TO authenticated WITH CHECK (((inviter_user_id = auth.uid()) AND (EXISTS ( SELECT 1
+   FROM public.lobby_member lm
+  WHERE ((lm.lobby_id = lobby_email_invite.lobby_id) AND (lm.user_id = auth.uid()))))));
+
+
+--
+-- Name: lobby_feed_item Members can post personal or photo items; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Members can post personal or photo items" ON public.lobby_feed_item FOR INSERT TO authenticated WITH CHECK (((author_id = ( SELECT auth.uid() AS uid)) AND (lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)) AND (kind = ANY (ARRAY['personal'::public.lobby_feed_item_kind, 'photo'::public.lobby_feed_item_kind]))));
 
 
 --
--- Name: activity_confirmation Members can read confirmations in their lobby; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity_confirmation Members can read confirmations in their lobby; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Members can read confirmations in their lobby" ON public.activity_confirmation FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
@@ -9561,14 +14088,14 @@ CREATE POLICY "Members can read confirmations in their lobby" ON public.activity
 
 
 --
--- Name: lobby_feed_item Members can read feed items in their lobby; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_feed_item Members can read feed items in their lobby; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Members can read feed items in their lobby" ON public.lobby_feed_item FOR SELECT TO authenticated USING ((lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)));
 
 
 --
--- Name: lobby_feed_poll_vote Members can read poll votes in their lobby; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_feed_poll_vote Members can read poll votes in their lobby; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Members can read poll votes in their lobby" ON public.lobby_feed_poll_vote FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
@@ -9577,28 +14104,107 @@ CREATE POLICY "Members can read poll votes in their lobby" ON public.lobby_feed_
 
 
 --
--- Name: activity_confirmation Members can retract their own confirmation; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity_confirmation Members can retract their own confirmation; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Members can retract their own confirmation" ON public.activity_confirmation FOR DELETE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
 
 
 --
--- Name: lobby_match Members of either lobby can read the match; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_email_invite Members can view email invites; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Members can view email invites" ON public.lobby_email_invite FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.lobby_member lm
+  WHERE ((lm.lobby_id = lobby_email_invite.lobby_id) AND (lm.user_id = auth.uid())))));
+
+
+--
+-- Name: lobby_challenge Members of either lobby can read challenges; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Members of either lobby can read challenges" ON public.lobby_challenge FOR SELECT TO authenticated USING (((initiator_lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)) OR (target_lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids))));
+
+
+--
+-- Name: lobby_match Members of either lobby can read the match; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Members of either lobby can read the match" ON public.lobby_match FOR SELECT TO authenticated USING (((lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)) OR ((opponent_lobby_id IS NOT NULL) AND (opponent_lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)))));
 
 
 --
--- Name: lobby_feed_poll_vote Users can change their own vote; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity Owner or lobby manager can delete activities; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Owner or lobby manager can delete activities" ON public.activity FOR DELETE TO authenticated USING (((user_id = auth.uid()) OR ((lobby_id IS NOT NULL) AND public.lobby_can_manage(lobby_id))));
+
+
+--
+-- Name: activity Owner or lobby manager can update activities; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Owner or lobby manager can update activities" ON public.activity FOR UPDATE TO authenticated USING (((user_id = auth.uid()) OR ((lobby_id IS NOT NULL) AND public.lobby_can_manage(lobby_id)))) WITH CHECK (((user_id = auth.uid()) OR ((lobby_id IS NOT NULL) AND public.lobby_can_manage(lobby_id))));
+
+
+--
+-- Name: friendship Parties can read their friendship rows; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Parties can read their friendship rows" ON public.friendship FOR SELECT TO authenticated USING (((auth.uid() = requester_id) OR (auth.uid() = addressee_id)));
+
+
+--
+-- Name: wall_post_reaction React to visible posts; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "React to visible posts" ON public.wall_post_reaction FOR INSERT TO authenticated WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND public.fn_can_see_wall_post(post_id)));
+
+
+--
+-- Name: wall_post_reaction Reactions follow their post; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Reactions follow their post" ON public.wall_post_reaction FOR SELECT TO authenticated USING (public.fn_can_see_wall_post(post_id));
+
+
+--
+-- Name: wall_post_reaction Remove your own reaction; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Remove your own reaction" ON public.wall_post_reaction FOR DELETE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: wall_post_report Report a visible post; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Report a visible post" ON public.wall_post_report FOR INSERT TO authenticated WITH CHECK (((reporter_id = ( SELECT auth.uid() AS uid)) AND public.fn_can_see_wall_post(post_id)));
+
+
+--
+-- Name: wall_post_report Reporters can see their own reports; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Reporters can see their own reports" ON public.wall_post_report FOR SELECT TO authenticated USING ((reporter_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: wall_post_tag Tags follow their post; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Tags follow their post" ON public.wall_post_tag FOR SELECT TO authenticated USING (public.fn_can_see_wall_post(post_id));
+
+
+--
+-- Name: lobby_feed_poll_vote Users can change their own vote; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can change their own vote" ON public.lobby_feed_poll_vote FOR UPDATE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
 
 
 --
--- Name: lobby_befriend_record Users can create befriend records with restrictions; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_befriend_record Users can create befriend records with restrictions; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can create befriend records with restrictions" ON public.lobby_befriend_record FOR INSERT TO authenticated WITH CHECK ((true AND ((interaction_type <> 'request'::public.lobby_befriend_interaction) OR (NOT (EXISTS ( SELECT 1
@@ -9607,14 +14213,14 @@ CREATE POLICY "Users can create befriend records with restrictions" ON public.lo
 
 
 --
--- Name: activity Users can create their own activities; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity Users can create their own activities; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can create their own activities" ON public.activity FOR INSERT TO authenticated WITH CHECK ((user_id = auth.uid()));
 
 
 --
--- Name: activity_hr_sample Users can delete HR samples for their activities; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity_hr_sample Users can delete HR samples for their activities; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can delete HR samples for their activities" ON public.activity_hr_sample FOR DELETE TO authenticated USING ((EXISTS ( SELECT 1
@@ -9623,42 +14229,35 @@ CREATE POLICY "Users can delete HR samples for their activities" ON public.activ
 
 
 --
--- Name: activity Users can delete their own activities; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can delete their own activities" ON public.activity FOR DELETE TO authenticated USING ((user_id = auth.uid()));
-
-
---
--- Name: user_industry Users can delete their own data; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_industry Users can delete their own data; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can delete their own data" ON public.user_industry FOR DELETE TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id));
 
 
 --
--- Name: user_health_link Users can delete their own health link; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_health_link Users can delete their own health link; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can delete their own health link" ON public.user_health_link FOR DELETE TO authenticated USING ((user_id = auth.uid()));
 
 
 --
--- Name: activity_health_metrics Users can delete their own health metrics; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity_health_metrics Users can delete their own health metrics; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can delete their own health metrics" ON public.activity_health_metrics FOR DELETE TO authenticated USING ((user_id = auth.uid()));
 
 
 --
--- Name: user_network Users can delete their own rows; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_network Users can delete their own rows; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can delete their own rows" ON public.user_network FOR DELETE TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id));
 
 
 --
--- Name: activity_hr_sample Users can insert HR samples for their activities; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity_hr_sample Users can insert HR samples for their activities; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can insert HR samples for their activities" ON public.activity_hr_sample FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
@@ -9667,91 +14266,84 @@ CREATE POLICY "Users can insert HR samples for their activities" ON public.activ
 
 
 --
--- Name: user_industry Users can insert their own data; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_industry Users can insert their own data; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can insert their own data" ON public.user_industry FOR INSERT TO authenticated WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
 
 
 --
--- Name: user_health_link Users can insert their own health link; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_health_link Users can insert their own health link; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can insert their own health link" ON public.user_health_link FOR INSERT TO authenticated WITH CHECK ((user_id = auth.uid()));
 
 
 --
--- Name: activity_health_metrics Users can insert their own health metrics; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity_health_metrics Users can insert their own health metrics; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can insert their own health metrics" ON public.activity_health_metrics FOR INSERT TO authenticated WITH CHECK ((user_id = auth.uid()));
 
 
 --
--- Name: user_network Users can insert their own rows; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_network Users can insert their own rows; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can insert their own rows" ON public.user_network FOR INSERT TO authenticated WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
 
 
 --
--- Name: lobby_feed_poll_vote Users can retract their own vote; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_feed_poll_vote Users can retract their own vote; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can retract their own vote" ON public.lobby_feed_poll_vote FOR DELETE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
 
 
 --
--- Name: lobby_member Users can see lobby members in shared lobbies; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_member Users can see lobby members in shared lobbies; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can see lobby members in shared lobbies" ON public.lobby_member FOR SELECT TO authenticated USING ((lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)));
 
 
 --
--- Name: activity Users can update their own activities; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can update their own activities" ON public.activity FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
-
-
---
--- Name: daily_health_summary Users can update their own daily summaries; Type: POLICY; Schema: public; Owner: postgres
+-- Name: daily_health_summary Users can update their own daily summaries; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can update their own daily summaries" ON public.daily_health_summary FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
 
 
 --
--- Name: user_health_link Users can update their own health link; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_health_link Users can update their own health link; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can update their own health link" ON public.user_health_link FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
 
 
 --
--- Name: activity_health_metrics Users can update their own health metrics; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity_health_metrics Users can update their own health metrics; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can update their own health metrics" ON public.activity_health_metrics FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
 
 
 --
--- Name: user_network Users can update their own rows; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_network Users can update their own rows; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can update their own rows" ON public.user_network FOR UPDATE TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
 
 
 --
--- Name: daily_health_summary Users can upsert their own daily summaries; Type: POLICY; Schema: public; Owner: postgres
+-- Name: daily_health_summary Users can upsert their own daily summaries; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can upsert their own daily summaries" ON public.daily_health_summary FOR INSERT TO authenticated WITH CHECK ((user_id = auth.uid()));
 
 
 --
--- Name: activity_hr_sample Users can view HR samples for their activities; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity_hr_sample Users can view HR samples for their activities; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can view HR samples for their activities" ON public.activity_hr_sample FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
@@ -9760,7 +14352,7 @@ CREATE POLICY "Users can view HR samples for their activities" ON public.activit
 
 
 --
--- Name: lobby_befriend_record Users can view befriend records; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_befriend_record Users can view befriend records; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can view befriend records" ON public.lobby_befriend_record FOR SELECT TO authenticated USING (((( SELECT auth.uid() AS uid) = target_user_id) OR (( SELECT auth.uid() AS uid) = initiator_user_id) OR (target_lobby_id IN ( SELECT lobby_member.lobby_id
@@ -9769,2862 +14361,597 @@ CREATE POLICY "Users can view befriend records" ON public.lobby_befriend_record 
 
 
 --
--- Name: activity Users can view their own activities; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity Users can view their own activities; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can view their own activities" ON public.activity FOR SELECT TO authenticated USING ((user_id = auth.uid()));
 
 
 --
--- Name: daily_health_summary Users can view their own daily summaries; Type: POLICY; Schema: public; Owner: postgres
+-- Name: daily_health_summary Users can view their own daily summaries; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can view their own daily summaries" ON public.daily_health_summary FOR SELECT TO authenticated USING ((user_id = auth.uid()));
 
 
 --
--- Name: user_health_link Users can view their own health link; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_health_link Users can view their own health link; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can view their own health link" ON public.user_health_link FOR SELECT TO authenticated USING ((user_id = auth.uid()));
 
 
 --
--- Name: activity_health_metrics Users can view their own health metrics; Type: POLICY; Schema: public; Owner: postgres
+-- Name: activity_health_metrics Users can view their own health metrics; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can view their own health metrics" ON public.activity_health_metrics FOR SELECT TO authenticated USING ((user_id = auth.uid()));
 
 
 --
--- Name: lobby_befriend_record Users involved can update befriend record status; Type: POLICY; Schema: public; Owner: postgres
+-- Name: lobby_befriend_record Users involved can update befriend record status; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users involved can update befriend record status" ON public.lobby_befriend_record FOR UPDATE TO authenticated USING (((( SELECT auth.uid() AS uid) = initiator_user_id) OR (( SELECT auth.uid() AS uid) = target_user_id) OR ((target_lobby_id IS NOT NULL) AND (target_lobby_id IN ( SELECT lobby.id
-   FROM public.lobby
-  WHERE (lobby.captain_id = ( SELECT auth.uid() AS uid))))))) WITH CHECK (true);
+CREATE POLICY "Users involved can update befriend record status" ON public.lobby_befriend_record FOR UPDATE TO authenticated USING (((auth.uid() = initiator_user_id) OR (auth.uid() = target_user_id) OR ((target_lobby_id IS NOT NULL) AND public.lobby_can_manage(target_lobby_id)))) WITH CHECK (true);
 
 
 --
--- Name: user_achievement Users see their own achievements; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_achievement Users see their own achievements; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users see their own achievements" ON public.user_achievement FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
 
 
 --
--- Name: achievement; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: vitality_daily_load Users see their own daily load; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users see their own daily load" ON public.vitality_daily_load FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: vitality_score Users see their own vitality score; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users see their own vitality score" ON public.vitality_score FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: wall_post Visible posts are readable; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Visible posts are readable" ON public.wall_post FOR SELECT TO authenticated USING (public.fn_can_see_wall_post(id));
+
+
+--
+-- Name: achievement; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.achievement ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: activity; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: activity; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.activity ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: activity_confirmation; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: activity_confirmation; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.activity_confirmation ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: activity_health_metrics; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: activity_health_metrics; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.activity_health_metrics ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: activity_hr_sample; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: activity_hr_sample; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.activity_hr_sample ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: badminton_profile badminton profiles are publicly readable; Type: POLICY; Schema: public; Owner: postgres
+-- Name: badminton_profile badminton profiles are publicly readable; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "badminton profiles are publicly readable" ON public.badminton_profile FOR SELECT USING (true);
 
 
 --
--- Name: badminton_profile; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: badminton_profile; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.badminton_profile ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: basketball_profile basketball profiles are publicly readable; Type: POLICY; Schema: public; Owner: postgres
+-- Name: basketball_profile basketball profiles are publicly readable; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "basketball profiles are publicly readable" ON public.basketball_profile FOR SELECT USING (true);
 
 
 --
--- Name: basketball_profile; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: basketball_profile; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.basketball_profile ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: booking_additional_users; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: booking_additional_users; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.booking_additional_users ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: daily_health_summary; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: daily_health_summary; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.daily_health_summary ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: user_rating elo ratings are publicly readable; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_device_token device tokens: delete own; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "device tokens: delete own" ON public.user_device_token FOR DELETE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: user_device_token device tokens: read own; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "device tokens: read own" ON public.user_device_token FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: user_rating elo ratings are publicly readable; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "elo ratings are publicly readable" ON public.user_rating FOR SELECT USING (true);
 
 
 --
--- Name: industry; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: enabled_notification_kind; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.enabled_notification_kind ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: friendship; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.friendship ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: industry; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.industry ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: lobby; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: lobby; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.lobby ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: lobby_befriend_record; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: lobby_befriend_record; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.lobby_befriend_record ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: lobby_feed_item; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: lobby_challenge; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.lobby_challenge ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lobby_email_invite; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.lobby_email_invite ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lobby_feed_item; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.lobby_feed_item ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: lobby_feed_poll_vote; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: lobby_feed_item_reaction; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.lobby_feed_item_reaction ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lobby_feed_poll_vote; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.lobby_feed_poll_vote ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: lobby_match; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: lobby_match; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.lobby_match ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: lobby_member; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: lobby_member; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.lobby_member ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: location; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: lobby_payment_request_payee; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.lobby_payment_request_payee ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: location; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.location ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: network; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: network; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.network ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: pickleball_profile pickleball profiles are publicly readable; Type: POLICY; Schema: public; Owner: postgres
+-- Name: notification_outbox; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.notification_outbox ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: notification_outbox outbox: read own; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "outbox: read own" ON public.notification_outbox FOR SELECT TO authenticated USING ((recipient_user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: pickleball_profile pickleball profiles are publicly readable; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "pickleball profiles are publicly readable" ON public.pickleball_profile FOR SELECT USING (true);
 
 
 --
--- Name: pickleball_profile; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: pickleball_profile; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.pickleball_profile ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: professional; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: professional; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.professional ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: professional_booking; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: professional_booking; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.professional_booking ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: professional_booking_review; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: professional_booking_package; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.professional_booking_package ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: professional_booking_review; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.professional_booking_review ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: professional_service; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: professional_preferred_location; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.professional_preferred_location ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: professional_service; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.professional_service ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: soccer_profile; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: soccer_profile; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.soccer_profile ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: sport; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: social_event; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.social_event ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: sport; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.sport ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: soccer_profile sport profiles are publicly readable; Type: POLICY; Schema: public; Owner: postgres
+-- Name: soccer_profile sport profiles are publicly readable; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "sport profiles are publicly readable" ON public.soccer_profile FOR SELECT USING (true);
 
 
 --
--- Name: supported_city_cluster; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: supported_city_cluster; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.supported_city_cluster ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: tennis_profile tennis profiles are publicly readable; Type: POLICY; Schema: public; Owner: postgres
+-- Name: tennis_profile tennis profiles are publicly readable; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "tennis profiles are publicly readable" ON public.tennis_profile FOR SELECT USING (true);
 
 
 --
--- Name: tennis_profile; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: tennis_profile; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.tennis_profile ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: user; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: user; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public."user" ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: user_achievement; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: user_achievement; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.user_achievement ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: user_health_link; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: user_block; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.user_block ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: user_device_token; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.user_device_token ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: user_health_link; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.user_health_link ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: user_industry; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: user_industry; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.user_industry ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: user_network; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: user_network; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.user_network ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: user_rating; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: user_payment_info; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.user_payment_info ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: user_rating; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.user_rating ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: badminton_profile users manage own badminton profile; Type: POLICY; Schema: public; Owner: postgres
+-- Name: badminton_profile users manage own badminton profile; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "users manage own badminton profile" ON public.badminton_profile USING ((auth.uid() = user_id));
 
 
 --
--- Name: basketball_profile users manage own basketball profile; Type: POLICY; Schema: public; Owner: postgres
+-- Name: basketball_profile users manage own basketball profile; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "users manage own basketball profile" ON public.basketball_profile USING ((auth.uid() = user_id));
 
 
 --
--- Name: pickleball_profile users manage own pickleball profile; Type: POLICY; Schema: public; Owner: postgres
+-- Name: pickleball_profile users manage own pickleball profile; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "users manage own pickleball profile" ON public.pickleball_profile USING ((auth.uid() = user_id));
 
 
 --
--- Name: soccer_profile users manage own soccer profile; Type: POLICY; Schema: public; Owner: postgres
+-- Name: soccer_profile users manage own soccer profile; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "users manage own soccer profile" ON public.soccer_profile USING ((auth.uid() = user_id));
 
 
 --
--- Name: tennis_profile users manage own tennis profile; Type: POLICY; Schema: public; Owner: postgres
+-- Name: tennis_profile users manage own tennis profile; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "users manage own tennis profile" ON public.tennis_profile USING ((auth.uid() = user_id));
 
 
 --
--- Name: messages; Type: ROW SECURITY; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: vitality_daily_load; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.vitality_daily_load ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: vitality_score; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.vitality_score ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: wall_post; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.wall_post ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: wall_post_gc; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.wall_post_gc ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: wall_post_reaction; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.wall_post_reaction ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: wall_post_report; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.wall_post_report ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: wall_post_tag; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.wall_post_tag ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: messages; Type: ROW SECURITY; Schema: realtime; Owner: -
 --
 
 ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: buckets; Type: ROW SECURITY; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckets; Type: ROW SECURITY; Schema: storage; Owner: -
 --
 
 ALTER TABLE storage.buckets ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: buckets_analytics; Type: ROW SECURITY; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckets_analytics; Type: ROW SECURITY; Schema: storage; Owner: -
 --
 
 ALTER TABLE storage.buckets_analytics ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: buckets_vectors; Type: ROW SECURITY; Schema: storage; Owner: supabase_storage_admin
+-- Name: buckets_vectors; Type: ROW SECURITY; Schema: storage; Owner: -
 --
 
 ALTER TABLE storage.buckets_vectors ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: migrations; Type: ROW SECURITY; Schema: storage; Owner: supabase_storage_admin
+-- Name: objects lobby_avatar: captain can delete; Type: POLICY; Schema: storage; Owner: -
+--
+
+CREATE POLICY "lobby_avatar: captain can delete" ON storage.objects FOR DELETE TO authenticated USING (((bucket_id = 'lobby_avatar'::text) AND (EXISTS ( SELECT 1
+   FROM public.lobby l
+  WHERE ((l.id = (split_part(l.name, '.'::text, 1))::uuid) AND (l.captain_id = auth.uid()))))));
+
+
+--
+-- Name: objects lobby_avatar: captain can replace; Type: POLICY; Schema: storage; Owner: -
+--
+
+CREATE POLICY "lobby_avatar: captain can replace" ON storage.objects FOR UPDATE TO authenticated USING (((bucket_id = 'lobby_avatar'::text) AND (EXISTS ( SELECT 1
+   FROM public.lobby l
+  WHERE ((l.id = (split_part(l.name, '.'::text, 1))::uuid) AND (l.captain_id = auth.uid())))))) WITH CHECK (((bucket_id = 'lobby_avatar'::text) AND (EXISTS ( SELECT 1
+   FROM public.lobby l
+  WHERE ((l.id = (split_part(l.name, '.'::text, 1))::uuid) AND (l.captain_id = auth.uid()))))));
+
+
+--
+-- Name: objects lobby_avatar: captain can upload; Type: POLICY; Schema: storage; Owner: -
+--
+
+CREATE POLICY "lobby_avatar: captain can upload" ON storage.objects FOR INSERT TO authenticated WITH CHECK (((bucket_id = 'lobby_avatar'::text) AND (EXISTS ( SELECT 1
+   FROM public.lobby l
+  WHERE ((l.id = (split_part(l.name, '.'::text, 1))::uuid) AND (l.captain_id = auth.uid()))))));
+
+
+--
+-- Name: objects lobby_avatar: public read; Type: POLICY; Schema: storage; Owner: -
+--
+
+CREATE POLICY "lobby_avatar: public read" ON storage.objects FOR SELECT USING ((bucket_id = 'lobby_avatar'::text));
+
+
+--
+-- Name: migrations; Type: ROW SECURITY; Schema: storage; Owner: -
 --
 
 ALTER TABLE storage.migrations ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: objects; Type: ROW SECURITY; Schema: storage; Owner: supabase_storage_admin
+-- Name: objects; Type: ROW SECURITY; Schema: storage; Owner: -
 --
 
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: s3_multipart_uploads; Type: ROW SECURITY; Schema: storage; Owner: supabase_storage_admin
+-- Name: s3_multipart_uploads; Type: ROW SECURITY; Schema: storage; Owner: -
 --
 
 ALTER TABLE storage.s3_multipart_uploads ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: s3_multipart_uploads_parts; Type: ROW SECURITY; Schema: storage; Owner: supabase_storage_admin
+-- Name: s3_multipart_uploads_parts; Type: ROW SECURITY; Schema: storage; Owner: -
 --
 
 ALTER TABLE storage.s3_multipart_uploads_parts ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: vector_indexes; Type: ROW SECURITY; Schema: storage; Owner: supabase_storage_admin
+-- Name: vector_indexes; Type: ROW SECURITY; Schema: storage; Owner: -
 --
 
 ALTER TABLE storage.vector_indexes ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: supabase_realtime; Type: PUBLICATION; Schema: -; Owner: postgres
+-- Name: objects wall_post: owner can delete; Type: POLICY; Schema: storage; Owner: -
+--
+
+CREATE POLICY "wall_post: owner can delete" ON storage.objects FOR DELETE TO authenticated USING (((bucket_id = 'wall_post'::text) AND (split_part(name, '/'::text, 1) = (auth.uid())::text)));
+
+
+--
+-- Name: objects wall_post: owner can upload; Type: POLICY; Schema: storage; Owner: -
+--
+
+CREATE POLICY "wall_post: owner can upload" ON storage.objects FOR INSERT TO authenticated WITH CHECK (((bucket_id = 'wall_post'::text) AND (split_part(name, '/'::text, 1) = (auth.uid())::text)));
+
+
+--
+-- Name: supabase_realtime; Type: PUBLICATION; Schema: -; Owner: -
 --
 
 CREATE PUBLICATION supabase_realtime WITH (publish = 'insert, update, delete, truncate');
 
 
-ALTER PUBLICATION supabase_realtime OWNER TO postgres;
-
 --
--- Name: SCHEMA auth; Type: ACL; Schema: -; Owner: supabase_admin
---
-
-GRANT USAGE ON SCHEMA auth TO anon;
-GRANT USAGE ON SCHEMA auth TO authenticated;
-GRANT USAGE ON SCHEMA auth TO service_role;
-GRANT ALL ON SCHEMA auth TO supabase_auth_admin;
-GRANT ALL ON SCHEMA auth TO dashboard_user;
-GRANT USAGE ON SCHEMA auth TO postgres;
-
-
---
--- Name: SCHEMA extensions; Type: ACL; Schema: -; Owner: postgres
---
-
-GRANT USAGE ON SCHEMA extensions TO anon;
-GRANT USAGE ON SCHEMA extensions TO authenticated;
-GRANT USAGE ON SCHEMA extensions TO service_role;
-GRANT ALL ON SCHEMA extensions TO dashboard_user;
-
-
---
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
---
-
-GRANT USAGE ON SCHEMA public TO postgres;
-GRANT USAGE ON SCHEMA public TO anon;
-GRANT USAGE ON SCHEMA public TO authenticated;
-GRANT USAGE ON SCHEMA public TO service_role;
-
-
---
--- Name: SCHEMA realtime; Type: ACL; Schema: -; Owner: supabase_admin
---
-
-GRANT USAGE ON SCHEMA realtime TO postgres;
-GRANT USAGE ON SCHEMA realtime TO anon;
-GRANT USAGE ON SCHEMA realtime TO authenticated;
-GRANT USAGE ON SCHEMA realtime TO service_role;
-GRANT ALL ON SCHEMA realtime TO supabase_realtime_admin;
-
-
---
--- Name: SCHEMA storage; Type: ACL; Schema: -; Owner: supabase_admin
---
-
-GRANT USAGE ON SCHEMA storage TO postgres;
-GRANT USAGE ON SCHEMA storage TO anon;
-GRANT USAGE ON SCHEMA storage TO authenticated;
-GRANT USAGE ON SCHEMA storage TO service_role;
-GRANT ALL ON SCHEMA storage TO supabase_storage_admin;
-GRANT ALL ON SCHEMA storage TO dashboard_user;
-
-
---
--- Name: SCHEMA vault; Type: ACL; Schema: -; Owner: supabase_admin
---
-
-GRANT USAGE ON SCHEMA vault TO postgres WITH GRANT OPTION;
-GRANT USAGE ON SCHEMA vault TO service_role;
-
-
---
--- Name: FUNCTION gtrgm_in(cstring); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gtrgm_in(cstring) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gtrgm_out(extensions.gtrgm); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gtrgm_out(extensions.gtrgm) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION email(); Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT ALL ON FUNCTION auth.email() TO dashboard_user;
-GRANT ALL ON FUNCTION auth.email() TO postgres;
-
-
---
--- Name: FUNCTION jwt(); Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT ALL ON FUNCTION auth.jwt() TO postgres;
-GRANT ALL ON FUNCTION auth.jwt() TO dashboard_user;
-
-
---
--- Name: FUNCTION role(); Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT ALL ON FUNCTION auth.role() TO dashboard_user;
-GRANT ALL ON FUNCTION auth.role() TO postgres;
-
-
---
--- Name: FUNCTION uid(); Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT ALL ON FUNCTION auth.uid() TO dashboard_user;
-GRANT ALL ON FUNCTION auth.uid() TO postgres;
-
-
---
--- Name: FUNCTION armor(bytea); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.armor(bytea) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.armor(bytea) TO dashboard_user;
-
-
---
--- Name: FUNCTION armor(bytea, text[], text[]); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.armor(bytea, text[], text[]) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.armor(bytea, text[], text[]) TO dashboard_user;
-
-
---
--- Name: FUNCTION crypt(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.crypt(text, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.crypt(text, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION dearmor(text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.dearmor(text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.dearmor(text) TO dashboard_user;
-
-
---
--- Name: FUNCTION decrypt(bytea, bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.decrypt(bytea, bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.decrypt(bytea, bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION decrypt_iv(bytea, bytea, bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.decrypt_iv(bytea, bytea, bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.decrypt_iv(bytea, bytea, bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION digest(bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.digest(bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.digest(bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION digest(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.digest(text, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.digest(text, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION encrypt(bytea, bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.encrypt(bytea, bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.encrypt(bytea, bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION encrypt_iv(bytea, bytea, bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.encrypt_iv(bytea, bytea, bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.encrypt_iv(bytea, bytea, bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION gen_random_bytes(integer); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gen_random_bytes(integer) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.gen_random_bytes(integer) TO dashboard_user;
-
-
---
--- Name: FUNCTION gen_random_uuid(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gen_random_uuid() TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.gen_random_uuid() TO dashboard_user;
-
-
---
--- Name: FUNCTION gen_salt(text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gen_salt(text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.gen_salt(text) TO dashboard_user;
-
-
---
--- Name: FUNCTION gen_salt(text, integer); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gen_salt(text, integer) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.gen_salt(text, integer) TO dashboard_user;
-
-
---
--- Name: FUNCTION gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gin_extract_value_trgm(text, internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gin_extract_value_trgm(text, internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION grant_pg_cron_access(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-REVOKE ALL ON FUNCTION extensions.grant_pg_cron_access() FROM supabase_admin;
-GRANT ALL ON FUNCTION extensions.grant_pg_cron_access() TO supabase_admin WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.grant_pg_cron_access() TO dashboard_user;
-GRANT ALL ON FUNCTION extensions.grant_pg_cron_access() TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION grant_pg_graphql_access(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.grant_pg_graphql_access() TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION grant_pg_net_access(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-REVOKE ALL ON FUNCTION extensions.grant_pg_net_access() FROM supabase_admin;
-GRANT ALL ON FUNCTION extensions.grant_pg_net_access() TO supabase_admin WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.grant_pg_net_access() TO dashboard_user;
-GRANT ALL ON FUNCTION extensions.grant_pg_net_access() TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gtrgm_compress(internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gtrgm_compress(internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gtrgm_consistent(internal, text, smallint, oid, internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gtrgm_consistent(internal, text, smallint, oid, internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gtrgm_decompress(internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gtrgm_decompress(internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gtrgm_distance(internal, text, smallint, oid, internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gtrgm_distance(internal, text, smallint, oid, internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gtrgm_options(internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gtrgm_options(internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gtrgm_penalty(internal, internal, internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gtrgm_penalty(internal, internal, internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gtrgm_picksplit(internal, internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gtrgm_picksplit(internal, internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gtrgm_same(extensions.gtrgm, extensions.gtrgm, internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gtrgm_same(extensions.gtrgm, extensions.gtrgm, internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION gtrgm_union(internal, internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.gtrgm_union(internal, internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION hmac(bytea, bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.hmac(bytea, bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.hmac(bytea, bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION hmac(text, text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.hmac(text, text, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.hmac(text, text, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION json_matches_schema(schema json, instance json); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.json_matches_schema(schema json, instance json) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION jsonb_matches_schema(schema json, instance jsonb); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.jsonb_matches_schema(schema json, instance jsonb) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION jsonschema_is_valid(schema json); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.jsonschema_is_valid(schema json) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION jsonschema_validation_errors(schema json, instance json); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.jsonschema_validation_errors(schema json, instance json) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION nanoid(size integer, alphabet text); Type: ACL; Schema: extensions; Owner: postgres
---
-
-GRANT ALL ON FUNCTION extensions.nanoid(size integer, alphabet text) TO authenticated;
-GRANT ALL ON FUNCTION extensions.nanoid(size integer, alphabet text) TO anon;
-GRANT ALL ON FUNCTION extensions.nanoid(size integer, alphabet text) TO service_role;
-
-
---
--- Name: FUNCTION pg_stat_statements(showtext boolean, OUT userid oid, OUT dbid oid, OUT toplevel boolean, OUT queryid bigint, OUT query text, OUT plans bigint, OUT total_plan_time double precision, OUT min_plan_time double precision, OUT max_plan_time double precision, OUT mean_plan_time double precision, OUT stddev_plan_time double precision, OUT calls bigint, OUT total_exec_time double precision, OUT min_exec_time double precision, OUT max_exec_time double precision, OUT mean_exec_time double precision, OUT stddev_exec_time double precision, OUT rows bigint, OUT shared_blks_hit bigint, OUT shared_blks_read bigint, OUT shared_blks_dirtied bigint, OUT shared_blks_written bigint, OUT local_blks_hit bigint, OUT local_blks_read bigint, OUT local_blks_dirtied bigint, OUT local_blks_written bigint, OUT temp_blks_read bigint, OUT temp_blks_written bigint, OUT shared_blk_read_time double precision, OUT shared_blk_write_time double precision, OUT local_blk_read_time double precision, OUT local_blk_write_time double precision, OUT temp_blk_read_time double precision, OUT temp_blk_write_time double precision, OUT wal_records bigint, OUT wal_fpi bigint, OUT wal_bytes numeric, OUT jit_functions bigint, OUT jit_generation_time double precision, OUT jit_inlining_count bigint, OUT jit_inlining_time double precision, OUT jit_optimization_count bigint, OUT jit_optimization_time double precision, OUT jit_emission_count bigint, OUT jit_emission_time double precision, OUT jit_deform_count bigint, OUT jit_deform_time double precision, OUT stats_since timestamp with time zone, OUT minmax_stats_since timestamp with time zone); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pg_stat_statements(showtext boolean, OUT userid oid, OUT dbid oid, OUT toplevel boolean, OUT queryid bigint, OUT query text, OUT plans bigint, OUT total_plan_time double precision, OUT min_plan_time double precision, OUT max_plan_time double precision, OUT mean_plan_time double precision, OUT stddev_plan_time double precision, OUT calls bigint, OUT total_exec_time double precision, OUT min_exec_time double precision, OUT max_exec_time double precision, OUT mean_exec_time double precision, OUT stddev_exec_time double precision, OUT rows bigint, OUT shared_blks_hit bigint, OUT shared_blks_read bigint, OUT shared_blks_dirtied bigint, OUT shared_blks_written bigint, OUT local_blks_hit bigint, OUT local_blks_read bigint, OUT local_blks_dirtied bigint, OUT local_blks_written bigint, OUT temp_blks_read bigint, OUT temp_blks_written bigint, OUT shared_blk_read_time double precision, OUT shared_blk_write_time double precision, OUT local_blk_read_time double precision, OUT local_blk_write_time double precision, OUT temp_blk_read_time double precision, OUT temp_blk_write_time double precision, OUT wal_records bigint, OUT wal_fpi bigint, OUT wal_bytes numeric, OUT jit_functions bigint, OUT jit_generation_time double precision, OUT jit_inlining_count bigint, OUT jit_inlining_time double precision, OUT jit_optimization_count bigint, OUT jit_optimization_time double precision, OUT jit_emission_count bigint, OUT jit_emission_time double precision, OUT jit_deform_count bigint, OUT jit_deform_time double precision, OUT stats_since timestamp with time zone, OUT minmax_stats_since timestamp with time zone) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION pg_stat_statements_info(OUT dealloc bigint, OUT stats_reset timestamp with time zone); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pg_stat_statements_info(OUT dealloc bigint, OUT stats_reset timestamp with time zone) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pg_stat_statements_info(OUT dealloc bigint, OUT stats_reset timestamp with time zone) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_armor_headers(text, OUT key text, OUT value text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_armor_headers(text, OUT key text, OUT value text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_armor_headers(text, OUT key text, OUT value text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_key_id(bytea); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_key_id(bytea) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_key_id(bytea) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_pub_decrypt(bytea, bytea); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt(bytea, bytea) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt(bytea, bytea) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_pub_decrypt(bytea, bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_pub_decrypt(bytea, bytea, text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_pub_decrypt_bytea(bytea, bytea); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_pub_decrypt_bytea(bytea, bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_pub_decrypt_bytea(bytea, bytea, text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_pub_encrypt(text, bytea); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_pub_encrypt(text, bytea) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_pub_encrypt(text, bytea) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_pub_encrypt(text, bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_pub_encrypt(text, bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_pub_encrypt(text, bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_pub_encrypt_bytea(bytea, bytea); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_pub_encrypt_bytea(bytea, bytea) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_pub_encrypt_bytea(bytea, bytea) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_pub_encrypt_bytea(bytea, bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_pub_encrypt_bytea(bytea, bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_pub_encrypt_bytea(bytea, bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_sym_decrypt(bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_sym_decrypt(bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_sym_decrypt(bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_sym_decrypt(bytea, text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_sym_decrypt(bytea, text, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_sym_decrypt(bytea, text, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_sym_decrypt_bytea(bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_sym_decrypt_bytea(bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_sym_decrypt_bytea(bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_sym_decrypt_bytea(bytea, text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_sym_decrypt_bytea(bytea, text, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_sym_decrypt_bytea(bytea, text, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_sym_encrypt(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_sym_encrypt(text, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_sym_encrypt(text, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_sym_encrypt(text, text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_sym_encrypt(text, text, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_sym_encrypt(text, text, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_sym_encrypt_bytea(bytea, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_sym_encrypt_bytea(bytea, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_sym_encrypt_bytea(bytea, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgp_sym_encrypt_bytea(bytea, text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgp_sym_encrypt_bytea(bytea, text, text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.pgp_sym_encrypt_bytea(bytea, text, text) TO dashboard_user;
-
-
---
--- Name: FUNCTION pgrst_ddl_watch(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgrst_ddl_watch() TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION pgrst_drop_watch(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.pgrst_drop_watch() TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION set_graphql_placeholder(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.set_graphql_placeholder() TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION set_limit(real); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.set_limit(real) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION show_limit(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.show_limit() TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION show_trgm(text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.show_trgm(text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION similarity(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.similarity(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION similarity_dist(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.similarity_dist(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION similarity_op(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.similarity_op(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION strict_word_similarity(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.strict_word_similarity(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION strict_word_similarity_commutator_op(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.strict_word_similarity_commutator_op(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION strict_word_similarity_dist_commutator_op(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.strict_word_similarity_dist_commutator_op(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION strict_word_similarity_dist_op(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.strict_word_similarity_dist_op(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION strict_word_similarity_op(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.strict_word_similarity_op(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION unaccent(text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.unaccent(text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION unaccent(regdictionary, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.unaccent(regdictionary, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION unaccent_init(internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.unaccent_init(internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION unaccent_lexize(internal, internal, internal, internal); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.unaccent_lexize(internal, internal, internal, internal) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION uuid_generate_v1(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.uuid_generate_v1() TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.uuid_generate_v1() TO dashboard_user;
-
-
---
--- Name: FUNCTION uuid_generate_v1mc(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.uuid_generate_v1mc() TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.uuid_generate_v1mc() TO dashboard_user;
-
-
---
--- Name: FUNCTION uuid_generate_v3(namespace uuid, name text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.uuid_generate_v3(namespace uuid, name text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.uuid_generate_v3(namespace uuid, name text) TO dashboard_user;
-
-
---
--- Name: FUNCTION uuid_generate_v4(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.uuid_generate_v4() TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.uuid_generate_v4() TO dashboard_user;
-
-
---
--- Name: FUNCTION uuid_generate_v5(namespace uuid, name text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.uuid_generate_v5(namespace uuid, name text) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.uuid_generate_v5(namespace uuid, name text) TO dashboard_user;
-
-
---
--- Name: FUNCTION uuid_nil(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.uuid_nil() TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.uuid_nil() TO dashboard_user;
-
-
---
--- Name: FUNCTION uuid_ns_dns(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.uuid_ns_dns() TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.uuid_ns_dns() TO dashboard_user;
-
-
---
--- Name: FUNCTION uuid_ns_oid(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.uuid_ns_oid() TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.uuid_ns_oid() TO dashboard_user;
-
-
---
--- Name: FUNCTION uuid_ns_url(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.uuid_ns_url() TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.uuid_ns_url() TO dashboard_user;
-
-
---
--- Name: FUNCTION uuid_ns_x500(); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.uuid_ns_x500() TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION extensions.uuid_ns_x500() TO dashboard_user;
-
-
---
--- Name: FUNCTION word_similarity(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.word_similarity(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION word_similarity_commutator_op(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.word_similarity_commutator_op(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION word_similarity_dist_commutator_op(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.word_similarity_dist_commutator_op(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION word_similarity_dist_op(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.word_similarity_dist_op(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION word_similarity_op(text, text); Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION extensions.word_similarity_op(text, text) TO postgres WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION graphql("operationName" text, query text, variables jsonb, extensions jsonb); Type: ACL; Schema: graphql_public; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION graphql_public.graphql("operationName" text, query text, variables jsonb, extensions jsonb) TO postgres;
-GRANT ALL ON FUNCTION graphql_public.graphql("operationName" text, query text, variables jsonb, extensions jsonb) TO anon;
-GRANT ALL ON FUNCTION graphql_public.graphql("operationName" text, query text, variables jsonb, extensions jsonb) TO authenticated;
-GRANT ALL ON FUNCTION graphql_public.graphql("operationName" text, query text, variables jsonb, extensions jsonb) TO service_role;
-
-
---
--- Name: FUNCTION get_auth(p_usename text); Type: ACL; Schema: pgbouncer; Owner: supabase_admin
---
-
-REVOKE ALL ON FUNCTION pgbouncer.get_auth(p_usename text) FROM PUBLIC;
-GRANT ALL ON FUNCTION pgbouncer.get_auth(p_usename text) TO pgbouncer;
-GRANT ALL ON FUNCTION pgbouncer.get_auth(p_usename text) TO postgres;
-
-
---
--- Name: FUNCTION crypto_aead_det_decrypt(message bytea, additional bytea, key_uuid uuid, nonce bytea); Type: ACL; Schema: pgsodium; Owner: pgsodium_keymaker
---
-
-GRANT ALL ON FUNCTION pgsodium.crypto_aead_det_decrypt(message bytea, additional bytea, key_uuid uuid, nonce bytea) TO service_role;
-
-
---
--- Name: FUNCTION crypto_aead_det_encrypt(message bytea, additional bytea, key_uuid uuid, nonce bytea); Type: ACL; Schema: pgsodium; Owner: pgsodium_keymaker
---
-
-GRANT ALL ON FUNCTION pgsodium.crypto_aead_det_encrypt(message bytea, additional bytea, key_uuid uuid, nonce bytea) TO service_role;
-
-
---
--- Name: FUNCTION crypto_aead_det_keygen(); Type: ACL; Schema: pgsodium; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION pgsodium.crypto_aead_det_keygen() TO service_role;
-
-
---
--- Name: FUNCTION _achievement_current_value(p_user_id uuid, p_criteria jsonb, p_eligible_from timestamp with time zone); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public._achievement_current_value(p_user_id uuid, p_criteria jsonb, p_eligible_from timestamp with time zone) TO anon;
-GRANT ALL ON FUNCTION public._achievement_current_value(p_user_id uuid, p_criteria jsonb, p_eligible_from timestamp with time zone) TO authenticated;
-GRANT ALL ON FUNCTION public._achievement_current_value(p_user_id uuid, p_criteria jsonb, p_eligible_from timestamp with time zone) TO service_role;
-
-
---
--- Name: FUNCTION _achievement_level_floor(p_level integer); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public._achievement_level_floor(p_level integer) TO anon;
-GRANT ALL ON FUNCTION public._achievement_level_floor(p_level integer) TO authenticated;
-GRANT ALL ON FUNCTION public._achievement_level_floor(p_level integer) TO service_role;
-
-
---
--- Name: FUNCTION _achievement_level_for_xp(p_xp bigint); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public._achievement_level_for_xp(p_xp bigint) TO anon;
-GRANT ALL ON FUNCTION public._achievement_level_for_xp(p_xp bigint) TO authenticated;
-GRANT ALL ON FUNCTION public._achievement_level_for_xp(p_xp bigint) TO service_role;
-
-
---
--- Name: FUNCTION _achievement_period_key(p_criteria jsonb); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public._achievement_period_key(p_criteria jsonb) TO anon;
-GRANT ALL ON FUNCTION public._achievement_period_key(p_criteria jsonb) TO authenticated;
-GRANT ALL ON FUNCTION public._achievement_period_key(p_criteria jsonb) TO service_role;
-
-
---
--- Name: TABLE activity_health_metrics; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.activity_health_metrics TO anon;
-GRANT ALL ON TABLE public.activity_health_metrics TO authenticated;
-GRANT ALL ON TABLE public.activity_health_metrics TO service_role;
-
-
---
--- Name: FUNCTION _activity_metric_value(m public.activity_health_metrics, p_metric text); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public._activity_metric_value(m public.activity_health_metrics, p_metric text) TO anon;
-GRANT ALL ON FUNCTION public._activity_metric_value(m public.activity_health_metrics, p_metric text) TO authenticated;
-GRANT ALL ON FUNCTION public._activity_metric_value(m public.activity_health_metrics, p_metric text) TO service_role;
-
-
---
--- Name: FUNCTION achievement_progress(p_user_id uuid); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.achievement_progress(p_user_id uuid) TO anon;
-GRANT ALL ON FUNCTION public.achievement_progress(p_user_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.achievement_progress(p_user_id uuid) TO service_role;
-
-
---
--- Name: FUNCTION activity_confirmation_status(p_activity_id uuid); Type: ACL; Schema: public; Owner: postgres
---
-
-REVOKE ALL ON FUNCTION public.activity_confirmation_status(p_activity_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.activity_confirmation_status(p_activity_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.activity_confirmation_status(p_activity_id uuid) TO service_role;
-
-
---
--- Name: FUNCTION activity_health_data(p_sport_id bigint); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.activity_health_data(p_sport_id bigint) TO anon;
-GRANT ALL ON FUNCTION public.activity_health_data(p_sport_id bigint) TO authenticated;
-GRANT ALL ON FUNCTION public.activity_health_data(p_sport_id bigint) TO service_role;
-
-
---
--- Name: FUNCTION activity_is_confirmed(p_activity_id uuid); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.activity_is_confirmed(p_activity_id uuid) TO anon;
-GRANT ALL ON FUNCTION public.activity_is_confirmed(p_activity_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.activity_is_confirmed(p_activity_id uuid) TO service_role;
-
-
---
--- Name: FUNCTION calculate_profile_compat(p_user_id uuid, p_target_id uuid, p_sport_id bigint); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.calculate_profile_compat(p_user_id uuid, p_target_id uuid, p_sport_id bigint) TO anon;
-GRANT ALL ON FUNCTION public.calculate_profile_compat(p_user_id uuid, p_target_id uuid, p_sport_id bigint) TO authenticated;
-GRANT ALL ON FUNCTION public.calculate_profile_compat(p_user_id uuid, p_target_id uuid, p_sport_id bigint) TO service_role;
-
-
---
--- Name: FUNCTION calculate_profile_compat_score(p_user_id uuid, p_target_id uuid, p_sport_id bigint); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.calculate_profile_compat_score(p_user_id uuid, p_target_id uuid, p_sport_id bigint) TO anon;
-GRANT ALL ON FUNCTION public.calculate_profile_compat_score(p_user_id uuid, p_target_id uuid, p_sport_id bigint) TO authenticated;
-GRANT ALL ON FUNCTION public.calculate_profile_compat_score(p_user_id uuid, p_target_id uuid, p_sport_id bigint) TO service_role;
-
-
---
--- Name: FUNCTION calculate_timeslot_compat_score(source jsonb, target jsonb); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.calculate_timeslot_compat_score(source jsonb, target jsonb) TO anon;
-GRANT ALL ON FUNCTION public.calculate_timeslot_compat_score(source jsonb, target jsonb) TO authenticated;
-GRANT ALL ON FUNCTION public.calculate_timeslot_compat_score(source jsonb, target jsonb) TO service_role;
-
-
---
--- Name: FUNCTION create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text) TO anon;
-GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text) TO authenticated;
-GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text) TO service_role;
-
-
---
--- Name: FUNCTION evaluate_achievements(p_user_id uuid); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.evaluate_achievements(p_user_id uuid) TO anon;
-GRANT ALL ON FUNCTION public.evaluate_achievements(p_user_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.evaluate_achievements(p_user_id uuid) TO service_role;
-
-
---
--- Name: FUNCTION fn_lobby_playtime_keys(p_playtime jsonb); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) TO anon;
-GRANT ALL ON FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) TO authenticated;
-GRANT ALL ON FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) TO service_role;
-
-
---
--- Name: FUNCTION fn_lobby_recompute_stats(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
---
-
-REVOKE ALL ON FUNCTION public.fn_lobby_recompute_stats(p_lobby_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.fn_lobby_recompute_stats(p_lobby_id uuid) TO service_role;
-
-
---
--- Name: FUNCTION fn_playtime_to_dict(p_playtime jsonb); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.fn_playtime_to_dict(p_playtime jsonb) TO anon;
-GRANT ALL ON FUNCTION public.fn_playtime_to_dict(p_playtime jsonb) TO authenticated;
-GRANT ALL ON FUNCTION public.fn_playtime_to_dict(p_playtime jsonb) TO service_role;
-
-
---
--- Name: FUNCTION fn_seed_initial_elo(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.fn_seed_initial_elo() TO anon;
-GRANT ALL ON FUNCTION public.fn_seed_initial_elo() TO authenticated;
-GRANT ALL ON FUNCTION public.fn_seed_initial_elo() TO service_role;
-
-
---
--- Name: FUNCTION fn_sport_name(p_sport_id bigint); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.fn_sport_name(p_sport_id bigint) TO anon;
-GRANT ALL ON FUNCTION public.fn_sport_name(p_sport_id bigint) TO authenticated;
-GRANT ALL ON FUNCTION public.fn_sport_name(p_sport_id bigint) TO service_role;
-
-
---
--- Name: FUNCTION get_my_lobby_ids(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.get_my_lobby_ids() TO anon;
-GRANT ALL ON FUNCTION public.get_my_lobby_ids() TO authenticated;
-GRANT ALL ON FUNCTION public.get_my_lobby_ids() TO service_role;
-
-
---
--- Name: FUNCTION get_popular_networks(limit_count integer); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.get_popular_networks(limit_count integer) TO anon;
-GRANT ALL ON FUNCTION public.get_popular_networks(limit_count integer) TO authenticated;
-GRANT ALL ON FUNCTION public.get_popular_networks(limit_count integer) TO service_role;
-
-
---
--- Name: FUNCTION health_capture_candidates(p_window_start timestamp with time zone); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.health_capture_candidates(p_window_start timestamp with time zone) TO anon;
-GRANT ALL ON FUNCTION public.health_capture_candidates(p_window_start timestamp with time zone) TO authenticated;
-GRANT ALL ON FUNCTION public.health_capture_candidates(p_window_start timestamp with time zone) TO service_role;
-
-
---
--- Name: FUNCTION home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_mmr_window integer, p_page_size integer, p_page_number integer); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_mmr_window integer, p_page_size integer, p_page_number integer) TO anon;
-GRANT ALL ON FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_mmr_window integer, p_page_size integer, p_page_number integer) TO authenticated;
-GRANT ALL ON FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_mmr_window integer, p_page_size integer, p_page_number integer) TO service_role;
-
-
---
--- Name: FUNCTION home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_page_size integer, p_page_number integer); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_page_size integer, p_page_number integer) TO anon;
-GRANT ALL ON FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_page_size integer, p_page_number integer) TO authenticated;
-GRANT ALL ON FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_page_size integer, p_page_number integer) TO service_role;
-
-
---
--- Name: FUNCTION immutable_unaccent(text); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.immutable_unaccent(text) TO anon;
-GRANT ALL ON FUNCTION public.immutable_unaccent(text) TO authenticated;
-GRANT ALL ON FUNCTION public.immutable_unaccent(text) TO service_role;
-
-
---
--- Name: FUNCTION lobby_add_captain_as_member(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.lobby_add_captain_as_member() TO anon;
-GRANT ALL ON FUNCTION public.lobby_add_captain_as_member() TO authenticated;
-GRANT ALL ON FUNCTION public.lobby_add_captain_as_member() TO service_role;
-
-
---
--- Name: FUNCTION lobby_before_delete(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.lobby_before_delete() TO anon;
-GRANT ALL ON FUNCTION public.lobby_before_delete() TO authenticated;
-GRANT ALL ON FUNCTION public.lobby_before_delete() TO service_role;
-
-
---
--- Name: FUNCTION lobby_befriend_accepted_trigger_fn(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.lobby_befriend_accepted_trigger_fn() TO anon;
-GRANT ALL ON FUNCTION public.lobby_befriend_accepted_trigger_fn() TO authenticated;
-GRANT ALL ON FUNCTION public.lobby_befriend_accepted_trigger_fn() TO service_role;
-
-
---
--- Name: FUNCTION lobby_befriend_record_before_insert_trigger_fn(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.lobby_befriend_record_before_insert_trigger_fn() TO anon;
-GRANT ALL ON FUNCTION public.lobby_befriend_record_before_insert_trigger_fn() TO authenticated;
-GRANT ALL ON FUNCTION public.lobby_befriend_record_before_insert_trigger_fn() TO service_role;
-
-
---
--- Name: FUNCTION lobby_feed_data(p_lobby_id uuid, p_page_size integer, p_before timestamp with time zone); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.lobby_feed_data(p_lobby_id uuid, p_page_size integer, p_before timestamp with time zone) TO anon;
-GRANT ALL ON FUNCTION public.lobby_feed_data(p_lobby_id uuid, p_page_size integer, p_before timestamp with time zone) TO authenticated;
-GRANT ALL ON FUNCTION public.lobby_feed_data(p_lobby_id uuid, p_page_size integer, p_before timestamp with time zone) TO service_role;
-
-
---
--- Name: FUNCTION lobby_match_history_data(p_lobby_id uuid, p_page_size integer, p_page_number integer); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.lobby_match_history_data(p_lobby_id uuid, p_page_size integer, p_page_number integer) TO anon;
-GRANT ALL ON FUNCTION public.lobby_match_history_data(p_lobby_id uuid, p_page_size integer, p_page_number integer) TO authenticated;
-GRANT ALL ON FUNCTION public.lobby_match_history_data(p_lobby_id uuid, p_page_size integer, p_page_number integer) TO service_role;
-
-
---
--- Name: FUNCTION lobby_match_referee_role_check(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.lobby_match_referee_role_check() TO anon;
-GRANT ALL ON FUNCTION public.lobby_match_referee_role_check() TO authenticated;
-GRANT ALL ON FUNCTION public.lobby_match_referee_role_check() TO service_role;
-
-
---
--- Name: FUNCTION lobby_member_prevent_captain_leave(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.lobby_member_prevent_captain_leave() TO anon;
-GRANT ALL ON FUNCTION public.lobby_member_prevent_captain_leave() TO authenticated;
-GRANT ALL ON FUNCTION public.lobby_member_prevent_captain_leave() TO service_role;
-
-
---
--- Name: FUNCTION my_schedule_data(p_sport_id bigint, p_from timestamp with time zone, p_to timestamp with time zone); Type: ACL; Schema: public; Owner: postgres
---
-
-REVOKE ALL ON FUNCTION public.my_schedule_data(p_sport_id bigint, p_from timestamp with time zone, p_to timestamp with time zone) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.my_schedule_data(p_sport_id bigint, p_from timestamp with time zone, p_to timestamp with time zone) TO authenticated;
-GRANT ALL ON FUNCTION public.my_schedule_data(p_sport_id bigint, p_from timestamp with time zone, p_to timestamp with time zone) TO service_role;
-
-
---
--- Name: FUNCTION nanoid(size integer, alphabet text); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.nanoid(size integer, alphabet text) TO anon;
-GRANT ALL ON FUNCTION public.nanoid(size integer, alphabet text) TO authenticated;
-GRANT ALL ON FUNCTION public.nanoid(size integer, alphabet text) TO service_role;
-
-
---
--- Name: FUNCTION new_user_created_trigger_fn(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.new_user_created_trigger_fn() TO anon;
-GRANT ALL ON FUNCTION public.new_user_created_trigger_fn() TO authenticated;
-GRANT ALL ON FUNCTION public.new_user_created_trigger_fn() TO service_role;
-
-
---
--- Name: FUNCTION professional_booking_review_updated_trigger_fn(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.professional_booking_review_updated_trigger_fn() TO anon;
-GRANT ALL ON FUNCTION public.professional_booking_review_updated_trigger_fn() TO authenticated;
-GRANT ALL ON FUNCTION public.professional_booking_review_updated_trigger_fn() TO service_role;
-
-
---
--- Name: FUNCTION search_locations(search_term text); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.search_locations(search_term text) TO anon;
-GRANT ALL ON FUNCTION public.search_locations(search_term text) TO authenticated;
-GRANT ALL ON FUNCTION public.search_locations(search_term text) TO service_role;
-
-
---
--- Name: FUNCTION search_networks_unaccent(search_term text, result_limit integer); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer) TO anon;
-GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer) TO authenticated;
-GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer) TO service_role;
-
-
---
--- Name: FUNCTION search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]) TO anon;
-GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]) TO authenticated;
-GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]) TO service_role;
-
-
---
--- Name: FUNCTION transfer_lobby_captaincy(p_lobby_id uuid, p_new_captain_id uuid); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.transfer_lobby_captaincy(p_lobby_id uuid, p_new_captain_id uuid) TO anon;
-GRANT ALL ON FUNCTION public.transfer_lobby_captaincy(p_lobby_id uuid, p_new_captain_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.transfer_lobby_captaincy(p_lobby_id uuid, p_new_captain_id uuid) TO service_role;
-
-
---
--- Name: FUNCTION trg_lobby_member_recompute(); Type: ACL; Schema: public; Owner: postgres
---
-
-REVOKE ALL ON FUNCTION public.trg_lobby_member_recompute() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.trg_lobby_member_recompute() TO service_role;
-
-
---
--- Name: FUNCTION trg_lobby_playtime_keys(); Type: ACL; Schema: public; Owner: postgres
---
-
-REVOKE ALL ON FUNCTION public.trg_lobby_playtime_keys() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.trg_lobby_playtime_keys() TO service_role;
-
-
---
--- Name: FUNCTION trg_user_affiliation_recompute(); Type: ACL; Schema: public; Owner: postgres
---
-
-REVOKE ALL ON FUNCTION public.trg_user_affiliation_recompute() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.trg_user_affiliation_recompute() TO service_role;
-
-
---
--- Name: FUNCTION trg_user_rating_recompute(); Type: ACL; Schema: public; Owner: postgres
---
-
-REVOKE ALL ON FUNCTION public.trg_user_rating_recompute() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.trg_user_rating_recompute() TO service_role;
-
-
---
--- Name: FUNCTION user_level_summary(p_user_id uuid); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.user_level_summary(p_user_id uuid) TO anon;
-GRANT ALL ON FUNCTION public.user_level_summary(p_user_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.user_level_summary(p_user_id uuid) TO service_role;
-
-
---
--- Name: FUNCTION apply_rls(wal jsonb, max_record_bytes integer); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime.apply_rls(wal jsonb, max_record_bytes integer) TO postgres;
-GRANT ALL ON FUNCTION realtime.apply_rls(wal jsonb, max_record_bytes integer) TO dashboard_user;
-GRANT ALL ON FUNCTION realtime.apply_rls(wal jsonb, max_record_bytes integer) TO anon;
-GRANT ALL ON FUNCTION realtime.apply_rls(wal jsonb, max_record_bytes integer) TO authenticated;
-GRANT ALL ON FUNCTION realtime.apply_rls(wal jsonb, max_record_bytes integer) TO service_role;
-GRANT ALL ON FUNCTION realtime.apply_rls(wal jsonb, max_record_bytes integer) TO supabase_realtime_admin;
-
-
---
--- Name: FUNCTION broadcast_changes(topic_name text, event_name text, operation text, table_name text, table_schema text, new record, old record, level text); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime.broadcast_changes(topic_name text, event_name text, operation text, table_name text, table_schema text, new record, old record, level text) TO postgres;
-GRANT ALL ON FUNCTION realtime.broadcast_changes(topic_name text, event_name text, operation text, table_name text, table_schema text, new record, old record, level text) TO dashboard_user;
-
-
---
--- Name: FUNCTION build_prepared_statement_sql(prepared_statement_name text, entity regclass, columns realtime.wal_column[]); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime.build_prepared_statement_sql(prepared_statement_name text, entity regclass, columns realtime.wal_column[]) TO postgres;
-GRANT ALL ON FUNCTION realtime.build_prepared_statement_sql(prepared_statement_name text, entity regclass, columns realtime.wal_column[]) TO dashboard_user;
-GRANT ALL ON FUNCTION realtime.build_prepared_statement_sql(prepared_statement_name text, entity regclass, columns realtime.wal_column[]) TO anon;
-GRANT ALL ON FUNCTION realtime.build_prepared_statement_sql(prepared_statement_name text, entity regclass, columns realtime.wal_column[]) TO authenticated;
-GRANT ALL ON FUNCTION realtime.build_prepared_statement_sql(prepared_statement_name text, entity regclass, columns realtime.wal_column[]) TO service_role;
-GRANT ALL ON FUNCTION realtime.build_prepared_statement_sql(prepared_statement_name text, entity regclass, columns realtime.wal_column[]) TO supabase_realtime_admin;
-
-
---
--- Name: FUNCTION "cast"(val text, type_ regtype); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime."cast"(val text, type_ regtype) TO postgres;
-GRANT ALL ON FUNCTION realtime."cast"(val text, type_ regtype) TO dashboard_user;
-GRANT ALL ON FUNCTION realtime."cast"(val text, type_ regtype) TO anon;
-GRANT ALL ON FUNCTION realtime."cast"(val text, type_ regtype) TO authenticated;
-GRANT ALL ON FUNCTION realtime."cast"(val text, type_ regtype) TO service_role;
-GRANT ALL ON FUNCTION realtime."cast"(val text, type_ regtype) TO supabase_realtime_admin;
-
-
---
--- Name: FUNCTION check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text) TO postgres;
-GRANT ALL ON FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text) TO dashboard_user;
-GRANT ALL ON FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text) TO anon;
-GRANT ALL ON FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text) TO authenticated;
-GRANT ALL ON FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text) TO service_role;
-GRANT ALL ON FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text) TO supabase_realtime_admin;
-
-
---
--- Name: FUNCTION is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]) TO postgres;
-GRANT ALL ON FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]) TO dashboard_user;
-GRANT ALL ON FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]) TO anon;
-GRANT ALL ON FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]) TO authenticated;
-GRANT ALL ON FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]) TO service_role;
-GRANT ALL ON FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]) TO supabase_realtime_admin;
-
-
---
--- Name: FUNCTION list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime.list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer) TO postgres;
-GRANT ALL ON FUNCTION realtime.list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer) TO dashboard_user;
-
-
---
--- Name: FUNCTION quote_wal2json(entity regclass); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime.quote_wal2json(entity regclass) TO postgres;
-GRANT ALL ON FUNCTION realtime.quote_wal2json(entity regclass) TO dashboard_user;
-GRANT ALL ON FUNCTION realtime.quote_wal2json(entity regclass) TO anon;
-GRANT ALL ON FUNCTION realtime.quote_wal2json(entity regclass) TO authenticated;
-GRANT ALL ON FUNCTION realtime.quote_wal2json(entity regclass) TO service_role;
-GRANT ALL ON FUNCTION realtime.quote_wal2json(entity regclass) TO supabase_realtime_admin;
-
-
---
--- Name: FUNCTION send(payload jsonb, event text, topic text, private boolean); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime.send(payload jsonb, event text, topic text, private boolean) TO postgres;
-GRANT ALL ON FUNCTION realtime.send(payload jsonb, event text, topic text, private boolean) TO dashboard_user;
-
-
---
--- Name: FUNCTION send_binary(payload bytea, event text, topic text, private boolean); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime.send_binary(payload bytea, event text, topic text, private boolean) TO postgres;
-GRANT ALL ON FUNCTION realtime.send_binary(payload bytea, event text, topic text, private boolean) TO dashboard_user;
-
-
---
--- Name: FUNCTION subscription_check_filters(); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime.subscription_check_filters() TO postgres;
-GRANT ALL ON FUNCTION realtime.subscription_check_filters() TO dashboard_user;
-GRANT ALL ON FUNCTION realtime.subscription_check_filters() TO anon;
-GRANT ALL ON FUNCTION realtime.subscription_check_filters() TO authenticated;
-GRANT ALL ON FUNCTION realtime.subscription_check_filters() TO service_role;
-GRANT ALL ON FUNCTION realtime.subscription_check_filters() TO supabase_realtime_admin;
-
-
---
--- Name: FUNCTION to_regrole(role_name text); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime.to_regrole(role_name text) TO postgres;
-GRANT ALL ON FUNCTION realtime.to_regrole(role_name text) TO dashboard_user;
-GRANT ALL ON FUNCTION realtime.to_regrole(role_name text) TO anon;
-GRANT ALL ON FUNCTION realtime.to_regrole(role_name text) TO authenticated;
-GRANT ALL ON FUNCTION realtime.to_regrole(role_name text) TO service_role;
-GRANT ALL ON FUNCTION realtime.to_regrole(role_name text) TO supabase_realtime_admin;
-
-
---
--- Name: FUNCTION topic(); Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
---
-
-GRANT ALL ON FUNCTION realtime.topic() TO postgres;
-GRANT ALL ON FUNCTION realtime.topic() TO dashboard_user;
-
-
---
--- Name: FUNCTION wal2json_escape_identifier(name text); Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION realtime.wal2json_escape_identifier(name text) TO postgres;
-GRANT ALL ON FUNCTION realtime.wal2json_escape_identifier(name text) TO dashboard_user;
-
-
---
--- Name: FUNCTION can_insert_object(bucketid text, name text, owner uuid, metadata jsonb); Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON FUNCTION storage.can_insert_object(bucketid text, name text, owner uuid, metadata jsonb) TO postgres;
-
-
---
--- Name: FUNCTION extension(name text); Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON FUNCTION storage.extension(name text) TO postgres;
-
-
---
--- Name: FUNCTION filename(name text); Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON FUNCTION storage.filename(name text) TO postgres;
-
-
---
--- Name: FUNCTION foldername(name text); Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON FUNCTION storage.foldername(name text) TO postgres;
-
-
---
--- Name: FUNCTION get_size_by_bucket(); Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON FUNCTION storage.get_size_by_bucket() TO postgres;
-
-
---
--- Name: FUNCTION list_multipart_uploads_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer, next_key_token text, next_upload_token text); Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON FUNCTION storage.list_multipart_uploads_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer, next_key_token text, next_upload_token text) TO postgres;
-
-
---
--- Name: FUNCTION operation(); Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON FUNCTION storage.operation() TO postgres;
-
-
---
--- Name: FUNCTION search(prefix text, bucketname text, limits integer, levels integer, offsets integer, search text, sortcolumn text, sortorder text); Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON FUNCTION storage.search(prefix text, bucketname text, limits integer, levels integer, offsets integer, search text, sortcolumn text, sortorder text) TO postgres;
-
-
---
--- Name: FUNCTION update_updated_at_column(); Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON FUNCTION storage.update_updated_at_column() TO postgres;
-
-
---
--- Name: FUNCTION _crypto_aead_det_decrypt(message bytea, additional bytea, key_id bigint, context bytea, nonce bytea); Type: ACL; Schema: vault; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION vault._crypto_aead_det_decrypt(message bytea, additional bytea, key_id bigint, context bytea, nonce bytea) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION vault._crypto_aead_det_decrypt(message bytea, additional bytea, key_id bigint, context bytea, nonce bytea) TO service_role;
-
-
---
--- Name: FUNCTION create_secret(new_secret text, new_name text, new_description text, new_key_id uuid); Type: ACL; Schema: vault; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION vault.create_secret(new_secret text, new_name text, new_description text, new_key_id uuid) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION vault.create_secret(new_secret text, new_name text, new_description text, new_key_id uuid) TO service_role;
-
-
---
--- Name: FUNCTION update_secret(secret_id uuid, new_secret text, new_name text, new_description text, new_key_id uuid); Type: ACL; Schema: vault; Owner: supabase_admin
---
-
-GRANT ALL ON FUNCTION vault.update_secret(secret_id uuid, new_secret text, new_name text, new_description text, new_key_id uuid) TO postgres WITH GRANT OPTION;
-GRANT ALL ON FUNCTION vault.update_secret(secret_id uuid, new_secret text, new_name text, new_description text, new_key_id uuid) TO service_role;
-
-
---
--- Name: TABLE audit_log_entries; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.audit_log_entries TO dashboard_user;
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.audit_log_entries TO postgres;
-GRANT SELECT ON TABLE auth.audit_log_entries TO postgres WITH GRANT OPTION;
-
-
---
--- Name: TABLE custom_oauth_providers; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.custom_oauth_providers TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.custom_oauth_providers TO dashboard_user;
-
-
---
--- Name: TABLE flow_state; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.flow_state TO postgres;
-GRANT SELECT ON TABLE auth.flow_state TO postgres WITH GRANT OPTION;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.flow_state TO dashboard_user;
-
-
---
--- Name: TABLE identities; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.identities TO postgres;
-GRANT SELECT ON TABLE auth.identities TO postgres WITH GRANT OPTION;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.identities TO dashboard_user;
-
-
---
--- Name: TABLE instances; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.instances TO dashboard_user;
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.instances TO postgres;
-GRANT SELECT ON TABLE auth.instances TO postgres WITH GRANT OPTION;
-
-
---
--- Name: TABLE mfa_amr_claims; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.mfa_amr_claims TO postgres;
-GRANT SELECT ON TABLE auth.mfa_amr_claims TO postgres WITH GRANT OPTION;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.mfa_amr_claims TO dashboard_user;
-
-
---
--- Name: TABLE mfa_challenges; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.mfa_challenges TO postgres;
-GRANT SELECT ON TABLE auth.mfa_challenges TO postgres WITH GRANT OPTION;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.mfa_challenges TO dashboard_user;
-
-
---
--- Name: TABLE mfa_factors; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.mfa_factors TO postgres;
-GRANT SELECT ON TABLE auth.mfa_factors TO postgres WITH GRANT OPTION;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.mfa_factors TO dashboard_user;
-
-
---
--- Name: TABLE oauth_authorizations; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.oauth_authorizations TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.oauth_authorizations TO dashboard_user;
-
-
---
--- Name: TABLE oauth_client_states; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.oauth_client_states TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.oauth_client_states TO dashboard_user;
-
-
---
--- Name: TABLE oauth_clients; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.oauth_clients TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.oauth_clients TO dashboard_user;
-
-
---
--- Name: TABLE oauth_consents; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.oauth_consents TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.oauth_consents TO dashboard_user;
-
-
---
--- Name: TABLE one_time_tokens; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.one_time_tokens TO postgres;
-GRANT SELECT ON TABLE auth.one_time_tokens TO postgres WITH GRANT OPTION;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.one_time_tokens TO dashboard_user;
-
-
---
--- Name: TABLE refresh_tokens; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.refresh_tokens TO dashboard_user;
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.refresh_tokens TO postgres;
-GRANT SELECT ON TABLE auth.refresh_tokens TO postgres WITH GRANT OPTION;
-
-
---
--- Name: SEQUENCE refresh_tokens_id_seq; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT ALL ON SEQUENCE auth.refresh_tokens_id_seq TO dashboard_user;
-GRANT ALL ON SEQUENCE auth.refresh_tokens_id_seq TO postgres;
-
-
---
--- Name: TABLE saml_providers; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.saml_providers TO postgres;
-GRANT SELECT ON TABLE auth.saml_providers TO postgres WITH GRANT OPTION;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.saml_providers TO dashboard_user;
-
-
---
--- Name: TABLE saml_relay_states; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.saml_relay_states TO postgres;
-GRANT SELECT ON TABLE auth.saml_relay_states TO postgres WITH GRANT OPTION;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.saml_relay_states TO dashboard_user;
-
-
---
--- Name: TABLE sessions; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.sessions TO postgres;
-GRANT SELECT ON TABLE auth.sessions TO postgres WITH GRANT OPTION;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.sessions TO dashboard_user;
-
-
---
--- Name: TABLE sso_domains; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.sso_domains TO postgres;
-GRANT SELECT ON TABLE auth.sso_domains TO postgres WITH GRANT OPTION;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.sso_domains TO dashboard_user;
-
-
---
--- Name: TABLE sso_providers; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.sso_providers TO postgres;
-GRANT SELECT ON TABLE auth.sso_providers TO postgres WITH GRANT OPTION;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.sso_providers TO dashboard_user;
-
-
---
--- Name: TABLE users; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.users TO dashboard_user;
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.users TO postgres;
-GRANT SELECT ON TABLE auth.users TO postgres WITH GRANT OPTION;
-
-
---
--- Name: TABLE webauthn_challenges; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.webauthn_challenges TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.webauthn_challenges TO dashboard_user;
-
-
---
--- Name: TABLE webauthn_credentials; Type: ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.webauthn_credentials TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.webauthn_credentials TO dashboard_user;
-
-
---
--- Name: TABLE pg_stat_statements_info; Type: ACL; Schema: extensions; Owner: supabase_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE extensions.pg_stat_statements_info TO postgres WITH GRANT OPTION;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE extensions.pg_stat_statements_info TO dashboard_user;
-
-
---
--- Name: TABLE decrypted_key; Type: ACL; Schema: pgsodium; Owner: supabase_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE pgsodium.decrypted_key TO pgsodium_keyholder;
-
-
---
--- Name: TABLE masking_rule; Type: ACL; Schema: pgsodium; Owner: supabase_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE pgsodium.masking_rule TO pgsodium_keyholder;
-
-
---
--- Name: TABLE mask_columns; Type: ACL; Schema: pgsodium; Owner: supabase_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE pgsodium.mask_columns TO pgsodium_keyholder;
-
-
---
--- Name: TABLE achievement; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT ON TABLE public.achievement TO anon;
-GRANT SELECT ON TABLE public.achievement TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.achievement TO service_role;
-
-
---
--- Name: TABLE activity; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.activity TO anon;
-GRANT ALL ON TABLE public.activity TO authenticated;
-GRANT ALL ON TABLE public.activity TO service_role;
-
-
---
--- Name: TABLE activity_confirmation; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.activity_confirmation TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.activity_confirmation TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.activity_confirmation TO service_role;
-
-
---
--- Name: TABLE activity_hr_sample; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.activity_hr_sample TO anon;
-GRANT ALL ON TABLE public.activity_hr_sample TO authenticated;
-GRANT ALL ON TABLE public.activity_hr_sample TO service_role;
-
-
---
--- Name: SEQUENCE activity_hr_sample_id_seq; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON SEQUENCE public.activity_hr_sample_id_seq TO anon;
-GRANT ALL ON SEQUENCE public.activity_hr_sample_id_seq TO authenticated;
-GRANT ALL ON SEQUENCE public.activity_hr_sample_id_seq TO service_role;
-
-
---
--- Name: TABLE badminton_profile; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.badminton_profile TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.badminton_profile TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.badminton_profile TO service_role;
-
-
---
--- Name: TABLE basketball_profile; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.basketball_profile TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.basketball_profile TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.basketball_profile TO service_role;
-
-
---
--- Name: TABLE booking_additional_users; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.booking_additional_users TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.booking_additional_users TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.booking_additional_users TO service_role;
-
-
---
--- Name: TABLE daily_health_summary; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.daily_health_summary TO anon;
-GRANT ALL ON TABLE public.daily_health_summary TO authenticated;
-GRANT ALL ON TABLE public.daily_health_summary TO service_role;
-
-
---
--- Name: TABLE industry; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.industry TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.industry TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.industry TO service_role;
-
-
---
--- Name: SEQUENCE industry_id_seq; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON SEQUENCE public.industry_id_seq TO anon;
-GRANT ALL ON SEQUENCE public.industry_id_seq TO authenticated;
-GRANT ALL ON SEQUENCE public.industry_id_seq TO service_role;
-
-
---
--- Name: TABLE lobby; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby TO service_role;
-
-
---
--- Name: TABLE lobby_befriend_record; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_befriend_record TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_befriend_record TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_befriend_record TO service_role;
-
-
---
--- Name: TABLE lobby_feed_item; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_feed_item TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_feed_item TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_feed_item TO service_role;
-
-
---
--- Name: TABLE lobby_feed_poll_vote; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_feed_poll_vote TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_feed_poll_vote TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_feed_poll_vote TO service_role;
-
-
---
--- Name: TABLE lobby_match; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_match TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_match TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_match TO service_role;
-
-
---
--- Name: TABLE lobby_member; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_member TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_member TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_member TO service_role;
-
-
---
--- Name: SEQUENCE lobby_member_id_seq; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON SEQUENCE public.lobby_member_id_seq TO anon;
-GRANT ALL ON SEQUENCE public.lobby_member_id_seq TO authenticated;
-GRANT ALL ON SEQUENCE public.lobby_member_id_seq TO service_role;
-
-
---
--- Name: TABLE location; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.location TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.location TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.location TO service_role;
-
-
---
--- Name: TABLE network; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.network TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.network TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.network TO service_role;
-
-
---
--- Name: SEQUENCE network_id_seq; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON SEQUENCE public.network_id_seq TO anon;
-GRANT ALL ON SEQUENCE public.network_id_seq TO authenticated;
-GRANT ALL ON SEQUENCE public.network_id_seq TO service_role;
-
-
---
--- Name: TABLE pickleball_profile; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.pickleball_profile TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.pickleball_profile TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.pickleball_profile TO service_role;
-
-
---
--- Name: TABLE professional; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional TO service_role;
-
-
---
--- Name: TABLE professional_booking; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_booking TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_booking TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_booking TO service_role;
-
-
---
--- Name: TABLE professional_booking_review; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_booking_review TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_booking_review TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_booking_review TO service_role;
-
-
---
--- Name: TABLE professional_service; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_service TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_service TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional_service TO service_role;
-
-
---
--- Name: TABLE soccer_profile; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.soccer_profile TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.soccer_profile TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.soccer_profile TO service_role;
-
-
---
--- Name: TABLE sport; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.sport TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.sport TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.sport TO service_role;
-
-
---
--- Name: SEQUENCE sport_id_seq; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON SEQUENCE public.sport_id_seq TO anon;
-GRANT ALL ON SEQUENCE public.sport_id_seq TO authenticated;
-GRANT ALL ON SEQUENCE public.sport_id_seq TO service_role;
-
-
---
--- Name: TABLE supported_city_cluster; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.supported_city_cluster TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.supported_city_cluster TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.supported_city_cluster TO service_role;
-
-
---
--- Name: SEQUENCE supported_city_id_seq; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON SEQUENCE public.supported_city_id_seq TO anon;
-GRANT ALL ON SEQUENCE public.supported_city_id_seq TO authenticated;
-GRANT ALL ON SEQUENCE public.supported_city_id_seq TO service_role;
-
-
---
--- Name: TABLE tennis_profile; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.tennis_profile TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.tennis_profile TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.tennis_profile TO service_role;
-
-
---
--- Name: TABLE "user"; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public."user" TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public."user" TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public."user" TO service_role;
-
-
---
--- Name: TABLE user_achievement; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_achievement TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_achievement TO authenticated;
-GRANT ALL ON TABLE public.user_achievement TO service_role;
-
-
---
--- Name: TABLE user_health_link; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.user_health_link TO anon;
-GRANT ALL ON TABLE public.user_health_link TO authenticated;
-GRANT ALL ON TABLE public.user_health_link TO service_role;
-
-
---
--- Name: TABLE user_industry; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_industry TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_industry TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_industry TO service_role;
-
-
---
--- Name: SEQUENCE user_industry_id_seq; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON SEQUENCE public.user_industry_id_seq TO anon;
-GRANT ALL ON SEQUENCE public.user_industry_id_seq TO authenticated;
-GRANT ALL ON SEQUENCE public.user_industry_id_seq TO service_role;
-
-
---
--- Name: TABLE user_network; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_network TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_network TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_network TO service_role;
-
-
---
--- Name: SEQUENCE user_network_id_seq; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON SEQUENCE public.user_network_id_seq TO anon;
-GRANT ALL ON SEQUENCE public.user_network_id_seq TO authenticated;
-GRANT ALL ON SEQUENCE public.user_network_id_seq TO service_role;
-
-
---
--- Name: TABLE user_rating; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_rating TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_rating TO authenticated;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.user_rating TO service_role;
-
-
---
--- Name: TABLE messages; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages TO dashboard_user;
-GRANT SELECT,INSERT,UPDATE ON TABLE realtime.messages TO anon;
-GRANT SELECT,INSERT,UPDATE ON TABLE realtime.messages TO authenticated;
-GRANT SELECT,INSERT,UPDATE ON TABLE realtime.messages TO service_role;
-
-
---
--- Name: TABLE schema_migrations; Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.schema_migrations TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.schema_migrations TO dashboard_user;
-GRANT SELECT ON TABLE realtime.schema_migrations TO anon;
-GRANT SELECT ON TABLE realtime.schema_migrations TO authenticated;
-GRANT SELECT ON TABLE realtime.schema_migrations TO service_role;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.schema_migrations TO supabase_realtime_admin;
-
-
---
--- Name: TABLE subscription; Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.subscription TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.subscription TO dashboard_user;
-GRANT SELECT ON TABLE realtime.subscription TO anon;
-GRANT SELECT ON TABLE realtime.subscription TO authenticated;
-GRANT SELECT ON TABLE realtime.subscription TO service_role;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.subscription TO supabase_realtime_admin;
-
-
---
--- Name: SEQUENCE subscription_id_seq; Type: ACL; Schema: realtime; Owner: supabase_admin
---
-
-GRANT ALL ON SEQUENCE realtime.subscription_id_seq TO postgres;
-GRANT ALL ON SEQUENCE realtime.subscription_id_seq TO dashboard_user;
-GRANT USAGE ON SEQUENCE realtime.subscription_id_seq TO anon;
-GRANT USAGE ON SEQUENCE realtime.subscription_id_seq TO authenticated;
-GRANT USAGE ON SEQUENCE realtime.subscription_id_seq TO service_role;
-GRANT ALL ON SEQUENCE realtime.subscription_id_seq TO supabase_realtime_admin;
-
-
---
--- Name: TABLE buckets; Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-REVOKE ALL ON TABLE storage.buckets FROM supabase_storage_admin;
-GRANT ALL ON TABLE storage.buckets TO supabase_storage_admin WITH GRANT OPTION;
-GRANT ALL ON TABLE storage.buckets TO anon;
-GRANT ALL ON TABLE storage.buckets TO authenticated;
-GRANT ALL ON TABLE storage.buckets TO service_role;
-GRANT ALL ON TABLE storage.buckets TO postgres WITH GRANT OPTION;
-
-
---
--- Name: TABLE buckets_analytics; Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON TABLE storage.buckets_analytics TO service_role;
-GRANT ALL ON TABLE storage.buckets_analytics TO authenticated;
-GRANT ALL ON TABLE storage.buckets_analytics TO anon;
-
-
---
--- Name: TABLE buckets_vectors; Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT SELECT ON TABLE storage.buckets_vectors TO service_role;
-GRANT SELECT ON TABLE storage.buckets_vectors TO authenticated;
-GRANT SELECT ON TABLE storage.buckets_vectors TO anon;
-
-
---
--- Name: TABLE objects; Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-REVOKE ALL ON TABLE storage.objects FROM supabase_storage_admin;
-GRANT ALL ON TABLE storage.objects TO supabase_storage_admin WITH GRANT OPTION;
-GRANT ALL ON TABLE storage.objects TO anon;
-GRANT ALL ON TABLE storage.objects TO authenticated;
-GRANT ALL ON TABLE storage.objects TO service_role;
-GRANT ALL ON TABLE storage.objects TO postgres WITH GRANT OPTION;
-
-
---
--- Name: TABLE s3_multipart_uploads; Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE storage.s3_multipart_uploads TO service_role;
-GRANT SELECT ON TABLE storage.s3_multipart_uploads TO authenticated;
-GRANT SELECT ON TABLE storage.s3_multipart_uploads TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE storage.s3_multipart_uploads TO postgres;
-
-
---
--- Name: TABLE s3_multipart_uploads_parts; Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE storage.s3_multipart_uploads_parts TO service_role;
-GRANT SELECT ON TABLE storage.s3_multipart_uploads_parts TO authenticated;
-GRANT SELECT ON TABLE storage.s3_multipart_uploads_parts TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE storage.s3_multipart_uploads_parts TO postgres;
-
-
---
--- Name: TABLE vector_indexes; Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT SELECT ON TABLE storage.vector_indexes TO service_role;
-GRANT SELECT ON TABLE storage.vector_indexes TO authenticated;
-GRANT SELECT ON TABLE storage.vector_indexes TO anon;
-
-
---
--- Name: TABLE secrets; Type: ACL; Schema: vault; Owner: supabase_admin
---
-
-GRANT SELECT,REFERENCES,DELETE,TRUNCATE ON TABLE vault.secrets TO postgres WITH GRANT OPTION;
-GRANT SELECT,DELETE ON TABLE vault.secrets TO service_role;
-
-
---
--- Name: TABLE decrypted_secrets; Type: ACL; Schema: vault; Owner: supabase_admin
---
-
-GRANT SELECT,REFERENCES,DELETE,TRUNCATE ON TABLE vault.decrypted_secrets TO postgres WITH GRANT OPTION;
-GRANT SELECT,DELETE ON TABLE vault.decrypted_secrets TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_auth_admin IN SCHEMA auth GRANT ALL ON SEQUENCES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_auth_admin IN SCHEMA auth GRANT ALL ON SEQUENCES TO dashboard_user;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_auth_admin IN SCHEMA auth GRANT ALL ON FUNCTIONS TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_auth_admin IN SCHEMA auth GRANT ALL ON FUNCTIONS TO dashboard_user;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: auth; Owner: supabase_auth_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_auth_admin IN SCHEMA auth GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_auth_admin IN SCHEMA auth GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO dashboard_user;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: extensions; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA extensions GRANT ALL ON SEQUENCES TO postgres WITH GRANT OPTION;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: extensions; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA extensions GRANT ALL ON FUNCTIONS TO postgres WITH GRANT OPTION;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: extensions; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA extensions GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO postgres WITH GRANT OPTION;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: graphql; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql GRANT ALL ON SEQUENCES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql GRANT ALL ON SEQUENCES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql GRANT ALL ON SEQUENCES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql GRANT ALL ON SEQUENCES TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: graphql; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql GRANT ALL ON FUNCTIONS TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql GRANT ALL ON FUNCTIONS TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql GRANT ALL ON FUNCTIONS TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql GRANT ALL ON FUNCTIONS TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: graphql; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql GRANT ALL ON TABLES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql GRANT ALL ON TABLES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql GRANT ALL ON TABLES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql GRANT ALL ON TABLES TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: graphql_public; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql_public GRANT ALL ON SEQUENCES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql_public GRANT ALL ON SEQUENCES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql_public GRANT ALL ON SEQUENCES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql_public GRANT ALL ON SEQUENCES TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: graphql_public; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql_public GRANT ALL ON FUNCTIONS TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql_public GRANT ALL ON FUNCTIONS TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql_public GRANT ALL ON FUNCTIONS TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql_public GRANT ALL ON FUNCTIONS TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: graphql_public; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql_public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql_public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql_public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA graphql_public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: pgsodium; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA pgsodium GRANT ALL ON SEQUENCES TO pgsodium_keyholder;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: pgsodium; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA pgsodium GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO pgsodium_keyholder;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: pgsodium_masks; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA pgsodium_masks GRANT ALL ON SEQUENCES TO pgsodium_keyiduser;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: pgsodium_masks; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA pgsodium_masks GRANT ALL ON FUNCTIONS TO pgsodium_keyiduser;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: pgsodium_masks; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA pgsodium_masks GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO pgsodium_keyiduser;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: postgres
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: postgres
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: postgres
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: realtime; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA realtime GRANT ALL ON SEQUENCES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA realtime GRANT ALL ON SEQUENCES TO dashboard_user;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: realtime; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA realtime GRANT ALL ON FUNCTIONS TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA realtime GRANT ALL ON FUNCTIONS TO dashboard_user;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: realtime; Owner: supabase_admin
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA realtime GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA realtime GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO dashboard_user;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: storage; Owner: postgres
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA storage GRANT ALL ON SEQUENCES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA storage GRANT ALL ON SEQUENCES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA storage GRANT ALL ON SEQUENCES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA storage GRANT ALL ON SEQUENCES TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: storage; Owner: postgres
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA storage GRANT ALL ON FUNCTIONS TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA storage GRANT ALL ON FUNCTIONS TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA storage GRANT ALL ON FUNCTIONS TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA storage GRANT ALL ON FUNCTIONS TO service_role;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: storage; Owner: postgres
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA storage GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA storage GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA storage GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA storage GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO service_role;
-
-
---
--- Name: issue_graphql_placeholder; Type: EVENT TRIGGER; Schema: -; Owner: supabase_admin
+-- Name: issue_graphql_placeholder; Type: EVENT TRIGGER; Schema: -; Owner: -
 --
 
 CREATE EVENT TRIGGER issue_graphql_placeholder ON sql_drop
@@ -12632,10 +14959,8 @@ CREATE EVENT TRIGGER issue_graphql_placeholder ON sql_drop
    EXECUTE FUNCTION extensions.set_graphql_placeholder();
 
 
-ALTER EVENT TRIGGER issue_graphql_placeholder OWNER TO supabase_admin;
-
 --
--- Name: issue_pg_cron_access; Type: EVENT TRIGGER; Schema: -; Owner: supabase_admin
+-- Name: issue_pg_cron_access; Type: EVENT TRIGGER; Schema: -; Owner: -
 --
 
 CREATE EVENT TRIGGER issue_pg_cron_access ON ddl_command_end
@@ -12643,10 +14968,8 @@ CREATE EVENT TRIGGER issue_pg_cron_access ON ddl_command_end
    EXECUTE FUNCTION extensions.grant_pg_cron_access();
 
 
-ALTER EVENT TRIGGER issue_pg_cron_access OWNER TO supabase_admin;
-
 --
--- Name: issue_pg_graphql_access; Type: EVENT TRIGGER; Schema: -; Owner: supabase_admin
+-- Name: issue_pg_graphql_access; Type: EVENT TRIGGER; Schema: -; Owner: -
 --
 
 CREATE EVENT TRIGGER issue_pg_graphql_access ON ddl_command_end
@@ -12654,10 +14977,8 @@ CREATE EVENT TRIGGER issue_pg_graphql_access ON ddl_command_end
    EXECUTE FUNCTION extensions.grant_pg_graphql_access();
 
 
-ALTER EVENT TRIGGER issue_pg_graphql_access OWNER TO supabase_admin;
-
 --
--- Name: issue_pg_net_access; Type: EVENT TRIGGER; Schema: -; Owner: supabase_admin
+-- Name: issue_pg_net_access; Type: EVENT TRIGGER; Schema: -; Owner: -
 --
 
 CREATE EVENT TRIGGER issue_pg_net_access ON ddl_command_end
@@ -12665,31 +14986,25 @@ CREATE EVENT TRIGGER issue_pg_net_access ON ddl_command_end
    EXECUTE FUNCTION extensions.grant_pg_net_access();
 
 
-ALTER EVENT TRIGGER issue_pg_net_access OWNER TO supabase_admin;
-
 --
--- Name: pgrst_ddl_watch; Type: EVENT TRIGGER; Schema: -; Owner: supabase_admin
+-- Name: pgrst_ddl_watch; Type: EVENT TRIGGER; Schema: -; Owner: -
 --
 
 CREATE EVENT TRIGGER pgrst_ddl_watch ON ddl_command_end
    EXECUTE FUNCTION extensions.pgrst_ddl_watch();
 
 
-ALTER EVENT TRIGGER pgrst_ddl_watch OWNER TO supabase_admin;
-
 --
--- Name: pgrst_drop_watch; Type: EVENT TRIGGER; Schema: -; Owner: supabase_admin
+-- Name: pgrst_drop_watch; Type: EVENT TRIGGER; Schema: -; Owner: -
 --
 
 CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
    EXECUTE FUNCTION extensions.pgrst_drop_watch();
 
 
-ALTER EVENT TRIGGER pgrst_drop_watch OWNER TO supabase_admin;
-
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dXnchi3sijuOVkXgi6HCzTdWqATIO4RDKYhAte2aXmfRtJAYZtkbJR90kFB56T1
+\unrestrict C2QwSEso5H7O50rxpzmvg0mu8GVIZDeTJTfTtmVzsmppxnOAExnMjoQvPcCgxOb
 

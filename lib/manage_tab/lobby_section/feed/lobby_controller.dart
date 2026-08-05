@@ -78,10 +78,18 @@ class UserLobbiesController extends _$UserLobbiesController {
     // pg_cron schedule ('expire_past_activities' job) — it must NOT run as a
     // mutation on this read path.
 
+    // `lobby` has two FKs to `location` (`home_ground` and
+    // `challenge_offer_location`, the latter added for the Challenger
+    // System's offer terms), so an unqualified `location(...)` embed is
+    // ambiguous — PostgREST rejects it with a 300/PGRST201 ("more than one
+    // relationship was found"), which silently broke this whole query (and
+    // therefore the entire Manage▸Lobby list) the moment that column
+    // shipped. Pin the FK explicitly to keep resolving the homeground, not
+    // the challenge-offer venue.
     final lobbyRows = await supabase
         .from('lobby')
         .select(
-          'id, name, searchable_id, sport_id, captain_id, home_ground, details, mmr, location(name), lobby_member!inner(user_id, role)',
+          'id, name, searchable_id, sport_id, captain_id, home_ground, details, mmr, location!lobby_home_ground_fkey(name), lobby_member!inner(user_id, role)',
         )
         .eq('sport_id', sport.index)
         .eq('lobby_member.user_id', user.id!)
