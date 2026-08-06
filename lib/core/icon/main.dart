@@ -34,7 +34,7 @@ class PasseIcons {
   SvgPicture(AssetBytesLoader('./assets/icons/gender.svg.vec'));
 
   static const googleRound =
-  AssetBytesLoader('./assets/icons/google_round.svg.vec');
+  SvgPicture(AssetBytesLoader('./assets/icons/google_round.svg.vec'));
 
   static const lobby =
   SvgPicture(AssetBytesLoader('./assets/icons/lobby.svg.vec'));

@@ -307,7 +307,6 @@ class ProfileTab extends ConsumerWidget {
   ) {
     return FTileGroup(
       label: Text('profile.accountInfo'.tr()),
-      description: Text('profile.profileFeatureExplanation'.tr()),
       children: [
         FTile(
           onPress: () => Navigator.of(context).push(

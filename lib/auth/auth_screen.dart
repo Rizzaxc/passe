@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
+import '../core/icon/main.dart';
 import '../router.dart';
 import '../ui/main.dart';
 import 'auth_controller.dart';
@@ -303,7 +304,7 @@ class SocialAuthSection extends ConsumerWidget {
           spacing: 12,
           children: [
             buildRow(
-              icon: FaIcon(FontAwesomeIcons.google, color: const Color(0xFF4285F4)),
+              icon: const SizedBox(width: 24, height: 24, child: PasseIcons.googleRound),
               label: 'auth.googleContinue'.tr(),
               onTap: () => handleAuthAction(
                 () => ref.read(authControllerProvider.notifier).signInWithGoogle(),
