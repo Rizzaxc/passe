@@ -581,6 +581,7 @@
         "username": "Username",
         "email": "Email",
         "changePassword": "Đổi mật khẩu",
+        "setPassword": "Đặt mật khẩu",
         "generalInfo": "Thông tin chung",
         "noGeneralInfo": "Chưa cung cấp thông tin chung",
         "gender": "Giới tính",
@@ -657,7 +658,13 @@
         "disclaimer": "Passe không xác minh hoặc chịu trách nhiệm cho các giao dịch chuyển khoản thực hiện ngoài ứng dụng. Hãy kiểm tra kỹ thông tin người nhận trước khi chuyển tiền.",
         "payCoach": "Thanh toán cho HLV",
         "coachNoPaymentInfo": "HLV này chưa thiết lập thông tin thanh toán.",
-        "lessonNote": "Thanh toán buổi tập với {}"
+        "lessonNote": "Thanh toán buổi tập với {}",
+        "confirmPasswordTitle": "Xác nhận mật khẩu",
+        "confirmPasswordExplanation": "Để bảo mật, hãy xác nhận mật khẩu tài khoản trước khi thêm hoặc thay đổi thông tin thanh toán.",
+        "confirmPasswordAction": "Xác nhận",
+        "incorrectPassword": "Mật khẩu không đúng",
+        "passwordSetupRequiredTitle": "Thiết lập mật khẩu trước",
+        "passwordSetupRequiredExplanation": "Bạn chưa thiết lập mật khẩu tài khoản. Hãy thiết lập để bảo vệ các thay đổi đối với thông tin thanh toán của bạn."
     },
     "health": {
         "title": "Health",

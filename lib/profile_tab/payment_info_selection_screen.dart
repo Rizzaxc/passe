@@ -9,6 +9,7 @@ import '../core/payment/payment_qr_sheet.dart';
 import '../core/payment/preferred_sending_bank_state.dart';
 import '../core/payment/vietqr_bank.dart';
 import '../ui/main.dart';
+import 'password_confirmation_sheet.dart';
 import 'payment_info_controller.dart';
 
 class PaymentInfoSelectionScreen extends ConsumerWidget {
@@ -132,7 +133,10 @@ class PaymentInfoSelectionScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddPaymentInfoSheet(BuildContext context, WidgetRef ref) {
+  Future<void> _showAddPaymentInfoSheet(BuildContext context, WidgetRef ref) async {
+    final confirmed = await requirePasswordConfirmation(context, ref);
+    if (!confirmed || !context.mounted) return;
+
     showPSheet(
       context: context,
       builder: (context) => const _AddPaymentInfoSheet(),

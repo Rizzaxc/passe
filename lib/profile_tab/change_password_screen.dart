@@ -6,7 +6,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../auth/auth_controller.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
-  const ChangePasswordScreen({super.key});
+  /// True when the user has no password credential yet and is being routed
+  /// here to set one up (e.g. before the payment-info password gate) rather
+  /// than changing an existing password.
+  final bool isInitialSetup;
+
+  const ChangePasswordScreen({super.key, this.isInitialSetup = false});
 
   @override
   ConsumerState<ChangePasswordScreen> createState() =>
@@ -42,7 +47,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         title: Text('profile.passwordChanged'.tr()),
         alignment: .bottomCenter,
       );
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       showFToast(
@@ -63,7 +68,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     return FScaffold(
       resizeToAvoidBottomInset: false,
       header: FHeader(
-        title: Text('profile.changePassword'.tr()),
+        title: Text(
+          (widget.isInitialSetup ? 'profile.setPassword' : 'profile.changePassword').tr(),
+        ),
         suffixes: [
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],
@@ -75,6 +82,15 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (widget.isInitialSetup) ...[
+                Text(
+                  'payment.passwordSetupRequiredExplanation'.tr(),
+                  style: context.theme.typography.body.sm.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               FTextFormField.password(
                 label: Text('profile.newPassword'.tr()),
                 autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -114,7 +130,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text('profile.changePassword'.tr()),
+                    : Text(
+                        (widget.isInitialSetup ? 'profile.setPassword' : 'profile.changePassword')
+                            .tr(),
+                      ),
               ),
             ],
           ),

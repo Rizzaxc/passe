@@ -450,6 +450,17 @@ class AuthController extends _$AuthController {
     await refresh();
   }
 
+  /// Whether the current session has an email/password credential set —
+  /// false for a user who only ever signed in via Google/Apple. Read
+  /// straight off the Supabase user (identity providers aren't part of
+  /// [PasseUser]/the offline cache), same sanctioned-exception pattern as
+  /// the rest of this file.
+  bool hasPasswordCredential() {
+    return supabase.auth.currentUser?.identities
+            ?.any((identity) => identity.provider == 'email') ??
+        false;
+  }
+
   Future<void> changePassword(String newPassword) async {
     try {
       await supabase.auth

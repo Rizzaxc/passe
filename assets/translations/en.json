@@ -580,6 +580,7 @@
         "username": "Username",
         "email": "Email",
         "changePassword": "Change Password",
+        "setPassword": "Set Password",
         "generalInfo": "General Info",
         "noGeneralInfo": "No general information provided",
         "gender": "Gender",
@@ -657,7 +658,13 @@
         "disclaimer": "Passe does not verify or take responsibility for transfers made outside the app. Double-check the recipient's info before sending money.",
         "payCoach": "Pay Coach",
         "coachNoPaymentInfo": "This coach hasn't set up payment info yet.",
-        "lessonNote": "Payment for lesson with {}"
+        "lessonNote": "Payment for lesson with {}",
+        "confirmPasswordTitle": "Confirm your password",
+        "confirmPasswordExplanation": "For your security, confirm your account password before adding or changing payment info.",
+        "confirmPasswordAction": "Confirm",
+        "incorrectPassword": "Incorrect password",
+        "passwordSetupRequiredTitle": "Set up a password first",
+        "passwordSetupRequiredExplanation": "You haven't set an account password yet. Set one up to protect changes to your payment info."
     },
     "health": {
         "title": "Health",

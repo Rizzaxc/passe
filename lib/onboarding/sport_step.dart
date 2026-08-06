@@ -28,48 +28,59 @@ class SportStep extends ConsumerWidget {
     }
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'onboarding.sport.title'.tr(),
-              style: context.theme.typography.body.xl2
-                  .copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'onboarding.sport.body'.tr(),
-              style: context.theme.typography.body.md
-                  .copyWith(color: colors.mutedForeground, height: 1.5),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 28),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              alignment: WrapAlignment.center,
-              children: [
-                for (final sport in sports)
-                  FButton(
-                    variant: .outline,
-                    prefix: sport.getIcon(size: 18),
-                    onPress: () => onPick(sport),
-                    child: Text(sport.getLocalizedName(context)),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(28),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - 56,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'onboarding.sport.title'.tr(),
+                    style: context.theme.typography.body.xl2
+                        .copyWith(fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
                   ),
-              ],
+                  const SizedBox(height: 12),
+                  Text(
+                    'onboarding.sport.body'.tr(),
+                    style: context.theme.typography.body.md.copyWith(
+                      color: colors.mutedForeground,
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 28),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      for (final sport in sports)
+                        FButton(
+                          variant: .outline,
+                          prefix: sport.getIcon(size: 18),
+                          onPress: () => onPick(sport),
+                          child: Text(sport.getLocalizedName(context)),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'onboarding.sport.hint'.tr(),
+                    style: context.theme.typography.body.sm
+                        .copyWith(color: colors.mutedForeground),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'onboarding.sport.hint'.tr(),
-              style: context.theme.typography.body.sm
-                  .copyWith(color: colors.mutedForeground),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
