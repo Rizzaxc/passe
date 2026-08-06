@@ -23,6 +23,10 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
   final bookingId = data['booking_id'] as String?;
 
   return switch (kind) {
+    // A newly-scheduled activity lives inside its lobby's section, same as the
+    // later quorum-crossing confirmation.
+    NotificationKind.activityScheduled =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
     // The confirmed activity lives inside its lobby's section.
     NotificationKind.activityConfirmed =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,

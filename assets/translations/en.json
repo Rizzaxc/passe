@@ -95,6 +95,7 @@
             "dayChunkLabel": "Day Chunk",
             "search": "Search",
             "searchHint": "Enter keyword/ SearchID...",
+            "sport": "Sport",
             "city": "City",
             "district": "District",
             "any": "Any",
@@ -242,34 +243,13 @@
             "navigateMessage": "Opening {lobbyTitle} lobby...",
             "createMessage": "Lobby creation coming soon!",
             "empty": {
-                "title": "No lobbies found",
-                "message": "Create a lobby to start playing with others"
+                "title": "No {sport} lobbies found",
+                "message": "Create a {sport} lobby to start playing with others. Looking for a different sport? Check the sport selector at the top."
             },
             "guest": {
                 "title": "You're not signed in",
                 "message": "Sign in to create and manage your lobbies."
             }
-        },
-        "recordMatch": {
-            "cta": "Record match result",
-            "title": "Record Result",
-            "win": "Win",
-            "loss": "Loss",
-            "draw": "Draw",
-            "practice": "Practice",
-            "opponent": "Opponent",
-            "opponentHint": "Opposing team name",
-            "sets": "Set scores",
-            "addSet": "Add set",
-            "mvp": "MVP",
-            "venue": "Venue",
-            "venueHint": "Court name",
-            "venueRequired": "Enter a venue",
-            "setsInvalid": "Invalid set score",
-            "note": "Note",
-            "noteHint": "Optional",
-            "submit": "Save result",
-            "success": "Match result saved"
         }
     },
     "lobby": {
@@ -387,16 +367,29 @@
             "failed": "Failed to send invite. Please try again.",
             "send": "Send Invite",
             "search": "Search",
-            "alreadyMember": "User is already a member",
-            "emailLabel": "Email address",
-            "emailHint": "e.g. name@email.com",
-            "emailDescription": "If they don't have an account yet, they'll auto-join the lobby on sign-up.",
-            "emailEmptyError": "Enter an email address",
-            "emailSuccess": "Invite sent to {email}",
-            "emailExisting": "Invited existing user",
-            "emailAlreadyMember": "This email is already a member of the lobby",
-            "modeUser": "Username",
-            "modeEmail": "Email"
+            "alreadyMember": "User is already a member"
+        },
+        "inviteLink": {
+            "title": "Invite Link",
+            "description": "Anyone with this link joins instantly, no approval needed.",
+            "create": "Create Invite Link",
+            "copy": "Copy",
+            "share": "Share",
+            "regenerate": "Regenerate",
+            "remove": "Remove",
+            "copied": "Invite link copied",
+            "error": "Something went wrong. Please try again.",
+            "landingTitle": "Lobby Invite",
+            "invitedTo": "You're invited to join",
+            "memberCount": "{count} members",
+            "captainedBy": "Captain: {name}",
+            "join": "Join",
+            "joined": "You joined {name}",
+            "alreadyMember": "You're already a member",
+            "invalid": "This invite link no longer works",
+            "notFound": "This invite link is invalid",
+            "expired": "This invite link has expired",
+            "revoked": "This invite link has been removed"
         }
     },
     "createLobby": {
@@ -561,6 +554,12 @@
         "empty": {
             "title": "No notifications yet",
             "subtitle": "Activity, invites and requests will show up here"
+        },
+        "clearRead": {
+            "title": "Clear read notifications?",
+            "message": "This removes every read notification. Unread ones stay.",
+            "cancel": "Cancel",
+            "confirm": "Clear"
         }
     },
     "home": {
@@ -603,7 +602,7 @@
         "selectedNetworks": "Selected Networks",
         "noNetworksFound": "No networks found matching the search criteria",
         "industrySelectionTitle": "Select Industries",
-        "networkFeatureExplanation": "Choose at most 2 schools/ universities/ companies that you were or are a part of. Passe will connect you with people who share your networks.",
+        "networkFeatureExplanation": "Choose at most 5 schools/ universities/ companies that you were or are a part of. Passe will connect you with people who share your networks.",
         "industryFeatureExplanation": "Choose at most 2 industries that you work in. Passe will connect you with people who share your industries.",
         "sportFeatureExplanation": "Update your skill level to find better matches and connect with people who share your passion for sports.",
         "profileFeatureExplanation": "Fill in your profile will help Passe connect you more effectively.",
@@ -630,7 +629,7 @@
         "uploadPhoto": "Upload Photo",
         "cropAvatar": "Adjust Photo",
         "uploadFailed": "Failed to upload photo",
-        "networkMaxReached": "Maximum 2 networks. Remove one first.",
+        "networkMaxReached": "Maximum 5 networks. Remove one first.",
         "paymentInfo": "Payment Info",
         "paymentInfoExplanation": "Add banks or e-wallets you can receive money on. This is shown to your friends and lobby mates so they can pay you outside the app — Passe does not process any payments.",
         "paymentInfoEmpty": "No payment info added yet. Add a bank or e-wallet so friends and lobby mates can pay you.",
@@ -941,9 +940,11 @@
         "sessionsError": "Couldn't load your sessions",
         "untitledSession": "Session",
         "alreadyPosted": "Posted",
-        "photos": "Photos",
-        "addPhotos": "Pick photos (up to 4)",
-        "changePhotos": "{count} selected — change",
+        "media": "Photos & video",
+        "addMedia": "Pick photos or video (up to 4)",
+        "changeMedia": "{count} selected — change",
+        "videoTooLong": "Video must be under 1 minute",
+        "videoTooLarge": "Video is too large (max 25MB)",
         "caption": "Caption",
         "captionHint": "A few words about it (optional)",
         "tagPeople": "Tag people",

@@ -87,11 +87,6 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
                       child: HistoryView(
                         lobbyId: widget.lobbyId,
                         lobbyName: lobbyName,
-                        canRecord: ref
-                                .watch(myLobbyPermissionProvider(widget.lobbyId))
-                                .value
-                                ?.isCaptain ??
-                            false,
                       ),
                     ),
                   ],

@@ -17,7 +17,7 @@ compatibility scores used by the Home feeds.
   - `ProfileController` (`ProfileState`: username, `UserDetails`, networks, industries, pickedAvatar)
     — the editable draft; `commit()` writes `user.username` + `user.details` json, syncs networks &
     industries, handles avatar upload/removal, then refreshes `authControllerProvider`.
-  - `NetworkController` / `IndustryController` — selected networks (≤2) / industries (≤2), each with
+  - `NetworkController` / `IndustryController` — selected networks (≤5) / industries (≤2), each with
     its own `commit()` against `user_network` / `user_industry`.
   - `NetworkSearchController` — typeahead search via `search_networks_unaccent` RPC.
 - Per-field push screens: `age_group_selection_screen`, `location_selection_screen`,
@@ -65,8 +65,8 @@ removes a stale custom photo, falling back to a generated seed if upload fails.
 
 - **Guests can't edit** — `ProfileTab` shows `GuestProfileView` (which also embeds the password-reset
   entry point). Guard new features on `user == null || user.isGuest`.
-- Network and industry are capped at **2 selections each** — the toggle logic enforces it; respect
-  the cap.
+- Network is capped at **5 selections**, industry at **2 selections** — the toggle logic in each
+  controller enforces its own cap; respect it.
 - Username identity is `username#tagNumber`; uniqueness is on the *(username, tag_number)* pair.
   `changeUsername` races against a DB unique constraint and throws `UsernameTakenException`.
 - Sport profiles only exist for the 5 real sports; `Sport.others` renders nothing and commits a

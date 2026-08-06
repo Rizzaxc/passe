@@ -161,7 +161,7 @@ class NetworkController extends _$NetworkController {
     final current = state.toSet();
     if (current.contains(network)) {
       current.remove(network);
-    } else if (current.length < 2) {
+    } else if (current.length < 5) {
       current.add(network);
     } else {
       return false;
@@ -472,21 +472,5 @@ class ProfileController extends _$ProfileController {
     state = state.copyWith(
       details: state.details.copyWith(playtime: originalPlaytime),
     );
-  }
-
-  Future<void> changePassword(String newPassword) async {
-    try {
-      await supabase.auth.updateUser(
-        UserAttributes(
-          password: newPassword,
-        ),
-      ).timeout(const Duration(seconds: 5));
-    } on AuthException catch (e, st) {
-      talker.handle(e, st);
-      rethrow;
-    } catch (e, st) {
-      talker.handle(e, st);
-      rethrow;
-    }
   }
 }

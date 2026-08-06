@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../auth/auth_controller.dart';
+import '../../../core/state/selected_sport_state.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
 import '../incoming_invites_controller.dart';
@@ -22,6 +23,8 @@ class LobbySubtab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lobbiesAsync = ref.watch(userLobbiesControllerProvider);
     final isGuest = ref.watch(authControllerProvider).value?.isGuest ?? true;
+    final sport = ref.watch(selectedSportStateProvider).value;
+    final sportName = sport?.getLocalizedName(context).toLowerCase() ?? '';
 
     ref.listen(userLobbiesControllerProvider, (_, next) {
       if (next is AsyncError && context.mounted) {
@@ -82,8 +85,10 @@ class LobbySubtab extends ConsumerWidget {
                             size: 64,
                             color: context.theme.colors.mutedForeground,
                           ),
-                          title: 'manageTab.lobby.empty.title'.tr(),
-                          subtitle: 'manageTab.lobby.empty.message'.tr(),
+                          title: 'manageTab.lobby.empty.title'
+                              .tr(namedArgs: {'sport': sportName}),
+                          subtitle: 'manageTab.lobby.empty.message'
+                              .tr(namedArgs: {'sport': sportName}),
                         )
                       : RefreshIndicator(
                           onRefresh: () async {

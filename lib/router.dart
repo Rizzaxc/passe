@@ -20,6 +20,7 @@ import 'feed_tab/main.dart';
 import 'health_tab/main.dart';
 import 'home_tab/main.dart';
 import 'main.dart';
+import 'manage_tab/lobby_section/invite_link/invite_landing_page.dart';
 import 'manage_tab/lobby_section/lobby_detail_page.dart';
 import 'manage_tab/main.dart';
 import 'notification/main.dart';
@@ -102,6 +103,20 @@ GoRouter router(Ref ref) {
     // debugLogDiagnostics: true,
     routes: $appRoutes,
     redirect: (context, state) {
+      // A `passe://invite/CODE` tap is forwarded by the OS straight to
+      // Flutter's platform channel — go_router receives the *raw* URI
+      // (scheme, host and all) as `state.uri`, not a bare path, and none of
+      // `$appRoutes` match that shape. Rewrite it to the internal route
+      // before anything else runs; returning a new location here makes
+      // go_router re-resolve `redirect` against it, so the normal
+      // auth/onboarding gating below still applies to the rewritten path.
+      if (state.uri.scheme == 'passe') {
+        if (state.uri.host == 'invite' && state.uri.pathSegments.isNotEmpty) {
+          return InviteRoute(code: state.uri.pathSegments.first).location;
+        }
+        return HomeRoute().location;
+      }
+
       final isSplash = state.uri.path == const SplashRoute().location;
       final isOnboarding = state.uri.path == const OnboardingRoute().location;
       // Password-recovery screens carry their own flag: unlike the rest of
@@ -397,6 +412,22 @@ class UserRoute extends GoRouteData with $UserRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       UserPage(userId: id, initialName: $extra);
+}
+
+/// Lobby invite-link landing page. Reached from a `passe://invite/:code` deep
+/// link (see `lib/core/deep_link_service.dart`) or a direct push; renders a
+/// preview of the lobby and, once signed in, redeems the code. Push-only,
+/// like [UserRoute]/[ProfessionalDetailRoute] — never a tab.
+@TypedGoRoute<InviteRoute>(path: '/invite/:code')
+@immutable
+class InviteRoute extends GoRouteData with $InviteRoute {
+  final String code;
+
+  const InviteRoute({required this.code});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      InviteLandingPage(code: code);
 }
 
 @TypedStatefulShellRoute<MainRoute>(

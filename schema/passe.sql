@@ -2944,56 +2944,6 @@ $$;
 
 
 --
--- Name: fn_invoke_send_invite_email(uuid, text, uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.fn_invoke_send_invite_email(p_invite_id uuid, p_email text, p_inviter_id uuid, p_lobby_id uuid) RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-DECLARE
-    v_url          text;
-    v_key          text;
-    v_inviter_name text;
-    v_lobby_name   text;
-    v_sport_name   text;
-BEGIN
-    SELECT decrypted_secret INTO v_url
-        FROM vault.decrypted_secrets WHERE name = 'edge_invite_email_url';
-    SELECT decrypted_secret INTO v_key
-        FROM vault.decrypted_secrets WHERE name = 'edge_invite_email_key';
-
-    IF v_url IS NULL OR v_key IS NULL THEN
-        RETURN;
-    END IF;
-
-    SELECT u.username INTO v_inviter_name
-        FROM public."user" u WHERE u.id = p_inviter_id;
-
-    SELECT l.name, s.name INTO v_lobby_name, v_sport_name
-        FROM public.lobby l
-        LEFT JOIN public.sport s ON s.id = l.sport_id
-        WHERE l.id = p_lobby_id;
-
-    PERFORM net.http_post(
-        url     := v_url,
-        headers := jsonb_build_object(
-            'Content-Type',  'application/json',
-            'Authorization', 'Bearer ' || v_key
-        ),
-        body    := jsonb_build_object(
-            'invite_id',    p_invite_id,
-            'email',        p_email,
-            'inviter_name', COALESCE(v_inviter_name, 'Ai đó'),
-            'lobby_name',   COALESCE(v_lobby_name, 'một lobby'),
-            'sport_name',   COALESCE(v_sport_name, '')
-        )
-    );
-END;
-$$;
-
-
---
 -- Name: fn_invoke_send_push(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -3037,23 +2987,6 @@ CREATE FUNCTION public.fn_is_blocked(p_a uuid, p_b uuid) RETURNS boolean
         where (blocker_id = p_a and blocked_id = p_b)
            or (blocker_id = p_b and blocked_id = p_a)
     );
-$$;
-
-
---
--- Name: fn_lobby_email_invite_send(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.fn_lobby_email_invite_send() RETURNS trigger
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-BEGIN
-    PERFORM public.fn_invoke_send_invite_email(
-        NEW.id, NEW.email, NEW.inviter_user_id, NEW.lobby_id
-    );
-    RETURN NEW;
-END;
 $$;
 
 
@@ -3874,6 +3807,77 @@ $$;
 
 
 --
+-- Name: generate_lobby_invite_link(uuid, interval); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.generate_lobby_invite_link(p_lobby_id uuid, p_expires_in interval DEFAULT NULL::interval) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'extensions'
+    AS $$
+DECLARE
+    v_uid  uuid := auth.uid();
+    v_code text;
+    v_exp  timestamptz;
+BEGIN
+    IF NOT public.lobby_can_manage(p_lobby_id, v_uid) THEN
+        RAISE EXCEPTION 'Not authorized to manage this lobby';
+    END IF;
+
+    UPDATE public.lobby_invite_link
+       SET revoked_at = now()
+     WHERE lobby_id = p_lobby_id AND revoked_at IS NULL;
+
+    v_exp := CASE WHEN p_expires_in IS NULL THEN NULL ELSE now() + p_expires_in END;
+    v_code := extensions.nanoid(10);
+
+    INSERT INTO public.lobby_invite_link (lobby_id, code, created_by, expires_at)
+    VALUES (p_lobby_id, v_code, v_uid, v_exp)
+    RETURNING code, expires_at INTO v_code, v_exp;
+
+    RETURN jsonb_build_object('code', v_code, 'expires_at', v_exp);
+END;
+$$;
+
+
+--
+-- Name: get_lobby_invite_preview(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_lobby_invite_preview(p_code text) RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_link record;
+BEGIN
+    SELECT lil.*, l.name AS lobby_name, l.sport_id, l.member_count, u.username AS captain_username
+      INTO v_link
+      FROM public.lobby_invite_link lil
+      JOIN public.lobby l ON l.id = lil.lobby_id
+      JOIN public."user" u ON u.id = l.captain_id
+     WHERE lil.code = p_code;
+
+    IF v_link IS NULL THEN
+        RETURN jsonb_build_object('valid', false, 'reason', 'not_found');
+    ELSIF v_link.revoked_at IS NOT NULL THEN
+        RETURN jsonb_build_object('valid', false, 'reason', 'revoked');
+    ELSIF v_link.expires_at IS NOT NULL AND v_link.expires_at <= now() THEN
+        RETURN jsonb_build_object('valid', false, 'reason', 'expired');
+    END IF;
+
+    RETURN jsonb_build_object(
+        'valid', true,
+        'lobby_id', v_link.lobby_id,
+        'lobby_name', v_link.lobby_name,
+        'sport_id', v_link.sport_id,
+        'member_count', v_link.member_count,
+        'captain_username', v_link.captain_username
+    );
+END;
+$$;
+
+
+--
 -- Name: get_my_friend_ids(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4241,7 +4245,75 @@ CREATE FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots j
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
+DECLARE
+    v_ts_floor integer := 4;
+    v_cnt      integer;
 BEGIN
+    IF p_timeslots <> '{}'::jsonb THEN
+        SELECT count(*) INTO v_cnt
+        FROM public.lobby l
+        LEFT JOIN public.location loc ON l.home_ground = loc.id
+        CROSS JOIN LATERAL (
+            SELECT public.calculate_timeslot_compat_score(
+                       p_timeslots, public.fn_playtime_to_dict(l.playtime)
+                   ) AS ts_score
+        ) ts
+        WHERE l.sport_id = p_sport_id
+          AND l.visibility != 'private'
+          AND (loc.city_cluster = p_city OR loc.id IS NULL)
+          AND l.id NOT IN (SELECT public.get_my_lobby_ids())
+          AND (p_districts IS NULL OR cardinality(p_districts) = 0 OR loc.district = ANY(p_districts))
+          AND (
+                p_search IS NULL OR p_search = ''
+                OR l.name ILIKE '%' || p_search || '%'
+                OR extensions.unaccent(l.name) ILIKE '%' || extensions.unaccent(p_search) || '%'
+                OR l.searchable_id ILIKE '%' || p_search || '%'
+            )
+          AND ts.ts_score >= v_ts_floor
+          AND NOT EXISTS (
+                SELECT 1 FROM public.lobby_befriend_record r
+                WHERE r.initiator_user_id = auth.uid()
+                  AND r.target_lobby_id = l.id
+                  AND r.interaction_type = 'request'
+                  AND r.status = 'declined'
+            );
+
+        IF v_cnt < p_page_size THEN
+            v_ts_floor := 2;
+            SELECT count(*) INTO v_cnt
+            FROM public.lobby l
+            LEFT JOIN public.location loc ON l.home_ground = loc.id
+            CROSS JOIN LATERAL (
+                SELECT public.calculate_timeslot_compat_score(
+                           p_timeslots, public.fn_playtime_to_dict(l.playtime)
+                       ) AS ts_score
+            ) ts
+            WHERE l.sport_id = p_sport_id
+              AND l.visibility != 'private'
+              AND (loc.city_cluster = p_city OR loc.id IS NULL)
+              AND l.id NOT IN (SELECT public.get_my_lobby_ids())
+              AND (p_districts IS NULL OR cardinality(p_districts) = 0 OR loc.district = ANY(p_districts))
+              AND (
+                    p_search IS NULL OR p_search = ''
+                    OR l.name ILIKE '%' || p_search || '%'
+                    OR extensions.unaccent(l.name) ILIKE '%' || extensions.unaccent(p_search) || '%'
+                    OR l.searchable_id ILIKE '%' || p_search || '%'
+                )
+              AND ts.ts_score >= v_ts_floor
+              AND NOT EXISTS (
+                    SELECT 1 FROM public.lobby_befriend_record r
+                    WHERE r.initiator_user_id = auth.uid()
+                      AND r.target_lobby_id = l.id
+                      AND r.interaction_type = 'request'
+                      AND r.status = 'declined'
+                );
+
+            IF v_cnt < p_page_size THEN
+                v_ts_floor := 0;
+            END IF;
+        END IF;
+    END IF;
+
     RETURN QUERY
         SELECT
             l.id,
@@ -4266,7 +4338,7 @@ BEGIN
             ) AS already_requested
         FROM
             public.lobby l
-                JOIN
+                LEFT JOIN
             public.location loc ON l.home_ground = loc.id
                 CROSS JOIN LATERAL (
                 SELECT public.calculate_timeslot_compat_score(p_timeslots, public.fn_playtime_to_dict(l.playtime)) AS ts_score
@@ -4277,7 +4349,7 @@ BEGIN
         WHERE
             l.sport_id = p_sport_id
           AND l.visibility != 'private'
-          AND loc.city_cluster = p_city
+          AND (loc.city_cluster = p_city OR loc.id IS NULL)
           AND l.id NOT IN (SELECT public.get_my_lobby_ids())
           AND (p_districts IS NULL OR cardinality(p_districts) = 0 OR loc.district = ANY(p_districts))
           AND (
@@ -4286,7 +4358,7 @@ BEGIN
                 OR extensions.unaccent(l.name) ILIKE '%' || extensions.unaccent(p_search) || '%'
                 OR l.searchable_id ILIKE '%' || p_search || '%'
             )
-          AND (p_timeslots = '{}'::jsonb OR ts.ts_score >= 4)
+          AND (p_timeslots = '{}'::jsonb OR ts.ts_score >= v_ts_floor)
           AND NOT EXISTS (
                 SELECT 1 FROM public.lobby_befriend_record r
                 WHERE r.initiator_user_id = auth.uid()
@@ -4313,60 +4385,6 @@ CREATE FUNCTION public.immutable_unaccent(text) RETURNS text
     AS $_$
 SELECT extensions.unaccent($1)
 $_$;
-
-
---
--- Name: invite_to_lobby_by_email(uuid, text); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.invite_to_lobby_by_email(p_lobby_id uuid, p_email text) RETURNS jsonb
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-DECLARE
-    v_uid        uuid := auth.uid();
-    v_target_uid uuid;
-    v_email      text := lower(trim(p_email));
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM public.lobby_member lm
-        WHERE lm.lobby_id = p_lobby_id AND lm.user_id = v_uid
-    ) THEN
-        RAISE EXCEPTION 'Not a member of this lobby';
-    END IF;
-
-    SELECT au.id INTO v_target_uid
-    FROM auth.users au
-    WHERE au.email = v_email
-    LIMIT 1;
-
-    IF v_target_uid IS NOT NULL THEN
-        IF EXISTS (
-            SELECT 1 FROM public.lobby_member lm
-            WHERE lm.lobby_id = p_lobby_id AND lm.user_id = v_target_uid
-        ) THEN
-            RETURN jsonb_build_object('status', 'already_member');
-        END IF;
-
-        INSERT INTO public.lobby_befriend_record (
-            initiator_user_id, target_user_id, target_lobby_id, interaction_type
-        ) VALUES (v_uid, v_target_uid, p_lobby_id, 'invite');
-
-        RETURN jsonb_build_object('status', 'invited_existing');
-    ELSE
-        INSERT INTO public.lobby_email_invite (lobby_id, inviter_user_id, email)
-        VALUES (p_lobby_id, v_uid, v_email)
-        ON CONFLICT (lobby_id, email) DO UPDATE
-        SET status = 'pending',
-            inviter_user_id = v_uid,
-            expires_at = now() + interval '7 days',
-            created_at = now()
-        WHERE public.lobby_email_invite.status != 'pending';
-
-        RETURN jsonb_build_object('status', 'invited_new');
-    END IF;
-END;
-$$;
 
 
 --
@@ -4642,46 +4660,6 @@ CREATE FUNCTION public.lobby_challenge_data(p_lobby_id uuid) RETURNS TABLE(id uu
     WHERE (c.initiator_lobby_id = p_lobby_id OR c.target_lobby_id = p_lobby_id)
       AND c.status IN ('requested', 'accepted', 'scheduled')
     ORDER BY c.created_at DESC;
-$$;
-
-
---
--- Name: lobby_email_invite_auto_join_fn(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.lobby_email_invite_auto_join_fn() RETURNS trigger
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-DECLARE
-    v_email  text;
-    v_invite record;
-BEGIN
-    SELECT au.email INTO v_email
-    FROM auth.users au WHERE au.id = NEW.id;
-
-    IF v_email IS NULL THEN RETURN NEW; END IF;
-
-    FOR v_invite IN
-        SELECT * FROM public.lobby_email_invite lei
-        WHERE lei.email = v_email
-          AND lei.status = 'pending'
-          AND lei.expires_at > now()
-    LOOP
-        -- Create a pending befriend invite (not auto-accept)
-        INSERT INTO public.lobby_befriend_record (
-            initiator_user_id, target_user_id, target_lobby_id, interaction_type
-        ) VALUES (v_invite.inviter_user_id, NEW.id, v_invite.lobby_id, 'invite')
-        ON CONFLICT DO NOTHING;
-
-        -- Mark the email invite as converted
-        UPDATE public.lobby_email_invite
-        SET status = 'accepted'
-        WHERE id = v_invite.id;
-    END LOOP;
-
-    RETURN NEW;
-END;
 $$;
 
 
@@ -5283,6 +5261,62 @@ $$;
 
 
 --
+-- Name: redeem_lobby_invite_link(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.redeem_lobby_invite_link(p_code text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid  uuid := auth.uid();
+    v_link record;
+BEGIN
+    IF v_uid IS NULL THEN
+        RAISE EXCEPTION 'Not authenticated';
+    END IF;
+
+    SELECT lil.*, l.name AS lobby_name
+      INTO v_link
+      FROM public.lobby_invite_link lil
+      JOIN public.lobby l ON l.id = lil.lobby_id
+     WHERE lil.code = p_code;
+
+    IF v_link IS NULL THEN
+        RETURN jsonb_build_object('status', 'invalid', 'reason', 'not_found');
+    ELSIF v_link.revoked_at IS NOT NULL THEN
+        RETURN jsonb_build_object('status', 'invalid', 'reason', 'revoked');
+    ELSIF v_link.expires_at IS NOT NULL AND v_link.expires_at <= now() THEN
+        RETURN jsonb_build_object('status', 'invalid', 'reason', 'expired');
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM public.lobby_member lm
+        WHERE lm.lobby_id = v_link.lobby_id AND lm.user_id = v_uid
+    ) THEN
+        RETURN jsonb_build_object(
+            'status', 'already_member',
+            'lobby_id', v_link.lobby_id,
+            'lobby_name', v_link.lobby_name
+        );
+    END IF;
+
+    INSERT INTO public.lobby_member (user_id, lobby_id) VALUES (v_uid, v_link.lobby_id);
+
+    UPDATE public.lobby_invite_link
+       SET use_count = use_count + 1
+     WHERE id = v_link.id;
+
+    RETURN jsonb_build_object(
+        'status', 'joined',
+        'lobby_id', v_link.lobby_id,
+        'lobby_name', v_link.lobby_name
+    );
+END;
+$$;
+
+
+--
 -- Name: register_device_token(text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5511,6 +5545,26 @@ begin
         raise exception 'invalid action %', p_action;
     end if;
 end;
+$$;
+
+
+--
+-- Name: revoke_lobby_invite_link(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.revoke_lobby_invite_link(p_lobby_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    IF NOT public.lobby_can_manage(p_lobby_id, auth.uid()) THEN
+        RAISE EXCEPTION 'Not authorized to manage this lobby';
+    END IF;
+
+    UPDATE public.lobby_invite_link
+       SET revoked_at = now()
+     WHERE lobby_id = p_lobby_id AND revoked_at IS NULL;
+END;
 $$;
 
 
@@ -9222,23 +9276,6 @@ CREATE TABLE public.lobby_challenge (
 
 
 --
--- Name: lobby_email_invite; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.lobby_email_invite (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    lobby_id uuid NOT NULL,
-    inviter_user_id uuid NOT NULL,
-    email text NOT NULL,
-    status text DEFAULT 'pending'::text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    expires_at timestamp with time zone DEFAULT (now() + '7 days'::interval) NOT NULL,
-    email_sent boolean DEFAULT false NOT NULL,
-    CONSTRAINT lobby_email_invite_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'expired'::text])))
-);
-
-
---
 -- Name: lobby_feed_item; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -9291,6 +9328,22 @@ CREATE TABLE public.lobby_feed_poll_vote (
 --
 
 COMMENT ON TABLE public.lobby_feed_poll_vote IS 'Member votes against a feed-item poll. option_index points into the payload.options array of the parent lobby_feed_item.';
+
+
+--
+-- Name: lobby_invite_link; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lobby_invite_link (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    lobby_id uuid NOT NULL,
+    code text NOT NULL,
+    created_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone,
+    revoked_at timestamp with time zone,
+    use_count integer DEFAULT 0 NOT NULL
+);
 
 
 --
@@ -10716,21 +10769,6 @@ ALTER TABLE ONLY public.lobby_challenge
     ADD CONSTRAINT lobby_challenge_pkey PRIMARY KEY (id);
 
 
---
--- Name: lobby_email_invite lobby_email_invite_lobby_id_email_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.lobby_email_invite
-    ADD CONSTRAINT lobby_email_invite_lobby_id_email_key UNIQUE (lobby_id, email);
-
-
---
--- Name: lobby_email_invite lobby_email_invite_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.lobby_email_invite
-    ADD CONSTRAINT lobby_email_invite_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: lobby_feed_item lobby_feed_item_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -10754,6 +10792,22 @@ ALTER TABLE ONLY public.lobby_feed_item_reaction
 
 ALTER TABLE ONLY public.lobby_feed_poll_vote
     ADD CONSTRAINT lobby_feed_poll_vote_pkey PRIMARY KEY (feed_item_id, user_id);
+
+
+--
+-- Name: lobby_invite_link lobby_invite_link_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_invite_link
+    ADD CONSTRAINT lobby_invite_link_code_key UNIQUE (code);
+
+
+--
+-- Name: lobby_invite_link lobby_invite_link_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_invite_link
+    ADD CONSTRAINT lobby_invite_link_pkey PRIMARY KEY (id);
 
 
 --
@@ -11868,6 +11922,13 @@ CREATE INDEX idx_lobby_home_ground ON public.lobby USING btree (home_ground);
 
 
 --
+-- Name: idx_lobby_invite_link_lobby_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_lobby_invite_link_lobby_id ON public.lobby_invite_link USING btree (lobby_id);
+
+
+--
 -- Name: idx_lobby_member_lobby_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -12410,20 +12471,6 @@ CREATE TRIGGER lobby_befriend_invite_notify AFTER INSERT ON public.lobby_befrien
 --
 
 CREATE TRIGGER lobby_befriend_record_before_insert BEFORE INSERT ON public.lobby_befriend_record FOR EACH ROW EXECUTE FUNCTION public.lobby_befriend_record_before_insert_trigger_fn();
-
-
---
--- Name: user lobby_email_invite_auto_join; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER lobby_email_invite_auto_join AFTER INSERT ON public."user" FOR EACH ROW EXECUTE FUNCTION public.lobby_email_invite_auto_join_fn();
-
-
---
--- Name: lobby_email_invite lobby_email_invite_send; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER lobby_email_invite_send AFTER INSERT ON public.lobby_email_invite FOR EACH ROW EXECUTE FUNCTION public.fn_lobby_email_invite_send();
 
 
 --
@@ -13006,22 +13053,6 @@ ALTER TABLE ONLY public.lobby_challenge
 
 
 --
--- Name: lobby_email_invite lobby_email_invite_inviter_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.lobby_email_invite
-    ADD CONSTRAINT lobby_email_invite_inviter_user_id_fkey FOREIGN KEY (inviter_user_id) REFERENCES public."user"(id);
-
-
---
--- Name: lobby_email_invite lobby_email_invite_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.lobby_email_invite
-    ADD CONSTRAINT lobby_email_invite_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
-
-
---
 -- Name: lobby_feed_item lobby_feed_item_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -13075,6 +13106,22 @@ ALTER TABLE ONLY public.lobby_feed_poll_vote
 
 ALTER TABLE ONLY public.lobby
     ADD CONSTRAINT lobby_home_ground_fkey FOREIGN KEY (home_ground) REFERENCES public.location(id);
+
+
+--
+-- Name: lobby_invite_link lobby_invite_link_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_invite_link
+    ADD CONSTRAINT lobby_invite_link_created_by_fkey FOREIGN KEY (created_by) REFERENCES public."user"(id);
+
+
+--
+-- Name: lobby_invite_link lobby_invite_link_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lobby_invite_link
+    ADD CONSTRAINT lobby_invite_link_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
 
 
 --
@@ -14063,15 +14110,6 @@ CREATE POLICY "Members can confirm their own attendance" ON public.activity_conf
 
 
 --
--- Name: lobby_email_invite Members can create email invites; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Members can create email invites" ON public.lobby_email_invite FOR INSERT TO authenticated WITH CHECK (((inviter_user_id = auth.uid()) AND (EXISTS ( SELECT 1
-   FROM public.lobby_member lm
-  WHERE ((lm.lobby_id = lobby_email_invite.lobby_id) AND (lm.user_id = auth.uid()))))));
-
-
---
 -- Name: lobby_feed_item Members can post personal or photo items; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -14111,12 +14149,12 @@ CREATE POLICY "Members can retract their own confirmation" ON public.activity_co
 
 
 --
--- Name: lobby_email_invite Members can view email invites; Type: POLICY; Schema: public; Owner: -
+-- Name: lobby_invite_link Members can view their lobby's invite links; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Members can view email invites" ON public.lobby_email_invite FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+CREATE POLICY "Members can view their lobby's invite links" ON public.lobby_invite_link FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM public.lobby_member lm
-  WHERE ((lm.lobby_id = lobby_email_invite.lobby_id) AND (lm.user_id = auth.uid())))));
+  WHERE ((lm.lobby_id = lobby_invite_link.lobby_id) AND (lm.user_id = auth.uid())))));
 
 
 --
@@ -14549,12 +14587,6 @@ ALTER TABLE public.lobby_befriend_record ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lobby_challenge ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: lobby_email_invite; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.lobby_email_invite ENABLE ROW LEVEL SECURITY;
-
---
 -- Name: lobby_feed_item; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -14571,6 +14603,12 @@ ALTER TABLE public.lobby_feed_item_reaction ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.lobby_feed_poll_vote ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lobby_invite_link; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.lobby_invite_link ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: lobby_match; Type: ROW SECURITY; Schema: public; Owner: -

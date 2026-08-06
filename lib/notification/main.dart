@@ -13,15 +13,50 @@ import 'notification_item.dart';
 class NotificationPage extends ConsumerWidget {
   const NotificationPage({super.key});
 
+  void _confirmClearRead(BuildContext context, WidgetRef ref) {
+    showFDialog(
+      context: context,
+      builder: (dialogCtx, style, animation) => PConfirmDialog(
+        animation: animation,
+        title: Text('notification.clearRead.title'.tr()),
+        body: Text('notification.clearRead.message'.tr()),
+        actions: [
+          FButton(
+            variant: .outline,
+            onPress: () => Navigator.of(dialogCtx).pop(),
+            child: Text('notification.clearRead.cancel'.tr()),
+          ),
+          FButton(
+            variant: .destructive,
+            onPress: () {
+              Navigator.of(dialogCtx).pop();
+              ref
+                  .read(notificationCenterControllerProvider.notifier)
+                  .clearRead();
+            },
+            child: Text('notification.clearRead.confirm'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final itemsAsync = ref.watch(notificationCenterControllerProvider);
-    final hasUnread = itemsAsync.value?.any((i) => i.isUnread) ?? false;
+    final items = itemsAsync.value ?? const <NotificationItem>[];
+    final hasUnread = items.any((i) => i.isUnread);
+    final hasRead = items.any((i) => !i.isUnread);
 
     return FScaffold(
       header: FHeader(
         title: Text('notification.title'.tr()),
         suffixes: [
+          if (hasRead)
+            FHeaderAction(
+              icon: const Icon(FLucideIcons.trash2),
+              onPress: () => _confirmClearRead(context, ref),
+            ),
           if (hasUnread)
             FHeaderAction(
               icon: const Icon(FLucideIcons.checkCheck),
@@ -90,6 +125,7 @@ class NotificationPage extends ConsumerWidget {
 }
 
 IconData _iconFor(NotificationKind? kind) => switch (kind) {
+  NotificationKind.activityScheduled => FLucideIcons.calendarPlus,
   NotificationKind.activityConfirmed => FLucideIcons.calendarCheck,
   NotificationKind.proSessionReminder => FLucideIcons.clock,
   NotificationKind.challengerConfirmed ||
@@ -135,63 +171,95 @@ class _NotificationRow extends ConsumerWidget {
     if (location != null && context.mounted) context.push(location);
   }
 
+  Future<void> _onDelete(WidgetRef ref) => ref
+      .read(notificationCenterControllerProvider.notifier)
+      .delete(item.id);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
 
-    return FTappable(
-      onPress: () => _onTap(context, ref),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 12,
-          children: [
-            Icon(_iconFor(item.kind), size: 20, color: colors.mutedForeground),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 2,
-                children: [
-                  Text(
-                    item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: typography.body.sm.copyWith(
-                      fontWeight: item.isUnread ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    item.body,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: typography.body.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
-                  Text(
-                    _relativeTime(item.createdAt),
-                    style: typography.body.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (item.isUnread)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: colors.primary,
-                    shape: BoxShape.circle,
-                  ),
+    return Dismissible(
+      key: ValueKey(item.id),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) => _onDelete(ref),
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        color: colors.destructive,
+        child: Icon(FLucideIcons.trash2, color: colors.destructiveForeground),
+      ),
+      child: FTappable(
+        onPress: () => _onTap(context, ref),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 12,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: item.isUnread ? colors.secondary : colors.muted,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  _iconFor(item.kind),
+                  size: 18,
+                  color: item.isUnread
+                      ? colors.secondaryForeground
+                      : colors.mutedForeground,
                 ),
               ),
-          ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 2,
+                  children: [
+                    Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: typography.body.sm.copyWith(
+                        fontWeight: item.isUnread
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      item.body,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: typography.body.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                    Text(
+                      _relativeTime(item.createdAt),
+                      style: typography.body.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (item.isUnread)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: colors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

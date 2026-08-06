@@ -94,6 +94,7 @@
             "dayChunkLabel": "Buổi",
             "search": "Tìm kiếm",
             "searchHint": "Nhập từ khoá/ SearchID...",
+            "sport": "Môn",
             "city": "Thành phố",
             "district": "Quận/ Huyện",
             "any": "Tất cả",
@@ -241,37 +242,16 @@
             "createNew": "Tạo Lobby Mới",
             "createFirst": "Tạo Lobby Đầu Tiên",
             "navigate": "Vào Phòng Chơi",
-            "navigateMessage": "Đang mở phòng {lobbyTitle}...",
+            "navigateMessage": "Đang mở Lobby {lobbyTitle}...",
             "createMessage": "Tính năng tạo lobby sắp ra mắt!",
             "empty": {
-                "title": "Không tìm thấy lobby",
-                "message": "Tạo lobby để bắt đầu chơi với người khác"
+                "title": "Không tìm thấy lobby {sport}",
+                "message": "Tạo lobby {sport} để bắt đầu chơi với người khác. Bạn có đang chọn nhầm môn?"
             },
             "guest": {
                 "title": "Bạn chưa đăng nhập",
                 "message": "Đăng nhập để tạo và quản lý lobby của bạn."
             }
-        },
-        "recordMatch": {
-            "cta": "Ghi kết quả trận",
-            "title": "Ghi kết quả",
-            "win": "Thắng",
-            "loss": "Thua",
-            "draw": "Hoà",
-            "practice": "Tập nội bộ",
-            "opponent": "Đối thủ",
-            "opponentHint": "Tên đội đối thủ",
-            "sets": "Tỉ số các set",
-            "addSet": "Thêm set",
-            "mvp": "MVP",
-            "venue": "Địa điểm",
-            "venueHint": "Tên sân",
-            "venueRequired": "Nhập địa điểm thi đấu",
-            "setsInvalid": "Tỉ số set không hợp lệ",
-            "note": "Ghi chú",
-            "noteHint": "Tùy chọn",
-            "submit": "Lưu kết quả",
-            "success": "Đã lưu kết quả trận"
         }
     },
     "lobby": {
@@ -381,7 +361,7 @@
         },
         "inviteUser": {
             "label": "Tên người dùng",
-            "hint": "vd. Thach#1234 hoặc #1234",
+            "hint": "abcxyz#1234 hoặc #1234",
             "description": "Nhập username#tag, chỉ username, hoặc chỉ #tag để tìm.",
             "emptyError": "Nhập tên hoặc tag người dùng",
             "notFound": "Không tìm thấy người dùng \"{name}\"",
@@ -389,16 +369,29 @@
             "failed": "Không thể gửi lời mời. Vui lòng thử lại.",
             "send": "Gửi lời mời",
             "search": "Tìm",
-            "alreadyMember": "Người dùng đã là thành viên",
-            "emailLabel": "Địa chỉ email",
-            "emailHint": "vd. ten@email.com",
-            "emailDescription": "Nếu chưa có tài khoản, họ sẽ tự động vào lobby khi đăng ký.",
-            "emailEmptyError": "Nhập địa chỉ email",
-            "emailSuccess": "Đã gửi lời mời đến {email}",
-            "emailExisting": "Đã mời người dùng hiện tại",
-            "emailAlreadyMember": "Email này đã là thành viên của lobby",
-            "modeUser": "Username",
-            "modeEmail": "Email"
+            "alreadyMember": "Người dùng đã là thành viên"
+        },
+        "inviteLink": {
+            "title": "Liên Kết Mời",
+            "description": "Bất kỳ ai có liên kết này sẽ vào lobby ngay, không cần duyệt.",
+            "create": "Tạo Liên Kết Mời",
+            "copy": "Sao chép",
+            "share": "Chia sẻ",
+            "regenerate": "Tạo lại",
+            "remove": "Xóa",
+            "copied": "Đã sao chép liên kết mời",
+            "error": "Có lỗi xảy ra. Vui lòng thử lại.",
+            "landingTitle": "Lời Mời Lobby",
+            "invitedTo": "Bạn được mời vào",
+            "memberCount": "{count} thành viên",
+            "captainedBy": "Đội trưởng: {name}",
+            "join": "Tham Gia",
+            "joined": "Bạn đã vào {name}",
+            "alreadyMember": "Bạn đã là thành viên",
+            "invalid": "Liên kết mời này không còn hiệu lực",
+            "notFound": "Liên kết mời không hợp lệ",
+            "expired": "Liên kết mời đã hết hạn",
+            "revoked": "Liên kết mời đã bị xóa"
         }
     },
     "createLobby": {
@@ -561,6 +554,12 @@
         "empty": {
             "title": "Chưa có thông báo",
             "subtitle": "Hoạt động, lời mời và yêu cầu sẽ xuất hiện ở đây"
+        },
+        "clearRead": {
+            "title": "Xoá thông báo đã đọc?",
+            "message": "Thao tác này sẽ xoá mọi thông báo đã đọc. Thông báo chưa đọc vẫn được giữ lại.",
+            "cancel": "Huỷ",
+            "confirm": "Xoá"
         }
     },
     "home": {
@@ -603,7 +602,7 @@
         "networkSearchHint": "Tìm theo tên trường học/ tổ chức/ công ty",
         "selectedNetworks": "Đã Chọn",
         "noNetworksFound": "Không tìm thấy network nào theo từ khoá",
-        "networkFeatureExplanation": "Bạn chưa chọn tổ chức nào. Chọn tối đa 2 trường học/ tổ chức/ công ty bạn đã hoặc đang là thành viên. Passe sẽ kết nối bạn đến những người cùng network.",
+        "networkFeatureExplanation": "Bạn chưa chọn tổ chức nào. Chọn tối đa 5 trường học/ tổ chức/ công ty bạn đã hoặc đang là thành viên. Passe sẽ kết nối bạn đến những người cùng network.",
         "industryFeatureExplanation": "Chọn tối đa 2 ngạch bạn đang làm việc. Passe sẽ kết nối bạn đến những người cùng ngành nghề.",
         "sportFeatureExplanation": "Cập nhật trình độ để tìm đối thủ phù hợp và kết nối với những người có cùng đam mê thể thao.",
         "profileFeatureExplanation": "Điền profile để Passe giúp bạn kết nối với người khác tốt hơn.",
@@ -630,7 +629,7 @@
         "uploadPhoto": "Tải ảnh lên",
         "cropAvatar": "Chỉnh ảnh",
         "uploadFailed": "Tải ảnh thất bại",
-        "networkMaxReached": "Tối đa 2 tổ chức. Hãy xoá bớt 1 trước.",
+        "networkMaxReached": "Tối đa 5 tổ chức. Hãy xoá bớt 1 trước.",
         "paymentInfo": "Thông tin thanh toán",
         "paymentInfoExplanation": "Thêm ngân hàng hoặc ví điện tử để nhận tiền. Thông tin này chỉ hiển thị cho bạn bè và thành viên cùng lobby để họ chuyển khoản cho bạn ngoài ứng dụng — Passe không xử lý bất kỳ giao dịch thanh toán nào.",
         "paymentInfoEmpty": "Chưa có thông tin thanh toán nào. Thêm ngân hàng hoặc ví điện tử để bạn bè và thành viên lobby có thể chuyển khoản cho bạn.",
@@ -941,9 +940,11 @@
         "sessionsError": "Không tải được danh sách buổi chơi",
         "untitledSession": "Buổi chơi",
         "alreadyPosted": "Đã đăng",
-        "photos": "Ảnh",
-        "addPhotos": "Chọn ảnh (tối đa 4)",
-        "changePhotos": "Đã chọn {count} ảnh — đổi",
+        "media": "Ảnh & video",
+        "addMedia": "Chọn ảnh hoặc video (tối đa 4)",
+        "changeMedia": "Đã chọn {count} mục — đổi",
+        "videoTooLong": "Video phải dưới 1 phút",
+        "videoTooLarge": "Video quá dung lượng cho phép (tối đa 25MB)",
         "caption": "Chú thích",
         "captionHint": "Chia sẻ cảm nghĩ",
         "tagPeople": "Gắn thẻ",

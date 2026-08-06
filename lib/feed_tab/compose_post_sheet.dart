@@ -4,7 +4,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/model/wall_post.dart';
@@ -42,11 +41,12 @@ class _ComposePostScreen extends ConsumerStatefulWidget {
 
 class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
   PostableSession? _session;
-  final List<XFile> _images = [];
+  final List<PreparedMedia> _media = [];
   final _caption = TextEditingController();
   List<TaggableUser> _tagged = const [];
   int _ttlDays = 7;
   bool _submitting = false;
+  bool _picking = false;
 
   @override
   void dispose() {
@@ -54,25 +54,43 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImages() async {
+  Future<void> _pickMedia() async {
+    setState(() => _picking = true);
     try {
-      final picked = await ref
-          .read(composePostControllerProvider.notifier)
-          .pickImages();
+      final controller = ref.read(composePostControllerProvider.notifier);
+      final picked = await controller.pickMedia();
       if (picked.isEmpty || !mounted) return;
+
+      final result = await controller.prepareMedia(picked);
+      if (!mounted) return;
       setState(() {
-        _images
+        _media
           ..clear()
-          ..addAll(picked);
+          ..addAll(result.accepted);
       });
+      for (final r in result.rejected) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: Text(
+            r.reason == MediaRejectReason.tooLong
+                ? 'feed.videoTooLong'.tr()
+                : 'feed.videoTooLarge'.tr(),
+          ),
+          alignment: .bottomCenter,
+        );
+      }
     } catch (e, st) {
-      Talker().handle(e, st, 'Pick images failed');
+      Talker().handle(e, st, 'Pick media failed');
+    } finally {
+      if (mounted) setState(() => _picking = false);
     }
   }
 
   Future<void> _submit() async {
     final session = _session;
-    if (session == null || _images.isEmpty) return;
+    if (session == null || _media.isEmpty) return;
 
     setState(() => _submitting = true);
     try {
@@ -81,7 +99,7 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
           .submit(
             activityId: session.activityId,
             bookingId: session.bookingId,
-            images: _images,
+            media: _media,
             caption: _caption.text.trim(),
             ttlDays: _ttlDays,
             taggedUserIds: _tagged.map((t) => t.userId).toList(),
@@ -140,14 +158,20 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
               }),
             ),
 
-            // ── 2. Photos ─────────────────────────────────────────────
-            PSectionHeader(title: 'feed.photos'.tr()),
-            if (_images.isEmpty)
+            // ── 2. Media ──────────────────────────────────────────────
+            PSectionHeader(title: 'feed.media'.tr()),
+            if (_media.isEmpty)
               FButton(
                 variant: .outline,
-                prefix: const Icon(FLucideIcons.imagePlus),
-                onPress: _pickImages,
-                child: Text('feed.addPhotos'.tr()),
+                prefix: _picking
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(FLucideIcons.imagePlus),
+                onPress: _picking ? null : _pickMedia,
+                child: Text('feed.addMedia'.tr()),
               )
             else
               Column(
@@ -158,25 +182,17 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
                     height: 84,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      itemCount: _images.length,
+                      itemCount: _media.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 8),
-                      itemBuilder: (_, i) => ClipRRect(
-                        borderRadius: context.theme.style.borderRadius.sm,
-                        child: Image.file(
-                          File(_images[i].path),
-                          width: 84,
-                          height: 84,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                      itemBuilder: (_, i) => _MediaThumb(item: _media[i]),
                     ),
                   ),
                   FButton(
                     variant: .ghost,
-                    onPress: _pickImages,
+                    onPress: _picking ? null : _pickMedia,
                     child: Text(
-                      'feed.changePhotos'.tr(
-                        namedArgs: {'count': '${_images.length}'},
+                      'feed.changeMedia'.tr(
+                        namedArgs: {'count': '${_media.length}'},
                       ),
                     ),
                   ),
@@ -235,7 +251,7 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
             ),
 
             FButton(
-              onPress: _session == null || _images.isEmpty || _submitting
+              onPress: _session == null || _media.isEmpty || _submitting
                   ? null
                   : _submit,
               child: _submitting
@@ -254,6 +270,73 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
         ),
       ),
     );
+  }
+}
+
+/// One thumbnail in the picked-media preview strip. Photos render their own
+/// bytes; a video renders its poster-frame thumbnail (or a plain placeholder
+/// if thumbnail generation failed) with a play glyph and its duration, so a
+/// video item never looks identical to a photo in the picker.
+class _MediaThumb extends StatelessWidget {
+  final PreparedMedia item;
+
+  const _MediaThumb({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+
+    return ClipRRect(
+      borderRadius: context.theme.style.borderRadius.sm,
+      child: SizedBox(
+        width: 84,
+        height: 84,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (!item.isVideo)
+              Image.file(File(item.file.path), fit: BoxFit.cover)
+            else if (item.thumbnailBytes != null)
+              Image.memory(item.thumbnailBytes!, fit: BoxFit.cover)
+            else
+              Container(color: colors.muted),
+            if (item.isVideo) ...[
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.45),
+                    ],
+                  ),
+                ),
+              ),
+              const Center(
+                child: Icon(FLucideIcons.play, color: Colors.white, size: 22),
+              ),
+              if (item.duration != null)
+                Positioned(
+                  right: 4,
+                  bottom: 4,
+                  child: Text(
+                    _durationLabel(item.duration!),
+                    style: context.theme.typography.body.xs
+                        .copyWith(color: Colors.white),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _durationLabel(Duration d) {
+    final m = d.inMinutes;
+    final s = d.inSeconds % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
   }
 }
 

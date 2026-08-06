@@ -151,28 +151,34 @@ final class TaggableUsersFamily extends $Family
   String toString() => r'taggableUsersProvider';
 }
 
-/// Uploads the picked images, then creates the post.
+/// Uploads the picked media, then creates the post.
 ///
-/// Images go to `<uid>/<random>.jpg` in the public `wall_post` bucket — the
-/// path is user-scoped rather than post-scoped because the upload happens
+/// Images (and video thumbnails) go to `<uid>/<random>.jpg` in the public
+/// `wall_post` bucket; video goes to `<uid>/<random>.<ext>` in
+/// `wall_post_video` (see schema/wall_post_video.sql for why they're split).
+/// Paths are user-scoped rather than post-scoped because the upload happens
 /// *before* the post row exists, and the storage policy can only check the
 /// first path segment against `auth.uid()`.
 
 @ProviderFor(ComposePostController)
 final composePostControllerProvider = ComposePostControllerProvider._();
 
-/// Uploads the picked images, then creates the post.
+/// Uploads the picked media, then creates the post.
 ///
-/// Images go to `<uid>/<random>.jpg` in the public `wall_post` bucket — the
-/// path is user-scoped rather than post-scoped because the upload happens
+/// Images (and video thumbnails) go to `<uid>/<random>.jpg` in the public
+/// `wall_post` bucket; video goes to `<uid>/<random>.<ext>` in
+/// `wall_post_video` (see schema/wall_post_video.sql for why they're split).
+/// Paths are user-scoped rather than post-scoped because the upload happens
 /// *before* the post row exists, and the storage policy can only check the
 /// first path segment against `auth.uid()`.
 final class ComposePostControllerProvider
     extends $NotifierProvider<ComposePostController, void> {
-  /// Uploads the picked images, then creates the post.
+  /// Uploads the picked media, then creates the post.
   ///
-  /// Images go to `<uid>/<random>.jpg` in the public `wall_post` bucket — the
-  /// path is user-scoped rather than post-scoped because the upload happens
+  /// Images (and video thumbnails) go to `<uid>/<random>.jpg` in the public
+  /// `wall_post` bucket; video goes to `<uid>/<random>.<ext>` in
+  /// `wall_post_video` (see schema/wall_post_video.sql for why they're split).
+  /// Paths are user-scoped rather than post-scoped because the upload happens
   /// *before* the post row exists, and the storage policy can only check the
   /// first path segment against `auth.uid()`.
   ComposePostControllerProvider._()
@@ -203,12 +209,14 @@ final class ComposePostControllerProvider
 }
 
 String _$composePostControllerHash() =>
-    r'49cf68cd1fa420f49cccd9f4c6d57e1d3e2a5287';
+    r'3e0954f5063a995b7e94abfb10ada09e22f72bec';
 
-/// Uploads the picked images, then creates the post.
+/// Uploads the picked media, then creates the post.
 ///
-/// Images go to `<uid>/<random>.jpg` in the public `wall_post` bucket — the
-/// path is user-scoped rather than post-scoped because the upload happens
+/// Images (and video thumbnails) go to `<uid>/<random>.jpg` in the public
+/// `wall_post` bucket; video goes to `<uid>/<random>.<ext>` in
+/// `wall_post_video` (see schema/wall_post_video.sql for why they're split).
+/// Paths are user-scoped rather than post-scoped because the upload happens
 /// *before* the post row exists, and the storage policy can only check the
 /// first path segment against `auth.uid()`.
 

@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/model/user_details.dart';
+
 part 'user_page_controller.g.dart';
 
 /// The viewer's relationship to the profile they're looking at.
@@ -21,6 +23,11 @@ class UserProfile {
   /// "cùng lobby" line — the honest reason a stranger's wall is visible.
   final int sharedLobbyCount;
 
+  /// The full `details` jsonb, parsed — powers the Overview tab's general
+  /// info section. `generatedAvatar` above stays the raw wire string
+  /// separately since `PUserAvatar` wants that, not the typed `UserAvatar`.
+  final UserDetails details;
+
   const UserProfile({
     required this.userId,
     required this.username,
@@ -28,6 +35,7 @@ class UserProfile {
     required this.friendState,
     required this.friendCount,
     required this.sharedLobbyCount,
+    required this.details,
     this.generatedAvatar,
     this.friendshipId,
   });
@@ -41,6 +49,7 @@ class UserProfile {
       username: json['username'] as String? ?? '',
       tagNumber: json['tag_number'] as String? ?? '0000',
       generatedAvatar: details?['generatedAvatar'] as String?,
+      details: UserDetails.fromJson(details ?? const {}),
       friendshipId: json['friendship_id'] as String?,
       friendState: switch (json['friend_state'] as String?) {
         'friend' => FriendState.friend,

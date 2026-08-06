@@ -49,4 +49,19 @@ class NotificationCenterController extends _$NotificationCenterController {
     ref.invalidateSelf();
     ref.invalidate(notificationUnreadCountProvider);
   }
+
+  Future<void> delete(int id) async {
+    await supabase
+        .rpc('fn_delete_notification', params: {'p_id': id})
+        .timeout(const Duration(seconds: 5));
+    ref.invalidateSelf();
+    ref.invalidate(notificationUnreadCountProvider);
+  }
+
+  Future<void> clearRead() async {
+    await supabase
+        .rpc('fn_clear_read_notifications')
+        .timeout(const Duration(seconds: 5));
+    ref.invalidateSelf();
+  }
 }

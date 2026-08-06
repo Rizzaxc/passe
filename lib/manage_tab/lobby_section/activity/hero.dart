@@ -171,23 +171,33 @@ class _HeroEmpty extends ConsumerWidget {
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              // Stretch so the card's own width doesn't shrink-wrap to
+              // whichever CTA happens to be shown below — the captain
+              // branch used to only look full-width because its button
+              // carries an explicit SizedBox(width: double.infinity); the
+              // member branch's compact "remind" pill had nothing forcing
+              // the card wide, so it visibly shrank to content width.
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: _crimsonTint,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.calendar_today_outlined,
-                    size: 22,
-                    color: _crimson,
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: _crimsonTint,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 22,
+                      color: _crimson,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
                   'Chưa có buổi chơi nào',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -241,6 +251,7 @@ class _HeroEmpty extends ConsumerWidget {
                   GestureDetector(
                     onTap: () => _remindCaptain(context, ref),
                     child: Container(
+                      width: double.infinity,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 10,
@@ -251,6 +262,7 @@ class _HeroEmpty extends ConsumerWidget {
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             FLucideIcons.bell,

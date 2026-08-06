@@ -18,11 +18,12 @@ a full-bleed black immersive surface — every page is the app's normal light th
 just the same `PostCard` used everywhere else, centered in the viewport. `PageView`'s default
 physics already snap one page per swipe; no custom scroll physics were needed.
 
-`post_card.dart` (the shared card renderer) is used identically by three surfaces: this pager, a
-user's wall (`/user/:id`, see [`lib/social/CLAUDE.md`](../social/CLAUDE.md)), and the lobby activity
-feed (`lib/manage_tab/lobby_section/activity/feed.dart`). Don't fork it or give the pager a
-different-looking card — the point of reusing `PostCard` here is that a post looks the same
-wherever it's seen.
+`post_card.dart` (the shared card renderer) is used identically by two surfaces: this pager and the
+lobby activity feed (`lib/manage_tab/lobby_section/activity/feed.dart`). Don't fork it or give the
+pager a different-looking card — the point of reusing `PostCard` here is that a post looks the same
+wherever it's seen. (`/user/:id`, see [`lib/social/CLAUDE.md`](../social/CLAUDE.md), used to show a
+wall here too via `userWall`/`user_wall_data` — dropped as not useful; that RPC and provider no
+longer exist.)
 
 ## Layout
 
@@ -43,10 +44,10 @@ wherever it's seen.
   - **Data state** (`_FeedPager`): a vertical `PageView.builder`, one `PostCard` per page, wrapped in
     a `RefreshIndicator` (a vertical `PageView` is still a `Scrollable`, so overscrolling past the
     first post refreshes, same as every other feed in the app).
-- `feed_controller.dart` — `WallFeedController` (`wall_feed_data` RPC), `userWall` (`user_wall_data`,
-  used by `/user/:id`), and `FeedSportFilter` — deliberately **not** `selectedSportStateProvider`
-  (see Purpose above). `null` = all sports. There's currently no UI entry point to *set*
-  `FeedSportFilter` in the pager (the old card-list feed had chips); it defaults to all sports.
+- `feed_controller.dart` — `WallFeedController` (`wall_feed_data` RPC) and `FeedSportFilter` —
+  deliberately **not** `selectedSportStateProvider` (see Purpose above). `null` = all sports.
+  There's currently no UI entry point to *set* `FeedSportFilter` in the pager (the old card-list
+  feed had chips); it defaults to all sports.
 - `post_card.dart` / `reaction_bar.dart` — the shared card renderer (see Purpose above). Reactions
   are a fixed 5-emoji palette (`kWallReactions`), one per person (upsert), applied optimistically and
   rolled back on failure. The card's own overflow menu handles delete-own/report-other.

@@ -86,6 +86,80 @@ abstract class _$FeedSportFilter extends $Notifier<int?> {
   }
 }
 
+/// Session-wide "is autoplaying video muted" preference — unmuted by
+/// default (video only ever autoplays in the Feed pager, with sound). The
+/// mute toggle on a playing video (post_card.dart's `_VideoPage`) flips this,
+/// and it carries forward to the next video the user lands on rather than
+/// resetting per-video.
+
+@ProviderFor(FeedVideoMuted)
+final feedVideoMutedProvider = FeedVideoMutedProvider._();
+
+/// Session-wide "is autoplaying video muted" preference — unmuted by
+/// default (video only ever autoplays in the Feed pager, with sound). The
+/// mute toggle on a playing video (post_card.dart's `_VideoPage`) flips this,
+/// and it carries forward to the next video the user lands on rather than
+/// resetting per-video.
+final class FeedVideoMutedProvider
+    extends $NotifierProvider<FeedVideoMuted, bool> {
+  /// Session-wide "is autoplaying video muted" preference — unmuted by
+  /// default (video only ever autoplays in the Feed pager, with sound). The
+  /// mute toggle on a playing video (post_card.dart's `_VideoPage`) flips this,
+  /// and it carries forward to the next video the user lands on rather than
+  /// resetting per-video.
+  FeedVideoMutedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'feedVideoMutedProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$feedVideoMutedHash();
+
+  @$internal
+  @override
+  FeedVideoMuted create() => FeedVideoMuted();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$feedVideoMutedHash() => r'2778e2b21d51f6a1464a417d96ade0a433e4aa2d';
+
+/// Session-wide "is autoplaying video muted" preference — unmuted by
+/// default (video only ever autoplays in the Feed pager, with sound). The
+/// mute toggle on a playing video (post_card.dart's `_VideoPage`) flips this,
+/// and it carries forward to the next video the user lands on rather than
+/// resetting per-video.
+
+abstract class _$FeedVideoMuted extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// Posts from the caller, their friends, their lobby mates, and any post a
 /// friend of theirs is tagged in. Visibility is resolved server-side in
 /// `wall_feed_data` — the client never assembles the audience itself.
@@ -121,7 +195,7 @@ final class WallFeedControllerProvider
 }
 
 String _$wallFeedControllerHash() =>
-    r'b13d9a1ee987d7a0b9e024c3c423d7d83132ded1';
+    r'968fad694080aaa51b3ae3929a3ff379aaaf07d9';
 
 /// Posts from the caller, their friends, their lobby mates, and any post a
 /// friend of theirs is tagged in. Visibility is resolved server-side in
@@ -143,102 +217,4 @@ abstract class _$WallFeedController extends $AsyncNotifier<List<WallPost>> {
             >;
     return element.handleCreate(ref, build);
   }
-}
-
-/// One person's wall. `tagged: false` = posts they wrote, `true` = posts
-/// they're tagged in. Both are filtered server-side by the same visibility
-/// predicate, so a visitor simply sees a shorter list.
-
-@ProviderFor(userWall)
-final userWallProvider = UserWallFamily._();
-
-/// One person's wall. `tagged: false` = posts they wrote, `true` = posts
-/// they're tagged in. Both are filtered server-side by the same visibility
-/// predicate, so a visitor simply sees a shorter list.
-
-final class UserWallProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<WallPost>>,
-          List<WallPost>,
-          FutureOr<List<WallPost>>
-        >
-    with $FutureModifier<List<WallPost>>, $FutureProvider<List<WallPost>> {
-  /// One person's wall. `tagged: false` = posts they wrote, `true` = posts
-  /// they're tagged in. Both are filtered server-side by the same visibility
-  /// predicate, so a visitor simply sees a shorter list.
-  UserWallProvider._({
-    required UserWallFamily super.from,
-    required (String, {bool tagged}) super.argument,
-  }) : super(
-         retry: null,
-         name: r'userWallProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$userWallHash();
-
-  @override
-  String toString() {
-    return r'userWallProvider'
-        ''
-        '$argument';
-  }
-
-  @$internal
-  @override
-  $FutureProviderElement<List<WallPost>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<WallPost>> create(Ref ref) {
-    final argument = this.argument as (String, {bool tagged});
-    return userWall(ref, argument.$1, tagged: argument.tagged);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is UserWallProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$userWallHash() => r'198afba387e02196fb966480ed711134fa5d60fd';
-
-/// One person's wall. `tagged: false` = posts they wrote, `true` = posts
-/// they're tagged in. Both are filtered server-side by the same visibility
-/// predicate, so a visitor simply sees a shorter list.
-
-final class UserWallFamily extends $Family
-    with
-        $FunctionalFamilyOverride<
-          FutureOr<List<WallPost>>,
-          (String, {bool tagged})
-        > {
-  UserWallFamily._()
-    : super(
-        retry: null,
-        name: r'userWallProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  /// One person's wall. `tagged: false` = posts they wrote, `true` = posts
-  /// they're tagged in. Both are filtered server-side by the same visibility
-  /// predicate, so a visitor simply sees a shorter list.
-
-  UserWallProvider call(String userId, {bool tagged = false}) =>
-      UserWallProvider._(argument: (userId, tagged: tagged), from: this);
-
-  @override
-  String toString() => r'userWallProvider';
 }

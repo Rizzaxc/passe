@@ -164,12 +164,42 @@ class NetworkSelectionScreen extends HookConsumerWidget {
                                       )
                                     : null,
                               ),
-                              suffix: FBadge(
-                                variant: network.isAlumni ? .outline : .primary,
-                                child: Text(
-                                  network.isAlumni
-                                      ? 'profile.alumni'.tr()
-                                      : 'profile.currentMember'.tr(),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'profile.currentMember'.tr(),
+                                      style: context.theme.typography.body.xs.copyWith(
+                                        color: !network.isAlumni
+                                            ? context.theme.colors.foreground
+                                            : context.theme.colors.mutedForeground,
+                                        fontWeight: !network.isAlumni ? FontWeight.bold : FontWeight.normal,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    FSwitch(
+                                      value: network.isAlumni,
+                                      onChange: isRemovalMode.value
+                                          ? null
+                                          : (v) {
+                                              ref
+                                                  .read(networkControllerProvider.notifier)
+                                                  .toggleAlumni(network.id);
+                                            },
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'profile.alumni'.tr(),
+                                      style: context.theme.typography.body.xs.copyWith(
+                                        color: network.isAlumni
+                                            ? context.theme.colors.foreground
+                                            : context.theme.colors.mutedForeground,
+                                        fontWeight: network.isAlumni ? FontWeight.bold : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               onPress: () {

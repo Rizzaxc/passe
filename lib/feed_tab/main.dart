@@ -173,6 +173,10 @@ class _FeedPager extends ConsumerStatefulWidget {
 class _FeedPagerState extends ConsumerState<_FeedPager> {
   final _controller = PageController();
 
+  // Drives which post's video is allowed to autoplay (see PostCard.isActive
+  // / post_card.dart's _VideoPage) — only the page actually on screen.
+  int _activeIndex = 0;
+
   @override
   void dispose() {
     _controller.dispose();
@@ -196,10 +200,14 @@ class _FeedPagerState extends ConsumerState<_FeedPager> {
         controller: _controller,
         scrollDirection: Axis.vertical,
         itemCount: widget.posts.length,
+        onPageChanged: (i) => setState(() => _activeIndex = i),
         itemBuilder: (_, i) => Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-            child: PostCard(post: widget.posts[i]),
+            child: PostCard(
+              post: widget.posts[i],
+              isActive: i == _activeIndex,
+            ),
           ),
         ),
       ),

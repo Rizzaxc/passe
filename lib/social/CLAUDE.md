@@ -18,7 +18,14 @@ Before this existed there was no `/user/:id` route at all and no way to connect 
   `send_friend_request` / `respond_friend_request` / `unfriend` / `block_user` / `unblock_user`
   RPCs, never direct table writes.
 - `user_page.dart` + `user_page_controller.dart` — the `/user/:id` page (`UserRoute`): identity,
-  the relationship CTA, and their wall in two segments (**Bài viết** / **Được gắn thẻ**).
+  the relationship CTA, and their read-only profile overview.
+- `profile_overview_tab.dart` + `user_profile_detail_controller.dart` — the read-only overview
+  section on `/user/:id`: general info (from `user_page_controller.dart`'s `UserProfile.details`,
+  already carried by `user_profile_data`), plus networks/industries/the current context sport's
+  profile (`userProfileDetailProvider`, three queries mirroring what `lib/profile_tab/`'s own
+  self-editing controllers already run, just parameterized by the viewed `userId` instead of
+  `auth.uid()` — all three tables are `USING (true)` readable, no new RPC needed). No wall/post
+  browsing here — that was tried and dropped as not useful for a first pass.
 - `friends_screen.dart` — `FriendsScreen`, the friends hub (open requests + friend list +
   username#tag search). Pushed as a full page (`Navigator.push(MaterialPageRoute(...))`) from the
   Profile tab (below Industry & Network) and from the Feed tab's empty-state "Tìm bạn bè" CTA —

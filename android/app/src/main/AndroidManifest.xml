@@ -1,5 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Required on Android 13+ (API 33+) before the app can request or receive any
+         notification, including FCM push — without this, requestPermission() in
+         notification_service.dart can never actually reach a granted state, so a
+         device token is never registered. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <!-- Health Connect Permissions -->
     <uses-permission android:name="android.permission.health.READ_STEPS"/>
     <uses-permission android:name="android.permission.health.READ_DISTANCE"/>
@@ -47,6 +53,13 @@
             <!-- Health Connect permissions request handler -->
             <intent-filter>
                 <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
+            </intent-filter>
+            <!-- Lobby invite links, e.g. passe://invite/CODE -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="passe" android:host="invite"/>
             </intent-filter>
         </activity>
 

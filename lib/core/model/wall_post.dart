@@ -32,6 +32,71 @@ class WallPostTag {
       );
 }
 
+enum WallPostMediaType {
+  image,
+  video;
+
+  static WallPostMediaType fromJson(String value) =>
+      value == 'video' ? WallPostMediaType.video : WallPostMediaType.image;
+
+  String toJson() => name;
+}
+
+/// One image or video in a post's carousel (1-4 per post, mixed freely,
+/// order = display order). Mirrors the `media` jsonb shape enforced
+/// server-side by `fn_valid_wall_post_media` (schema/wall_post_video.sql) —
+/// change one, change both.
+class WallPostMedia {
+  final WallPostMediaType type;
+  final String path;
+
+  /// Video only. Self-reported by the client at pick time — nothing
+  /// server-side actually probes the file (see fn_valid_wall_post_media).
+  final int? durationMs;
+
+  /// Video only. A small poster-frame JPEG uploaded alongside the video,
+  /// generated client-side at compose time (`video_thumbnail`). Lives in the
+  /// `wall_post` bucket like a regular photo, not `wall_post_video`.
+  final String? thumbnailPath;
+
+  const WallPostMedia({
+    required this.type,
+    required this.path,
+    this.durationMs,
+    this.thumbnailPath,
+  });
+
+  bool get isVideo => type == WallPostMediaType.video;
+
+  /// Public URL for the media itself. Images and video thumbnails live in
+  /// the `wall_post` bucket; video files live in `wall_post_video` — both
+  /// buckets are public with unguessable UUID paths (see schema/wall_post.sql
+  /// and schema/wall_post_video.sql for why).
+  String get url => Supabase.instance.client.storage
+      .from(isVideo ? 'wall_post_video' : 'wall_post')
+      .getPublicUrl(path);
+
+  String? get thumbnailUrl => thumbnailPath == null
+      ? null
+      : Supabase.instance.client.storage
+          .from('wall_post')
+          .getPublicUrl(thumbnailPath!);
+
+  factory WallPostMedia.fromJson(Map<String, dynamic> json) => WallPostMedia(
+        type: WallPostMediaType.fromJson(json['type'] as String? ?? 'image'),
+        path: json['path'] as String? ?? '',
+        durationMs: (json['duration_ms'] as num?)?.toInt(),
+        thumbnailPath: json['thumbnail_path'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'type': type.toJson(),
+        'path': path,
+        if (durationMs != null) 'duration_ms': durationMs,
+        if (thumbnailPath != null) 'thumbnail_path': thumbnailPath,
+      };
+}
+
 class WallPost {
   final String id;
   final String authorId;
@@ -48,7 +113,7 @@ class WallPost {
   final String? sourceVenueName;
 
   final String? caption;
-  final List<String> imagePaths;
+  final List<WallPostMedia> media;
   final DateTime createdAt;
   final DateTime expiresAt;
 
@@ -67,7 +132,7 @@ class WallPost {
     required this.authorTagNumber,
     required this.sportId,
     required this.sourceStartTime,
-    required this.imagePaths,
+    required this.media,
     required this.createdAt,
     required this.expiresAt,
     required this.tags,
@@ -81,13 +146,6 @@ class WallPost {
   });
 
   String get authorHandle => '$authorUsername#$authorTagNumber';
-
-  /// Public URLs for the images. The bucket is public with unguessable UUID
-  /// paths — a stable URL is what lets the CDN and the on-disk cache work.
-  List<String> get imageUrls => imagePaths
-      .map((p) =>
-          Supabase.instance.client.storage.from('wall_post').getPublicUrl(p))
-      .toList();
 
   factory WallPost.fromJson(Map<String, dynamic> json) {
     final details = json['author_details'] as Map<String, dynamic>?;
@@ -108,9 +166,10 @@ class WallPost {
               DateTime.now(),
       sourceVenueName: json['source_venue_name'] as String?,
       caption: json['caption'] as String?,
-      imagePaths:
-          (json['image_paths'] as List?)?.map((e) => e as String).toList() ??
-              const [],
+      media: (json['media'] as List?)
+              ?.map((e) => WallPostMedia.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       createdAt:
           DateTime.tryParse(json['created_at'] as String? ?? '')?.toLocal() ??
               DateTime.now(),

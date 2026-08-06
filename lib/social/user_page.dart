@@ -5,16 +5,15 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
-import '../feed_tab/feed_controller.dart';
-import '../feed_tab/post_card.dart';
 import '../notifications/notification_service.dart';
 import '../ui/main.dart';
 import 'block_report_sheet.dart';
 import 'friendship_controller.dart';
+import 'profile_overview_tab.dart';
 import 'user_page_controller.dart';
 
 /// `/user/:id` — another player's page: identity, the viewer's relationship to
-/// them, and (once the wall ships) their posts.
+/// them, and their read-only profile overview.
 ///
 /// Reached from a lobby member row, a friend search result, a feed post author
 /// and a tag chip. `initialName` is passed as `$extra` so the header can show a
@@ -55,19 +54,34 @@ class UserPage extends ConsumerWidget {
               subtitle: 'social.profileMissing'.tr(),
             );
           }
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(userProfileProvider(userId));
-              await ref.read(userProfileProvider(userId).future);
-            },
-            child: ListView(
-              padding: const EdgeInsets.all(16),
+          // The self-profile tab sits inside the bottom-nav shell
+          // (`ScaffoldWithNavBar`), itself an `FScaffold`, so its content gets
+          // the theme's horizontal childPadding applied twice — once by the
+          // shell, once by the tab's own `FScaffold`. This page is a pushed
+          // route with only one `FScaffold`, so it needs an explicit extra 8px
+          // to match that stacked 16px total instead of coming up short.
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _IdentityBlock(profile: profile),
-                const SizedBox(height: 20),
-                if (!isSelf) _FriendCta(profile: profile),
-                const SizedBox(height: 24),
-                _Wall(userId: userId),
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Column(
+                    children: [
+                      _IdentityBlock(profile: profile),
+                      const SizedBox(height: 20),
+                      if (!isSelf) _FriendCta(profile: profile),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: ProfileOverviewTab(
+                    userId: userId,
+                    details: profile.details,
+                  ),
+                ),
               ],
             ),
           );
@@ -138,65 +152,6 @@ class _IdentityBlock extends StatelessWidget {
                 ),
               ),
           ],
-        ),
-      ],
-    );
-  }
-}
-
-/// Their wall, in two segments: posts they wrote, and posts they're tagged in.
-///
-/// Both go through `user_wall_data`, which applies the same visibility
-/// predicate as the feed — so a visitor's "tagged" view simply comes back
-/// shorter. There is no separate rule for the tagged tab and therefore nothing
-/// extra to leak.
-class _Wall extends ConsumerStatefulWidget {
-  final String userId;
-
-  const _Wall({required this.userId});
-
-  @override
-  ConsumerState<_Wall> createState() => _WallState();
-}
-
-class _WallState extends ConsumerState<_Wall> {
-  bool _tagged = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final postsAsync =
-        ref.watch(userWallProvider(widget.userId, tagged: _tagged));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 12,
-      children: [
-        PSegmentedButton<bool>(
-          values: const [false, true],
-          selected: _tagged,
-          format: (v) =>
-              Text(v ? 'social.wallTagged'.tr() : 'social.wallAuthored'.tr()),
-          onChange: (v) {
-            if (v != null) setState(() => _tagged = v);
-          },
-        ),
-        postsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, st) =>
-              PEmptySectionPlaceholder(subtitle: 'feed.error'.tr()),
-          data: (posts) {
-            if (posts.isEmpty) {
-              return PEmptySectionPlaceholder(
-                subtitle: _tagged
-                    ? 'social.wallTaggedEmpty'.tr()
-                    : 'social.wallEmpty'.tr(),
-              );
-            }
-            return Column(
-              spacing: 12,
-              children: [for (final post in posts) PostCard(post: post)],
-            );
-          },
         ),
       ],
     );

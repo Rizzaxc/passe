@@ -13,6 +13,21 @@ class HealthNotLinkedView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = context.theme;
+
+    ref.listen(healthControllerProvider, (previous, next) {
+      if (Platform.isAndroid &&
+          next.error != null &&
+          previous?.error == null) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: Text('health.notLinked.notAvailableAndroid'.tr()),
+          alignment: .bottomCenter,
+        );
+      }
+    });
+
     final healthState = ref.watch(healthControllerProvider);
     final isLinking = healthState.isLoading;
     final error = healthState.error;

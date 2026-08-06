@@ -6,7 +6,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'match.dart';
 import 'match_history_controller.dart';
-import 'record_match_sheet.dart';
 
 const _crimson = Color(0xFFDC143C);
 const _green = Color(0xFF959D54);
@@ -22,13 +21,11 @@ enum _HistoryFilter { all, challenge, practice, win, loss, draw }
 class HistoryView extends ConsumerStatefulWidget {
   final String lobbyId;
   final String lobbyName;
-  final bool canRecord;
 
   const HistoryView({
     super.key,
     required this.lobbyId,
     this.lobbyName = '',
-    this.canRecord = false,
   });
 
   @override
@@ -79,21 +76,6 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
               child: _StatsCard(stats: stats),
             ),
           ),
-
-          // Record-match CTA (captain-only).
-          if (widget.canRecord)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
-                child: FButton(
-                  variant: .outline,
-                  onPress: () =>
-                      showRecordMatchSheet(context, widget.lobbyId),
-                  prefix: const Icon(FLucideIcons.plus, size: 16),
-                  child: Text('manageTab.recordMatch.cta'.tr()),
-                ),
-              ),
-            ),
 
           // Filter pills
           SliverToBoxAdapter(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
+import 'package:video_player/video_player.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/model/wall_post.dart';
@@ -17,10 +18,18 @@ import 'report_post_sheet.dart';
 ///
 /// Everything below the images is dynamic-length and user-supplied, so every
 /// row here is overflow-guarded — this card renders at 375 px too.
+///
+/// [isActive] marks this post as the current page of the Feed's vertical
+/// pager — the one surface where video autoplays (with sound). Everywhere
+/// else this card is used (a user's wall, the lobby activity feed — both
+/// scrolling lists where several cards can be near-visible at once) leaves
+/// it false, so video there is always tap-to-play. See post_card.dart's
+/// `_VideoPage` for the actual play/pause rule.
 class PostCard extends ConsumerWidget {
   final WallPost post;
+  final bool isActive;
 
-  const PostCard({super.key, required this.post});
+  const PostCard({super.key, required this.post, this.isActive = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,7 +44,7 @@ class PostCard extends ConsumerWidget {
           const SizedBox(height: 10),
           _SourceLine(post: post),
           const SizedBox(height: 10),
-          _Images(urls: post.imageUrls),
+          _Media(media: post.media, isActive: isActive),
           if (post.caption != null && post.caption!.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
@@ -218,16 +227,22 @@ class _SourceLine extends StatelessWidget {
   }
 }
 
-class _Images extends StatefulWidget {
-  final List<String> urls;
+/// A post's media carousel (1-4 items, mixed images/video, order = display
+/// order). Video only ever autoplays for the item that is both [isActive]
+/// (this post is the Feed pager's current page) *and* the carousel's current
+/// page — swiping horizontally to a video starts it, swiping away pauses it;
+/// everywhere else (or once isActive goes false) video is tap-to-play.
+class _Media extends StatefulWidget {
+  final List<WallPostMedia> media;
+  final bool isActive;
 
-  const _Images({required this.urls});
+  const _Media({required this.media, required this.isActive});
 
   @override
-  State<_Images> createState() => _ImagesState();
+  State<_Media> createState() => _MediaState();
 }
 
-class _ImagesState extends State<_Images> {
+class _MediaState extends State<_Media> {
   final _controller = PageController();
   int _index = 0;
 
@@ -245,34 +260,48 @@ class _ImagesState extends State<_Images> {
       children: [
         ClipRRect(
           borderRadius: context.theme.style.borderRadius.md,
-          // Fixed aspect ratio: the images aren't measured before they load,
-          // so without this the card would jump as each one arrives.
+          // Fixed aspect ratio: items aren't measured before they load, so
+          // without this the card would jump as each one arrives. Video is
+          // letterboxed to fit inside it (BoxFit.contain) rather than
+          // cropped, since a portrait clip cropped into a 4:3 box loses far
+          // more than a typical photo crop does; photos keep the original
+          // cover-fit crop, unchanged.
           child: AspectRatio(
             aspectRatio: 4 / 3,
             child: PageView.builder(
               controller: _controller,
-              itemCount: widget.urls.length,
+              itemCount: widget.media.length,
               onPageChanged: (i) => setState(() => _index = i),
-              itemBuilder: (_, i) => CachedNetworkImage(
-                imageUrl: widget.urls[i],
-                fit: BoxFit.cover,
-                placeholder: (_, _) => Container(color: colors.muted),
-                errorWidget: (_, _, _) => Container(
-                  color: colors.muted,
-                  alignment: Alignment.center,
-                  child: Icon(FLucideIcons.imageOff,
-                      color: colors.mutedForeground),
-                ),
-              ),
+              itemBuilder: (_, i) {
+                final item = widget.media[i];
+                if (!item.isVideo) {
+                  return CachedNetworkImage(
+                    imageUrl: item.url,
+                    fit: BoxFit.cover,
+                    placeholder: (_, _) => Container(color: colors.muted),
+                    errorWidget: (_, _, _) => Container(
+                      color: colors.muted,
+                      alignment: Alignment.center,
+                      child: Icon(FLucideIcons.imageOff,
+                          color: colors.mutedForeground),
+                    ),
+                  );
+                }
+                return _VideoPage(
+                  key: ValueKey(item.path),
+                  media: item,
+                  shouldAutoplay: widget.isActive && i == _index,
+                );
+              },
             ),
           ),
         ),
-        if (widget.urls.length > 1) ...[
+        if (widget.media.length > 1) ...[
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              for (var i = 0; i < widget.urls.length; i++)
+              for (var i = 0; i < widget.media.length; i++)
                 Container(
                   width: 6,
                   height: 6,
@@ -286,6 +315,158 @@ class _ImagesState extends State<_Images> {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// One video item. Effective playing state is `_userOverride ?? shouldAutoplay`:
+/// [shouldAutoplay] alone drives it in the Feed pager (the only surface where
+/// it's ever true), a tap sets [_userOverride] which wins until
+/// [shouldAutoplay] itself flips (a fresh autoplay/no-autoplay occasion clears
+/// any stale override). Swiping this page out of the carousel disposes the
+/// controller entirely via normal PageView.builder recycling — no explicit
+/// reset needed for that path, only for the isActive-flips-while-still-mounted
+/// path that didUpdateWidget below handles.
+class _VideoPage extends ConsumerStatefulWidget {
+  final WallPostMedia media;
+  final bool shouldAutoplay;
+
+  const _VideoPage({
+    super.key,
+    required this.media,
+    required this.shouldAutoplay,
+  });
+
+  @override
+  ConsumerState<_VideoPage> createState() => _VideoPageState();
+}
+
+class _VideoPageState extends ConsumerState<_VideoPage> {
+  VideoPlayerController? _controller;
+  bool? _userOverride;
+
+  bool get _playing => _userOverride ?? widget.shouldAutoplay;
+
+  @override
+  void initState() {
+    super.initState();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(covariant _VideoPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.shouldAutoplay != widget.shouldAutoplay) {
+      _userOverride = null;
+      _sync();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _ensureController() async {
+    if (_controller != null) return;
+    final controller =
+        VideoPlayerController.networkUrl(Uri.parse(widget.media.url));
+    _controller = controller;
+    try {
+      await controller.initialize();
+      await controller.setLooping(true);
+      await controller.setVolume(ref.read(feedVideoMutedProvider) ? 0 : 1);
+      if (!mounted) return;
+      setState(() {});
+      _sync();
+    } catch (_) {
+      // Leave the poster frame showing — no player, no crash.
+    }
+  }
+
+  void _sync() {
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) {
+      if (_playing) _ensureController();
+      return;
+    }
+    if (_playing) {
+      c.play();
+    } else {
+      c.pause();
+    }
+  }
+
+  void _toggleTap() {
+    setState(() => _userOverride = !_playing);
+    _sync();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final muted = ref.watch(feedVideoMutedProvider);
+    final controller = _controller;
+
+    ref.listen(feedVideoMutedProvider, (_, next) {
+      controller?.setVolume(next ? 0 : 1);
+    });
+
+    return GestureDetector(
+      onTap: _toggleTap,
+      child: ColoredBox(
+        color: Colors.black,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (widget.media.thumbnailUrl != null)
+              CachedNetworkImage(
+                imageUrl: widget.media.thumbnailUrl!,
+                fit: BoxFit.contain,
+                placeholder: (_, _) => Container(color: colors.muted),
+                errorWidget: (_, _, _) => const SizedBox.shrink(),
+              ),
+            if (controller != null && controller.value.isInitialized)
+              FittedBox(
+                fit: BoxFit.contain,
+                child: SizedBox(
+                  width: controller.value.size.width,
+                  height: controller.value.size.height,
+                  child: VideoPlayer(controller),
+                ),
+              ),
+            if (!_playing)
+              Container(
+                color: Colors.black26,
+                alignment: Alignment.center,
+                child: const Icon(FLucideIcons.play,
+                    color: Colors.white, size: 40),
+              ),
+            if (controller != null && controller.value.isInitialized)
+              Positioned(
+                right: 8,
+                bottom: 8,
+                child: GestureDetector(
+                  onTap: () =>
+                      ref.read(feedVideoMutedProvider.notifier).toggle(),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Colors.black45,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      muted ? FLucideIcons.volumeX : FLucideIcons.volume2,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -21,6 +21,7 @@ List<RouteBase> get $appRoutes => [
   $walletTopupRoute,
   $professionalDetailRoute,
   $userRoute,
+  $inviteRoute,
   $mainRoute,
 ];
 
@@ -417,6 +418,36 @@ mixin $UserRoute on GoRouteData {
   @override
   void replace(BuildContext context) =>
       context.replace(location, extra: _self.$extra);
+}
+
+RouteBase get $inviteRoute => GoRouteData.$route(
+  path: '/invite/:code',
+  hasOverriddenOnExit: false,
+  factory: $InviteRoute._fromState,
+);
+
+mixin $InviteRoute on GoRouteData {
+  static InviteRoute _fromState(GoRouterState state) =>
+      InviteRoute(code: state.pathParameters['code']!);
+
+  InviteRoute get _self => this as InviteRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/invite/${Uri.encodeComponent(_self.code)}');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
 }
 
 RouteBase get $mainRoute => StatefulShellRouteData.$route(
@@ -965,4 +996,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'c6e93ed66d977785d160f0b307e4796d8acf4cec';
+String _$routerHash() => r'9c609bd745e6b7290cc2b690df7339b689bb7268';

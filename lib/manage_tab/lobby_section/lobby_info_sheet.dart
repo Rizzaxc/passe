@@ -16,6 +16,7 @@ import 'challenges_controller.dart';
 import 'challenges_sheet.dart';
 import 'feed/lobby_controller.dart';
 import 'feed/lobby_form_sheet.dart';
+import 'invite_link/invite_link_card.dart';
 import 'invite_member_sheet.dart';
 import 'join_requests_controller.dart';
 import 'join_requests_sheet.dart';
@@ -558,6 +559,8 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                   canManage: canManage,
                   dense: true,
                 ),
+                const SizedBox(height: 8),
+                InviteLinkCard(lobbyId: widget.lobbyId, canManage: canManage),
                 const SizedBox(height: 8),
               ],
               Container(

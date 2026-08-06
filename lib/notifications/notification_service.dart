@@ -45,7 +45,7 @@ NotificationService notificationService(Ref ref) {
   return service;
 }
 
-class NotificationService {
+class NotificationService with WidgetsBindingObserver {
   NotificationService(this._ref);
 
   final Ref _ref;
@@ -126,17 +126,40 @@ class NotificationService {
 
       // Already-authed warm start with permission previously granted.
       await _registerIfPermitted();
+
+      // Coming back to the foreground (app switch, lock screen) is the other
+      // common way the bell/badge goes stale: a notification can land while
+      // this device was merely backgrounded (push delivered, but nothing here
+      // was running to react to it), not just while fully closed. Refresh on
+      // every resume rather than only reacting to a live FCM message.
+      WidgetsBinding.instance.addObserver(this);
+      _ref.onDispose(() => WidgetsBinding.instance.removeObserver(this));
     } catch (e, st) {
       _talker.handle(e, st, 'notification init failed');
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    _ref.invalidate(notificationUnreadCountProvider);
+    _ref.invalidate(notificationCenterControllerProvider);
   }
 
   Future<void> _onForegroundMessage(RemoteMessage message) async {
     final notification = message.notification;
     if (notification == null) return;
     // A notification arrived while the app is open — refresh the bell badge
-    // live rather than waiting for the next screen visit, on both platforms.
+    // and the notification-centre list live rather than waiting for the next
+    // screen visit, on both platforms.
     _ref.invalidate(notificationUnreadCountProvider);
+    _ref.invalidate(notificationCenterControllerProvider);
+    // The OS foreground presentation (iOS) / a manually-drawn tray entry
+    // (Android, below) can be easy to miss while eyes are already on the
+    // screen — this in-app toast is the reliable, always-visible cue, and is
+    // tappable straight into the same destination a push tap would open.
+    _showInAppToast(message);
+
     // iOS already draws the banner (presentation options); only Android needs us.
     if (Platform.isIOS) return;
     await _local.show(
@@ -153,6 +176,41 @@ class NotificationService {
         ),
       ),
       payload: jsonEncode(message.data),
+    );
+  }
+
+  void _showInAppToast(RemoteMessage message) {
+    final notification = message.notification;
+    if (notification == null) return;
+    final router = _ref.read(routerProvider);
+    final context = router.routerDelegate.navigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+
+    late final FToasterEntry entry;
+    entry = showFToast(
+      context: context,
+      icon: const Icon(FLucideIcons.bell),
+      alignment: .topCenter,
+      title: GestureDetector(
+        onTap: () {
+          entry.dismiss();
+          _routeTap(message.data);
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          spacing: 2,
+          children: [
+            Text(
+              notification.title ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (notification.body case final body?)
+              Text(body, maxLines: 2, overflow: TextOverflow.ellipsis),
+          ],
+        ),
+      ),
     );
   }
 

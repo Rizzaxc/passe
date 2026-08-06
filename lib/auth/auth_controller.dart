@@ -450,21 +450,26 @@ class AuthController extends _$AuthController {
     await refresh();
   }
 
-  /// Whether the current session has an email/password credential set —
-  /// false for a user who only ever signed in via Google/Apple. Read
-  /// straight off the Supabase user (identity providers aren't part of
-  /// [PasseUser]/the offline cache), same sanctioned-exception pattern as
-  /// the rest of this file.
+  /// Whether the current session has an email/password credential set — false
+  /// for a user who only ever signed in via Google/Apple and has never set a
+  /// password. `identities` covers users who signed up directly with
+  /// email/password; `user_metadata.has_password` covers an OAuth-only user
+  /// who added a password afterwards, since `updateUser(password: ...)` alone
+  /// does not add an email identity for them. Read straight off the Supabase
+  /// user (this state isn't part of [PasseUser]/the offline cache), same
+  /// sanctioned-exception pattern as the rest of this file.
   bool hasPasswordCredential() {
-    return supabase.auth.currentUser?.identities
-            ?.any((identity) => identity.provider == 'email') ??
-        false;
+    final user = supabase.auth.currentUser;
+    final hasEmailIdentity =
+        user?.identities?.any((identity) => identity.provider == 'email') ?? false;
+    final hasPasswordFlag = user?.userMetadata?['has_password'] == true;
+    return hasEmailIdentity || hasPasswordFlag;
   }
 
   Future<void> changePassword(String newPassword) async {
     try {
       await supabase.auth
-          .updateUser(UserAttributes(password: newPassword))
+          .updateUser(UserAttributes(password: newPassword, data: {'has_password': true}))
           .timeout(const Duration(seconds: 5));
     } on AuthException catch (e, st) {
       talker.handle(e, st);

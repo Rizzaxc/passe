@@ -49,6 +49,16 @@
 					<string>com.googleusercontent.apps.618362334941-9c6p21hlie4iatg7nadtka3fdrc7vt70</string>
 				</array>
 			</dict>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLName</key>
+				<string>com.passe.invite</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>passe</string>
+				</array>
+			</dict>
 		</array>
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>

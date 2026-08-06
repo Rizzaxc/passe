@@ -2,6 +2,7 @@
 /// (see schema/push_notifications.sql). The `value` is the canonical DB string
 /// and is what arrives in the FCM `data.kind` field — keep the two in lockstep.
 enum NotificationKind {
+  activityScheduled('activity_scheduled'),
   activityConfirmed('activity_confirmed'),
   proSessionReminder('pro_session_reminder'),
   challengerConfirmed('challenger_confirmed'),

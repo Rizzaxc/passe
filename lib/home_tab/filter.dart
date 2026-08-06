@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../core/model/enum.dart';
 import '../core/model/timeslot.dart';
+import '../core/state/selected_sport_state.dart';
 import '../core/user_preferences.dart';
 import '../ui/district_select.dart';
 import '../ui/search_field.dart';
@@ -168,6 +169,9 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
   Widget build(BuildContext context) {
     final filter = ref.watch(filterStateProvider);
     final notifier = ref.read(filterStateProvider.notifier);
+    
+    final selectedSportAsync = ref.watch(selectedSportStateProvider);
+    final selectedSport = selectedSportAsync.value ?? Sport.soccer;
 
     return SingleChildScrollView(
       controller: _scrollController,
@@ -207,12 +211,60 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              PSheetSectionLabel(label: context.tr('homeTab.filter.search')),
+              Row(
+                spacing: 8,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: PSheetSectionLabel(
+                      label: context.tr('homeTab.filter.search'),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: PSheetSectionLabel(
+                      label: context.tr('homeTab.filter.sport'),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 8),
-              PSearchField(
-                hint: context.tr('homeTab.filter.searchHint'),
-                controller: _searchController,
-                onChange: (value) => notifier.setFilter(value),
+              Row(
+                spacing: 8,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: PSearchField(
+                      hint: context.tr('homeTab.filter.searchHint'),
+                      controller: _searchController,
+                      onChange: (value) => notifier.setFilter(value),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: FSelect<Sport>.rich(
+                      hint: context.tr('homeTab.filter.sport'),
+                      format: (s) => s.getLocalizedName(context),
+                      autoHide: true,
+                      control: FSelectControl.lifted(
+                        value: selectedSport,
+                        onChange: (s) {
+                          if (s != null) {
+                            ref.read(selectedSportStateProvider.notifier).change(s);
+                          }
+                        },
+                      ),
+                      children: [
+                        for (final s in Sport.values.where((s) => s != Sport.others))
+                          FSelectItem<Sport>(
+                            prefix: s.getIcon(size: 16),
+                            title: Text(s.getLocalizedName(context)),
+                            value: s,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

@@ -321,6 +321,13 @@ Three interaction types:
 
 A before-insert trigger auto-accepts reciprocal request/invite pairs and enforces uniqueness.
 
+These three types aren't the only way into a lobby: a **lobby invite link** (`lobby_invite_link`,
+Discord-style, `lib/manage_tab/lobby_section/invite_link/`) lets a captain/coordinator generate a
+shareable `passe://invite/CODE` that anyone can redeem for instant membership — it bypasses
+`lobby_befriend_record` entirely (no request/invite row, no approval step) via a `SECURITY DEFINER`
+RPC that inserts straight into `lobby_member`. It replaced the retired email-invite flow (formerly
+`lobby_email_invite` + a Resend-backed edge function).
+
 ### Challenger System (built, full flow)
 
 Separate from `lobby_befriend_record`. The flow: a lobby **publishes an offer** (opts in with terms)
@@ -407,12 +414,11 @@ referee → the referee records the result → both lobbies' history and Elo upd
   captain vetoes" flow was never implemented — see `lib/manage_tab/CLAUDE.md`). Members RSVP
   (going/maybe/out); the activity becomes official once enough **going** confirmations reach the
   threshold, which also fires the `activity_confirmed` push.
-- **Match recording**: an ordinary (non-challenge) activity's result is recorded into `lobby_match`
-  via `RecordMatchController` (`history/record_match_controller.dart` + `record_match_sheet.dart`,
-  captain/coordinator "Ghi kết quả" on the History tab) — free-text opponent only, `opponent_lobby_id`
-  stays null, so this path never touches the referee CHECK or moves Elo. A **challenge** match's
-  result is recorded by the referee instead — see "Challenger System" above. History reads via
-  `lobby_match_history_data` for either path, from either lobby's side.
+- **Match recording**: the free-text "Ghi kết quả" manual-entry path (`RecordMatchController` /
+  `record_match_sheet.dart`) is **removed** — captains/coordinators can no longer log an ad-hoc
+  practice/opponent result from the History tab. A **challenge** match's result is still recorded by
+  the referee (`record_challenge_match`) — see "Challenger System" above — and that's now the only
+  way a `lobby_match` row gets written. History reads via `lobby_match_history_data`.
 - **đá currency is deferred, not built.** There is still no server-side ledger — `DaBalance`
   (`lib/currency/`) is a local SharedPreferences int and confirming an activity does **not** actually
   debit đá. The wallet's purchase/spending history is intentionally **empty** (not fabricated) and the
@@ -457,6 +463,8 @@ Push (raw FCM HTTP v1, iOS + Android) is **built**. Design + remaining provision
   marks `sent`/`failed` (retry cap 3). Schema: `schema/push_notifications.sql`.
 - **Flag system = data-driven allowlist** `enabled_notification_kind`. Each `notification_kind`
   is dark-launched / kill-switched by toggling its `enabled` flag (no redeploy). Live kinds:
+  `activity_scheduled` (a captain/coordinator puts up a new activity — creation only, not
+  reschedule/cancel, which stay feed-only; see `schema/activity_scheduled_notify.sql`),
   `activity_confirmed`, `pro_session_reminder`, `lobby_invite`, `professional_booking_*`, (with
   the challenge handshake) `challenger_confirmed`, `challenge_received`, `challenge_declined`,
   `challenge_scheduled`, `challenge_lapsed`, `match_result_recorded`, and (with friendship)

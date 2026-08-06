@@ -140,13 +140,15 @@ class HealthController extends _$HealthController {
     try {
       // Configure health package
       // This may throw on iOS simulator where HealthKit isn't available
-      await _health.configure();
+      await _health.configure().timeout(const Duration(seconds: 5));
 
       // Request permissions
       final permissions = _healthDataTypes
           .map((type) => HealthDataAccess.READ)
           .toList();
 
+      // Not timeout-wrapped: this shows the interactive OS permission
+      // sheet, gated on the user, like the native sign-in flows.
       final authorized = await _health.requestAuthorization(
         _healthDataTypes,
         permissions: permissions,

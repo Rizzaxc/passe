@@ -21,6 +21,19 @@ class FeedSportFilter extends _$FeedSportFilter {
   void set(int? sportId) => state = sportId;
 }
 
+/// Session-wide "is autoplaying video muted" preference — unmuted by
+/// default (video only ever autoplays in the Feed pager, with sound). The
+/// mute toggle on a playing video (post_card.dart's `_VideoPage`) flips this,
+/// and it carries forward to the next video the user lands on rather than
+/// resetting per-video.
+@Riverpod(keepAlive: true)
+class FeedVideoMuted extends _$FeedVideoMuted {
+  @override
+  bool build() => false;
+
+  void toggle() => state = !state;
+}
+
 /// Posts from the caller, their friends, their lobby mates, and any post a
 /// friend of theirs is tagged in. Visibility is resolved server-side in
 /// `wall_feed_data` — the client never assembles the audience itself.
@@ -112,7 +125,7 @@ class WallFeedController extends _$WallFeedController {
       sourceStartTime: post.sourceStartTime,
       sourceVenueName: post.sourceVenueName,
       caption: post.caption,
-      imagePaths: post.imagePaths,
+      media: post.media,
       createdAt: post.createdAt,
       expiresAt: post.expiresAt,
       tags: post.tags,
@@ -120,25 +133,4 @@ class WallFeedController extends _$WallFeedController {
       myReaction: emoji,
     );
   }
-}
-
-/// One person's wall. `tagged: false` = posts they wrote, `true` = posts
-/// they're tagged in. Both are filtered server-side by the same visibility
-/// predicate, so a visitor simply sees a shorter list.
-@riverpod
-Future<List<WallPost>> userWall(
-  Ref ref,
-  String userId, {
-  bool tagged = false,
-}) async {
-  final rows = await Supabase.instance.client.rpc('user_wall_data', params: {
-    'p_user_id': userId,
-    'p_mode': tagged ? 'tagged' : 'authored',
-    'p_page_size': 20,
-    'p_page_number': 0,
-  }).timeout(const Duration(seconds: 5));
-
-  return (rows as List)
-      .map((r) => WallPost.fromJson(r as Map<String, dynamic>))
-      .toList();
 }

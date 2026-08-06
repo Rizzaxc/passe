@@ -33,6 +33,24 @@ coaching courses. Unlike Home (discovery), this is about entities the user is al
     `lobby_banner.dart` — sheets/widgets pushed from the detail page. (`invite_challenge_sheet.dart`
     is **retired** — challenging by SearchID from inside your own lobby bypassed the offer/matching
     system; see root CLAUDE.md ▸ Challenger System.)
+  - `invite_link/` — the Discord-style lobby invite link (replaced the retired email-invite flow,
+    `invite_member_sheet.dart`'s email mode). `invite_link_controller.dart` +
+    `invite_link_card.dart` are the captain/coordinator-only generate/copy/share/regenerate/remove
+    card embedded in `lobby_info_sheet.dart`, next to the SearchID row. `invite_landing_controller.dart`
+    + `invite_landing_page.dart` back the `/invite/:code` route (`InviteRoute` in `router.dart`) that
+    a `passe://invite/CODE` deep link opens. The `passe` URL scheme is registered natively on both
+    platforms (`ios/Runner/Info.plist`'s `CFBundleURLTypes`, an `<intent-filter>` on
+    `android/app/src/main/AndroidManifest.xml`'s `MainActivity`) — no universal/app-links or web
+    fallback. No extra deep-link package is needed: the OS forwards an opened `passe://...` URL
+    straight to Flutter's platform channel as the *raw* URI, and `router.dart`'s `redirect` rewrites
+    it (`state.uri.scheme == 'passe'`) to the internal `InviteRoute` location before any other
+    redirect logic runs — go_router re-resolves `redirect` against the rewritten path, so normal
+    auth/onboarding gating still applies. Redemption is
+    instant auto-join (`redeem_lobby_invite_link`, `SECURITY DEFINER`) — no approval step, unlike a
+    `lobby_befriend_record` join request. Guests hit the existing `ensureSignedIn` prompt
+    (`lib/auth/guest_prompt.dart`); the router's own `pendingDestination` bookkeeping already bounces
+    them back to `/invite/CODE` after sign-in, so there's no separate pending-state provider. Schema:
+    `schema/lobby_invite_link.sql`.
 
 ## Domain model
 
@@ -131,10 +149,10 @@ Judgment calls made along the way, in case they need revisiting:
   prompts the home side to book a referee (`_ChallengeBlock` in `activity/hero.dart`); the referee
   records the result from pro mode via `record_challenge_match`, which inserts the `lobby_match` row
   with `opponent_lobby_id` **and** `referee_booking_id` set together (the CHECK requires exactly
-  that pairing for a scored match) and fires the Elo trigger. The free-text
-  `history/record_match_controller.dart` / `record_match_sheet.dart` path (captain/coordinator, "Ghi
-  kết quả" on the History tab) is unchanged and still records opponent-less/free-text matches only —
-  see root CLAUDE.md ▸ Challenger System for the full referee-records-a-challenge-match path.
+  that pairing for a scored match) and fires the Elo trigger. The free-text manual "Ghi kết quả"
+  entry point (formerly `history/record_match_controller.dart` / `record_match_sheet.dart`,
+  captain/coordinator-only on the History tab) is **removed** — `record_challenge_match` via the
+  referee is now the only write path into `lobby_match`; see root CLAUDE.md ▸ Challenger System.
   **(2026-08 pass)** that same "Lobby members can view attached bookings" policy on
   `professional_booking` and `activity`'s own "Linked professionals can view their attached
   activities" policy referenced each other's table directly — a mutual RLS recursion that made
