@@ -390,7 +390,7 @@ class _ProfessionalCard extends StatelessWidget {
 
     return FTappable(
       onPress: () => _openDetail(context, item),
-      child: FCard(
+      child: PCard(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
           child: Column(
@@ -512,7 +512,7 @@ class _LoadingSkeleton extends StatelessWidget {
         for (var s = 0; s < 2; s++) ...[
           bar(160, 24),
           const SizedBox(height: 12),
-          FCard(
+          PCard(
             child: Padding(
               padding: const EdgeInsets.all(18),
               child: Column(
@@ -608,7 +608,7 @@ class _SheetRow extends StatelessWidget {
 
     return FTappable(
       onPress: () => _openDetail(context, item),
-      child: FCard(
+      child: PCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

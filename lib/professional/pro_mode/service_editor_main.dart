@@ -330,7 +330,7 @@ class _ServiceCard extends ConsumerWidget {
         professionalId: professionalId,
         existing: service,
       ),
-      child: FCard(
+      child: PCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: 6,

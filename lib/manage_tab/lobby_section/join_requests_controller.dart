@@ -8,12 +8,14 @@ class JoinRequest {
   final String initiatorUserId;
   final String username;
   final String tagNumber;
+  final String? generatedAvatar;
 
   const JoinRequest({
     required this.id,
     required this.initiatorUserId,
     required this.username,
     required this.tagNumber,
+    this.generatedAvatar,
   });
 }
 
@@ -26,7 +28,7 @@ class JoinRequestsController extends _$JoinRequestsController {
     final response = await supabase
         .from('lobby_befriend_record')
         .select(
-            'id, initiator_user_id, user!lobby_befriend_record_initiator_user_id_fkey(username, tag_number)')
+            'id, initiator_user_id, user!lobby_befriend_record_initiator_user_id_fkey(username, tag_number, details)')
         .eq('target_lobby_id', lobbyId)
         .eq('interaction_type', 'request')
         .eq('status', 'pending')
@@ -34,11 +36,13 @@ class JoinRequestsController extends _$JoinRequestsController {
 
     return (response as List).map((row) {
       final u = row['user'] as Map<String, dynamic>;
+      final details = u['details'] as Map<String, dynamic>?;
       return JoinRequest(
         id: row['id'] as String,
         initiatorUserId: row['initiator_user_id'] as String,
         username: u['username'] as String,
         tagNumber: u['tag_number'] as String,
+        generatedAvatar: details?['generatedAvatar'] as String?,
       );
     }).toList();
   }

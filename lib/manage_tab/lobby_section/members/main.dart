@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../router.dart';
 import '../../../ui/empty_section_placeholder.dart';
+import '../../../ui/user_avatar.dart';
 import 'controller.dart';
 
 class MembersSection extends ConsumerWidget {
@@ -75,18 +76,11 @@ class _MemberChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         spacing: 4,
         children: [
-          CircleAvatar(
+          PUserAvatar(
+            userId: member.userId,
+            username: member.username,
+            generatedAvatar: member.generatedAvatar,
             radius: 24,
-            backgroundColor: context.theme.colors.secondary,
-            child: Text(
-              member.username.isNotEmpty
-                  ? member.username[0].toUpperCase()
-                  : '?',
-              style: context.theme.typography.body.md.copyWith(
-                color: context.theme.colors.secondaryForeground,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
           ),
           Text(
             member.username,

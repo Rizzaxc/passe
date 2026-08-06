@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../ui/theme.dart';
+import '../../../../ui/user_avatar.dart';
 import '../../../auth/auth_controller.dart';
 import '../../../core/model/wall_post.dart';
 import '../../../core/payment/pay_recipient.dart';
@@ -160,6 +161,7 @@ sealed class FeedItem {
     final payload = row['payload'] as Map<String, dynamic>;
     final author = (row['author_username'] as String?) ?? '';
     final authorId = row['author_id'] as String?;
+    final authorGeneratedAvatar = row['author_generated_avatar'] as String?;
     final time = _formatHm(DateTime.parse(row['created_at'] as String));
 
     switch (kind) {
@@ -167,6 +169,7 @@ sealed class FeedItem {
         return UpdateItem(
           author: author,
           authorId: authorId,
+          authorGeneratedAvatar: authorGeneratedAvatar,
           time: time,
           title: payload['title'] as String,
           kind: UpdateKind.fromDb(payload['kind'] as String?),
@@ -183,6 +186,7 @@ sealed class FeedItem {
         return PersonalItem(
           author: author,
           authorId: authorId,
+          authorGeneratedAvatar: authorGeneratedAvatar,
           time: time,
           action: PersonalActionKind.fromDb(payload['action_kind'] as String?),
           detail: payload['detail'] as String?,
@@ -208,6 +212,7 @@ sealed class FeedItem {
           id: row['id'] as String,
           author: author,
           authorId: authorId,
+          authorGeneratedAvatar: authorGeneratedAvatar,
           time: time,
           question: payload['question'] as String,
           options: options,
@@ -222,6 +227,7 @@ sealed class FeedItem {
           id: row['id'] as String,
           author: author,
           authorId: authorId,
+          authorGeneratedAvatar: authorGeneratedAvatar,
           time: time,
           type: payload['type'] as String,
           sourceActivityId: payload['source_activity_id'] as String?,
@@ -265,6 +271,7 @@ final class DayDivItem extends FeedItem {
 final class UpdateItem extends FeedItem {
   final String author;
   final String? authorId;
+  final String? authorGeneratedAvatar;
   final String time;
   final String title;
   final UpdateKind kind;
@@ -273,6 +280,7 @@ final class UpdateItem extends FeedItem {
   const UpdateItem({
     required this.author,
     required this.authorId,
+    this.authorGeneratedAvatar,
     required this.time,
     required this.title,
     required this.kind,
@@ -284,6 +292,7 @@ final class UpdateItem extends FeedItem {
 final class PersonalItem extends FeedItem {
   final String author;
   final String? authorId;
+  final String? authorGeneratedAvatar;
   final String time;
   final PersonalActionKind action;
   final String? detail;
@@ -291,6 +300,7 @@ final class PersonalItem extends FeedItem {
   const PersonalItem({
     required this.author,
     required this.authorId,
+    this.authorGeneratedAvatar,
     required this.time,
     required this.action,
     this.detail,
@@ -307,6 +317,7 @@ final class PollItem extends FeedItem {
   final String id;
   final String author;
   final String? authorId;
+  final String? authorGeneratedAvatar;
   final String time;
   final String question;
   final List<(String, int)> options; // (label, voteCount)
@@ -317,6 +328,7 @@ final class PollItem extends FeedItem {
     required this.id,
     required this.author,
     required this.authorId,
+    this.authorGeneratedAvatar,
     required this.time,
     required this.question,
     required this.options,
@@ -340,12 +352,14 @@ final class WallPostItem extends FeedItem {
 class PaymentPayee {
   final String userId;
   final String username;
+  final String? generatedAvatar;
   final num amountOwed;
   final bool paid;
 
   const PaymentPayee({
     required this.userId,
     required this.username,
+    this.generatedAvatar,
     required this.amountOwed,
     required this.paid,
   });
@@ -353,6 +367,7 @@ class PaymentPayee {
   factory PaymentPayee.fromJson(Map<String, dynamic> j) => PaymentPayee(
     userId: j['user_id'] as String,
     username: j['username'] as String,
+    generatedAvatar: j['generated_avatar'] as String?,
     amountOwed: j['amount_owed'] as num,
     paid: j['paid'] as bool,
   );
@@ -366,6 +381,7 @@ final class PaymentRequestItem extends FeedItem {
   final String id;
   final String author;
   final String? authorId;
+  final String? authorGeneratedAvatar;
   final String time;
   final String type; // 'split' | 'ancillary'
   final String? sourceActivityId;
@@ -380,6 +396,7 @@ final class PaymentRequestItem extends FeedItem {
     required this.id,
     required this.author,
     required this.authorId,
+    this.authorGeneratedAvatar,
     required this.time,
     required this.type,
     required this.sourceActivityId,
@@ -470,12 +487,14 @@ class _DayDivider extends StatelessWidget {
 class _AuthorRow extends StatelessWidget {
   final String name;
   final String? authorId;
+  final String? authorGeneratedAvatar;
   final String? captainId;
   final String time;
 
   const _AuthorRow({
     required this.name,
     required this.authorId,
+    this.authorGeneratedAvatar,
     required this.captainId,
     required this.time,
   });
@@ -483,29 +502,39 @@ class _AuthorRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    final authorId = this.authorId;
     final isLeader =
         authorId != null && captainId != null && authorId == captainId;
 
     return Row(
       children: [
-        Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: _memberColor(name),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            initial,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
+        if (authorId != null)
+          PUserAvatar(
+            userId: authorId,
+            username: name,
+            generatedAvatar: authorGeneratedAvatar,
+            radius: 14,
+          )
+        else
+          // Author row with no id at all (e.g. a deleted account) — nothing
+          // to resolve a real avatar from, so this stays a plain initial.
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _memberColor(name),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : '?',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
           ),
-        ),
         const SizedBox(width: 7),
         Text(
           name,
@@ -581,6 +610,7 @@ class _PersonalCard extends StatelessWidget {
           _AuthorRow(
             name: item.author,
             authorId: item.authorId,
+            authorGeneratedAvatar: item.authorGeneratedAvatar,
             captainId: captainId,
             time: item.time,
           ),
@@ -697,6 +727,7 @@ class _UpdateCard extends StatelessWidget {
           _AuthorRow(
             name: item.author,
             authorId: item.authorId,
+            authorGeneratedAvatar: item.authorGeneratedAvatar,
             captainId: captainId,
             time: item.time,
           ),
@@ -908,6 +939,7 @@ class _PollCardState extends ConsumerState<_PollCard> {
           _AuthorRow(
             name: widget.item.author,
             authorId: widget.item.authorId,
+            authorGeneratedAvatar: widget.item.authorGeneratedAvatar,
             captainId: widget.captainId,
             time: widget.item.time,
           ),
@@ -1179,6 +1211,7 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
           _AuthorRow(
             name: item.author,
             authorId: item.authorId,
+            authorGeneratedAvatar: item.authorGeneratedAvatar,
             captainId: widget.captainId,
             time: item.time,
           ),
@@ -1271,24 +1304,11 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                             padding: const EdgeInsets.only(bottom: 6),
                             child: Row(
                               children: [
-                                Container(
-                                  width: 22,
-                                  height: 22,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: _memberColor(payee.username),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    payee.username.isNotEmpty
-                                        ? payee.username[0].toUpperCase()
-                                        : '?',
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                    ),
-                                  ),
+                                PUserAvatar(
+                                  userId: payee.userId,
+                                  username: payee.username,
+                                  generatedAvatar: payee.generatedAvatar,
+                                  radius: 11,
                                 ),
                                 const SizedBox(width: 7),
                                 Expanded(

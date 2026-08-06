@@ -19,4 +19,7 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+    <!-- image_cropper's crop screen theme; see values-v35 for the Android 15+
+         edge-to-edge opt-out uCrop itself doesn't yet support natively. -->
+    <style name="Ucrop.CropTheme" parent="Theme.AppCompat.Light.NoActionBar"/>
 </resources>

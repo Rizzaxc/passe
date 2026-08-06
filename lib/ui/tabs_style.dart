@@ -35,6 +35,6 @@ FTabsStyle tabsStyle({
   focusedOutlineStyle: style.focusedOutlineStyle,
   padding: const .all(4),
   indicatorSize: .tab,
-  height: 35,
+  minHeight: 35,
   spacing: 10,
 );

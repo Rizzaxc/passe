@@ -44,9 +44,9 @@ class _ConfirmPasswordSheet extends ConsumerStatefulWidget {
 }
 
 class _ConfirmPasswordSheetState extends ConsumerState<_ConfirmPasswordSheet> {
+  final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
   bool _submitting = false;
-  String? _error;
 
   @override
   void dispose() {
@@ -55,27 +55,29 @@ class _ConfirmPasswordSheetState extends ConsumerState<_ConfirmPasswordSheet> {
   }
 
   Future<void> _submit() async {
-    final password = _passwordController.text;
-    if (password.isEmpty) return;
+    final state = _formKey.currentState;
+    if (state == null || !state.validate()) return;
 
     final email = ref.read(authControllerProvider).value?.email;
     if (email == null) return;
 
-    setState(() {
-      _submitting = true;
-      _error = null;
-    });
+    setState(() => _submitting = true);
     try {
       await ref
           .read(authControllerProvider.notifier)
-          .signInWithPassword(email: email, password: password);
+          .signInWithPassword(email: email, password: _passwordController.text);
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = e is AuthException ? 'payment.incorrectPassword'.tr() : 'errorGeneric'.tr();
-      });
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: Text('error'.tr()),
+        description: Text(e is AuthException ? 'payment.incorrectPassword'.tr() : 'errorGeneric'.tr()),
+        alignment: .bottomCenter,
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -85,44 +87,52 @@ class _ConfirmPasswordSheetState extends ConsumerState<_ConfirmPasswordSheet> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       primary: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 12,
-        children: [
-          PSheetTitle(
-            label: 'payment.confirmPasswordTitle'.tr(),
-            trailing: FButton.icon(
-              variant: .ghost,
-              onPress: () => Navigator.of(context).pop(),
-              child: const Icon(FLucideIcons.x),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 12,
+          children: [
+            PSheetTitle(
+              label: 'payment.confirmPasswordTitle'.tr(),
+              trailing: FButton.icon(
+                variant: .ghost,
+                onPress: () => Navigator.of(context).pop(),
+                child: const Icon(FLucideIcons.x),
+              ),
             ),
-          ),
-          Text(
-            'payment.confirmPasswordExplanation'.tr(),
-            style: context.theme.typography.body.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
+            Text(
+              'payment.confirmPasswordExplanation'.tr(),
+              style: context.theme.typography.body.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
             ),
-          ),
-          FTextField.password(
-            label: Text('auth.passwordLabel'.tr()),
-            autofocus: true,
-            control: FTextFieldControl.managed(controller: _passwordController),
-            error: _error != null ? Text(_error!) : null,
-            onSubmit: (_) => _submit(),
-          ),
-          FButton(
-            onPress: (_passwordController.text.isEmpty || _submitting) ? null : _submit,
-            child: _submitting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : Text('payment.confirmPasswordAction'.tr()),
-          ),
-          const SizedBox(height: 8),
-        ],
+            FTextFormField.password(
+              label: Text('auth.passwordLabel'.tr()),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              control: FTextFieldControl.managed(controller: _passwordController),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'auth.passwordEmpty'.tr();
+                }
+                return null;
+              },
+              onSubmit: (_) => _submit(),
+            ),
+            FButton(
+              onPress: _submitting ? null : _submit,
+              child: _submitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text('payment.confirmPasswordAction'.tr()),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }

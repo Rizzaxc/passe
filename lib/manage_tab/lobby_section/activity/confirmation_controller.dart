@@ -119,9 +119,16 @@ class ActivityConfirmationController
 
 /// One row of the hero's RSVP avatar strip.
 class Attendee {
+  final String userId;
   final String username;
+  final String? generatedAvatar;
   final Attendance attendance;
-  const Attendee({required this.username, required this.attendance});
+  const Attendee({
+    required this.userId,
+    required this.username,
+    this.generatedAvatar,
+    required this.attendance,
+  });
 }
 
 /// Small sample of who's going / maybe, for the hero's avatar strip.
@@ -132,7 +139,8 @@ Future<List<Attendee>> activityAttendees(Ref ref, String activityId) async {
   final supabase = Supabase.instance.client;
   final rows = await supabase
       .from('activity_confirmation')
-      .select('attendance, user!activity_confirmation_user_id_fkey(username)')
+      .select(
+          'attendance, user!activity_confirmation_user_id_fkey(id, username, details)')
       .eq('activity_id', activityId)
       .inFilter('attendance', ['going', 'maybe'])
       .order('confirmed_at')
@@ -141,8 +149,11 @@ Future<List<Attendee>> activityAttendees(Ref ref, String activityId) async {
 
   return (rows as List).map((row) {
     final u = row['user'] as Map<String, dynamic>;
+    final details = u['details'] as Map<String, dynamic>?;
     return Attendee(
+      userId: u['id'] as String,
       username: u['username'] as String,
+      generatedAvatar: details?['generatedAvatar'] as String?,
       attendance: Attendance.fromValue(row['attendance'] as String)!,
     );
   }).toList();

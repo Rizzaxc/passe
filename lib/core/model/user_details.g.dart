@@ -17,7 +17,7 @@ _UserDetails _$UserDetailsFromJson(Map json) => _UserDetails(
       : UserLocation.fromJson(
           Map<String, dynamic>.from(json['location'] as Map),
         ),
-  generatedAvatar: json['generatedAvatar'] as String?,
+  avatar: UserAvatar.decode(json['generatedAvatar'] as String?),
 );
 
 Map<String, dynamic> _$UserDetailsToJson(_UserDetails instance) =>
@@ -26,7 +26,7 @@ Map<String, dynamic> _$UserDetailsToJson(_UserDetails instance) =>
       'ageGroup': ?_$AgeGroupEnumMap[instance.ageGroup],
       'playtime': ?instance.playtime?.map((e) => e.toJson()).toList(),
       'location': ?instance.location?.toJson(),
-      'generatedAvatar': ?instance.generatedAvatar,
+      'generatedAvatar': ?UserAvatar.encode(instance.avatar),
     };
 
 const _$GenderEnumMap = {Gender.male: 'male', Gender.female: 'female'};

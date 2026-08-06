@@ -79,7 +79,7 @@ class _HistoryRow extends StatelessWidget {
     final colors = context.theme.colors;
     final (label, color) = _statusStyle(context, booking.status);
 
-    return FCard(
+    return PCard(
       child: Row(
         children: [
           Expanded(

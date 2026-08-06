@@ -73,20 +73,29 @@ class PLogo extends StatelessWidget {
       ),
     );
 
-    final slogan = ShaderMask(
-      blendMode: BlendMode.srcIn,
-      shaderCallback: (rect) => LinearGradient(
-        colors: [colors.primary, context.theme.brand.blue],
-      ).createShader(rect),
-      child: Text(
-        _slogan,
-        style: TextStyle(
-          fontFamily: 'Bitter',
-          fontWeight: FontWeight.w700,
-          fontSize: size * 0.19,
-          letterSpacing: size * 0.05,
-          height: 1.3,
-          color: Colors.white,
+    // FittedBox + a single unwrapped line so a narrow screen shrinks the
+    // slogan to fit instead of line-wrapping it mid-phrase (this is what
+    // broke on the splash screen — "WIN" and "TOGETHER" splitting onto a
+    // second line on narrow phones).
+    final slogan = FittedBox(
+      fit: BoxFit.scaleDown,
+      child: ShaderMask(
+        blendMode: BlendMode.srcIn,
+        shaderCallback: (rect) => LinearGradient(
+          colors: [colors.primary, context.theme.brand.blue],
+        ).createShader(rect),
+        child: Text(
+          _slogan,
+          maxLines: 1,
+          softWrap: false,
+          style: TextStyle(
+            fontFamily: 'Bitter',
+            fontWeight: FontWeight.w700,
+            fontSize: size * 0.19,
+            letterSpacing: size * 0.05,
+            height: 1.3,
+            color: Colors.white,
+          ),
         ),
       ),
     );

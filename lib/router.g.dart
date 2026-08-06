@@ -24,8 +24,11 @@ List<RouteBase> get $appRoutes => [
   $mainRoute,
 ];
 
-RouteBase get $splashRoute =>
-    GoRouteData.$route(path: '/splash', factory: $SplashRoute._fromState);
+RouteBase get $splashRoute => GoRouteData.$route(
+  path: '/splash',
+  hasOverriddenOnExit: false,
+  factory: $SplashRoute._fromState,
+);
 
 mixin $SplashRoute on GoRouteData {
   static SplashRoute _fromState(GoRouterState state) => const SplashRoute();
@@ -47,8 +50,11 @@ mixin $SplashRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-RouteBase get $authRoute =>
-    GoRouteData.$route(path: '/auth', factory: $AuthRoute._fromState);
+RouteBase get $authRoute => GoRouteData.$route(
+  path: '/auth',
+  hasOverriddenOnExit: false,
+  factory: $AuthRoute._fromState,
+);
 
 mixin $AuthRoute on GoRouteData {
   static AuthRoute _fromState(GoRouterState state) => const AuthRoute();
@@ -70,8 +76,11 @@ mixin $AuthRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-RouteBase get $welcomeRoute =>
-    GoRouteData.$route(path: '/welcome', factory: $WelcomeRoute._fromState);
+RouteBase get $welcomeRoute => GoRouteData.$route(
+  path: '/welcome',
+  hasOverriddenOnExit: false,
+  factory: $WelcomeRoute._fromState,
+);
 
 mixin $WelcomeRoute on GoRouteData {
   static WelcomeRoute _fromState(GoRouterState state) => const WelcomeRoute();
@@ -95,6 +104,7 @@ mixin $WelcomeRoute on GoRouteData {
 
 RouteBase get $forgotPasswordRoute => GoRouteData.$route(
   path: '/forgot-password',
+  hasOverriddenOnExit: false,
   factory: $ForgotPasswordRoute._fromState,
 );
 
@@ -121,6 +131,7 @@ mixin $ForgotPasswordRoute on GoRouteData {
 
 RouteBase get $resetPasswordRoute => GoRouteData.$route(
   path: '/reset-password',
+  hasOverriddenOnExit: false,
   factory: $ResetPasswordRoute._fromState,
 );
 
@@ -152,6 +163,7 @@ mixin $ResetPasswordRoute on GoRouteData {
 
 RouteBase get $onboardingRoute => GoRouteData.$route(
   path: '/onboarding',
+  hasOverriddenOnExit: false,
   factory: $OnboardingRoute._fromState,
 );
 
@@ -178,6 +190,7 @@ mixin $OnboardingRoute on GoRouteData {
 
 RouteBase get $notificationRoute => GoRouteData.$route(
   path: '/notifications',
+  hasOverriddenOnExit: false,
   factory: $NotificationRoute._fromState,
 );
 
@@ -202,8 +215,11 @@ mixin $NotificationRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-RouteBase get $walletHomeRoute =>
-    GoRouteData.$route(path: '/wallet', factory: $WalletHomeRoute._fromState);
+RouteBase get $walletHomeRoute => GoRouteData.$route(
+  path: '/wallet',
+  hasOverriddenOnExit: false,
+  factory: $WalletHomeRoute._fromState,
+);
 
 mixin $WalletHomeRoute on GoRouteData {
   static WalletHomeRoute _fromState(GoRouterState state) =>
@@ -228,6 +244,7 @@ mixin $WalletHomeRoute on GoRouteData {
 
 RouteBase get $walletIntroRoute => GoRouteData.$route(
   path: '/wallet/intro',
+  hasOverriddenOnExit: false,
   factory: $WalletIntroRoute._fromState,
 );
 
@@ -254,6 +271,7 @@ mixin $WalletIntroRoute on GoRouteData {
 
 RouteBase get $walletPurchaseHistoryRoute => GoRouteData.$route(
   path: '/wallet/purchase',
+  hasOverriddenOnExit: false,
   factory: $WalletPurchaseHistoryRoute._fromState,
 );
 
@@ -280,6 +298,7 @@ mixin $WalletPurchaseHistoryRoute on GoRouteData {
 
 RouteBase get $walletSpendingHistoryRoute => GoRouteData.$route(
   path: '/wallet/spending',
+  hasOverriddenOnExit: false,
   factory: $WalletSpendingHistoryRoute._fromState,
 );
 
@@ -306,6 +325,7 @@ mixin $WalletSpendingHistoryRoute on GoRouteData {
 
 RouteBase get $walletTopupRoute => GoRouteData.$route(
   path: '/wallet/topup',
+  hasOverriddenOnExit: false,
   factory: $WalletTopupRoute._fromState,
 );
 
@@ -332,6 +352,7 @@ mixin $WalletTopupRoute on GoRouteData {
 
 RouteBase get $professionalDetailRoute => GoRouteData.$route(
   path: '/professional/:id',
+  hasOverriddenOnExit: false,
   factory: $ProfessionalDetailRoute._fromState,
 );
 
@@ -364,8 +385,11 @@ mixin $ProfessionalDetailRoute on GoRouteData {
       context.replace(location, extra: _self.$extra);
 }
 
-RouteBase get $userRoute =>
-    GoRouteData.$route(path: '/user/:id', factory: $UserRoute._fromState);
+RouteBase get $userRoute => GoRouteData.$route(
+  path: '/user/:id',
+  hasOverriddenOnExit: false,
+  factory: $UserRoute._fromState,
+);
 
 mixin $UserRoute on GoRouteData {
   static UserRoute _fromState(GoRouterState state) => UserRoute(
@@ -400,29 +424,38 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
   branches: [
     StatefulShellBranchData.$branch(
       routes: [
-        GoRouteData.$route(path: '/feed', factory: $FeedRoute._fromState),
+        GoRouteData.$route(
+          path: '/feed',
+          hasOverriddenOnExit: false,
+          factory: $FeedRoute._fromState,
+        ),
       ],
     ),
     StatefulShellBranchData.$branch(
       routes: [
         GoRouteData.$route(
           path: '/home',
+          hasOverriddenOnExit: false,
           factory: $HomeRoute._fromState,
           routes: [
             GoRouteData.$route(
               path: 'teammate',
+              hasOverriddenOnExit: false,
               factory: $HomeTeammateRoute._fromState,
             ),
             GoRouteData.$route(
               path: 'challenger',
+              hasOverriddenOnExit: false,
               factory: $HomeChallengerRoute._fromState,
             ),
             GoRouteData.$route(
               path: 'professional',
+              hasOverriddenOnExit: false,
               factory: $HomeProfessionalRoute._fromState,
             ),
             GoRouteData.$route(
               path: 'place',
+              hasOverriddenOnExit: false,
               factory: $HomePlaceRoute._fromState,
             ),
           ],
@@ -433,22 +466,27 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
       routes: [
         GoRouteData.$route(
           path: '/manage',
+          hasOverriddenOnExit: false,
           factory: $ManageRoute._fromState,
           routes: [
             GoRouteData.$route(
               path: 'schedule',
+              hasOverriddenOnExit: false,
               factory: $ManageScheduleRoute._fromState,
             ),
             GoRouteData.$route(
               path: 'requests',
+              hasOverriddenOnExit: false,
               factory: $ManageRequestsRoute._fromState,
             ),
             GoRouteData.$route(
               path: 'lobby',
+              hasOverriddenOnExit: false,
               factory: $ManageLobbyRoute._fromState,
               routes: [
                 GoRouteData.$route(
                   path: ':id',
+                  hasOverriddenOnExit: false,
                   factory: $LobbyDetailRoute._fromState,
                 ),
               ],
@@ -461,18 +499,22 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
       routes: [
         GoRouteData.$route(
           path: '/health',
+          hasOverriddenOnExit: false,
           factory: $HealthRoute._fromState,
           routes: [
             GoRouteData.$route(
               path: 'user_health',
+              hasOverriddenOnExit: false,
               factory: $HealthUserHealthRoute._fromState,
             ),
             GoRouteData.$route(
               path: 'activity_data',
+              hasOverriddenOnExit: false,
               factory: $HealthActivityDataRoute._fromState,
             ),
             GoRouteData.$route(
               path: 'achievements',
+              hasOverriddenOnExit: false,
               factory: $HealthAchievementsRoute._fromState,
             ),
           ],
@@ -481,7 +523,11 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
     ),
     StatefulShellBranchData.$branch(
       routes: [
-        GoRouteData.$route(path: '/profile', factory: $ProfileRoute._fromState),
+        GoRouteData.$route(
+          path: '/profile',
+          hasOverriddenOnExit: false,
+          factory: $ProfileRoute._fromState,
+        ),
       ],
     ),
   ],
@@ -919,4 +965,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'82d4e97d82bd875774834c6732b5dacf13c2e688';
+String _$routerHash() => r'c6e93ed66d977785d160f0b307e4796d8acf4cec';

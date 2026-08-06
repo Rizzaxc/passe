@@ -38,20 +38,28 @@ The profile is edited as an in-memory **draft** and only persisted on the explic
 ## Data model
 
 - `UserDetails` (freezed, `core/model/user_details.dart`): `gender`, `ageGroup`, `playtime`
-  (`List<Timeslot>`), `location` (`UserLocation`), `generatedAvatar`. Persisted as the `details`
-  jsonb column on the `user` table. **Editing this json schema requires a migration script** (see
-  root guideline).
+  (`List<Timeslot>`), `location` (`UserLocation`), `avatar` (`UserAvatar?`). Persisted as the
+  `details` jsonb column on the `user` table. **Editing this json schema requires a migration
+  script** (see root guideline) — `avatar` is the one exception: its `@JsonKey(fromJson:
+  toJson:)` wire-encodes to/from the same `generatedAvatar` string key the column already used
+  (see Avatar handling below), so introducing it needed no migration.
 - Enums (`core/model/enum.dart`) are `@JsonEnum`; `Industry.index` and `City.dbIndex` are DB ids —
   don't reorder.
 
 ## Avatar handling
 
-`generatedAvatar` is overloaded:
-- non-empty string → an `AvatarPlus` seed (procedural avatar).
-- `''` (empty string) → the user has a **custom uploaded photo** in the `user_avatar` storage
-  bucket at `<userId>.jpg` (loaded as a cache-busted `NetworkImage`).
-- `pickedAvatar` (an `XFile`) → a not-yet-committed pick; `commit()` uploads it and removes a stale
-  custom photo, falling back to a generated seed if upload fails.
+`UserDetails.avatar` is a `UserAvatar?` sealed type (`core/model/user_avatar.dart`):
+`GeneratedAvatar(seed)` → an `AvatarPlus` seed (procedural avatar); `PhotoAvatar()` → the user has
+a **custom uploaded photo** in the `user_avatar` storage bucket at `<userId>.jpg` (loaded as a
+cache-busted `NetworkImage`); `null` → unset, falls back to seeding off the username.
+`UserAvatar.decode`/`.encode` wire-convert to/from the underlying `details ->> 'generatedAvatar'`
+string (non-empty = seed, `''` = photo, absent = unset) — this is the *only* place that
+string-sentinel convention should be handled; every typed consumer (`ProfileController`,
+`profile_tab/main.dart`) works with `UserAvatar`, not the raw string. Read-only surfaces elsewhere
+in the app (lobby member lists, feed authors, payment payees, etc.) still read the raw wire string
+directly out of Supabase JSON — they never touch `UserDetails`, so they didn't need to change.
+`pickedAvatar` (an `XFile` on `ProfileState`) is a not-yet-committed pick; `commit()` uploads it and
+removes a stale custom photo, falling back to a generated seed if upload fails.
 
 ## Gotchas
 

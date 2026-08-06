@@ -8,7 +8,9 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../../../auth/guest_prompt.dart';
 import '../../../../core/model/enum.dart';
 import '../../../../ui/button_styles.dart';
+import '../../../../ui/dialog.dart';
 import '../../../../ui/theme.dart';
+import '../../../../ui/user_avatar.dart';
 import '../../../professional/pending_activity_booking_state.dart';
 import '../../../router.dart';
 import '../challenge_offer_sheet.dart';
@@ -506,7 +508,7 @@ class _HeroExpanded extends ConsumerWidget {
   void _confirmCancel(BuildContext context, WidgetRef ref) {
     showFDialog(
       context: context,
-      builder: (dialogCtx, style, animation) => FDialog(
+      builder: (dialogCtx, style, animation) => PConfirmDialog(
         animation: animation,
         title: const Text('Hủy buổi chơi?'),
         body: const Text(
@@ -1049,7 +1051,9 @@ class _RsvpAvatarRow extends ConsumerWidget {
       children: [
         for (final a in attendees)
           _RsvpAvatar(
-            letter: a.username.isNotEmpty ? a.username[0].toUpperCase() : '?',
+            userId: a.userId,
+            username: a.username,
+            generatedAvatar: a.generatedAvatar,
             going: a.attendance == Attendance.going,
           ),
       ],
@@ -1057,35 +1061,35 @@ class _RsvpAvatarRow extends ConsumerWidget {
   }
 }
 
-/// Single neutral background for every avatar — status reads from the
-/// ring color (green = going, gray = anything else), not from a
-/// per-person hash-color palette.
+/// Status reads from the ring color (green = going, gray = anything else).
 class _RsvpAvatar extends StatelessWidget {
-  final String letter;
+  final String userId;
+  final String username;
+  final String? generatedAvatar;
   final bool going;
 
-  const _RsvpAvatar({required this.letter, required this.going});
+  const _RsvpAvatar({
+    required this.userId,
+    required this.username,
+    this.generatedAvatar,
+    required this.going,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final ringColor = going ? _green : colors.border;
     return Container(
-      width: 26,
-      height: 26,
+      padding: const EdgeInsets.all(1),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: colors.secondary,
         border: Border.all(color: ringColor, width: 2),
       ),
-      alignment: Alignment.center,
-      child: Text(
-        letter,
-        style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-          color: colors.secondaryForeground,
-        ),
+      child: PUserAvatar(
+        userId: userId,
+        username: username,
+        generatedAvatar: generatedAvatar,
+        radius: 11,
       ),
     );
   }

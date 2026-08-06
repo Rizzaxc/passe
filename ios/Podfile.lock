@@ -2,26 +2,20 @@ PODS:
   - Flutter (1.0.0)
   - health (13.3.1):
     - Flutter
-  - location (0.0.1):
-    - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - health (from `.symlinks/plugins/health/ios`)
-  - location (from `.symlinks/plugins/location/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
   health:
     :path: ".symlinks/plugins/health/ios"
-  location:
-    :path: ".symlinks/plugins/location/ios"
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   health: c1dfe8bc28ccd5998a32bdd0963943bfe9ac8320
-  location: d5cf8598915965547c3f36761ae9cc4f4e87d22e
 
 PODFILE CHECKSUM: bae4dd9e1d5a38d982e3af8b8013b89d8981a3b8
 

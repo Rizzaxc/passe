@@ -63,7 +63,8 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
 
       final myId = ref.read(currentUserIdProvider);
 
-      var query = supabase.from('user').select('id, username, tag_number');
+      var query =
+          supabase.from('user').select('id, username, tag_number, details');
       if (username != null && username.isNotEmpty) {
         // Partial (case-insensitive) match so users don't need the exact name.
         query = query.ilike('username', '%$username%');
@@ -80,13 +81,15 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
 
       if (!mounted) return;
       setState(() {
-        _searchResults = (rows as List)
-            .map((r) => _UserResult(
-                  id: r['id'] as String,
-                  username: r['username'] as String,
-                  tagNumber: r['tag_number'] as String,
-                ))
-            .toList();
+        _searchResults = (rows as List).map((r) {
+          final details = r['details'] as Map<String, dynamic>?;
+          return _UserResult(
+            id: r['id'] as String,
+            username: r['username'] as String,
+            tagNumber: r['tag_number'] as String,
+            generatedAvatar: details?['generatedAvatar'] as String?,
+          );
+        }).toList();
       });
     } catch (e, st) {
       Talker().handle(e, st, 'User search failed');
@@ -366,11 +369,13 @@ class _UserResult {
   final String id;
   final String username;
   final String tagNumber;
+  final String? generatedAvatar;
 
   const _UserResult({
     required this.id,
     required this.username,
     required this.tagNumber,
+    this.generatedAvatar,
   });
 }
 
@@ -388,28 +393,16 @@ class _UserRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final initial =
-        user.username.isNotEmpty ? user.username[0].toUpperCase() : '?';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: colors.secondary,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              initial,
-              style: context.theme.typography.body.sm.copyWith(
-                fontWeight: FontWeight.w700,
-                color: colors.primary,
-              ),
-            ),
+          PUserAvatar(
+            userId: user.id,
+            username: user.username,
+            generatedAvatar: user.generatedAvatar,
+            radius: 16,
           ),
           const SizedBox(width: 10),
           Expanded(

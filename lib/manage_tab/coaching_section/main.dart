@@ -270,7 +270,7 @@ void _confirmCancelBooking(
 ) {
   showFDialog(
     context: context,
-    builder: (dialogCtx, style, animation) => FDialog(
+    builder: (dialogCtx, style, animation) => PConfirmDialog(
       animation: animation,
       title: const Text('Huỷ lịch hẹn?'),
       body: Text('Yêu cầu đặt lịch với ${booking.professionalName} sẽ bị huỷ.'),
@@ -592,7 +592,7 @@ class _CoachJourneyCard extends StatelessWidget {
     final colors = context.theme.colors;
     final needsReview = journey.sessions.where((s) => s.reviewEligible).length;
 
-    return FCard(
+    return PCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 12,
@@ -838,7 +838,7 @@ class _SessionPreviewSheet extends ConsumerWidget {
             _StatusChip(label: label, color: fg, bg: bg),
           ],
         ),
-        FCard(
+        PCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 10,
@@ -1195,7 +1195,7 @@ class _LoadingSkeleton extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         for (var i = 0; i < 2; i++) ...[
-          FCard(
+          PCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 12,

@@ -116,7 +116,7 @@ class _BookingCard extends ConsumerWidget {
     final endsAt = match?.activityEnd ?? booking.end;
     final isPastDue = endsAt.isBefore(DateTime.now());
 
-    final card = FCard(
+    final card = PCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 6,

@@ -8,7 +8,9 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../auth/auth_controller.dart';
 import '../../core/model/lobby.dart';
+import '../../ui/dialog.dart';
 import '../../ui/sheet.dart';
+import '../../ui/user_avatar.dart';
 import 'challenge_offer_sheet.dart';
 import 'challenges_controller.dart';
 import 'challenges_sheet.dart';
@@ -57,7 +59,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
   void _confirmLeave() {
     showFDialog(
       context: context,
-      builder: (dialogCtx, style, animation) => FDialog(
+      builder: (dialogCtx, style, animation) => PConfirmDialog(
         animation: animation,
         title: Text('lobby.leave.title'.tr()),
         body: Text('lobby.leave.message'.tr()),
@@ -107,7 +109,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
   void _confirmDelete() {
     showFDialog(
       context: context,
-      builder: (dialogCtx, style, animation) => FDialog(
+      builder: (dialogCtx, style, animation) => PConfirmDialog(
         animation: animation,
         title: Text('lobby.delete.title'.tr()),
         body: Text('lobby.delete.message'.tr()),
@@ -180,7 +182,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
     }
     showFDialog(
       context: context,
-      builder: (dialogCtx, style, animation) => FDialog(
+      builder: (dialogCtx, style, animation) => PConfirmDialog(
         animation: animation,
         title: Text('lobby.captainTransfer.title'.tr()),
         body: Text('lobby.captainTransfer.message'.tr()),
@@ -729,7 +731,7 @@ class _MemberRow extends ConsumerWidget {
     final isCoordinator = member.role == LobbyMemberRole.coordinator;
     showFDialog(
       context: context,
-      builder: (dialogCtx, style, animation) => FDialog(
+      builder: (dialogCtx, style, animation) => PConfirmDialog(
         animation: animation,
         title: Text('${member.username} #${member.tagNumber}'),
         direction: Axis.vertical,
@@ -807,7 +809,7 @@ class _MemberRow extends ConsumerWidget {
   void _confirmKick(BuildContext context, WidgetRef ref) {
     showFDialog(
       context: context,
-      builder: (dialogCtx, style, animation) => FDialog(
+      builder: (dialogCtx, style, animation) => PConfirmDialog(
         animation: animation,
         title: Text(
           'lobby.kick.title'.tr(namedArgs: {'username': member.username}),
@@ -852,9 +854,6 @@ class _MemberRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
-    final initial = member.username.isNotEmpty
-        ? member.username[0].toUpperCase()
-        : '?';
 
     // Captain-only row menu: kick, or grant/revoke coordinator — never for
     // the captain's own row or the viewer's own row.
@@ -866,22 +865,11 @@ class _MemberRow extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _memberColor(member.username),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              initial,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
+          PUserAvatar(
+            userId: member.userId,
+            username: member.username,
+            generatedAvatar: member.generatedAvatar,
+            radius: 18,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1016,16 +1004,4 @@ class _SettingsRow extends StatelessWidget {
       ),
     );
   }
-}
-
-Color _memberColor(String name) {
-  const palette = [
-    Color(0xFF6366F1),
-    Color(0xFF0EA5E9),
-    Color(0xFF10B981),
-    Color(0xFFF59E0B),
-    Color(0xFFEC4899),
-    Color(0xFF8B5CF6),
-  ];
-  return palette[name.hashCode.abs() % palette.length];
 }

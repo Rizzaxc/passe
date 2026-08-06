@@ -26,7 +26,10 @@ import 'onboarding_step_badge.dart';
 /// so it's the one path that never dead-ends a new user the way an empty
 /// Discover result can.
 Future<void> showGetStartedSheet(BuildContext context, WidgetRef ref) async {
-  await showPSheet(context: context, builder: (_) => const _GetStartedContent());
+  await showPSheet(
+    context: context,
+    builder: (_) => const _GetStartedContent(),
+  );
   if (!context.mounted) return;
   await ref.read(onboardingStateProvider.notifier).completeGetStarted();
 }
@@ -55,9 +58,9 @@ class _GetStartedContent extends ConsumerWidget {
     void addFriends() {
       if (!ensureSignedIn(context, ref)) return;
       Navigator.of(context).pop();
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => const FriendsScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (context) => const FriendsScreen()));
     }
 
     void findTeammates() {
@@ -78,74 +81,110 @@ class _GetStartedContent extends ConsumerWidget {
       const HealthRoute().go(context);
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        PSheetTitle(
-          label: 'onboarding.getStarted.title'.tr(),
-          trailing: const OnboardingStepBadge(step: 4, total: 4),
-        ),
-        const SizedBox(height: 4),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text(
-            'onboarding.getStarted.body'.tr(),
-            style: context.theme.typography.body.sm
-                .copyWith(color: colors.mutedForeground),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PSheetTitle(
+            label: 'onboarding.getStarted.title'.tr(),
+            trailing: const OnboardingStepBadge(step: 4, total: 4),
           ),
-        ),
-        const SizedBox(height: 16),
-        _HeroAction(
-          icon: FLucideIcons.shieldPlus,
-          title: 'onboarding.getStarted.createLobby.title'.tr(),
-          subtitle: 'onboarding.getStarted.createLobby.subtitle'.tr(),
-          badge: 'onboarding.getStarted.createLobby.badge'.tr(),
-          onPress: createLobby,
-        ),
-        const SizedBox(height: 12),
-        FTileGroup(
-          children: [
-            FTile(
-              prefix: const Icon(FLucideIcons.userPlus),
-              title: Text('onboarding.getStarted.friends.title'.tr()),
-              subtitle: Text('onboarding.getStarted.friends.subtitle'.tr()),
-              suffix: const Icon(FLucideIcons.chevronRight),
-              onPress: addFriends,
-            ),
-            FTile(
-              prefix: const Icon(FLucideIcons.users),
-              title: Text('onboarding.getStarted.lobby.title'.tr()),
-              subtitle: Text('onboarding.getStarted.lobby.subtitle'.tr()),
-              suffix: const Icon(FLucideIcons.chevronRight),
-              onPress: findTeammates,
-            ),
-            FTile(
-              prefix: const Icon(FLucideIcons.graduationCap),
-              title: Text('onboarding.getStarted.coach.title'.tr()),
-              subtitle: Text('onboarding.getStarted.coach.subtitle'.tr()),
-              suffix: const Icon(FLucideIcons.chevronRight),
-              onPress: findCoach,
-            ),
-            FTile(
-              prefix: const Icon(FLucideIcons.activity),
-              title: Text('onboarding.getStarted.wearable.title'.tr()),
-              subtitle: Text('onboarding.getStarted.wearable.subtitle'.tr()),
-              suffix: Text(
-                'onboarding.getStarted.wearable.optional'.tr(),
-                style: context.theme.typography.body.sm
-                    .copyWith(color: colors.mutedForeground),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              'onboarding.getStarted.body'.tr(),
+              style: context.theme.typography.body.sm.copyWith(
+                color: colors.mutedForeground,
               ),
-              onPress: connectWearable,
             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        FButton(
-          variant: .outline,
-          onPress: () => Navigator.of(context).pop(),
-          child: Text('onboarding.skip'.tr()),
-        ),
-      ],
+          ),
+          const SizedBox(height: 16),
+          _HeroAction(
+            icon: FLucideIcons.shieldPlus,
+            title: 'onboarding.getStarted.createLobby.title'.tr(),
+            subtitle: 'onboarding.getStarted.createLobby.subtitle'.tr(),
+            badge: 'onboarding.getStarted.createLobby.badge'.tr(),
+            onPress: createLobby,
+          ),
+          const SizedBox(height: 12),
+          FTileGroup(
+            children: [
+              FTile(
+                prefix: const Icon(FLucideIcons.userPlus),
+                title: Text(
+                  'onboarding.getStarted.friends.title'.tr(),
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                ),
+                subtitle: Text(
+                  'onboarding.getStarted.friends.subtitle'.tr(),
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                ),
+                suffix: const Icon(FLucideIcons.chevronRight),
+                onPress: addFriends,
+              ),
+              FTile(
+                prefix: const Icon(FLucideIcons.users),
+                title: Text(
+                  'onboarding.getStarted.lobby.title'.tr(),
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                ),
+                subtitle: Text(
+                  'onboarding.getStarted.lobby.subtitle'.tr(),
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                ),
+                suffix: const Icon(FLucideIcons.chevronRight),
+                onPress: findTeammates,
+              ),
+              FTile(
+                prefix: const Icon(FLucideIcons.graduationCap),
+                title: Text(
+                  'onboarding.getStarted.coach.title'.tr(),
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                ),
+                subtitle: Text(
+                  'onboarding.getStarted.coach.subtitle'.tr(),
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                ),
+                suffix: const Icon(FLucideIcons.chevronRight),
+                onPress: findCoach,
+              ),
+              FTile(
+                prefix: const Icon(FLucideIcons.activity),
+                title: Text(
+                  'onboarding.getStarted.wearable.title'.tr(),
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                ),
+                subtitle: Text(
+                  'onboarding.getStarted.wearable.subtitle'.tr(),
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                ),
+                suffix: Text(
+                  'onboarding.getStarted.wearable.optional'.tr(),
+                  style: context.theme.typography.body.sm.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                ),
+                onPress: connectWearable,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          FButton(
+            variant: .outline,
+            onPress: () => Navigator.of(context).pop(),
+            child: Text('onboarding.skip'.tr()),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -206,32 +245,40 @@ class _HeroAction extends StatelessWidget {
                   // title (Vietnamese or English) plus badge overflowed the
                   // available space and silently truncated the title.
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: onPrimary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       badge,
-                      style: context.theme.typography.body.xs
-                          .copyWith(color: onPrimary, fontWeight: FontWeight.w600),
+                      style: context.theme.typography.body.xs.copyWith(
+                        color: onPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     title,
-                    style: context.theme.typography.body.md
-                        .copyWith(color: onPrimary, fontWeight: FontWeight.bold),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    style: context.theme.typography.body.md.copyWith(
+                      color: onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    softWrap: true,
+                    overflow: TextOverflow.visible,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: context.theme.typography.body.sm
-                        .copyWith(color: onPrimary.withValues(alpha: 0.85)),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    style: context.theme.typography.body.sm.copyWith(
+                      color: onPrimary.withValues(alpha: 0.85),
+                    ),
+                    softWrap: true,
+                    overflow: TextOverflow.visible,
                   ),
                 ],
               ),

@@ -10,12 +10,14 @@ class LobbyMemberInfo {
   final String username;
   final String tagNumber;
   final LobbyMemberRole role;
+  final String? generatedAvatar;
 
   const LobbyMemberInfo({
     required this.userId,
     required this.username,
     required this.tagNumber,
     required this.role,
+    this.generatedAvatar,
   });
 }
 
@@ -27,17 +29,19 @@ class LobbyMembersController extends _$LobbyMembersController {
   Future<List<LobbyMemberInfo>> build(String lobbyId) async {
     final response = await supabase
         .from('lobby_member')
-        .select('user_id, role, user!inner(username, tag_number)')
+        .select('user_id, role, user!inner(username, tag_number, details)')
         .eq('lobby_id', lobbyId)
         .timeout(const Duration(seconds: 5));
 
     return (response as List).map((row) {
       final u = row['user'] as Map<String, dynamic>;
+      final details = u['details'] as Map<String, dynamic>?;
       return LobbyMemberInfo(
         userId: row['user_id'] as String,
         username: u['username'] as String,
         tagNumber: u['tag_number'] as String,
         role: LobbyMemberRole.fromValue(row['role'] as String?),
+        generatedAvatar: details?['generatedAvatar'] as String?,
       );
     }).toList();
   }

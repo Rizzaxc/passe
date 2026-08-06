@@ -8,6 +8,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../auth/auth_controller.dart';
 import '../core/model/enum.dart';
 import '../core/model/network.dart';
+import '../core/model/user_avatar.dart';
 import '../core/model/user_details.dart';
 
 part 'profile_controller.freezed.dart';
@@ -308,11 +309,11 @@ class ProfileController extends _$ProfileController {
     final tagNumber = user?.tagNumber ?? '0000';
     var details = user?.details ?? const UserDetails();
 
-    if (details.generatedAvatar == null) {
+    if (details.avatar == null) {
       final seed = username == 'Guest'
           ? '${DateTime.now().millisecondsSinceEpoch}'
           : '${username}_$tagNumber';
-      details = details.copyWith(generatedAvatar: seed);
+      details = details.copyWith(avatar: GeneratedAvatar(seed));
     }
 
     return ProfileState(
@@ -345,7 +346,7 @@ class ProfileController extends _$ProfileController {
     final tagNumber = user?.tagNumber ?? '0000';
     final seed = '${DateTime.now().microsecondsSinceEpoch}_$tagNumber';
     updateDraft(
-      details: state.details.copyWith(generatedAvatar: seed),
+      details: state.details.copyWith(avatar: GeneratedAvatar(seed)),
       clearPickedAvatar: true,
     );
   }
@@ -355,33 +356,19 @@ class ProfileController extends _$ProfileController {
     final tagNumber = user?.tagNumber ?? '0000';
     final seed = '${DateTime.now().microsecondsSinceEpoch}_$tagNumber';
     updateDraft(
-      details: state.details.copyWith(generatedAvatar: seed),
+      details: state.details.copyWith(avatar: GeneratedAvatar(seed)),
       clearPickedAvatar: true,
     );
   }
 
-  Future<void> uploadAvatar() async {
-    final user = ref.read(authControllerProvider).value;
-    if (user == null || user.id == null) return;
-
-    try {
-      final picker = ImagePicker();
-      final picked = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 80,
-      );
-      if (picked == null) return;
-
-      updateDraft(
-        details: state.details.copyWith(generatedAvatar: ''),
-        pickedAvatar: picked,
-      );
-    } catch (e, st) {
-      talker.handle(e, st, 'Failed to pick avatar image');
-      rethrow;
-    }
+  /// Stores an already-picked-and-cropped avatar as the draft pick. Picking
+  /// and cropping happen in the UI layer (`profile_tab/main.dart`) since the
+  /// native crop screen needs a `BuildContext` for theming.
+  void setPickedAvatar(XFile file) {
+    updateDraft(
+      details: state.details.copyWith(avatar: const PhotoAvatar()),
+      pickedAvatar: file,
+    );
   }
 
   void resetDraft() {
@@ -406,12 +393,12 @@ class ProfileController extends _$ProfileController {
 
     try {
       // 1. Handle Avatar storage operations
-      final oldGeneratedAvatar = user.details?.generatedAvatar;
-      final newGeneratedAvatar = state.details.generatedAvatar;
+      final oldAvatar = user.details?.avatar;
+      final newAvatar = state.details.avatar;
 
-      // If we previously had a custom photo (generatedAvatar was '')
-      // and now we have a generated one (not ''), remove the custom photo from bucket
-      if (oldGeneratedAvatar == '' && newGeneratedAvatar != '' && newGeneratedAvatar != null) {
+      // If we previously had a custom photo and now we have a generated
+      // one, remove the custom photo from the bucket.
+      if (oldAvatar is PhotoAvatar && newAvatar is GeneratedAvatar) {
         try {
           final path = '${user.id}.jpg';
           await supabase.storage
@@ -436,14 +423,14 @@ class ProfileController extends _$ProfileController {
               ).timeout(const Duration(seconds: 5));
         } catch (e, st) {
           talker.handle(e, st, 'Failed to upload avatar to storage');
-          // Fall back to a generated avatar so `generatedAvatar` isn't left as
-          // '' (which means "custom photo"), then surface the failure to the
-          // user via AvatarUploadFailedException once the rest of the commit
-          // succeeds below.
+          // Fall back to a generated avatar so `avatar` isn't left as
+          // `PhotoAvatar` with nothing actually uploaded, then surface the
+          // failure to the user via AvatarUploadFailedException once the
+          // rest of the commit succeeds below.
           avatarUploadFailed = true;
           final tagNumber = user.tagNumber;
           final seed = 'fallback_${DateTime.now().millisecondsSinceEpoch}_$tagNumber';
-          updatedDetails = updatedDetails.copyWith(generatedAvatar: seed);
+          updatedDetails = updatedDetails.copyWith(avatar: GeneratedAvatar(seed));
         }
       }
 

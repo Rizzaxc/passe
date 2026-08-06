@@ -628,6 +628,7 @@
         "randomizeAvatar": "Randomize",
         "removeAvatar": "Remove",
         "uploadPhoto": "Upload Photo",
+        "cropAvatar": "Adjust Photo",
         "uploadFailed": "Failed to upload photo",
         "networkMaxReached": "Maximum 2 networks. Remove one first.",
         "paymentInfo": "Payment Info",

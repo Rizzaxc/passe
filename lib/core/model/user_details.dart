@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'enum.dart';
 import 'timeslot.dart';
+import 'user_avatar.dart';
 import 'user_location.dart';
 
 part 'user_details.freezed.dart';
@@ -15,7 +16,12 @@ abstract class UserDetails with _$UserDetails {
     AgeGroup? ageGroup,
     List<Timeslot>? playtime,
     UserLocation? location,
-    String? generatedAvatar,
+    @JsonKey(
+      name: 'generatedAvatar',
+      fromJson: UserAvatar.decode,
+      toJson: UserAvatar.encode,
+    )
+    UserAvatar? avatar,
   }) = _UserDetails;
 
   factory UserDetails.fromJson(Map<String, dynamic> json) =>

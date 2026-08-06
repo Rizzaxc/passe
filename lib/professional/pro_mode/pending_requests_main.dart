@@ -141,7 +141,7 @@ class _RequestCard extends ConsumerWidget {
     final reasonCtrl = TextEditingController();
     final confirmed = await showFDialog<bool>(
       context: context,
-      builder: (dialogCtx, style, animation) => FDialog(
+      builder: (dialogCtx, style, animation) => PConfirmDialog(
         animation: animation,
         title: const Text('Từ chối yêu cầu?'),
         body: FTextField(
@@ -195,7 +195,7 @@ class _RequestCard extends ConsumerWidget {
       proBookingActionControllerProvider(professionalId),
     );
 
-    final card = FCard(
+    final card = PCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 8,

@@ -46,7 +46,7 @@ dependencies:
   connectivity_plus: ^7.0.0
   health: ^13.2.1
   device_info_plus: ^12.1.0
-  location: ^8.0.0
+  location: ^10.0.0
   async: ^2.12.0
   easy_localization: ^3.0.7+1
   flutter_typeahead: ^6.0.0
@@ -59,6 +59,7 @@ dependencies:
   flutter_hooks: ^0.21.3+1
   riverpod_annotation: ^4.0.3
   image_picker: ^1.0.7
+  image_cropper: ^9.1.0
   firebase_core: ^4.11.0
   firebase_messaging: ^16.4.1
   flutter_local_notifications: ^22.0.1
@@ -67,7 +68,7 @@ dependencies:
   freezed_annotation: ^3.1.0
   talker_riverpod_logger: ^5.1.5
   talker_flutter: ^5.1.5
-  forui: ^0.23.0
+  forui: ^0.25.0
   riverpod: ^3.3.2
   hooks: ^1.0.0
   flutter_map: ^8.1.1
@@ -339,3 +340,4 @@ scripts:
   genwatch: dart run build_runner watch --delete-conflicting-outputs
   svg: dart run vector_graphics_compiler --input-dir ./assets/icons --out-dir ./assets/icons
   schema: export $(grep -v '^#' .env | xargs) && PGPASSWORD=$SUPABASE_DB_PASSWORD pg_dump --schema-only -h aws-0-ap-southeast-1.pooler.supabase.com -p 5432 -U postgres.qlezbnjfuabcxlsxxnrw -d postgres -f schema/passe.sql
+  iosfix: sh tool/fix_ios_spm.sh

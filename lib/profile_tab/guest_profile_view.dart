@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../auth/auth_screen.dart';
+import '../ui/main.dart';
 
 class GuestProfileView extends StatelessWidget {
   const GuestProfileView({super.key});
@@ -36,7 +37,7 @@ class GuestProfileView extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
-          FCard(
+          PCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

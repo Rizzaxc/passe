@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../ui/sheet.dart';
+import '../../ui/user_avatar.dart';
 import 'join_requests_controller.dart';
 import 'members/controller.dart';
 
@@ -107,18 +108,6 @@ class _RequestRow extends ConsumerStatefulWidget {
 class _RequestRowState extends ConsumerState<_RequestRow> {
   bool _loading = false;
 
-  Color _avatarColor(String name) {
-    const palette = [
-      Color(0xFF6366F1),
-      Color(0xFF0EA5E9),
-      Color(0xFF10B981),
-      Color(0xFFF59E0B),
-      Color(0xFFEC4899),
-      Color(0xFF8B5CF6),
-    ];
-    return palette[name.hashCode.abs() % palette.length];
-  }
-
   Future<void> _act(Future<void> Function() action) async {
     setState(() => _loading = true);
     try {
@@ -142,28 +131,16 @@ class _RequestRowState extends ConsumerState<_RequestRow> {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final r = widget.request;
-    final initial = r.username.isNotEmpty ? r.username[0].toUpperCase() : '?';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _avatarColor(r.username),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              initial,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
+          PUserAvatar(
+            userId: r.initiatorUserId,
+            username: r.username,
+            generatedAvatar: r.generatedAvatar,
+            radius: 18,
           ),
           const SizedBox(width: 10),
           Expanded(

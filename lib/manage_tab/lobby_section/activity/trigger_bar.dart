@@ -5,9 +5,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../auth/auth_controller.dart';
+import '../../../../core/model/user_avatar.dart';
 import '../../../../professional/pending_activity_booking_state.dart';
 import '../../../../ui/sheet.dart';
 import '../../../../ui/theme.dart';
+import '../../../../ui/user_avatar.dart';
 import '../../../feed_tab/compose_post_sheet.dart';
 import '../../../router.dart';
 import '../invite_member_sheet.dart';
@@ -158,8 +160,7 @@ class ChatTriggerBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
-    final username = ref.watch(authControllerProvider).value?.username ?? '';
-    final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
+    final me = ref.watch(authControllerProvider).value;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
@@ -169,23 +170,13 @@ class ChatTriggerBar extends ConsumerWidget {
       child: Row(
         children: [
           // User avatar
-          Container(
-            width: 30,
-            height: 30,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFF6366F1),
+          if (me?.id != null)
+            PUserAvatar(
+              userId: me!.id!,
+              username: me.username,
+              generatedAvatar: UserAvatar.encode(me.details?.avatar),
+              radius: 15,
             ),
-            alignment: Alignment.center,
-            child: Text(
-              initial,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ),
           const SizedBox(width: 8),
           // Field-style trigger (tappable, opens overlay)
           Expanded(

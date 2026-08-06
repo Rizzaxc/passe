@@ -234,7 +234,7 @@ final class ActivityAttendeesProvider
   }
 }
 
-String _$activityAttendeesHash() => r'733b685342950a387e7b55c29c5ab7a32becad74';
+String _$activityAttendeesHash() => r'ca2784ce25173b618a7d0677709bddec5397a06a';
 
 /// Small sample of who's going / maybe, for the hero's avatar strip.
 /// `activity_confirmation_status` only returns aggregate counts, so this

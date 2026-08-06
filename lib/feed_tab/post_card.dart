@@ -27,7 +27,7 @@ class PostCard extends ConsumerWidget {
     final colors = context.theme.colors;
     final isMine = ref.watch(currentUserIdProvider) == post.authorId;
 
-    return FCard(
+    return PCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

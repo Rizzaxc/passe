@@ -5,15 +5,17 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/model/enum.dart';
+import '../core/model/user_avatar.dart';
 import '../core/model/user_details.dart';
 import '../core/sport_selector.dart';
 import '../core/state/pro_mode_state.dart';
 import '../core/state/selected_sport_state.dart';
-import '../notification/notification_icon_button.dart';
 import '../professional/controller.dart';
 import '../professional/pro_mode/service_editor_main.dart';
 import '../social/friends_screen.dart';
@@ -169,19 +171,74 @@ class ProfileTab extends ConsumerWidget {
     );
   }
 
+  /// Picks a gallery photo, then hands it to the native circular crop/pan
+  /// screen (uCrop on Android, TOCropViewController on iOS) before storing
+  /// it as the draft pick. Cropping needs a `BuildContext` for toolbar
+  /// theming, so it lives here rather than in `ProfileController`.
+  Future<void> _pickAndCropAvatar(BuildContext context, WidgetRef ref) async {
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1600,
+        maxHeight: 1600,
+      );
+      if (picked == null) return;
+
+      final cropped = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        maxWidth: 512,
+        maxHeight: 512,
+        compressQuality: 85,
+        compressFormat: ImageCompressFormat.jpg,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'profile.cropAvatar'.tr(),
+            toolbarColor: pbBlue,
+            toolbarWidgetColor: Colors.white,
+            activeControlsWidgetColor: pbBlue,
+            cropStyle: CropStyle.circle,
+            lockAspectRatio: true,
+            hideBottomControls: true,
+          ),
+          IOSUiSettings(
+            title: 'profile.cropAvatar'.tr(),
+            cropStyle: CropStyle.circle,
+            aspectRatioLockEnabled: true,
+            resetAspectRatioEnabled: false,
+            aspectRatioPickerButtonHidden: true,
+          ),
+        ],
+      );
+      if (cropped == null) return;
+
+      ref
+          .read(profileControllerProvider.notifier)
+          .setPickedAvatar(XFile(cropped.path));
+    } catch (e) {
+      if (!context.mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: Text('profile.uploadFailed'.tr()),
+        alignment: .bottomCenter,
+      );
+    }
+  }
+
   Widget _buildAvatar(
     BuildContext context,
     WidgetRef ref,
     ProfileState profileState,
   ) {
-    final generatedAvatar = profileState.details.generatedAvatar;
+    final avatar = profileState.details.avatar;
     final pickedAvatar = profileState.pickedAvatar;
 
     ImageProvider? imageProvider;
     if (pickedAvatar != null) {
       imageProvider = FileImage(File(pickedAvatar.path));
-    } else if (generatedAvatar == '') {
-      // If generatedAvatar is empty string, it means there's a custom photo
+    } else if (avatar is PhotoAvatar) {
       final userId = ref.read(authControllerProvider).value?.id;
       if (userId != null) {
         final avatarUrl = Supabase.instance.client.storage
@@ -203,7 +260,11 @@ class ProfileTab extends ConsumerWidget {
             backgroundImage: imageProvider,
             child: imageProvider != null
                 ? null
-                : AvatarPlus(generatedAvatar ?? profileState.username),
+                : AvatarPlus(
+                    avatar is GeneratedAvatar
+                        ? avatar.seed
+                        : profileState.username,
+                  ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -227,22 +288,7 @@ class ProfileTab extends ConsumerWidget {
                 ),
               const SizedBox(width: 12),
               FButton.icon(
-                onPress: () async {
-                  try {
-                    await ref
-                        .read(profileControllerProvider.notifier)
-                        .uploadAvatar();
-                  } catch (e) {
-                    if (!context.mounted) return;
-                    showFToast(
-                      context: context,
-                      icon: const Icon(FLucideIcons.circleX),
-                      variant: .destructive,
-                      title: Text('profile.uploadFailed'.tr()),
-                      alignment: .bottomCenter,
-                    );
-                  }
-                },
+                onPress: () => _pickAndCropAvatar(context, ref),
                 variant: .ghost,
                 child: const Icon(FLucideIcons.camera),
               ),

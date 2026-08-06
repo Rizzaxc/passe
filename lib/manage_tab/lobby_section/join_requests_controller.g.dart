@@ -52,7 +52,7 @@ final class JoinRequestsControllerProvider
 }
 
 String _$joinRequestsControllerHash() =>
-    r'f581927fdd59b860ed6104197125ea097a543ffa';
+    r'4de0d13ff31cbd012565be37b40632d66f3f19a9';
 
 final class JoinRequestsControllerFamily extends $Family
     with
