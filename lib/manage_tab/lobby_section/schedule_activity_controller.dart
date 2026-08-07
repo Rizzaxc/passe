@@ -27,6 +27,13 @@ class ScheduleActivityController extends _$ScheduleActivityController {
   @override
   bool build(String lobbyId) => false; // in-flight flag
 
+  /// Hard ceiling on how many current/future activities one lobby can carry
+  /// at once — keeps the Planner list from growing unbounded. Checked again
+  /// right before the INSERT (not just at the "+" button) so two
+  /// captains/coordinators racing to schedule around the same moment can't
+  /// both slip past it.
+  static const maxConcurrentActivities = 7;
+
   Future<void> schedule({
     required DateTime start,
     required DateTime end,
@@ -51,6 +58,15 @@ class ScheduleActivityController extends _$ScheduleActivityController {
 
       final lobbyInfo = ref.read(lobbyDetailControllerProvider(lobbyId)).value;
       if (lobbyInfo == null) return;
+
+      final currentCount = (await ref.read(
+        lobbyUpcomingActivitiesControllerProvider(lobbyId).future,
+      )).length;
+      if (currentCount >= maxConcurrentActivities) {
+        throw StateError(
+          'Lobby đã đạt giới hạn $maxConcurrentActivities hoạt động sắp tới',
+        );
+      }
 
       final params = <String, dynamic>{
         'user_id': user.id,
@@ -112,7 +128,7 @@ class ScheduleActivityController extends _$ScheduleActivityController {
           .timeout(const Duration(seconds: 5));
 
       ref.invalidate(lobbyFeedControllerProvider(lobbyId));
-      ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
+      ref.invalidate(lobbyUpcomingActivitiesControllerProvider(lobbyId));
     } finally {
       state = false;
       keepAliveLink.close();
@@ -167,7 +183,7 @@ class ScheduleActivityController extends _$ScheduleActivityController {
             'author_id': user.id,
             'kind': 'update',
             'payload': {
-              'title': 'Đổi giờ buổi chơi',
+              'title': 'Thay đổi buổi chơi',
               'kind': 'rescheduled',
               'tone': 'crimson',
               'fields': [
@@ -179,7 +195,7 @@ class ScheduleActivityController extends _$ScheduleActivityController {
           .timeout(const Duration(seconds: 5));
 
       ref.invalidate(lobbyFeedControllerProvider(lobbyId));
-      ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
+      ref.invalidate(lobbyUpcomingActivitiesControllerProvider(lobbyId));
     } finally {
       state = false;
       keepAliveLink.close();
@@ -226,7 +242,7 @@ class ScheduleActivityController extends _$ScheduleActivityController {
           .timeout(const Duration(seconds: 5));
 
       ref.invalidate(lobbyFeedControllerProvider(lobbyId));
-      ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
+      ref.invalidate(lobbyUpcomingActivitiesControllerProvider(lobbyId));
     } finally {
       state = false;
       keepAliveLink.close();

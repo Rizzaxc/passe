@@ -156,8 +156,8 @@ class UpcomingActivity {
   }
 }
 
-/// Soonest upcoming activity for a lobby, accounting for weekly
-/// recurrence.
+/// Every current/future activity for a lobby, accounting for weekly
+/// recurrence, sorted soonest-first.
 ///
 /// Strategy:
 ///   1. Query for any candidate — either `start_time > now` (one-off) or
@@ -165,14 +165,18 @@ class UpcomingActivity {
 ///      first occurrence may already be in the past).
 ///   2. Compute the next-start instant for each candidate (recurring
 ///      ones get advanced forward to the next matching weekday at the
-///      same time-of-day).
-///   3. Return the row with the earliest computed next-start.
+///      same time-of-day), dropping any whose next occurrence can't be
+///      resolved (a one-off already in the past).
+///   3. Sort by that next-start instant, soonest first — a lobby can
+///      legitimately have several activities live at once (an organic
+///      session and a challenge match, two different weekly slots, …).
 @riverpod
-class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController {
+class LobbyUpcomingActivitiesController
+    extends _$LobbyUpcomingActivitiesController {
   final supabase = Supabase.instance.client;
 
   @override
-  Future<UpcomingActivity?> build(String lobbyId) async {
+  Future<List<UpcomingActivity>> build(String lobbyId) async {
     final nowUtc = DateTime.now().toUtc();
 
     final response = await supabase
@@ -197,9 +201,9 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
         .timeout(const Duration(seconds: 5));
 
     final rows = (response as List).cast<Map<String, dynamic>>();
-    if (rows.isEmpty) return null;
+    if (rows.isEmpty) return const [];
 
-    UpcomingActivity? best;
+    final list = <UpcomingActivity>[];
     for (final row in rows) {
       final activity = Activity.fromJson(_stripExtras(row));
       final recDow = (row['recurrence_day_of_week'] as num?)?.toInt();
@@ -209,32 +213,31 @@ class LobbyUpcomingActivityController extends _$LobbyUpcomingActivityController 
         now: DateTime.now(),
       );
       if (next == null) continue;
-      if (best == null || next.isBefore(best.nextStart)) {
-        final location = row['location'] as Map<String, dynamic>?;
-        best = UpcomingActivity(
-          activity: activity,
-          nextStart: next,
-          recurrenceDayOfWeek: recDow,
-          locationId: row['location_id'] as String?,
-          locationName: location?['name'] as String?,
-          locationDistrict: location?['district'] as String?,
-          costType: row['cost_type'] as String?,
-          costAmount: row['cost_amount'] as num?,
-          confirmationThreshold:
-              (row['confirmation_threshold'] as num?)?.toInt(),
-          confirmationDeadline: row['confirmation_deadline'] != null
-              ? DateTime.parse(row['confirmation_deadline'] as String)
-              : null,
-          coach: AttachedProfessional.fromEmbed(row['coach']),
-          referee: AttachedProfessional.fromEmbed(row['referee']),
-          challenge: ChallengeContext.fromEmbed(row['challenge'], lobbyId),
-          managerConfirmedAt: row['manager_confirmed_at'] != null
-              ? DateTime.parse(row['manager_confirmed_at'] as String).toLocal()
-              : null,
-        );
-      }
+      final location = row['location'] as Map<String, dynamic>?;
+      list.add(UpcomingActivity(
+        activity: activity,
+        nextStart: next,
+        recurrenceDayOfWeek: recDow,
+        locationId: row['location_id'] as String?,
+        locationName: location?['name'] as String?,
+        locationDistrict: location?['district'] as String?,
+        costType: row['cost_type'] as String?,
+        costAmount: row['cost_amount'] as num?,
+        confirmationThreshold:
+            (row['confirmation_threshold'] as num?)?.toInt(),
+        confirmationDeadline: row['confirmation_deadline'] != null
+            ? DateTime.parse(row['confirmation_deadline'] as String)
+            : null,
+        coach: AttachedProfessional.fromEmbed(row['coach']),
+        referee: AttachedProfessional.fromEmbed(row['referee']),
+        challenge: ChallengeContext.fromEmbed(row['challenge'], lobbyId),
+        managerConfirmedAt: row['manager_confirmed_at'] != null
+            ? DateTime.parse(row['manager_confirmed_at'] as String).toLocal()
+            : null,
+      ));
     }
-    return best;
+    list.sort((a, b) => a.nextStart.compareTo(b.nextStart));
+    return list;
   }
 
   /// Strip columns the freezed `Activity.fromJson` doesn't know about

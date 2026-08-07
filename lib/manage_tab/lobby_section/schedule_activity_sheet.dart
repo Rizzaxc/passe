@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../ui/dialog.dart';
 import '../../ui/sheet.dart';
 import 'activity/upcoming_controller.dart';
 import 'feed/home_ground_selector.dart';
@@ -30,9 +31,13 @@ void showScheduleActivitySheet(
 /// further out should go through a recurrence template instead.
 const _maxScheduleHorizonDays = 7;
 
-/// Default "lock confirmations N days before start" used when the user
-/// turns the deadline on for a session that's far enough out.
-const _defaultDeadlineLeadDays = 2;
+/// Bounds (in hours before kickoff) on how close to start time the
+/// organizer can require confirmations to lock in, chosen via a slider.
+const _minDeadlineLeadHours = 2;
+const _maxDeadlineLeadHours = 72;
+
+/// Default lead time used when the user first turns the deadline on.
+const _defaultDeadlineLeadHours = 48.0;
 
 class _ScheduleActivitySheet extends ConsumerStatefulWidget {
   final String lobbyId;
@@ -63,6 +68,11 @@ class _ScheduleActivitySheetState
 
   int _confirmationThreshold = 4;
 
+  // How many hours before kickoff confirmations lock in, chosen via the
+  // slider. Clamped to [_minDeadlineLeadHours, _maxAllowedDeadlineLeadHours]
+  // on every date/time change.
+  double _deadlineLeadHours = _defaultDeadlineLeadHours;
+
   // Null = the user has manually turned the deadline off, OR the session
   // is too soon for one. Otherwise this is the chosen deadline.
   DateTime? _confirmationDeadline;
@@ -86,11 +96,8 @@ class _ScheduleActivitySheetState
     _recomputeDeadline();
   }
 
-  /// Prefill every field from the activity being edited. The deadline
-  /// on/off toggle only supports the fixed 2-day-before-start lead (same
-  /// as a fresh schedule) rather than an arbitrary custom date, so an
-  /// existing deadline that isn't exactly `start - 2 days` gets
-  /// normalised to that default on save — a known simplification.
+  /// Prefill every field from the activity being edited, including the
+  /// chosen lead time (derived from the stored deadline vs. start time).
   void _seedFromExisting(UpcomingActivity existing) {
     final start = existing.nextStart.toLocal();
     final end = existing.nextEnd?.toLocal();
@@ -110,6 +117,15 @@ class _ScheduleActivitySheetState
     }
     _confirmationThreshold = existing.confirmationThreshold ?? 4;
     _deadlineManuallyOff = existing.confirmationDeadline == null;
+    final existingDeadline = existing.confirmationDeadline;
+    if (existingDeadline != null) {
+      final leadHours =
+          start.difference(existingDeadline.toLocal()).inMinutes / 60.0;
+      _deadlineLeadHours = leadHours.clamp(
+        _minDeadlineLeadHours.toDouble(),
+        _maxDeadlineLeadHours.toDouble(),
+      );
+    }
   }
 
   void _seedDefaultsFromLobby() {
@@ -190,13 +206,26 @@ class _ScheduleActivitySheetState
         _start.minute,
       );
 
-  /// The session is too soon for a confirmation cutoff if start is
-  /// less than the default lead time (2 days) away — the deadline UI
-  /// flips off and locks.
+  /// The session is too soon for a confirmation cutoff if start is less
+  /// than the minimum lead time (2h) away — the deadline UI flips off and
+  /// locks, since no valid lead choice would leave the deadline in the
+  /// future.
   bool get _tooSoonForDeadline {
     final now = DateTime.now();
-    return _startInstant.isBefore(
-        now.add(const Duration(days: _defaultDeadlineLeadDays)));
+    return _startInstant
+        .isBefore(now.add(const Duration(hours: _minDeadlineLeadHours)));
+  }
+
+  /// The largest lead time the slider can offer right now: the 72h cap,
+  /// further capped by how far away the session actually is so the
+  /// resulting deadline can never land in the past.
+  double get _maxAllowedDeadlineLeadHours {
+    final hoursUntilStart =
+        _startInstant.difference(DateTime.now()).inMinutes / 60.0;
+    return hoursUntilStart.clamp(
+      _minDeadlineLeadHours.toDouble(),
+      _maxDeadlineLeadHours.toDouble(),
+    );
   }
 
   void _recomputeDeadline() {
@@ -204,17 +233,70 @@ class _ScheduleActivitySheetState
       _confirmationDeadline = null;
       return;
     }
+    _deadlineLeadHours = _deadlineLeadHours.clamp(
+      _minDeadlineLeadHours.toDouble(),
+      _maxAllowedDeadlineLeadHours,
+    );
     if (_deadlineManuallyOff) {
       _confirmationDeadline = null;
       return;
     }
-    // Default: 2 days before start, anchored at start_time so it lines
-    // up nicely with the rest of the schedule.
-    _confirmationDeadline =
-        _startInstant.subtract(const Duration(days: _defaultDeadlineLeadDays));
+    _confirmationDeadline = _startInstant
+        .subtract(Duration(minutes: (_deadlineLeadHours * 60).round()));
   }
 
   // ── Submit ────────────────────────────────────────────────────
+
+  /// Best-effort, non-blocking collision check against the lobby's other
+  /// current/future activities — same time window *and* same venue. A
+  /// lobby can legitimately run several activities at once (see
+  /// upcoming_controller.dart), so this only warns; it never blocks.
+  UpcomingActivity? _findConflict(DateTime start, DateTime end) {
+    final others = ref
+            .read(lobbyUpcomingActivitiesControllerProvider(widget.lobbyId))
+            .value ??
+        const <UpcomingActivity>[];
+    final myId = widget.existing?.activity.id;
+    for (final other in others) {
+      if (other.activity.id == myId) continue; // don't compare against self
+      final oStart = other.nextStart;
+      final oEnd = other.nextEnd ?? oStart;
+      final overlaps = start.isBefore(oEnd) && oStart.isBefore(end);
+      final sameLocation = _locationId != null && _locationId == other.locationId;
+      if (overlaps && sameLocation) return other;
+    }
+    return null;
+  }
+
+  Future<bool> _showOverlapDialog(UpcomingActivity conflict) async {
+    final start = conflict.nextStart.toLocal();
+    final proceed = await showFDialog<bool>(
+      context: context,
+      builder: (dialogCtx, style, animation) => PConfirmDialog(
+        animation: animation,
+        title: const Text('Trùng lịch?'),
+        body: Text(
+          'Lobby đã có một buổi khác vào ${_fmtDate(DateTime(start.year, start.month, start.day))} '
+          'lúc ${_fmtTime(TimeOfDay(hour: start.hour, minute: start.minute))} '
+          'tại cùng địa điểm. Bạn vẫn muốn lên lịch?',
+        ),
+        direction: Axis.horizontal,
+        actions: [
+          FButton(
+            variant: .outline,
+            onPress: () => Navigator.of(dialogCtx).pop(false),
+            child: const Text('Sửa Lại'),
+          ),
+          FButton(
+            variant: .destructive,
+            onPress: () => Navigator.of(dialogCtx).pop(true),
+            child: const Text('Vẫn Lên Lịch'),
+          ),
+        ],
+      ),
+    );
+    return proceed ?? false;
+  }
 
   Future<void> _submit() async {
     final start = _startInstant;
@@ -225,6 +307,24 @@ class _ScheduleActivitySheetState
       _end.hour,
       _end.minute,
     );
+
+    // A one-off activity scheduled in the past would insert successfully
+    // (the DB has no such constraint) but then never surface anywhere: the
+    // Planner list only shows rows whose next occurrence is still ahead of
+    // now, and History only covers *recorded* matches, not activities. A
+    // recurring template is exempt — its stored start_time is just an
+    // anchor date/time-of-day, and its next real occurrence is always
+    // resolved forward from now regardless of that anchor.
+    if (!_recurring && start.isBefore(DateTime.now())) {
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleAlert),
+        variant: .destructive,
+        title: const Text('Không thể lên lịch vào thời điểm đã qua'),
+        alignment: .bottomCenter,
+      );
+      return;
+    }
 
     final amountText = _amountController.text.trim();
     final amount = _costEnabled ? num.tryParse(amountText) : null;
@@ -239,6 +339,12 @@ class _ScheduleActivitySheetState
       return;
     }
 
+    final conflict = _findConflict(start, end);
+    if (conflict != null) {
+      final proceed = await _showOverlapDialog(conflict);
+      if (!mounted || !proceed) return;
+    }
+
     // Day-of-week ISO ordering: Mon=0 … Sun=6. DateTime.weekday is
     // 1..7 (Mon..Sun) so subtract one.
     final dayOfWeek = _recurring ? _date.weekday - 1 : null;
@@ -246,29 +352,41 @@ class _ScheduleActivitySheetState
     final controller =
         ref.read(scheduleActivityControllerProvider(widget.lobbyId).notifier);
 
-    if (existing != null) {
-      await controller.reschedule(
-        activityId: existing.activity.id!,
-        start: start,
-        end: end,
-        locationId: _locationId,
-        costType: _costEnabled ? _costType : null,
-        costAmount: amount,
-        confirmationThreshold: _confirmationThreshold,
-        confirmationDeadline: _confirmationDeadline,
-        recurrenceDayOfWeek: dayOfWeek,
+    try {
+      if (existing != null) {
+        await controller.reschedule(
+          activityId: existing.activity.id!,
+          start: start,
+          end: end,
+          locationId: _locationId,
+          costType: _costEnabled ? _costType : null,
+          costAmount: amount,
+          confirmationThreshold: _confirmationThreshold,
+          confirmationDeadline: _confirmationDeadline,
+          recurrenceDayOfWeek: dayOfWeek,
+        );
+      } else {
+        await controller.schedule(
+          start: start,
+          end: end,
+          locationId: _locationId,
+          costType: _costEnabled ? _costType : null,
+          costAmount: amount,
+          confirmationThreshold: _confirmationThreshold,
+          confirmationDeadline: _confirmationDeadline,
+          recurrenceDayOfWeek: dayOfWeek,
+        );
+      }
+    } on StateError catch (e) {
+      if (!mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleAlert),
+        variant: .destructive,
+        title: Text(e.message),
+        alignment: .bottomCenter,
       );
-    } else {
-      await controller.schedule(
-        start: start,
-        end: end,
-        locationId: _locationId,
-        costType: _costEnabled ? _costType : null,
-        costAmount: amount,
-        confirmationThreshold: _confirmationThreshold,
-        confirmationDeadline: _confirmationDeadline,
-        recurrenceDayOfWeek: dayOfWeek,
-      );
+      return;
     }
 
     if (!mounted) return;
@@ -417,6 +535,15 @@ class _ScheduleActivitySheetState
                   _recomputeDeadline();
                 }),
               ),
+              if (!_tooSoonForDeadline && !_deadlineManuallyOff)
+                _DeadlineLeadSlider(
+                  hours: _deadlineLeadHours,
+                  maxHours: _maxAllowedDeadlineLeadHours,
+                  onChanged: (h) => setState(() {
+                    _deadlineLeadHours = h;
+                    _recomputeDeadline();
+                  }),
+                ),
             ],
           ),
 
@@ -831,7 +958,7 @@ class _DeadlineRow extends StatelessWidget {
     final colors = context.theme.colors;
     final on = !tooSoon && !manuallyOff;
     final sub = tooSoon
-        ? 'Buổi quá gần (<2 ngày) — tắt sẵn'
+        ? 'Buổi quá gần (<2 giờ) — tắt sẵn'
         : on
             ? 'Hạn: ${_fmtAbs(deadline!)}'
             : 'Không có hạn chót';
@@ -884,5 +1011,84 @@ class _DeadlineRow extends StatelessWidget {
     final hh = d.hour.toString().padLeft(2, '0');
     final mm = d.minute.toString().padLeft(2, '0');
     return '$wd, ${d.day}/${d.month} $hh:$mm';
+  }
+}
+
+/// Lets the organizer pick how many hours before kickoff confirmations lock
+/// in, between [_minDeadlineLeadHours] and whatever's currently reachable
+/// (capped at [_maxDeadlineLeadHours], and further capped by how far away
+/// the session actually is via [maxHours]).
+class _DeadlineLeadSlider extends StatelessWidget {
+  final double hours;
+  final double maxHours;
+  final ValueChanged<double> onChanged;
+
+  const _DeadlineLeadSlider({
+    required this.hours,
+    required this.maxHours,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final range = maxHours - _minDeadlineLeadHours;
+    final fraction =
+        range <= 0 ? 0.0 : ((hours - _minDeadlineLeadHours) / range).clamp(0.0, 1.0);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Khóa xác nhận trước',
+                style: context.theme.typography.body.sm
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+              const Spacer(),
+              Text(
+                _fmtLead(hours),
+                style: context.theme.typography.body.sm.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          FSlider(
+            enabled: range > 0,
+            control: FSliderControl.liftedContinuous(
+              value: FSliderValue(max: fraction),
+              onChange: (v) {
+                if (range <= 0) return;
+                final picked =
+                    (_minDeadlineLeadHours + v.max * range).roundToDouble();
+                onChanged(picked);
+              },
+            ),
+            tooltipBuilder: (_, v) =>
+                Text(_fmtLead(_minDeadlineLeadHours + v * range)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _fmtLead(double h) {
+    final rounded = h.round();
+    if (rounded % 24 == 0) {
+      final days = rounded ~/ 24;
+      return '$days ngày';
+    }
+    return '$rounded giờ';
   }
 }

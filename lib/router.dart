@@ -580,11 +580,32 @@ class LobbyDetailRoute extends GoRouteData with $LobbyDetailRoute {
   // ignore: library_private_types_in_public_api
   final String? $extra;
 
-  const LobbyDetailRoute({required this.id, this.$extra});
+  /// Which tab to land on (0 = Feed, 1 = Planner, 2 = History) — set from
+  /// notification routing. Defaults to Feed.
+  final int? tab;
+
+  /// Set from a notification tap that references a specific activity or
+  /// challenge — the Planner tab scrolls to and highlights that card.
+  final String? highlightActivityId;
+  final String? highlightChallengeId;
+
+  const LobbyDetailRoute({
+    required this.id,
+    this.$extra,
+    this.tab,
+    this.highlightActivityId,
+    this.highlightChallengeId,
+  });
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      LobbyDetailPage(lobbyId: id, lobbyName: $extra);
+      LobbyDetailPage.withInitialTab(
+        id,
+        tab ?? 0,
+        lobbyName: $extra,
+        highlightActivityId: highlightActivityId,
+        highlightChallengeId: highlightChallengeId,
+      );
 }
 
 @immutable

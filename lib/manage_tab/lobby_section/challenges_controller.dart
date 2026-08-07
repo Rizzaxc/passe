@@ -123,7 +123,7 @@ class ConfirmChallengeActivityController
       await Supabase.instance.client.rpc('confirm_challenge_activity', params: {
         'p_activity_id': activityId,
       }).timeout(const Duration(seconds: 5));
-      ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
+      ref.invalidate(lobbyUpcomingActivitiesControllerProvider(lobbyId));
       ref.invalidate(lobbyChallengesControllerProvider(lobbyId));
     } finally {
       state = false;

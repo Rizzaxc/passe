@@ -834,14 +834,25 @@ mixin $ManageLobbyRoute on GoRouteData {
 mixin $LobbyDetailRoute on GoRouteData {
   static LobbyDetailRoute _fromState(GoRouterState state) => LobbyDetailRoute(
     id: state.pathParameters['id']!,
+    tab: _$convertMapValue('tab', state.uri.queryParameters, int.tryParse),
+    highlightActivityId: state.uri.queryParameters['highlight-activity-id'],
+    highlightChallengeId: state.uri.queryParameters['highlight-challenge-id'],
     $extra: state.extra as String?,
   );
 
   LobbyDetailRoute get _self => this as LobbyDetailRoute;
 
   @override
-  String get location =>
-      GoRouteData.$location('/manage/lobby/${Uri.encodeComponent(_self.id)}');
+  String get location => GoRouteData.$location(
+    '/manage/lobby/${Uri.encodeComponent(_self.id)}',
+    queryParams: {
+      if (_self.tab != null) 'tab': _self.tab!.toString(),
+      if (_self.highlightActivityId != null)
+        'highlight-activity-id': _self.highlightActivityId,
+      if (_self.highlightChallengeId != null)
+        'highlight-challenge-id': _self.highlightChallengeId,
+    },
+  );
 
   @override
   void go(BuildContext context) => context.go(location, extra: _self.$extra);

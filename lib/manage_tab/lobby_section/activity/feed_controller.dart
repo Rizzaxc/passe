@@ -86,40 +86,64 @@ class LobbyFeedController extends _$LobbyFeedController {
   /// see `PersonalActionKind`). RLS allows any lobby member to insert
   /// `kind = 'personal'` items, unlike `update`/`poll` which are
   /// captain-only.
+  ///
+  /// Callers include the Planner tab's activity card (`_postLate`) and its
+  /// empty state, neither of which watches this provider — the Feed tab is
+  /// a separate subtab and may not be mounted. Without `ref.keepAlive()`
+  /// this autoDispose provider can get disposed the moment this method
+  /// yields (right after the insert, at `ref.invalidateSelf()`), so the
+  /// `await future` below throws on a disposed Ref even though the insert
+  /// already succeeded — surfacing as a spurious error toast over a feed
+  /// item that *did* get posted (same failure mode `ScheduleActivityController.cancel`
+  /// hit for the same reason).
   Future<void> postPersonalAction(String actionKind) async {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
-    await supabase.from('lobby_feed_item').insert({
-      'lobby_id': lobbyId,
-      'author_id': userId,
-      'kind': 'personal',
-      'payload': {'action_kind': actionKind},
-    }).timeout(const Duration(seconds: 5));
+    final keepAliveLink = ref.keepAlive();
+    try {
+      await supabase.from('lobby_feed_item').insert({
+        'lobby_id': lobbyId,
+        'author_id': userId,
+        'kind': 'personal',
+        'payload': {'action_kind': actionKind},
+      }).timeout(const Duration(seconds: 5));
 
-    ref.invalidateSelf();
-    await future;
+      ref.invalidateSelf();
+      await future;
+    } finally {
+      keepAliveLink.close();
+    }
   }
 
   /// Start an ancillary payment request ("đòi tiền trà đá") against tagged
   /// lobby mates — any confirmed (going) attendee of [activityId] can call
   /// this, not just the captain/coordinator. Splits [amount] equally
   /// (rounded up to the nearest 1000đ, server-side) across [taggedUserIds].
+  ///
+  /// Called from `payment_request_sheet.dart`, which doesn't watch this
+  /// provider — same bare-`ref.read()`-with-no-watcher hazard as
+  /// `postPersonalAction` above, so it needs the same `ref.keepAlive()`.
   Future<void> createAncillaryPaymentRequest({
     required String activityId,
     required num amount,
     String? note,
     required List<String> taggedUserIds,
   }) async {
-    await supabase.rpc('create_ancillary_payment_request', params: {
-      'p_activity_id': activityId,
-      'p_total_amount': amount,
-      'p_note': note,
-      'p_tagged_users': taggedUserIds,
-    }).timeout(const Duration(seconds: 5));
+    final keepAliveLink = ref.keepAlive();
+    try {
+      await supabase.rpc('create_ancillary_payment_request', params: {
+        'p_activity_id': activityId,
+        'p_total_amount': amount,
+        'p_note': note,
+        'p_tagged_users': taggedUserIds,
+      }).timeout(const Duration(seconds: 5));
 
-    ref.invalidateSelf();
-    await future;
+      ref.invalidateSelf();
+      await future;
+    } finally {
+      keepAliveLink.close();
+    }
   }
 
   /// Self-report "I've paid" on a payment-request feed item

@@ -2,21 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../auth/auth_controller.dart';
 import '../../../../core/model/user_avatar.dart';
-import '../../../../professional/pending_activity_booking_state.dart';
 import '../../../../ui/sheet.dart';
 import '../../../../ui/theme.dart';
 import '../../../../ui/user_avatar.dart';
 import '../../../feed_tab/compose_post_sheet.dart';
-import '../../../router.dart';
 import '../invite_member_sheet.dart';
-import '../schedule_activity_sheet.dart';
-import 'feed_controller.dart';
 import 'poll_sheet.dart';
-import 'upcoming_controller.dart';
 
 const _crimson = Color(0xFFDC143C);
 const _crimsonTint = Color(0xFFFFEBED);
@@ -32,98 +26,25 @@ class _ActionDef {
   final IconData icon;
   final String tone;
   final String label;
-  final String? intro;
 
   const _ActionDef({
     required this.id,
     required this.icon,
     required this.tone,
     required this.label,
-    this.intro,
   });
 }
 
-// Personal action ids are the exact `PersonalActionKind.db` values from
-// feed.dart, posted as-is in the `lobby_feed_item.payload.action_kind`
-// (RLS: "Members can post personal or photo items" — any lobby member).
-const _personalActions = [
-  _ActionDef(
-    id: 'come_early',
-    icon: Icons.local_fire_department_outlined,
-    tone: 'amber',
-    label: 'Đến sớm khởi động',
-    intro: 'Báo giờ đến sớm để làm nóng cùng nhau',
-  ),
-  _ActionDef(
-    id: 'late',
-    icon: Icons.access_time_rounded,
-    tone: 'crimson',
-    label: 'Đến muộn',
-    intro: 'Thông báo bạn sẽ đến trễ bao lâu',
-  ),
-  _ActionDef(
-    id: 'bring_gear',
-    icon: Icons.sports_tennis_outlined,
-    tone: 'green',
-    label: 'Mang thêm gear',
-    intro: 'Báo mang thêm cầu, vợt, giày…',
-  ),
-  _ActionDef(
-    id: 'need_lift',
-    icon: Icons.directions_car_outlined,
-    tone: 'blue',
-    label: 'Cần đi nhờ',
-    intro: 'Tìm người cùng tuyến đi chung',
-  ),
-  _ActionDef(
-    id: 'offer_lift',
-    icon: Icons.directions_car_outlined,
-    tone: 'blue',
-    label: 'Cho đi nhờ',
-    intro: 'Có chỗ trống trên xe, ai cùng tuyến?',
-  ),
-  _ActionDef(
-    id: 'paid',
-    icon: Icons.account_balance_wallet_outlined,
-    tone: 'green',
-    label: 'Đã chuyển tiền sân',
-  ),
-  _ActionDef(
-    id: 'skip',
-    icon: Icons.close_rounded,
-    tone: 'crimson',
-    label: 'Vắng buổi này',
-    intro: 'Xin phép vắng và lý do',
-  ),
-  _ActionDef(
-    id: 'cheer',
-    icon: Icons.emoji_emotions_outlined,
-    tone: 'neutral',
-    label: 'Tăng động năng lượng',
-  ),
-];
-
 // Captain-only per RLS ("Captain can post updates and polls" covers
-// 'poll'; reschedule/bookCoach aren't feed-item posts but are still
-// captain-gated actions, so they live in the same section).
+// 'poll'). Reschedule/bookCoach moved to the Planner tab's per-card
+// actions — they're activity-scoped, not lobby-scoped, so they don't
+// belong in this lobby-wide picker anymore.
 const _captainActions = [
-  _ActionDef(
-    id: 'reschedule',
-    icon: Icons.calendar_month_outlined,
-    tone: 'crimson',
-    label: 'Đổi giờ buổi',
-  ),
   _ActionDef(
     id: 'poll',
     icon: Icons.bar_chart_rounded,
     tone: 'blue',
     label: 'Tạo bình chọn',
-  ),
-  _ActionDef(
-    id: 'bookCoach',
-    icon: Icons.school_outlined,
-    tone: 'green',
-    label: 'Đặt HLV / Trọng tài',
   ),
 ];
 
@@ -235,42 +156,30 @@ class ChatTriggerBar extends ConsumerWidget {
 void showActionPickerSheet(
   BuildContext context, {
   required bool isLeader,
-  required bool hasActivity,
   required String lobbyId,
-  UpcomingActivity? upcoming,
 }) {
   showPSheet(
     context: context,
     padding: EdgeInsets.zero,
     builder: (_) => _ActionPickerSheet(
       isLeader: isLeader,
-      hasActivity: hasActivity,
       lobbyId: lobbyId,
-      upcoming: upcoming,
     ),
   );
 }
 
 class _ActionPickerSheet extends StatelessWidget {
   final bool isLeader;
-  final bool hasActivity;
   final String lobbyId;
-  final UpcomingActivity? upcoming;
 
   const _ActionPickerSheet({
     required this.isLeader,
-    required this.hasActivity,
     required this.lobbyId,
-    this.upcoming,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    // Can't reschedule a session that doesn't exist yet.
-    final captainActions = hasActivity
-        ? _captainActions
-        : _captainActions.where((a) => a.id != 'reschedule').toList();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -310,17 +219,8 @@ class _ActionPickerSheet extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (hasActivity) ...[
-                  const SizedBox(height: 8),
-                  PSheetSectionLabel(
-                    label: 'Cá nhân',
-                    trailing: _SectionDescription('Cập nhật trạng thái của bạn'),
-                  ),
-                  const SizedBox(height: 6),
-                  _ActionGroup(actions: _personalActions, lobbyId: lobbyId),
-                ],
                 if (isLeader) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 8),
                   PSheetSectionLabel(
                     label: 'Đội trưởng',
                     trailing: Row(
@@ -338,9 +238,8 @@ class _ActionPickerSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   _ActionGroup(
-                    actions: captainActions,
+                    actions: _captainActions,
                     lobbyId: lobbyId,
-                    upcoming: upcoming,
                   ),
                 ],
                 const SizedBox(height: 14),
@@ -384,9 +283,8 @@ class _SectionDescription extends StatelessWidget {
 class _ActionGroup extends StatelessWidget {
   final List<_ActionDef> actions;
   final String? lobbyId;
-  final UpcomingActivity? upcoming;
 
-  const _ActionGroup({required this.actions, this.lobbyId, this.upcoming});
+  const _ActionGroup({required this.actions, this.lobbyId});
 
   @override
   Widget build(BuildContext context) {
@@ -401,7 +299,7 @@ class _ActionGroup extends StatelessWidget {
       child: Column(
         children: [
           for (var i = 0; i < actions.length; i++) ...[
-            _ActionRow(def: actions[i], lobbyId: lobbyId, upcoming: upcoming),
+            _ActionRow(def: actions[i], lobbyId: lobbyId),
             if (i < actions.length - 1)
               Divider(
                 height: 1,
@@ -415,34 +313,13 @@ class _ActionGroup extends StatelessWidget {
   }
 }
 
-class _ActionRow extends ConsumerWidget {
+class _ActionRow extends StatelessWidget {
   final _ActionDef def;
   final String? lobbyId;
-  final UpcomingActivity? upcoming;
 
-  const _ActionRow({required this.def, this.lobbyId, this.upcoming});
+  const _ActionRow({required this.def, this.lobbyId});
 
-  Future<void> _postPersonal(BuildContext context, WidgetRef ref) async {
-    if (lobbyId == null) return;
-    try {
-      await ref
-          .read(lobbyFeedControllerProvider(lobbyId!).notifier)
-          .postPersonalAction(def.id);
-    } catch (e, st) {
-      Talker().handle(e, st, 'Post personal action failed');
-      if (context.mounted) {
-        showFToast(
-          context: context,
-          icon: const Icon(FLucideIcons.circleX),
-          variant: .destructive,
-          title: const Text('Không thể đăng'),
-          alignment: .bottomCenter,
-        );
-      }
-    }
-  }
-
-  void _onPress(BuildContext context, WidgetRef ref) {
+  void _onPress(BuildContext context) {
     Navigator.of(context).pop();
     if (lobbyId == null) return;
     switch (def.id) {
@@ -452,38 +329,17 @@ class _ActionRow extends ConsumerWidget {
         showComposePostSheet(context, lobbyId: lobbyId);
       case 'poll':
         showCreatePollSheet(context, lobbyId!);
-      case 'reschedule':
-        if (upcoming != null) {
-          showScheduleActivitySheet(context, lobbyId!, existing: upcoming);
-        }
-      case 'bookCoach':
-        // Deep-links to the general Neutrals/professional discovery tab —
-        // there's still no dedicated lobby-scoped browse screen. The
-        // activity id is stashed as a one-shot hand-off consumed by the
-        // next booking sheet submission (see PendingActivityBookingState),
-        // which links the resulting booking back via the activity's
-        // coach_booking_id / referee_booking_id (per the booked pro's role) —
-        // NOT professional_booking_id, which activity_source_exclusivity
-        // forbids on a lobby activity.
-        if (upcoming != null) {
-          ref
-              .read(pendingActivityBookingStateProvider.notifier)
-              .set(upcoming!.activity.id);
-        }
-        const HomeProfessionalRoute().go(context);
-      default:
-        _postPersonal(context, ref);
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final fg = _toneFg(def.tone);
     final bg = _toneBg(def.tone, colors);
 
     return FTappable(
-      onPress: () => _onPress(context, ref),
+      onPress: () => _onPress(context),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         child: Row(
@@ -510,17 +366,6 @@ class _ActionRow extends ConsumerWidget {
                       color: Color(0xFF09090B),
                     ),
                   ),
-                  if (def.intro != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      def.intro!,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: colors.mutedForeground,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
                 ],
               ),
             ),

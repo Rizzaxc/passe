@@ -65,6 +65,32 @@ coaching courses. Unlike Home (discovery), this is about entities the user is al
   `schedule_activity_controller.dart`'s `schedule`/`reschedule`/`cancel` all insert/update/delete the
   `activity` row as the captain. Confirming costs **đá** (see the `lib/currency/` controller); the đá
   ledger is not yet in the DB — currency is currently a local SharedPreferences int.
+- **RSVP lock-in**: once an activity is `activity_confirmed` (enough `going` RSVPs to clear
+  `confirmation_threshold`, or no threshold at all), a member whose row is already `going` can no
+  longer change or retract it — enforced at the DB via RLS
+  (`schema/activity_confirmation_lock_after_confirmed.sql`, tightening both the UPDATE and DELETE
+  policies on `activity_confirmation`) so it holds regardless of client. `activity_card.dart`'s
+  `_RsvpControl` mirrors this client-side (`locked` prop, padlock icon on the active pill) to avoid a
+  round-trip just to show a rejection. Members who are `maybe`/`out`/unresponsive are unaffected and
+  can still RSVP (including flipping to `going`) after confirmation.
+- **`LobbyFeedController` mutations called from outside the Feed subtab need `ref.keepAlive()`.**
+  The Feed tab (`LobbyFeedTab` in `activity/main.dart`) and the Planner tab (activity cards) are
+  separate subtabs now — only one is mounted at a time — but Planner-side actions
+  (`activity_card.dart`'s "Đến Muộn"/late and "Đòi Tiền"/payment-request quick actions,
+  `planner_empty_state.dart`'s "remind captain") call mutations on `lobbyFeedControllerProvider` via
+  a bare `ref.read(...).notifier`, same as `ScheduleActivityController.cancel()`'s documented hazard.
+  Without `ref.keepAlive()`, the autoDispose provider can get disposed the instant the mutation
+  yields (at `ref.invalidateSelf()`), so the trailing `await future` throws on a disposed Ref *after*
+  the write already landed — surfacing as a spurious error toast on top of a feed item that did post
+  successfully. `postPersonalAction` and `createAncillaryPaymentRequest` both wrap their body in
+  `ref.keepAlive()` for this reason; `vote`/`markPaymentRequestPaid` don't need it because their only
+  callers live inside `feed.dart`'s list items, which only exist while `LobbyFeedTab` itself is
+  watching the provider.
+- **Confirmation deadline wasn't rendered anywhere** — `schedule_activity_sheet.dart` writes
+  `activity.confirmation_deadline`, but no card ever displayed it back. `activity_card.dart` now
+  shows a "Hạn xác nhận …" tag (next to the cost tag, same `_Tag` row) whenever
+  `upcoming.confirmationDeadline` is set. Purely informational — nothing currently freezes RSVP once
+  the deadline itself passes (that's separate from the threshold-based lock-in above).
 
 ## Gotchas
 
@@ -111,13 +137,18 @@ Judgment calls made along the way, in case they need revisiting:
   app — there's no `url_launcher` (or similar) dependency in `pubspec.yaml` yet, and adding one felt
   like a bigger call than this pass should make unilaterally. Swap in a real maps deep-link once that
   dependency lands.
-- **"Đổi Giờ" / reschedule**: `schedule_activity_sheet.dart` now takes an optional `existing:
+- **"Thay Đổi" / reschedule**: `schedule_activity_sheet.dart` now takes an optional `existing:
   UpcomingActivity` and calls a new `ScheduleActivityController.reschedule()` (UPDATE + a
-  `rescheduled` feed item) instead of `schedule()` (INSERT). The confirmation-deadline toggle still
-  only supports the fixed "2 days before start" default (same as a fresh schedule) — editing an
-  activity whose deadline was ever set to something else would normalise it back to that default on
-  save. There's no arbitrary custom-deadline picker in this sheet at all, so this isn't a regression,
-  just a pre-existing limitation now also reachable via edit.
+  `rescheduled` feed item) instead of `schedule()` (INSERT). **(2026-08 update)** the confirmation
+  deadline is no longer a fixed "2 days before start" toggle — the organizer picks the lead time
+  (2–72h before kickoff) with a slider (`_DeadlineLeadSlider`), clamped so it can never land in the
+  past (the slider's usable max shrinks to however many hours actually remain until start once
+  that's under 72h). Editing an activity re-derives the current lead from
+  `start - existing.confirmationDeadline` so the slider seeds where the captain last left it, not a
+  hardcoded default. **(2026-08 pass)** the quick-action row's separate "Đổi Giờ" (change time) and
+  "Thêm Địa Điểm" (add location, shown only when the activity had no location yet) buttons opened the
+  exact same sheet — collapsed into a single leader-only "Thay Đổi" action that covers time,
+  location, recurrence, cost, and confirmation together.
 - **Cancel** (the hero's "…" overflow, captain-only) deletes the `activity` row and posts an `update`
   feed item with a new `UpdateKind.cancelled`. There's no soft-cancel / undo.
 - **Poll**: moved from the "any member" picker section to "captain-only" — RLS

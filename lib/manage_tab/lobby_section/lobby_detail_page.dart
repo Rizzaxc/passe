@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'activity/main.dart';
+import 'activity/planner_tab.dart';
 import 'history/view.dart';
 import 'lobby_avatar.dart';
 import 'lobby_detail_controller.dart';
@@ -15,14 +18,85 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
   final String lobbyId;
   final String? lobbyName;
 
-  const LobbyDetailPage({super.key, required this.lobbyId, this.lobbyName});
+  /// Which of the 3 tabs (0 = Feed, 1 = Planner, 2 = History) to land on.
+  final int initialIndex;
+
+  /// Threaded through to the Planner tab — see `LobbyPlannerTab`.
+  final String? highlightActivityId;
+  final String? highlightChallengeId;
+
+  const LobbyDetailPage({
+    super.key,
+    required this.lobbyId,
+    this.lobbyName,
+    this.initialIndex = 0,
+    this.highlightActivityId,
+    this.highlightChallengeId,
+  }) : assert(initialIndex >= 0 && initialIndex <= 2);
+
+  /// Deep-links a specific tab (and, for Planner, a specific activity or
+  /// challenge to scroll to and highlight) — used by notification routing.
+  factory LobbyDetailPage.withInitialTab(
+    String lobbyId,
+    int initialIndex, {
+    String? lobbyName,
+    String? highlightActivityId,
+    String? highlightChallengeId,
+  }) {
+    return LobbyDetailPage(
+      lobbyId: lobbyId,
+      lobbyName: lobbyName,
+      initialIndex: initialIndex,
+      highlightActivityId: highlightActivityId,
+      highlightChallengeId: highlightChallengeId,
+    );
+  }
 
   @override
   ConsumerState<LobbyDetailPage> createState() => _LobbyDetailPageState();
 }
 
 class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+
+  // Which tabs are actually inflated right now. FTabs' content viewport has
+  // a ~250px cache extent on either side of the active page, so the
+  // neighboring tab would otherwise get fully built — and fire its own
+  // RPCs (Feed/Planner both hit Supabase on build) — even though it's not
+  // on screen. Rendering everything but the active + just-left index as a
+  // cheap SizedBox defeats that, matching lib/home_tab/main.dart's
+  // `_DiscoverViewState`.
+  late final Set<int> _builtIndices;
+  Timer? _settleTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _builtIndices = {_currentIndex};
+  }
+
+  @override
+  void dispose() {
+    _settleTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onTabChanged(int index) {
+    _settleTimer?.cancel();
+    setState(() {
+      _currentIndex = index;
+      _builtIndices.add(index);
+    });
+    _settleTimer = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      setState(() {
+        _builtIndices
+          ..clear()
+          ..add(_currentIndex);
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,14 +104,43 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
     final colors = context.theme.colors;
 
     final lobbyName = infoAsync.value?.lobby.name ?? widget.lobbyName ?? '';
-    // The activity tab's actions (schedule/reschedule/cancel, poll,
+    // The Feed/Planner tabs' actions (schedule/reschedule/cancel, poll,
     // invite-to-challenge) are all coordinator-eligible — none of them
     // are kicking or editing lobby info — so this passes "can manage",
     // not strictly "is captain".
     final canManage =
         ref.watch(myLobbyPermissionProvider(widget.lobbyId)).value?.canManage ??
         false;
-    final sport = infoAsync.value?.lobby.sport;
+
+    final sections = <FTabEntry>[
+      FTabEntry(
+        label: const Icon(FLucideIcons.messageCircle),
+        child: _builtIndices.contains(0)
+            ? LobbyFeedTab(
+                lobbyId: widget.lobbyId,
+                isLeader: canManage,
+                captainId: infoAsync.value?.lobby.captainId,
+              )
+            : const SizedBox.shrink(),
+      ),
+      FTabEntry(
+        label: const Icon(FLucideIcons.activity),
+        child: _builtIndices.contains(1)
+            ? LobbyPlannerTab(
+                lobbyId: widget.lobbyId,
+                isLeader: canManage,
+                highlightActivityId: widget.highlightActivityId,
+                highlightChallengeId: widget.highlightChallengeId,
+              )
+            : const SizedBox.shrink(),
+      ),
+      FTabEntry(
+        label: const Icon(FLucideIcons.clock),
+        child: _builtIndices.contains(2)
+            ? HistoryView(lobbyId: widget.lobbyId, lobbyName: lobbyName)
+            : const SizedBox.shrink(),
+      ),
+    ];
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -60,8 +163,8 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
             ),
 
             // Tabs — horizontal padding matches the 14-px inset the
-            // hero / feed / history cards use, so the tab indicator's
-            // edges line up with the content underneath.
+            // card content uses, so the tab indicator's edges line up
+            // with the content underneath.
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -70,26 +173,9 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
                   contentPhysics: const NeverScrollableScrollPhysics(),
                   control: FTabControl.lifted(
                     index: _currentIndex,
-                    onChange: (i) => setState(() => _currentIndex = i),
+                    onChange: _onTabChanged,
                   ),
-                  children: [
-                    FTabEntry(
-                      label: const Icon(FLucideIcons.activity),
-                      child: ActivityTab(
-                        lobbyId: widget.lobbyId,
-                        isLeader: canManage,
-                        sport: sport,
-                        captainId: infoAsync.value?.lobby.captainId,
-                      ),
-                    ),
-                    FTabEntry(
-                      label: const Icon(FLucideIcons.clock),
-                      child: HistoryView(
-                        lobbyId: widget.lobbyId,
-                        lobbyName: lobbyName,
-                      ),
-                    ),
-                  ],
+                  children: sections,
                 ),
               ),
             ),

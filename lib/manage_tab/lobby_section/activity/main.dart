@@ -1,102 +1,65 @@
-// Activity tab — single scroll view (hero + feed) + fixed chat trigger bar
+// Feed tab — chat-style action feed + fixed trigger bar. Split out from
+// the old combined activity tab; activity scheduling/management now lives
+// in the Planner tab (planner_tab.dart).
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../../core/model/enum.dart';
 import 'feed.dart';
 import 'feed_controller.dart';
-import 'hero.dart';
 import 'trigger_bar.dart';
-import 'upcoming_controller.dart';
 
-/// Overscroll threshold (px away from the newest message) past which the
-/// hero collapses to its compact form. Hysteresis (enter/exit at
-/// different offsets) avoids flicker right at the boundary.
-const _kCompactEnter = 48.0;
-const _kCompactExit = 16.0;
-
-class ActivityTab extends HookConsumerWidget {
+class LobbyFeedTab extends HookConsumerWidget {
   final String lobbyId;
   final bool isLeader;
-  final Sport? sport;
   final String? captainId;
 
-  const ActivityTab({
+  const LobbyFeedTab({
     super.key,
     required this.lobbyId,
     required this.isLeader,
-    required this.sport,
     this.captainId,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Whether the lobby currently has an upcoming activity pinned. The
-    // hero's expanded vs. empty branch keys off this flag.
-    final upcoming = ref.watch(
-      lobbyUpcomingActivityControllerProvider(lobbyId),
-    );
-    final upcomingActivity = upcoming.value;
-    final hasActivity = upcomingActivity != null;
-    // The chat-style action feed. Empty while loading / on error — the
-    // hero still renders so the screen isn't blank.
     final feed =
         ref.watch(lobbyFeedControllerProvider(lobbyId)).value ??
         const <FeedItem>[];
 
     final scrollController = useScrollController();
-    final compact = useState(false);
 
+    // Land on the newest message like a chat, but lay items out in normal
+    // (oldest → newest, top → bottom) reading order instead of a
+    // `reverse: true` list. A reversed list anchors its content to the
+    // *bottom* of the viewport, so a short feed leaves a large empty gap
+    // at the *top* — jarring now that this tab has no hero above it to
+    // fill that space. Top-down order means any leftover space trails
+    // harmlessly below the last message, next to the trigger bar.
     useEffect(() {
-      void onScroll() {
-        final offset = scrollController.position.pixels;
-        if (!compact.value && offset > _kCompactEnter) {
-          compact.value = true;
-        } else if (compact.value && offset < _kCompactExit) {
-          compact.value = false;
-        }
-      }
-
-      scrollController.addListener(onScroll);
-      return () => scrollController.removeListener(onScroll);
-    }, [scrollController]);
+      if (feed.isEmpty) return null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!scrollController.hasClients) return;
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+      });
+      return null;
+    }, [feed.length]);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Pinned context block — sits between the tab bar and the
-        // scrolling feed so the next-session card stays visible no
-        // matter how far the user scrolls into older messages. Shrinks
-        // to a compact date/hour/confirmed-count strip once the user
-        // has scrolled away from the newest message, to give the feed
-        // more room.
-        ActivityHero(
-          lobbyId: lobbyId,
-          upcoming: upcomingActivity,
-          sport: sport,
-          isLeader: isLeader,
-          captainId: captainId,
-          compact: compact.value,
-        ),
         Expanded(
-          // Chat-anchored: newest message at the bottom (initial view),
-          // scroll up to reveal older messages. Pull-down (from the top of
-          // the reversed list) refetches the feed + pinned activity.
           child: RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(lobbyFeedControllerProvider(lobbyId));
-              ref.invalidate(lobbyUpcomingActivityControllerProvider(lobbyId));
               await ref.read(lobbyFeedControllerProvider(lobbyId).future);
             },
             child: ListView(
               controller: scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
-              reverse: true,
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
-                // Children laid out bottom-up: index 0 sits at the bottom.
-                for (final item in feed.reversed)
+                for (final item in feed)
                   FeedItemWidget(
                     item: item,
                     lobbyId: lobbyId,
@@ -111,9 +74,7 @@ class ActivityTab extends HookConsumerWidget {
           onOpen: () => showActionPickerSheet(
             context,
             isLeader: isLeader,
-            hasActivity: hasActivity,
             lobbyId: lobbyId,
-            upcoming: upcomingActivity,
           ),
         ),
       ],

@@ -198,7 +198,7 @@ final class ConfirmChallengeActivityControllerProvider
 }
 
 String _$confirmChallengeActivityControllerHash() =>
-    r'bc4b122aac09b8b53eabb9c41325de12e4cbb17d';
+    r'1f54a4f7477f651508095646e2ba5e65d915bdba';
 
 /// Locks in this lobby's half of an accepted challenge.
 ///

@@ -22,34 +22,56 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
   // land on, whether they just asked or just accepted.
   final userId = data['user_id'] as String?;
   final bookingId = data['booking_id'] as String?;
+  // Activity/challenge ids so a tap can land on the specific Planner card
+  // instead of just the lobby. Key names aren't uniform across emitters —
+  // `fn_emit_activity_scheduled` uses `activity_id`, `fn_emit_activity_confirmed`
+  // uses `target_id` for the same concept (schema/activity_scheduled_notify.sql,
+  // schema/push_notifications.sql) — so both are read here.
+  final activityId = (data['activity_id'] ?? data['target_id']) as String?;
+  final challengeId = data['challenge_id'] as String?;
 
   return switch (kind) {
-    // A newly-scheduled activity lives inside its lobby's section, same as the
-    // later quorum-crossing confirmation.
-    NotificationKind.activityScheduled =>
-      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
-    // The confirmed activity lives inside its lobby's section.
-    NotificationKind.activityConfirmed =>
-      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    // A newly-scheduled activity lives in the Planner tab — scroll to it.
+    NotificationKind.activityScheduled => lobbyId == null
+        ? null
+        : LobbyDetailRoute(id: lobbyId, tab: 1, highlightActivityId: activityId)
+            .location,
+    // The confirmed activity lives in the Planner tab — scroll to it.
+    NotificationKind.activityConfirmed => lobbyId == null
+        ? null
+        : LobbyDetailRoute(id: lobbyId, tab: 1, highlightActivityId: activityId)
+            .location,
     // The booking surfaces on the Manage → schedule calendar.
     NotificationKind.proSessionReminder => const ManageScheduleRoute().location,
-    // Challenge accepted → open the initiator lobby (recipient's own).
-    NotificationKind.challengerConfirmed =>
-      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
-    // Incoming challenge / declined → open the relevant lobby to act/see.
+    // Challenge accepted → the activity now exists in the initiator lobby's
+    // (recipient's own) Planner tab — scroll to it by challenge id, since
+    // this event doesn't carry the newly-materialised activity's own id.
+    NotificationKind.challengerConfirmed => lobbyId == null
+        ? null
+        : LobbyDetailRoute(id: lobbyId, tab: 1, highlightChallengeId: challengeId)
+            .location,
+    // Incoming challenge / declined — no activity exists yet (only
+    // materialises on accept), so just open the lobby (Feed).
     NotificationKind.challengeReceived =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
     NotificationKind.challengeDeclined =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
-    // Both sides confirmed / a deadline lapsed / a result landed — all three
-    // are per-recipient (the server sends one enqueue call per lobby with
-    // that lobby's own id), so this always opens the recipient's own lobby.
-    NotificationKind.challengeScheduled =>
-      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    // Both sides confirmed — the real "it's locked in" moment; scroll to the
+    // now-official activity in Planner. Per-recipient (the server sends one
+    // enqueue call per lobby with that lobby's own id).
+    NotificationKind.challengeScheduled => lobbyId == null
+        ? null
+        : LobbyDetailRoute(id: lobbyId, tab: 1, highlightChallengeId: challengeId)
+            .location,
+    // The sweep that lapses a challenge deletes both sides' activity rows —
+    // nothing to highlight in Planner; the explanatory feed item is what a
+    // tap should land near, so just open the lobby (Feed).
     NotificationKind.challengeLapsed =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    // A played/recorded result is History's domain, not Planner's (Planner
+    // is future/ongoing-only).
     NotificationKind.matchResultRecorded =>
-      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId, tab: 2).location,
     // Lobby invite — the preview/accept page for this specific invite. Used
     // for OS push taps / cold starts, which (unlike the in-app notification
     // list) can't cheaply pre-check accept/decline status before routing.

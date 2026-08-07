@@ -1,0 +1,208 @@
+// Planner tab empty state — shown when a lobby has zero current/future
+// activities. Extracted from the old pinned hero's empty branch.
+import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:talker_flutter/talker_flutter.dart';
+
+import '../../../../ui/button_styles.dart';
+import '../challenge_offer_sheet.dart';
+import '../schedule_activity_sheet.dart';
+import 'feed_controller.dart';
+
+const _crimson = Color(0xFFDC143C);
+const _crimsonTint = Color(0xFFFFEBED);
+
+class PlannerEmptyState extends ConsumerWidget {
+  final String lobbyId;
+  final bool isLeader;
+
+  const PlannerEmptyState({
+    super.key,
+    required this.lobbyId,
+    required this.isLeader,
+  });
+
+  Future<void> _remindCaptain(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref
+          .read(lobbyFeedControllerProvider(lobbyId).notifier)
+          .postPersonalAction('remind_captain');
+    } catch (e, st) {
+      Talker().handle(e, st, 'Remind captain failed');
+      if (context.mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: const Text('Không thể gửi nhắc nhở'),
+          alignment: .bottomCenter,
+        );
+      }
+      return;
+    }
+    if (context.mounted) {
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.check),
+        title: const Text('Đã nhắc đội trưởng'),
+        alignment: .bottomCenter,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          // Stretch so the card's own width doesn't shrink-wrap to
+          // whichever CTA happens to be shown below.
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  color: _crimsonTint,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 22,
+                  color: _crimson,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Chưa có buổi chơi nào',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF09090B),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isLeader
+                  ? 'Lên lịch buổi mới, hoặc mở nhận thách đấu để đội khác tìm tới.'
+                  : 'Đội trưởng chưa lên lịch buổi nào. Bạn có thể nhắc.',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w400,
+                color: colors.mutedForeground,
+                height: 1.45,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            if (isLeader)
+              Column(
+                spacing: 8,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: FButton(
+                      size: .sm,
+                      style: FButtonStyleExtension.accentBlueStyle(
+                        context.theme.buttonStyles.primary.base,
+                      ),
+                      onPress: () =>
+                          showScheduleActivitySheet(context, lobbyId),
+                      child: const _CTALabel(
+                        icon: Icon(Icons.calendar_month_outlined, size: 16),
+                        label: 'Lên Lịch',
+                      ),
+                    ),
+                  ),
+                  // Was "Mời Thách Đấu" — challenging by SearchID from inside
+                  // your own lobby is retired (challenges start from Discover,
+                  // against a lobby that actually opted in). What replaces it
+                  // is the other half of that flow: opting *this* lobby in.
+                  ChallengeOfferControl(
+                    lobbyId: lobbyId,
+                    canManage: isLeader,
+                  ),
+                ],
+              )
+            else
+              GestureDetector(
+                onTap: () => _remindCaptain(context, ref),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.secondary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        FLucideIcons.bell,
+                        size: 14,
+                        color: colors.secondaryForeground,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Nhắc đội trưởng',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: colors.secondaryForeground,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact icon + label used inside the empty state's "Lên Lịch" button.
+/// Color comes from whatever the enclosing [FButton]'s style resolves to.
+class _CTALabel extends StatelessWidget {
+  final Widget icon;
+  final String label;
+
+  const _CTALabel({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    spacing: 6,
+    children: [
+      icon,
+      Flexible(
+        child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ),
+    ],
+  );
+}
