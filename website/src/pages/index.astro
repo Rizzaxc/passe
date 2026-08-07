@@ -94,20 +94,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           những người muốn chơi cùng nhau thường xuyên — không còn lục lại tin nhắn để tìm giờ và sân.
         </p>
         <div class="lobby-tags" aria-label="Tính năng lobby">
-          <span>Lịch chơi</span><span>Thành viên</span><span>Thách đấu</span><span>Lịch sử</span>
+          <span>Lịch chơi</span><span>Thành viên</span><span>Thách đấu</span><span>Lịch sử</span><span>Chia tiền</span>
+        </div>
+        <div class="bank-handoff">
+          <span class="bank-shield" aria-hidden="true">✓</span>
+          <div>
+            <strong>Passe chia phần. Ngân hàng chuyển tiền.</strong>
+            <p>
+              Nhập chi phí một lần, Passe tính phần của từng người và nhắc ai còn thiếu. Khi trả,
+              mỗi người tự xác nhận trong app ngân hàng của mình — Passe không giữ tiền hay thông tin đăng nhập.
+            </p>
+          </div>
         </div>
       </div>
       <div class="route-map" aria-hidden="true">
         <div class="route-node node-a"><b>Đồng đội</b><span>đúng lịch</span></div>
         <div class="route-node node-b"><b>Lobby</b><span>của bạn</span></div>
         <div class="route-node node-c"><b>Ra sân</b><span>đúng hẹn</span></div>
-        <svg class="route-desktop" viewBox="0 0 600 420" role="presentation">
-          <path class="route-base" d="M95 104 C170 35 274 73 300 190 S430 325 520 270" />
-          <path class="route-live" d="M95 104 C170 35 274 73 300 190 S430 325 520 270" />
+        <div class="route-node node-d"><b>Chia tiền</b><span>qua app ngân hàng</span></div>
+        <svg class="route-desktop" viewBox="0 0 600 520" role="presentation">
+          <path class="route-base" d="M58 62 C175 42 204 126 252 198 S340 348 414 372 S503 436 542 461" />
+          <path class="route-live" d="M58 62 C175 42 204 126 252 198 S340 348 414 372 S503 436 542 461" />
         </svg>
-        <svg class="route-mobile" viewBox="0 0 300 430" role="presentation">
-          <path class="route-base" d="M53 58 C178 88 87 196 150 215 S216 318 247 372" />
-          <path class="route-live" d="M53 58 C178 88 87 196 150 215 S216 318 247 372" />
+        <svg class="route-mobile" viewBox="0 0 300 620" role="presentation">
+          <path class="route-base" d="M53 53 C170 86 207 163 247 238 S128 343 53 413 S175 517 247 567" />
+          <path class="route-live" d="M53 53 C170 86 207 163 247 238 S128 343 53 413 S175 517 247 567" />
         </svg>
       </div>
     </div>
@@ -434,7 +445,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .lobby-section { background: var(--blue); color: white; }
   .lobby-grid {
-    min-height: 700px;
+    min-height: 790px;
     display: grid;
     grid-template-columns: .9fr 1.1fr;
     align-items: center;
@@ -446,7 +457,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .lobby-tags { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1.7rem; }
   .lobby-tags span { padding: .55rem .8rem; border: 1px solid rgba(255,255,255,.35); border-radius: 99px; font-size: .8rem; font-weight: 800; }
 
-  .route-map { position: relative; min-height: 430px; }
+  .bank-handoff {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: .9rem;
+    max-width: 590px;
+    margin-top: 1.5rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(255,255,255,.23);
+    border-radius: 1rem;
+    background: rgba(23,36,67,.18);
+  }
+  .bank-shield {
+    display: grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    place-items: center;
+    border-radius: 48% 48% 58% 58%;
+    background: #70d3bb;
+    color: var(--ink);
+    font-weight: 950;
+  }
+  .bank-handoff strong { display: block; font-family: var(--font-display); font-size: .98rem; }
+  .bank-handoff p { margin: .35rem 0 0; color: rgba(255,255,255,.68); font-size: .82rem; }
+
+  .route-map { position: relative; min-height: 520px; }
   .route-map svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .route-mobile { display: none; }
   .route-base, .route-live { fill: none; stroke-linecap: round; stroke-width: 8; }
@@ -469,9 +504,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
   .route-node b { font-family: var(--font-display); font-size: 1.1rem; }
   .route-node span { color: var(--ink-soft); font-size: .72rem; }
-  .node-a { left: 2%; top: 8%; }
-  .node-b { left: 42%; top: 37%; width: 8.5rem; height: 8.5rem; background: var(--amber); }
-  .node-c { right: 0; bottom: 8%; background: var(--coral); }
+  .node-a { left: 0; top: 0; }
+  .node-b { left: 31%; top: 25%; width: 8.5rem; height: 8.5rem; background: var(--amber); }
+  .node-c { left: 59%; bottom: 17%; background: var(--coral); }
+  .node-d { right: 0; bottom: 0; width: 8rem; height: 8rem; background: #70d3bb; }
+  .node-d span { max-width: 5.8rem; line-height: 1.2; }
 
   .discover { padding-block: 8rem; }
   .discover-heading { max-width: 760px; }
@@ -636,14 +673,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     .team-line { margin-top: 3.5rem; }
     .how, .discover { padding-block: 5rem; }
     .lobby-grid { min-height: auto; padding-block: 5rem; }
-    .route-map { min-height: 430px; margin-top: 1rem; transform: none; }
+    .route-map { min-height: 620px; margin-top: 1rem; transform: none; }
     .route-desktop { display: none; }
     .route-mobile { display: block; }
     .route-node { width: 6.6rem; height: 6.6rem; border-width: 3px; }
     .route-node b { font-size: 1rem; }
     .node-a { left: 0; top: 0; }
-    .node-b { left: 50%; top: 50%; width: 7.2rem; height: 7.2rem; transform: translate(-50%, -50%); }
-    .node-c { right: 0; bottom: 0; }
+    .node-b { right: 0; left: auto; top: 30%; width: 7.2rem; height: 7.2rem; transform: none; }
+    .node-c { right: auto; left: 0; top: 60%; bottom: auto; }
+    .node-d { right: 0; bottom: 0; width: 6.8rem; height: 6.8rem; }
+    .bank-handoff { grid-template-columns: 2.2rem minmax(0, 1fr); padding: .9rem; }
+    .bank-shield { width: 2.2rem; height: 2.2rem; }
     .discover-rail { grid-template-columns: 1fr; }
     .discover-rail article { min-height: 210px; border-top: 1px solid var(--line); border-left: 0; }
     .discover-rail article:first-child { border-top: 0; }
