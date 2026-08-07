@@ -10,6 +10,14 @@ import 'tabs_style.dart';
 // const pbRed = Color(0xFFDC143C);
 const pbBlue = Color(0xFF3090F2);
 const pbGreen = Color(0xFF959D54);
+// Expressive landing-page palette. These are intentionally separate from the
+// semantic Forui colors: they are for branded illustration-like surfaces,
+// not generic success/error states.
+const pbInk = Color(0xFF172443);
+const pbBlueDeep = Color(0xFF173B92);
+const pbAmber = Color(0xFFF6B83C);
+const pbCoral = Color(0xFFFF6F83);
+const pbMint = Color(0xFF70D3BB);
 // Rating-star amber. Shared by every place that renders a star score so the
 // colour stays consistent and theme-derived instead of a hardcoded literal.
 const pbStar = Color(0xFFF59E0B);

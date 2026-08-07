@@ -6,6 +6,7 @@ export 'dialog.dart';
 export 'district_select.dart';
 export 'dual_button.dart';
 export 'empty_section_placeholder.dart';
+export 'lobby_avatar.dart';
 export 'logo.dart';
 export 'pill_toggle.dart';
 export 'search_field.dart';

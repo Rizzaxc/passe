@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../ui/lobby_avatar.dart';
 import 'activity/main.dart';
 import 'activity/planner_tab.dart';
 import 'history/view.dart';
-import 'lobby_avatar.dart';
 import 'lobby_detail_controller.dart';
 import 'lobby_info_sheet.dart';
 

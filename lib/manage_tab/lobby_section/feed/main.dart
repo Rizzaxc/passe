@@ -9,7 +9,6 @@ import '../../../core/state/selected_sport_state.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
 import '../invite_member_sheet.dart';
-import '../lobby_avatar.dart';
 import '../schedule_activity_sheet.dart';
 import 'lobby_controller.dart';
 import 'lobby_form_sheet.dart';
@@ -20,7 +19,8 @@ class LobbySubtab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lobbiesAsync = ref.watch(userLobbiesControllerProvider);
-    final isGuest = ref.watch(authControllerProvider).value?.isGuest ?? true;
+    final currentUser = ref.watch(authControllerProvider).value;
+    final isGuest = currentUser?.isGuest ?? true;
     final sport = ref.watch(selectedSportStateProvider).value;
     final sportName = sport?.getLocalizedName(context).toLowerCase() ?? '';
 
@@ -73,10 +73,12 @@ class LobbySubtab extends ConsumerWidget {
                             size: 64,
                             color: context.theme.colors.mutedForeground,
                           ),
-                          title: 'manageTab.lobby.empty.title'
-                              .tr(namedArgs: {'sport': sportName}),
-                          subtitle: 'manageTab.lobby.empty.message'
-                              .tr(namedArgs: {'sport': sportName}),
+                          title: 'manageTab.lobby.empty.title'.tr(
+                            namedArgs: {'sport': sportName},
+                          ),
+                          subtitle: 'manageTab.lobby.empty.message'.tr(
+                            namedArgs: {'sport': sportName},
+                          ),
                         )
                       : RefreshIndicator(
                           onRefresh: () async {
@@ -91,8 +93,10 @@ class LobbySubtab extends ConsumerWidget {
                             itemCount: lobbies.length,
                             separatorBuilder: (_, _) =>
                                 const SizedBox(height: 8),
-                            itemBuilder: (context, index) =>
-                                _LobbyCard(item: lobbies[index]),
+                            itemBuilder: (context, index) => ManageLobbyCard(
+                              item: lobbies[index],
+                              currentUserId: currentUser?.id,
+                            ),
                           ),
                         ),
                 ),
@@ -145,16 +149,20 @@ class _GuestLobbyState extends StatelessWidget {
   }
 }
 
-class _LobbyCard extends ConsumerWidget {
+class ManageLobbyCard extends StatelessWidget {
   final LobbyListItem item;
+  final String? currentUserId;
 
-  const _LobbyCard({required this.item});
+  const ManageLobbyCard({
+    required this.item,
+    required this.currentUserId,
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final lobby = item.lobby;
     final colors = context.theme.colors;
-    final currentUserId = ref.watch(authControllerProvider).value?.id;
     final isLeader =
         currentUserId != null &&
         lobby.captainId != null &&
@@ -162,259 +170,334 @@ class _LobbyCard extends ConsumerWidget {
     // Scheduling is coordinator-eligible too (not kicking, not editing
     // lobby info) — the crown badge and sliver accent stay captain-only.
     final canManage = isLeader || item.isCoordinator;
-    final sliverColor = isLeader ? colors.primary : colors.muted;
+    final frameColor = isLeader
+        ? pbCoral
+        : item.isCoordinator
+        ? pbAmber
+        : pbBlueDeep;
+    final radius = BorderRadius.circular(16);
 
-    return FTappable(
-      onPress: lobby.id != null
-          ? () =>
-                LobbyDetailRoute(id: lobby.id!, $extra: lobby.name).go(context)
-          : null,
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.card,
-          border: Border.all(color: colors.border),
-          borderRadius: context.theme.style.borderRadius.md,
-          boxShadow: context.theme.style.shadow,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 10,
-                children: [
-                  // Avatar + name column
-                  Row(
-                    spacing: 12,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      LobbyAvatar(
-                        lobbyId: lobby.id,
-                        name: lobby.name,
-                        hasAvatar: lobby.details?.hasAvatar ?? false,
-                        size: 48,
-                        borderRadius: context.theme.style.borderRadius.md,
-                        backgroundColor: colors.secondary,
-                        foregroundColor: colors.primary,
+    return POffsetFrame(
+      offsetColor: frameColor,
+      borderRadius: radius,
+      child: FTappable(
+        onPress: lobby.id != null
+            ? () => LobbyDetailRoute(
+                id: lobby.id!,
+                $extra: lobby.name,
+              ).go(context)
+            : null,
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.card,
+            border: Border.all(color: pbInk.withValues(alpha: 0.16)),
+            borderRadius: radius,
+            boxShadow: context.theme.style.shadow,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 12,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LobbyAvatar(
+                      lobbyId: lobby.id,
+                      name: lobby.name,
+                      hasAvatar: lobby.details?.hasAvatar ?? false,
+                      size: 58,
+                      borderRadius: BorderRadius.circular(16),
+                      backgroundColor: pbAmber,
+                      foregroundColor: pbInk,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 6,
+                        children: [
+                          if (isLeader || item.isCoordinator)
+                            _LobbyRoleBadge(
+                              isLeader: isLeader,
+                              isCoordinator: item.isCoordinator,
+                            ),
+                          Text(
+                            lobby.name,
+                            style: context.theme.typography.body.lg.copyWith(
+                              color: pbInk,
+                              fontWeight: FontWeight.w800,
+                              height: 1.1,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
+                    ),
+                  ],
+                ),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    _LobbyMetaPill(
+                      icon: FLucideIcons.users,
+                      label: '${item.memberCount}',
+                    ),
+                    _LobbyMetaPill(
+                      icon: FLucideIcons.swords,
+                      label: item.isMmrCalibrated ? '${item.mmr}' : '? MMR',
+                    ),
+                  ],
+                ),
+                if (item.homeGroundName != null)
+                  Row(
+                    children: [
+                      Icon(
+                        FLucideIcons.mapPin,
+                        size: 12,
+                        color: colors.mutedForeground,
+                      ),
+                      const SizedBox(width: 5),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          spacing: 4,
-                          children: [
-                            // Name + crown (full width, wraps up to 2 lines)
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              spacing: 4,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    lobby.name,
-                                    style: context.theme.typography.body.sm
-                                        .copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: colors.primary,
-                                          fontSize: 15,
-                                        ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (isLeader)
-                                  Icon(
-                                    FLucideIcons.crown,
-                                    size: 13,
-                                    color: colors.mutedForeground,
-                                  ),
-                              ],
-                            ),
-                            // Meta: mmr
-                            Row(
-                              spacing: 10,
-                              children: [
-                                if (item.isMmrCalibrated)
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    spacing: 4,
-                                    children: [
-                                      Icon(
-                                        FLucideIcons.swords,
-                                        size: 14,
-                                        color: colors.primary,
-                                      ),
-                                      Text(
-                                        '${item.mmr}',
-                                        style: context.theme.typography.body.lg
-                                            .copyWith(
-                                              fontWeight: FontWeight.w700,
-                                              color: colors.primary,
-                                              height: 1,
-                                            ),
-                                      ),
-                                    ],
-                                  )
-                                else
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: colors.muted,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      '? MMR',
-                                      style: TextStyle(
-                                        fontFamily: context
-                                            .theme
-                                            .typography
-                                            .body
-                                            .xs
-                                            .fontFamily,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: colors.mutedForeground,
-                                        letterSpacing: 0.4,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ],
+                        child: Text(
+                          item.homeGroundName!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.theme.typography.body.xs.copyWith(
+                            color: colors.mutedForeground,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
                   ),
-
-                  // Homeground — level with the avatar, spanning the full
-                  // card width rather than indented under the name column.
-                  if (item.homeGroundName != null)
-                    Row(
-                      spacing: 4,
-                      children: [
-                        Icon(
-                          FLucideIcons.mapPin,
-                          size: 12,
-                          color: colors.mutedForeground,
-                        ),
-                        Flexible(
-                          child: Text(
-                            item.homeGroundName!,
-                            style: context.theme.typography.body.xs.copyWith(
-                              color: colors.mutedForeground,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                _NextActivityBoard(nextActivity: item.nextActivity),
+                Row(
+                  children: [
+                    if (canManage && lobby.id != null)
+                      Expanded(
+                        child: FButton(
+                          size: .sm,
+                          style: FButtonStyleExtension.accentBlueStyle(
+                            context.theme.buttonStyles.primary.base,
                           ),
-                        ),
-                      ],
-                    ),
-
-                  FDivider(),
-
-                  // Activity label (left) + small ghost action buttons (right)
-                  Row(
-                    children: [
-                      // Activity state
-                      if (item.nextActivity != null) ...[
-                        Icon(
-                          FLucideIcons.calendar,
-                          size: 12,
-                          color: colors.mutedForeground,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            DateFormat(
-                              'EEE, d MMM · HH:mm',
-                            ).format(item.nextActivity!),
-                            style: TextStyle(
-                              fontFamily:
-                                  context.theme.typography.body.xs.fontFamily,
-                              fontSize: 11,
-                              color: colors.mutedForeground,
-                              height: 1.2,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ] else
-                        Expanded(
-                          child: Text(
-                            'lobby.noActivity'.tr(),
-                            style: TextStyle(
-                              fontFamily:
-                                  context.theme.typography.body.xs.fontFamily,
-                              fontSize: 11,
-                              fontStyle: FontStyle.italic,
-                              color: colors.mutedForeground,
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
-                      // Action buttons
-                      if (canManage && lobby.id != null)
-                        FButton.icon(
-                          size: .xs,
-                          variant: .ghost,
-                          onPress: () =>
-                              showScheduleActivitySheet(context, lobby.id!),
-                          child: Icon(
+                          prefix: const Icon(
                             FLucideIcons.calendarPlus,
                             size: 16,
-                            color: pbBlue,
                           ),
-                        ),
-                      FButton.icon(
-                        size: .xs,
-                        variant: .ghost,
-                        onPress: lobby.searchableId != null
-                            ? () async {
-                                await Clipboard.setData(
-                                  ClipboardData(text: lobby.searchableId!),
-                                );
-                                if (!context.mounted) return;
-                                showFToast(
-                                  context: context,
-                                  icon: const Icon(FLucideIcons.info),
-                                  title: Text('lobby.searchIDCopied'.tr()),
-                                  description: Text(
-                                    'lobby.searchIDExplanation'.tr(),
-                                  ),
-                                  alignment: .bottomCenter,
-                                );
-                              }
-                            : null,
-                        child: Icon(FLucideIcons.copy, size: 16, color: pbBlue),
-                      ),
-                      if (lobby.id != null)
-                        FButton.icon(
-                          size: .xs,
-                          variant: .ghost,
                           onPress: () =>
-                              showInviteMemberSheet(context, lobby.id!),
-                          child: Icon(
-                            FLucideIcons.userPlus,
-                            size: 16,
-                            color: pbBlue,
-                          ),
+                              showScheduleActivitySheet(context, lobby.id!),
+                          child: Text('lobby.scheduleActivity'.tr()),
                         ),
+                      )
+                    else
+                      const Spacer(),
+                    const SizedBox(width: 6),
+                    FButton.icon(
+                      size: .sm,
+                      variant: .outline,
+                      onPress: lobby.searchableId != null
+                          ? () async {
+                              await Clipboard.setData(
+                                ClipboardData(text: lobby.searchableId!),
+                              );
+                              if (!context.mounted) return;
+                              showFToast(
+                                context: context,
+                                icon: const Icon(FLucideIcons.info),
+                                title: Text('lobby.searchIDCopied'.tr()),
+                                description: Text(
+                                  'lobby.searchIDExplanation'.tr(),
+                                ),
+                                alignment: .bottomCenter,
+                              );
+                            }
+                          : null,
+                      child: const Icon(FLucideIcons.copy, size: 16),
+                    ),
+                    if (lobby.id != null) ...[
+                      const SizedBox(width: 6),
+                      FButton.icon(
+                        size: .sm,
+                        variant: .outline,
+                        onPress: () =>
+                            showInviteMemberSheet(context, lobby.id!),
+                        child: const Icon(FLucideIcons.userPlus, size: 16),
+                      ),
                     ],
-                  ),
-                ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LobbyRoleBadge extends StatelessWidget {
+  final bool isLeader;
+  final bool isCoordinator;
+
+  const _LobbyRoleBadge({required this.isLeader, required this.isCoordinator});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = isLeader
+        ? 'lobby.leader'.tr()
+        : 'lobby.memberRole.coordinator'.tr();
+    final color = isLeader ? pbCoral : pbAmber;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 4,
+        children: [
+          Icon(
+            isLeader ? FLucideIcons.crown : FLucideIcons.shieldCheck,
+            size: 10,
+            color: pbInk,
+          ),
+          Flexible(
+            child: Text(
+              label.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.theme.typography.body.xs.copyWith(
+                color: pbInk,
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.7,
               ),
             ),
-            // Bottom sliver
-            SizedBox(height: 4, child: ColoredBox(color: sliverColor)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LobbyMetaPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _LobbyMetaPill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+    decoration: BoxDecoration(
+      color: pbInk.withValues(alpha: 0.055),
+      border: Border.all(color: pbInk.withValues(alpha: 0.12)),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 4,
+      children: [
+        Icon(icon, size: 11, color: pbBlueDeep),
+        Text(
+          label,
+          style: context.theme.typography.body.xs.copyWith(
+            color: pbInk,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _NextActivityBoard extends StatelessWidget {
+  final DateTime? nextActivity;
+
+  const _NextActivityBoard({required this.nextActivity});
+
+  @override
+  Widget build(BuildContext context) {
+    final activity = nextActivity;
+    if (activity == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        decoration: BoxDecoration(
+          color: pbInk.withValues(alpha: 0.055),
+          border: Border.all(color: pbInk.withValues(alpha: 0.12)),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            const Icon(FLucideIcons.calendarClock, size: 18, color: pbBlueDeep),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                'lobby.noActivity'.tr(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.theme.typography.body.sm.copyWith(
+                  color: pbInk.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ],
         ),
+      );
+    }
+
+    return PMatchBoard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 3,
+              children: [
+                Text(
+                  'lobby.detail.upcoming'.tr().toUpperCase(),
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.05,
+                  ),
+                ),
+                Text(
+                  DateFormat(
+                    'EEE, d MMM',
+                    context.locale.toLanguageTag(),
+                  ).format(activity),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.theme.typography.body.sm.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            DateFormat('HH:mm').format(activity),
+            style: context.theme.typography.body.xl2.copyWith(
+              color: pbAmber,
+              fontWeight: FontWeight.w900,
+              height: 1,
+            ),
+          ),
+        ],
       ),
     );
   }

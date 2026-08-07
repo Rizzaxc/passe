@@ -129,7 +129,9 @@ class _ChallengeButtonState extends ConsumerState<_ChallengeButton> {
   Widget build(BuildContext context) {
     return FButton(
       size: .sm,
-      variant: .secondary,
+      style: FButtonStyleExtension.accentBlueStyle(
+        context.theme.buttonStyles.primary.base,
+      ),
       onPress: _sent ? null : _open,
       child: Text(_sent
           ? 'homeTab.challenger.sent'.tr()

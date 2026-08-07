@@ -12,7 +12,6 @@ import '../../../core/model/lobby.dart';
 import '../../../core/model/timeslot.dart';
 import '../../../notifications/notification_service.dart';
 import '../../../ui/main.dart';
-import '../lobby_avatar.dart';
 import 'home_ground_selector.dart';
 import 'lobby_controller.dart';
 

@@ -1,5 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+// Replace these two URLs when each distribution channel is ready.
+// The Android URL can point straight to an APK for internal testers in the meantime.
+const androidDownloadUrl = 'https://your-domain.com/download/passe.apk';
+const iosDownloadUrl = 'https://apps.apple.com/app/idYOUR_APP_ID';
 ---
 
 <BaseLayout
@@ -210,7 +215,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <img src="/brand/passe-mark.svg" alt="" width="110" height="110" />
       <p class="eyebrow">Play together · Win together</p>
       <h2>Càng chơi,<br />càng hợp.</h2>
-      <p>Passe đang hoàn thiện những bước cuối cho iOS và Android.</p>
+      <p class="download-lede">Sắp có trên iOS và Android. Android đã sẵn sàng cho bản thử nghiệm nội bộ.</p>
+      <div class="download-options" aria-label="Tải ứng dụng Passe">
+        <a class="store-button android-store" href={androidDownloadUrl} target="_blank" rel="noreferrer">
+          <span class="android-mark" aria-hidden="true"><i></i><b></b></span>
+          <span><small>TẢI BẢN THỬ NGHIỆM</small><strong>Android APK</strong></span>
+        </a>
+        <a class="store-button ios-store" href={iosDownloadUrl} target="_blank" rel="noreferrer">
+          <span class="ios-mark" aria-hidden="true">iOS</span>
+          <span><small>SẮP CÓ TRÊN</small><strong>App Store</strong></span>
+        </a>
+      </div>
+      <p class="download-note">Link Android hiện dành cho internal testers.</p>
     </div>
   </section>
 </BaseLayout>
@@ -650,7 +666,65 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .closing-inner { min-height: 610px; display: grid; place-content: center; justify-items: center; padding-block: 5rem; }
   .closing img { margin-bottom: 1.5rem; filter: drop-shadow(0 14px 20px rgba(237,23,72,.18)); }
   .closing h2 { color: var(--red); }
-  .closing > p, .closing-inner > p:last-child { color: var(--ink-soft); }
+  .download-lede { max-width: 30rem; margin: 1.25rem 0 0; color: var(--ink-soft); }
+  .download-options { display: flex; flex-wrap: wrap; justify-content: center; gap: .8rem; margin-top: 2rem; }
+  .store-button {
+    display: inline-flex;
+    align-items: center;
+    gap: .8rem;
+    min-width: 12.8rem;
+    padding: .78rem 1rem;
+    border: 1px solid var(--ink);
+    border-radius: .85rem;
+    background: var(--ink);
+    color: white;
+    text-align: left;
+    text-decoration: none;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .store-button:hover { transform: translateY(-3px); box-shadow: 0 10px 0 var(--amber); }
+  .store-button small, .store-button strong { display: block; }
+  .store-button small { color: rgba(255,255,255,.68); font-size: .58rem; font-weight: 850; letter-spacing: .08em; }
+  .store-button strong { margin-top: .08rem; font-family: var(--font-display); font-size: 1.12rem; letter-spacing: -.025em; }
+  .android-store { background: var(--blue-deep); }
+  .ios-store { background: var(--ink); }
+  .android-mark {
+    position: relative;
+    display: inline-block;
+    width: 1.75rem;
+    height: 1.25rem;
+    margin-top: .25rem;
+    border-radius: .9rem .9rem .38rem .38rem;
+    background: #70d3bb;
+  }
+  .android-mark::before, .android-mark::after {
+    content: '';
+    position: absolute;
+    top: -.33rem;
+    width: .52rem;
+    height: .08rem;
+    border-radius: 99px;
+    background: #70d3bb;
+  }
+  .android-mark::before { left: .16rem; transform: rotate(-34deg); }
+  .android-mark::after { right: .16rem; transform: rotate(34deg); }
+  .android-mark i, .android-mark b { position: absolute; display: block; }
+  .android-mark i { top: .38rem; left: .43rem; width: .17rem; height: .17rem; border-radius: 50%; background: var(--blue-deep); }
+  .android-mark b { top: .38rem; right: .43rem; width: .17rem; height: .17rem; border-radius: 50%; background: var(--blue-deep); }
+  .ios-mark {
+    display: grid;
+    width: 1.8rem;
+    height: 1.8rem;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.68);
+    border-radius: 50%;
+    color: white;
+    font-family: var(--font-display);
+    font-size: .62rem;
+    font-weight: 850;
+    letter-spacing: -.05em;
+  }
+  .download-note { margin: .95rem 0 0; color: var(--ink-soft); font-size: .72rem; }
 
   @media (max-width: 900px) {
     .hero { min-height: auto; grid-template-columns: 1fr; padding-block: 4rem 6rem; }
@@ -696,5 +770,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     .pulse-score strong { font-size: 3.7rem; }
     .health-stats div { padding-inline: .45rem; }
     .health-stats strong { font-size: 1.02rem; }
+    .download-options { width: 100%; flex-direction: column; }
+    .store-button { justify-content: center; width: 100%; }
   }
 </style>

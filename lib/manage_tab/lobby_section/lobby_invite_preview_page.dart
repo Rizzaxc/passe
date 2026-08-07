@@ -9,7 +9,6 @@ import '../../core/model/lobby.dart';
 import '../../notifications/notification_service.dart';
 import '../../router.dart';
 import '../../ui/main.dart';
-import 'lobby_avatar.dart';
 import 'lobby_invite_response_controller.dart';
 
 /// `/lobby-invite/:recordId` — reached from a `lobby_invite` notification tap

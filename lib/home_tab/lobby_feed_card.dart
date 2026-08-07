@@ -5,15 +5,11 @@ import 'package:forui/forui.dart';
 import '../core/format.dart';
 import '../core/model/enum.dart';
 import '../core/model/lobby_feed_item.dart';
-import '../ui/theme.dart';
+import '../ui/main.dart';
 
 /// Score floor of `calculate_profile_compat_score` — the neutral baseline.
 /// Anything above it is "at least an ok fit"; at or below it is a poor fit.
 const double _fitScoreFloor = 2.5;
-
-/// Vibrant green for the FitScore badge/sliver when the fit is at least "ok".
-/// (Brighter than the muted brand olive `pbGreen`, for a stronger signal.)
-const Color _fitGreen = Color(0xFF16A34A);
 
 class LobbyFeedCard extends StatelessWidget {
   final LobbyFeedItem item;
@@ -31,210 +27,109 @@ class LobbyFeedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final score = item.profileCompatScore;
-    final isGoodFit = score > _fitScoreFloor;
-    final sliverColor = showCompat && score > 0
-        ? (isGoodFit ? _fitGreen : colors.muted)
-        : colors.muted;
+    final isGoodFit = score >= _fitScoreFloor;
+    final frameColor = showCompat && score > 0 && isGoodFit ? pbMint : pbAmber;
+    final radius = BorderRadius.circular(16);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.card,
-        border: Border.all(color: colors.border),
-        borderRadius: context.theme.style.borderRadius.md,
-        boxShadow: context.theme.style.shadow,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 8,
-              children: [
-                // Name + member count
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item.name,
-                        style: context.theme.typography.body.sm.copyWith(
-                          fontWeight: FontWeight.w600,
+    return POffsetFrame(
+      offsetColor: frameColor,
+      borderRadius: radius,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.card,
+          border: Border.all(color: pbInk.withValues(alpha: 0.16)),
+          borderRadius: radius,
+          boxShadow: context.theme.style.shadow,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 12,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LobbyAvatar(
+                    lobbyId: item.id,
+                    name: item.name,
+                    hasAvatar: item.details?.hasAvatar ?? false,
+                    size: 54,
+                    borderRadius: BorderRadius.circular(15),
+                    backgroundColor: pbAmber,
+                    foregroundColor: pbInk,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 5,
+                      children: [
+                        Text(
+                          item.name,
+                          style: context.theme.typography.body.lg.copyWith(
+                            color: pbInk,
+                            fontWeight: FontWeight.w800,
+                            height: 1.12,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (item.memberCount != null) ...[
-                      const SizedBox(width: 8),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        spacing: 4,
-                        children: [
-                          Icon(
-                            FLucideIcons.users,
-                            size: 14,
-                            color: colors.primary,
-                          ),
-                          Text(
-                            '${item.memberCount}',
-                            style: context.theme.typography.body.lg.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: colors.primary,
-                              height: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-
-                // Homeground + timeslots. Visibility used to show here too
-                // (an icon: public/discoverable/private) — dropped from the
-                // discovery cards since it's not decision-relevant at
-                // browse time; it's still shown when creating a lobby and
-                // on the lobby detail page.
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 6,
-                  children: [
-                    if (item.homegroundName != null)
-                      Row(
-                        spacing: 3,
-                        children: [
-                          Icon(
-                            FLucideIcons.mapPin,
-                            size: 11,
-                            color: colors.mutedForeground,
-                          ),
-                          Expanded(
-                            child: Text(
-                              item.homegroundName!,
-                              style: context.theme.typography.body.xs.copyWith(
+                        if (item.homegroundName != null)
+                          Row(
+                            children: [
+                              Icon(
+                                FLucideIcons.mapPin,
+                                size: 12,
                                 color: colors.mutedForeground,
-                                fontSize: 11,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    if (item.playtime.isNotEmpty)
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: item.playtime.take(3).map((ts) {
-                          return _TimeslotChip(
-                            label:
-                                '${ts.dayChunk.getShortName(context)} ${ts.dayOfWeek.getShortName(context)}',
-                          );
-                        }).toList(),
-                      ),
-                  ],
-                ),
-
-                // Combined Stake & FitScore footer
-                if ((item.lobbyMmr != null) || (showCompat && score > 0)) ...[
-                  FDivider(),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: 6,
-                    children: [
-                      Row(
-                        children: [
-                          if (showCompat && score > 0)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              spacing: 6,
-                              children: [
-                                Text(
-                                  'FitScore',
-                                  style: TextStyle(
-                                    fontFamily: context
-                                        .theme
-                                        .typography
-                                        .body
-                                        .xs
-                                        .fontFamily,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: colors.mutedForeground,
-                                    letterSpacing: 0.7,
-                                  ),
-                                ),
-                                _ScoreBadge(score: score, isGoodFit: isGoodFit),
-                              ],
-                            ),
-                          const Spacer(),
-                          if (item.lobbyMmr != null)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              spacing: 6,
-                              children: [
-                                Text(
-                                  'homeTab.challenger.mmr'.tr(),
-                                  style: TextStyle(
-                                    fontFamily: context
-                                        .theme
-                                        .typography
-                                        .body
-                                        .xs
-                                        .fontFamily,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: colors.mutedForeground,
-                                    letterSpacing: 0.7,
-                                  ),
-                                ),
-                                // A lobby with no rated matches still has an
-                                // MMR, but it's derived from what its members
-                                // declared at signup — qualify it rather than
-                                // presenting a seed as an earned rating.
-                                Text(
-                                  item.hasProvisionalMmr
-                                      ? '${item.lobbyMmr} · ${'homeTab.challenger.provisional'.tr()}'
-                                      : '${item.lobbyMmr}',
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  item.homegroundName!,
                                   style: context.theme.typography.body.xs
                                       .copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: item.hasProvisionalMmr
-                                            ? colors.mutedForeground
-                                            : colors.foreground,
+                                        color: colors.mutedForeground,
+                                        fontSize: 11,
                                       ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                if (item.favorability != null)
-                                  _FavorabilityBadge(
-                                    favorability: item.favorability!,
-                                  ),
-                              ],
-                            ),
-                        ],
-                      ),
-                      if (showCompat && score > 0) _FitScoreVibes(item: item),
-                    ],
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
                   ),
+                  if (item.memberCount != null) ...[
+                    const SizedBox(width: 8),
+                    _MemberBadge(count: item.memberCount!),
+                  ],
                 ],
-
-                // Challenger only: the match this lobby is actually offering.
-                // The CTA below accepts these exact terms, so they have to be
-                // on the card, not behind a tap.
-                if (item.offerTime != null) _OfferStrip(item: item),
-
-                FDivider(),
-
-                // CTA
-                Align(alignment: Alignment.centerRight, child: action),
-              ],
-            ),
+              ),
+              if (item.playtime.isNotEmpty)
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: item.playtime.take(3).map((ts) {
+                    return _TimeslotChip(
+                      label:
+                          '${ts.dayChunk.getShortName(context)} ${ts.dayOfWeek.getShortName(context)}',
+                    );
+                  }).toList(),
+                ),
+              if (item.lobbyMmr != null || (showCompat && score > 0))
+                _LobbyMatchBoard(
+                  item: item,
+                  showCompat: showCompat,
+                  isGoodFit: isGoodFit,
+                ),
+              if (item.offerTime != null) _OfferStrip(item: item),
+              Align(alignment: Alignment.centerRight, child: action),
+            ],
           ),
-          // Bottom tier sliver
-          SizedBox(height: 4, child: ColoredBox(color: sliverColor)),
-        ],
+        ),
       ),
     );
   }
@@ -251,96 +146,227 @@ class _OfferStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-
-    Widget line(IconData icon, String value, {bool strong = false}) => Row(
-          children: [
-            Icon(icon, size: 13, color: colors.mutedForeground),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.theme.typography.body.xs.copyWith(
-                  color: strong ? colors.foreground : colors.secondaryForeground,
-                  fontWeight: strong ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        );
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colors.secondary.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(10),
+        color: pbAmber.withValues(alpha: 0.18),
+        border: Border.all(color: pbAmber.withValues(alpha: 0.7)),
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 4,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          line(FLucideIcons.calendar, formatMatchDateTime(item.offerTime!),
-              strong: true),
-          if (item.offerLocationName != null)
-            line(FLucideIcons.mapPin, item.offerLocationName!),
-          if (item.offerCost != null)
-            line(
-              FLucideIcons.wallet,
-              'homeTab.challenger.costPerTeam'
-                  .tr(args: [formatVnd(item.offerCost!)]),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: const BoxDecoration(
+              color: pbInk,
+              shape: BoxShape.circle,
             ),
+            alignment: Alignment.center,
+            child: const Icon(
+              FLucideIcons.calendarDays,
+              size: 17,
+              color: pbAmber,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 4,
+              children: [
+                Text(
+                  formatMatchDateTime(item.offerTime!),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.theme.typography.body.sm.copyWith(
+                    color: pbInk,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                  ),
+                ),
+                if (item.offerLocationName != null)
+                  _OfferDetail(
+                    icon: FLucideIcons.mapPin,
+                    value: item.offerLocationName!,
+                  ),
+                if (item.offerCost != null)
+                  _OfferDetail(
+                    icon: FLucideIcons.wallet,
+                    value: 'homeTab.challenger.costPerTeam'.tr(
+                      args: [formatVnd(item.offerCost!)],
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _ScoreBadge extends StatelessWidget {
-  final double score;
-  final bool isGoodFit;
+class _OfferDetail extends StatelessWidget {
+  final IconData icon;
+  final String value;
 
-  const _ScoreBadge({required this.score, required this.isGoodFit});
+  const _OfferDetail({required this.icon, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final scoreBg = isGoodFit ? _fitGreen : colors.secondary;
-    final scoreFg = isGoodFit ? Colors.white : colors.mutedForeground;
+    return Row(
+      children: [
+        Icon(icon, size: 11, color: pbInk.withValues(alpha: 0.58)),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.theme.typography.body.xs.copyWith(
+              color: pbInk.withValues(alpha: 0.72),
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: scoreBg,
-        borderRadius: BorderRadius.circular(9999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
+class _MemberBadge extends StatelessWidget {
+  final int count;
+
+  const _MemberBadge({required this.count});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+    decoration: BoxDecoration(
+      color: pbInk,
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 4,
+      children: [
+        const Icon(FLucideIcons.users, size: 12, color: Colors.white),
+        Text(
+          '$count',
+          style: context.theme.typography.body.xs.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            height: 1,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _LobbyMatchBoard extends StatelessWidget {
+  final LobbyFeedItem item;
+  final bool showCompat;
+  final bool isGoodFit;
+
+  const _LobbyMatchBoard({
+    required this.item,
+    required this.showCompat,
+    required this.isGoodFit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final score = item.profileCompatScore;
+    final hasFit = showCompat && score > 0;
+
+    return PMatchBoard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 10,
         children: [
-          Text(
-            score.toStringAsFixed(1),
-            style: TextStyle(
-              fontFamily: context.theme.typography.body.xs.fontFamily,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: scoreFg,
-              height: 1,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (hasFit)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 2,
+                    children: [
+                      Text(
+                        'FITSCORE',
+                        style: context.theme.typography.body.xs.copyWith(
+                          color: Colors.white.withValues(alpha: 0.62),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: score.toStringAsFixed(1),
+                              style: TextStyle(
+                                color: isGoodFit ? pbAmber : Colors.white,
+                                fontSize: 29,
+                                fontWeight: FontWeight.w900,
+                                height: 1,
+                              ),
+                            ),
+                            TextSpan(
+                              text: ' / 5',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.56),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        maxLines: 1,
+                      ),
+                    ],
+                  ),
+                ),
+              if (item.lobbyMmr != null)
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    spacing: 3,
+                    children: [
+                      Text(
+                        'homeTab.challenger.mmr'.tr().toUpperCase(),
+                        style: context.theme.typography.body.xs.copyWith(
+                          color: Colors.white.withValues(alpha: 0.62),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      Text(
+                        item.hasProvisionalMmr
+                            ? '${item.lobbyMmr} · ${'homeTab.challenger.provisional'.tr()}'
+                            : '${item.lobbyMmr}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                        style: context.theme.typography.body.sm.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (item.favorability != null)
+                        _FavorabilityBadge(favorability: item.favorability!),
+                    ],
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(width: 2),
-          Text(
-            '/ 5',
-            style: TextStyle(
-              fontFamily: context.theme.typography.body.xs.fontFamily,
-              fontSize: 8,
-              fontWeight: FontWeight.w500,
-              color: scoreFg.withValues(alpha: 0.85),
-              height: 1,
-            ),
-          ),
+          if (hasFit) _FitScoreVibes(item: item),
         ],
       ),
     );
@@ -354,13 +380,12 @@ class _FavorabilityBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final (Color bg, Color fg) = switch (favorability) {
-      ChallengeFavorability.favored => (const Color(0xFF16a34a), Colors.white),
-      ChallengeFavorability.even => (const Color(0xFFd97706), Colors.white),
+      ChallengeFavorability.favored => (pbMint, pbInk),
+      ChallengeFavorability.even => (pbAmber, pbInk),
       ChallengeFavorability.underdog => (
-        colors.secondary,
-        colors.mutedForeground,
+        Colors.white.withValues(alpha: 0.14),
+        Colors.white.withValues(alpha: 0.78),
       ),
     };
 
@@ -391,35 +416,19 @@ class _FitScoreVibes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     if (item.matchFactors.isEmpty) return const SizedBox.shrink();
 
-    // Each real factor code → (label, icon, foreground). The chip background is
-    // the foreground at 8% opacity. Unknown codes are skipped.
-    (String, IconData, Color)? specFor(String code) => switch (code) {
-      'skill' => (
-        'Trình độ phù hợp',
-        FLucideIcons.trophy,
-        const Color(0xFFD97706),
-      ),
-      'network' => (
-        'Chung mạng lưới',
-        FLucideIcons.users,
-        const Color(0xFF059669),
-      ),
-      'industry' => (
-        'Cùng ngành nghề',
-        FLucideIcons.briefcase,
-        const Color(0xFF0D9488),
-      ),
-      'age' => ('Cùng nhóm tuổi', FLucideIcons.cake, const Color(0xFF7C3AED)),
-      'gender' => (
-        'Thân thiện với nữ',
-        FLucideIcons.venus,
-        const Color(0xFFDB2777),
-      ),
-      'playtime' => ('Lịch chơi khớp', FLucideIcons.calendar, pbBlue),
-      'location' => ('Vị trí thuận tiện', FLucideIcons.mapPin, colors.primary),
+    // Keep the factor language monochrome inside the match board. The prior
+    // rainbow of micro-chips read as analytics tags instead of one cohesive
+    // sports graphic.
+    (String, IconData)? specFor(String code) => switch (code) {
+      'skill' => ('Trình độ phù hợp', FLucideIcons.trophy),
+      'network' => ('Chung mạng lưới', FLucideIcons.users),
+      'industry' => ('Cùng ngành nghề', FLucideIcons.briefcase),
+      'age' => ('Cùng nhóm tuổi', FLucideIcons.cake),
+      'gender' => ('Thân thiện với nữ', FLucideIcons.venus),
+      'playtime' => ('Lịch chơi khớp', FLucideIcons.calendar),
+      'location' => ('Vị trí thuận tiện', FLucideIcons.mapPin),
       _ => null,
     };
 
@@ -427,26 +436,27 @@ class _FitScoreVibes extends StatelessWidget {
     for (final code in item.matchFactors) {
       final spec = specFor(code);
       if (spec == null) continue;
-      final (label, icon, fg) = spec;
+      final (label, icon) = spec;
       chips.add(
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
           decoration: BoxDecoration(
-            color: fg.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(4),
+            color: Colors.white.withValues(alpha: 0.1),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+            borderRadius: BorderRadius.circular(999),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            spacing: 3,
+            spacing: 4,
             children: [
-              Icon(icon, size: 9, color: fg),
+              Icon(icon, size: 10, color: pbAmber),
               Text(
                 label,
                 style: TextStyle(
                   fontFamily: context.theme.typography.body.xs.fontFamily,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: fg,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
               ),
             ],
@@ -469,22 +479,23 @@ class _TimeslotChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: pbBlue.withValues(alpha: 0.08),
-        borderRadius: context.theme.style.borderRadius.sm,
+        color: pbInk.withValues(alpha: 0.055),
+        border: Border.all(color: pbInk.withValues(alpha: 0.12)),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          spacing: 3,
+          spacing: 4,
           children: [
-            const Icon(Icons.schedule_rounded, size: 10, color: pbBlue),
+            const Icon(Icons.schedule_rounded, size: 11, color: pbBlueDeep),
             Text(
               label,
               style: context.theme.typography.body.xs.copyWith(
                 fontSize: 10,
-                fontWeight: FontWeight.w500,
-                color: pbBlue,
+                fontWeight: FontWeight.w700,
+                color: pbInk,
               ),
             ),
           ],
