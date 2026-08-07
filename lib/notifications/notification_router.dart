@@ -32,24 +32,36 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
 
   return switch (kind) {
     // A newly-scheduled activity lives in the Planner tab — scroll to it.
-    NotificationKind.activityScheduled => lobbyId == null
-        ? null
-        : LobbyDetailRoute(id: lobbyId, tab: 1, highlightActivityId: activityId)
-            .location,
+    NotificationKind.activityScheduled =>
+      lobbyId == null
+          ? null
+          : LobbyDetailRoute(
+              id: lobbyId,
+              tab: 1,
+              highlightActivityId: activityId,
+            ).location,
     // The confirmed activity lives in the Planner tab — scroll to it.
-    NotificationKind.activityConfirmed => lobbyId == null
-        ? null
-        : LobbyDetailRoute(id: lobbyId, tab: 1, highlightActivityId: activityId)
-            .location,
+    NotificationKind.activityConfirmed =>
+      lobbyId == null
+          ? null
+          : LobbyDetailRoute(
+              id: lobbyId,
+              tab: 1,
+              highlightActivityId: activityId,
+            ).location,
     // The booking surfaces on the Manage → schedule calendar.
     NotificationKind.proSessionReminder => const ManageScheduleRoute().location,
     // Challenge accepted → the activity now exists in the initiator lobby's
     // (recipient's own) Planner tab — scroll to it by challenge id, since
     // this event doesn't carry the newly-materialised activity's own id.
-    NotificationKind.challengerConfirmed => lobbyId == null
-        ? null
-        : LobbyDetailRoute(id: lobbyId, tab: 1, highlightChallengeId: challengeId)
-            .location,
+    NotificationKind.challengerConfirmed =>
+      lobbyId == null
+          ? null
+          : LobbyDetailRoute(
+              id: lobbyId,
+              tab: 1,
+              highlightChallengeId: challengeId,
+            ).location,
     // Incoming challenge / declined — no activity exists yet (only
     // materialises on accept), so just open the lobby (Feed).
     NotificationKind.challengeReceived =>
@@ -59,10 +71,14 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
     // Both sides confirmed — the real "it's locked in" moment; scroll to the
     // now-official activity in Planner. Per-recipient (the server sends one
     // enqueue call per lobby with that lobby's own id).
-    NotificationKind.challengeScheduled => lobbyId == null
-        ? null
-        : LobbyDetailRoute(id: lobbyId, tab: 1, highlightChallengeId: challengeId)
-            .location,
+    NotificationKind.challengeScheduled =>
+      lobbyId == null
+          ? null
+          : LobbyDetailRoute(
+              id: lobbyId,
+              tab: 1,
+              highlightChallengeId: challengeId,
+            ).location,
     // The sweep that lapses a challenge deletes both sides' activity rows —
     // nothing to highlight in Planner; the explanatory feed item is what a
     // tap should land near, so just open the lobby (Feed).
@@ -75,15 +91,26 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
     // Lobby invite — the preview/accept page for this specific invite. Used
     // for OS push taps / cold starts, which (unlike the in-app notification
     // list) can't cheaply pre-check accept/decline status before routing.
-    NotificationKind.lobbyInvite => recordId == null
-        ? const ManageLobbyRoute().location
-        : LobbyInvitePreviewRoute(recordId: recordId).location,
+    NotificationKind.lobbyInvite =>
+      recordId == null
+          ? const ManageLobbyRoute().location
+          : LobbyInvitePreviewRoute(recordId: recordId).location,
+    // The captain handles incoming requests from the lobby's info sheet.
+    NotificationKind.lobbyJoinRequest =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    // Once approved, the requester is a member and can open the lobby.
+    NotificationKind.lobbyJoinRequestApproved =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    // A denied requester cannot open the lobby's member-only detail page.
+    NotificationKind.lobbyJoinRequestDenied =>
+      const HomeTeammateRoute().location,
     // Kicked — the lobby is no longer theirs to open; land on their own lobby list.
     NotificationKind.memberKicked => const ManageLobbyRoute().location,
     // A new request came in for the linked professional — their
     // pending-requests subtab, scrolled/highlighted to this one booking.
-    NotificationKind.professionalBookingRequested =>
-      ManageRequestsRoute(highlightBookingId: bookingId).location,
+    NotificationKind.professionalBookingRequested => ManageRequestsRoute(
+      highlightBookingId: bookingId,
+    ).location,
     // The professional responded — the client's own booking lives in their schedule/coaching view.
     NotificationKind.professionalBookingConfirmed =>
       const ManageScheduleRoute().location,
