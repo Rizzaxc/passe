@@ -323,7 +323,7 @@ A before-insert trigger auto-accepts reciprocal request/invite pairs and enforce
 
 These three types aren't the only way into a lobby: a **lobby invite link** (`lobby_invite_link`,
 Discord-style, `lib/manage_tab/lobby_section/invite_link/`) lets a captain/coordinator generate a
-shareable `passe://invite/CODE` that anyone can redeem for instant membership — it bypasses
+  shareable `https://passe.vn/invite/CODE` that anyone can redeem for instant membership — it bypasses
 `lobby_befriend_record` entirely (no request/invite row, no approval step) via a `SECURITY DEFINER`
 RPC that inserts straight into `lobby_member`. It replaced the retired email-invite flow (formerly
 `lobby_email_invite` + a Resend-backed edge function).

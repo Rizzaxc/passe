@@ -1,7 +1,20 @@
-/// A played-out match for a lobby — the row model behind the
-/// "Lịch sử trận đấu" tab. Backed by the `lobby_match` table via the
-/// `lobby_match_history_data` RPC (read) and `RecordMatchController` (write).
-class LobbyMatch {
+import '../activity/upcoming_controller.dart';
+
+/// A chronological entry in a lobby's History tab. Matches and completed
+/// activities deliberately share a timeline, but only matches contribute to
+/// the competitive record.
+sealed class LobbyHistoryEntry {
+  const LobbyHistoryEntry();
+
+  String get id;
+  DateTime get occurredAt;
+  bool get isChallenge;
+  bool get isPractice;
+}
+
+/// A recorded match from `lobby_match`.
+class LobbyMatch extends LobbyHistoryEntry {
+  @override
   final String id;
   final String date;
   final String when;
@@ -21,6 +34,13 @@ class LobbyMatch {
   final String? refereeBookingId;
   final String? refereeName;
 
+  /// The underlying activity when this match came from a challenge. Used to
+  /// avoid rendering the same completed session twice in the unified timeline.
+  final String? activityId;
+
+  @override
+  final DateTime occurredAt;
+
   const LobbyMatch({
     required this.id,
     required this.date,
@@ -35,11 +55,14 @@ class LobbyMatch {
     this.note,
     this.refereeBookingId,
     this.refereeName,
+    this.activityId,
+    required this.occurredAt,
   });
 
   bool get isWin => result == LobbyMatchResult.win;
   bool get isLoss => result == LobbyMatchResult.loss;
   bool get isDraw => result == LobbyMatchResult.draw;
+  @override
   bool get isPractice => result == LobbyMatchResult.practice;
 
   /// A challenge is any match against an opponent lobby. A *scored* one
@@ -48,8 +71,39 @@ class LobbyMatch {
   /// sides, just with no score: it's a challenge match with `result ==
   /// practice`, indistinguishable at the DB level from an internal scrimmage
   /// except for [opponent] being set — [isScorelessEncounter] is that case.
+  @override
   bool get isChallenge => opponent != null;
   bool get isScorelessEncounter => isChallenge && isPractice;
+}
+
+/// A completed lobby activity that did not produce a `lobby_match` row.
+/// Scheduling has no separate completion column, so `end_time` (or
+/// `start_time` for older rows without one) is the completion signal.
+class PastLobbyActivity extends LobbyHistoryEntry {
+  final UpcomingActivity activity;
+
+  const PastLobbyActivity(this.activity);
+
+  @override
+  String get id => activity.activity.id!;
+
+  @override
+  DateTime get occurredAt => activity.nextEnd ?? activity.nextStart;
+
+  @override
+  bool get isChallenge => activity.challenge != null;
+
+  @override
+  bool get isPractice => !isChallenge;
+}
+
+class LobbyHistory {
+  final List<LobbyHistoryEntry> entries;
+
+  const LobbyHistory(this.entries);
+
+  List<LobbyMatch> get matches =>
+      entries.whereType<LobbyMatch>().toList(growable: false);
 }
 
 enum LobbyMatchResult { win, loss, draw, practice }

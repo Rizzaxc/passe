@@ -23,9 +23,10 @@ class LobbyFeedTab extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final feed =
-        ref.watch(lobbyFeedControllerProvider(lobbyId)).value ??
-        const <FeedItem>[];
+    final feed = generalFeedItems(
+      ref.watch(lobbyFeedControllerProvider(lobbyId)).value ??
+          const <FeedItem>[],
+    );
 
     final scrollController = useScrollController();
 

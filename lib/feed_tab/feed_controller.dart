@@ -62,12 +62,19 @@ class WallFeedController extends _$WallFeedController {
         .toList();
   }
 
-  /// Set, change, or (with a null emoji) clear the caller's reaction.
+  /// Toggle one of the caller's reactions.
   ///
   /// Applied optimistically so the tap feels instant, then rolled back if the
   /// RPC fails — the same approach as the teammate feed's request button.
-  Future<void> react(String postId, String? emoji) async {
+  Future<void> react(String postId, String emoji) async {
     final previous = state.value;
+    final wasSelected =
+        previous
+            ?.where((post) => post.id == postId)
+            .firstOrNull
+            ?.myReactions
+            .contains(emoji) ??
+        false;
     if (previous != null) {
       state = AsyncData([
         for (final p in previous)
@@ -85,9 +92,9 @@ class WallFeedController extends _$WallFeedController {
       rethrow;
     }
 
-    // Only reacting (not clearing) can move the "react to N posts" badge.
+    // Only adding a reaction (not removing one) can move the badge.
     final userId = ref.read(currentUserIdProvider);
-    if (emoji != null && userId != null) {
+    if (!wasSelected && userId != null) {
       await evaluateAchievements(ref, userId);
     }
   }
@@ -99,19 +106,20 @@ class WallFeedController extends _$WallFeedController {
     ref.invalidateSelf();
   }
 
-  WallPost _withReaction(WallPost post, String? emoji) {
+  WallPost _withReaction(WallPost post, String emoji) {
     final counts = Map<String, int>.from(post.reactions);
-
-    final old = post.myReaction;
-    if (old != null) {
-      final n = (counts[old] ?? 1) - 1;
+    final myReactions = [...post.myReactions];
+    if (myReactions.remove(emoji)) {
+      final n = (counts[emoji] ?? 1) - 1;
       if (n <= 0) {
-        counts.remove(old);
+        counts.remove(emoji);
       } else {
-        counts[old] = n;
+        counts[emoji] = n;
       }
+    } else {
+      myReactions.add(emoji);
+      counts[emoji] = (counts[emoji] ?? 0) + 1;
     }
-    if (emoji != null) counts[emoji] = (counts[emoji] ?? 0) + 1;
 
     return WallPost(
       id: post.id,
@@ -130,7 +138,7 @@ class WallFeedController extends _$WallFeedController {
       expiresAt: post.expiresAt,
       tags: post.tags,
       reactions: counts,
-      myReaction: emoji,
+      myReactions: myReactions,
     );
   }
 }

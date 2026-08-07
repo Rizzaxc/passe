@@ -2,14 +2,19 @@
 // challenge block, attached coach/referee, RSVP strip + control, quick
 // actions, captain-only cancel. Extracted from the old pinned hero (one
 // card was assumed per lobby); a lobby can now have several of these.
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../auth/auth_controller.dart';
 import '../../../../auth/guest_prompt.dart';
 import '../../../../core/model/enum.dart';
+import '../../../../feed_tab/compose_post_sheet.dart';
 import '../../../../ui/dialog.dart';
 import '../../../../ui/theme.dart';
 import '../../../../ui/user_avatar.dart';
@@ -20,7 +25,9 @@ import '../invite_member_sheet.dart';
 import '../schedule_activity_controller.dart';
 import '../schedule_activity_sheet.dart';
 import 'confirmation_controller.dart';
+import 'feed.dart';
 import 'feed_controller.dart';
+import 'note_sheet.dart';
 import 'payment_request_sheet.dart';
 import 'upcoming_controller.dart';
 
@@ -46,12 +53,18 @@ class ActivityCard extends ConsumerWidget {
   /// notification deep-link, so it's obvious which one the user was sent to.
   final bool highlighted;
 
+  /// History reuses this card after the session ends. Past cards keep the
+  /// session identity, attendees, post-session actions, and activity log, but
+  /// suppress RSVP, editing, booking, invite, and cancel controls.
+  final bool isPast;
+
   const ActivityCard({
     super.key,
     required this.lobbyId,
     required this.upcoming,
     required this.isLeader,
     this.highlighted = false,
+    this.isPast = false,
   });
 
   static const _wd = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
@@ -109,14 +122,64 @@ class ActivityCard extends ConsumerWidget {
     }
   }
 
+  /// Hands off to whatever maps app the device has, same pattern as
+  /// `lib/home_tab/location_section/main.dart`'s `_openDirections` — Apple
+  /// Maps on iOS, a `geo:` intent (native app chooser) on Android, falling
+  /// back to a Google Maps web URL. Unlike a Location venue, an activity's
+  /// location can legitimately have no geocode yet (e.g. a lobby homeground
+  /// scraped without lat/lon), so this falls back to the old copy-to-
+  /// clipboard behavior instead of a dead/disabled button.
+  Future<void> _openDirections(BuildContext context) async {
+    final lat = upcoming.locationLat;
+    final lon = upcoming.locationLon;
+    if (lat == null || lon == null) {
+      await _copyAddress(context);
+      return;
+    }
+
+    final label = Uri.encodeComponent(upcoming.locationName ?? '');
+    final nativeUri = defaultTargetPlatform == TargetPlatform.iOS
+        ? Uri.parse('https://maps.apple.com/?daddr=$lat,$lon&q=$label')
+        : Uri.parse('geo:$lat,$lon?q=$lat,$lon($label)');
+    final webUri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$lat,$lon',
+    );
+
+    var launched = false;
+    try {
+      if (await canLaunchUrl(nativeUri)) {
+        launched = await launchUrl(
+          nativeUri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+      if (!launched) {
+        launched = await launchUrl(
+          webUri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (_) {
+      launched = false;
+    }
+
+    if (!launched && context.mounted) {
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: const Text('Không thể mở bản đồ'),
+        alignment: .bottomCenter,
+      );
+    }
+  }
+
   void _openReschedule(BuildContext context) {
     showScheduleActivitySheet(context, lobbyId, existing: upcoming);
   }
 
   void _bookCoach(BuildContext context, WidgetRef ref) {
-    ref
-        .read(pendingActivityBookingStateProvider.notifier)
-        .set(_activityId);
+    ref.read(pendingActivityBookingStateProvider.notifier).set(_activityId);
     const HomeProfessionalRoute().go(context);
   }
 
@@ -124,7 +187,16 @@ class ActivityCard extends ConsumerWidget {
     try {
       await ref
           .read(lobbyFeedControllerProvider(lobbyId).notifier)
-          .postPersonalAction('late');
+          .postPersonalAction('late', activityId: _activityId);
+    } on AlreadyMarkedLateException {
+      if (context.mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleCheck),
+          title: const Text('Bạn đã báo đến muộn cho buổi này rồi'),
+          alignment: .bottomCenter,
+        );
+      }
     } catch (e, st) {
       Talker().handle(e, st, 'Post personal action failed');
       if (context.mounted) {
@@ -137,6 +209,11 @@ class ActivityCard extends ConsumerWidget {
         );
       }
     }
+  }
+
+  void _openActivityNote(BuildContext context, WidgetRef ref) {
+    if (!ensureSignedIn(context, ref)) return;
+    showActivityNoteSheet(context, lobbyId: lobbyId, activityId: _activityId);
   }
 
   void _confirmCancel(BuildContext context, WidgetRef ref) {
@@ -191,10 +268,31 @@ class ActivityCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final activityId = _activityId;
-    final status =
-        ref.watch(activityConfirmationControllerProvider(activityId)).value;
+    final status = ref
+        .watch(activityConfirmationControllerProvider(activityId))
+        .value;
     final costLabel = _costLabel();
-    final deadlineLabel = _deadlineLabel();
+    final deadlineLabel = isPast ? null : _deadlineLabel();
+
+    // Light select-watch on the already-fetched lobby feed (shared with the
+    // Feed tab and every other card via the same lobbyId-keyed provider) —
+    // no extra round-trip. Backed server-side by
+    // the partial unique indexes for `late` and `note`; this is what makes
+    // each one-shot action disappear once the member has used it.
+    final myId = ref.watch(currentUserIdProvider);
+    final myActivityActions = ref.watch(
+      lobbyFeedControllerProvider(lobbyId).select(
+        (async) => async.value
+            ?.whereType<PersonalItem>()
+            .where((i) => i.activityId == activityId && i.authorId == myId)
+            .map((i) => i.action)
+            .toSet(),
+      ),
+    );
+    final alreadyLate =
+        myActivityActions?.contains(PersonalActionKind.late) ?? false;
+    final alreadyNoted =
+        myActivityActions?.contains(PersonalActionKind.note) ?? false;
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: highlighted ? 1.0 : 0.0, end: 0.0),
@@ -333,7 +431,7 @@ class ActivityCard extends ConsumerWidget {
                 ],
                 // Lobby-vs-lobby match: who we're playing, and the manager
                 // actions that turn an accepted challenge into a real one.
-                if (upcoming.challenge != null) ...[
+                if (!isPast && upcoming.challenge != null) ...[
                   const SizedBox(height: 10),
                   _ChallengeBlock(
                     lobbyId: lobbyId,
@@ -379,49 +477,51 @@ class ActivityCard extends ConsumerWidget {
                 // locked in — the DB (RLS on activity_confirmation) rejects
                 // the change/retract either way, but locking it client-side
                 // avoids a round-trip just to show an error.
-                _RsvpControl(
-                  value: status?.myAttendance?.value ?? '',
-                  locked: status?.activityConfirmed == true &&
-                      status?.myAttendance == Attendance.going,
-                  onChange: (v) async {
-                    final next = Attendance.fromValue(v);
-                    if (next == null) return;
-                    if (!ensureSignedIn(context, ref)) return;
-                    try {
-                      await ref
-                          .read(
-                            activityConfirmationControllerProvider(
-                              activityId,
-                            ).notifier,
-                          )
-                          .setAttendance(activityId, next);
-                    } catch (e, st) {
-                      // Most likely: the activity got confirmed between this
-                      // card's last load and the tap, and the DB's RLS (see
-                      // schema/activity_confirmation_lock_after_confirmed.sql)
-                      // rejected locking-in-a-"going"-member's change.
-                      Talker().handle(e, st, 'setAttendance failed');
-                      if (!context.mounted) return;
-                      showFToast(
-                        context: context,
-                        icon: const Icon(FLucideIcons.circleX),
-                        variant: .destructive,
-                        title: const Text(
-                          'Không thể đổi trạng thái tham gia',
-                        ),
-                        alignment: .bottomCenter,
-                      );
-                    }
-                  },
-                  onLockedTap: () => showFToast(
-                    context: context,
-                    icon: const Icon(FLucideIcons.lock),
-                    title: const Text(
-                      'Buổi chơi đã chốt — không thể đổi trạng thái tham gia',
+                if (!isPast)
+                  _RsvpControl(
+                    value: status?.myAttendance?.value ?? '',
+                    locked:
+                        status?.activityConfirmed == true &&
+                        status?.myAttendance == Attendance.going,
+                    onChange: (v) async {
+                      final next = Attendance.fromValue(v);
+                      if (next == null) return;
+                      if (!ensureSignedIn(context, ref)) return;
+                      try {
+                        await ref
+                            .read(
+                              activityConfirmationControllerProvider(
+                                activityId,
+                              ).notifier,
+                            )
+                            .setAttendance(activityId, next);
+                      } catch (e, st) {
+                        // Most likely: the activity got confirmed between this
+                        // card's last load and the tap, and the DB's RLS (see
+                        // schema/activity_confirmation_lock_after_confirmed.sql)
+                        // rejected locking-in-a-"going"-member's change.
+                        Talker().handle(e, st, 'setAttendance failed');
+                        if (!context.mounted) return;
+                        showFToast(
+                          context: context,
+                          icon: const Icon(FLucideIcons.circleX),
+                          variant: .destructive,
+                          title: const Text(
+                            'Không thể đổi trạng thái tham gia',
+                          ),
+                          alignment: .bottomCenter,
+                        );
+                      }
+                    },
+                    onLockedTap: () => showFToast(
+                      context: context,
+                      icon: const Icon(FLucideIcons.lock),
+                      title: const Text(
+                        'Buổi chơi đã chốt — không thể đổi trạng thái tham gia',
+                      ),
+                      alignment: .bottomCenter,
                     ),
-                    alignment: .bottomCenter,
                   ),
-                ),
                 const SizedBox(height: 12),
                 // Quick actions
                 Row(
@@ -432,15 +532,23 @@ class ActivityCard extends ConsumerWidget {
                         physics: const ClampingScrollPhysics(),
                         child: Row(
                           children: [
+                            if (!alreadyNoted) ...[
+                              _QuickAction(
+                                icon: Icons.sticky_note_2_outlined,
+                                label: 'Ghi Chú',
+                                onTap: () => _openActivityNote(context, ref),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
                             if (upcoming.locationName != null) ...[
                               _QuickAction(
                                 icon: Icons.navigation_outlined,
                                 label: 'Chỉ Đường',
-                                onTap: () => _copyAddress(context),
+                                onTap: () => _openDirections(context),
                               ),
                               const SizedBox(width: 6),
                             ],
-                            if (isLeader) ...[
+                            if (!isPast && isLeader) ...[
                               // Opens the full schedule form (time, location,
                               // recurrence, cost, confirmation) — covers a
                               // location-less activity too, so there's no
@@ -458,18 +566,34 @@ class ActivityCard extends ConsumerWidget {
                               ),
                               const SizedBox(width: 6),
                             ],
-                            _QuickAction(
-                              icon: Icons.person_add_alt_1_outlined,
-                              label: 'Mời',
-                              onTap: () =>
-                                  showInviteMemberSheet(context, lobbyId),
-                            ),
-                            if (status?.myAttendance == Attendance.going) ...[
+                            if (!isPast)
+                              _QuickAction(
+                                icon: Icons.person_add_alt_1_outlined,
+                                label: 'Mời',
+                                onTap: () =>
+                                    showInviteMemberSheet(context, lobbyId),
+                              ),
+                            if (!isPast &&
+                                status?.myAttendance == Attendance.going &&
+                                !alreadyLate) ...[
                               const SizedBox(width: 6),
                               _QuickAction(
                                 icon: Icons.access_time_rounded,
                                 label: 'Đến Muộn',
                                 onTap: () => _postLate(context, ref),
+                              ),
+                            ],
+                            if (isPast &&
+                                status?.myAttendance == Attendance.going) ...[
+                              const SizedBox(width: 6),
+                              _QuickAction(
+                                icon: Icons.add_photo_alternate_outlined,
+                                label: 'Đăng Feed',
+                                onTap: () => showComposePostSheet(
+                                  context,
+                                  lobbyId: lobbyId,
+                                  activityId: activityId,
+                                ),
                               ),
                               const SizedBox(width: 6),
                               _QuickAction(
@@ -486,7 +610,7 @@ class ActivityCard extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    if (isLeader) ...[
+                    if (!isPast && isLeader) ...[
                       const SizedBox(width: 6),
                       GestureDetector(
                         onTap: () => _confirmCancel(context, ref),
@@ -507,12 +631,199 @@ class ActivityCard extends ConsumerWidget {
                     ],
                   ],
                 ),
+                const SizedBox(height: 8),
+                _ActivityFeedLog(
+                  lobbyId: lobbyId,
+                  activityId: activityId,
+                  initiallyExpanded: isPast && costLabel != null,
+                  settlementDueAt: isPast && costLabel != null
+                      ? (upcoming.nextEnd ?? upcoming.nextStart).add(
+                          const Duration(minutes: 15),
+                        )
+                      : null,
+                ),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+}
+
+// ─── Per-activity action log (notes, late reports, payments) ───────────────
+
+/// Collapsed-by-default log of this activity's own scoped `personal` and
+/// `payment_request` feed items — the actions a member fires from *this*
+/// card, as opposed to lobby-wide `update`/poll/photo posts which stay on
+/// the general Feed tab. See `perActivityFeedItems` in `feed.dart`.
+class _ActivityFeedLog extends ConsumerStatefulWidget {
+  final String lobbyId;
+  final String activityId;
+  final bool initiallyExpanded;
+  final DateTime? settlementDueAt;
+
+  const _ActivityFeedLog({
+    required this.lobbyId,
+    required this.activityId,
+    this.initiallyExpanded = false,
+    this.settlementDueAt,
+  });
+
+  @override
+  ConsumerState<_ActivityFeedLog> createState() => _ActivityFeedLogState();
+}
+
+class _ActivityFeedLogState extends ConsumerState<_ActivityFeedLog> {
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.initiallyExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GestureDetector(
+          // The row below has a Spacer() filling the gap between the label
+          // and the chevron — with the default `deferToChild` behavior nothing
+          // in that empty middle claims the hit, so most of the row silently
+          // eats taps. `opaque` makes the whole box (not just its painted
+          // children) respond.
+          behavior: HitTestBehavior.opaque,
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.history_rounded,
+                  size: 14,
+                  color: colors.mutedForeground,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Nhật ký hoạt động',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: colors.secondaryForeground,
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  _expanded
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
+                  size: 18,
+                  color: colors.mutedForeground,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_expanded)
+          _ActivityFeedLogBody(
+            lobbyId: widget.lobbyId,
+            activityId: widget.activityId,
+            settlementDueAt: widget.settlementDueAt,
+          ),
+      ],
+    );
+  }
+}
+
+class _ActivityFeedLogBody extends ConsumerWidget {
+  final String lobbyId;
+  final String activityId;
+  final DateTime? settlementDueAt;
+
+  const _ActivityFeedLogBody({
+    required this.lobbyId,
+    required this.activityId,
+    this.settlementDueAt,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final feedAsync = ref.watch(lobbyFeedControllerProvider(lobbyId));
+
+    return feedAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ),
+      error: (_, _) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          'Không tải được nhật ký',
+          style: TextStyle(fontSize: 11.5, color: colors.mutedForeground),
+        ),
+      ),
+      data: (items) {
+        final scoped = perActivityFeedItems(items, activityId);
+        final hasAutomaticSplit = scoped.any(
+          (item) => item is PaymentRequestItem && item.type == 'split',
+        );
+        final settlementMessage = hasAutomaticSplit
+            ? null
+            : _settlementMessage(settlementDueAt);
+        if (scoped.isEmpty && settlementMessage == null) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'Chưa có hoạt động nào',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontStyle: FontStyle.italic,
+                color: colors.mutedForeground,
+              ),
+            ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (settlementMessage != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  settlementMessage,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: colors.mutedForeground,
+                  ),
+                ),
+              ),
+            for (final item in scoped)
+              FeedItemWidget(item: item, lobbyId: lobbyId),
+          ],
+        );
+      },
+    );
+  }
+
+  String? _settlementMessage(DateTime? dueAt) {
+    if (dueAt == null) return null;
+    final localDue = dueAt.toLocal();
+    if (DateTime.now().isBefore(localDue)) {
+      final hh = localDue.hour.toString().padLeft(2, '0');
+      final mm = localDue.minute.toString().padLeft(2, '0');
+      return 'Chi phí sẽ được tổng kết tự động lúc $hh:$mm';
+    }
+    return 'Đang chờ hệ thống tổng kết chi phí · kéo xuống để làm mới';
   }
 }
 
@@ -894,7 +1205,11 @@ class _RsvpBtn extends StatelessWidget {
                   child: Icon(Icons.lock_outline, size: 12, color: fg),
                 )
               else
-                Icon(icon, size: 14, color: active ? fg : colors.mutedForeground),
+                Icon(
+                  icon,
+                  size: 14,
+                  color: active ? fg : colors.mutedForeground,
+                ),
               const SizedBox(width: 5),
               Flexible(
                 child: Text(

@@ -34,6 +34,9 @@ class FeedTab extends ConsumerWidget {
       header: FHeader(
         title: Text('nav.feed'.tr()),
         suffixes: [
+          // This re-reads the feed immediately; pull-to-refresh remains
+          // available inside the pager and empty/error states.
+          if (!isGuest) const _FeedRefreshButton(),
           const NotificationIconButton(),
           // Posting requires being signed in — hide the CTA for guests
           // rather than let it lead to an RPC that will just reject them.
@@ -46,6 +49,39 @@ class FeedTab extends ConsumerWidget {
         ],
       ),
       child: isGuest ? const _GuestState() : const _FeedBody(),
+    );
+  }
+}
+
+/// Header-level force refresh for when the user wants to fetch new posts
+/// without first scrolling back to the top of the pager.
+class _FeedRefreshButton extends ConsumerWidget {
+  const _FeedRefreshButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final refreshing = ref.watch(wallFeedControllerProvider).isLoading;
+
+    return FButton.icon(
+      variant: .ghost,
+      onPress: refreshing
+          ? null
+          : () async {
+              ref.invalidate(wallFeedControllerProvider);
+              try {
+                await ref.read(wallFeedControllerProvider.future);
+              } catch (_) {
+                // The Feed body switches to its error state, which already
+                // offers another retry path and an explanatory message.
+              }
+            },
+      child: refreshing
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(FLucideIcons.refreshCw, size: 20),
     );
   }
 }

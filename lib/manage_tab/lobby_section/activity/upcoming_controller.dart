@@ -6,6 +6,20 @@ import '../../../core/model/enum.dart';
 
 part 'upcoming_controller.g.dart';
 
+/// Shared PostgREST projection for both Planner and completed History cards.
+/// Keeping one shape lets both screens render the same [ActivityCard].
+const lobbyActivitySelect =
+    '*, location(name, district, lat, lon), '
+    'coach:professional_booking!activity_coach_booking_id_fkey('
+    'id, status, professional_id, '
+    'professional:professional_id(display_name, is_verified)), '
+    'referee:professional_booking!activity_referee_booking_id_fkey('
+    'id, status, professional_id, '
+    'professional:professional_id(display_name, is_verified)), '
+    'challenge:lobby_challenge(id, status, target_lobby_id, agreed_cost, '
+    'initiator:initiator_lobby_id(name, mmr), '
+    'target:target_lobby_id(name, mmr))';
+
 /// A professional (coach or referee) hired for a lobby activity, resolved from
 /// the `coach_booking_id` / `referee_booking_id` embed. Enough to render the
 /// hero card's attachment row and deep-link to the pro's profile.
@@ -71,7 +85,8 @@ class ChallengeContext {
     if (embed is! Map<String, dynamic>) return null;
     final weAreHome = embed['target_lobby_id'] == myLobbyId;
     final opponent =
-        (weAreHome ? embed['initiator'] : embed['target']) as Map<String, dynamic>?;
+        (weAreHome ? embed['initiator'] : embed['target'])
+            as Map<String, dynamic>?;
     return ChallengeContext(
       challengeId: embed['id'] as String,
       status: (embed['status'] as String?) ?? 'accepted',
@@ -107,6 +122,8 @@ class UpcomingActivity {
   final String? locationId;
   final String? locationName;
   final String? locationDistrict;
+  final double? locationLat;
+  final double? locationLon;
 
   /// Informational cost, settled post-session via the payment-request
   /// feature (chia tiền) — not collected at scheduling time.
@@ -137,6 +154,8 @@ class UpcomingActivity {
     required this.locationId,
     required this.locationName,
     required this.locationDistrict,
+    this.locationLat,
+    this.locationLon,
     required this.costType,
     required this.costAmount,
     required this.confirmationThreshold,
@@ -146,6 +165,50 @@ class UpcomingActivity {
     this.challenge,
     this.managerConfirmedAt,
   });
+
+  factory UpcomingActivity.fromRow(Map<String, dynamic> row, String lobbyId) {
+    final activity = Activity.fromJson(_stripProjection(row));
+    final location = row['location'] as Map<String, dynamic>?;
+    return UpcomingActivity(
+      activity: activity,
+      recurrenceDayOfWeek: (row['recurrence_day_of_week'] as num?)?.toInt(),
+      seriesId: row['series_id'] as String?,
+      locationId: row['location_id'] as String?,
+      locationName: location?['name'] as String?,
+      locationDistrict: location?['district'] as String?,
+      locationLat: (location?['lat'] as num?)?.toDouble(),
+      locationLon: (location?['lon'] as num?)?.toDouble(),
+      costType: row['cost_type'] as String?,
+      costAmount: row['cost_amount'] as num?,
+      confirmationThreshold: (row['confirmation_threshold'] as num?)?.toInt(),
+      confirmationDeadline: row['confirmation_deadline'] != null
+          ? DateTime.parse(row['confirmation_deadline'] as String)
+          : null,
+      coach: AttachedProfessional.fromEmbed(row['coach']),
+      referee: AttachedProfessional.fromEmbed(row['referee']),
+      challenge: ChallengeContext.fromEmbed(row['challenge'], lobbyId),
+      managerConfirmedAt: row['manager_confirmed_at'] != null
+          ? DateTime.parse(row['manager_confirmed_at'] as String).toLocal()
+          : null,
+    );
+  }
+
+  static Map<String, dynamic> _stripProjection(Map<String, dynamic> row) {
+    return {...row}
+      ..remove('location')
+      ..remove('coach')
+      ..remove('referee')
+      ..remove('challenge')
+      ..remove('challenge_id')
+      ..remove('manager_confirmed_at')
+      ..remove('recurrence_day_of_week')
+      ..remove('series_id')
+      ..remove('location_id')
+      ..remove('cost_type')
+      ..remove('cost_amount')
+      ..remove('confirmation_threshold')
+      ..remove('confirmation_deadline');
+  }
 
   bool get isRecurring => recurrenceDayOfWeek != null;
 
@@ -170,18 +233,7 @@ class LobbyUpcomingActivitiesController
 
     final response = await supabase
         .from('activity')
-        .select(
-          '*, location(name, district), '
-          'coach:professional_booking!activity_coach_booking_id_fkey('
-          'id, status, professional_id, '
-          'professional:professional_id(display_name, is_verified)), '
-          'referee:professional_booking!activity_referee_booking_id_fkey('
-          'id, status, professional_id, '
-          'professional:professional_id(display_name, is_verified)), '
-          'challenge:lobby_challenge(id, status, target_lobby_id, agreed_cost, '
-          'initiator:initiator_lobby_id(name, mmr), '
-          'target:target_lobby_id(name, mmr))',
-        )
+        .select(lobbyActivitySelect)
         .eq('lobby_id', lobbyId)
         .gt('start_time', nowUtc.toIso8601String())
         .timeout(const Duration(seconds: 5));
@@ -191,52 +243,9 @@ class LobbyUpcomingActivitiesController
 
     final list = <UpcomingActivity>[];
     for (final row in rows) {
-      final activity = Activity.fromJson(_stripExtras(row));
-      final location = row['location'] as Map<String, dynamic>?;
-      list.add(UpcomingActivity(
-        activity: activity,
-        recurrenceDayOfWeek: (row['recurrence_day_of_week'] as num?)?.toInt(),
-        seriesId: row['series_id'] as String?,
-        locationId: row['location_id'] as String?,
-        locationName: location?['name'] as String?,
-        locationDistrict: location?['district'] as String?,
-        costType: row['cost_type'] as String?,
-        costAmount: row['cost_amount'] as num?,
-        confirmationThreshold:
-            (row['confirmation_threshold'] as num?)?.toInt(),
-        confirmationDeadline: row['confirmation_deadline'] != null
-            ? DateTime.parse(row['confirmation_deadline'] as String)
-            : null,
-        coach: AttachedProfessional.fromEmbed(row['coach']),
-        referee: AttachedProfessional.fromEmbed(row['referee']),
-        challenge: ChallengeContext.fromEmbed(row['challenge'], lobbyId),
-        managerConfirmedAt: row['manager_confirmed_at'] != null
-            ? DateTime.parse(row['manager_confirmed_at'] as String).toLocal()
-            : null,
-      ));
+      list.add(UpcomingActivity.fromRow(row, lobbyId));
     }
     list.sort((a, b) => a.nextStart.compareTo(b.nextStart));
     return list;
-  }
-
-  /// Strip columns the freezed `Activity.fromJson` doesn't know about
-  /// so the deserialisation succeeds. The augmented fields (location join,
-  /// recurrence, cost, confirmation) are read directly from the row
-  /// above and carried on `UpcomingActivity` instead.
-  Map<String, dynamic> _stripExtras(Map<String, dynamic> row) {
-    return {...row}
-      ..remove('location')
-      ..remove('coach')
-      ..remove('referee')
-      ..remove('challenge')
-      ..remove('challenge_id')
-      ..remove('manager_confirmed_at')
-      ..remove('recurrence_day_of_week')
-      ..remove('series_id')
-      ..remove('location_id')
-      ..remove('cost_type')
-      ..remove('cost_amount')
-      ..remove('confirmation_threshold')
-      ..remove('confirmation_deadline');
   }
 }

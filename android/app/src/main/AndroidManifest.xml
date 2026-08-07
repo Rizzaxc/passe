@@ -54,12 +54,15 @@
             <intent-filter>
                 <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
             </intent-filter>
-            <!-- Lobby invite links, e.g. passe://invite/CODE -->
-            <intent-filter android:autoVerify="false">
+            <!-- Verified lobby invite links, e.g. https://passe.vn/invite/CODE -->
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="passe" android:host="invite"/>
+                <data
+                    android:scheme="https"
+                    android:host="passe.vn"
+                    android:pathPrefix="/invite/"/>
             </intent-filter>
         </activity>
 

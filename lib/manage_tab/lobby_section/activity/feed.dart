@@ -1,4 +1,5 @@
-// Feed item models + renderers — action-based, no free-text chat
+// Feed item models + renderers — action-based; activity notes are the one
+// intentionally short free-text action.
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -64,6 +65,7 @@ enum PersonalActionKind {
     Icons.local_fire_department_outlined,
   ),
   late('late', 'Đến muộn', FeedTone.crimson, Icons.access_time_rounded),
+  note('note', 'Ghi chú', FeedTone.blue, Icons.sticky_note_2_outlined),
   bringGear(
     'bring_gear',
     'Mang thêm gear',
@@ -193,6 +195,7 @@ sealed class FeedItem {
           reactions: rawReactions
               ?.map((r) => FeedReaction.fromJson(r as Map<String, dynamic>))
               .toList(),
+          activityId: row['activity_id'] as String?,
         );
 
       case 'system':
@@ -236,10 +239,12 @@ sealed class FeedItem {
           totalAmount: payload['total_amount'] as num,
           perPersonAmount: payload['per_person_amount'] as num,
           note: payload['note'] as String?,
-          payees: payeesRaw
+          payees:
+              payeesRaw
                   ?.map((p) => PaymentPayee.fromJson(p as Map<String, dynamic>))
                   .toList() ??
               const [],
+          activityId: row['activity_id'] as String?,
         );
 
       // `photo` is no longer a natively-written kind — lobby_feed_data
@@ -254,6 +259,58 @@ sealed class FeedItem {
     }
   }
 }
+
+/// The activity a feed item is scoped to, if any. Only `PersonalItem`
+/// (`late` reports and member notes) and `PaymentRequestItem` (always) ever
+/// carry one — every
+/// other kind (`update`, `poll`, `system`, wall posts) is lobby-wide and
+/// returns null. Used to split the general Feed tab from each `ActivityCard`
+/// 's own per-activity log — see `lib/manage_tab/CLAUDE.md`.
+extension FeedItemActivityScope on FeedItem {
+  String? get activityId => switch (this) {
+    final PersonalItem p => p.activityId,
+    final PaymentRequestItem pr => pr.activityId,
+    _ => null,
+  };
+}
+
+bool _isActivityScoped(FeedItem item) =>
+    (item is PersonalItem || item is PaymentRequestItem) &&
+    item.activityId != null;
+
+/// The general Feed tab's view of a lobby's feed: everything except the
+/// activity-scoped `personal` and `payment_request` items that now live in
+/// their own `ActivityCard`'s expandable log (see `perActivityFeedItems`
+/// below). Also
+/// drops any `DayDivItem` left with nothing following it once those are
+/// removed, so a day with only activity-scoped posts doesn't leave a bare
+/// divider.
+List<FeedItem> generalFeedItems(List<FeedItem> items) {
+  final filtered = [
+    for (final i in items)
+      if (!_isActivityScoped(i)) i,
+  ];
+  final out = <FeedItem>[];
+  for (var i = 0; i < filtered.length; i++) {
+    final item = filtered[i];
+    if (item is DayDivItem) {
+      final hasContentAfter =
+          i + 1 < filtered.length && filtered[i + 1] is! DayDivItem;
+      if (!hasContentAfter) continue;
+    }
+    out.add(item);
+  }
+  return out;
+}
+
+/// One `ActivityCard`'s own action log — `personal` actions and
+/// `payment_request` items scoped to [activityId], oldest-first, with no day
+/// dividers (a single session's log is short enough not to need them).
+List<FeedItem> perActivityFeedItems(List<FeedItem> items, String activityId) =>
+    [
+      for (final i in items)
+        if (i.activityId == activityId) i,
+    ];
 
 String _formatHm(DateTime t) {
   final local = t.toLocal();
@@ -297,6 +354,14 @@ final class PersonalItem extends FeedItem {
   final PersonalActionKind action;
   final String? detail;
   final List<FeedReaction>? reactions;
+
+  /// The activity this action refers to — set for `late` and `note`, which
+  /// are posted from a specific `ActivityCard`. `remind_captain` and any
+  /// other personal action posted with no activity context stay null, which
+  /// keeps them on the general Feed tab — see `FeedItem.activityId` / the
+  /// Planner tab's per-card log.
+  final String? activityId;
+
   const PersonalItem({
     required this.author,
     required this.authorId,
@@ -305,6 +370,7 @@ final class PersonalItem extends FeedItem {
     required this.action,
     this.detail,
     this.reactions,
+    this.activityId,
   });
 }
 
@@ -392,6 +458,13 @@ final class PaymentRequestItem extends FeedItem {
   final String? note;
   final List<PaymentPayee> payees;
 
+  /// The activity this request is billing for — a real `lobby_feed_item
+  /// .activity_id` column now, distinct from `sourceActivityId`
+  /// (`payload->>'source_activity_id'`, kept for the amount/split math and
+  /// display). Both create paths always set this, so a payment request is
+  /// always activity-scoped and never appears in the general Feed tab.
+  final String? activityId;
+
   const PaymentRequestItem({
     required this.id,
     required this.author,
@@ -406,6 +479,7 @@ final class PaymentRequestItem extends FeedItem {
     required this.perPersonAmount,
     required this.note,
     required this.payees,
+    this.activityId,
   });
 
   bool get isFullyPaid => payees.isNotEmpty && payees.every((p) => p.paid);
@@ -1145,7 +1219,8 @@ class _PaymentRequestCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_PaymentRequestCard> createState() => _PaymentRequestCardState();
+  ConsumerState<_PaymentRequestCard> createState() =>
+      _PaymentRequestCardState();
 }
 
 class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
@@ -1329,8 +1404,9 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                                   style: TextStyle(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
-                                    color:
-                                        payee.paid ? pbGreen : colors.mutedForeground,
+                                    color: payee.paid
+                                        ? pbGreen
+                                        : colors.mutedForeground,
                                   ),
                                 ),
                                 if (payee.paid) ...[
@@ -1388,4 +1464,3 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
 }
 
 // ─── Photo card ────────────────────────────────────────────────
-

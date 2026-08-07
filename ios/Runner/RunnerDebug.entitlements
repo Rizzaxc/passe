@@ -10,5 +10,9 @@
 	</array>
 	<key>com.apple.developer.healthkit</key>
 	<true/>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:passe.vn</string>
+	</array>
 </dict>
 </plist>

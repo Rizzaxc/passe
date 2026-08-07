@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../activity/activity_card.dart';
+import '../activity/feed_controller.dart';
 import 'match.dart';
 import 'match_history_controller.dart';
 
@@ -22,11 +24,7 @@ class HistoryView extends ConsumerStatefulWidget {
   final String lobbyId;
   final String lobbyName;
 
-  const HistoryView({
-    super.key,
-    required this.lobbyId,
-    this.lobbyName = '',
-  });
+  const HistoryView({super.key, required this.lobbyId, this.lobbyName = ''});
 
   @override
   ConsumerState<HistoryView> createState() => _HistoryViewState();
@@ -35,34 +33,39 @@ class HistoryView extends ConsumerStatefulWidget {
 class _HistoryViewState extends ConsumerState<HistoryView> {
   _HistoryFilter _filter = _HistoryFilter.all;
 
-  List<LobbyMatch> _applyFilter(List<LobbyMatch> matches) {
+  List<LobbyHistoryEntry> _applyFilter(List<LobbyHistoryEntry> entries) {
     return switch (_filter) {
-      // A "challenge" is any competitive (non-practice) match — derived from
-      // the result enum, not a display-string match.
-      _HistoryFilter.challenge =>
-        matches.where((h) => !h.isPractice).toList(),
-      _HistoryFilter.practice => matches.where((h) => h.isPractice).toList(),
-      _HistoryFilter.win => matches.where((h) => h.isWin).toList(),
-      _HistoryFilter.loss => matches.where((h) => h.isLoss).toList(),
-      _HistoryFilter.draw => matches.where((h) => h.isDraw).toList(),
-      _HistoryFilter.all => matches,
+      // Completed challenge activities without a referee result still belong
+      // under Challenge. Ordinary past sessions belong under Practice.
+      _HistoryFilter.challenge => entries.where((h) => h.isChallenge).toList(),
+      _HistoryFilter.practice => entries.where((h) => h.isPractice).toList(),
+      _HistoryFilter.win =>
+        entries.whereType<LobbyMatch>().where((h) => h.isWin).toList(),
+      _HistoryFilter.loss =>
+        entries.whereType<LobbyMatch>().where((h) => h.isLoss).toList(),
+      _HistoryFilter.draw =>
+        entries.whereType<LobbyMatch>().where((h) => h.isDraw).toList(),
+      _HistoryFilter.all => entries,
     };
   }
 
   @override
   Widget build(BuildContext context) {
-    final matchesAsync =
-        ref.watch(lobbyMatchHistoryControllerProvider(widget.lobbyId));
-    final matches = matchesAsync.value ?? const <LobbyMatch>[];
-    final stats = LobbyMatchStats.from(matches);
-    final filtered = _applyFilter(matches);
+    final historyAsync = ref.watch(
+      lobbyMatchHistoryControllerProvider(widget.lobbyId),
+    );
+    final history = historyAsync.value ?? const LobbyHistory([]);
+    final stats = LobbyMatchStats.from(history.matches);
+    final filtered = _applyFilter(history.entries);
 
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(lobbyMatchHistoryControllerProvider(widget.lobbyId));
-        await ref.read(
-          lobbyMatchHistoryControllerProvider(widget.lobbyId).future,
-        );
+        ref.invalidate(lobbyFeedControllerProvider(widget.lobbyId));
+        await Future.wait([
+          ref.read(lobbyMatchHistoryControllerProvider(widget.lobbyId).future),
+          ref.read(lobbyFeedControllerProvider(widget.lobbyId).future),
+        ]);
       },
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -83,8 +86,7 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
               height: 44,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                 itemCount: _HistoryFilter.values.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 6),
                 itemBuilder: (_, i) {
@@ -105,8 +107,18 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
             sliver: SliverList.separated(
               itemCount: filtered.length,
               separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, i) =>
-                  _HistoryCard(match: filtered[i], lobbyName: widget.lobbyName),
+              itemBuilder: (context, i) => switch (filtered[i]) {
+                LobbyMatch match => _HistoryCard(
+                  match: match,
+                  lobbyName: widget.lobbyName,
+                ),
+                PastLobbyActivity entry => ActivityCard(
+                  lobbyId: widget.lobbyId,
+                  upcoming: entry.activity,
+                  isLeader: false,
+                  isPast: true,
+                ),
+              },
             ),
           ),
         ],
@@ -115,13 +127,13 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
   }
 
   static String _filterLabel(_HistoryFilter f) => switch (f) {
-        _HistoryFilter.all => 'Tất cả',
-        _HistoryFilter.challenge => 'Thách đấu',
-        _HistoryFilter.practice => 'Tập nội bộ',
-        _HistoryFilter.win => 'Thắng',
-        _HistoryFilter.loss => 'Thua',
-        _HistoryFilter.draw => 'Hoà',
-      };
+    _HistoryFilter.all => 'Tất cả',
+    _HistoryFilter.challenge => 'Thách đấu',
+    _HistoryFilter.practice => 'Tập nội bộ',
+    _HistoryFilter.win => 'Thắng',
+    _HistoryFilter.loss => 'Thua',
+    _HistoryFilter.draw => 'Hoà',
+  };
 }
 
 // ─── Stats card ────────────────────────────────────────────────
@@ -166,22 +178,10 @@ class _StatsCard extends StatelessWidget {
                   label: 'trận',
                   color: c.foreground,
                 ),
-                _HStat(
-                  value: '${stats.wins}',
-                  label: 'thắng',
-                  color: _green,
-                ),
-                _HStat(
-                  value: '${stats.losses}',
-                  label: 'thua',
-                  color: _orange,
-                ),
+                _HStat(value: '${stats.wins}', label: 'thắng', color: _green),
+                _HStat(value: '${stats.losses}', label: 'thua', color: _orange),
                 if (stats.draws > 0)
-                  _HStat(
-                    value: '${stats.draws}',
-                    label: 'hoà',
-                    color: _slate,
-                  ),
+                  _HStat(value: '${stats.draws}', label: 'hoà', color: _slate),
                 _HStat(
                   value: '${stats.winRate}%',
                   label: 'win rate',
@@ -201,11 +201,7 @@ class _HStat extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _HStat({
-    required this.value,
-    required this.label,
-    required this.color,
-  });
+  const _HStat({required this.value, required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -255,8 +251,7 @@ class _FilterPill extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: active ? _crimson : context.theme.colors.secondary,
           borderRadius: BorderRadius.circular(999),
@@ -296,29 +291,29 @@ class _HistoryCard extends StatelessWidget {
     final Color stripBg = isWin
         ? _greenTint
         : isLoss
-            ? const Color(0x1AF97316)
-            : isDraw
-                ? _slateTint
-                : colors.secondary;
+        ? const Color(0x1AF97316)
+        : isDraw
+        ? _slateTint
+        : colors.secondary;
     final Color stripFg = isWin
         ? _green
         : isLoss
-            ? _orange
-            : isDraw
-                ? _slate
-                : colors.mutedForeground;
+        ? _orange
+        : isDraw
+        ? _slate
+        : colors.mutedForeground;
     final String stripLabel = isWin
         ? 'Thắng'
         : isLoss
-            ? 'Thua'
-            : isDraw
-                ? 'Hoà'
-                // A scoreless encounter is still a challenge — the match was
-                // played, just unrefereed — so it reads differently from an
-                // internal scrimmage even though both share `result: practice`.
-                : isScoreless
-                    ? 'Không tính điểm'
-                    : 'Tập nội bộ';
+        ? 'Thua'
+        : isDraw
+        ? 'Hoà'
+        // A scoreless encounter is still a challenge — the match was
+        // played, just unrefereed — so it reads differently from an
+        // internal scrimmage even though both share `result: practice`.
+        : isScoreless
+        ? 'Không tính điểm'
+        : 'Tập nội bộ';
 
     // Set tallies
     int? usWins, themWins;
@@ -340,8 +335,7 @@ class _HistoryCard extends StatelessWidget {
         children: [
           // Result strip
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             color: stripBg,
             child: Row(
               children: [
@@ -404,8 +398,11 @@ class _HistoryCard extends StatelessWidget {
                           color: colors.secondary,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.sports_outlined,
-                            size: 18, color: colors.mutedForeground),
+                        child: Icon(
+                          Icons.sports_outlined,
+                          size: 18,
+                          color: colors.mutedForeground,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -443,7 +440,9 @@ class _HistoryCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              lobbyName.isNotEmpty ? lobbyName : 'lobby.us'.tr(),
+                              lobbyName.isNotEmpty
+                                  ? lobbyName
+                                  : 'lobby.us'.tr(),
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -473,8 +472,7 @@ class _HistoryCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color:
-                              colors.mutedForeground.withValues(alpha: 0.5),
+                          color: colors.mutedForeground.withValues(alpha: 0.5),
                           letterSpacing: 0.7,
                         ),
                       ),
@@ -519,8 +517,11 @@ class _HistoryCard extends StatelessWidget {
                           color: colors.secondary,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.groups_outlined,
-                            size: 18, color: colors.mutedForeground),
+                        child: Icon(
+                          Icons.groups_outlined,
+                          size: 18,
+                          color: colors.mutedForeground,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -572,8 +573,11 @@ class _HistoryCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Icon(FLucideIcons.mapPin,
-                        size: 11, color: colors.mutedForeground),
+                    Icon(
+                      FLucideIcons.mapPin,
+                      size: 11,
+                      color: colors.mutedForeground,
+                    ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
@@ -598,18 +602,24 @@ class _HistoryCard extends StatelessWidget {
                   const SizedBox(height: 9),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 9, vertical: 6),
+                      horizontal: 9,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: colors.background,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          color: colors.border.withValues(alpha: 0.6)),
+                        color: colors.border.withValues(alpha: 0.6),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.star_rounded,
-                            size: 12, color: Color(0xFFC58A1A)),
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 12,
+                          color: Color(0xFFC58A1A),
+                        ),
                         const SizedBox(width: 7),
                         Text(
                           'MVP',
@@ -665,24 +675,20 @@ class _SetChip extends StatelessWidget {
   final int us;
   final int them;
 
-  const _SetChip({
-    required this.setNum,
-    required this.us,
-    required this.them,
-  });
+  const _SetChip({required this.setNum, required this.us, required this.them});
 
   @override
   Widget build(BuildContext context) {
     final Color tone = us > them
         ? _green
         : us < them
-            ? _orange
-            : _slate;
+        ? _orange
+        : _slate;
     final Color tint = us > them
         ? _greenTint
         : us < them
-            ? const Color(0x1AF97316)
-            : _slateTint;
+        ? const Color(0x1AF97316)
+        : _slateTint;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 5),
       decoration: BoxDecoration(

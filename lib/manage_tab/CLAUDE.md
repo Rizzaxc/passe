@@ -38,14 +38,11 @@ coaching courses. Unlike Home (discovery), this is about entities the user is al
     `invite_link_card.dart` are the captain/coordinator-only generate/copy/share/regenerate/remove
     card embedded in `lobby_info_sheet.dart`, next to the SearchID row. `invite_landing_controller.dart`
     + `invite_landing_page.dart` back the `/invite/:code` route (`InviteRoute` in `router.dart`) that
-    a `passe://invite/CODE` deep link opens. The `passe` URL scheme is registered natively on both
-    platforms (`ios/Runner/Info.plist`'s `CFBundleURLTypes`, an `<intent-filter>` on
-    `android/app/src/main/AndroidManifest.xml`'s `MainActivity`) — no universal/app-links or web
-    fallback. No extra deep-link package is needed: the OS forwards an opened `passe://...` URL
-    straight to Flutter's platform channel as the *raw* URI, and `router.dart`'s `redirect` rewrites
-    it (`state.uri.scheme == 'passe'`) to the internal `InviteRoute` location before any other
-    redirect logic runs — go_router re-resolves `redirect` against the rewritten path, so normal
-    auth/onboarding gating still applies. Redemption is
+    verified `https://passe.vn/invite/CODE` link opens. Android App Links are registered in
+    `android/app/src/main/AndroidManifest.xml`; iOS Universal Links use the Runner entitlements.
+    The association documents and browser fallback live in the root `website/` Astro project. No
+    extra deep-link package is needed: Flutter's native Router integration passes the HTTPS path to
+    the existing `InviteRoute`, so normal auth/onboarding gating still applies. Redemption is
     instant auto-join (`redeem_lobby_invite_link`, `SECURITY DEFINER`) — no approval step, unlike a
     `lobby_befriend_record` join request. Guests hit the existing `ensureSignedIn` prompt
     (`lib/auth/guest_prompt.dart`); the router's own `pendingDestination` bookkeeping already bounces

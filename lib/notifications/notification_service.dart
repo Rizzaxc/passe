@@ -12,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/user_preferences.dart';
 import '../notification/notification_center_controller.dart';
 import '../notification/notification_unread_count_controller.dart';
 import '../router.dart';
@@ -55,6 +56,8 @@ class NotificationService with WidgetsBindingObserver {
   SupabaseClient get _supabase => Supabase.instance.client;
 
   bool _started = false;
+
+  static const _androidPermissionAskedKey = 'android_notification_permission_asked';
 
   String get _platform => Platform.isIOS ? 'ios' : 'android';
 
@@ -253,15 +256,29 @@ class NotificationService with WidgetsBindingObserver {
     if (ref.read(currentUserIdProvider) == null) return; // guest / signed-out
 
     final settings = await _messaging.getNotificationSettings();
-    switch (settings.authorizationStatus) {
-      case AuthorizationStatus.authorized:
-      case AuthorizationStatus.provisional:
-        await _registerIfPermitted();
-        return;
-      case AuthorizationStatus.denied:
-        return; // permanent on iOS — don't nag; a Settings hint can come later
-      case AuthorizationStatus.notDetermined:
-        break; // fall through to the soft-ask
+    if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional) {
+      await _registerIfPermitted();
+      return;
+    }
+
+    // iOS genuinely distinguishes "never asked" (notDetermined) from a real
+    // permanent refusal (denied) — don't nag once denied. Android's native
+    // layer has no notDetermined concept at all: FlutterFirebaseMessagingPlugin
+    // (Android) maps its permission check straight to authorized(1)/denied(0),
+    // so a fresh install that's never been asked also reports `denied` here.
+    // Falling through to `return` in that case (as the old iOS-only logic did)
+    // meant the soft-ask — and therefore the OS prompt — never fired on
+    // Android at all. Track "already asked" ourselves so Android still gets
+    // exactly one real prompt, without re-nagging after that.
+    if (Platform.isIOS &&
+        settings.authorizationStatus == AuthorizationStatus.denied) {
+      return;
+    }
+    if (Platform.isAndroid &&
+        await UserPreferences.instance.getBool(_androidPermissionAskedKey) ==
+            true) {
+      return;
     }
 
     if (!context.mounted) return;
@@ -269,6 +286,9 @@ class NotificationService with WidgetsBindingObserver {
     if (accepted != true) return;
 
     final result = await _messaging.requestPermission();
+    if (Platform.isAndroid) {
+      await UserPreferences.instance.setBool(_androidPermissionAskedKey, true);
+    }
     if (result.authorizationStatus == AuthorizationStatus.authorized ||
         result.authorizationStatus == AuthorizationStatus.provisional) {
       await _registerIfPermitted();

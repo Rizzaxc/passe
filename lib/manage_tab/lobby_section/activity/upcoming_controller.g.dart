@@ -8,59 +8,29 @@ part of 'upcoming_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Every current/future activity for a lobby, accounting for weekly
-/// recurrence, sorted soonest-first.
-///
-/// Strategy:
-///   1. Query for any candidate — either `start_time > now` (one-off) or
-///      `recurrence_day_of_week IS NOT NULL` (recurring series whose
-///      first occurrence may already be in the past).
-///   2. Compute the next-start instant for each candidate (recurring
-///      ones get advanced forward to the next matching weekday at the
-///      same time-of-day), dropping any whose next occurrence can't be
-///      resolved (a one-off already in the past).
-///   3. Sort by that next-start instant, soonest first — a lobby can
-///      legitimately have several activities live at once (an organic
-///      session and a challenge match, two different weekly slots, …).
+/// Every current/future activity for a lobby, sorted soonest-first. A lobby
+/// can legitimately have several live at once (an organic session and a
+/// challenge match, several weeks of a recurring series once materialised,
+/// …) — each is its own row, so this is a plain `start_time > now` query.
 
 @ProviderFor(LobbyUpcomingActivitiesController)
 final lobbyUpcomingActivitiesControllerProvider =
     LobbyUpcomingActivitiesControllerFamily._();
 
-/// Every current/future activity for a lobby, accounting for weekly
-/// recurrence, sorted soonest-first.
-///
-/// Strategy:
-///   1. Query for any candidate — either `start_time > now` (one-off) or
-///      `recurrence_day_of_week IS NOT NULL` (recurring series whose
-///      first occurrence may already be in the past).
-///   2. Compute the next-start instant for each candidate (recurring
-///      ones get advanced forward to the next matching weekday at the
-///      same time-of-day), dropping any whose next occurrence can't be
-///      resolved (a one-off already in the past).
-///   3. Sort by that next-start instant, soonest first — a lobby can
-///      legitimately have several activities live at once (an organic
-///      session and a challenge match, two different weekly slots, …).
+/// Every current/future activity for a lobby, sorted soonest-first. A lobby
+/// can legitimately have several live at once (an organic session and a
+/// challenge match, several weeks of a recurring series once materialised,
+/// …) — each is its own row, so this is a plain `start_time > now` query.
 final class LobbyUpcomingActivitiesControllerProvider
     extends
         $AsyncNotifierProvider<
           LobbyUpcomingActivitiesController,
           List<UpcomingActivity>
         > {
-  /// Every current/future activity for a lobby, accounting for weekly
-  /// recurrence, sorted soonest-first.
-  ///
-  /// Strategy:
-  ///   1. Query for any candidate — either `start_time > now` (one-off) or
-  ///      `recurrence_day_of_week IS NOT NULL` (recurring series whose
-  ///      first occurrence may already be in the past).
-  ///   2. Compute the next-start instant for each candidate (recurring
-  ///      ones get advanced forward to the next matching weekday at the
-  ///      same time-of-day), dropping any whose next occurrence can't be
-  ///      resolved (a one-off already in the past).
-  ///   3. Sort by that next-start instant, soonest first — a lobby can
-  ///      legitimately have several activities live at once (an organic
-  ///      session and a challenge match, two different weekly slots, …).
+  /// Every current/future activity for a lobby, sorted soonest-first. A lobby
+  /// can legitimately have several live at once (an organic session and a
+  /// challenge match, several weeks of a recurring series once materialised,
+  /// …) — each is its own row, so this is a plain `start_time > now` query.
   LobbyUpcomingActivitiesControllerProvider._({
     required LobbyUpcomingActivitiesControllerFamily super.from,
     required String super.argument,
@@ -101,22 +71,12 @@ final class LobbyUpcomingActivitiesControllerProvider
 }
 
 String _$lobbyUpcomingActivitiesControllerHash() =>
-    r'd1cf07b0446e12bbb353ab7d081ffa9e654990c1';
+    r'd64b7b8526a53c527b0f2230ac8d9c62ccc780ff';
 
-/// Every current/future activity for a lobby, accounting for weekly
-/// recurrence, sorted soonest-first.
-///
-/// Strategy:
-///   1. Query for any candidate — either `start_time > now` (one-off) or
-///      `recurrence_day_of_week IS NOT NULL` (recurring series whose
-///      first occurrence may already be in the past).
-///   2. Compute the next-start instant for each candidate (recurring
-///      ones get advanced forward to the next matching weekday at the
-///      same time-of-day), dropping any whose next occurrence can't be
-///      resolved (a one-off already in the past).
-///   3. Sort by that next-start instant, soonest first — a lobby can
-///      legitimately have several activities live at once (an organic
-///      session and a challenge match, two different weekly slots, …).
+/// Every current/future activity for a lobby, sorted soonest-first. A lobby
+/// can legitimately have several live at once (an organic session and a
+/// challenge match, several weeks of a recurring series once materialised,
+/// …) — each is its own row, so this is a plain `start_time > now` query.
 
 final class LobbyUpcomingActivitiesControllerFamily extends $Family
     with
@@ -136,20 +96,10 @@ final class LobbyUpcomingActivitiesControllerFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Every current/future activity for a lobby, accounting for weekly
-  /// recurrence, sorted soonest-first.
-  ///
-  /// Strategy:
-  ///   1. Query for any candidate — either `start_time > now` (one-off) or
-  ///      `recurrence_day_of_week IS NOT NULL` (recurring series whose
-  ///      first occurrence may already be in the past).
-  ///   2. Compute the next-start instant for each candidate (recurring
-  ///      ones get advanced forward to the next matching weekday at the
-  ///      same time-of-day), dropping any whose next occurrence can't be
-  ///      resolved (a one-off already in the past).
-  ///   3. Sort by that next-start instant, soonest first — a lobby can
-  ///      legitimately have several activities live at once (an organic
-  ///      session and a challenge match, two different weekly slots, …).
+  /// Every current/future activity for a lobby, sorted soonest-first. A lobby
+  /// can legitimately have several live at once (an organic session and a
+  /// challenge match, several weeks of a recurring series once materialised,
+  /// …) — each is its own row, so this is a plain `start_time > now` query.
 
   LobbyUpcomingActivitiesControllerProvider call(String lobbyId) =>
       LobbyUpcomingActivitiesControllerProvider._(
@@ -161,20 +111,10 @@ final class LobbyUpcomingActivitiesControllerFamily extends $Family
   String toString() => r'lobbyUpcomingActivitiesControllerProvider';
 }
 
-/// Every current/future activity for a lobby, accounting for weekly
-/// recurrence, sorted soonest-first.
-///
-/// Strategy:
-///   1. Query for any candidate — either `start_time > now` (one-off) or
-///      `recurrence_day_of_week IS NOT NULL` (recurring series whose
-///      first occurrence may already be in the past).
-///   2. Compute the next-start instant for each candidate (recurring
-///      ones get advanced forward to the next matching weekday at the
-///      same time-of-day), dropping any whose next occurrence can't be
-///      resolved (a one-off already in the past).
-///   3. Sort by that next-start instant, soonest first — a lobby can
-///      legitimately have several activities live at once (an organic
-///      session and a challenge match, two different weekly slots, …).
+/// Every current/future activity for a lobby, sorted soonest-first. A lobby
+/// can legitimately have several live at once (an organic session and a
+/// challenge match, several weeks of a recurring series once materialised,
+/// …) — each is its own row, so this is a plain `start_time > now` query.
 
 abstract class _$LobbyUpcomingActivitiesController
     extends $AsyncNotifier<List<UpcomingActivity>> {

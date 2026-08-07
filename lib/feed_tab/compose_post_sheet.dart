@@ -20,20 +20,28 @@ import 'tag_picker_sheet.dart';
 /// like a small, half-empty sheet rather than a real compose flow.
 ///
 /// [lobbyId] pre-filters the session list — used when opened from inside a
-/// lobby's feed rather than from the Feed tab.
-void showComposePostSheet(BuildContext context, {String? lobbyId}) {
+/// lobby's feed rather than from the Feed tab. [activityId] additionally
+/// selects one completed activity, so a History-card action cannot
+/// accidentally attach the post to the wrong session.
+void showComposePostSheet(
+  BuildContext context, {
+  String? lobbyId,
+  String? activityId,
+}) {
   Navigator.of(context, rootNavigator: true).push(
     MaterialPageRoute(
       fullscreenDialog: true,
-      builder: (_) => _ComposePostScreen(lobbyId: lobbyId),
+      builder: (_) =>
+          _ComposePostScreen(lobbyId: lobbyId, activityId: activityId),
     ),
   );
 }
 
 class _ComposePostScreen extends ConsumerStatefulWidget {
   final String? lobbyId;
+  final String? activityId;
 
-  const _ComposePostScreen({this.lobbyId});
+  const _ComposePostScreen({this.lobbyId, this.activityId});
 
   @override
   ConsumerState<_ComposePostScreen> createState() => _ComposePostScreenState();
@@ -47,6 +55,7 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
   int _ttlDays = 7;
   bool _submitting = false;
   bool _picking = false;
+  bool _triedInitialActivity = false;
 
   @override
   void dispose() {
@@ -131,6 +140,21 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
   @override
   Widget build(BuildContext context) {
     final sessionsAsync = ref.watch(postableSessionsProvider);
+    final sessions = sessionsAsync.value;
+    if (!_triedInitialActivity &&
+        widget.activityId != null &&
+        sessions != null) {
+      _triedInitialActivity = true;
+      final initial = sessions.cast<PostableSession?>().firstWhere(
+        (session) => session?.activityId == widget.activityId,
+        orElse: () => null,
+      );
+      if (initial != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _session == null) setState(() => _session = initial);
+        });
+      }
+    }
 
     return FScaffold(
       header: FHeader.nested(
@@ -151,6 +175,7 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
             _SessionPicker(
               sessionsAsync: sessionsAsync,
               lobbyId: widget.lobbyId,
+              activityId: widget.activityId,
               selected: _session,
               onChanged: (s) => setState(() {
                 _session = s;
@@ -322,8 +347,9 @@ class _MediaThumb extends StatelessWidget {
                   bottom: 4,
                   child: Text(
                     _durationLabel(item.duration!),
-                    style: context.theme.typography.body.xs
-                        .copyWith(color: Colors.white),
+                    style: context.theme.typography.body.xs.copyWith(
+                      color: Colors.white,
+                    ),
                   ),
                 ),
             ],
@@ -347,12 +373,14 @@ class _MediaThumb extends StatelessWidget {
 class _SessionPicker extends StatelessWidget {
   final AsyncValue<List<PostableSession>> sessionsAsync;
   final String? lobbyId;
+  final String? activityId;
   final PostableSession? selected;
   final ValueChanged<PostableSession?> onChanged;
 
   const _SessionPicker({
     required this.sessionsAsync,
     required this.lobbyId,
+    required this.activityId,
     required this.selected,
     required this.onChanged,
   });
@@ -361,7 +389,11 @@ class _SessionPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final sessions = (sessionsAsync.value ?? const [])
-        .where((s) => lobbyId == null || s.lobbyId == lobbyId)
+        .where(
+          (s) =>
+              (lobbyId == null || s.lobbyId == lobbyId) &&
+              (activityId == null || s.activityId == activityId),
+        )
         .toList();
     final isLoading = sessionsAsync.isLoading;
 
@@ -426,7 +458,10 @@ class _SessionPicker extends StatelessWidget {
         ],
       ),
       hint: 'feed.pickSessionHint'.tr(),
-      format: (s) => s.sourceLabel ?? 'feed.untitledSession'.tr(),
+      // The select field needs the date as part of a lobby activity's
+      // identity: the same lobby can have several postable sessions in the
+      // seven-day window. Lesson labels are already person-specific.
+      format: (s) => _selectedLabel(context, s),
       autoHide: true,
       enabled: !isLoading && sessions.isNotEmpty,
       control: FSelectControl.lifted(value: selected, onChange: onChanged),
@@ -453,5 +488,15 @@ class _SessionPicker extends StatelessWidget {
       if (s.alreadyPosted) 'feed.alreadyPosted'.tr(),
     ];
     return parts.join(' · ');
+  }
+
+  String _selectedLabel(BuildContext context, PostableSession session) {
+    final label = session.sourceLabel ?? 'feed.untitledSession'.tr();
+    if (session.lobbyId == null) return label;
+    final date = DateFormat(
+      'd/M',
+      context.locale.toString(),
+    ).format(session.startTime);
+    return '$label · $date';
   }
 }

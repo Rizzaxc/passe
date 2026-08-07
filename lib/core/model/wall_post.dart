@@ -122,8 +122,8 @@ class WallPost {
   /// emoji → count.
   final Map<String, int> reactions;
 
-  /// The viewer's own reaction, if any.
-  final String? myReaction;
+  /// Every emoji the viewer has added to this post.
+  final List<String> myReactions;
 
   const WallPost({
     required this.id,
@@ -142,7 +142,7 @@ class WallPost {
     this.sourceLabel,
     this.sourceVenueName,
     this.caption,
-    this.myReaction,
+    this.myReactions = const [],
   });
 
   String get authorHandle => '$authorUsername#$authorTagNumber';
@@ -184,7 +184,14 @@ class WallPost {
         for (final e in rawReactions.entries)
           e.key: (e.value as num?)?.toInt() ?? 0,
       },
-      myReaction: json['my_reaction'] as String?,
+      // `my_reactions` is the current RPC shape. Accept the former singular
+      // field too so an app update remains safe while the DB migration rolls
+      // out.
+      myReactions: json['my_reactions'] is List
+          ? (json['my_reactions'] as List).whereType<String>().toList()
+          : json['my_reaction'] is String
+          ? [json['my_reaction'] as String]
+          : const [],
     );
   }
 }

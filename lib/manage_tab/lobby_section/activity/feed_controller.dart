@@ -6,6 +6,46 @@ import 'feed.dart';
 
 part 'feed_controller.g.dart';
 
+/// Thrown by `postPersonalAction('late', ...)` when the caller already has a
+/// `late` report for this activity — races the DB's partial unique index
+/// (`lobby_feed_item_one_late_per_activity_idx`), same pattern as
+/// `UsernameTakenException` in `lib/auth/auth_controller.dart`.
+class AlreadyMarkedLateException implements Exception {
+  const AlreadyMarkedLateException();
+  @override
+  String toString() =>
+      'AlreadyMarkedLateException: already posted a late report for this activity';
+}
+
+/// Thrown when the caller already posted their one note for an activity.
+class AlreadyPostedActivityNoteException implements Exception {
+  const AlreadyPostedActivityNoteException();
+  @override
+  String toString() =>
+      'AlreadyPostedActivityNoteException: already posted a note for this activity';
+}
+
+const maxActivityNoteLength = 72;
+
+/// Trims and validates an activity note before it reaches Supabase.
+///
+/// `String.runes` matches PostgreSQL `char_length` for ordinary Unicode code
+/// points more closely than UTF-16 `String.length` does.
+String normalizeActivityNote(String value) {
+  final note = value.trim();
+  if (note.isEmpty) {
+    throw ArgumentError.value(value, 'value', 'activity note cannot be empty');
+  }
+  if (note.runes.length > maxActivityNoteLength) {
+    throw ArgumentError.value(
+      value,
+      'value',
+      'activity note cannot exceed $maxActivityNoteLength characters',
+    );
+  }
+  return note;
+}
+
 /// Activity-tab feed (chat-style action stream) for a lobby.
 ///
 /// Backed by `lobby_feed_item` via the `lobby_feed_data` RPC, which
@@ -87,6 +127,14 @@ class LobbyFeedController extends _$LobbyFeedController {
   /// `kind = 'personal'` items, unlike `update`/`poll` which are
   /// captain-only.
   ///
+  /// [activityId] scopes the post to one activity — only ever passed for
+  /// `late` (fired from a specific `ActivityCard`), which is also the only
+  /// action kind the DB gates to one-per-(activity, author) via a partial
+  /// unique index. Every other caller (e.g. `remind_captain` from the
+  /// Planner tab's empty state, where there's no activity yet) omits it, so
+  /// the post stays lobby-wide and shows on the general Feed tab — see
+  /// `FeedItemActivityScope` in `feed.dart`.
+  ///
   /// Callers include the Planner tab's activity card (`_postLate`) and its
   /// empty state, neither of which watches this provider — the Feed tab is
   /// a separate subtab and may not be mounted. Without `ref.keepAlive()`
@@ -96,21 +144,66 @@ class LobbyFeedController extends _$LobbyFeedController {
   /// already succeeded — surfacing as a spurious error toast over a feed
   /// item that *did* get posted (same failure mode `ScheduleActivityController.cancel`
   /// hit for the same reason).
-  Future<void> postPersonalAction(String actionKind) async {
+  Future<void> postPersonalAction(
+    String actionKind, {
+    String? activityId,
+  }) async {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
     final keepAliveLink = ref.keepAlive();
     try {
-      await supabase.from('lobby_feed_item').insert({
-        'lobby_id': lobbyId,
-        'author_id': userId,
-        'kind': 'personal',
-        'payload': {'action_kind': actionKind},
-      }).timeout(const Duration(seconds: 5));
+      await supabase
+          .from('lobby_feed_item')
+          .insert({
+            'lobby_id': lobbyId,
+            'author_id': userId,
+            'kind': 'personal',
+            'activity_id': ?activityId,
+            'payload': {'action_kind': actionKind},
+          })
+          .timeout(const Duration(seconds: 5));
 
       ref.invalidateSelf();
       await future;
+    } on PostgrestException catch (e) {
+      // Unique-violation race on lobby_feed_item_one_late_per_activity_idx —
+      // two rapid taps (or a stale disabled-button check) both reaching the
+      // insert. The client-side gate in ActivityCard should normally prevent
+      // this; this is the DB-side backstop.
+      if (e.code == '23505') {
+        throw const AlreadyMarkedLateException();
+      }
+      rethrow;
+    } finally {
+      keepAliveLink.close();
+    }
+  }
+
+  /// Post the caller's one free-text note for [activityId]. The database
+  /// independently validates lobby membership, activity scope, message
+  /// length, and the one-note-per-member rule.
+  Future<void> postActivityNote({
+    required String activityId,
+    required String note,
+  }) async {
+    final normalized = normalizeActivityNote(note);
+    final keepAliveLink = ref.keepAlive();
+    try {
+      await supabase
+          .rpc(
+            'post_activity_note',
+            params: {'p_activity_id': activityId, 'p_note': normalized},
+          )
+          .timeout(const Duration(seconds: 5));
+
+      ref.invalidateSelf();
+      await future;
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') {
+        throw const AlreadyPostedActivityNoteException();
+      }
+      rethrow;
     } finally {
       keepAliveLink.close();
     }
@@ -132,12 +225,17 @@ class LobbyFeedController extends _$LobbyFeedController {
   }) async {
     final keepAliveLink = ref.keepAlive();
     try {
-      await supabase.rpc('create_ancillary_payment_request', params: {
-        'p_activity_id': activityId,
-        'p_total_amount': amount,
-        'p_note': note,
-        'p_tagged_users': taggedUserIds,
-      }).timeout(const Duration(seconds: 5));
+      await supabase
+          .rpc(
+            'create_ancillary_payment_request',
+            params: {
+              'p_activity_id': activityId,
+              'p_total_amount': amount,
+              'p_note': note,
+              'p_tagged_users': taggedUserIds,
+            },
+          )
+          .timeout(const Duration(seconds: 5));
 
       ref.invalidateSelf();
       await future;
@@ -152,7 +250,10 @@ class LobbyFeedController extends _$LobbyFeedController {
   /// Once every tagged payee has acked, the RPC notifies the recipient.
   Future<void> markPaymentRequestPaid(String feedItemId) async {
     await supabase
-        .rpc('mark_payment_request_paid', params: {'p_feed_item_id': feedItemId})
+        .rpc(
+          'mark_payment_request_paid',
+          params: {'p_feed_item_id': feedItemId},
+        )
         .timeout(const Duration(seconds: 5));
 
     ref.invalidateSelf();

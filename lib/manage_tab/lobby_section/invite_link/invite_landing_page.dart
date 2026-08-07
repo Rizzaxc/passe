@@ -11,8 +11,8 @@ import '../../../router.dart';
 import '../../../ui/main.dart';
 import 'invite_landing_controller.dart';
 
-/// `/invite/:code` — lands here from a `passe://invite/CODE` deep link (see
-/// `lib/core/deep_link_service.dart`) or a direct push. Shows a preview of
+/// `/invite/:code` — lands here from a verified
+/// `https://passe.vn/invite/CODE` link or a direct push. Shows a preview of
 /// the lobby, then redeems the code on tap — instant auto-join, no approval
 /// step (see `redeem_lobby_invite_link`). Guests are routed through the
 /// existing sign-in prompt (`ensureSignedIn`); the router's own

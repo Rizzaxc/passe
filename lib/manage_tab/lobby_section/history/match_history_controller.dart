@@ -1,27 +1,60 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../activity/upcoming_controller.dart';
 import 'match.dart';
 
 part 'match_history_controller.g.dart';
 
-/// Played-match history for a lobby — wins, losses, practice sessions.
+/// Lobby history combines recorded matches with completed activities that do
+/// not have a match record yet. The latter retain their post-session actions
+/// without being incorrectly counted as competitive results.
 ///
-/// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
-/// which resolves the opponent lobby name, MVP username and current
-/// member usernames in one round-trip.
+/// Match details come from `lobby_match_history_data`; completed activities
+/// use the member-visible `activity` rows. A matching `activity_id` is
+/// de-duplicated in the client because challenge matches already render their
+/// richer match record.
 @riverpod
 class LobbyMatchHistoryController extends _$LobbyMatchHistoryController {
   final supabase = Supabase.instance.client;
 
   @override
-  Future<List<LobbyMatch>> build(String lobbyId) async {
-    final response = await supabase
-        .rpc('lobby_match_history_data', params: {'p_lobby_id': lobbyId})
-        .timeout(const Duration(seconds: 5));
+  Future<LobbyHistory> build(String lobbyId) async {
+    final now = DateTime.now().toUtc();
+    final responses = await Future.wait([
+      supabase
+          .rpc(
+            'lobby_match_history_data',
+            params: {'p_lobby_id': lobbyId, 'p_page_size': 100},
+          )
+          .timeout(const Duration(seconds: 5)),
+      supabase
+          .from('activity')
+          .select(lobbyActivitySelect)
+          .eq('lobby_id', lobbyId)
+          .lte('start_time', now.toIso8601String())
+          .order('start_time', ascending: false)
+          .limit(100)
+          .timeout(const Duration(seconds: 5)),
+    ]);
 
-    final rows = (response as List).cast<Map<String, dynamic>>();
-    return rows.map(_rowToMatch).toList();
+    final matches = (responses[0] as List)
+        .cast<Map<String, dynamic>>()
+        .map(_rowToMatch)
+        .toList();
+    final recordedActivityIds = {
+      for (final match in matches)
+        if (match.activityId != null) match.activityId!,
+    };
+    final completedActivities = (responses[1] as List)
+        .cast<Map<String, dynamic>>()
+        .map((row) => _rowToPastActivity(row, lobbyId))
+        .whereType<PastLobbyActivity>()
+        .where((activity) => !recordedActivityIds.contains(activity.id))
+        .toList();
+    final entries = <LobbyHistoryEntry>[...matches, ...completedActivities]
+      ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    return LobbyHistory(entries);
   }
 
   LobbyMatch _rowToMatch(Map<String, dynamic> row) {
@@ -31,10 +64,9 @@ class LobbyMatchHistoryController extends _$LobbyMatchHistoryController {
     List<(int, int)>? sets;
     if (rawSets is List) {
       sets = rawSets
-          .map<(int, int)>((s) => (
-                ((s as List)[0] as num).toInt(),
-                (s[1] as num).toInt(),
-              ))
+          .map<(int, int)>(
+            (s) => (((s as List)[0] as num).toInt(), (s[1] as num).toInt()),
+          )
           .toList();
     }
 
@@ -54,16 +86,28 @@ class LobbyMatchHistoryController extends _$LobbyMatchHistoryController {
       note: row['note'] as String?,
       refereeBookingId: row['referee_booking_id'] as String?,
       refereeName: row['referee_name'] as String?,
+      activityId: row['activity_id'] as String?,
+      occurredAt: playedAt,
     );
   }
 
+  PastLobbyActivity? _rowToPastActivity(
+    Map<String, dynamic> row,
+    String lobbyId,
+  ) {
+    final activity = UpcomingActivity.fromRow(row, lobbyId);
+    final completedAt = activity.nextEnd ?? activity.nextStart;
+    if (!completedAt.isBefore(DateTime.now())) return null;
+    return PastLobbyActivity(activity);
+  }
+
   LobbyMatchResult _parseResult(String db) => switch (db) {
-        'win' => LobbyMatchResult.win,
-        'loss' => LobbyMatchResult.loss,
-        'draw' => LobbyMatchResult.draw,
-        'practice' => LobbyMatchResult.practice,
-        _ => throw StateError('Unknown lobby_match_result: $db'),
-      };
+    'win' => LobbyMatchResult.win,
+    'loss' => LobbyMatchResult.loss,
+    'draw' => LobbyMatchResult.draw,
+    'practice' => LobbyMatchResult.practice,
+    _ => throw StateError('Unknown lobby_match_result: $db'),
+  };
 
   static const _weekdayShort = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 

@@ -8,29 +8,37 @@ part of 'match_history_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Played-match history for a lobby — wins, losses, practice sessions.
+/// Lobby history combines recorded matches with completed activities that do
+/// not have a match record yet. The latter retain their post-session actions
+/// without being incorrectly counted as competitive results.
 ///
-/// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
-/// which resolves the opponent lobby name, MVP username and current
-/// member usernames in one round-trip.
+/// Match details come from `lobby_match_history_data`; completed activities
+/// use the member-visible `activity` rows. A matching `activity_id` is
+/// de-duplicated in the client because challenge matches already render their
+/// richer match record.
 
 @ProviderFor(LobbyMatchHistoryController)
 final lobbyMatchHistoryControllerProvider =
     LobbyMatchHistoryControllerFamily._();
 
-/// Played-match history for a lobby — wins, losses, practice sessions.
+/// Lobby history combines recorded matches with completed activities that do
+/// not have a match record yet. The latter retain their post-session actions
+/// without being incorrectly counted as competitive results.
 ///
-/// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
-/// which resolves the opponent lobby name, MVP username and current
-/// member usernames in one round-trip.
+/// Match details come from `lobby_match_history_data`; completed activities
+/// use the member-visible `activity` rows. A matching `activity_id` is
+/// de-duplicated in the client because challenge matches already render their
+/// richer match record.
 final class LobbyMatchHistoryControllerProvider
-    extends
-        $AsyncNotifierProvider<LobbyMatchHistoryController, List<LobbyMatch>> {
-  /// Played-match history for a lobby — wins, losses, practice sessions.
+    extends $AsyncNotifierProvider<LobbyMatchHistoryController, LobbyHistory> {
+  /// Lobby history combines recorded matches with completed activities that do
+  /// not have a match record yet. The latter retain their post-session actions
+  /// without being incorrectly counted as competitive results.
   ///
-  /// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
-  /// which resolves the opponent lobby name, MVP username and current
-  /// member usernames in one round-trip.
+  /// Match details come from `lobby_match_history_data`; completed activities
+  /// use the member-visible `activity` rows. A matching `activity_id` is
+  /// de-duplicated in the client because challenge matches already render their
+  /// richer match record.
   LobbyMatchHistoryControllerProvider._({
     required LobbyMatchHistoryControllerFamily super.from,
     required String super.argument,
@@ -69,21 +77,24 @@ final class LobbyMatchHistoryControllerProvider
 }
 
 String _$lobbyMatchHistoryControllerHash() =>
-    r'13c236a7993a9cc4a12c67bba1f5586ed7cfdd13';
+    r'4e5e9ec60cbd85af364323f88e49c2e1e4c4d23c';
 
-/// Played-match history for a lobby — wins, losses, practice sessions.
+/// Lobby history combines recorded matches with completed activities that do
+/// not have a match record yet. The latter retain their post-session actions
+/// without being incorrectly counted as competitive results.
 ///
-/// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
-/// which resolves the opponent lobby name, MVP username and current
-/// member usernames in one round-trip.
+/// Match details come from `lobby_match_history_data`; completed activities
+/// use the member-visible `activity` rows. A matching `activity_id` is
+/// de-duplicated in the client because challenge matches already render their
+/// richer match record.
 
 final class LobbyMatchHistoryControllerFamily extends $Family
     with
         $ClassFamilyOverride<
           LobbyMatchHistoryController,
-          AsyncValue<List<LobbyMatch>>,
-          List<LobbyMatch>,
-          FutureOr<List<LobbyMatch>>,
+          AsyncValue<LobbyHistory>,
+          LobbyHistory,
+          FutureOr<LobbyHistory>,
           String
         > {
   LobbyMatchHistoryControllerFamily._()
@@ -95,11 +106,14 @@ final class LobbyMatchHistoryControllerFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Played-match history for a lobby — wins, losses, practice sessions.
+  /// Lobby history combines recorded matches with completed activities that do
+  /// not have a match record yet. The latter retain their post-session actions
+  /// without being incorrectly counted as competitive results.
   ///
-  /// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
-  /// which resolves the opponent lobby name, MVP username and current
-  /// member usernames in one round-trip.
+  /// Match details come from `lobby_match_history_data`; completed activities
+  /// use the member-visible `activity` rows. A matching `activity_id` is
+  /// de-duplicated in the client because challenge matches already render their
+  /// richer match record.
 
   LobbyMatchHistoryControllerProvider call(String lobbyId) =>
       LobbyMatchHistoryControllerProvider._(argument: lobbyId, from: this);
@@ -108,28 +122,30 @@ final class LobbyMatchHistoryControllerFamily extends $Family
   String toString() => r'lobbyMatchHistoryControllerProvider';
 }
 
-/// Played-match history for a lobby — wins, losses, practice sessions.
+/// Lobby history combines recorded matches with completed activities that do
+/// not have a match record yet. The latter retain their post-session actions
+/// without being incorrectly counted as competitive results.
 ///
-/// Backed by `lobby_match` via the `lobby_match_history_data` RPC,
-/// which resolves the opponent lobby name, MVP username and current
-/// member usernames in one round-trip.
+/// Match details come from `lobby_match_history_data`; completed activities
+/// use the member-visible `activity` rows. A matching `activity_id` is
+/// de-duplicated in the client because challenge matches already render their
+/// richer match record.
 
 abstract class _$LobbyMatchHistoryController
-    extends $AsyncNotifier<List<LobbyMatch>> {
+    extends $AsyncNotifier<LobbyHistory> {
   late final _$args = ref.$arg as String;
   String get lobbyId => _$args;
 
-  FutureOr<List<LobbyMatch>> build(String lobbyId);
+  FutureOr<LobbyHistory> build(String lobbyId);
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref =
-        this.ref as $Ref<AsyncValue<List<LobbyMatch>>, List<LobbyMatch>>;
+    final ref = this.ref as $Ref<AsyncValue<LobbyHistory>, LobbyHistory>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<List<LobbyMatch>>, List<LobbyMatch>>,
-              AsyncValue<List<LobbyMatch>>,
+              AnyNotifier<AsyncValue<LobbyHistory>, LobbyHistory>,
+              AsyncValue<LobbyHistory>,
               Object?,
               Object?
             >;

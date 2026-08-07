@@ -12,9 +12,8 @@ import 'feed_controller.dart';
 /// moderation, unlike free-text comments, and keeps the tally readable.
 const kWallReactions = ['🔥', '👏', '😂', '💪', '😮'];
 
-/// Tap to react, tap your own again to clear it. One reaction per person —
-/// the DB enforces it with a (post_id, user_id) primary key, so a second
-/// choice replaces the first rather than stacking.
+/// Each emoji can be toggled independently, so a person can react with more
+/// than one emoji to the same post.
 class ReactionBar extends ConsumerWidget {
   final WallPost post;
 
@@ -27,9 +26,8 @@ class ReactionBar extends ConsumerWidget {
 
     Future<void> react(String emoji) async {
       if (isGuest) return;
-      final next = post.myReaction == emoji ? null : emoji;
       try {
-        await ref.read(wallFeedControllerProvider.notifier).react(post.id, next);
+        await ref.read(wallFeedControllerProvider.notifier).react(post.id, emoji);
       } catch (e, st) {
         Talker().handle(e, st, 'React failed');
         if (!context.mounted) return;
@@ -49,7 +47,7 @@ class ReactionBar extends ConsumerWidget {
           _ReactionChip(
             emoji: emoji,
             count: post.reactions[emoji] ?? 0,
-            selected: post.myReaction == emoji,
+            selected: post.myReactions.contains(emoji),
             onTap: isGuest ? null : () => react(emoji),
           ),
           const SizedBox(width: 6),

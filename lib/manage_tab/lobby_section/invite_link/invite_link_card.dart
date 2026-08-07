@@ -8,7 +8,8 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import 'invite_link_controller.dart';
 
-String buildInviteLinkUrl(String code) => 'passe://invite/$code';
+String buildInviteLinkUrl(String code) =>
+    Uri.https('passe.vn', '/invite/$code').toString();
 
 /// Captain/coordinator-only card in the lobby info sheet: shows the lobby's
 /// current invite link (or a create button if none exists yet), with
