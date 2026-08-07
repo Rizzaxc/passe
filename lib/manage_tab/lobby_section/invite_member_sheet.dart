@@ -6,12 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../auth/auth_controller.dart';
+import '../../social/friendship_controller.dart';
 import '../../ui/main.dart';
+import 'members/controller.dart';
 
 void showInviteMemberSheet(BuildContext context, String lobbyId) {
   showPSheet(
     context: context,
-    maxHeightRatio: 0.9,
     builder: (_) => _InviteMemberSheet(lobbyId: lobbyId),
   );
 }
@@ -153,105 +154,190 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
     }
   }
 
+  // ── Friend shortlist ──────────────────────────────────────────
+
+  Widget _buildFriendShortlist(BuildContext context) {
+    final friends = ref.watch(friendsProvider);
+    if (friends.isEmpty) return const SizedBox.shrink();
+
+    // Wait for the member list so a current member never flashes in the
+    // shortlist before being filtered out.
+    final memberIds = ref
+        .watch(lobbyMembersControllerProvider(widget.lobbyId))
+        .value
+        ?.map((m) => m.userId)
+        .toSet();
+    if (memberIds == null) return const SizedBox.shrink();
+
+    final candidates = friends
+        .where((f) => !memberIds.contains(f.userId))
+        .take(25)
+        .toList();
+    if (candidates.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 8,
+      children: [
+        Text(
+          'lobby.inviteUser.friendsShortlist'.tr(),
+          style: context.theme.typography.body.sm.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(
+          height: 78,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: candidates.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (_, i) {
+              final f = candidates[i];
+              return _FriendShortlistCard(
+                friend: f,
+                busy: _sending,
+                onInvite: () => _inviteUser(
+                  _UserResult(
+                    id: f.userId,
+                    username: f.username,
+                    tagNumber: f.tagNumber,
+                    generatedAvatar: f.generatedAvatar,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   // ── Build ──────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
 
+    // Content alone (title + search box) is short enough to shrink-wrap
+    // to a sliver of the screen; floor it at half height so the sheet
+    // reads as a deliberate surface rather than a barely-there strip.
+    // The ConstrainedBox sits *inside* the scroll view so it only sets a
+    // floor on the content, not the ambient (possibly unbounded) height
+    // the scroll view itself is laid out with.
+    final minHeight = MediaQuery.sizeOf(context).height * 0.5;
+
     return SingleChildScrollView(
       primary: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 16,
-        children: [
-          PSheetTitle(
-            label: 'lobby.inviteMember'.tr(),
-            trailing: FButton.icon(
-              variant: .ghost,
-              onPress: () => Navigator.of(context).pop(),
-              child: const Icon(FLucideIcons.x),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: minHeight),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 16,
+          children: [
+            PSheetTitle(
+              label: 'lobby.inviteMember'.tr(),
+              trailing: FButton.icon(
+                variant: .ghost,
+                onPress: () => Navigator.of(context).pop(),
+                child: const Icon(FLucideIcons.x),
+              ),
             ),
-          ),
 
-          // Username / tag input + search button
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 8,
-            children: [
-              Expanded(
-                child: FTextField(
-                  label: Text('lobby.inviteUser.label'.tr()),
-                  hint: 'lobby.inviteUser.hint'.tr(),
-                  control: FTextFieldControl.managed(
-                    controller: _userController,
+            // Non-member friends, invitable in one tap instead of searching.
+            _buildFriendShortlist(context),
+
+            // Username / tag input + search button
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 6,
+              children: [
+                Text(
+                  'lobby.inviteUser.label'.tr(),
+                  style: context.theme.typography.body.sm.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
-                  description: Text('lobby.inviteUser.description'.tr()),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 22),
-                child: FButton(
-                  variant: .outline,
-                  onPress: _searching ? null : _search,
-                  child: _searching
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text('lobby.inviteUser.search'.tr()),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  spacing: 8,
+                  children: [
+                    Expanded(
+                      child: FTextField(
+                        hint: 'lobby.inviteUser.hint'.tr(),
+                        control: FTextFieldControl.managed(
+                          controller: _userController,
+                        ),
+                      ),
+                    ),
+                    FButton(
+                      variant: .outline,
+                      onPress: _searching ? null : _search,
+                      child: _searching
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text('lobby.inviteUser.search'.tr()),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
+                Text(
+                  'lobby.inviteUser.description'.tr(),
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                ),
+              ],
+            ),
 
-          // Search results
-          if (_searchResults != null)
-            _searchResults!.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text(
-                      'lobby.inviteUser.notFound'.tr(
-                        namedArgs: {'name': _userController.text.trim()},
+            // Search results
+            if (_searchResults != null)
+              _searchResults!.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'lobby.inviteUser.notFound'.tr(
+                          namedArgs: {'name': _userController.text.trim()},
+                        ),
+                        style: context.theme.typography.body.sm.copyWith(
+                          color: colors.mutedForeground,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      style: context.theme.typography.body.sm.copyWith(
-                        color: colors.mutedForeground,
-                        fontStyle: FontStyle.italic,
+                    )
+                  : Container(
+                      decoration: BoxDecoration(
+                        color: colors.card,
+                        borderRadius: context.theme.style.borderRadius.md,
+                        border: Border.all(color: colors.border),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  )
-                : Container(
-                    decoration: BoxDecoration(
-                      color: colors.card,
-                      borderRadius: context.theme.style.borderRadius.md,
-                      border: Border.all(color: colors.border),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (var i = 0; i < _searchResults!.length; i++) ...[
-                          _UserRow(
-                            user: _searchResults![i],
-                            busy: _sending,
-                            onInvite: () => _inviteUser(_searchResults![i]),
-                          ),
-                          if (i < _searchResults!.length - 1)
-                            Divider(
-                              height: 1,
-                              indent: 48,
-                              color: colors.border.withValues(alpha: 0.5),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (var i = 0; i < _searchResults!.length; i++) ...[
+                            _UserRow(
+                              user: _searchResults![i],
+                              busy: _sending,
+                              onInvite: () => _inviteUser(_searchResults![i]),
                             ),
+                            if (i < _searchResults!.length - 1)
+                              Divider(
+                                height: 1,
+                                indent: 48,
+                                color: colors.border.withValues(alpha: 0.5),
+                              ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
 
-          const SizedBox(height: 8),
-        ],
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
@@ -271,6 +357,51 @@ class _UserResult {
     required this.tagNumber,
     this.generatedAvatar,
   });
+}
+
+class _FriendShortlistCard extends StatelessWidget {
+  final FriendUser friend;
+  final bool busy;
+  final VoidCallback onInvite;
+
+  const _FriendShortlistCard({
+    required this.friend,
+    required this.busy,
+    required this.onInvite,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+
+    return GestureDetector(
+      onTap: busy ? null : onInvite,
+      child: SizedBox(
+        width: 64,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PUserAvatar(
+              userId: friend.userId,
+              username: friend.username,
+              generatedAvatar: friend.generatedAvatar,
+              radius: 24,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              friend.username,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: context.theme.typography.body.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _UserRow extends StatelessWidget {

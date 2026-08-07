@@ -381,6 +381,7 @@
             "cancelBtn": "Cancel"
         },
         "inviteUser": {
+            "friendsShortlist": "Quick invite",
             "label": "Username",
             "hint": "e.g. Thach#1234 or #1234",
             "description": "Enter username#tag, just a username, or just #tag to search.",

@@ -18,7 +18,12 @@ import 'friendship_controller.dart';
 /// (see `network_selection_screen.dart`) rather than a bottom sheet, since
 /// this has the same multi-section depth as those.
 class FriendsScreen extends ConsumerStatefulWidget {
-  const FriendsScreen({super.key});
+  /// Prefills the search box and runs the search immediately — used when a
+  /// caller (e.g. the Discover filter's `username#tag` shortcut) already
+  /// knows the exact query, so there's no reason to wait for the debounce.
+  final String? initialQuery;
+
+  const FriendsScreen({super.key, this.initialQuery});
 
   @override
   ConsumerState<FriendsScreen> createState() => _FriendsScreenState();
@@ -29,6 +34,16 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   List<_UserResult>? _results;
   bool _searching = false;
   Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialQuery?.trim();
+    if (initial != null && initial.isNotEmpty) {
+      _controller.text = initial;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _search());
+    }
+  }
 
   @override
   void dispose() {

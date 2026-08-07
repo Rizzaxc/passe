@@ -7,12 +7,19 @@ import '../core/model/enum.dart';
 import '../core/model/timeslot.dart';
 import '../core/state/selected_sport_state.dart';
 import '../core/user_preferences.dart';
+import '../social/friends_screen.dart';
 import '../ui/district_select.dart';
 import '../ui/search_field.dart';
 import '../ui/sheet.dart';
 import 'filter_controller.dart';
 
 export 'filter_controller.dart' show FilterData, filterStateProvider;
+
+/// Matches `name#1234` or bare `#1234` — `tag_number` is always exactly 4
+/// digits (`character varying(4)`, zero-padded — see `schema/passe.sql`'s
+/// `user` table default), so requiring the full 4 digits doubles as "the
+/// user finished typing a tag", with no separate submit/debounce needed.
+final _userTagPattern = RegExp(r'^[^#]*#\d{4}$');
 
 /// Persisted "has anyone ever seen the filter-fields coach mark" flag —
 /// shown once, the very first time [FilterSheet] opens for a user,
@@ -165,6 +172,23 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     super.dispose();
   }
 
+  /// A `username#tag` (or bare `#tag`) search isn't a Discover query at all
+  /// — it's a person lookup, so it hands off to the dedicated friend search
+  /// (`FriendsScreen`) instead of running through the lobby/pro/location
+  /// RPCs, which don't know what to do with a `#`.
+  void _onSearchChanged(String value) {
+    ref.read(filterStateProvider.notifier).setFilter(value);
+    if (!_userTagPattern.hasMatch(value.trim())) return;
+
+    final navigator = Navigator.of(context);
+    navigator.pop();
+    navigator.push(
+      MaterialPageRoute(
+        builder: (_) => FriendsScreen(initialQuery: value.trim()),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final filter = ref.watch(filterStateProvider);
@@ -237,7 +261,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                     child: PSearchField(
                       hint: context.tr('homeTab.filter.searchHint'),
                       controller: _searchController,
-                      onChange: (value) => notifier.setFilter(value),
+                      onChange: _onSearchChanged,
                     ),
                   ),
                   Expanded(

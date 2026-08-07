@@ -383,6 +383,7 @@
             "cancelBtn": "Huỷ"
         },
         "inviteUser": {
+            "friendsShortlist": "Mời nhanh",
             "label": "Tên người dùng",
             "hint": "abcxyz#1234 hoặc #1234",
             "description": "Nhập username#tag, chỉ username, hoặc chỉ #tag để tìm.",
