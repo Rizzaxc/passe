@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/model/enum.dart';
 
 part 'booking_controller.g.dart';
 
@@ -11,36 +12,48 @@ class ProfessionalServiceOption {
   final String id;
   final String serviceType;
   final String? description;
-  final double? hourlyRate;
+  final double? priceAmount;
   final int? minDurationMinutes;
   final int? maxParticipants;
   final int sessionCount;
-  final String pricingMode; // 'per_session' | 'wholesale'
+  final ProfessionalPricingKind pricingKind;
 
   const ProfessionalServiceOption({
     required this.id,
     required this.serviceType,
     this.description,
-    this.hourlyRate,
+    this.priceAmount,
     this.minDurationMinutes,
     this.maxParticipants,
     required this.sessionCount,
-    required this.pricingMode,
+    required this.pricingKind,
   });
 
   bool get isPackage => sessionCount > 1;
   bool get isGroup => (maxParticipants ?? 1) > 1;
+
+  /// Price of one session at [duration]. Hourly services scale with time;
+  /// per-session services remain fixed regardless of duration or headcount.
+  double? priceFor(Duration duration) {
+    final amount = priceAmount;
+    if (amount == null) return null;
+    return pricingKind == ProfessionalPricingKind.hourly
+        ? amount * duration.inMinutes / 60
+        : amount;
+  }
 
   factory ProfessionalServiceOption.fromJson(Map<String, dynamic> json) {
     return ProfessionalServiceOption(
       id: json['id'] as String,
       serviceType: json['service_type'] as String,
       description: json['service_description'] as String?,
-      hourlyRate: double.tryParse(json['hourly_rate']?.toString() ?? ''),
+      priceAmount: double.tryParse(json['price_amount']?.toString() ?? ''),
       minDurationMinutes: (json['min_duration_minutes'] as num?)?.toInt(),
       maxParticipants: (json['max_participants'] as num?)?.toInt(),
       sessionCount: (json['session_count'] as num?)?.toInt() ?? 1,
-      pricingMode: json['pricing_mode'] as String? ?? 'per_session',
+      pricingKind: ProfessionalPricingKind.fromValue(
+        json['pricing_kind'] as String?,
+      ),
     );
   }
 }
@@ -113,6 +126,7 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
     required DateTime end,
     String? notes,
     String? locationId,
+    String? customLocationName,
     List<String>? participantUserIds,
     String? existingPackageId,
     bool createPackage = false,
@@ -137,6 +151,7 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
               'p_end': end.toUtc().toIso8601String(),
               'p_notes': notes,
               'p_location_id': locationId,
+              'p_custom_location_name': customLocationName,
               'p_participant_user_ids': participantUserIds ?? const <String>[],
               'p_existing_package_id': existingPackageId,
               'p_create_package': createPackage,

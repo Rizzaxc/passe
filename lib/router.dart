@@ -612,11 +612,12 @@ class ManageRequestsRoute extends GoRouteData with $ManageRequestsRoute {
   const ManageRequestsRoute({this.highlightBookingId});
 
   // In pro mode, ManageTab's subtab list is [schedule, pending requests,
-  // history] instead of [schedule, lobby, coaching] — index 1 lands on
-  // pending requests only when pro mode is active (see ManageTab.build).
+  // history] instead of [schedule, lobby, coaching]. The landing widget
+  // verifies the linked professional and activates pro mode before mounting
+  // index 1, so notification taps can never fall through to the Lobby tab.
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      ManageTab.withInitialTab(1, highlightBookingId: highlightBookingId);
+      ProfessionalRequestsLanding(highlightBookingId: highlightBookingId);
 }
 
 @immutable

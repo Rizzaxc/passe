@@ -283,7 +283,7 @@ final class ProfessionalBookingControllerProvider
 }
 
 String _$professionalBookingControllerHash() =>
-    r'11940e3ffb4c3146deef2ee54401f5b799b731d6';
+    r'4275464850cc894e96766e58210269c5cf4b0b84';
 
 /// Requests a booking through the server-side professional booking workflow.
 /// The RPC derives ownership, price, package details, and the initial status;

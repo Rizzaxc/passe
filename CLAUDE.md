@@ -157,7 +157,8 @@ Tables are `snake_case`, singular. Client identity is `auth.uid()`; RLS enforces
 **Professionals (coaches / referees)**
 - `professional` — the hireable profile (role, `sports bigint[]`, `average_rating`, `review_count`,
   `is_verified`).
-- `professional_service` — offered services (type, hourly_rate, duration, participants).
+- `professional_service` — offered services (type, `price_amount`, `pricing_kind`, duration,
+  participants). `pricing_kind` is `hourly` or `per_session`.
 - `professional_booking` (+ `booking_additional_users`) — an engagement; status enum
   (`requested` → … never directly `completed`). `professional_booking_review` holds the rating that
   rolls up into `professional.average_rating`.

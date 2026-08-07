@@ -13,9 +13,8 @@ import 'booking_location_field.dart';
 import 'pending_activity_booking_state.dart';
 
 /// "Đặt lịch" flow: pick one of the professional's active services, a date
-/// + start time, an optional note, then insert a `professional_booking` row
-/// (status defaults to `requested` — the professional accepts/rejects out
-/// of band; there's no in-app professional-side flow yet).
+/// + start time, an optional note, then submit an atomic booking request.
+/// Professionals accept or reject it from Manage in professional mode.
 void showProfessionalBookingSheet(
   BuildContext context,
   ProfessionalFeedItem item,
@@ -46,6 +45,7 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
   final _participantInputController = TextEditingController();
 
   String? _locationId;
+  String? _customLocationName;
   final List<_Participant> _participants = [];
   bool get _isCoach => widget.item.role == ProfessionalRole.coach;
 
@@ -154,6 +154,7 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
             end: end,
             notes: _notesController.text.trim(),
             locationId: _isCoach ? _locationId : null,
+            customLocationName: _isCoach ? _customLocationName : null,
             participantUserIds: _participants.isEmpty
                 ? null
                 : _participants.map((p) => p.id).toList(),
@@ -310,8 +311,12 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
                   if (_isCoach)
                     BookingLocationField(
                       professionalId: widget.item.id,
-                      value: _locationId,
-                      onChanged: (id) => setState(() => _locationId = id),
+                      locationId: _locationId,
+                      customLocationName: _customLocationName,
+                      onChanged: (id, name) => setState(() {
+                        _locationId = id;
+                        _customLocationName = name;
+                      }),
                     ),
                   if (selected.isGroup)
                     _Section(
@@ -413,12 +418,9 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
   String _priceSuffix(ProfessionalServiceOption service) {
-    if (service.hourlyRate == null) return '';
-    if (service.pricingMode == 'wholesale') {
-      return ' · ${formatVnd(service.hourlyRate!)}₫ trọn gói';
-    }
     final duration = service.minDurationMinutes ?? 60;
-    final perSession = service.hourlyRate! * duration / 60;
+    final perSession = service.priceFor(Duration(minutes: duration));
+    if (perSession == null) return '';
     if (service.isPackage) {
       return ' · ${formatVnd(perSession)}₫/buổi × ${service.sessionCount} buổi';
     }
@@ -582,14 +584,12 @@ class _ServiceOption extends StatelessWidget {
                 ],
               ),
             ),
-            if (service.hourlyRate != null)
+            if (service.priceAmount != null)
               Flexible(
                 child: Text(
-                  service.pricingMode == 'wholesale'
-                      ? '${formatVnd(service.hourlyRate!)}₫ trọn gói'
-                      : service.isPackage
-                      ? '${formatVnd(service.hourlyRate!)}₫/giờ · ${service.sessionCount} buổi'
-                      : '${formatVnd(service.hourlyRate!)}₫/giờ',
+                  '${formatVnd(service.priceAmount!)}₫/'
+                  '${service.pricingKind == ProfessionalPricingKind.hourly ? 'giờ' : 'buổi'}'
+                  '${service.isPackage ? ' · ${service.sessionCount} buổi' : ''}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: context.theme.typography.body.xs.copyWith(

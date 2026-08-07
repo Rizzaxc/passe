@@ -3,9 +3,11 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../auth/auth_controller.dart';
 import '../core/format.dart';
 import '../core/model/enum.dart';
 import '../core/model/professional_feed_item.dart';
+import '../router.dart';
 import '../ui/theme.dart';
 import 'booking_sheet.dart';
 import 'controller.dart';
@@ -113,7 +115,7 @@ class _HeaderBar extends StatelessWidget {
   }
 }
 
-class _Body extends StatelessWidget {
+class _Body extends ConsumerWidget {
   final ProfessionalFeedItem item;
 
   const _Body({required this.item});
@@ -132,7 +134,7 @@ class _Body extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final isCoach = item.role == ProfessionalRole.coach;
     // Single accent across the screen; role is conveyed by the label below,
@@ -271,7 +273,8 @@ class _Body extends StatelessWidget {
                             icon: FLucideIcons.wallet,
                             iconColor: colors.primary,
                             label: formatVnd(item.priceFrom!),
-                            sub: 'đ/giờ',
+                            sub:
+                                'đ/${item.priceFromKind == ProfessionalPricingKind.perSession ? 'buổi' : 'giờ'}',
                           ),
                         ),
                       ],
@@ -333,7 +336,13 @@ class _Body extends StatelessWidget {
                 ),
                 Expanded(
                   child: FButton(
-                    onPress: () => showProfessionalBookingSheet(context, item),
+                    onPress: () {
+                      if (ref.read(currentUserIdProvider) == null) {
+                        const ProfileRoute().go(context);
+                        return;
+                      }
+                      showProfessionalBookingSheet(context, item);
+                    },
                     child: const Text('Đặt lịch'),
                   ),
                 ),

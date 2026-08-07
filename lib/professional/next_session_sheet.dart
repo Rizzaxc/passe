@@ -41,6 +41,7 @@ class _NextSessionSheetState extends ConsumerState<_NextSessionSheet> {
   late DateTime _date;
   TimeOfDay _start = const TimeOfDay(hour: 18, minute: 0);
   String? _locationId;
+  String? _customLocationName;
   final _participantInputController = TextEditingController();
   final List<(String id, String label)> _participants = [];
 
@@ -114,7 +115,8 @@ class _NextSessionSheetState extends ConsumerState<_NextSessionSheet> {
     final serviceId = widget.booking.serviceId;
     final packageId = widget.booking.packageId;
     if (serviceId == null || packageId == null) return;
-    if (_locationId == null || _locationId!.isEmpty) {
+    if ((_locationId == null || _locationId!.isEmpty) &&
+        (_customLocationName == null || _customLocationName!.isEmpty)) {
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.circleX),
@@ -141,9 +143,11 @@ class _NextSessionSheetState extends ConsumerState<_NextSessionSheet> {
             start: start,
             end: end,
             locationId: _locationId,
+            customLocationName: _customLocationName,
             existingPackageId: packageId,
-            participantUserIds:
-                _participants.isEmpty ? null : _participants.map((p) => p.$1).toList(),
+            participantUserIds: _participants.isEmpty
+                ? null
+                : _participants.map((p) => p.$1).toList(),
           );
     } catch (e, st) {
       Talker().handle(e, st, 'Schedule next package session failed');
@@ -202,9 +206,7 @@ class _NextSessionSheetState extends ConsumerState<_NextSessionSheet> {
               FTile(
                 prefix: const Icon(FLucideIcons.calendar),
                 title: const Text('Ngày'),
-                details: Text(
-                  '${_date.day}/${_date.month}/${_date.year}',
-                ),
+                details: Text('${_date.day}/${_date.month}/${_date.year}'),
                 onPress: _pickDate,
               ),
               FTile(
@@ -219,8 +221,12 @@ class _NextSessionSheetState extends ConsumerState<_NextSessionSheet> {
           ),
           BookingLocationField(
             professionalId: widget.booking.professionalId,
-            value: _locationId,
-            onChanged: (id) => setState(() => _locationId = id),
+            locationId: _locationId,
+            customLocationName: _customLocationName,
+            onChanged: (id, name) => setState(() {
+              _locationId = id;
+              _customLocationName = name;
+            }),
           ),
           if (maxParticipants > 1) ...[
             Text(

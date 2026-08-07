@@ -337,11 +337,10 @@ class _ServiceCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
-    final priceLabel = service.hourlyRate == null
+    final priceLabel = service.priceAmount == null
         ? null
-        : service.pricingMode == 'wholesale'
-        ? '${formatVnd(service.hourlyRate!)}₫ trọn gói'
-        : '${formatVnd(service.hourlyRate!)}₫/buổi';
+        : '${formatVnd(service.priceAmount!)}₫/'
+              '${service.pricingKind == ProfessionalPricingKind.hourly ? 'giờ' : 'buổi'}';
 
     return FTappable(
       onPress: () => showServiceEditorSheet(
@@ -452,7 +451,7 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
   late final TextEditingController _sessionCountCtrl;
   late final TextEditingController _maxParticipantsCtrl;
   Sport _sport = Sport.soccer;
-  String _pricingMode = 'per_session';
+  ProfessionalPricingKind _pricingKind = ProfessionalPricingKind.hourly;
 
   @override
   void initState() {
@@ -460,7 +459,9 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
     final e = widget.existing;
     _typeCtrl = TextEditingController(text: e?.serviceType);
     _descCtrl = TextEditingController(text: e?.description);
-    _priceCtrl = TextEditingController(text: e?.hourlyRate?.toStringAsFixed(0));
+    _priceCtrl = TextEditingController(
+      text: e?.priceAmount?.toStringAsFixed(0),
+    );
     _durationCtrl = TextEditingController(
       text: e?.minDurationMinutes?.toString() ?? '60',
     );
@@ -471,7 +472,7 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
       text: e?.maxParticipants?.toString() ?? '1',
     );
     if (e != null) {
-      _pricingMode = e.pricingMode;
+      _pricingKind = e.pricingKind;
       if (e.sportId >= 0 && e.sportId < Sport.values.length) {
         _sport = Sport.values[e.sportId];
       }
@@ -499,11 +500,11 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
             sportId: _sport.index,
             serviceType: _typeCtrl.text.trim(),
             description: _descCtrl.text.trim(),
-            hourlyRate: double.tryParse(_priceCtrl.text.trim()),
+            priceAmount: double.tryParse(_priceCtrl.text.trim()),
             minDurationMinutes: int.tryParse(_durationCtrl.text.trim()),
             maxParticipants: int.tryParse(_maxParticipantsCtrl.text.trim()),
             sessionCount: int.tryParse(_sessionCountCtrl.text.trim()) ?? 1,
-            pricingMode: _pricingMode,
+            pricingKind: _pricingKind,
           );
     } catch (e, st) {
       Talker().handle(e, st, 'Service upsert failed');
@@ -527,8 +528,6 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
     final saving = ref.watch(
       serviceEditorControllerProvider(widget.professionalId),
     );
-    final sessionCount = int.tryParse(_sessionCountCtrl.text) ?? 1;
-
     return SingleChildScrollView(
       primary: false,
       child: Column(
@@ -599,43 +598,41 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
             keyboardType: TextInputType.number,
           ),
           Row(
-            spacing: 10,
+            spacing: 8,
             children: [
               Expanded(
-                child: FTextField(
-                  label: Text(
-                    sessionCount > 1 && _pricingMode == 'wholesale'
-                        ? 'Giá trọn gói'
-                        : 'Giá mỗi buổi',
+                child: FButton(
+                  variant: _pricingKind == ProfessionalPricingKind.hourly
+                      ? .primary
+                      : .outline,
+                  onPress: () => setState(
+                    () => _pricingKind = ProfessionalPricingKind.hourly,
                   ),
-                  control: FTextFieldControl.managed(controller: _priceCtrl),
-                  keyboardType: TextInputType.number,
+                  child: const Text('Theo giờ'),
+                ),
+              ),
+              Expanded(
+                child: FButton(
+                  variant: _pricingKind == ProfessionalPricingKind.perSession
+                      ? .primary
+                      : .outline,
+                  onPress: () => setState(
+                    () => _pricingKind = ProfessionalPricingKind.perSession,
+                  ),
+                  child: const Text('Theo buổi'),
                 ),
               ),
             ],
           ),
-          if (sessionCount > 1)
-            Row(
-              spacing: 8,
-              children: [
-                Expanded(
-                  child: FButton(
-                    variant: _pricingMode == 'per_session'
-                        ? .primary
-                        : .outline,
-                    onPress: () => setState(() => _pricingMode = 'per_session'),
-                    child: const Text('Giá/buổi'),
-                  ),
-                ),
-                Expanded(
-                  child: FButton(
-                    variant: _pricingMode == 'wholesale' ? .primary : .outline,
-                    onPress: () => setState(() => _pricingMode = 'wholesale'),
-                    child: const Text('Trọn gói'),
-                  ),
-                ),
-              ],
+          FTextField(
+            label: Text(
+              _pricingKind == ProfessionalPricingKind.hourly
+                  ? 'Giá mỗi giờ'
+                  : 'Giá mỗi buổi',
             ),
+            control: FTextFieldControl.managed(controller: _priceCtrl),
+            keyboardType: TextInputType.number,
+          ),
           FButton(
             onPress: saving ? null : _submit,
             child: saving

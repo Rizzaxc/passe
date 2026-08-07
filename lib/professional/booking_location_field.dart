@@ -22,7 +22,11 @@ Future<List<Location>> preferredCourts(Ref ref, String professionalId) async {
       .timeout(const Duration(seconds: 5));
 
   return (response as List)
-      .map((e) => Location.fromJson((e as Map<String, dynamic>)['location'] as Map<String, dynamic>))
+      .map(
+        (e) => Location.fromJson(
+          (e as Map<String, dynamic>)['location'] as Map<String, dynamic>,
+        ),
+      )
       .toList();
 }
 
@@ -37,24 +41,25 @@ Future<List<Location>> _searchLocations(String query) async {
 }
 
 /// Required location picker for a coach booking: pick one of the coach's
-/// preferred courts, or suggest a different address (search an existing
-/// `location` row, or — if nothing matches — add a bare-name one on the
-/// fly, mirroring `create_lobby_with_location`'s free-text insert but
-/// simplified to just a name, since that's this field's only required
-/// column). Deliberately does *not* reuse `HomeGroundField` — that widget
+/// preferred courts, suggest an existing venue, or provide a booking-scoped
+/// free-text location. Free text is stored on the booking instead of inserting
+/// an incomplete row into the global `location` directory. Deliberately does
+/// *not* reuse `HomeGroundField` — that widget
 /// is bound to the lobby home-ground's single-value contract and its own
 /// form controller; duplicating its full structured-address UI here would
 /// be a lot of surface for a field that mostly just needs "pick one of
 /// these known courts."
 class BookingLocationField extends ConsumerStatefulWidget {
   final String professionalId;
-  final String? value;
-  final ValueChanged<String> onChanged;
+  final String? locationId;
+  final String? customLocationName;
+  final void Function(String? locationId, String? customLocationName) onChanged;
 
   const BookingLocationField({
     super.key,
     required this.professionalId,
-    required this.value,
+    required this.locationId,
+    required this.customLocationName,
     required this.onChanged,
   });
 
@@ -68,6 +73,13 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
   final _searchController = TextEditingController();
   final _newNameController = TextEditingController();
   Location? _selectedOther;
+  String? _customLocationName;
+
+  @override
+  void initState() {
+    super.initState();
+    _customLocationName = widget.customLocationName;
+  }
 
   @override
   void dispose() {
@@ -76,24 +88,22 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
     super.dispose();
   }
 
-  Future<void> _createFreeTextLocation() async {
+  void _useFreeTextLocation() {
     final name = _newNameController.text.trim();
     if (name.isEmpty) return;
-    final response = await Supabase.instance.client
-        .from('location')
-        .insert({'name': name})
-        .select()
-        .single()
-        .timeout(const Duration(seconds: 5));
-    final loc = Location.fromJson(response);
-    setState(() => _selectedOther = loc);
-    widget.onChanged(loc.id);
+    setState(() {
+      _selectedOther = null;
+      _customLocationName = name;
+    });
+    widget.onChanged(null, name);
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final courtsAsync = ref.watch(preferredCourtsProvider(widget.professionalId));
+    final courtsAsync = ref.watch(
+      preferredCourtsProvider(widget.professionalId),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,22 +120,31 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
             const Spacer(),
             FButton(
               variant: .ghost,
-              onPress: () => setState(() => _suggestingOther = !_suggestingOther),
-              child: Text(_suggestingOther ? 'Chọn sân của HLV' : 'Đề xuất địa chỉ khác'),
+              onPress: () =>
+                  setState(() => _suggestingOther = !_suggestingOther),
+              child: Text(
+                _suggestingOther ? 'Chọn sân của HLV' : 'Đề xuất địa chỉ khác',
+              ),
             ),
           ],
         ),
         if (_suggestingOther) ...[
-          if (_selectedOther != null)
+          if (_selectedOther != null || _customLocationName != null)
             FTileGroup(
               children: [
                 FTile(
-                  title: Text(_selectedOther!.name),
-                  subtitle: _selectedOther!.displayAddress.isNotEmpty
+                  title: Text(_selectedOther?.name ?? _customLocationName!),
+                  subtitle: _selectedOther?.displayAddress.isNotEmpty == true
                       ? Text(_selectedOther!.displayAddress)
                       : null,
                   suffix: GestureDetector(
-                    onTap: () => setState(() => _selectedOther = null),
+                    onTap: () {
+                      setState(() {
+                        _selectedOther = null;
+                        _customLocationName = null;
+                      });
+                      widget.onChanged(null, null);
+                    },
                     child: const Icon(FLucideIcons.x, size: 16),
                   ),
                 ),
@@ -138,11 +157,15 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
               suggestionsBuilder: _searchLocations,
               displayStringForOption: (loc) => loc.fullAddress ?? loc.name,
               onSuggestionSelected: (loc) {
-                setState(() => _selectedOther = loc);
-                widget.onChanged(loc.id);
+                setState(() {
+                  _selectedOther = loc;
+                  _customLocationName = null;
+                });
+                widget.onChanged(loc.id, null);
               },
               onChange: (_) {},
-              formatSuggestion: (context, loc) => Text(loc.fullAddress ?? loc.name),
+              formatSuggestion: (context, loc) =>
+                  Text(loc.fullAddress ?? loc.name),
             ),
             Row(
               spacing: 8,
@@ -157,7 +180,7 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
                 ),
                 FButton(
                   variant: .outline,
-                  onPress: _createFreeTextLocation,
+                  onPress: _useFreeTextLocation,
                   child: const Text('Thêm'),
                 ),
               ],
@@ -189,19 +212,25 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
                 children: [
                   for (final court in courts)
                     FTappable(
-                      onPress: () => widget.onChanged(court.id),
+                      onPress: () {
+                        setState(() {
+                          _selectedOther = null;
+                          _customLocationName = null;
+                        });
+                        widget.onChanged(court.id, null);
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
                           vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          color: widget.value == court.id
+                          color: widget.locationId == court.id
                               ? colors.primary.withValues(alpha: 0.08)
                               : colors.card,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: widget.value == court.id
+                            color: widget.locationId == court.id
                                 ? colors.primary
                                 : colors.border,
                           ),
@@ -209,11 +238,11 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
                         child: Row(
                           children: [
                             Icon(
-                              widget.value == court.id
+                              widget.locationId == court.id
                                   ? FLucideIcons.circleCheck
                                   : FLucideIcons.circle,
                               size: 18,
-                              color: widget.value == court.id
+                              color: widget.locationId == court.id
                                   ? colors.primary
                                   : colors.mutedForeground,
                             ),
@@ -232,7 +261,9 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
                                     Text(
                                       court.displayAddress,
                                       style: context.theme.typography.body.xs
-                                          .copyWith(color: colors.mutedForeground),
+                                          .copyWith(
+                                            color: colors.mutedForeground,
+                                          ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),

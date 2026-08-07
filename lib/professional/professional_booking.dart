@@ -116,6 +116,10 @@ class ProfessionalBookingItem {
               ? packageRaw.first as Map<String, dynamic>?
               : null)
         : packageRaw as Map<String, dynamic>?;
+    final packageReviewRaw = package?['professional_booking_review'];
+    final packageHasReview = packageReviewRaw is List
+        ? packageReviewRaw.isNotEmpty
+        : packageReviewRaw != null;
 
     return ProfessionalBookingItem(
       id: json['id'] as String,
@@ -135,8 +139,10 @@ class ProfessionalBookingItem {
           ProfessionalBookingStatus.requested,
       clientNotes: json['client_notes'] as String?,
       professionalNotes: json['professional_notes'] as String?,
-      locationName: location?['name'] as String?,
-      reviewed: review != null,
+      locationName:
+          location?['name'] as String? ??
+          json['custom_location_name'] as String?,
+      reviewed: review != null || packageHasReview,
       packageId: json['package_id'] as String?,
       packageSessionsTotal: (package?['sessions_total'] as num?)?.toInt(),
       packageSessionsUsed: (package?['sessions_used'] as num?)?.toInt(),

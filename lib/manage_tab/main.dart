@@ -14,6 +14,44 @@ import 'coaching_section/main.dart';
 import 'lobby_section/feed/main.dart';
 import 'schedule_section/main.dart';
 
+/// Route-level guard for professional booking-request notifications.
+///
+/// Both OS push taps and the in-app notification center resolve to
+/// `ManageRequestsRoute`. That route must not rely on the user's last saved
+/// mode: index 1 is Lobby in player mode and Requests in professional mode.
+/// Wait for both lookups, verify this is still a linked professional, then
+/// activate professional mode before mounting the requested tab.
+class ProfessionalRequestsLanding extends ConsumerWidget {
+  final String? highlightBookingId;
+
+  const ProfessionalRequestsLanding({super.key, this.highlightBookingId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final professionalAsync = ref.watch(linkedProfessionalIdProvider);
+    final modeAsync = ref.watch(proModeStateProvider);
+
+    if (professionalAsync.isLoading || modeAsync.isLoading) {
+      return const FScaffold(child: Center(child: CircularProgressIndicator()));
+    }
+
+    final professionalId = professionalAsync.asData?.value;
+    if (professionalId == null) {
+      return ManageTab.withInitialTab(0);
+    }
+
+    final proModeActive = modeAsync.asData?.value ?? false;
+    if (!proModeActive) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(proModeStateProvider.notifier).set(true);
+      });
+      return const FScaffold(child: Center(child: CircularProgressIndicator()));
+    }
+
+    return ManageTab.withInitialTab(1, highlightBookingId: highlightBookingId);
+  }
+}
+
 class ManageTab extends StatefulWidget {
   final int initialIndex;
 
@@ -25,7 +63,10 @@ class ManageTab extends StatefulWidget {
 
   static final instance = ManageTab();
 
-  factory ManageTab.withInitialTab(int initialIndex, {String? highlightBookingId}) {
+  factory ManageTab.withInitialTab(
+    int initialIndex, {
+    String? highlightBookingId,
+  }) {
     return ManageTab(
       initialIndex: initialIndex,
       highlightBookingId: highlightBookingId,

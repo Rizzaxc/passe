@@ -138,8 +138,9 @@ freezed) — edit them by hand, no build_runner.
 - Data: `home_professional_data` RPC (`schema/professional_location_filter.sql`). Params mirror
   teammate — `p_sport_id`, `p_timeslots` (`Timeslot.listToJson`), `p_city` (`City.dbIndex`),
   `p_districts` (district ids), `p_page_size/number`. Returns the `professional` columns +
-  `professional_role` + `price_from` (cheapest active `professional_service.hourly_rate` for the
-  sport, numeric → `double.tryParse`, shown "từ {rate}₫/giờ") + `timeslot_compat_score`. Ranked
+  `professional_role` + `price_from` / `price_from_kind` (cheapest active
+  `professional_service.price_amount` for the sport, labelled hourly or per-session) +
+  `timeslot_compat_score`. Ranked
   `is_verified DESC, average_rating DESC, review_count DESC`. (RLS exposes services only for
   *verified* pros, so unverified pros list without a price.)
 - **Geo/schedule filter IS wired** (and soft). `professional` gained `preferred_city_cluster`

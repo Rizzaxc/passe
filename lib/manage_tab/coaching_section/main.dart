@@ -905,7 +905,11 @@ class _SessionPreviewSheet extends ConsumerWidget {
                 professionalName: session.professionalName,
               );
             },
-            child: const Text('Đánh Giá Buổi Này'),
+            child: Text(
+              session.packageId == null
+                  ? 'Đánh Giá Buổi Này'
+                  : 'Đánh Giá Gói Học',
+            ),
           )
         else if (session.reviewed)
           Row(
@@ -914,7 +918,9 @@ class _SessionPreviewSheet extends ConsumerWidget {
             children: [
               Icon(FLucideIcons.star, size: 14, color: pbStar),
               Text(
-                'Bạn đã đánh giá buổi này',
+                session.packageId == null
+                    ? 'Bạn đã đánh giá buổi này'
+                    : 'Bạn đã đánh giá gói học này',
                 style: context.theme.typography.body.sm.copyWith(
                   color: colors.mutedForeground,
                   fontWeight: FontWeight.w600,

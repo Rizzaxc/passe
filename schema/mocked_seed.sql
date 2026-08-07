@@ -266,12 +266,14 @@ BEGIN
         RETURNING id INTO v_pro;
 
         INSERT INTO professional_service (professional_id, sport_id, service_type, service_description,
-                                          hourly_rate, min_duration_minutes, max_participants, is_active)
+                                          price_amount, pricing_kind,
+                                          min_duration_minutes, max_participants, is_active)
         VALUES (
             v_pro, 1,
             (CASE WHEN i <= 5 THEN 'coaching' ELSE 'refereeing' END),
             (CASE WHEN i <= 5 THEN 'mocked_ Buổi tập cá nhân/nhóm' ELSE 'mocked_ Điều khiển trận đấu' END),
             200 + (i * 30) % 400,
+            'hourly',
             60,
             (CASE WHEN i <= 5 THEN 1 + (i % 6) ELSE 22 END),
             true);

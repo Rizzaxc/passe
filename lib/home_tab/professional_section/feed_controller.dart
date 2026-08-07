@@ -28,7 +28,7 @@ class ProfessionalFeed extends _$ProfessionalFeed {
 
     // `home_professional_data` applies sport + (soft) city/district/schedule
     // + search (display_name) filtering, ranks verified → rating → reviews,
-    // and rolls up each pro's cheapest active service rate as `price_from`.
+    // and rolls up each pro's cheapest active service amount + pricing kind.
     final response = await Supabase.instance.client
         .rpc(
           'home_professional_data',

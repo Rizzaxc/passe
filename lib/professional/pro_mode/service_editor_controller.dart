@@ -1,21 +1,23 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/model/enum.dart';
+
 part 'service_editor_controller.g.dart';
 
 /// One `professional_service` row, full shape (not just the active-only
 /// subset the client booking sheet reads) — used for the pro's own CRUD
-/// screen, so includes `isActive`/`sessionCount`/`pricingMode`.
+/// screen, so includes `isActive`/`sessionCount`/`pricingKind`.
 class ProfessionalServiceRow {
   final String id;
   final int sportId;
   final String serviceType;
   final String? description;
-  final double? hourlyRate;
+  final double? priceAmount;
   final int? minDurationMinutes;
   final int? maxParticipants;
   final int sessionCount;
-  final String pricingMode; // 'per_session' | 'wholesale'
+  final ProfessionalPricingKind pricingKind;
   final bool isActive;
 
   const ProfessionalServiceRow({
@@ -23,11 +25,11 @@ class ProfessionalServiceRow {
     required this.sportId,
     required this.serviceType,
     this.description,
-    this.hourlyRate,
+    this.priceAmount,
     this.minDurationMinutes,
     this.maxParticipants,
     required this.sessionCount,
-    required this.pricingMode,
+    required this.pricingKind,
     required this.isActive,
   });
 
@@ -37,11 +39,13 @@ class ProfessionalServiceRow {
       sportId: (json['sport_id'] as num).toInt(),
       serviceType: json['service_type'] as String,
       description: json['service_description'] as String?,
-      hourlyRate: double.tryParse(json['hourly_rate']?.toString() ?? ''),
+      priceAmount: double.tryParse(json['price_amount']?.toString() ?? ''),
       minDurationMinutes: (json['min_duration_minutes'] as num?)?.toInt(),
       maxParticipants: (json['max_participants'] as num?)?.toInt(),
       sessionCount: (json['session_count'] as num?)?.toInt() ?? 1,
-      pricingMode: json['pricing_mode'] as String? ?? 'per_session',
+      pricingKind: ProfessionalPricingKind.fromValue(
+        json['pricing_kind'] as String?,
+      ),
       isActive: json['is_active'] as bool? ?? true,
     );
   }
@@ -79,11 +83,11 @@ class ServiceEditorController extends _$ServiceEditorController {
     required int sportId,
     required String serviceType,
     String? description,
-    double? hourlyRate,
+    double? priceAmount,
     int? minDurationMinutes,
     int? maxParticipants,
     required int sessionCount,
-    required String pricingMode,
+    required ProfessionalPricingKind pricingKind,
   }) async {
     state = true;
     try {
@@ -92,11 +96,11 @@ class ServiceEditorController extends _$ServiceEditorController {
         'sport_id': sportId,
         'service_type': serviceType,
         'service_description': description,
-        'hourly_rate': hourlyRate,
+        'price_amount': priceAmount,
         'min_duration_minutes': minDurationMinutes,
         'max_participants': maxParticipants,
         'session_count': sessionCount,
-        'pricing_mode': pricingMode,
+        'pricing_kind': pricingKind.value,
       };
       if (id == null) {
         await supabase

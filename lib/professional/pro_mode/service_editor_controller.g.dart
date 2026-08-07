@@ -151,7 +151,7 @@ final class ServiceEditorControllerProvider
 }
 
 String _$serviceEditorControllerHash() =>
-    r'c3fe4b7870c55a16b79601850d417dd1a3a2a2f1';
+    r'7efda13e84e2cbb77c5832e3af8d202b1700437c';
 
 /// Create/edit/(de)activate the linked professional's own services. RLS
 /// ("Linked professionals can manage their own services") already scopes

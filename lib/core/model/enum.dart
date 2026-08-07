@@ -780,6 +780,22 @@ enum ProfessionalRole {
       context.tr('homeTab.professional.role.$name');
 }
 
+/// How a professional service's price is charged.
+enum ProfessionalPricingKind {
+  hourly('hourly'),
+  perSession('per_session');
+
+  final String value;
+
+  const ProfessionalPricingKind(this.value);
+
+  static ProfessionalPricingKind fromValue(String? value) =>
+      ProfessionalPricingKind.values.firstWhere(
+        (kind) => kind.value == value,
+        orElse: () => ProfessionalPricingKind.hourly,
+      );
+}
+
 /// Mirrors the `professional_booking_status` Postgres enum by value.
 /// Manually parsed (not JsonSerializable), same convention as [Attendance].
 enum ProfessionalBookingStatus {

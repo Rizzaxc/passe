@@ -443,7 +443,9 @@ class _ProfessionalCard extends StatelessWidget {
                               ),
                             ),
                             TextSpan(
-                              text: 'từ ${formatVnd(item.priceFrom!)}₫/giờ',
+                              text:
+                                  'từ ${formatVnd(item.priceFrom!)}₫/'
+                                  '${item.priceFromKind == ProfessionalPricingKind.perSession ? 'buổi' : 'giờ'}',
                               style: context.theme.typography.body.sm.copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: colors.primary,
@@ -680,7 +682,8 @@ class _SheetRow extends StatelessWidget {
             if (item.priceFrom != null) ...[
               const SizedBox(height: 12),
               Text(
-                'từ ${formatVnd(item.priceFrom!)}₫/giờ',
+                'từ ${formatVnd(item.priceFrom!)}₫/'
+                '${item.priceFromKind == ProfessionalPricingKind.perSession ? 'buổi' : 'giờ'}',
                 style: context.theme.typography.body.lg.copyWith(
                   fontWeight: FontWeight.w700,
                   color: colors.primary,
