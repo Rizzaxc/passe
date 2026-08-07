@@ -246,9 +246,13 @@ class AuthController extends _$AuthController {
         idToken: idToken,
       );
     } on GoogleSignInException catch (e, st) {
+      // Always log: Android's Credential Manager backend can report
+      // `canceled` for failures that aren't a real user dismissal (provider
+      // errors, missing OAuth client registration, etc), so this is the only
+      // signal we get for those cases.
+      talker.handle(e, st);
       // The user backing out of the picker is not an error worth surfacing.
       if (e.code == GoogleSignInExceptionCode.canceled) return;
-      talker.handle(e, st);
       rethrow;
     } catch (e, st) {
       talker.handle(e, st);
