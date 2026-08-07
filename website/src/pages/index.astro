@@ -1,0 +1,660 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Passe — Hẹn phủi, dễ như hẹn cà phê"
+  description="Passe kết nối bạn với đồng đội, đối thủ, sân bãi và hành trình sức khoẻ — theo đúng môn bạn chơi."
+>
+  <section class="hero shell">
+    <div class="hero-copy">
+      <p class="eyebrow">Next-gen casual sport portal</p>
+      <h1>Hẹn phủi,<br /><em>dễ như hẹn cà phê.</em></h1>
+      <p class="hero-lede">
+        Passe kết nối bạn với đồng đội, đối thủ và sân bãi quanh bạn — theo đúng môn bạn chơi,
+        trình độ và lịch rảnh của bạn.
+      </p>
+      <div class="hero-actions">
+        <a class="button" href="#cach-hoat-dong">Passe hoạt động thế nào?</a>
+        <a class="button secondary" href="#lobby">Lobby là gì?</a>
+      </div>
+      <p class="availability"><span></span> iOS & Android · đang hoàn thiện</p>
+    </div>
+
+    <div class="match-board" aria-label="Minh hoạ một buổi chơi được tổ chức trong Passe">
+      <div class="court-lines" aria-hidden="true"></div>
+      <div class="board-topline">
+        <span>LOBBY / TỐI THỨ SÁU</span>
+        <span class="live-dot">ĐÃ CHỐT</span>
+      </div>
+      <div class="sport-row">
+        <span class="sport-ball" aria-hidden="true">◉</span>
+        <div>
+          <strong>Badminton after work</strong>
+          <span>Cầu Giấy · 19:30</span>
+        </div>
+      </div>
+      <div class="team-line">
+        <div class="avatars" aria-label="Sáu người đã xác nhận">
+          <span>AN</span><span>MI</span><span>KH</span><span>+3</span>
+        </div>
+        <div class="score"><b>6</b><span>/ 8 người</span></div>
+      </div>
+      <div class="board-footer">
+        <span>Phù hợp lịch rảnh</span>
+        <strong>92%</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="ticker" aria-label="Các môn thể thao trên Passe">
+    <div>
+      <span>BÓNG ĐÁ</span><i>•</i><span>BÓNG RỔ</span><i>•</i><span>CẦU LÔNG</span><i>•</i>
+      <span>TENNIS</span><i>•</i><span>PICKLEBALL</span><i>•</i><span>CHƠI CÙNG NHAU</span>
+    </div>
+  </section>
+
+  <section class="how shell" id="cach-hoat-dong">
+    <div class="section-intro">
+      <p class="eyebrow">Từ “muốn chơi” đến “có kèo”</p>
+      <h2>Một nhịp chơi,<br />ba việc rõ ràng.</h2>
+    </div>
+    <ol class="playbook">
+      <li>
+        <span class="step">01</span>
+        <div>
+          <h3>Chọn môn của bạn</h3>
+          <p>Passe hoạt động theo từng môn. Chuyển context sport bất cứ lúc nào, không trộn lẫn kèo chơi.</p>
+        </div>
+      </li>
+      <li>
+        <span class="step">02</span>
+        <div>
+          <h3>Tìm đúng người</h3>
+          <p>Trình độ, lịch rảnh và network giúp Passe đưa đồng đội và đối thủ phù hợp lên trước.</p>
+        </div>
+      </li>
+      <li>
+        <span class="step">03</span>
+        <div>
+          <h3>Chốt lịch, ra sân</h3>
+          <p>Tạo buổi chơi, xác nhận thành viên, gắn sân và theo dõi mọi thứ trong cùng một lobby.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="lobby-section" id="lobby">
+    <div class="shell lobby-grid">
+      <div class="lobby-copy">
+        <p class="eyebrow">Đơn vị cốt lõi</p>
+        <h2>Lobby là đội của bạn.</h2>
+        <p>
+          Lập lobby, rủ bạn bè, lên lịch và theo dõi quá trình thi đấu của đội. Một nơi chung cho
+          những người muốn chơi cùng nhau thường xuyên — không còn lục lại tin nhắn để tìm giờ và sân.
+        </p>
+        <div class="lobby-tags" aria-label="Tính năng lobby">
+          <span>Lịch chơi</span><span>Thành viên</span><span>Thách đấu</span><span>Lịch sử</span>
+        </div>
+      </div>
+      <div class="route-map" aria-hidden="true">
+        <div class="route-node node-a"><b>Đồng đội</b><span>đúng lịch</span></div>
+        <div class="route-node node-b"><b>Lobby</b><span>của bạn</span></div>
+        <div class="route-node node-c"><b>Ra sân</b><span>đúng hẹn</span></div>
+        <svg class="route-desktop" viewBox="0 0 600 420" role="presentation">
+          <path class="route-base" d="M95 104 C170 35 274 73 300 190 S430 325 520 270" />
+          <path class="route-live" d="M95 104 C170 35 274 73 300 190 S430 325 520 270" />
+        </svg>
+        <svg class="route-mobile" viewBox="0 0 300 430" role="presentation">
+          <path class="route-base" d="M53 58 C178 88 87 196 150 215 S216 318 247 372" />
+          <path class="route-live" d="M53 58 C178 88 87 196 150 215 S216 318 247 372" />
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="discover shell">
+    <div class="discover-heading">
+      <p class="eyebrow">Không chỉ là tìm người chơi</p>
+      <h2>Mọi thứ quanh một buổi thể thao.</h2>
+    </div>
+    <div class="discover-rail">
+      <article><span>01</span><h3>Đồng đội</h3><p>Tìm người và lobby có lịch chơi hợp với bạn.</p></article>
+      <article><span>02</span><h3>Đối thủ</h3><p>Đưa lobby lên bảng thách đấu và chốt một trận vừa sức.</p></article>
+      <article><span>03</span><h3>Chuyên gia</h3><p>Kết nối với huấn luyện viên hoặc trọng tài đúng môn.</p></article>
+      <article><span>04</span><h3>Sân bãi</h3><p>Tìm địa điểm quanh bạn theo khu vực và tiêu chí chơi.</p></article>
+    </div>
+  </section>
+
+  <section class="health-section" id="health">
+    <div class="shell health-grid">
+      <div class="health-copy">
+        <p class="eyebrow">Health · Tiến bộ mỗi ngày</p>
+        <h2>Chơi vui.<br />Khoẻ thật.</h2>
+        <p class="health-lede">
+          Kết nối dữ liệu vận động với Passe để nhìn thấy cơ thể thay đổi qua từng buổi chơi —
+          rồi biến tiến bộ nhỏ thành động lực cho kèo tiếp theo.
+        </p>
+        <div class="health-capabilities">
+          <article>
+            <span class="health-index">SYNC</span>
+            <div>
+              <h3>Kết nối Health của bạn</h3>
+              <p>Đồng bộ với Apple Health trên iOS và Health Connect trên Android.</p>
+            </div>
+          </article>
+          <article>
+            <span class="health-index">TRACK</span>
+            <div>
+              <h3>Theo dõi chỉ số thật</h3>
+              <p>Xem nhịp tim, thời gian vận động, calories và xu hướng hồi phục theo thời gian.</p>
+            </div>
+          </article>
+          <article>
+            <span class="health-index">GO</span>
+            <div>
+              <h3>Hoàn thành thử thách</h3>
+              <p>Đặt mục tiêu, giữ chuỗi vận động và mở khoá achievement khi bạn tiến bộ.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="health-dashboard" aria-label="Minh hoạ bảng theo dõi Health trong Passe">
+        <div class="health-dashboard-head">
+          <div>
+            <span>NHỊP VẬN ĐỘNG</span>
+            <strong>Tuần này</strong>
+          </div>
+          <span class="sync-state"><i></i> Đã đồng bộ</span>
+        </div>
+
+        <div class="activity-pulse">
+          <div class="pulse-ring pulse-outer"></div>
+          <div class="pulse-ring pulse-inner"></div>
+          <div class="pulse-score"><strong>3</strong><span>buổi chơi</span></div>
+        </div>
+
+        <div class="health-stats">
+          <div><span>Nhịp tim TB</span><strong>142 <small>bpm</small></strong></div>
+          <div><span>Vận động</span><strong>186 <small>phút</small></strong></div>
+          <div><span>Calories</span><strong>1.240 <small>kcal</small></strong></div>
+        </div>
+
+        <div class="challenge-card">
+          <div class="challenge-copy">
+            <span>THỬ THÁCH TUẦN</span>
+            <strong>Ra sân 4 buổi</strong>
+          </div>
+          <span class="challenge-count">3 / 4</span>
+          <div class="challenge-track"><span></span></div>
+        </div>
+        <p class="health-note">Dữ liệu minh hoạ</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing" id="san-sang">
+    <div class="shell closing-inner">
+      <img src="/brand/passe-mark.svg" alt="" width="110" height="110" />
+      <p class="eyebrow">Play together · Win together</p>
+      <h2>Càng chơi,<br />càng hợp.</h2>
+      <p>Passe đang hoàn thiện những bước cuối cho iOS và Android.</p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    min-height: 720px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(380px, 0.95fr);
+    align-items: center;
+    gap: clamp(3rem, 7vw, 7rem);
+    padding-block: 5rem 6rem;
+  }
+
+  h1,
+  h2,
+  h3 {
+    margin: 0;
+    font-family: var(--font-display);
+  }
+
+  h1 {
+    max-width: 760px;
+    font-size: clamp(3.7rem, 7.4vw, 7.2rem);
+    font-weight: 880;
+    letter-spacing: -0.075em;
+    line-height: 0.92;
+  }
+
+  h1 em {
+    color: var(--red);
+    font-weight: 760;
+  }
+
+  .hero-lede {
+    max-width: 640px;
+    margin: 2rem 0 0;
+    color: var(--ink-soft);
+    font-size: clamp(1.08rem, 1.6vw, 1.28rem);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 2rem;
+  }
+
+  .availability {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 1.5rem 0 0;
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .availability span {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--amber);
+    box-shadow: 0 0 0 5px rgba(246, 184, 60, 0.18);
+  }
+
+  .match-board {
+    position: relative;
+    isolation: isolate;
+    min-height: 510px;
+    padding: 2rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 2.2rem;
+    background: var(--blue-deep);
+    color: white;
+    box-shadow: 28px 30px 0 var(--amber), 0 32px 70px rgba(23, 36, 67, 0.2);
+    transform: rotate(1.5deg);
+  }
+
+  .court-lines {
+    position: absolute;
+    z-index: -1;
+    inset: 12%;
+    border: 2px solid rgba(255, 255, 255, 0.13);
+    border-radius: 50%;
+  }
+
+  .court-lines::before,
+  .court-lines::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.13);
+  }
+
+  .court-lines::before { width: 2px; inset-block: -35%; left: 50%; }
+  .court-lines::after { height: 2px; inset-inline: -35%; top: 50%; }
+
+  .board-topline,
+  .board-footer,
+  .team-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .board-topline {
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+  }
+
+  .live-dot {
+    padding: 0.45rem 0.65rem;
+    border-radius: 99px;
+    background: var(--green);
+  }
+
+  .sport-row {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-top: 7rem;
+  }
+
+  .sport-ball {
+    display: grid;
+    width: 4rem;
+    height: 4rem;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 50%;
+    color: var(--amber);
+    font-size: 2rem;
+  }
+
+  .sport-row strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    line-height: 1.08;
+  }
+
+  .sport-row div span {
+    display: block;
+    margin-top: 0.4rem;
+    color: rgba(255, 255, 255, 0.65);
+  }
+
+  .team-line {
+    margin-top: 4.5rem;
+  }
+
+  .avatars { display: flex; }
+  .avatars span {
+    display: grid;
+    width: 2.8rem;
+    height: 2.8rem;
+    margin-left: -0.45rem;
+    place-items: center;
+    border: 3px solid var(--blue-deep);
+    border-radius: 50%;
+    background: var(--coral);
+    color: var(--ink);
+    font-size: 0.68rem;
+    font-weight: 900;
+  }
+  .avatars span:first-child { margin-left: 0; background: var(--amber); }
+  .avatars span:nth-child(2) { background: white; }
+  .avatars span:nth-child(3) { background: #70d3bb; }
+
+  .score { text-align: right; }
+  .score b { font-family: var(--font-display); font-size: 2.4rem; }
+  .score span { color: rgba(255,255,255,.6); font-size: .8rem; }
+
+  .board-footer {
+    margin-top: 1.4rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid rgba(255,255,255,.18);
+    font-size: .85rem;
+  }
+  .board-footer strong { color: var(--amber); font-size: 1.4rem; }
+
+  .ticker {
+    overflow: hidden;
+    border-block: 1px solid var(--ink);
+    background: var(--red);
+    color: white;
+  }
+
+  .ticker div {
+    width: max-content;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: .8rem 0;
+    font-family: var(--font-display);
+    font-weight: 850;
+    letter-spacing: .08em;
+    animation: ticker 24s linear infinite;
+  }
+
+  .ticker i { color: var(--amber); }
+  @keyframes ticker { to { transform: translateX(-28%); } }
+
+  .how {
+    display: grid;
+    grid-template-columns: .8fr 1.2fr;
+    gap: clamp(3rem, 8vw, 8rem);
+    padding-block: 8rem;
+  }
+
+  h2 {
+    font-size: clamp(2.7rem, 5.6vw, 5.2rem);
+    letter-spacing: -0.065em;
+    line-height: .98;
+  }
+
+  .playbook { margin: 0; padding: 0; list-style: none; }
+  .playbook li {
+    display: grid;
+    grid-template-columns: 4rem 1fr;
+    gap: 1rem;
+    padding: 1.5rem 0 1.8rem;
+    border-top: 1px solid var(--line);
+  }
+  .playbook li:last-child { border-bottom: 1px solid var(--line); }
+  .step { color: var(--red); font-family: var(--font-display); font-weight: 850; }
+  .playbook h3 { font-size: 1.45rem; letter-spacing: -.035em; }
+  .playbook p { max-width: 580px; margin: .6rem 0 0; color: var(--ink-soft); }
+
+  .lobby-section { background: var(--blue); color: white; }
+  .lobby-grid {
+    min-height: 700px;
+    display: grid;
+    grid-template-columns: .9fr 1.1fr;
+    align-items: center;
+    gap: 5rem;
+    padding-block: 6rem;
+  }
+  .lobby-copy .eyebrow { color: var(--amber); }
+  .lobby-copy > p:not(.eyebrow) { max-width: 580px; color: rgba(255,255,255,.76); font-size: 1.1rem; }
+  .lobby-tags { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1.7rem; }
+  .lobby-tags span { padding: .55rem .8rem; border: 1px solid rgba(255,255,255,.35); border-radius: 99px; font-size: .8rem; font-weight: 800; }
+
+  .route-map { position: relative; min-height: 430px; }
+  .route-map svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .route-mobile { display: none; }
+  .route-base, .route-live { fill: none; stroke-linecap: round; stroke-width: 8; }
+  .route-base { stroke: rgba(255,255,255,.16); }
+  .route-live { stroke: var(--amber); stroke-dasharray: 12 20; animation: route 5s linear infinite; }
+  @keyframes route { to { stroke-dashoffset: -128; } }
+  .route-node {
+    position: absolute;
+    z-index: 2;
+    display: grid;
+    width: 7.4rem;
+    height: 7.4rem;
+    place-content: center;
+    border: 4px solid var(--blue);
+    border-radius: 50%;
+    background: var(--paper);
+    color: var(--ink);
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(23,36,67,.22);
+  }
+  .route-node b { font-family: var(--font-display); font-size: 1.1rem; }
+  .route-node span { color: var(--ink-soft); font-size: .72rem; }
+  .node-a { left: 2%; top: 8%; }
+  .node-b { left: 42%; top: 37%; width: 8.5rem; height: 8.5rem; background: var(--amber); }
+  .node-c { right: 0; bottom: 8%; background: var(--coral); }
+
+  .discover { padding-block: 8rem; }
+  .discover-heading { max-width: 760px; }
+  .discover-rail {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin-top: 4rem;
+    border-block: 1px solid var(--ink);
+  }
+  .discover-rail article { min-height: 260px; padding: 1.5rem; border-left: 1px solid var(--line); }
+  .discover-rail article:first-child { border-left: 0; }
+  .discover-rail span { color: var(--red); font-family: var(--font-display); font-weight: 850; }
+  .discover-rail h3 { margin-top: 4rem; font-size: 1.55rem; }
+  .discover-rail p { color: var(--ink-soft); font-size: .92rem; }
+
+  .health-section {
+    overflow: hidden;
+    background: var(--ink);
+    color: white;
+  }
+
+  .health-grid {
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(420px, 1.1fr);
+    align-items: center;
+    gap: clamp(3rem, 8vw, 7rem);
+    padding-block: 8rem;
+  }
+
+  .health-copy .eyebrow { color: #70d3bb; }
+  .health-copy h2 { color: white; }
+  .health-copy h2::after {
+    content: '';
+    display: inline-block;
+    width: .25em;
+    height: .25em;
+    margin-left: .12em;
+    border-radius: 50%;
+    background: var(--coral);
+  }
+
+  .health-lede {
+    max-width: 580px;
+    margin: 1.6rem 0 0;
+    color: rgba(255,255,255,.68);
+    font-size: 1.08rem;
+  }
+
+  .health-capabilities { margin-top: 2.7rem; }
+  .health-capabilities article {
+    display: grid;
+    grid-template-columns: 4.4rem minmax(0, 1fr);
+    gap: 1rem;
+    padding: 1.15rem 0;
+    border-top: 1px solid rgba(255,255,255,.15);
+  }
+  .health-capabilities article:last-child { border-bottom: 1px solid rgba(255,255,255,.15); }
+  .health-index {
+    color: var(--amber);
+    font-family: var(--font-display);
+    font-size: .72rem;
+    font-weight: 850;
+    letter-spacing: .08em;
+  }
+  .health-capabilities h3 { font-size: 1.18rem; letter-spacing: -.025em; }
+  .health-capabilities p { margin: .35rem 0 0; color: rgba(255,255,255,.62); font-size: .9rem; }
+
+  .health-dashboard {
+    position: relative;
+    min-height: 590px;
+    padding: 1.7rem;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 2.2rem;
+    background:
+      radial-gradient(circle at 50% 39%, rgba(112,211,187,.17), transparent 14rem),
+      var(--blue-deep);
+    box-shadow: 28px 30px 0 var(--coral), 0 32px 70px rgba(0,0,0,.25);
+    transform: rotate(-1deg);
+  }
+
+  .health-dashboard-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .health-dashboard-head > div span,
+  .challenge-copy span {
+    display: block;
+    color: rgba(255,255,255,.52);
+    font-size: .66rem;
+    font-weight: 850;
+    letter-spacing: .12em;
+  }
+  .health-dashboard-head > div strong { display: block; margin-top: .2rem; font-family: var(--font-display); font-size: 1.35rem; }
+  .sync-state { display: flex; align-items: center; gap: .45rem; color: rgba(255,255,255,.72); font-size: .72rem; font-weight: 750; }
+  .sync-state i { width: .55rem; height: .55rem; border-radius: 50%; background: #70d3bb; box-shadow: 0 0 0 5px rgba(112,211,187,.12); }
+
+  .activity-pulse {
+    position: relative;
+    width: 15.5rem;
+    height: 15.5rem;
+    margin: 1.7rem auto 1.4rem;
+  }
+  .pulse-ring { position: absolute; border-radius: 50%; }
+  .pulse-outer { inset: 0; border: 1.25rem solid rgba(255,255,255,.11); border-top-color: var(--coral); border-right-color: var(--coral); transform: rotate(18deg); }
+  .pulse-inner { inset: 2rem; border: .85rem solid rgba(255,255,255,.1); border-top-color: #70d3bb; border-left-color: #70d3bb; transform: rotate(-34deg); }
+  .pulse-score { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .pulse-score strong { font-family: var(--font-display); font-size: 4.4rem; line-height: .85; }
+  .pulse-score span { margin-top: .5rem; color: rgba(255,255,255,.6); font-size: .78rem; font-weight: 750; }
+
+  .health-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-block: 1px solid rgba(255,255,255,.15);
+  }
+  .health-stats div { min-width: 0; padding: 1rem .7rem; border-left: 1px solid rgba(255,255,255,.15); }
+  .health-stats div:first-child { border-left: 0; padding-left: 0; }
+  .health-stats span { display: block; overflow: hidden; color: rgba(255,255,255,.5); font-size: .67rem; white-space: nowrap; text-overflow: ellipsis; }
+  .health-stats strong { display: block; margin-top: .2rem; font-family: var(--font-display); font-size: 1.2rem; white-space: nowrap; }
+  .health-stats small { color: rgba(255,255,255,.55); font-family: var(--font-body); font-size: .62rem; font-weight: 650; }
+
+  .challenge-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .9rem 1rem;
+    margin-top: 1.3rem;
+    padding: 1rem 1.1rem;
+    border-radius: 1rem;
+    background: rgba(255,255,255,.1);
+  }
+  .challenge-copy strong { display: block; margin-top: .2rem; font-size: .92rem; }
+  .challenge-count { align-self: center; color: var(--amber); font-family: var(--font-display); font-weight: 850; }
+  .challenge-track { grid-column: 1 / -1; height: .45rem; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.13); }
+  .challenge-track span { display: block; width: 75%; height: 100%; border-radius: inherit; background: var(--amber); }
+  .health-note { margin: .75rem 0 0; color: rgba(255,255,255,.35); font-size: .62rem; text-align: right; }
+
+  .closing { overflow: hidden; background: var(--paper-deep); text-align: center; }
+  .closing-inner { min-height: 610px; display: grid; place-content: center; justify-items: center; padding-block: 5rem; }
+  .closing img { margin-bottom: 1.5rem; filter: drop-shadow(0 14px 20px rgba(237,23,72,.18)); }
+  .closing h2 { color: var(--red); }
+  .closing > p, .closing-inner > p:last-child { color: var(--ink-soft); }
+
+  @media (max-width: 900px) {
+    .hero { min-height: auto; grid-template-columns: 1fr; padding-block: 4rem 6rem; }
+    .match-board { width: min(100% - 20px, 580px); justify-self: center; }
+    .how, .lobby-grid { grid-template-columns: 1fr; }
+    .lobby-grid { gap: 2rem; }
+    .health-grid { grid-template-columns: 1fr; }
+    .health-dashboard { width: min(100% - 20px, 600px); justify-self: center; }
+    .discover-rail { grid-template-columns: repeat(2, 1fr); }
+    .discover-rail article:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); }
+    .discover-rail article:nth-child(4) { border-top: 1px solid var(--line); }
+  }
+
+  @media (max-width: 560px) {
+    .hero { padding-top: 3rem; }
+    h1 { font-size: clamp(3.25rem, 17vw, 5rem); }
+    .hero-actions { align-items: stretch; flex-direction: column; }
+    .match-board { min-height: 460px; padding: 1.35rem; border-radius: 1.5rem; box-shadow: 14px 16px 0 var(--amber); }
+    .sport-row { margin-top: 6rem; }
+    .team-line { margin-top: 3.5rem; }
+    .how, .discover { padding-block: 5rem; }
+    .lobby-grid { min-height: auto; padding-block: 5rem; }
+    .route-map { min-height: 430px; margin-top: 1rem; transform: none; }
+    .route-desktop { display: none; }
+    .route-mobile { display: block; }
+    .route-node { width: 6.6rem; height: 6.6rem; border-width: 3px; }
+    .route-node b { font-size: 1rem; }
+    .node-a { left: 0; top: 0; }
+    .node-b { left: 50%; top: 50%; width: 7.2rem; height: 7.2rem; transform: translate(-50%, -50%); }
+    .node-c { right: 0; bottom: 0; }
+    .discover-rail { grid-template-columns: 1fr; }
+    .discover-rail article { min-height: 210px; border-top: 1px solid var(--line); border-left: 0; }
+    .discover-rail article:first-child { border-top: 0; }
+    .discover-rail h3 { margin-top: 2.6rem; }
+    .health-grid { padding-block: 5rem 6rem; }
+    .health-dashboard { min-height: 540px; padding: 1.2rem; border-radius: 1.5rem; box-shadow: 14px 16px 0 var(--coral); }
+    .activity-pulse { width: 13rem; height: 13rem; }
+    .pulse-outer { border-width: 1rem; }
+    .pulse-inner { inset: 1.7rem; border-width: .7rem; }
+    .pulse-score strong { font-size: 3.7rem; }
+    .health-stats div { padding-inline: .45rem; }
+    .health-stats strong { font-size: 1.02rem; }
+  }
+</style>

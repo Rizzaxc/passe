@@ -1,0 +1,68 @@
+---
+import Brand from '../components/Brand.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalPath?: string;
+  minimal?: boolean;
+}
+
+const {
+  title,
+  description,
+  canonicalPath = Astro.url.pathname,
+  minimal = false,
+} = Astro.props;
+const canonical = new URL(canonicalPath, 'https://passe.vn');
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f3ea" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/brand/passe-mark.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:site_name" content="Passe" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content="https://passe.vn/brand/app-icon.png" />
+    <meta name="twitter:card" content="summary" />
+    <title>{title}</title>
+  </head>
+  <body class:list={{ minimal }}>
+    <a class="skip-link" href="#main">Đi thẳng đến nội dung</a>
+    <header class:list={['site-header', { minimal }]}>
+      <div class="shell header-inner">
+        <Brand compact={minimal} />
+        {
+          !minimal && (
+            <nav aria-label="Điều hướng chính">
+              <a href="#cach-hoat-dong">Cách hoạt động</a>
+              <a href="#lobby">Lobby</a>
+              <a href="#health">Health</a>
+              <a class="nav-cta" href="#san-sang">Sắp ra mắt</a>
+            </nav>
+          )
+        }
+      </div>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <Brand compact inverse />
+        <p>Play together · Win together</p>
+        <p>© {new Date().getFullYear()} Passe</p>
+      </div>
+    </footer>
+  </body>
+</html>

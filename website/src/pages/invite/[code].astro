@@ -1,0 +1,161 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export const prerender = false;
+
+const rawCode = Astro.params.code ?? '';
+const code = rawCode.toUpperCase();
+const isValidShape = /^[0-9A-Z]{10}$/.test(code);
+
+if (!isValidShape) {
+  Astro.response.status = 404;
+}
+
+const appStoreUrl = import.meta.env.PUBLIC_APP_STORE_URL;
+const playStoreUrl = import.meta.env.PUBLIC_PLAY_STORE_URL;
+const inviteUrl = `https://passe.vn/invite/${encodeURIComponent(code)}`;
+---
+
+<BaseLayout
+  title="Lời mời vào lobby · Passe"
+  description="Mở Passe để xem lời mời và tham gia lobby."
+  canonicalPath={`/invite/${encodeURIComponent(code)}`}
+  minimal
+>
+  <section class="invite-shell shell">
+    <div class="invite-art" aria-hidden="true">
+      <div class="court">
+        <span class="person p1"></span><span class="person p2"></span><span class="person p3"></span>
+        <span class="person p4"></span><span class="ball"></span>
+      </div>
+    </div>
+    <div class="invite-copy">
+      <p class="eyebrow">Lời mời lobby</p>
+      {
+        isValidShape ? (
+          <>
+            <h1>Bạn có một kèo đang chờ.</h1>
+            <p>
+              Mở liên kết này trên điện thoại đã cài Passe để xem lobby và tham gia. Passe sẽ giữ
+              nguyên mã mời trong suốt quá trình đăng nhập.
+            </p>
+            <div class="invite-code">
+              <span>Mã mời</span>
+              <strong>{code}</strong>
+            </div>
+            <div class="actions">
+              {appStoreUrl && <a class="button" href={appStoreUrl}>Tải cho iPhone</a>}
+              {playStoreUrl && <a class="button" href={playStoreUrl}>Tải cho Android</a>}
+              <button class="button secondary" id="copy-invite" data-url={inviteUrl}>Sao chép liên kết</button>
+            </div>
+            {!appStoreUrl && !playStoreUrl && (
+              <p class="release-note">Passe đang chuẩn bị phát hành rộng rãi trên iOS và Android.</p>
+            )}
+          </>
+        ) : (
+          <>
+            <h1>Liên kết này không đúng định dạng.</h1>
+            <p>Kiểm tra lại tin nhắn chứa lời mời hoặc nhờ người quản lý lobby gửi một liên kết mới.</p>
+            <a class="button" href="/">Về trang chủ Passe</a>
+          </>
+        )
+      }
+    </div>
+  </section>
+
+  <script>
+    const copyButton = document.querySelector<HTMLButtonElement>('#copy-invite');
+    copyButton?.addEventListener('click', async () => {
+      const url = copyButton.dataset.url;
+      if (!url) return;
+      await navigator.clipboard.writeText(url);
+      copyButton.textContent = 'Đã sao chép';
+    });
+  </script>
+</BaseLayout>
+
+<style>
+  .invite-shell {
+    min-height: calc(100vh - 76px);
+    display: grid;
+    grid-template-columns: minmax(320px, .9fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: clamp(3rem, 8vw, 8rem);
+    padding-block: 4rem 7rem;
+  }
+
+  .invite-art {
+    display: grid;
+    aspect-ratio: 1;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(246,184,60,.2);
+  }
+
+  .court {
+    position: relative;
+    width: 72%;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 3px solid white;
+    border-radius: 1.4rem;
+    background: var(--blue);
+    box-shadow: 18px 20px 0 var(--red);
+  }
+
+  .court::before,
+  .court::after {
+    content: '';
+    position: absolute;
+    background: rgba(255,255,255,.65);
+  }
+  .court::before { width: 3px; inset-block: 0; left: 50%; }
+  .court::after { height: 3px; inset-inline: 0; top: 50%; }
+
+  .person, .ball { position: absolute; z-index: 2; border-radius: 50%; }
+  .person { width: 13%; aspect-ratio: 1; border: 4px solid white; background: var(--coral); }
+  .p1 { left: 18%; top: 18%; }
+  .p2 { right: 18%; top: 20%; background: var(--amber); }
+  .p3 { left: 22%; bottom: 17%; background: #70d3bb; }
+  .p4 { right: 20%; bottom: 20%; background: white; }
+  .ball { width: 5%; aspect-ratio: 1; left: 48%; top: 42%; background: var(--amber); box-shadow: 0 0 0 6px rgba(246,184,60,.18); }
+
+  .invite-copy { max-width: 620px; }
+  h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 7vw, 5.8rem);
+    font-weight: 870;
+    letter-spacing: -.07em;
+    line-height: .95;
+  }
+  .invite-copy > p:not(.eyebrow, .release-note) { max-width: 600px; margin: 1.5rem 0 0; color: var(--ink-soft); font-size: 1.08rem; }
+  .invite-code {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1rem 0;
+    border-block: 1px solid var(--line);
+  }
+  .invite-code span { color: var(--ink-soft); font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
+  .invite-code strong { font-family: var(--font-display); font-size: 1.6rem; letter-spacing: .12em; }
+  .actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.5rem; }
+  button.button { font: inherit; cursor: pointer; }
+  .release-note { margin: 1rem 0 0; color: var(--ink-soft); font-size: .82rem; }
+
+  @media (max-width: 780px) {
+    .invite-shell { grid-template-columns: 1fr; padding-top: 1.5rem; }
+    .invite-art { width: min(78vw, 390px); justify-self: center; }
+    .invite-copy { text-align: center; }
+    .invite-code { text-align: left; }
+    .actions { justify-content: center; }
+  }
+
+  @media (max-width: 460px) {
+    .invite-shell { gap: 2rem; }
+    .invite-art { width: min(74vw, 310px); }
+    .actions { align-items: stretch; flex-direction: column; }
+  }
+</style>

@@ -1,0 +1,22 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"compatibility_date": "2026-08-07",
+	"compatibility_flags": [
+		"global_fetch_strictly_public"
+	],
+	"name": "passe-vn",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS",
+	},
+	"observability": {
+		"enabled": true,
+	},
+	"routes": [
+		{
+			"pattern": "passe.vn",
+			"custom_domain": true,
+		},
+	],
+}
