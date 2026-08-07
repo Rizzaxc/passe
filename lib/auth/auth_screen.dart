@@ -304,7 +304,7 @@ class SocialAuthSection extends ConsumerWidget {
           spacing: 12,
           children: [
             buildRow(
-              icon: const SizedBox(width: 24, height: 24, child: PasseIcons.googleRound),
+              icon: const SizedBox(width: 24, height: 24, child: PasseIcons.googleLogo),
               label: 'auth.googleContinue'.tr(),
               onTap: () => handleAuthAction(
                 () => ref.read(authControllerProvider.notifier).signInWithGoogle(),
