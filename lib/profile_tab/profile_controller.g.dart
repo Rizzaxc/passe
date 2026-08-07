@@ -9,6 +9,49 @@ part of 'profile_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(profileHasUncommittedChanges)
+final profileHasUncommittedChangesProvider =
+    ProfileHasUncommittedChangesProvider._();
+
+final class ProfileHasUncommittedChangesProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  ProfileHasUncommittedChangesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'profileHasUncommittedChangesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$profileHasUncommittedChangesHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return profileHasUncommittedChanges(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$profileHasUncommittedChangesHash() =>
+    r'c3fbbd7bcad8bca2f2fbbf1ca31580011d755256';
+
 @ProviderFor(NetworkSearchController)
 final networkSearchControllerProvider = NetworkSearchControllerProvider._();
 
@@ -94,7 +137,7 @@ final class NetworkControllerProvider
   }
 }
 
-String _$networkControllerHash() => r'4a62a9e9c7206c954c9506da9f4a206b78052869';
+String _$networkControllerHash() => r'2a870a69e47608b066cafc7018d3d6186a46d369';
 
 abstract class _$NetworkController extends $Notifier<List<Network>> {
   List<Network> build();
@@ -147,7 +190,7 @@ final class IndustryControllerProvider
 }
 
 String _$industryControllerHash() =>
-    r'5c48af6b0b94fc9713482229fd2e04217552a1ec';
+    r'76e6e7f36272eb21a2222de85a02bf1b7f922b3f';
 
 abstract class _$IndustryController extends $Notifier<List<Industry>> {
   List<Industry> build();
@@ -199,7 +242,7 @@ final class ProfileControllerProvider
   }
 }
 
-String _$profileControllerHash() => r'49c841988003f98fabc2dc952aef08dfbc7cf5d5';
+String _$profileControllerHash() => r'083b00a92c2af1b1b034e3de44bd3e627b7d2ec5';
 
 abstract class _$ProfileController extends $Notifier<ProfileState> {
   ProfileState build();

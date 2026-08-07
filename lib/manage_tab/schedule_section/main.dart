@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../router.dart';
 import '../../ui/main.dart';
 import 'controller.dart';
 
@@ -16,6 +17,16 @@ enum _ViewMode { timeline, cards }
 
 String _fmtTime(TimeOfDay t) =>
     '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+void _openActivity(BuildContext context, ScheduleEvent event) {
+  final lobbyId = event.lobbyId;
+  if (lobbyId == null) return;
+  LobbyDetailRoute(
+    id: lobbyId,
+    tab: 1,
+    highlightActivityId: event.activityId,
+  ).go(context);
+}
 
 // Card-mode window: yesterday → max(today+4, this week's Sunday).
 //
@@ -37,10 +48,7 @@ List<DateTime> get _cardRange {
   final minEnd = today.add(const Duration(days: 4));
   final end = minEnd.isAfter(thisWeekSunday) ? minEnd : thisWeekSunday;
   final totalDays = end.difference(yesterday).inDays + 1;
-  return List.generate(
-    totalDays,
-    (i) => yesterday.add(Duration(days: i)),
-  );
+  return List.generate(totalDays, (i) => yesterday.add(Duration(days: i)));
 }
 
 String _dayLabel(DateTime date) {
@@ -53,14 +61,14 @@ String _dayLabel(DateTime date) {
     0 => 'Hôm nay',
     1 => 'Ngày mai',
     _ => const [
-        'Chủ nhật',
-        'Thứ Hai',
-        'Thứ Ba',
-        'Thứ Tư',
-        'Thứ Năm',
-        'Thứ Sáu',
-        'Thứ Bảy',
-      ][date.weekday % 7],
+      'Chủ nhật',
+      'Thứ Hai',
+      'Thứ Ba',
+      'Thứ Tư',
+      'Thứ Năm',
+      'Thứ Sáu',
+      'Thứ Bảy',
+    ][date.weekday % 7],
   };
 }
 
@@ -104,11 +112,13 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
   /// True end of the empty leading range shown in collapsed/empty labels.
   String _emptyRangeEnd(List<ScheduleEvent> events) {
     if (events.isEmpty) return '24:00';
-    final first = events.reduce((a, b) =>
-        (a.start.hour * 60 + a.start.minute) <=
-                (b.start.hour * 60 + b.start.minute)
-            ? a
-            : b);
+    final first = events.reduce(
+      (a, b) =>
+          (a.start.hour * 60 + a.start.minute) <=
+              (b.start.hour * 60 + b.start.minute)
+          ? a
+          : b,
+    );
     return _fmtTime(first.start);
   }
 
@@ -154,7 +164,10 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
             value: _viewMode,
             options: const [
               PPillOption(value: _ViewMode.timeline, icon: FLucideIcons.clock),
-              PPillOption(value: _ViewMode.cards, icon: FLucideIcons.layoutList),
+              PPillOption(
+                value: _ViewMode.cards,
+                icon: FLucideIcons.layoutList,
+              ),
             ],
             onChanged: _switchMode,
           ),
@@ -186,13 +199,13 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
             },
             child: _viewMode == _ViewMode.timeline && startHour < 0
                 ? LayoutBuilder(
-                    builder: (context, constraints) =>
-                        SingleChildScrollView(
+                    builder: (context, constraints) => SingleChildScrollView(
                       controller: _scrollCtrl,
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight),
+                          minHeight: constraints.maxHeight,
+                        ),
                         child: const _EmptyDayCard(),
                       ),
                     ),
@@ -204,12 +217,10 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
                     child: _viewMode == _ViewMode.cards
                         ? _MultiDayCardView(eventsFor: _eventsFor)
                         : Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.stretch,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               if (startHour > 0) ...[
-                                _CollapsedBlock(
-                                    from: '00:00', to: rangeEnd),
+                                _CollapsedBlock(from: '00:00', to: rangeEnd),
                                 const SizedBox(height: 16),
                               ],
                               _TimeGrid(
@@ -239,7 +250,8 @@ class _MultiDayCardView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final day in _cardRange) _DaySection(date: day, events: eventsFor(day)),
+        for (final day in _cardRange)
+          _DaySection(date: day, events: eventsFor(day)),
       ],
     );
   }
@@ -305,9 +317,7 @@ class _DaySection extends StatelessWidget {
           else
             Column(
               spacing: 8,
-              children: [
-                for (final event in events) _EventRow(event: event),
-              ],
+              children: [for (final event in events) _EventRow(event: event)],
             ),
         ],
       ),
@@ -378,16 +388,24 @@ class _CollapsedBlock extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
-              child: Container(
-                  height: 1, color: colors.border.withValues(alpha: 0.3))),
+            child: Container(
+              height: 1,
+              color: colors.border.withValues(alpha: 0.3),
+            ),
+          ),
           const SizedBox(width: 10),
-          Text('$from – $to',
-              style: style.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            '$from – $to',
+            style: style.copyWith(fontWeight: FontWeight.w600),
+          ),
           Text('  ·  ${'manageTab.schedule.noEvents'.tr()}', style: style),
           const SizedBox(width: 10),
           Expanded(
-              child: Container(
-                  height: 1, color: colors.border.withValues(alpha: 0.3))),
+            child: Container(
+              height: 1,
+              color: colors.border.withValues(alpha: 0.3),
+            ),
+          ),
         ],
       ),
     );
@@ -404,10 +422,14 @@ class _EventRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final accent = event.tone == ScheduleEventTone.sport ? colors.primary : pbBlue;
+    final accent = event.tone == ScheduleEventTone.sport
+        ? colors.primary
+        : pbBlue;
 
     return FTappable(
-      onPress: () {},
+      onPress: event.lobbyId == null
+          ? null
+          : () => _openActivity(context, event),
       child: Container(
         decoration: BoxDecoration(
           color: colors.card,
@@ -529,13 +551,15 @@ class _TimeGrid extends StatelessWidget {
 
   double _offsetFor(TimeOfDay t) {
     final mins = (t.hour - startHour) * 60 + t.minute;
-    return (mins * hourHeight / 60)
-        .clamp(0.0, (_endHour - startHour) * hourHeight);
+    return (mins * hourHeight / 60).clamp(
+      0.0,
+      (_endHour - startHour) * hourHeight,
+    );
   }
 
   double _blockHeight(ScheduleEvent e) {
-    final mins = (e.end.hour * 60 + e.end.minute) -
-        (e.start.hour * 60 + e.start.minute);
+    final mins =
+        (e.end.hour * 60 + e.end.minute) - (e.start.hour * 60 + e.start.minute);
     return (mins * hourHeight / 60).clamp(28.0, double.infinity);
   }
 
@@ -559,8 +583,9 @@ class _TimeGrid extends StatelessWidget {
               right: 0,
               child: Container(
                 height: 1,
-                color: colors.border
-                    .withValues(alpha: h == startHour ? 0.7 : 0.4),
+                color: colors.border.withValues(
+                  alpha: h == startHour ? 0.7 : 0.4,
+                ),
               ),
             ),
 
@@ -571,7 +596,9 @@ class _TimeGrid extends StatelessWidget {
               left: timeColumnWidth,
               right: 0,
               child: Container(
-                  height: 1, color: colors.border.withValues(alpha: 0.18)),
+                height: 1,
+                color: colors.border.withValues(alpha: 0.18),
+              ),
             ),
 
           // Hour labels
@@ -648,10 +675,14 @@ class _EventBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final accent = event.tone == ScheduleEventTone.sport ? colors.primary : pbBlue;
+    final accent = event.tone == ScheduleEventTone.sport
+        ? colors.primary
+        : pbBlue;
 
     return FTappable(
-      onPress: () {},
+      onPress: event.lobbyId == null
+          ? null
+          : () => _openActivity(context, event),
       child: Container(
         decoration: BoxDecoration(
           color: accent.withValues(alpha: 0.10),

@@ -1,4 +1,3 @@
-
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -14,11 +13,22 @@ import '../core/model/user_details.dart';
 part 'profile_controller.freezed.dart';
 part 'profile_controller.g.dart';
 
+@riverpod
+bool profileHasUncommittedChanges(Ref ref) {
+  ref.watch(profileControllerProvider);
+  ref.watch(networkControllerProvider);
+  ref.watch(industryControllerProvider);
+  return ref.read(profileControllerProvider.notifier).hasUncommittedChanges ||
+      ref.read(networkControllerProvider.notifier).hasUncommittedChanges ||
+      ref.read(industryControllerProvider.notifier).hasUncommittedChanges;
+}
+
 class AvatarUploadFailedException implements Exception {
   const AvatarUploadFailedException();
 
   @override
-  String toString() => 'AvatarUploadFailedException: failed to upload avatar to storage';
+  String toString() =>
+      'AvatarUploadFailedException: failed to upload avatar to storage';
 }
 
 @freezed
@@ -88,13 +98,14 @@ class NetworkSearchController extends _$NetworkSearchController {
         'search_term': query,
         'result_limit': 10,
         'filter_cities': state.cityFilters.map((c) => c.dbIndex).toList(),
-        'filter_categories': state.categoryFilters.map((c) => c.jsonValue).toList(),
+        'filter_categories': state.categoryFilters
+            .map((c) => c.jsonValue)
+            .toList(),
       };
 
-      final response = await supabase.rpc(
-        'search_networks_unaccent',
-        params: params,
-      ).timeout(const Duration(seconds: 5));
+      final response = await supabase
+          .rpc('search_networks_unaccent', params: params)
+          .timeout(const Duration(seconds: 5));
 
       state = state.copyWith(
         isLoading: false,
@@ -104,7 +115,9 @@ class NetworkSearchController extends _$NetworkSearchController {
             name: data['name'] as String,
             isAlumni: false,
             category: NetworkCategory.fromString(data['category'] as String?),
-            city: data['city'] != null ? City.values[data['city'] as int] : null,
+            city: data['city'] != null
+                ? City.values[data['city'] as int]
+                : null,
           );
         }).toList(),
       );
@@ -144,7 +157,9 @@ class NetworkController extends _$NetworkController {
           id: networkData['id'] as int,
           name: networkData['name'] as String,
           isAlumni: data['alumni'] as bool,
-          category: NetworkCategory.fromString(networkData['category'] as String?),
+          category: NetworkCategory.fromString(
+            networkData['category'] as String?,
+          ),
           city: networkData['city'] != null
               ? City.values[networkData['city'] as int]
               : null,
@@ -213,17 +228,26 @@ class NetworkController extends _$NetworkController {
     if (userId == null) return;
 
     try {
-      await supabase.from('user_network').delete().eq('user_id', userId).timeout(const Duration(seconds: 5));
+      await supabase
+          .from('user_network')
+          .delete()
+          .eq('user_id', userId)
+          .timeout(const Duration(seconds: 5));
       if (state.isNotEmpty) {
-        await supabase.from('user_network').insert(
+        await supabase
+            .from('user_network')
+            .insert(
               state
-                  .map((network) => {
-                        'user_id': userId,
-                        'network_id': network.id,
-                        'alumni': network.isAlumni,
-                      })
+                  .map(
+                    (network) => {
+                      'user_id': userId,
+                      'network_id': network.id,
+                      'alumni': network.isAlumni,
+                    },
+                  )
                   .toList(),
-            ).timeout(const Duration(seconds: 5));
+            )
+            .timeout(const Duration(seconds: 5));
       }
       _initialNetworks = List.unmodifiable(state);
     } catch (e, st) {
@@ -236,6 +260,7 @@ class NetworkController extends _$NetworkController {
 @riverpod
 class IndustryController extends _$IndustryController {
   final supabase = Supabase.instance.client;
+  List<Industry>? _initialIndustries;
 
   @override
   List<Industry> build() {
@@ -247,10 +272,7 @@ class IndustryController extends _$IndustryController {
     return [];
   }
 
-
-
   Future<void> _fetchIndustries(String userId) async {
-
     try {
       final response = await supabase
           .from('user_industry')
@@ -264,6 +286,7 @@ class IndustryController extends _$IndustryController {
       }).toList();
 
       state = industries;
+      _initialIndustries ??= List.unmodifiable(industries);
     } catch (e, st) {
       Talker().handle(e, st, 'Error fetching user industries');
     }
@@ -287,6 +310,19 @@ class IndustryController extends _$IndustryController {
     state = industries;
   }
 
+  bool get hasUncommittedChanges {
+    final initial = _initialIndustries;
+    if (initial == null || initial.length != state.length) {
+      return initial != null;
+    }
+    return state.any((industry) => !initial.contains(industry));
+  }
+
+  void discardChanges() {
+    final initial = _initialIndustries;
+    if (initial != null) state = [...initial];
+  }
+
   void reset() {
     ref.invalidateSelf();
   }
@@ -296,17 +332,27 @@ class IndustryController extends _$IndustryController {
     if (userId == null) return;
 
     try {
-      await supabase.from('user_industry').delete().eq('user_id', userId).timeout(const Duration(seconds: 5));
+      await supabase
+          .from('user_industry')
+          .delete()
+          .eq('user_id', userId)
+          .timeout(const Duration(seconds: 5));
       if (state.isNotEmpty) {
-        await supabase.from('user_industry').insert(
+        await supabase
+            .from('user_industry')
+            .insert(
               state
-                  .map((industry) => {
-                        'user_id': userId,
-                        'industry_id': industry.index,
-                      })
+                  .map(
+                    (industry) => {
+                      'user_id': userId,
+                      'industry_id': industry.index,
+                    },
+                  )
                   .toList(),
-            ).timeout(const Duration(seconds: 5));
+            )
+            .timeout(const Duration(seconds: 5));
       }
+      _initialIndustries = List.unmodifiable(state);
     } catch (e, st) {
       Talker().handle(e, st, 'Error committing user industries');
       rethrow;
@@ -318,6 +364,7 @@ class IndustryController extends _$IndustryController {
 class ProfileController extends _$ProfileController {
   final supabase = Supabase.instance.client;
   final talker = Talker();
+  ProfileState? _initialState;
 
   @override
   ProfileState build() {
@@ -337,12 +384,29 @@ class ProfileController extends _$ProfileController {
       details = details.copyWith(avatar: GeneratedAvatar(seed));
     }
 
-    return ProfileState(
+    final initial = ProfileState(
       username: username,
       details: details,
       networks: networks,
       industries: industries,
     );
+    _initialState ??= initial;
+    return initial;
+  }
+
+  bool get hasUncommittedChanges {
+    final initial = _initialState;
+    if (initial == null) return false;
+    return state.username != initial.username ||
+        state.details != initial.details ||
+        state.pickedAvatar != initial.pickedAvatar;
+  }
+
+  void discardChanges() {
+    final initial = _initialState;
+    if (initial != null) state = initial;
+    ref.read(networkControllerProvider.notifier).discardChanges();
+    ref.read(industryControllerProvider.notifier).discardChanges();
   }
 
   void updateDraft({
@@ -358,7 +422,9 @@ class ProfileController extends _$ProfileController {
       details: details ?? state.details,
       networks: networks ?? state.networks,
       industries: industries ?? state.industries,
-      pickedAvatar: clearPickedAvatar ? null : (pickedAvatar ?? state.pickedAvatar),
+      pickedAvatar: clearPickedAvatar
+          ? null
+          : (pickedAvatar ?? state.pickedAvatar),
     );
   }
 
@@ -437,11 +503,17 @@ class ProfileController extends _$ProfileController {
           final bytes = await state.pickedAvatar!.readAsBytes();
           final path = '${user.id}.jpg';
 
-          await supabase.storage.from('user_avatar').uploadBinary(
+          await supabase.storage
+              .from('user_avatar')
+              .uploadBinary(
                 path,
                 bytes,
-                fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
-              ).timeout(const Duration(seconds: 5));
+                fileOptions: const FileOptions(
+                  upsert: true,
+                  contentType: 'image/jpeg',
+                ),
+              )
+              .timeout(const Duration(seconds: 5));
         } catch (e, st) {
           talker.handle(e, st, 'Failed to upload avatar to storage');
           // Fall back to a generated avatar so `avatar` isn't left as
@@ -450,17 +522,24 @@ class ProfileController extends _$ProfileController {
           // rest of the commit succeeds below.
           avatarUploadFailed = true;
           final tagNumber = user.tagNumber;
-          final seed = 'fallback_${DateTime.now().millisecondsSinceEpoch}_$tagNumber';
-          updatedDetails = updatedDetails.copyWith(avatar: GeneratedAvatar(seed));
+          final seed =
+              'fallback_${DateTime.now().millisecondsSinceEpoch}_$tagNumber';
+          updatedDetails = updatedDetails.copyWith(
+            avatar: GeneratedAvatar(seed),
+          );
         }
       }
 
       await Future.wait([
         // 2. Update user basic info & details json
-        supabase.from('user').update({
-          'username': state.username,
-          'details': updatedDetails.toJson(),
-        }).eq('id', user.id!).timeout(const Duration(seconds: 5)),
+        supabase
+            .from('user')
+            .update({
+              'username': state.username,
+              'details': updatedDetails.toJson(),
+            })
+            .eq('id', user.id!)
+            .timeout(const Duration(seconds: 5)),
 
         // 3. Sync networks (user_network table)
         ref.read(networkControllerProvider.notifier).commit(),
@@ -468,6 +547,8 @@ class ProfileController extends _$ProfileController {
         // 4. Sync industries (user_industry table)
         ref.read(industryControllerProvider.notifier).commit(),
       ]);
+
+      _initialState = state.copyWith(pickedAvatar: null);
 
       if (avatarUploadFailed) {
         throw const AvatarUploadFailedException();

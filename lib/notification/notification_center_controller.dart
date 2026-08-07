@@ -51,11 +51,27 @@ class NotificationCenterController extends _$NotificationCenterController {
   }
 
   Future<void> delete(int id) async {
-    await supabase
-        .rpc('fn_delete_notification', params: {'p_id': id})
-        .timeout(const Duration(seconds: 5));
-    ref.invalidateSelf();
-    ref.invalidate(notificationUnreadCountProvider);
+    // Remove the row before the RPC so the tap feels immediate and the list
+    // never waits on network latency to reflect the user's action.
+    final previousItems = state.asData?.value;
+    if (previousItems != null) {
+      state = AsyncData([
+        for (final item in previousItems)
+          if (item.id != id) item,
+      ]);
+    }
+
+    try {
+      await supabase
+          .rpc('fn_delete_notification', params: {'p_id': id})
+          .timeout(const Duration(seconds: 5));
+      ref.invalidate(notificationUnreadCountProvider);
+    } catch (_) {
+      // Let the caller report the failure, but restore the row so a transient
+      // network failure never makes a notification appear deleted locally.
+      if (previousItems != null) state = AsyncData(previousItems);
+      rethrow;
+    }
   }
 
   Future<void> clearRead() async {

@@ -655,7 +655,7 @@
         "uploadFailed": "Failed to upload photo",
         "networkMaxReached": "Maximum 5 networks. Remove one first.",
         "discardChangesTitle": "Discard changes?",
-        "discardChangesBody": "Your network changes have not been saved.",
+        "discardChangesBody": "Your profile changes have not been saved.",
         "discardChangesStay": "Keep editing",
         "discardChangesLeave": "Discard",
         "paymentInfo": "Payment Info",

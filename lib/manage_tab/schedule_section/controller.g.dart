@@ -9,15 +9,17 @@ part of 'controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// The current user's activities (lobby sessions + coach bookings) for the
-/// context sport, keyed by local date. Backed by the `my_schedule_data` RPC;
-/// recurring rows are expanded across the visible window.
+/// all sports, keyed by local date. Backed by the `my_schedule_data` RPC —
+/// every row, including each occurrence of a recurring series, is its own
+/// dated activity, so no client-side expansion is needed.
 
 @ProviderFor(ScheduleEvents)
 final scheduleEventsProvider = ScheduleEventsProvider._();
 
 /// The current user's activities (lobby sessions + coach bookings) for the
-/// context sport, keyed by local date. Backed by the `my_schedule_data` RPC;
-/// recurring rows are expanded across the visible window.
+/// all sports, keyed by local date. Backed by the `my_schedule_data` RPC —
+/// every row, including each occurrence of a recurring series, is its own
+/// dated activity, so no client-side expansion is needed.
 final class ScheduleEventsProvider
     extends
         $AsyncNotifierProvider<
@@ -25,8 +27,9 @@ final class ScheduleEventsProvider
           Map<DateTime, List<ScheduleEvent>>
         > {
   /// The current user's activities (lobby sessions + coach bookings) for the
-  /// context sport, keyed by local date. Backed by the `my_schedule_data` RPC;
-  /// recurring rows are expanded across the visible window.
+  /// all sports, keyed by local date. Backed by the `my_schedule_data` RPC —
+  /// every row, including each occurrence of a recurring series, is its own
+  /// dated activity, so no client-side expansion is needed.
   ScheduleEventsProvider._()
     : super(
         from: null,
@@ -46,11 +49,12 @@ final class ScheduleEventsProvider
   ScheduleEvents create() => ScheduleEvents();
 }
 
-String _$scheduleEventsHash() => r'e0fc0c4bb45487b76e872885fc9867ca3a0cff92';
+String _$scheduleEventsHash() => r'3f184c8d8cffad026e29bc7caf7371920f6a8139';
 
 /// The current user's activities (lobby sessions + coach bookings) for the
-/// context sport, keyed by local date. Backed by the `my_schedule_data` RPC;
-/// recurring rows are expanded across the visible window.
+/// all sports, keyed by local date. Backed by the `my_schedule_data` RPC —
+/// every row, including each occurrence of a recurring series, is its own
+/// dated activity, so no client-side expansion is needed.
 
 abstract class _$ScheduleEvents
     extends $AsyncNotifier<Map<DateTime, List<ScheduleEvent>>> {

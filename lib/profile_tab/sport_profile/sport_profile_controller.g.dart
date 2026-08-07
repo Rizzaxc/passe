@@ -9,6 +9,50 @@ part of 'sport_profile_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(sportProfileHasUncommittedChanges)
+final sportProfileHasUncommittedChangesProvider =
+    SportProfileHasUncommittedChangesProvider._();
+
+final class SportProfileHasUncommittedChangesProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  SportProfileHasUncommittedChangesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sportProfileHasUncommittedChangesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() =>
+      _$sportProfileHasUncommittedChangesHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return sportProfileHasUncommittedChanges(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$sportProfileHasUncommittedChangesHash() =>
+    r'67b2a9fdd3f493d11120ef60d126b8f3cbd52ca7';
+
 @ProviderFor(SoccerProfileController)
 final soccerProfileControllerProvider = SoccerProfileControllerProvider._();
 
@@ -42,7 +86,7 @@ final class SoccerProfileControllerProvider
 }
 
 String _$soccerProfileControllerHash() =>
-    r'fe1ab08bb01c434d3418ae35821340a34e0c2484';
+    r'3250565495a0eb2c601e9a08380b70babc327ff2';
 
 abstract class _$SoccerProfileController extends $Notifier<SoccerProfileState> {
   SoccerProfileState build();
@@ -97,7 +141,7 @@ final class BasketballProfileControllerProvider
 }
 
 String _$basketballProfileControllerHash() =>
-    r'b896c8d8c7e8cc6ec31999c5dcc7c813ffaad848';
+    r'207b9557a2c783f4fb4003a00cefdee3d8f95041';
 
 abstract class _$BasketballProfileController
     extends $Notifier<BasketballProfileState> {
@@ -154,7 +198,7 @@ final class BadmintonProfileControllerProvider
 }
 
 String _$badmintonProfileControllerHash() =>
-    r'4cef0434fc28e30a5d7e27da28e602415705a8b2';
+    r'9a971d385970cb480052047f1324dbbde59eb994';
 
 abstract class _$BadmintonProfileController
     extends $Notifier<BadmintonProfileState> {
@@ -208,7 +252,7 @@ final class TennisProfileControllerProvider
 }
 
 String _$tennisProfileControllerHash() =>
-    r'a11a43ede098b3372c1670af9364f257e27db1df';
+    r'7511559e39f01ee06e659df178c56a243dd6de51';
 
 abstract class _$TennisProfileController extends $Notifier<TennisProfileState> {
   TennisProfileState build();
@@ -263,7 +307,7 @@ final class PickleballProfileControllerProvider
 }
 
 String _$pickleballProfileControllerHash() =>
-    r'e281ae7e6a23bbac4d354c1f6180a84b9ec38da9';
+    r'a421187d5ea34a07cc0982ef29fbd9488d8412d1';
 
 abstract class _$PickleballProfileController
     extends $Notifier<PickleballProfileState> {

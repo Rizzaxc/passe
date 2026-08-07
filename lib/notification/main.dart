@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
@@ -205,9 +207,23 @@ class _NotificationRow extends ConsumerWidget {
     if (location != null && context.mounted) context.go(location);
   }
 
-  Future<void> _onDelete(WidgetRef ref) => ref
-      .read(notificationCenterControllerProvider.notifier)
-      .delete(item.id);
+  Future<void> _onDelete(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref
+          .read(notificationCenterControllerProvider.notifier)
+          .delete(item.id);
+    } catch (e, st) {
+      Talker().handle(e, st, 'notification deletion failed');
+      if (!context.mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: Text('errorGeneric'.tr()),
+        alignment: .bottomCenter,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -221,80 +237,77 @@ class _NotificationRow extends ConsumerWidget {
         ? null
         : ref.watch(lobbyInviteStatusProvider(recordId)).value;
 
-    return Dismissible(
-      key: ValueKey(item.id),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) => _onDelete(ref),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        color: colors.destructive,
-        child: Icon(FLucideIcons.trash2, color: colors.destructiveForeground),
-      ),
-      child: FTappable(
-        onPress: () =>
-            _onTap(context, ref, lobbyInviteStatus: lobbyInviteStatus),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 12,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: item.isUnread ? colors.secondary : colors.muted,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  _iconFor(item.kind),
-                  size: 18,
-                  color: item.isUnread
-                      ? colors.secondaryForeground
-                      : colors.mutedForeground,
-                ),
+    return FTappable(
+      onPress: () => _onTap(context, ref, lobbyInviteStatus: lobbyInviteStatus),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 12,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: item.isUnread ? colors.secondary : colors.muted,
+                shape: BoxShape.circle,
               ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 2,
-                  children: [
-                    Text(
-                      item.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: typography.body.sm.copyWith(
-                        fontWeight: item.isUnread
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      item.body,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: typography.body.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                    Text(
-                      _relativeTime(item.createdAt),
-                      style: typography.body.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                  ],
-                ),
+              alignment: Alignment.center,
+              child: Icon(
+                _iconFor(item.kind),
+                size: 18,
+                color: item.isUnread
+                    ? colors.secondaryForeground
+                    : colors.mutedForeground,
               ),
-              if (recordId != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: _LobbyInviteActions(recordId: recordId),
-                ),
-            ],
-          ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 2,
+                children: [
+                  Text(
+                    item.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: typography.body.sm.copyWith(
+                      fontWeight: item.isUnread
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    item.body,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: typography.body.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                  Text(
+                    _relativeTime(item.createdAt),
+                    style: typography.body.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (recordId != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: _LobbyInviteActions(recordId: recordId),
+              ),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: FButton.icon(
+                variant: .destructive,
+                size: .xs,
+                onPress: () => unawaited(_onDelete(context, ref)),
+                child: const Icon(FLucideIcons.trash2, size: 14),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -389,17 +402,17 @@ class _LobbyInvitePendingButtonsState
       mainAxisSize: MainAxisSize.min,
       spacing: 4,
       children: [
-        FButton.icon(
-          variant: .ghost,
+        FButton(
+          variant: .outline,
           size: .xs,
           onPress: () => _respond(false),
-          child: const Icon(FLucideIcons.x, size: 14, color: pbBlue),
+          child: const Text('No'),
         ),
-        FButton.icon(
+        FButton(
           variant: .primary,
           size: .xs,
           onPress: () => _respond(true),
-          child: const Icon(FLucideIcons.check, size: 14),
+          child: const Text('Yes'),
         ),
       ],
     );

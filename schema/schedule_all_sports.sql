@@ -1,22 +1,9 @@
 -- ============================================================================
--- schedule_rpc.sql — my_schedule_data: the current user's activities for the
--- Manage → Schedule calendar.
+-- schedule_all_sports.sql — make Manage → Schedule context-sport independent.
 --
--- Returns, for auth.uid() across all sports, within [p_from, p_to].
--- `p_sport_id` remains optional for backwards-compatible sport-filtered callers;
--- pass NULL to include every sport:
---   • lobby activities for every lobby the user is a member of   (tone 'sport')
---   • the user's own professional bookings                       (tone 'coach')
--- Recurring rows are real, independently-dated activity rows now (each week
--- is its own materialized row — see schema/recurring_activity_series.sql),
--- so a plain start_time-in-window filter is correct for all of them; there's
--- no more client-side expansion of a single anchor row.
---
--- SECURITY DEFINER because `activity` RLS is owner-only (user_id = auth.uid()),
--- but the schedule needs every activity in the user's lobbies regardless of who
--- proposed it. search_path is locked and the body filters on auth.uid().
---
--- Apply with execute_sql / apply_migration. Idempotent.
+-- Existing callers may still pass a sport id to filter. The Manage calendar
+-- passes NULL, which returns the current user's activities across every sport.
+-- Apply with execute_sql / apply_migration.
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION public.my_schedule_data(
@@ -45,7 +32,6 @@ BEGIN
     END IF;
 
     RETURN QUERY
-    -- lobby activities for lobbies the user belongs to
     SELECT a.id,
            a.start_time,
            a.end_time,
@@ -63,7 +49,6 @@ BEGIN
 
     UNION ALL
 
-    -- professional bookings where the user is the client
     SELECT a.id,
            a.start_time,
            a.end_time,
@@ -82,7 +67,5 @@ BEGIN
 END;
 $$;
 
--- Postgres grants EXECUTE to PUBLIC by default; lock it to authenticated only
--- (the body already returns nothing when auth.uid() is null).
 REVOKE EXECUTE ON FUNCTION public.my_schedule_data(bigint, timestamptz, timestamptz) FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION public.my_schedule_data(bigint, timestamptz, timestamptz) TO authenticated;

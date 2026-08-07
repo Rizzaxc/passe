@@ -18,12 +18,16 @@ import 'package:talker_riverpod_logger/talker_riverpod_logger_observer.dart';
 import 'package:talker_riverpod_logger/talker_riverpod_logger_settings.dart';
 
 import 'ads/ad_service.dart';
+import 'core/model/enum.dart';
+import 'core/state/selected_sport_state.dart';
 import 'firebase_options.dart';
 import 'health_tab/health_sync_service.dart';
 import 'logger/observer.dart';
 import 'notifications/notification_service.dart';
 import 'onboarding/coach_marks.dart';
 import 'onboarding/follow_up.dart';
+import 'profile_tab/profile_controller.dart';
+import 'profile_tab/sport_profile/sport_profile_controller.dart';
 import 'router.dart';
 import 'ui/main.dart' as ui;
 
@@ -230,7 +234,51 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
     );
   }
 
-  void _onTap(BuildContext context, int index) {
+  Future<void> _onTap(BuildContext context, int index) async {
+    if (widget.navigationShell.currentIndex == 4 && index != 4) {
+      // The providers also depend on controller-owned saved baselines, which
+      // can advance after a successful commit without changing draft state.
+      // Re-evaluate them at the navigation boundary instead of trusting a
+      // previously cached dirty result.
+      ref.invalidate(profileHasUncommittedChangesProvider);
+      ref.invalidate(sportProfileHasUncommittedChangesProvider);
+      final hasChanges =
+          ref.read(profileHasUncommittedChangesProvider) ||
+          ref.read(sportProfileHasUncommittedChangesProvider);
+      if (!hasChanges) {
+        widget.navigationShell.goBranch(index);
+        return;
+      }
+
+      final discard = await showFDialog<bool>(
+        context: context,
+        builder: (dialogContext, style, animation) => ui.PConfirmDialog(
+          animation: animation,
+          title: Text('profile.discardChangesTitle'.tr()),
+          body: Text('profile.discardChangesBody'.tr()),
+          actions: [
+            FButton(
+              variant: .outline,
+              onPress: () => Navigator.of(dialogContext).pop(false),
+              child: Text('profile.discardChangesStay'.tr()),
+            ),
+            FButton(
+              variant: .destructive,
+              onPress: () => Navigator.of(dialogContext).pop(true),
+              child: Text('profile.discardChangesLeave'.tr()),
+            ),
+          ],
+        ),
+      );
+      if (discard != true || !mounted) return;
+
+      ref.read(profileControllerProvider.notifier).discardChanges();
+      final sport = ref.read(selectedSportStateProvider).asData?.value;
+      if (sport != null && sport != Sport.others) {
+        discardSportProfileChanges(ref, sport);
+      }
+    }
+
     widget.navigationShell.goBranch(
       index,
       initialLocation: index == widget.navigationShell.currentIndex,
