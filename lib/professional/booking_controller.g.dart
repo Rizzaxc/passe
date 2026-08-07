@@ -218,28 +218,25 @@ final class HasBookingConflictFamily extends $Family
   String toString() => r'hasBookingConflictProvider';
 }
 
-/// Creates a `professional_booking` row for one professional. RLS ("Clients
-/// can manage their own bookings") scopes the insert to the caller as
-/// `client_user_id`; the row starts at the default `requested` status —
-/// the professional accepts/rejects it via `accept_professional_booking`/
-/// `reject_professional_booking` (schema/professional_booking_actions.sql).
+/// Requests a booking through the server-side professional booking workflow.
+/// The RPC derives ownership, price, package details, and the initial status;
+/// the professional then accepts or rejects the request through the matching
+/// action RPCs.
 
 @ProviderFor(ProfessionalBookingController)
 final professionalBookingControllerProvider =
     ProfessionalBookingControllerFamily._();
 
-/// Creates a `professional_booking` row for one professional. RLS ("Clients
-/// can manage their own bookings") scopes the insert to the caller as
-/// `client_user_id`; the row starts at the default `requested` status —
-/// the professional accepts/rejects it via `accept_professional_booking`/
-/// `reject_professional_booking` (schema/professional_booking_actions.sql).
+/// Requests a booking through the server-side professional booking workflow.
+/// The RPC derives ownership, price, package details, and the initial status;
+/// the professional then accepts or rejects the request through the matching
+/// action RPCs.
 final class ProfessionalBookingControllerProvider
     extends $NotifierProvider<ProfessionalBookingController, bool> {
-  /// Creates a `professional_booking` row for one professional. RLS ("Clients
-  /// can manage their own bookings") scopes the insert to the caller as
-  /// `client_user_id`; the row starts at the default `requested` status —
-  /// the professional accepts/rejects it via `accept_professional_booking`/
-  /// `reject_professional_booking` (schema/professional_booking_actions.sql).
+  /// Requests a booking through the server-side professional booking workflow.
+  /// The RPC derives ownership, price, package details, and the initial status;
+  /// the professional then accepts or rejects the request through the matching
+  /// action RPCs.
   ProfessionalBookingControllerProvider._({
     required ProfessionalBookingControllerFamily super.from,
     required String super.argument,
@@ -286,13 +283,12 @@ final class ProfessionalBookingControllerProvider
 }
 
 String _$professionalBookingControllerHash() =>
-    r'cfc580e164d2b18d9e96d0de4944e6a02bb06d7d';
+    r'11940e3ffb4c3146deef2ee54401f5b799b731d6';
 
-/// Creates a `professional_booking` row for one professional. RLS ("Clients
-/// can manage their own bookings") scopes the insert to the caller as
-/// `client_user_id`; the row starts at the default `requested` status —
-/// the professional accepts/rejects it via `accept_professional_booking`/
-/// `reject_professional_booking` (schema/professional_booking_actions.sql).
+/// Requests a booking through the server-side professional booking workflow.
+/// The RPC derives ownership, price, package details, and the initial status;
+/// the professional then accepts or rejects the request through the matching
+/// action RPCs.
 
 final class ProfessionalBookingControllerFamily extends $Family
     with
@@ -312,11 +308,10 @@ final class ProfessionalBookingControllerFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Creates a `professional_booking` row for one professional. RLS ("Clients
-  /// can manage their own bookings") scopes the insert to the caller as
-  /// `client_user_id`; the row starts at the default `requested` status —
-  /// the professional accepts/rejects it via `accept_professional_booking`/
-  /// `reject_professional_booking` (schema/professional_booking_actions.sql).
+  /// Requests a booking through the server-side professional booking workflow.
+  /// The RPC derives ownership, price, package details, and the initial status;
+  /// the professional then accepts or rejects the request through the matching
+  /// action RPCs.
 
   ProfessionalBookingControllerProvider call(String professionalId) =>
       ProfessionalBookingControllerProvider._(
@@ -328,11 +323,10 @@ final class ProfessionalBookingControllerFamily extends $Family
   String toString() => r'professionalBookingControllerProvider';
 }
 
-/// Creates a `professional_booking` row for one professional. RLS ("Clients
-/// can manage their own bookings") scopes the insert to the caller as
-/// `client_user_id`; the row starts at the default `requested` status —
-/// the professional accepts/rejects it via `accept_professional_booking`/
-/// `reject_professional_booking` (schema/professional_booking_actions.sql).
+/// Requests a booking through the server-side professional booking workflow.
+/// The RPC derives ownership, price, package details, and the initial status;
+/// the professional then accepts or rejects the request through the matching
+/// action RPCs.
 
 abstract class _$ProfessionalBookingController extends $Notifier<bool> {
   late final _$args = ref.$arg as String;

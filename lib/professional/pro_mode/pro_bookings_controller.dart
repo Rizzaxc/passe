@@ -106,10 +106,12 @@ class RefereedMatch {
     return RefereedMatch(
       challengeId: challenge['id'] as String,
       homeLobbyName:
-          (challenge['target'] as Map<String, dynamic>?)?['name'] as String? ?? '—',
+          (challenge['target'] as Map<String, dynamic>?)?['name'] as String? ??
+          '—',
       awayLobbyName:
-          (challenge['initiator'] as Map<String, dynamic>?)?['name'] as String? ??
-              '—',
+          (challenge['initiator'] as Map<String, dynamic>?)?['name']
+              as String? ??
+          '—',
       activityEnd: end != null ? DateTime.parse(end).toLocal() : null,
       resultRecorded: challenge['status'] == 'played',
     );
@@ -214,14 +216,19 @@ class RecordChallengeResultController
   }) async {
     state = true;
     try {
-      await Supabase.instance.client.rpc('record_challenge_match', params: {
-        'p_challenge_id': challengeId,
-        'p_result': result,
-        'p_sets': sets.isEmpty
-            ? null
-            : sets.map((s) => [s.$1, s.$2]).toList(),
-        'p_note': note,
-      }).timeout(const Duration(seconds: 5));
+      await Supabase.instance.client
+          .rpc(
+            'record_challenge_match',
+            params: {
+              'p_challenge_id': challengeId,
+              'p_result': result,
+              'p_sets': sets.isEmpty
+                  ? null
+                  : sets.map((s) => [s.$1, s.$2]).toList(),
+              'p_note': note,
+            },
+          )
+          .timeout(const Duration(seconds: 5));
       _invalidateAll(ref, professionalId);
     } finally {
       state = false;
@@ -263,7 +270,10 @@ class ProBookingActionController extends _$ProBookingActionController {
     state = true;
     try {
       await supabase
-          .rpc('accept_professional_booking', params: {'p_booking_id': bookingId})
+          .rpc(
+            'accept_professional_booking',
+            params: {'p_booking_id': bookingId},
+          )
           .timeout(const Duration(seconds: 5));
       _invalidateAll(ref, professionalId);
     } finally {
@@ -293,9 +303,10 @@ class ProBookingActionController extends _$ProBookingActionController {
     state = true;
     try {
       await supabase
-          .from('professional_booking')
-          .update({'status': 'completed'})
-          .eq('id', bookingId)
+          .rpc(
+            'complete_professional_booking',
+            params: {'p_booking_id': bookingId},
+          )
           .timeout(const Duration(seconds: 5));
       _invalidateAll(ref, professionalId);
     } finally {

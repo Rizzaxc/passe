@@ -144,36 +144,7 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
     final durationMinutes = service.minDurationMinutes ?? 60;
     final start = _startInstant;
     final end = start.add(Duration(minutes: durationMinutes));
-    final participantCount = _participants.length + 1; // + the booking client
-    double? agreedRate;
-    double? packageTotalPrice;
-    if (service.hourlyRate != null) {
-      if (service.pricingMode == 'wholesale') {
-        packageTotalPrice = service.hourlyRate;
-        agreedRate = service.hourlyRate;
-      } else {
-        final perSession = service.hourlyRate! *
-            durationMinutes /
-            60 *
-            (service.isGroup ? participantCount : 1);
-        agreedRate = perSession;
-        packageTotalPrice = service.isPackage
-            ? perSession * service.sessionCount
-            : null;
-      }
-    }
-
-    final activityId = ref
-        .read(pendingActivityBookingStateProvider.notifier)
-        .consume();
-    // When this booking came from a lobby activity's "Đặt HLV / Trọng tài"
-    // action, attach it to that activity in the slot matching this pro's role
-    // (coach vs referee) — never professional_booking_id, which the
-    // activity_source_exclusivity CHECK forbids on a lobby activity.
-    final activityAttachColumn = activityId == null
-        ? null
-        : (_isCoach ? 'coach_booking_id' : 'referee_booking_id');
-
+    final activityId = ref.read(pendingActivityBookingStateProvider);
     try {
       await ref
           .read(professionalBookingControllerProvider(widget.item.id).notifier)
@@ -181,15 +152,13 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
             serviceId: service.id,
             start: start,
             end: end,
-            agreedRate: agreedRate,
             notes: _notesController.text.trim(),
             locationId: _isCoach ? _locationId : null,
-            participantUserIds:
-                _participants.isEmpty ? null : _participants.map((p) => p.id).toList(),
-            newPackageSessionCount: service.isPackage ? service.sessionCount : null,
-            newPackageTotalPrice: packageTotalPrice,
+            participantUserIds: _participants.isEmpty
+                ? null
+                : _participants.map((p) => p.id).toList(),
+            createPackage: service.isPackage,
             activityId: activityId,
-            activityAttachColumn: activityAttachColumn,
           );
     } catch (e, st) {
       Talker().handle(e, st, 'Professional booking failed');
@@ -206,6 +175,9 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
     }
 
     if (!mounted) return;
+    if (activityId != null) {
+      ref.read(pendingActivityBookingStateProvider.notifier).set(null);
+    }
     Navigator.of(context).pop();
     showFToast(
       context: context,
@@ -326,9 +298,8 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
                             Expanded(
                               child: Text(
                                 'Khung giờ này có thể đã trùng với lịch đã xác nhận khác của ${widget.item.displayName}.',
-                                style: context.theme.typography.body.xs.copyWith(
-                                  color: const Color(0xFF8E5D1F),
-                                ),
+                                style: context.theme.typography.body.xs
+                                    .copyWith(color: const Color(0xFF8E5D1F)),
                               ),
                             ),
                           ],
@@ -344,7 +315,8 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
                     ),
                   if (selected.isGroup)
                     _Section(
-                      label: 'Người tham gia (tối đa ${selected.maxParticipants} người)',
+                      label:
+                          'Người tham gia (tối đa ${selected.maxParticipants} người)',
                       children: [
                         Row(
                           spacing: 8,

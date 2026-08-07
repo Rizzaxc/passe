@@ -6,6 +6,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../core/format.dart';
 import '../../core/model/enum.dart';
 import '../../core/model/timeslot.dart';
+import '../../core/state/pro_mode_state.dart';
 import '../../core/timeslot_picker.dart';
 import '../../ui/main.dart';
 import 'pro_profile_controller.dart';
@@ -41,6 +42,23 @@ class ProProfileView extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: FTileGroup(
+                children: [
+                  FTile(
+                    prefix: const Icon(FLucideIcons.briefcaseBusiness),
+                    title: const Text('Chế Độ Chuyên Gia'),
+                    subtitle: const Text('Tắt để quay lại hồ sơ người chơi'),
+                    details: FSwitch(
+                      value: true,
+                      onChange: (active) =>
+                          ref.read(proModeStateProvider.notifier).set(active),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             profileAsync.when(
               loading: () => const Padding(
                 padding: EdgeInsets.all(24),
@@ -81,8 +99,7 @@ class _ProfileFieldsSection extends ConsumerStatefulWidget {
       _ProfileFieldsSectionState();
 }
 
-class _ProfileFieldsSectionState
-    extends ConsumerState<_ProfileFieldsSection> {
+class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
   late final TextEditingController _bioCtrl;
   late final TextEditingController _phoneCtrl;
   late final TextEditingController _scheduleNoteCtrl;
@@ -270,8 +287,10 @@ class _ServicesSection extends StatelessWidget {
               ),
               FButton.icon(
                 variant: .outline,
-                onPress: () =>
-                    showServiceEditorSheet(context, professionalId: professionalId),
+                onPress: () => showServiceEditorSheet(
+                  context,
+                  professionalId: professionalId,
+                ),
                 child: const Icon(FLucideIcons.plus),
               ),
             ],
@@ -383,7 +402,8 @@ class _ServiceCard extends ConsumerWidget {
                       color: colors.mutedForeground,
                     ),
                   ),
-                if (service.maxParticipants != null && service.maxParticipants! > 1)
+                if (service.maxParticipants != null &&
+                    service.maxParticipants! > 1)
                   Text(
                     'Tối đa ${service.maxParticipants} người',
                     style: context.theme.typography.body.xs.copyWith(
@@ -408,10 +428,8 @@ void showServiceEditorSheet(
 }) {
   showPSheet(
     context: context,
-    builder: (_) => _ServiceEditorSheet(
-      professionalId: professionalId,
-      existing: existing,
-    ),
+    builder: (_) =>
+        _ServiceEditorSheet(professionalId: professionalId, existing: existing),
   );
 }
 
@@ -475,9 +493,7 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
     if (_typeCtrl.text.trim().isEmpty) return;
     try {
       await ref
-          .read(
-            serviceEditorControllerProvider(widget.professionalId).notifier,
-          )
+          .read(serviceEditorControllerProvider(widget.professionalId).notifier)
           .upsert(
             id: widget.existing?.id,
             sportId: _sport.index,
@@ -559,9 +575,7 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
               Expanded(
                 child: FTextField(
                   label: const Text('Thời lượng (phút)'),
-                  control: FTextFieldControl.managed(
-                    controller: _durationCtrl,
-                  ),
+                  control: FTextFieldControl.managed(controller: _durationCtrl),
                   keyboardType: TextInputType.number,
                 ),
               ),

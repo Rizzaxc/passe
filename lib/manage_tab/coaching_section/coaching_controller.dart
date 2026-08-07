@@ -57,9 +57,10 @@ class CoachingBookingActionController
     state = true;
     try {
       await supabase
-          .from('professional_booking')
-          .update({'status': 'cancelled_by_client'})
-          .eq('id', bookingId)
+          .rpc(
+            'cancel_professional_booking',
+            params: {'p_booking_id': bookingId},
+          )
           .timeout(const Duration(seconds: 5));
       ref.invalidate(coachingBookingsProvider);
     } finally {
@@ -71,9 +72,10 @@ class CoachingBookingActionController
     state = true;
     try {
       await supabase
-          .from('professional_booking')
-          .update({'status': 'completed'})
-          .eq('id', bookingId)
+          .rpc(
+            'complete_professional_booking',
+            params: {'p_booking_id': bookingId},
+          )
           .timeout(const Duration(seconds: 5));
       ref.invalidate(coachingBookingsProvider);
     } finally {

@@ -90,11 +90,10 @@ Future<bool> hasBookingConflict(
   return (response as List).isNotEmpty;
 }
 
-/// Creates a `professional_booking` row for one professional. RLS ("Clients
-/// can manage their own bookings") scopes the insert to the caller as
-/// `client_user_id`; the row starts at the default `requested` status —
-/// the professional accepts/rejects it via `accept_professional_booking`/
-/// `reject_professional_booking` (schema/professional_booking_actions.sql).
+/// Requests a booking through the server-side professional booking workflow.
+/// The RPC derives ownership, price, package details, and the initial status;
+/// the professional then accepts or rejects the request through the matching
+/// action RPCs.
 @riverpod
 class ProfessionalBookingController extends _$ProfessionalBookingController {
   final supabase = Supabase.instance.client;
@@ -103,92 +102,48 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
   bool build(String professionalId) => false; // in-flight flag
 
   /// [existingPackageId] schedules the next session of an already-purchased
-  /// rolling package (no new package row). [newPackageSessionCount] > 1
-  /// instead creates a fresh `professional_booking_package` container plus
-  /// this one first session. Neither set = a plain single booking.
+  /// rolling package (no new package row). [createPackage] creates a fresh
+  /// `professional_booking_package` container plus its first session.
   /// [participantUserIds] populates `booking_additional_users` for a group
-  /// service. [activityId] + [activityAttachColumn] link the new booking back
-  /// to a *lobby* activity as an attached professional — the column is
-  /// `coach_booking_id` or `referee_booking_id` (chosen by the pro's role),
-  /// NOT `professional_booking_id` (which is reserved for a standalone
-  /// client pro-session and is mutually exclusive with `lobby_id` via
-  /// `activity_source_exclusivity`). See
-  /// schema/activity_professional_attachment.sql.
+  /// service. [activityId] links the booking to a *lobby* activity in the
+  /// coach/referee slot derived from the professional's role.
   Future<void> book({
     required String serviceId,
     required DateTime start,
     required DateTime end,
-    double? agreedRate,
     String? notes,
     String? locationId,
     List<String>? participantUserIds,
     String? existingPackageId,
-    int? newPackageSessionCount,
-    double? newPackageTotalPrice,
+    bool createPackage = false,
     String? activityId,
-    String? activityAttachColumn,
   }) async {
     final userId = ref.read(currentUserIdProvider);
-    if (userId == null) return;
+    if (userId == null) {
+      throw const AuthException(
+        'Authentication required to book a professional.',
+      );
+    }
 
     state = true;
     try {
-      var packageId = existingPackageId;
-
-      if (packageId == null &&
-          newPackageSessionCount != null &&
-          newPackageSessionCount > 1) {
-        final packageRow = await supabase
-            .from('professional_booking_package')
-            .insert({
-              'client_user_id': userId,
-              'professional_id': professionalId,
-              'service_id': serviceId,
-              'sessions_total': newPackageSessionCount,
-              'total_price': ?newPackageTotalPrice,
-            })
-            .select('id')
-            .single()
-            .timeout(const Duration(seconds: 5));
-        packageId = packageRow['id'] as String;
-      }
-
-      final bookingRow = await supabase
-          .from('professional_booking')
-          .insert({
-            'client_user_id': userId,
-            'professional_id': professionalId,
-            'service_id': serviceId,
-            'booking_time_start': start.toUtc().toIso8601String(),
-            'booking_time_end': end.toUtc().toIso8601String(),
-            'agreed_rate': ?agreedRate,
-            if (notes != null && notes.isNotEmpty) 'client_notes': notes,
-            if (locationId != null && locationId.isNotEmpty)
-              'location_id': locationId,
-            'package_id': ?packageId,
-          })
-          .select('id')
-          .single()
+      await supabase
+          .rpc(
+            'request_professional_booking',
+            params: {
+              'p_professional_id': professionalId,
+              'p_service_id': serviceId,
+              'p_start': start.toUtc().toIso8601String(),
+              'p_end': end.toUtc().toIso8601String(),
+              'p_notes': notes,
+              'p_location_id': locationId,
+              'p_participant_user_ids': participantUserIds ?? const <String>[],
+              'p_existing_package_id': existingPackageId,
+              'p_create_package': createPackage,
+              'p_activity_id': activityId,
+            },
+          )
           .timeout(const Duration(seconds: 5));
-      final bookingId = bookingRow['id'] as String;
-
-      if (participantUserIds != null && participantUserIds.isNotEmpty) {
-        await supabase
-            .from('booking_additional_users')
-            .insert([
-              for (final uid in participantUserIds)
-                {'booking_id': bookingId, 'user_id': uid},
-            ])
-            .timeout(const Duration(seconds: 5));
-      }
-
-      if (activityId != null && activityAttachColumn != null) {
-        await supabase
-            .from('activity')
-            .update({activityAttachColumn: bookingId})
-            .eq('id', activityId)
-            .timeout(const Duration(seconds: 5));
-      }
     } finally {
       state = false;
     }

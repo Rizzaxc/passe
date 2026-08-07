@@ -119,7 +119,7 @@ final class CoachingBookingActionControllerProvider
 }
 
 String _$coachingBookingActionControllerHash() =>
-    r'c940b069776197870bf942557a23476c24105ca3';
+    r'b22dfff19f08138f858c716df512ecb4cfef52b2';
 
 /// Client-side actions on a coaching booking: cancelling an upcoming
 /// request/confirmation, marking a past confirmed session complete (either

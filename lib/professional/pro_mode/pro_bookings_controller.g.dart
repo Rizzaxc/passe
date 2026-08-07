@@ -478,7 +478,7 @@ final class ProBookingActionControllerProvider
 }
 
 String _$proBookingActionControllerHash() =>
-    r'edab31868b335e338e0292090490771f368da5d8';
+    r'73d72dbb120bbc10ecb75f5768ce1e26533c7f94';
 
 /// Accept/reject/mark-complete actions for the professional side, backed by
 /// the validated `accept_professional_booking`/`reject_professional_booking`
