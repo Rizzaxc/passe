@@ -5,8 +5,10 @@
 -- Returns, for auth.uid() and the given sport, within [p_from, p_to]:
 --   • lobby activities for every lobby the user is a member of   (tone 'sport')
 --   • the user's own professional bookings                       (tone 'coach')
--- Recurring rows (recurrence_day_of_week NOT NULL) are always returned so the
--- client can expand them across the window (see upcoming_controller.dart).
+-- Recurring rows are real, independently-dated activity rows now (each week
+-- is its own materialized row — see schema/recurring_activity_series.sql),
+-- so a plain start_time-in-window filter is correct for all of them; there's
+-- no more client-side expansion of a single anchor row.
 --
 -- SECURITY DEFINER because `activity` RLS is owner-only (user_id = auth.uid()),
 -- but the schedule needs every activity in the user's lobbies regardless of who
@@ -55,8 +57,7 @@ BEGIN
     LEFT JOIN public.location loc ON loc.id = COALESCE(a.location_id, l.home_ground)
     WHERE a.sport_id = p_sport_id
       AND a.lobby_id IN (SELECT lobby_id FROM public.lobby_member WHERE user_id = v_uid)
-      AND (a.recurrence_day_of_week IS NOT NULL
-           OR (a.start_time >= p_from AND a.start_time <= p_to))
+      AND a.start_time >= p_from AND a.start_time <= p_to
 
     UNION ALL
 
@@ -75,8 +76,7 @@ BEGIN
     LEFT JOIN public.location loc ON loc.id = COALESCE(a.location_id, pb.location_id)
     WHERE a.sport_id = p_sport_id
       AND pb.client_user_id = v_uid
-      AND (a.recurrence_day_of_week IS NOT NULL
-           OR (a.start_time >= p_from AND a.start_time <= p_to));
+      AND a.start_time >= p_from AND a.start_time <= p_to;
 END;
 $$;
 

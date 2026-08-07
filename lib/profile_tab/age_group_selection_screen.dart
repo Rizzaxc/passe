@@ -15,9 +15,9 @@ class AgeGroupSelectionScreen extends ConsumerWidget {
     final details = profileState.details;
 
     return FScaffold(
-      header: FHeader(
+      header: FHeader.nested(
         title: Text('nav.profile'.tr()),
-        suffixes: [
+        prefixes: [
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],
       ),

@@ -1309,6 +1309,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
+  number_to_vietnamese_words:
+    dependency: "direct main"
+    description:
+      name: number_to_vietnamese_words
+      sha256: "5e7c67a0226c053f55958ce6012cdd37baceea7c6ffbdae6d073c338932cb80d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1+1"
   objective_c:
     dependency: transitive
     description:

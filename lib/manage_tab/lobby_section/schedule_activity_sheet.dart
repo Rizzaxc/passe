@@ -80,6 +80,10 @@ class _ScheduleActivitySheetState
 
   final _scrollController = ScrollController();
 
+  /// Editing an occurrence that's already part of a series locks the
+  /// recurring toggle ON — see the `locked` doc on `_SwitchRow`.
+  bool get _seriesLocked => widget.existing?.isRecurring ?? false;
+
   @override
   void initState() {
     super.initState();
@@ -310,12 +314,12 @@ class _ScheduleActivitySheetState
 
     // A one-off activity scheduled in the past would insert successfully
     // (the DB has no such constraint) but then never surface anywhere: the
-    // Planner list only shows rows whose next occurrence is still ahead of
-    // now, and History only covers *recorded* matches, not activities. A
-    // recurring template is exempt — its stored start_time is just an
-    // anchor date/time-of-day, and its next real occurrence is always
-    // resolved forward from now regardless of that anchor.
-    if (!_recurring && start.isBefore(DateTime.now())) {
+    // Planner list only shows rows whose start_time is still ahead of now,
+    // and History only covers *recorded* matches, not activities. A
+    // recurring series' first occurrence is a real dated row too now (see
+    // schema/recurring_activity_series.sql) — there's no more "it's just a
+    // template" exemption to make here.
+    if (start.isBefore(DateTime.now())) {
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.circleAlert),
@@ -482,11 +486,14 @@ class _ScheduleActivitySheetState
               _SwitchRow(
                 icon: FLucideIcons.repeat,
                 label: 'Lặp lại hằng tuần',
-                sub: _recurring
-                    ? 'Vào ${_weekdayLong(_date.weekday)} hằng tuần'
-                    : 'Chỉ một lần',
+                sub: _seriesLocked
+                    ? 'Đã là một phần của chuỗi lặp lại'
+                    : _recurring
+                        ? 'Vào ${_weekdayLong(_date.weekday)} hằng tuần'
+                        : 'Chỉ một lần',
                 value: _recurring,
                 onChanged: (v) => setState(() => _recurring = v),
+                locked: _seriesLocked,
               ),
             ],
           ),
@@ -686,12 +693,19 @@ class _SwitchRow extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
 
+  /// True locks the switch on and non-interactive — used for the "Lặp lại
+  /// hằng tuần" toggle when editing an occurrence already part of a series,
+  /// where turning it off has no defined behavior (cancelling stops a
+  /// series entirely; there's no separate "stop repeating" action).
+  final bool locked;
+
   const _SwitchRow({
     required this.icon,
     required this.label,
     this.sub,
     required this.value,
     required this.onChanged,
+    this.locked = false,
   });
 
   @override
@@ -729,9 +743,12 @@ class _SwitchRow extends StatelessWidget {
               ],
             ),
           ),
-          FSwitch(
-            value: value,
-            onChange: onChanged,
+          Opacity(
+            opacity: locked ? 0.5 : 1,
+            child: FSwitch(
+              value: value,
+              onChange: locked ? null : onChanged,
+            ),
           ),
         ],
       ),

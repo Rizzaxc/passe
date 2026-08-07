@@ -15,9 +15,9 @@ class IndustrySelectionScreen extends ConsumerWidget {
     final selectedIndustries = profileState.industries;
 
     return FScaffold(
-      header: FHeader(
+      header: FHeader.nested(
         title: Text('profile.industryLabel'.tr()),
-        suffixes: [
+        prefixes: [
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],
       ),

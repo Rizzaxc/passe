@@ -20,14 +20,14 @@ class SportProfileScreen extends ConsumerWidget {
     final sportAsync = ref.watch(selectedSportStateProvider);
 
     return FScaffold(
-      header: FHeader(
+      header: FHeader.nested(
         title: Text('profile.sportProfile'.tr(args: [
           sportAsync.maybeWhen(
             data: (s) => s.getLocalizedName(context),
             orElse: () => '',
           ),
         ])),
-        suffixes: [
+        prefixes: [
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],
       ),

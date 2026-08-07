@@ -67,11 +67,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   Widget build(BuildContext context) {
     return FScaffold(
       resizeToAvoidBottomInset: false,
-      header: FHeader(
+      header: FHeader.nested(
         title: Text(
           (widget.isInitialSetup ? 'profile.setPassword' : 'profile.changePassword').tr(),
         ),
-        suffixes: [
+        prefixes: [
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],
       ),

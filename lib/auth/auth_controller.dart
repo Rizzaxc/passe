@@ -43,6 +43,12 @@ class AuthController extends _$AuthController {
   final supabase = Supabase.instance.client;
   final talker = Talker();
 
+  // `updateUser` completes before the auth-state listener has necessarily
+  // replaced `currentUser`. Keep the successful setup visible to a
+  // immediately-following sensitive-action gate instead of sending an OAuth
+  // user through password setup a second time.
+  String? _passwordCredentialEstablishedForUserId;
+
   static const _stateKey = 'USER_DATA';
 
   // Offline cache TTL (24h) + timestamp key
@@ -460,9 +466,16 @@ class AuthController extends _$AuthController {
   /// sanctioned-exception pattern as the rest of this file.
   bool hasPasswordCredential() {
     final user = supabase.auth.currentUser;
+    if (user != null && _passwordCredentialEstablishedForUserId == user.id) {
+      return true;
+    }
+
     final hasEmailIdentity =
         user?.identities?.any((identity) => identity.provider == 'email') ?? false;
-    final hasPasswordFlag = user?.userMetadata?['has_password'] == true;
+    // Auth metadata received from a restored session has historically been
+    // decoded as either a bool or a string, depending on the platform/cache.
+    final passwordFlag = user?.userMetadata?['has_password'];
+    final hasPasswordFlag = passwordFlag == true || passwordFlag == 'true';
     return hasEmailIdentity || hasPasswordFlag;
   }
 
@@ -471,6 +484,7 @@ class AuthController extends _$AuthController {
       await supabase.auth
           .updateUser(UserAttributes(password: newPassword, data: {'has_password': true}))
           .timeout(const Duration(seconds: 5));
+      _passwordCredentialEstablishedForUserId = supabase.auth.currentUser?.id;
     } on AuthException catch (e, st) {
       talker.handle(e, st);
       rethrow;

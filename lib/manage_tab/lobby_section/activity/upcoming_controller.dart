@@ -83,12 +83,10 @@ class ChallengeContext {
   }
 }
 
-/// The next "live" activity for a lobby — either an upcoming one-off or
-/// the next virtual occurrence of a recurring series.
-///
-/// [nextStart] is the resolved start instant (may differ from the
-/// stored row's `start_time` when the row is a recurring template
-/// whose first occurrence has already happened).
+/// One current/future activity for a lobby, either a one-off or a single
+/// occurrence of a recurring series — every row is now its own real,
+/// independently-dated `activity` (see schema/recurring_activity_series.sql),
+/// so there's no virtual "next occurrence" left to resolve.
 ///
 /// The fields below (location, cost, confirmation) come straight off
 /// the `activity` row / its `location` join but aren't part of the shared
@@ -96,11 +94,15 @@ class ChallengeContext {
 /// model used elsewhere in the app.
 class UpcomingActivity {
   final Activity activity;
-  final DateTime nextStart;
 
   /// Null for one-off activities, 0–6 (Mon..Sun, ISO ordering) for a
   /// weekly recurrence.
   final int? recurrenceDayOfWeek;
+
+  /// Opaque grouping tag shared by every occurrence of the same recurring
+  /// series (null for a one-off). Purely informational client-side today —
+  /// the sweep that extends a series keys off this on the server.
+  final String? seriesId;
 
   final String? locationId;
   final String? locationName;
@@ -130,8 +132,8 @@ class UpcomingActivity {
 
   const UpcomingActivity({
     required this.activity,
-    required this.nextStart,
     required this.recurrenceDayOfWeek,
+    required this.seriesId,
     required this.locationId,
     required this.locationName,
     required this.locationDistrict,
@@ -147,29 +149,16 @@ class UpcomingActivity {
 
   bool get isRecurring => recurrenceDayOfWeek != null;
 
-  /// [nextStart] shifted by the row's own start→end duration, so a
-  /// recurring series' "next occurrence" gets the right end time too.
-  DateTime? get nextEnd {
-    final end = activity.endTime;
-    if (end == null) return null;
-    return nextStart.add(end.difference(activity.startTime));
-  }
+  /// Direct pass-throughs now that every occurrence is its own dated row —
+  /// no more resolving a template's "next" instant.
+  DateTime get nextStart => activity.startTime;
+  DateTime? get nextEnd => activity.endTime;
 }
 
-/// Every current/future activity for a lobby, accounting for weekly
-/// recurrence, sorted soonest-first.
-///
-/// Strategy:
-///   1. Query for any candidate — either `start_time > now` (one-off) or
-///      `recurrence_day_of_week IS NOT NULL` (recurring series whose
-///      first occurrence may already be in the past).
-///   2. Compute the next-start instant for each candidate (recurring
-///      ones get advanced forward to the next matching weekday at the
-///      same time-of-day), dropping any whose next occurrence can't be
-///      resolved (a one-off already in the past).
-///   3. Sort by that next-start instant, soonest first — a lobby can
-///      legitimately have several activities live at once (an organic
-///      session and a challenge match, two different weekly slots, …).
+/// Every current/future activity for a lobby, sorted soonest-first. A lobby
+/// can legitimately have several live at once (an organic session and a
+/// challenge match, several weeks of a recurring series once materialised,
+/// …) — each is its own row, so this is a plain `start_time > now` query.
 @riverpod
 class LobbyUpcomingActivitiesController
     extends _$LobbyUpcomingActivitiesController {
@@ -194,10 +183,7 @@ class LobbyUpcomingActivitiesController
           'target:target_lobby_id(name, mmr))',
         )
         .eq('lobby_id', lobbyId)
-        .or(
-          'start_time.gt.${nowUtc.toIso8601String()},'
-          'recurrence_day_of_week.not.is.null',
-        )
+        .gt('start_time', nowUtc.toIso8601String())
         .timeout(const Duration(seconds: 5));
 
     final rows = (response as List).cast<Map<String, dynamic>>();
@@ -206,18 +192,11 @@ class LobbyUpcomingActivitiesController
     final list = <UpcomingActivity>[];
     for (final row in rows) {
       final activity = Activity.fromJson(_stripExtras(row));
-      final recDow = (row['recurrence_day_of_week'] as num?)?.toInt();
-      final next = _nextOccurrence(
-        startTime: activity.startTime,
-        recurrenceDayOfWeek: recDow,
-        now: DateTime.now(),
-      );
-      if (next == null) continue;
       final location = row['location'] as Map<String, dynamic>?;
       list.add(UpcomingActivity(
         activity: activity,
-        nextStart: next,
-        recurrenceDayOfWeek: recDow,
+        recurrenceDayOfWeek: (row['recurrence_day_of_week'] as num?)?.toInt(),
+        seriesId: row['series_id'] as String?,
         locationId: row['location_id'] as String?,
         locationName: location?['name'] as String?,
         locationDistrict: location?['district'] as String?,
@@ -253,48 +232,11 @@ class LobbyUpcomingActivitiesController
       ..remove('challenge_id')
       ..remove('manager_confirmed_at')
       ..remove('recurrence_day_of_week')
+      ..remove('series_id')
       ..remove('location_id')
       ..remove('cost_type')
       ..remove('cost_amount')
       ..remove('confirmation_threshold')
       ..remove('confirmation_deadline');
-  }
-
-  /// Compute the next start instant for a single activity row.
-  ///
-  /// One-off: returns `startTime` iff it's still in the future; null
-  /// otherwise (already happened).
-  ///
-  /// Recurring: returns the next date at or after `now` whose
-  /// `weekday - 1` matches `recurrenceDayOfWeek`, with the same
-  /// time-of-day as the original `startTime`.
-  static DateTime? _nextOccurrence({
-    required DateTime startTime,
-    required int? recurrenceDayOfWeek,
-    required DateTime now,
-  }) {
-    if (recurrenceDayOfWeek == null) {
-      return startTime.isAfter(now) ? startTime : null;
-    }
-
-    // Walk forward up to 7 days from "today" to find the matching
-    // weekday. ISO day-of-week is 1..7 (Mon..Sun) — our enum stores
-    // 0..6, so add 1 to compare.
-    final targetWeekday = recurrenceDayOfWeek + 1;
-    final today = DateTime(now.year, now.month, now.day);
-    final local = startTime.toLocal();
-    for (var i = 0; i < 8; i++) {
-      final candidate = today.add(Duration(days: i));
-      if (candidate.weekday != targetWeekday) continue;
-      final occurrence = DateTime(
-        candidate.year,
-        candidate.month,
-        candidate.day,
-        local.hour,
-        local.minute,
-      );
-      if (occurrence.isAfter(now)) return occurrence;
-    }
-    return null;
   }
 }

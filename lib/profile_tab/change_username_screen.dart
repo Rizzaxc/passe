@@ -70,9 +70,9 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
 
     return FScaffold(
       resizeToAvoidBottomInset: false,
-      header: FHeader(
+      header: FHeader.nested(
         title: Text('profile.changeUsername'.tr()),
-        suffixes: [
+        prefixes: [
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],
       ),

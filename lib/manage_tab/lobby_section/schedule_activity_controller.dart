@@ -93,10 +93,24 @@ class ScheduleActivityController extends _$ScheduleActivityController {
         params['recurrence_day_of_week'] = recurrenceDayOfWeek;
       }
 
-      await supabase
+      final inserted = await supabase
           .from('activity')
           .insert(params)
+          .select('id')
+          .single()
           .timeout(const Duration(seconds: 5));
+      final newActivityId = inserted['id'] as String;
+
+      if (recurrenceDayOfWeek != null) {
+        // Seed the series with itself — fn_sweep_recurring_activities
+        // (schema/recurring_activity_series.sql) extends a series by
+        // series_id, so the first occurrence needs to already carry one.
+        await supabase
+            .from('activity')
+            .update({'series_id': newActivityId})
+            .eq('id', newActivityId)
+            .timeout(const Duration(seconds: 5));
+      }
 
       // Post a feed item so the captain-side activity tab shows the new
       // session immediately. The `scheduled` update kind + blue tone
@@ -175,6 +189,21 @@ class ScheduleActivityController extends _$ScheduleActivityController {
           })
           .eq('id', activityId)
           .timeout(const Duration(seconds: 5));
+
+      if (recurrenceDayOfWeek != null) {
+        // A plain one-off turning recurring for the first time needs a
+        // series_id to seed the series fn_sweep_recurring_activities will
+        // extend. `.isFilter('series_id', null)` makes this a no-op when
+        // the row already belongs to a series (editing an existing series
+        // occurrence keeps its own series_id, per the locked toggle in
+        // schedule_activity_sheet.dart).
+        await supabase
+            .from('activity')
+            .update({'series_id': activityId})
+            .eq('id', activityId)
+            .isFilter('series_id', null)
+            .timeout(const Duration(seconds: 5));
+      }
 
       await supabase
           .from('lobby_feed_item')

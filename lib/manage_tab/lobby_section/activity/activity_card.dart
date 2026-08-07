@@ -302,12 +302,20 @@ class ActivityCard extends ConsumerWidget {
                     ],
                   ),
                 ],
-                if (costLabel != null || deadlineLabel != null) ...[
+                if (costLabel != null ||
+                    deadlineLabel != null ||
+                    upcoming.recurrenceDayOfWeek != null) ...[
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
                     children: [
+                      if (upcoming.recurrenceDayOfWeek != null)
+                        const _Tag(
+                          text: 'Hằng tuần',
+                          icon: Icons.repeat,
+                          tone: 'neutral',
+                        ),
                       if (costLabel != null)
                         _Tag(
                           text: 'Chi phí $costLabel',

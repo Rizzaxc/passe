@@ -117,6 +117,7 @@ class NetworkSearchController extends _$NetworkSearchController {
 @riverpod
 class NetworkController extends _$NetworkController {
   final supabase = Supabase.instance.client;
+  List<Network>? _initialNetworks;
 
   @override
   List<Network> build() {
@@ -151,6 +152,7 @@ class NetworkController extends _$NetworkController {
       }).toList();
 
       state = networks;
+      _initialNetworks ??= List.unmodifiable(networks);
     } catch (e, st) {
       Talker().handle(e, st, 'Error fetching user networks');
     }
@@ -158,26 +160,44 @@ class NetworkController extends _$NetworkController {
 
   /// Returns false if at max capacity and trying to add.
   bool toggle(Network network) {
-    final current = state.toSet();
-    if (current.contains(network)) {
-      current.remove(network);
+    final current = [...state];
+    final index = current.indexWhere((selected) => selected.id == network.id);
+    if (index != -1) {
+      current.removeAt(index);
     } else if (current.length < 5) {
       current.add(network);
     } else {
       return false;
     }
-    state = current.toList();
+    state = current;
     return true;
   }
 
-  void toggleAlumni(int networkId) {
+  void setAlumni(int networkId, bool isAlumni) {
     state = [
       for (final network in state)
         if (network.id == networkId)
-          network.copyWith(isAlumni: !network.isAlumni)
+          network.copyWith(isAlumni: isAlumni)
         else
           network,
     ];
+  }
+
+  void remove(int networkId) {
+    state = state.where((network) => network.id != networkId).toList();
+  }
+
+  bool get hasUncommittedChanges {
+    final initial = _initialNetworks;
+    if (initial == null || initial.length != state.length) {
+      return initial != null;
+    }
+    return state.any((network) => !initial.contains(network));
+  }
+
+  void discardChanges() {
+    final initial = _initialNetworks;
+    if (initial != null) state = [...initial];
   }
 
   void updateAll(List<Network> networks) {
@@ -205,6 +225,7 @@ class NetworkController extends _$NetworkController {
                   .toList(),
             ).timeout(const Duration(seconds: 5));
       }
+      _initialNetworks = List.unmodifiable(state);
     } catch (e, st) {
       Talker().handle(e, st, 'Error committing user networks');
       rethrow;

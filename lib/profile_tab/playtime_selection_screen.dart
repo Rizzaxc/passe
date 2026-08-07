@@ -16,9 +16,9 @@ class PlaytimeSelectionScreen extends ConsumerWidget {
     final timeslots = profileState.details.playtime ?? [];
 
     return FScaffold(
-      header: FHeader(
+      header: FHeader.nested(
         title: Text('profile.playtimeShort'.tr()),
-        suffixes: [
+        prefixes: [
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],
       ),

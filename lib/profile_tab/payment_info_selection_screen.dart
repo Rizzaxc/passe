@@ -20,9 +20,9 @@ class PaymentInfoSelectionScreen extends ConsumerWidget {
     final entriesAsync = ref.watch(paymentInfoControllerProvider);
 
     return FScaffold(
-      header: FHeader(
+      header: FHeader.nested(
         title: Text('profile.paymentInfo'.tr()),
-        suffixes: [
+        prefixes: [
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],
       ),

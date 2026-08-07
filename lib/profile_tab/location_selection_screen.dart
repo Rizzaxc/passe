@@ -20,9 +20,9 @@ class LocationSelectionScreen extends ConsumerWidget {
     final selectedDistrictIds = location.districts.toSet();
 
     return FScaffold(
-      header: FHeader(
+      header: FHeader.nested(
         title: Text('profile.location'.tr()),
-        suffixes: [
+        prefixes: [
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],
       ),

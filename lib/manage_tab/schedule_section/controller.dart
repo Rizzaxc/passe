@@ -27,8 +27,9 @@ class ScheduleEvent {
 }
 
 /// The current user's activities (lobby sessions + coach bookings) for the
-/// context sport, keyed by local date. Backed by the `my_schedule_data` RPC;
-/// recurring rows are expanded across the visible window.
+/// context sport, keyed by local date. Backed by the `my_schedule_data` RPC —
+/// every row, including each occurrence of a recurring series, is its own
+/// dated activity, so no client-side expansion is needed.
 @riverpod
 class ScheduleEvents extends _$ScheduleEvents {
   /// Days before today included for short-term context.
@@ -80,15 +81,12 @@ class ScheduleEvents extends _$ScheduleEvents {
         end: TimeOfDay(hour: end.hour, minute: end.minute),
       );
 
-      final recDow = (row['recurrence_day_of_week'] as num?)?.toInt();
-      if (recDow == null) {
-        if (!start.isBefore(from) && !start.isAfter(to)) put(start, ev);
-      } else {
-        // recurrence_day_of_week is 0..6 (Mon..Sun); DateTime.weekday is 1..7.
-        for (var d = from; !d.isAfter(to); d = d.add(const Duration(days: 1))) {
-          if (d.weekday == recDow + 1) put(d, ev);
-        }
-      }
+      // Recurring rows are real, independently-dated activity rows now
+      // (each week is its own materialized row — see
+      // schema/recurring_activity_series.sql), so every row — recurring or
+      // not — takes this single path; there's no more client-side weekday
+      // expansion of a single anchor row.
+      if (!start.isBefore(from) && !start.isAfter(to)) put(start, ev);
     }
 
     int minutes(TimeOfDay t) => t.hour * 60 + t.minute;
