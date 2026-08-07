@@ -22,6 +22,7 @@ import 'home_tab/main.dart';
 import 'main.dart';
 import 'manage_tab/lobby_section/invite_link/invite_landing_page.dart';
 import 'manage_tab/lobby_section/lobby_detail_page.dart';
+import 'manage_tab/lobby_section/lobby_invite_preview_page.dart';
 import 'manage_tab/main.dart';
 import 'notification/main.dart';
 import 'onboarding/onboarding_controller.dart';
@@ -428,6 +429,23 @@ class InviteRoute extends GoRouteData with $InviteRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       InviteLandingPage(code: code);
+}
+
+/// Preview + accept/reject for a `lobby_befriend_record` invite. Reached from
+/// a `lobby_invite` notification tap (bell/notification-center or an OS
+/// push/cold start). This is the only accept surface for a lobby invite — the
+/// old Manage▸Lobby mail-icon sheet is retired. Push-only, like [InviteRoute].
+@TypedGoRoute<LobbyInvitePreviewRoute>(path: '/lobby-invite/:recordId')
+@immutable
+class LobbyInvitePreviewRoute extends GoRouteData
+    with $LobbyInvitePreviewRoute {
+  final String recordId;
+
+  const LobbyInvitePreviewRoute({required this.recordId});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      LobbyInvitePreviewPage(recordId: recordId);
 }
 
 @TypedStatefulShellRoute<MainRoute>(

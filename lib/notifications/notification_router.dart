@@ -17,6 +17,7 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
   if (kind == null) return null;
 
   final lobbyId = data['lobby_id'] as String?;
+  final recordId = data['record_id'] as String?;
   // Friendship pushes carry the *other* party's id — that's who you want to
   // land on, whether they just asked or just accepted.
   final userId = data['user_id'] as String?;
@@ -49,8 +50,14 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
     NotificationKind.matchResultRecorded =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
-    // Lobby invite — go to the manage/lobby tab so they see their pending invites.
-    NotificationKind.lobbyInvite => const ManageLobbyRoute().location,
+    // Lobby invite — the preview/accept page for this specific invite. Used
+    // for OS push taps / cold starts, which (unlike the in-app notification
+    // list) can't cheaply pre-check accept/decline status before routing.
+    NotificationKind.lobbyInvite => recordId == null
+        ? const ManageLobbyRoute().location
+        : LobbyInvitePreviewRoute(recordId: recordId).location,
+    // Kicked — the lobby is no longer theirs to open; land on their own lobby list.
+    NotificationKind.memberKicked => const ManageLobbyRoute().location,
     // A new request came in for the linked professional — their
     // pending-requests subtab, scrolled/highlighted to this one booking.
     NotificationKind.professionalBookingRequested =>

@@ -45,7 +45,7 @@ Before this existed there was no `/user/:id` route at all and no way to connect 
   edge, mirroring the `lobby_befriend_record` auto-accept trigger.
 - **`pair` is retired.** `schema/friendship.sql` installs a BEFORE INSERT trigger on
   `lobby_befriend_record` that rejects `interaction_type = 'pair'` and cancels pending ones. The
-  enum value stays (accepted rows already produced real lobbies). `incoming_invites_controller.dart`
+  enum value stays (accepted rows already produced real lobbies). `lobby_invite_response_controller.dart`
   reads `invite` only.
 - **Blocking is symmetric in effect**: `block_user` severs any live friendship in the same call,
   and `fn_is_blocked` hides each party from the other everywhere the wall-post visibility

@@ -344,7 +344,30 @@
             "empty": "You have no pending invites.",
             "invitedBy": "{name} invited you to their lobby",
             "pairFrom": "{name} wants to pair up",
-            "accepted": "Joined the lobby"
+            "accepted": "Joined the lobby",
+            "declined": "Declined"
+        },
+        "inviteReview": {
+            "title": "Lobby Invite",
+            "invitedBy": "{name} invited you to join",
+            "memberCount": "{count} members",
+            "captainedBy": "Captain: {name}",
+            "fitscore": "FitScore {score}/5",
+            "homeGround": "Home ground: {name}",
+            "mmr": "MMR {value}",
+            "membersTitle": "Members",
+            "relationship": {
+                "friend": "You're friends",
+                "incoming": "Sent you a friend request",
+                "outgoing": "Friend request sent",
+                "blocked": "Blocked",
+                "none": "Not connected"
+            },
+            "accept": "Accept",
+            "reject": "Decline",
+            "declinedTitle": "You declined this invite",
+            "notFound": "This invite is invalid or no longer available",
+            "error": "Something went wrong. Please try again."
         },
         "challenges": {
             "title": "Challenges",

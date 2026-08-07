@@ -19,7 +19,15 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
-    <!-- image_cropper's crop screen theme; see values-v35 for the Android 15+
-         edge-to-edge opt-out uCrop itself doesn't yet support natively. -->
-    <style name="Ucrop.CropTheme" parent="Theme.AppCompat.Light.NoActionBar"/>
+    <!-- image_cropper's crop screen theme; see values-v35 for the Android 15
+         edge-to-edge opt-out uCrop itself doesn't yet support natively. That
+         opt-out attribute is dropped entirely for apps targeting SDK 36+
+         (Android 16), so edge-to-edge can no longer be disabled there — the
+         toolbar's cancel/done icons then draw under the status bar / display
+         cutout and become unreachable in that corner. fitsSystemWindows still
+         works as a legacy inset fallback regardless of edge-to-edge
+         enforcement, so it's the one thing here that fixes all SDK levels. -->
+    <style name="Ucrop.CropTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:fitsSystemWindows">true</item>
+    </style>
 </resources>

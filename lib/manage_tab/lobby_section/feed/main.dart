@@ -8,8 +8,6 @@ import '../../../auth/auth_controller.dart';
 import '../../../core/state/selected_sport_state.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
-import '../incoming_invites_controller.dart';
-import '../incoming_invites_sheet.dart';
 import '../invite_member_sheet.dart';
 import '../lobby_avatar.dart';
 import '../schedule_activity_sheet.dart';
@@ -39,36 +37,26 @@ class LobbySubtab extends ConsumerWidget {
       }
     });
 
-    // Pending incoming invites (invite/pair records targeting this user).
-    final inviteCount =
-        ref.watch(incomingInvitesControllerProvider).value?.length ?? 0;
-
     return Column(
       children: [
         PSectionHeader(
           title: 'manageTab.lobby.title'.tr(),
-          suffix: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _InvitesButton(count: inviteCount),
-              FButton.icon(
-                variant: .ghost,
-                onPress: () {
-                  if (isGuest) {
-                    showFToast(
-                      context: context,
-                      icon: const Icon(FLucideIcons.circleAlert),
-                      variant: .destructive,
-                      title: Text('lobby.signInRequired'.tr()),
-                      alignment: .bottomCenter,
-                    );
-                    return;
-                  }
-                  showLobbyFormSheet(context: context, ref: ref, lobbyId: null);
-                },
-                child: const Icon(FLucideIcons.plus),
-              ),
-            ],
+          suffix: FButton.icon(
+            variant: .ghost,
+            onPress: () {
+              if (isGuest) {
+                showFToast(
+                  context: context,
+                  icon: const Icon(FLucideIcons.circleAlert),
+                  variant: .destructive,
+                  title: Text('lobby.signInRequired'.tr()),
+                  alignment: .bottomCenter,
+                );
+                return;
+              }
+              showLobbyFormSheet(context: context, ref: ref, lobbyId: null);
+            },
+            child: const Icon(FLucideIcons.plus),
           ),
         ),
         Expanded(
@@ -153,53 +141,6 @@ class _GuestLobbyState extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Inbox button in the lobby-list header — opens the pending-invites sheet,
-/// with a count badge when the user has unresolved invites/pairs.
-class _InvitesButton extends StatelessWidget {
-  final int count;
-
-  const _InvitesButton({required this.count});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        FButton.icon(
-          variant: .ghost,
-          onPress: () => showIncomingInvitesSheet(context),
-          child: const Icon(FLucideIcons.mailPlus),
-        ),
-        if (count > 0)
-          Positioned(
-            right: 4,
-            top: 4,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              constraints: const BoxConstraints(minWidth: 16),
-              decoration: BoxDecoration(
-                color: colors.primary,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colors.background, width: 1.5),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                count > 9 ? '9+' : '$count',
-                style: TextStyle(
-                  fontSize: 9,
-                  height: 1,
-                  fontWeight: FontWeight.w700,
-                  color: colors.primaryForeground,
-                ),
-              ),
-            ),
-          ),
-      ],
     );
   }
 }

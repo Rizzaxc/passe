@@ -346,7 +346,30 @@
             "empty": "Bạn chưa có lời mời nào.",
             "invitedBy": "{name} mời bạn vào lobby",
             "pairFrom": "{name} muốn ghép đôi",
-            "accepted": "Đã tham gia lobby"
+            "accepted": "Đã tham gia lobby",
+            "declined": "Đã từ chối"
+        },
+        "inviteReview": {
+            "title": "Lời Mời Lobby",
+            "invitedBy": "{name} mời bạn vào",
+            "memberCount": "{count} thành viên",
+            "captainedBy": "Đội trưởng: {name}",
+            "fitscore": "FitScore {score}/5",
+            "homeGround": "Sân nhà: {name}",
+            "mmr": "MMR {value}",
+            "membersTitle": "Thành viên",
+            "relationship": {
+                "friend": "Bạn bè",
+                "incoming": "Đã gửi lời mời kết bạn cho bạn",
+                "outgoing": "Đã gửi lời mời kết bạn",
+                "blocked": "Đã chặn",
+                "none": "Chưa kết nối"
+            },
+            "accept": "Chấp Nhận",
+            "reject": "Từ Chối",
+            "declinedTitle": "Bạn đã từ chối lời mời này",
+            "notFound": "Lời mời không hợp lệ hoặc không còn khả dụng",
+            "error": "Có lỗi xảy ra. Vui lòng thử lại."
         },
         "challenges": {
             "title": "Lời thách đấu",

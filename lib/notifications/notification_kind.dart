@@ -12,6 +12,7 @@ enum NotificationKind {
   challengeLapsed('challenge_lapsed'),
   matchResultRecorded('match_result_recorded'),
   lobbyInvite('lobby_invite'),
+  memberKicked('member_kicked'),
   professionalBookingRequested('professional_booking_requested'),
   professionalBookingConfirmed('professional_booking_confirmed'),
   professionalBookingRejected('professional_booking_rejected'),

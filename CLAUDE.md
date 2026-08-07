@@ -467,10 +467,13 @@ Push (raw FCM HTTP v1, iOS + Android) is **built**. Design + remaining provision
   reschedule/cancel, which stay feed-only; see `schema/activity_scheduled_notify.sql`),
   `activity_confirmed`, `pro_session_reminder`, `lobby_invite`, `professional_booking_*`, (with
   the challenge handshake) `challenger_confirmed`, `challenge_received`, `challenge_declined`,
-  `challenge_scheduled`, `challenge_lapsed`, `match_result_recorded`, and (with friendship)
-  `friend_request`, `friend_accepted`. There is deliberately **no** "a friend posted" or "someone
-  reacted" kind — the first is the highest-volume, most mutable-worthy push in any social app and
-  neither is worth the noise in v1.
+  `challenge_scheduled`, `challenge_lapsed`, `match_result_recorded`, (with friendship)
+  `friend_request`, `friend_accepted`, and `member_kicked` (a captain removes a member —
+  `schema/lobby_member_kicked_notify.sql`; kicking is a direct client-side `DELETE` on
+  `lobby_member`, same as a voluntary leave, so the emitter tells the two apart by comparing
+  `auth.uid()` to the deleted row's `user_id`). There is deliberately **no** "a friend posted" or
+  "someone reacted" kind — the first is the highest-volume, most mutable-worthy push in any social
+  app and neither is worth the noise in v1.
   Note: `fn_emit_activity_confirmed` counts **going-only** confirmations and fires on INSERT *or*
   UPDATE of `activity_confirmation` (an out→going switch can cross quorum) — see
   `schema/push_notifications.sql`. **It skips challenge activities entirely** (redefined

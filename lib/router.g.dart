@@ -22,6 +22,7 @@ List<RouteBase> get $appRoutes => [
   $professionalDetailRoute,
   $userRoute,
   $inviteRoute,
+  $lobbyInvitePreviewRoute,
   $mainRoute,
 ];
 
@@ -435,6 +436,37 @@ mixin $InviteRoute on GoRouteData {
   @override
   String get location =>
       GoRouteData.$location('/invite/${Uri.encodeComponent(_self.code)}');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $lobbyInvitePreviewRoute => GoRouteData.$route(
+  path: '/lobby-invite/:recordId',
+  hasOverriddenOnExit: false,
+  factory: $LobbyInvitePreviewRoute._fromState,
+);
+
+mixin $LobbyInvitePreviewRoute on GoRouteData {
+  static LobbyInvitePreviewRoute _fromState(GoRouterState state) =>
+      LobbyInvitePreviewRoute(recordId: state.pathParameters['recordId']!);
+
+  LobbyInvitePreviewRoute get _self => this as LobbyInvitePreviewRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/lobby-invite/${Uri.encodeComponent(_self.recordId)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

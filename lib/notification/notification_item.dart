@@ -1,7 +1,7 @@
 import '../notifications/notification_kind.dart';
 
 /// A row from `notification_outbox` — read-only history, not app state
-/// (mirrors `IncomingInvite`'s plain-DTO style rather than freezed).
+/// (a plain DTO rather than freezed).
 class NotificationItem {
   final int id;
   final NotificationKind? kind;
