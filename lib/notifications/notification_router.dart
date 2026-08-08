@@ -123,13 +123,28 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
       userId == null ? null : UserRoute(id: userId).location,
     NotificationKind.friendAccepted =>
       userId == null ? null : UserRoute(id: userId).location,
-    // Both payment-request kinds land wherever the feed item lives — the
-    // recipient's own lobby (the server sends one enqueue call per lobby,
-    // same convention as the challenge kinds above).
+    // A payment request is always for an already-ended session — that
+    // activity can never appear in the Planner tab (future/ongoing-only,
+    // see matchResultRecorded above), so this lands in History, same tab
+    // that hosts a played match, scrolled to and highlighting that
+    // activity's own card (which History reuses ActivityCard for — see
+    // lib/manage_tab/lobby_section/history/view.dart).
     NotificationKind.paymentRequested =>
-      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+      lobbyId == null
+          ? null
+          : LobbyDetailRoute(
+              id: lobbyId,
+              tab: 2,
+              highlightActivityId: activityId,
+            ).location,
     NotificationKind.debtCollected =>
-      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+      lobbyId == null
+          ? null
+          : LobbyDetailRoute(
+              id: lobbyId,
+              tab: 2,
+              highlightActivityId: activityId,
+            ).location,
   };
 }
 

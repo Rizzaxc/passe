@@ -1,1021 +1,1021 @@
 {
-    "timeslot": {
-        "dayOfWeek": {
-            "label": "Ngày Trong Tuần",
-            "everyday": "Hàng Ngày",
-            "monday": "Thứ 2",
-            "tuesday": "Thứ 3",
-            "wednesday": "Thứ 4",
-            "thursday": "Thứ 5",
-            "friday": "Thứ 6",
-            "saturday": "Thứ 7",
-            "sunday": "Chủ Nhật",
-            "even": "T2-T4-T6",
-            "odd": "T3-T5-T7",
-            "weekend": "Cuối Tuần",
-            "shortName": {
-                "everyday": "HN",
-                "monday": "T2",
-                "tuesday": "T3",
-                "wednesday": "T4",
-                "thursday": "T5",
-                "friday": "T6",
-                "saturday": "T7",
-                "sunday": "CN",
-                "even": "246",
-                "odd": "357",
-                "weekend": "CT"
-            }
-        },
-        "dayChunk": {
-            "label": "Khoảng Giờ",
-            "early": "Sáng (4h-9h)",
-            "midday": "Trưa (9h-14h)",
-            "noon": "Chiều (14h-18h)",
-            "night": "Tối (18h-24h)",
-            "shortName": {
-                "early": "Sáng",
-                "midday": "Trưa",
-                "noon": "Chiều",
-                "night": "Tối"
-            }
-        }
+  "timeslot": {
+    "dayOfWeek": {
+      "label": "Ngày Trong Tuần",
+      "everyday": "Hàng Ngày",
+      "monday": "Thứ 2",
+      "tuesday": "Thứ 3",
+      "wednesday": "Thứ 4",
+      "thursday": "Thứ 5",
+      "friday": "Thứ 6",
+      "saturday": "Thứ 7",
+      "sunday": "Chủ Nhật",
+      "even": "T2-T4-T6",
+      "odd": "T3-T5-T7",
+      "weekend": "Cuối Tuần",
+      "shortName": {
+        "everyday": "HN",
+        "monday": "T2",
+        "tuesday": "T3",
+        "wednesday": "T4",
+        "thursday": "T5",
+        "friday": "T6",
+        "saturday": "T7",
+        "sunday": "CN",
+        "even": "246",
+        "odd": "357",
+        "weekend": "CT"
+      }
     },
-    "gender": {
-        "male": "Nam",
-        "female": "Nữ"
+    "dayChunk": {
+      "label": "Khoảng Giờ",
+      "early": "Sáng (4h-9h)",
+      "midday": "Trưa (9h-14h)",
+      "noon": "Chiều (14h-18h)",
+      "night": "Tối (18h-24h)",
+      "shortName": {
+        "early": "Sáng",
+        "midday": "Trưa",
+        "noon": "Chiều",
+        "night": "Tối"
+      }
+    }
+  },
+  "gender": {
+    "male": "Nam",
+    "female": "Nữ"
+  },
+  "ageGroup": {
+    "student": "Học Sinh & Sinh Viên",
+    "mature": "Trưởng Thành",
+    "middleAge": "Trung Niên"
+  },
+  "industry": {
+    "agriculture": "Nông Nghiệp",
+    "construction": "Xây Dựng",
+    "culinaryTourism": "Ẩm Thực & Du Lịch",
+    "educationAcademia": "Giáo Dục & Nghiên Cứu",
+    "energy": "Năng Lượng",
+    "entertainmentContentCreation": "Giải Trí & Sáng Tạo Nội Dung",
+    "fashionBeauty": "Thời Trang & Sắc Đẹp",
+    "financeConsulting": "Finance & Consulting",
+    "government": "Hành Chính Chính Phủ",
+    "healthcare": "Y Tế",
+    "legalServices": "Luật",
+    "manufacturing": "Sản Xuất",
+    "mediaCommunications": "Báo Chí & Media",
+    "nonprofitCharity": "Non-profit & Từ Thiện",
+    "realEstate": "Bất Động Sản",
+    "retailOnlineCommerce": "Bán Lẻ & TMĐT",
+    "technology": "Công Nghệ",
+    "transportation": "Vận Tải"
+  },
+  "networkCategory": {
+    "highSchool": "THPT",
+    "giftedHighSchool": "THPT Chuyên",
+    "university": "Đại Học",
+    "company": "Công Ty"
+  },
+  "city": {
+    "hochiminh": "Tp Hồ Chí Minh",
+    "hanoi": "Hà Nội"
+  },
+  "district": {
+    "ward": "Phường",
+    "commune": "Xã",
+    "searchHint": "Tìm phường, xã...",
+    "noResults": "Không tìm thấy phường, xã phù hợp"
+  },
+  "homeTab": {
+    "filter": {
+      "location": "Địa điểm",
+      "time": "Thời gian",
+      "weekdayLabel": "Thứ trong tuần",
+      "dayChunkLabel": "Buổi",
+      "search": "Tìm kiếm",
+      "searchHint": "Nhập từ khoá/ SearchID...",
+      "sport": "Môn",
+      "city": "Thành phố",
+      "district": "Quận/ Huyện",
+      "any": "Tất cả",
+      "schedule": "Thời gian",
+      "scheduleHint": "Để trống",
+      "close": "Đóng",
+      "coach": {
+        "body": "Tinh chỉnh tiêu chí tìm kiếm để có kết quả phù hợp hơn"
+      }
     },
-    "ageGroup": {
-        "student": "Học Sinh & Sinh Viên",
-        "mature": "Trưởng Thành",
-        "middleAge": "Trung Niên"
+    "empty": {
+      "title": "Không có kết quả phù hợp",
+      "message": "Xin điều chỉnh filter hoặc quay lại sau"
     },
-    "industry": {
-        "agriculture": "Nông Nghiệp",
-        "construction": "Xây Dựng",
-        "culinaryTourism": "Ẩm Thực & Du Lịch",
-        "educationAcademia": "Giáo Dục & Nghiên Cứu",
-        "energy": "Năng Lượng",
-        "entertainmentContentCreation": "Giải Trí & Sáng Tạo Nội Dung",
-        "fashionBeauty": "Thời Trang & Sắc Đẹp",
-        "financeConsulting": "Finance & Consulting",
-        "government": "Hành Chính Chính Phủ",
-        "healthcare": "Y Tế",
-        "legalServices": "Luật",
-        "manufacturing": "Sản Xuất",
-        "mediaCommunications": "Báo Chí & Media",
-        "nonprofitCharity": "Non-profit & Từ Thiện",
-        "realEstate": "Bất Động Sản",
-        "retailOnlineCommerce": "Bán Lẻ & TMĐT",
-        "technology": "Công Nghệ",
-        "transportation": "Vận Tải"
+    "error": {
+      "title": "Lỗi tải dữ liệu",
+      "retry": "Thử lại"
     },
-    "networkCategory": {
-        "highSchool": "THPT",
-        "giftedHighSchool": "THPT Chuyên",
-        "university": "Đại Học",
-        "company": "Công Ty"
+    "teammate": {
+      "title": "Đồng đội",
+      "join": "Xin Vào",
+      "sent": "Đã Gửi",
+      "undo": "Hoàn Tác"
     },
-    "city": {
-        "hochiminh": "Tp Hồ Chí Minh",
-        "hanoi": "Hà Nội"
+    "challenger": {
+      "title": "Đối thủ",
+      "challenge": "Thách Đấu",
+      "challengingAs": "Thách đấu với tư cách",
+      "sent": "Đã gửi",
+      "alreadyPending": "Đã có lời thách đấu đang chờ",
+      "sportMismatch": "Hai lobby khác môn thể thao",
+      "sendFailed": "Không thể gửi lời thách đấu",
+      "mmr": "MMR",
+      "provisional": "tạm tính",
+      "costPerTeam": "{}đ/đội",
+      "confirmTitle": "Xác Nhận Thách Đấu",
+      "confirmBody": "Bạn đang thách đấu với tư cách {}. Nếu {} chấp nhận, cả hai lobby sẽ có một buổi thi đấu theo đúng điều kiện dưới đây.",
+      "kickoff": "Giờ thi đấu",
+      "venue": "Sân",
+      "cost": "Chi phí mỗi đội",
+      "refNote": "Chi phí trên chưa gồm phí trọng tài — đội chủ nhà sẽ thuê trọng tài riêng sau khi chấp nhận.",
+      "note": "Lời nhắn (tuỳ chọn)",
+      "noteHint": "vd. BO3, tự mang bóng",
+      "confirmCta": "Gửi Lời Thách Đấu",
+      "favorability": {
+        "underdog": "Cửa dưới",
+        "even": "Cân sức",
+        "favored": "Cửa trên"
+      },
+      "empty": {
+        "title": "Chưa tìm được đối thủ",
+        "message": "Thử điều chỉnh filter hoặc quay lại sau"
+      },
+      "noLobby": {
+        "title": "Bạn chưa có lobby nào",
+        "message": "Thách đấu là giữa 2 lobby. Tạo lobby của riêng bạn hoặc tham gia một lobby để bắt đầu thách đấu người khác.",
+        "findLobby": "Tìm Lobby",
+        "createLobby": "Tạo Lobby"
+      }
     },
-    "district": {
-        "ward": "Phường",
-        "commune": "Xã",
-        "searchHint": "Tìm phường, xã...",
-        "noResults": "Không tìm thấy phường, xã phù hợp"
+    "location": {
+      "viewMap": "Xem Bản Đồ",
+      "directions": "Chỉ Đường",
+      "directionsFailed": "Không mở được ứng dụng bản đồ",
+      "unnamed": "Địa điểm chưa đặt tên",
+      "address": "Địa Chỉ",
+      "amenities": "Tiện Ích",
+      "amenity": {
+        "pitch": "Sân thi đấu",
+        "sports_centre": "Trung tâm thể thao",
+        "stadium": "Sân vận động",
+        "swimming_pool": "Hồ bơi"
+      },
+      "someUnmapped": "Một số địa điểm chưa có toạ độ",
+      "roadmapNote": "Dữ liệu địa điểm đang được hoàn thiện. Đặt sân trực tiếp sẽ có khi tụi mình kết nối với các cơ sở địa phương.",
+      "empty": {
+        "title": "Không tìm thấy địa điểm",
+        "message": "Thử nhập từ khoá hoặc điều chỉnh filter"
+      }
     },
-    "homeTab": {
-        "filter": {
-            "location": "Địa điểm",
-            "time": "Thời gian",
-            "weekdayLabel": "Thứ trong tuần",
-            "dayChunkLabel": "Buổi",
-            "search": "Tìm kiếm",
-            "searchHint": "Nhập từ khoá/ SearchID...",
-            "sport": "Môn",
-            "city": "Thành phố",
-            "district": "Quận/ Huyện",
-            "any": "Tất cả",
-            "schedule": "Thời gian",
-            "scheduleHint": "Để trống",
-            "close": "Đóng",
-            "coach": {
-                "body": "Tinh chỉnh tiêu chí tìm kiếm để có kết quả phù hợp hơn"
-            }
-        },
-        "empty": {
-            "title": "Không có kết quả phù hợp",
-            "message": "Xin điều chỉnh filter hoặc quay lại sau"
-        },
-        "error": {
-            "title": "Lỗi tải dữ liệu",
-            "retry": "Thử lại"
-        },
-        "teammate": {
-            "title": "Đồng đội",
-            "join": "Xin Vào",
-            "sent": "Đã Gửi",
-            "undo": "Hoàn Tác"
-        },
-        "challenger": {
-            "title": "Đối thủ",
-            "challenge": "Thách Đấu",
-            "challengingAs": "Thách đấu với tư cách",
-            "sent": "Đã gửi",
-            "alreadyPending": "Đã có lời thách đấu đang chờ",
-            "sportMismatch": "Hai lobby khác môn thể thao",
-            "sendFailed": "Không thể gửi lời thách đấu",
-            "mmr": "MMR",
-            "provisional": "tạm tính",
-            "costPerTeam": "{}đ/đội",
-            "confirmTitle": "Xác Nhận Thách Đấu",
-            "confirmBody": "Bạn đang thách đấu với tư cách {}. Nếu {} chấp nhận, cả hai lobby sẽ có một buổi thi đấu theo đúng điều kiện dưới đây.",
-            "kickoff": "Giờ thi đấu",
-            "venue": "Sân",
-            "cost": "Chi phí mỗi đội",
-            "refNote": "Chi phí trên chưa gồm phí trọng tài — đội chủ nhà sẽ thuê trọng tài riêng sau khi chấp nhận.",
-            "note": "Lời nhắn (tuỳ chọn)",
-            "noteHint": "vd. BO3, tự mang bóng",
-            "confirmCta": "Gửi Lời Thách Đấu",
-            "favorability": {
-                "underdog": "Cửa dưới",
-                "even": "Cân sức",
-                "favored": "Cửa trên"
-            },
-            "empty": {
-                "title": "Chưa tìm được đối thủ",
-                "message": "Thử điều chỉnh filter hoặc quay lại sau"
-            },
-            "noLobby": {
-                "title": "Bạn chưa có lobby nào",
-                "message": "Thách đấu là giữa 2 lobby. Tạo lobby của riêng bạn hoặc tham gia một lobby để bắt đầu thách đấu người khác.",
-                "findLobby": "Tìm Lobby",
-                "createLobby": "Tạo Lobby"
-            }
-        },
-        "location": {
-            "viewMap": "Xem Bản Đồ",
-            "directions": "Chỉ Đường",
-            "directionsFailed": "Không mở được ứng dụng bản đồ",
-            "unnamed": "Địa điểm chưa đặt tên",
-            "address": "Địa Chỉ",
-            "amenities": "Tiện Ích",
-            "amenity": {
-                "pitch": "Sân thi đấu",
-                "sports_centre": "Trung tâm thể thao",
-                "stadium": "Sân vận động",
-                "swimming_pool": "Hồ bơi"
-            },
-            "someUnmapped": "Một số địa điểm chưa có toạ độ",
-            "roadmapNote": "Dữ liệu địa điểm đang được hoàn thiện. Đặt sân trực tiếp sẽ có khi tụi mình kết nối với các cơ sở địa phương.",
-            "empty": {
-                "title": "Không tìm thấy địa điểm",
-                "message": "Thử nhập từ khoá hoặc điều chỉnh filter"
-            }
-        },
-        "professional": {
-            "title": "Trung lập",
-            "filter": {
-                "all": "Tất Cả",
-                "coach": "Huấn Luyện Viên",
-                "referee": "Trọng Tài",
-                "role": "Vai trò"
-            },
-            "empty": {
-                "title": "Không tìm thấy chuyên gia",
-                "message": "Thử điều chỉnh bộ lọc hoặc quay lại sau"
-            },
-            "book": "Đặt Lịch",
-            "viewProfile": "Xem hồ sơ",
-            "experience": "{years} năm kinh nghiệm",
-            "reviews": "{count} đánh giá",
-            "role": {
-                "coach": "Huấn Luyện Viên",
-                "referee": "Trọng Tài"
-            },
-            "booking": {
-                "title": "Đặt Lịch Hẹn",
-                "confirm": "Xác Nhận Đặt Lịch",
-                "selectService": "Chọn Dịch Vụ",
-                "selectDate": "Chọn Ngày",
-                "selectTime": "Chọn Giờ",
-                "noSlots": "Không có khung giờ trống cho ngày này",
-                "notes": "Ghi Chú Thêm",
-                "notesHint": "Thêm yêu cầu đặc biệt hoặc ghi chú...",
-                "summary": "Tóm Tắt Đặt Lịch",
-                "service": "Dịch Vụ",
-                "date": "Ngày",
-                "time": "Giờ",
-                "total": "Tổng Cộng",
-                "success": "Đặt lịch thành công!",
-                "error": "Đặt lịch thất bại. Vui lòng thử lại."
-            },
-            "details": {
-                "bio": "Tiểu Sử"
-            }
-        },
-        "venue": {
-            "title": "Sân tập & Tụ Điểm"
-        }
+    "professional": {
+      "title": "Trung lập",
+      "filter": {
+        "all": "Tất Cả",
+        "coach": "Huấn Luyện Viên",
+        "referee": "Trọng Tài",
+        "role": "Vai trò"
+      },
+      "empty": {
+        "title": "Không tìm thấy chuyên gia",
+        "message": "Thử điều chỉnh bộ lọc hoặc quay lại sau"
+      },
+      "book": "Đặt Lịch",
+      "viewProfile": "Xem hồ sơ",
+      "experience": "{years} năm kinh nghiệm",
+      "reviews": "{count} đánh giá",
+      "role": {
+        "coach": "Huấn Luyện Viên",
+        "referee": "Trọng Tài"
+      },
+      "booking": {
+        "title": "Đặt Lịch Hẹn",
+        "confirm": "Xác Nhận Đặt Lịch",
+        "selectService": "Chọn Dịch Vụ",
+        "selectDate": "Chọn Ngày",
+        "selectTime": "Chọn Giờ",
+        "noSlots": "Không có khung giờ trống cho ngày này",
+        "notes": "Ghi Chú Thêm",
+        "notesHint": "Thêm yêu cầu đặc biệt hoặc ghi chú...",
+        "summary": "Tóm Tắt Đặt Lịch",
+        "service": "Dịch Vụ",
+        "date": "Ngày",
+        "time": "Giờ",
+        "total": "Tổng Cộng",
+        "success": "Đặt lịch thành công!",
+        "error": "Đặt lịch thất bại. Vui lòng thử lại."
+      },
+      "details": {
+        "bio": "Tiểu Sử"
+      }
     },
-    "manageTab": {
-        "title": "Quản Lý",
-        "schedule": {
-            "title": "Thời gian biểu",
-            "today": "Hôm nay",
-            "tomorrow": "Ngày mai",
-            "participants": "{count} người tham gia",
-            "selectDate": "Chọn ngày để xem lịch",
-            "stub": "Nội dung lịch trình sắp có",
-            "noEvents": "Lịch trống",
-            "empty": {
-                "title": "Không có lịch hẹn",
-                "message": "Các cuộc hẹn sắp tới sẽ hiển thị ở đây"
-            }
-        },
-        "lobby": {
-            "title": "Lobby",
-            "participants": "{current}/{max} người chơi",
-            "scheduledFor": "Đã lên lịch cho {time}",
-            "createNew": "Tạo Lobby Mới",
-            "createFirst": "Tạo Lobby Đầu Tiên",
-            "navigate": "Vào Phòng Chơi",
-            "navigateMessage": "Đang mở Lobby {lobbyTitle}...",
-            "createMessage": "Tính năng tạo lobby sắp ra mắt!",
-            "empty": {
-                "title": "Không tìm thấy lobby {sport}",
-                "message": "Tạo lobby {sport} để bắt đầu chơi với người khác. Bạn có đang chọn nhầm môn?"
-            },
-            "guest": {
-                "title": "Bạn chưa đăng nhập",
-                "message": "Đăng nhập để tạo và quản lý lobby của bạn."
-            }
-        }
+    "venue": {
+      "title": "Sân tập & Tụ Điểm"
+    }
+  },
+  "manageTab": {
+    "title": "Quản Lý",
+    "schedule": {
+      "title": "Thời gian biểu",
+      "today": "Hôm nay",
+      "tomorrow": "Ngày mai",
+      "participants": "{count} người tham gia",
+      "selectDate": "Chọn ngày để xem lịch",
+      "stub": "Nội dung lịch trình sắp có",
+      "noEvents": "Lịch trống",
+      "empty": {
+        "title": "Không có lịch hẹn",
+        "message": "Các cuộc hẹn sắp tới sẽ hiển thị ở đây"
+      }
     },
     "lobby": {
-        "create": "Tạo Lobby",
-        "edit": "Chỉnh Sửa Lobby",
-        "leader": "Đội trưởng",
-        "us": "Đội mình",
-        "sportNotSelected": "Hãy chọn môn thể thao trước khi tạo lobby",
-        "signInRequired": "Đăng nhập để tạo lobby",
-        "noActivity": "Chưa có lịch chơi",
-        "nameRequired": "Tên lobby là bắt buộc",
-        "nameTooShort": "Tên phải có ít nhất 3 ký tự",
-        "ageGroup": "Nhóm Tuổi",
-        "saveButton": "Lưu",
-        "saveFailed": "Lưu lobby thất bại",
-        "avatarPickFailed": "Không thể chọn ảnh",
-        "emptyTitle": "Chưa có lobby nào",
-        "emptyMessage": "Tạo lobby để bắt đầu chơi cùng người khác",
-        "visibility": {
-            "private": "Nội Bộ",
-            "privateDescription": "Không hiện trên search hay matchmaking. Người ngoài cần phải được mời",
-            "discoverable": "Mặc Định",
-            "discoverableDescription": "Hiện trên search và matchmaking. Người ngoài có thể xin gia nhập",
-            "public": "Công Khai",
-            "publicDescription": "Hiện trên trang chủ"
-        },
-        "detail": {
-            "members": "Thành Viên",
-            "noMembers": "Chưa có thành viên",
-            "upcoming": "Sắp Diễn Ra",
-            "noUpcoming": "Chưa có buổi chơi nào",
-            "scheduleEvent": "Lên Lịch",
-            "history": "Lịch Sử",
-            "noHistory": "Chưa có lịch sử"
-        },
-        "scheduleActivity": "Lên lịch",
-        "lookingForActivity": "Chưa có buổi chơi",
-        "searchIDCopied": "Đã sao chép SearchID",
-        "searchIDExplanation": "Người chơi khác có thể dùng SearchID ở filter trang chủ để tìm thấy Lobby của bạn",
-        "shareId": "Chia sẻ ID",
-        "invite": "Mời",
-        "leave": {
-            "title": "Rời lobby?",
-            "message": "Bạn sẽ không còn là thành viên của lobby này.",
-            "confirm": "Rời lobby",
-            "cancel": "Huỷ"
-        },
-        "info": "Thông tin lobby",
-        "settings": "Cài đặt",
-        "manageRequests": "Quản lý lời mời gia nhập",
-        "notifications": "Thông báo",
-        "comingSoon": "Tính năng sắp ra mắt",
-        "inviteMember": "Mời thành viên",
-        "pendingRequests": "{count} đang chờ",
-        "captainTransfer": {
-            "title": "Chuyển quyền đội trưởng",
-            "message": "Chọn thành viên sẽ trở thành đội trưởng mới.",
-            "noOthers": "Chưa có thành viên nào khác để chuyển quyền",
-            "success": "Đã chuyển quyền cho {username}",
-            "failed": "Chuyển quyền thất bại. Vui lòng thử lại."
-        },
-        "delete": {
-            "title": "Xoá lobby?",
-            "message": "Hành động này không thể hoàn tác. Lobby sẽ bị xoá vĩnh viễn.",
-            "confirm": "Xoá lobby",
-            "failed": "Xoá lobby thất bại. Vui lòng thử lại."
-        },
-        "kick": {
-            "action": "Mời rời lobby",
-            "title": "Mời {username} rời lobby?",
-            "message": "Thành viên sẽ bị xoá khỏi lobby.",
-            "confirm": "Xác nhận",
-            "failed": "Không thể mời rời. Vui lòng thử lại."
-        },
-        "memberRole": {
-            "member": "Thành Viên",
-            "coordinator": "Điều Phối Viên"
-        },
-        "coordinator": {
-            "makeAction": "Đặt làm Điều Phối Viên",
-            "removeAction": "Bỏ Vai Trò Điều Phối Viên",
-            "setSuccess": "Đã đặt {username} làm Điều Phối Viên",
-            "removeSuccess": "Đã bỏ vai trò Điều Phối Viên của {username}",
-            "failed": "Cập nhật vai trò thất bại. Vui lòng thử lại."
-        },
-        "joinRequests": {
-            "title": "Xin gia nhập",
-            "empty": "Không có ai đang xin vào."
-        },
-        "invites": {
-            "title": "Lời mời",
-            "empty": "Bạn chưa có lời mời nào.",
-            "invitedBy": "{name} mời bạn vào lobby",
-            "pairFrom": "{name} muốn ghép đôi",
-            "accepted": "Đã tham gia lobby",
-            "declined": "Đã từ chối"
-        },
-        "inviteReview": {
-            "title": "Lời Mời Lobby",
-            "invitedBy": "{name} mời bạn vào",
-            "memberCount": "{count} thành viên",
-            "captainedBy": "Đội trưởng: {name}",
-            "fitscore": "FitScore {score}/5",
-            "homeGround": "Sân nhà: {name}",
-            "mmr": "MMR {value}",
-            "membersTitle": "Thành viên",
-            "relationship": {
-                "friend": "Bạn bè",
-                "incoming": "Đã gửi lời mời kết bạn cho bạn",
-                "outgoing": "Đã gửi lời mời kết bạn",
-                "blocked": "Đã chặn",
-                "none": "Chưa kết nối"
-            },
-            "accept": "Chấp Nhận",
-            "reject": "Từ Chối",
-            "declinedTitle": "Bạn đã từ chối lời mời này",
-            "notFound": "Lời mời không hợp lệ hoặc không còn khả dụng",
-            "error": "Có lỗi xảy ra. Vui lòng thử lại."
-        },
-        "challenges": {
-            "title": "Lời thách đấu",
-            "empty": "Chưa có lời thách đấu nào.",
-            "incoming": "Đang chờ bạn phản hồi",
-            "outgoing": "Đã gửi · đang chờ",
-            "accepted": "Đã được chấp nhận",
-            "scheduled": "Đã chốt",
-            "accept": "Chấp nhận",
-            "decline": "Từ chối",
-            "cancelBtn": "Huỷ"
-        },
-        "inviteUser": {
-            "friendsShortlist": "Mời nhanh",
-            "label": "Tên người dùng",
-            "hint": "abcxyz#1234 hoặc #1234",
-            "description": "Nhập username#tag, chỉ username, hoặc chỉ #tag để tìm.",
-            "emptyError": "Nhập tên hoặc tag người dùng",
-            "notFound": "Không tìm thấy người dùng \"{name}\"",
-            "success": "Đã gửi lời mời đến {username}",
-            "failed": "Không thể gửi lời mời. Vui lòng thử lại.",
-            "send": "Gửi lời mời",
-            "search": "Tìm",
-            "alreadyMember": "Người dùng đã là thành viên"
-        },
-        "inviteLink": {
-            "title": "Liên Kết Mời",
-            "description": "Bất kỳ ai có liên kết này sẽ vào lobby ngay, không cần duyệt.",
-            "create": "Tạo Liên Kết Mời",
-            "copy": "Sao chép",
-            "share": "Chia sẻ",
-            "regenerate": "Tạo lại",
-            "remove": "Xóa",
-            "copied": "Đã sao chép liên kết mời",
-            "error": "Có lỗi xảy ra. Vui lòng thử lại.",
-            "landingTitle": "Lời Mời Lobby",
-            "invitedTo": "Bạn được mời vào",
-            "memberCount": "{count} thành viên",
-            "captainedBy": "Đội trưởng: {name}",
-            "join": "Tham Gia",
-            "joined": "Bạn đã vào {name}",
-            "alreadyMember": "Bạn đã là thành viên",
-            "invalid": "Liên kết mời này không còn hiệu lực",
-            "notFound": "Liên kết mời không hợp lệ",
-            "expired": "Liên kết mời đã hết hạn",
-            "revoked": "Liên kết mời đã bị xóa"
-        }
+      "title": "Lobby",
+      "participants": "{current}/{max} người chơi",
+      "scheduledFor": "Đã lên lịch cho {time}",
+      "createNew": "Tạo Lobby Mới",
+      "createFirst": "Tạo Lobby Đầu Tiên",
+      "navigate": "Vào Phòng Chơi",
+      "navigateMessage": "Đang mở Lobby {lobbyTitle}...",
+      "createMessage": "Tính năng tạo lobby sắp ra mắt!",
+      "empty": {
+        "title": "Không tìm thấy lobby {sport}",
+        "message": "Tạo lobby {sport} để bắt đầu chơi với người khác. Bạn có đang chọn nhầm môn?"
+      },
+      "guest": {
+        "title": "Bạn chưa đăng nhập",
+        "message": "Đăng nhập để tạo và quản lý lobby của bạn."
+      }
+    }
+  },
+  "lobby": {
+    "create": "Tạo Lobby",
+    "edit": "Chỉnh Sửa Lobby",
+    "leader": "Đội trưởng",
+    "us": "Đội mình",
+    "sportNotSelected": "Hãy chọn môn thể thao trước khi tạo lobby",
+    "signInRequired": "Đăng nhập để tạo lobby",
+    "noActivity": "Chưa có lịch chơi",
+    "nameRequired": "Tên lobby là bắt buộc",
+    "nameTooShort": "Tên phải có ít nhất 3 ký tự",
+    "ageGroup": "Nhóm Tuổi",
+    "saveButton": "Lưu",
+    "saveFailed": "Lưu lobby thất bại",
+    "avatarPickFailed": "Không thể chọn ảnh",
+    "emptyTitle": "Chưa có lobby nào",
+    "emptyMessage": "Tạo lobby để bắt đầu chơi cùng người khác",
+    "visibility": {
+      "private": "Nội Bộ",
+      "privateDescription": "Không hiện trên search hay matchmaking. Người ngoài cần phải được mời",
+      "discoverable": "Mặc Định",
+      "discoverableDescription": "Hiện trên search và matchmaking. Người ngoài có thể xin gia nhập",
+      "public": "Công Khai",
+      "publicDescription": "Hiện trên trang chủ"
     },
-    "createLobby": {
-        "title": "Tạo Lobby",
-        "create": "Tạo",
-        "lobbyName": "Tên Lobby",
-        "lobbyNameHint": "Nhập tên cho Lobby của bạn",
-        "description": "Mô Tả",
-        "descriptionHint": "Mô tả phòng chơi của bạn (không bắt buộc)",
-        "sport": "Môn Thể Thao",
-        "sportLocked": "Không thể thay đổi môn thể thao",
-        "visibility": "Độ Riêng tư",
-        "public": "Công Khai",
-        "publicDescription": "Hiện trên trang chủ",
-        "private": "Nội Bộ",
-        "privateDescription": "Không hiện trên search hay matchmaking. Cần phải được mời",
-        "homeGround": "Sân Nhà",
-        "homeGroundDescription": "Đây sẽ là điểm hẹn mặc định để các thành viên tìm đến khi có buổi chơi",
-        "homeGroundHint": "Tìm theo tên địa điểm/ địa chỉ...",
-        "homeGroundFreeHint": "Nhập trực tiếp tên địa điểm/ địa chỉ...",
-        "homeGroundFreeTextMode": "Nhập thủ công",
-        "homeGroundSearchMode": "Tìm kiếm địa điểm",
-        "streetNumber": "Số nhà",
-        "streetName": "Tên đường",
-        "district": "Quận/Huyện",
-        "city": "Thành phố",
-        "specificLocation": "Địa Điểm Cụ Thể",
-        "specificLocationHint": "Nhập địa điểm cụ thể",
-        "playtime": "Thời Gian Chơi",
-        "dayOfWeek": "Ngày Trong Tuần",
-        "timeSlot": "Khung Giờ",
-        "setTimeslot": "Đặt Khung Giờ",
-        "maxParticipants": "Số Người Tham Gia Tối Đa",
-        "participantCount": "{count} người tham gia"
+    "detail": {
+      "members": "Thành Viên",
+      "noMembers": "Chưa có thành viên",
+      "upcoming": "Sắp Diễn Ra",
+      "noUpcoming": "Chưa có buổi chơi nào",
+      "scheduleEvent": "Lên Lịch",
+      "history": "Lịch Sử",
+      "noHistory": "Chưa có lịch sử"
     },
-    "soccer": {
-        "position": {
-            "label": "Vị Trí",
-            "forward": "Tiền Đạo",
-            "midfielder": "Tiền Vệ",
-            "defender": "Hậu Vệ",
-            "keeper": "Thủ Môn"
-        },
-        "pitch": {
-            "label": "Loại Sân",
-            "futsal": "Futsal",
-            "5v5": "Sân 5",
-            "7v7": "Sân 7"
-        }
+    "scheduleActivity": "Lên lịch",
+    "lookingForActivity": "Chưa có buổi chơi",
+    "searchIDCopied": "Đã sao chép SearchID",
+    "searchIDExplanation": "Người chơi khác có thể dùng SearchID ở filter trang chủ để tìm thấy Lobby của bạn",
+    "shareId": "Chia sẻ ID",
+    "invite": "Mời",
+    "leave": {
+      "title": "Rời lobby?",
+      "message": "Bạn sẽ không còn là thành viên của lobby này.",
+      "confirm": "Rời lobby",
+      "cancel": "Huỷ"
     },
-    "racketSport": {
-        "dominantHand": {
-            "label": "Tay Thuận",
-            "left": "Tay Trái",
-            "right": "Tay Phải"
-        },
-        "discipline": {
-            "label": "Theer Thức",
-            "singles": "Đơn",
-            "doubles": "Đôi"
-        }
+    "info": "Thông tin lobby",
+    "settings": "Cài đặt",
+    "manageRequests": "Quản lý lời mời gia nhập",
+    "notifications": "Thông báo",
+    "comingSoon": "Tính năng sắp ra mắt",
+    "inviteMember": "Mời thành viên",
+    "pendingRequests": "{count} đang chờ",
+    "captainTransfer": {
+      "title": "Chuyển quyền đội trưởng",
+      "message": "Chọn thành viên sẽ trở thành đội trưởng mới.",
+      "noOthers": "Chưa có thành viên nào khác để chuyển quyền",
+      "success": "Đã chuyển quyền cho {username}",
+      "failed": "Chuyển quyền thất bại. Vui lòng thử lại."
     },
-    "basketball": {
-        "position": {
-            "label": "Vị Trí",
-            "guard": "Guard",
-            "forward": "Forward",
-            "center": "Center"
-        },
-        "pitch": {
-            "label": "Loại Sân",
-            "indoor": "Trong Nhà",
-            "outdoor": "Ngoài Trời"
-        }
+    "delete": {
+      "title": "Xoá lobby?",
+      "message": "Hành động này không thể hoàn tác. Lobby sẽ bị xoá vĩnh viễn.",
+      "confirm": "Xoá lobby",
+      "failed": "Xoá lobby thất bại. Vui lòng thử lại."
     },
-    "elo": {
-        "label": "Elo"
+    "kick": {
+      "action": "Kick khỏi lobby",
+      "title": "Kick {username} khỏi lobby?",
+      "message": "Thành viên sẽ bị xoá khỏi lobby.",
+      "confirm": "Xác nhận",
+      "failed": "Kick thất bại. Vui lòng thử lại."
     },
-    "eloSeed": {
-        "label": "Trình Độ",
-        "description": "Dùng để xếp hạng ban đầu. Chơi cùng người khác để cập nhật Elo.",
-        "beginner": "Tập Chơi",
-        "casual": "Biết Chơi",
-        "tryhard": "Tryhard",
-        "lockedHint": "Trình độ ban đầu đã được lưu"
+    "memberRole": {
+      "member": "Thành Viên",
+      "coordinator": "Đội phó"
+    },
+    "coordinator": {
+      "makeAction": "Đặt làm Đội phó",
+      "removeAction": "Bỏ Vai Trò Đội phó",
+      "setSuccess": "Đã đặt {username} làm Đội phó",
+      "removeSuccess": "Đã bỏ vai trò Đội phó của {username}",
+      "failed": "Cập nhật vai trò thất bại. Vui lòng thử lại."
+    },
+    "joinRequests": {
+      "title": "Xin gia nhập",
+      "empty": "Không có ai đang xin vào."
+    },
+    "invites": {
+      "title": "Lời mời",
+      "empty": "Bạn chưa có lời mời nào.",
+      "invitedBy": "{name} mời bạn vào lobby",
+      "pairFrom": "{name} muốn ghép đôi",
+      "accepted": "Đã tham gia lobby",
+      "declined": "Đã từ chối"
+    },
+    "inviteReview": {
+      "title": "Lời Mời Lobby",
+      "invitedBy": "{name} mời bạn vào",
+      "memberCount": "{count} thành viên",
+      "captainedBy": "Đội trưởng: {name}",
+      "fitscore": "FitScore {score}/5",
+      "homeGround": "Sân nhà: {name}",
+      "mmr": "MMR {value}",
+      "membersTitle": "Thành viên",
+      "relationship": {
+        "friend": "Bạn bè",
+        "incoming": "Đã gửi lời mời kết bạn cho bạn",
+        "outgoing": "Đã gửi lời mời kết bạn",
+        "blocked": "Đã chặn",
+        "none": "Chưa kết nối"
+      },
+      "accept": "Chấp Nhận",
+      "reject": "Từ Chối",
+      "declinedTitle": "Bạn đã từ chối lời mời này",
+      "notFound": "Lời mời không hợp lệ hoặc không còn khả dụng",
+      "error": "Có lỗi xảy ra. Vui lòng thử lại."
+    },
+    "challenges": {
+      "title": "Lời thách đấu",
+      "empty": "Chưa có lời thách đấu nào.",
+      "incoming": "Đang chờ bạn phản hồi",
+      "outgoing": "Đã gửi · đang chờ",
+      "accepted": "Đã được chấp nhận",
+      "scheduled": "Đã chốt",
+      "accept": "Chấp nhận",
+      "decline": "Từ chối",
+      "cancelBtn": "Huỷ"
+    },
+    "inviteUser": {
+      "friendsShortlist": "Mời nhanh",
+      "label": "Tên người dùng",
+      "hint": "abcxyz#1234 hoặc #1234",
+      "description": "Nhập username#tag, chỉ username, hoặc chỉ #tag để tìm.",
+      "emptyError": "Nhập tên hoặc tag người dùng",
+      "notFound": "Không tìm thấy người dùng \"{name}\"",
+      "success": "Đã gửi lời mời đến {username}",
+      "failed": "Không thể gửi lời mời. Vui lòng thử lại.",
+      "send": "Gửi lời mời",
+      "search": "Tìm",
+      "alreadyMember": "Người dùng đã là thành viên"
+    },
+    "inviteLink": {
+      "title": "Liên Kết Mời",
+      "description": "Bất kỳ ai có liên kết này sẽ vào lobby ngay, không cần duyệt.",
+      "create": "Tạo Liên Kết Mời",
+      "copy": "Sao chép",
+      "share": "Chia sẻ",
+      "regenerate": "Tạo lại",
+      "remove": "Xóa",
+      "copied": "Đã sao chép liên kết mời",
+      "error": "Có lỗi xảy ra. Vui lòng thử lại.",
+      "landingTitle": "Lời Mời Lobby",
+      "invitedTo": "Bạn được mời vào",
+      "memberCount": "{count} thành viên",
+      "captainedBy": "Đội trưởng: {name}",
+      "join": "Tham Gia",
+      "joined": "Bạn đã vào {name}",
+      "alreadyMember": "Bạn đã là thành viên",
+      "invalid": "Liên kết mời này không còn hiệu lực",
+      "notFound": "Liên kết mời không hợp lệ",
+      "expired": "Liên kết mời đã hết hạn",
+      "revoked": "Liên kết mời đã bị xóa"
+    }
+  },
+  "createLobby": {
+    "title": "Tạo Lobby",
+    "create": "Tạo",
+    "lobbyName": "Tên Lobby",
+    "lobbyNameHint": "Nhập tên cho Lobby của bạn",
+    "description": "Mô Tả",
+    "descriptionHint": "Mô tả phòng chơi của bạn (không bắt buộc)",
+    "sport": "Môn Thể Thao",
+    "sportLocked": "Không thể thay đổi môn thể thao",
+    "visibility": "Độ Riêng tư",
+    "public": "Công Khai",
+    "publicDescription": "Hiện nhiều thông tin hơn",
+    "private": "Nội Bộ",
+    "privateDescription": "Không hiện trên search hay matchmaking. Cần phải được mời",
+    "homeGround": "Sân Nhà",
+    "homeGroundDescription": "Đây sẽ là điểm hẹn mặc định để các thành viên tìm đến khi có buổi chơi",
+    "homeGroundHint": "Tìm theo tên địa điểm/ địa chỉ...",
+    "homeGroundFreeHint": "Nhập trực tiếp tên địa điểm/ địa chỉ...",
+    "homeGroundFreeTextMode": "Nhập thủ công",
+    "homeGroundSearchMode": "Tìm kiếm địa điểm",
+    "streetNumber": "Số nhà",
+    "streetName": "Tên đường",
+    "district": "Quận/Huyện",
+    "city": "Thành phố",
+    "specificLocation": "Địa Điểm Cụ Thể",
+    "specificLocationHint": "Nhập địa điểm cụ thể",
+    "playtime": "Thời Gian Chơi",
+    "dayOfWeek": "Ngày Trong Tuần",
+    "timeSlot": "Khung Giờ",
+    "setTimeslot": "Đặt Khung Giờ",
+    "maxParticipants": "Số Người Tham Gia Tối Đa",
+    "participantCount": "{count} người tham gia"
+  },
+  "soccer": {
+    "position": {
+      "label": "Vị Trí",
+      "forward": "Tiền Đạo",
+      "midfielder": "Tiền Vệ",
+      "defender": "Hậu Vệ",
+      "keeper": "Thủ Môn"
+    },
+    "pitch": {
+      "label": "Loại Sân",
+      "futsal": "Futsal",
+      "5v5": "Sân 5",
+      "7v7": "Sân 7"
+    }
+  },
+  "racketSport": {
+    "dominantHand": {
+      "label": "Tay Thuận",
+      "left": "Tay Trái",
+      "right": "Tay Phải"
+    },
+    "discipline": {
+      "label": "Theer Thức",
+      "singles": "Đơn",
+      "doubles": "Đôi"
+    }
+  },
+  "basketball": {
+    "position": {
+      "label": "Vị Trí",
+      "guard": "Guard",
+      "forward": "Forward",
+      "center": "Center"
+    },
+    "pitch": {
+      "label": "Loại Sân",
+      "indoor": "Trong Nhà",
+      "outdoor": "Ngoài Trời"
+    }
+  },
+  "elo": {
+    "label": "Elo"
+  },
+  "eloSeed": {
+    "label": "Trình Độ",
+    "description": "Dùng để xếp hạng ban đầu. Chơi cùng người khác để cập nhật Elo.",
+    "beginner": "Tập Chơi",
+    "casual": "Biết Chơi",
+    "tryhard": "Tryhard",
+    "lockedHint": "Trình độ ban đầu đã được lưu"
+  },
+  "sport": {
+    "others": "Khác",
+    "soccer": "Bóng Đá",
+    "basketball": "Bóng Rổ",
+    "badminton": "Cầu Lông",
+    "tennis": "Tennis",
+    "pickleball": "Pickleball",
+    "sportNotSelected": "Chọn Môn thể thao",
+    "othersAlertDescription": "Bạn cần chọn một môn thể thao để xem các nội dung phù hợp. Bấm vào biểu tượng ở góc phải màn hình để điều chỉnh."
+  },
+  "notSet": "Chưa Thiết Lập",
+  "done": "Xong",
+  "error": "Lỗi",
+  "errorGeneric": "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+  "auth": {
+    "welcome": "Welcome",
+    "emailLabel": "Email",
+    "passwordLabel": "Mật khẩu",
+    "emailEmpty": "Vui lòng nhập email của bạn",
+    "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ",
+    "passwordEmpty": "Vui lòng nhập mật khẩu của bạn",
+    "passwordLength": "Mật khẩu phải dài ít nhất 8 ký tự",
+    "signIn": "Đăng nhập",
+    "signUp": "Đăng ký",
+    "loginFailed": "Đăng nhập thất bại",
+    "signUpFailed": "Đăng ký thất bại",
+    "checkEmailTitle": "Kiểm tra email của bạn",
+    "checkEmailBody": "Đã gửi liên kết xác nhận tới {email}. Xác nhận để hoàn tất đăng ký.",
+    "guestPrompt": {
+      "title": "Cần đăng nhập",
+      "body": "Đăng nhập hoặc tạo tài khoản để tham gia lobby, xác nhận buổi chơi và nhiều hơn nữa.",
+      "cta": "Đăng nhập"
+    },
+    "orDivider": "hoặc",
+    "googleContinue": "Tiếp tục với Google",
+    "appleContinue": "Tiếp tục với Apple",
+    "guestContinue": "Tạm Skip Đăng nhập",
+    "googleLoginFailed": "Đăng nhập Google thất bại",
+    "appleLoginFailed": "Đăng nhập Apple thất bại",
+    "guestLoginFailed": "Đăng nhập Khách thất bại",
+    "credentialsInvalid": "Email hoặc mật khẩu không đúng",
+    "userAlreadyRegistered": "Email này đã được đăng ký",
+    "forgotPassword": "Quên mật khẩu?",
+    "forgotPasswordTitle": "Đặt lại mật khẩu",
+    "forgotPasswordInstruction": "Nhập email của bạn, chúng tôi sẽ gửi mã 6 số để đặt lại mật khẩu.",
+    "sendResetCode": "Gửi mã",
+    "resetCodeSent": "Đã gửi mã",
+    "resetCodeSentDescription": "Kiểm tra email để lấy mã đặt lại gồm 6 số.",
+    "resetPasswordTitle": "Mật khẩu mới",
+    "resetPasswordInstruction": "Nhập mã đã gửi tới {} và chọn mật khẩu mới.",
+    "otpLabel": "Mã đặt lại",
+    "otpEmpty": "Vui lòng nhập mã",
+    "otpInvalid": "Mã phải gồm 6 số",
+    "newPasswordLabel": "Mật khẩu mới",
+    "confirmPasswordLabel": "Xác nhận mật khẩu",
+    "passwordMismatch": "Mật khẩu không khớp",
+    "resetPassword": "Đặt lại mật khẩu",
+    "passwordResetSuccess": "Đặt lại mật khẩu thành công",
+    "resetFailed": "Đặt lại thất bại",
+    "otpInvalidOrExpired": "Mã không hợp lệ hoặc đã hết hạn",
+    "resetEmailFailed": "Không thể gửi mã đặt lại"
+  },
+  "nav": {
+    "home": "Home",
+    "manage": "Manage",
+    "health": "Health",
+    "profile": "Profile",
+    "discover": "Discover",
+    "feed": "Feed"
+  },
+  "notification": {
+    "title": "Thông báo",
+    "markAllRead": "Đánh dấu đã đọc",
+    "empty": {
+      "title": "Chưa có thông báo",
+      "subtitle": "Hoạt động, lời mời và yêu cầu sẽ xuất hiện ở đây"
+    },
+    "clearRead": {
+      "title": "Xoá thông báo đã đọc?",
+      "message": "Thao tác này sẽ xoá mọi thông báo đã đọc. Thông báo chưa đọc vẫn được giữ lại.",
+      "cancel": "Huỷ",
+      "confirm": "Xoá"
+    }
+  },
+  "home": {
+    "teammate": "Đồng đội",
+    "challenger": "Đối thủ",
+    "professional": "HLV & Trọng Tài",
+    "location": "Địa điểm"
+  },
+  "manage": {
+    "schedule": "Lịch trình",
+    "lobby": "Lobby"
+  },
+  "profile": {
+    "guestTitle": "Bạn chưa đăng nhập",
+    "guestMessage": "Đăng nhập để thiết lập hồ sơ, tạo lịch, tìm kiếm đồng đội và đối thủ xứng tầm!",
+    "logout": "Đăng xuất",
+    "accountInfo": "Thông tin tài khoản",
+    "username": "Username",
+    "email": "Email",
+    "changePassword": "Đổi mật khẩu",
+    "setPassword": "Đặt mật khẩu",
+    "generalInfo": "Thông tin chung",
+    "noGeneralInfo": "Chưa cung cấp thông tin chung",
+    "gender": "Giới tính",
+    "ageGroup": "Nhóm tuổi",
+    "location": "Địa điểm",
+    "locationCity": "Thành phố",
+    "locationDistrict": "Quận/ Huyện",
+    "locationDistrictHint": "Chọn tối đa 6 quận/ huyện",
+    "playtime": "Khung giờ thường chơi",
+    "playtimeShort": "Khung giờ",
+    "sportProfile": "Hồ sơ {}",
+    "noSportProfile": "Chưa cung cấp thông tin thể thao",
+    "commit": "Lưu thay đổi",
+    "genderLabel": "Giới Tính",
+    "ageGroupLabel": "Nhóm Tuổi",
+    "industryAndNetworkLabel": "Ngành Nghề & Network",
+    "industryLabel": "Ngành Nghề",
+    "networkLabel": "Network",
+    "networkSearchHint": "Tìm theo tên trường học/ tổ chức/ công ty",
+    "selectedNetworks": "Đã Chọn",
+    "noNetworksFound": "Không tìm thấy network nào theo từ khoá",
+    "playtimeExplanation": "Chọn khung giờ bạn thường chơi để Passe kết nối bạn với những người có cùng thời gian rảnh.",
+    "networkFeatureExplanation": "Bạn chưa chọn tổ chức nào. Chọn tối đa 5 trường học/ tổ chức/ công ty bạn đã hoặc đang là thành viên. Passe sẽ kết nối bạn đến những người cùng network.",
+    "industryFeatureExplanation": "Chọn tối đa 2 ngạch bạn đang làm việc. Passe sẽ kết nối bạn đến những người cùng ngành nghề.",
+    "sportFeatureExplanation": "Cập nhật trình độ để tìm đối thủ phù hợp và kết nối với những người có cùng đam mê thể thao.",
+    "profileFeatureExplanation": "Điền profile để Passe giúp bạn kết nối với người khác tốt hơn.",
+    "emptyNetwork": "Chưa chọn network. Thêm trường học hoặc công ty để kết nối với người khác.",
+    "emptyIndustry": "Chưa chọn ngành nghề. Thêm ngành nghề để tìm kiếm các kết nối chuyên nghiệp.",
+    "emptySportProfile": "Chưa thiết lập hồ sơ thể thao. Cập nhật trình độ để tìm đối thủ phù hợp.",
+    "changeUsername": "Đổi Username",
+    "newUsername": "Username Mới",
+    "confirmUsername": "Xác nhận Username",
+    "newPassword": "Mật khẩu mới",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "passwordMismatch": "Mật khẩu không khớp",
+    "passwordTooShort": "Mật khẩu phải dài ít nhất 8 ký tự",
+    "passwordChanged": "Đổi mật khẩu thành công",
+    "usernameMismatch": "Username không khớp",
+    "usernameInvalidChars": "Username chỉ được chứa chữ cái và số",
+    "usernameTaken": "Username này đã được sử dụng",
+    "confirmLogout": "Bấm giữ để đăng xuất",
+    "alumni": "Cựu Thành viên",
+    "currentMember": "Thành viên hiện tại",
+    "toggleAlumniStatus": "Đổi trạng thái thành viên",
+    "randomizeAvatar": "Ngẫu nhiên",
+    "removeAvatar": "Gỡ bỏ",
+    "uploadPhoto": "Tải ảnh lên",
+    "cropAvatar": "Chỉnh ảnh",
+    "uploadFailed": "Tải ảnh thất bại",
+    "networkMaxReached": "Tối đa 5 tổ chức. Hãy xoá bớt 1 trước.",
+    "discardChangesTitle": "Bỏ thay đổi?",
+    "discardChangesBody": "Các thay đổi Profile của bạn chưa được lưu.",
+    "discardChangesStay": "Quay lại",
+    "discardChangesLeave": "Bỏ thay đổi",
+    "paymentInfo": "Thông tin thanh toán",
+    "paymentInfoExplanation": "Thêm ngân hàng hoặc ví điện tử để nhận tiền. Thông tin này chỉ hiển thị cho bạn bè và thành viên cùng lobby để họ chuyển khoản cho bạn ngoài ứng dụng — Passe không xử lý bất kỳ giao dịch thanh toán nào.",
+    "paymentInfoEmpty": "Chưa có thông tin thanh toán nào. Thêm ngân hàng hoặc ví điện tử để bạn bè và thành viên lobby có thể chuyển khoản cho bạn.",
+    "addPaymentInfo": "Thêm thông tin thanh toán",
+    "changePaymentInfo": "Đổi thông tin thanh toán",
+    "paymentInfoDeleteConfirmTitle": "Xoá thông tin thanh toán này?",
+    "paymentInfoDeleteConfirmBody": "Thao tác này sẽ xoá khỏi hồ sơ của bạn và không thể hoàn tác.",
+    "paymentInfoDeleteCancel": "Huỷ",
+    "paymentInfoDeleteConfirmAction": "Xoá"
+  },
+  "payment": {
+    "bankOrWallet": "Ngân hàng hoặc ví điện tử",
+    "accountNumber": "Số tài khoản / số điện thoại",
+    "accountHolderName": "Tên chủ tài khoản (không bắt buộc)",
+    "copy": "Sao chép",
+    "copied": "Đã sao chép",
+    "share": "Chia sẻ",
+    "openInApp": "Mở app {}",
+    "openInAppFailed": "Không thể mở app. Bạn đã cài đặt app này chưa?",
+    "autofillHint": "App sẽ tự động điền sẵn thông tin chuyển khoản.",
+    "setPreferredBank": "Đặt app ngân hàng của bạn",
+    "choosePreferredBank": "Chọn app ngân hàng của bạn",
+    "preferredBank": "App ngân hàng của bạn",
+    "preferredBankNotSet": "Chưa đặt",
+    "preferredBankExplanation": "App mà Passe sẽ mở khi bạn nhấn \"Mở app\" để thanh toán cho ai đó — đây là ngân hàng của bạn, không phải của người nhận, nên sẽ luôn giữ nguyên dù bạn trả cho ai.",
+    "disclaimer": "Passe không xác minh hoặc chịu trách nhiệm cho các giao dịch chuyển khoản thực hiện ngoài ứng dụng. Hãy kiểm tra kỹ thông tin người nhận trước khi chuyển tiền.",
+    "payCoach": "Thanh toán cho HLV",
+    "coachNoPaymentInfo": "HLV này chưa thiết lập thông tin thanh toán.",
+    "lessonNote": "Thanh toán buổi tập với {}",
+    "confirmPasswordTitle": "Xác nhận mật khẩu",
+    "confirmPasswordExplanation": "Để bảo mật, hãy xác nhận mật khẩu tài khoản trước khi thêm hoặc thay đổi thông tin thanh toán.",
+    "confirmPasswordAction": "Xác nhận",
+    "incorrectPassword": "Mật khẩu không đúng",
+    "passwordSetupRequiredTitle": "Thiết lập mật khẩu trước",
+    "passwordSetupRequiredExplanation": "Bạn chưa thiết lập mật khẩu tài khoản. Hãy thiết lập để bảo vệ các thay đổi đối với thông tin thanh toán của bạn."
+  },
+  "health": {
+    "title": "Health",
+    "notLinked": {
+      "title": "Kết nối Dữ liệu Sức khỏe",
+      "description": "Liên kết Apple Health hoặc Google Fit để theo dõi xu hướng sức khỏe, chỉ số trong hoạt động và gặt hái mục tiêu.",
+      "linkButton": "Kết nối Health",
+      "notAvailableIOS": "Dịch vụ sức khỏe không khả dụng. Vui lòng chạy trên thiết bị thật có cài đặt ứng dụng Health.",
+      "notAvailableAndroid": "Health Connect không khả dụng. Vui lòng cài đặt Health Connect từ Play Store."
+    },
+    "userHealth": {
+      "title": "Cơ thể"
+    },
+    "vitality": {
+      "title": "VITALITY SCORE",
+      "notEnoughData": "Chưa đủ dữ liệu — hãy đồng bộ thêm vài tuần nữa",
+      "streakBonus": "+{n} thưởng chuỗi",
+      "component": {
+        "consistency": "Đều đặn",
+        "load": "Cường độ",
+        "recovery": "Hồi phục",
+        "volume": "Khối lượng"
+      }
+    },
+    "hrZone": {
+      "title": "HR Zone",
+      "maxHrLine": "Nhịp tim tối đa ~{value} bpm",
+      "zoneDesc": {
+        "easy": "Nhịp độ vừa nói chuyện được. Xây nền hiếu khí và hỗ trợ hồi phục.",
+        "moderate": "Cường độ tempo bền vững. Cải thiện sức bền và khả năng thải lactate.",
+        "hard": "Trên ngưỡng lactate. Xây tốc độ và sức bền yếm khí."
+      },
+      "edit": {
+        "title": "Chỉnh vùng nhịp tim",
+        "description": "Khai báo ngưỡng lactate thật để chia vùng nhịp tim chính xác hơn. Bỏ trống Nhịp tim tối đa để Passe tự ước tính theo độ tuổi.",
+        "maxHrLabel": "Nhịp tim tối đa (tuỳ chọn)",
+        "lt1Label": "LT1 — ngưỡng hiếu khí",
+        "lt2Label": "LT2 — ngưỡng yếm khí",
+        "invalid": "Nhập giá trị hợp lệ: LT1 < LT2, và cả hai đều nhỏ hơn Nhịp tim tối đa.",
+        "save": "Lưu",
+        "saved": "Đã cập nhật vùng nhịp tim"
+      }
+    },
+    "activityData": {
+      "title": "Hoạt động",
+      "selectSport": "Chọn một môn để xem tóm tắt hoạt động.",
+      "sample": {
+        "label": "Preview",
+        "session": "Buổi tập tiếp theo của bạn",
+        "caption": "Đồng bộ một buổi đã xác nhận để thay thế bằng dữ liệu thật."
+      }
+    },
+    "achievements": {
+      "title": "Thành tựu",
+      "emptyTitle": "Chưa có thành tựu nào",
+      "empty": "Đồng bộ thiết bị đeo sau buổi tập để bắt đầu tích XP.",
+      "inProgress": "Đang tiến hành",
+      "earned": "Đã mở khóa",
+      "completed": "Đã hoàn thành",
+      "locked": "Chưa bắt đầu",
+      "showMore": "Xem thêm",
+      "earnedPeriod": "Hoàn thành kỳ này · làm mới kỳ sau",
+      "levelLabel": "CẤP ĐỘ THỂ CHẤT",
+      "level": "Cấp {level}",
+      "xpTotal": "{xp} XP",
+      "maxed": "Đã đạt cấp tối đa",
+      "toNext": "{current} / {total} XP để lên cấp",
+      "toast": {
+        "levelUp": "⬆️ Lên cấp!",
+        "unlocked": "🏆 Mở khóa {count} thành tựu mới"
+      },
+      "celebrate": {
+        "title": "Thành tựu mới",
+        "levelTitle": "Lên cấp!",
+        "unlocked": "Đã mở khóa",
+        "dismiss": "Tuyệt!"
+      }
+    },
+    "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "metric": {
+      "restingHr": "Nhịp tim nghỉ",
+      "hrv": "HRV",
+      "weight": "Cân nặng",
+      "steps": "Số bước",
+      "distance": "Quãng đường",
+      "activeCalories": "Cal vận động",
+      "totalCalories": "Tổng cal"
+    },
+    "customize": {
+      "title": "Tùy chỉnh chỉ số"
+    },
+    "trend": {
+      "period": "90 ngày qua",
+      "insufficient": "Chưa đủ dữ liệu để vẽ biểu đồ."
+    },
+    "detected": {
+      "title": "Buổi tập được phát hiện",
+      "evidenceHigh": "Có buổi tập được ghi trong khung giờ này",
+      "evidenceMedium": "Nhịp tim tăng cao trong khung giờ này",
+      "attach": "Đính kèm",
+      "dismiss": "Bỏ qua",
+      "attached": "Đã đính kèm buổi tập"
+    },
+    "source": {
+      "lobby": "Lobby",
+      "professional": "Huấn luyện",
+      "self": "Cá nhân"
+    },
+    "recap": {
+      "duration": "Thời lượng",
+      "avgHr": "Nhịp tim TB",
+      "maxHr": "Nhịp tim tối đa",
+      "calories": "Calo",
+      "distance": "Quãng đường",
+      "effort": "Nỗ lực",
+      "hrCurve": "Nhịp tim",
+      "zones": "Vùng nhịp tim",
+      "estimated": "(ước tính)"
+    },
+    "zone": {
+      "easy": "Nhẹ",
+      "moderate": "Vừa",
+      "hard": "Nặng"
+    },
+    "sync": {
+      "done": "Đã đồng bộ {days} ngày, {activities} hoạt động",
+      "skipped": "Hãy liên kết dịch vụ sức khỏe trước",
+      "failed": "Đồng bộ thất bại. Vui lòng thử lại."
+    }
+  },
+  "welcome": {
+    "skip": "Bỏ qua",
+    "next": "Tiếp",
+    "getStarted": "Bắt đầu",
+    "page1": {
+      "title": "Kết nối cộng đồng thể thao",
+      "description": "Tìm kiếm đồng đội và đối thủ phù hợp với trình độ và lịch trình của bạn"
+    },
+    "page2": {
+      "title": "Quản lý lịch chơi",
+      "description": "Tạo và tham gia các buổi chơi, theo dõi lịch hẹn dễ dàng"
+    },
+    "page3": {
+      "title": "Nâng cao kỹ năng",
+      "description": "Theo dõi tiến bộ, kết nối với huấn luyện viên và cải thiện phong độ"
+    }
+  },
+  "onboarding": {
+    "next": "Tiếp tục",
+    "back": "Quay lại",
+    "skip": "Bỏ qua",
+    "done": "Bắt đầu",
+    "story": {
+      "s1": {
+        "title": "Hẹn phủi, dễ như hẹn cà phê",
+        "body": "Passe kết nối bạn với đồng đội, đối thủ và sân bãi quanh bạn — theo đúng môn bạn chơi."
+      },
+      "s2": {
+        "title": "Lobby là đội của bạn",
+        "body": "Lập lobby, rủ bạn bè, lên lịch, tổng kết chi phí và theo dõi quá trình thi đấu của đội."
+      },
+      "s3": {
+        "title": "Càng chơi càng hợp",
+        "body": "Trình độ, lịch rảnh và các mối quan hệ của bạn giúp Passe ghép đôi ngày một chính xác hơn."
+      }
     },
     "sport": {
-        "others": "Khác",
-        "soccer": "Bóng Đá",
-        "basketball": "Bóng Rổ",
-        "badminton": "Cầu Lông",
-        "tennis": "Tennis",
-        "pickleball": "Pickleball",
-        "sportNotSelected": "Chọn Môn thể thao",
-        "othersAlertDescription": "Bạn cần chọn một môn thể thao để xem các nội dung phù hợp. Bấm vào biểu tượng ở góc phải màn hình để điều chỉnh."
-    },
-    "notSet": "Chưa Thiết Lập",
-    "done": "Xong",
-    "error": "Lỗi",
-    "errorGeneric": "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
-    "auth": {
-        "welcome": "Welcome",
-        "emailLabel": "Email",
-        "passwordLabel": "Mật khẩu",
-        "emailEmpty": "Vui lòng nhập email của bạn",
-        "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ",
-        "passwordEmpty": "Vui lòng nhập mật khẩu của bạn",
-        "passwordLength": "Mật khẩu phải dài ít nhất 8 ký tự",
-        "signIn": "Đăng nhập",
-        "signUp": "Đăng ký",
-        "loginFailed": "Đăng nhập thất bại",
-        "signUpFailed": "Đăng ký thất bại",
-        "checkEmailTitle": "Kiểm tra email của bạn",
-        "checkEmailBody": "Đã gửi liên kết xác nhận tới {email}. Xác nhận để hoàn tất đăng ký.",
-        "guestPrompt": {
-            "title": "Cần đăng nhập",
-            "body": "Đăng nhập hoặc tạo tài khoản để tham gia lobby, xác nhận buổi chơi và nhiều hơn nữa.",
-            "cta": "Đăng nhập"
-        },
-        "orDivider": "hoặc",
-        "googleContinue": "Tiếp tục với Google",
-        "appleContinue": "Tiếp tục với Apple",
-        "guestContinue": "Tạm Skip Đăng nhập",
-        "googleLoginFailed": "Đăng nhập Google thất bại",
-        "appleLoginFailed": "Đăng nhập Apple thất bại",
-        "guestLoginFailed": "Đăng nhập Khách thất bại",
-        "credentialsInvalid": "Email hoặc mật khẩu không đúng",
-        "userAlreadyRegistered": "Email này đã được đăng ký",
-        "forgotPassword": "Quên mật khẩu?",
-        "forgotPasswordTitle": "Đặt lại mật khẩu",
-        "forgotPasswordInstruction": "Nhập email của bạn, chúng tôi sẽ gửi mã 6 số để đặt lại mật khẩu.",
-        "sendResetCode": "Gửi mã",
-        "resetCodeSent": "Đã gửi mã",
-        "resetCodeSentDescription": "Kiểm tra email để lấy mã đặt lại gồm 6 số.",
-        "resetPasswordTitle": "Mật khẩu mới",
-        "resetPasswordInstruction": "Nhập mã đã gửi tới {} và chọn mật khẩu mới.",
-        "otpLabel": "Mã đặt lại",
-        "otpEmpty": "Vui lòng nhập mã",
-        "otpInvalid": "Mã phải gồm 6 số",
-        "newPasswordLabel": "Mật khẩu mới",
-        "confirmPasswordLabel": "Xác nhận mật khẩu",
-        "passwordMismatch": "Mật khẩu không khớp",
-        "resetPassword": "Đặt lại mật khẩu",
-        "passwordResetSuccess": "Đặt lại mật khẩu thành công",
-        "resetFailed": "Đặt lại thất bại",
-        "otpInvalidOrExpired": "Mã không hợp lệ hoặc đã hết hạn",
-        "resetEmailFailed": "Không thể gửi mã đặt lại"
-    },
-    "nav": {
-        "home": "Home",
-        "manage": "Manage",
-        "health": "Health",
-        "profile": "Profile",
-        "discover": "Discover",
-        "feed": "Feed"
-    },
-    "notification": {
-        "title": "Thông báo",
-        "markAllRead": "Đánh dấu đã đọc",
-        "empty": {
-            "title": "Chưa có thông báo",
-            "subtitle": "Hoạt động, lời mời và yêu cầu sẽ xuất hiện ở đây"
-        },
-        "clearRead": {
-            "title": "Xoá thông báo đã đọc?",
-            "message": "Thao tác này sẽ xoá mọi thông báo đã đọc. Thông báo chưa đọc vẫn được giữ lại.",
-            "cancel": "Huỷ",
-            "confirm": "Xoá"
-        }
-    },
-    "home": {
-        "teammate": "Đồng đội",
-        "challenger": "Đối thủ",
-        "professional": "HLV & Trọng Tài",
-        "location": "Địa điểm"
-    },
-    "manage": {
-        "schedule": "Lịch trình",
-        "lobby": "Lobby"
+      "title": "Chọn môn thể thao",
+      "body": "Passe hoạt động theo từng môn. Chọn môn bạn muốn bắt đầu — có thể đổi bất cứ lúc nào ở thanh trên cùng.",
+      "hint": "Chọn một môn để bắt đầu"
     },
     "profile": {
-        "guestTitle": "Bạn chưa đăng nhập",
-        "guestMessage": "Đăng nhập để thiết lập hồ sơ, tạo lịch, tìm kiếm đồng đội và đối thủ xứng tầm!",
-        "logout": "Đăng xuất",
-        "accountInfo": "Thông tin tài khoản",
-        "username": "Username",
-        "email": "Email",
-        "changePassword": "Đổi mật khẩu",
-        "setPassword": "Đặt mật khẩu",
-        "generalInfo": "Thông tin chung",
-        "noGeneralInfo": "Chưa cung cấp thông tin chung",
-        "gender": "Giới tính",
-        "ageGroup": "Nhóm tuổi",
-        "location": "Địa điểm",
-        "locationCity": "Thành phố",
-        "locationDistrict": "Quận/ Huyện",
-        "locationDistrictHint": "Chọn tối đa 6 quận/ huyện",
-        "playtime": "Khung giờ thường chơi",
-        "playtimeShort": "Khung giờ",
-        "sportProfile": "Hồ sơ {}",
-        "noSportProfile": "Chưa cung cấp thông tin thể thao",
-        "commit": "Lưu thay đổi",
-        "genderLabel": "Giới Tính",
-        "ageGroupLabel": "Nhóm Tuổi",
-        "industryAndNetworkLabel": "Ngành Nghề & Network",
-        "industryLabel": "Ngành Nghề",
-        "networkLabel": "Network",
-        "networkSearchHint": "Tìm theo tên trường học/ tổ chức/ công ty",
-        "selectedNetworks": "Đã Chọn",
-        "noNetworksFound": "Không tìm thấy network nào theo từ khoá",
-        "playtimeExplanation": "Chọn khung giờ bạn thường chơi để Passe kết nối bạn với những người có cùng thời gian rảnh.",
-        "networkFeatureExplanation": "Bạn chưa chọn tổ chức nào. Chọn tối đa 5 trường học/ tổ chức/ công ty bạn đã hoặc đang là thành viên. Passe sẽ kết nối bạn đến những người cùng network.",
-        "industryFeatureExplanation": "Chọn tối đa 2 ngạch bạn đang làm việc. Passe sẽ kết nối bạn đến những người cùng ngành nghề.",
-        "sportFeatureExplanation": "Cập nhật trình độ để tìm đối thủ phù hợp và kết nối với những người có cùng đam mê thể thao.",
-        "profileFeatureExplanation": "Điền profile để Passe giúp bạn kết nối với người khác tốt hơn.",
-        "emptyNetwork": "Chưa chọn network. Thêm trường học hoặc công ty để kết nối với người khác.",
-        "emptyIndustry": "Chưa chọn ngành nghề. Thêm ngành nghề để tìm kiếm các kết nối chuyên nghiệp.",
-        "emptySportProfile": "Chưa thiết lập hồ sơ thể thao. Cập nhật trình độ để tìm đối thủ phù hợp.",
-        "changeUsername": "Đổi Username",
-        "newUsername": "Username Mới",
-        "confirmUsername": "Xác nhận Username",
-        "newPassword": "Mật khẩu mới",
-        "confirmPassword": "Xác nhận mật khẩu",
-        "passwordMismatch": "Mật khẩu không khớp",
-        "passwordTooShort": "Mật khẩu phải dài ít nhất 8 ký tự",
-        "passwordChanged": "Đổi mật khẩu thành công",
-        "usernameMismatch": "Username không khớp",
-        "usernameInvalidChars": "Username chỉ được chứa chữ cái và số",
-        "usernameTaken": "Username này đã được sử dụng",
-        "confirmLogout": "Bấm giữ để đăng xuất",
-        "alumni": "Cựu Thành viên",
-        "currentMember": "Thành viên hiện tại",
-        "toggleAlumniStatus": "Đổi trạng thái thành viên",
-        "randomizeAvatar": "Ngẫu nhiên",
-        "removeAvatar": "Gỡ bỏ",
-        "uploadPhoto": "Tải ảnh lên",
-        "cropAvatar": "Chỉnh ảnh",
-        "uploadFailed": "Tải ảnh thất bại",
-        "networkMaxReached": "Tối đa 5 tổ chức. Hãy xoá bớt 1 trước.",
-        "discardChangesTitle": "Bỏ thay đổi?",
-        "discardChangesBody": "Các thay đổi hồ sơ của bạn chưa được lưu.",
-        "discardChangesStay": "Tiếp tục chỉnh sửa",
-        "discardChangesLeave": "Bỏ thay đổi",
-        "paymentInfo": "Thông tin thanh toán",
-        "paymentInfoExplanation": "Thêm ngân hàng hoặc ví điện tử để nhận tiền. Thông tin này chỉ hiển thị cho bạn bè và thành viên cùng lobby để họ chuyển khoản cho bạn ngoài ứng dụng — Passe không xử lý bất kỳ giao dịch thanh toán nào.",
-        "paymentInfoEmpty": "Chưa có thông tin thanh toán nào. Thêm ngân hàng hoặc ví điện tử để bạn bè và thành viên lobby có thể chuyển khoản cho bạn.",
-        "addPaymentInfo": "Thêm thông tin thanh toán",
-        "changePaymentInfo": "Đổi thông tin thanh toán",
-        "paymentInfoDeleteConfirmTitle": "Xoá thông tin thanh toán này?",
-        "paymentInfoDeleteConfirmBody": "Thao tác này sẽ xoá khỏi hồ sơ của bạn và không thể hoàn tác.",
-        "paymentInfoDeleteCancel": "Huỷ",
-        "paymentInfoDeleteConfirmAction": "Xoá"
+      "title": "Vài thông tin để ghép đôi tốt hơn",
+      "body": "Chỉ mất 30 giây. Bạn có thể chỉnh lại bất cứ lúc nào ở tab Hồ sơ.",
+      "gender": "Giới tính",
+      "ageGroup": "Nhóm tuổi",
+      "playtime": "Lịch rảnh",
+      "addPlaytime": "Thêm khung giờ",
+      "skillIntro": "Trình độ ban đầu giúp Passe ghép bạn với đối thủ vừa sức ngay từ trận đầu tiên.",
+      "skillLevels": {
+        "beginner": "Mới làm quen hoặc còn đang học luật, kỹ thuật cơ bản.",
+        "casual": "Chơi đều đặn, đã nắm kỹ thuật căn bản.",
+        "tryhard": "Thi đấu nghiêm túc, muốn gặp đối thủ ngang tầm."
+      },
+      "skillLockWarning": "Trình độ ban đầu chỉ đặt được một lần và không thể đổi sau khi lưu.",
+      "save": "Lưu & tiếp tục",
+      "saveError": "Không lưu được hồ sơ. Bạn có thể thử lại ở tab Hồ sơ."
     },
-    "payment": {
-        "bankOrWallet": "Ngân hàng hoặc ví điện tử",
-        "accountNumber": "Số tài khoản / số điện thoại",
-        "accountHolderName": "Tên chủ tài khoản (không bắt buộc)",
-        "copy": "Sao chép",
-        "copied": "Đã sao chép",
-        "share": "Chia sẻ",
-        "openInApp": "Mở app {}",
-        "openInAppFailed": "Không thể mở app. Bạn đã cài đặt app này chưa?",
-        "autofillHint": "App sẽ tự động điền sẵn thông tin chuyển khoản.",
-        "setPreferredBank": "Đặt app ngân hàng của bạn",
-        "choosePreferredBank": "Chọn app ngân hàng của bạn",
-        "preferredBank": "App ngân hàng của bạn",
-        "preferredBankNotSet": "Chưa đặt",
-        "preferredBankExplanation": "App mà Passe sẽ mở khi bạn nhấn \"Mở app\" để thanh toán cho ai đó — đây là ngân hàng của bạn, không phải của người nhận, nên sẽ luôn giữ nguyên dù bạn trả cho ai.",
-        "disclaimer": "Passe không xác minh hoặc chịu trách nhiệm cho các giao dịch chuyển khoản thực hiện ngoài ứng dụng. Hãy kiểm tra kỹ thông tin người nhận trước khi chuyển tiền.",
-        "payCoach": "Thanh toán cho HLV",
-        "coachNoPaymentInfo": "HLV này chưa thiết lập thông tin thanh toán.",
-        "lessonNote": "Thanh toán buổi tập với {}",
-        "confirmPasswordTitle": "Xác nhận mật khẩu",
-        "confirmPasswordExplanation": "Để bảo mật, hãy xác nhận mật khẩu tài khoản trước khi thêm hoặc thay đổi thông tin thanh toán.",
-        "confirmPasswordAction": "Xác nhận",
-        "incorrectPassword": "Mật khẩu không đúng",
-        "passwordSetupRequiredTitle": "Thiết lập mật khẩu trước",
-        "passwordSetupRequiredExplanation": "Bạn chưa thiết lập mật khẩu tài khoản. Hãy thiết lập để bảo vệ các thay đổi đối với thông tin thanh toán của bạn."
+    "guest": {
+      "title": "Xem hướng dẫn các tính năng của app?",
+      "body": "Một vòng ngắn qua các tính năng chính. Bạn có thể bỏ qua và tự khám phá.",
+      "accept": "Xem thử",
+      "decline": "Để sau"
     },
-    "health": {
-        "title": "Health",
-        "notLinked": {
-            "title": "Kết nối Dữ liệu Sức khỏe",
-            "description": "Liên kết Apple Health hoặc Google Fit để theo dõi xu hướng sức khỏe, chỉ số trong hoạt động và gặt hái mục tiêu.",
-            "linkButton": "Kết nối Health",
-            "notAvailableIOS": "Dịch vụ sức khỏe không khả dụng. Vui lòng chạy trên thiết bị thật có cài đặt ứng dụng Health.",
-            "notAvailableAndroid": "Health Connect không khả dụng. Vui lòng cài đặt Health Connect từ Play Store."
-        },
-        "userHealth": {
-            "title": "Cơ thể"
-        },
-        "vitality": {
-            "title": "VITALITY SCORE",
-            "notEnoughData": "Chưa đủ dữ liệu — hãy đồng bộ thêm vài tuần nữa",
-            "streakBonus": "+{n} thưởng chuỗi",
-            "component": {
-                "consistency": "Đều đặn",
-                "load": "Cường độ",
-                "recovery": "Hồi phục",
-                "volume": "Khối lượng"
-            }
-        },
-        "hrZone": {
-            "title": "HR Zone",
-            "maxHrLine": "Nhịp tim tối đa ~{value} bpm",
-            "zoneDesc": {
-                "easy": "Nhịp độ vừa nói chuyện được. Xây nền hiếu khí và hỗ trợ hồi phục.",
-                "moderate": "Cường độ tempo bền vững. Cải thiện sức bền và khả năng thải lactate.",
-                "hard": "Trên ngưỡng lactate. Xây tốc độ và sức bền yếm khí."
-            },
-            "edit": {
-                "title": "Chỉnh vùng nhịp tim",
-                "description": "Khai báo ngưỡng lactate thật để chia vùng nhịp tim chính xác hơn. Bỏ trống Nhịp tim tối đa để Passe tự ước tính theo độ tuổi.",
-                "maxHrLabel": "Nhịp tim tối đa (tuỳ chọn)",
-                "lt1Label": "LT1 — ngưỡng hiếu khí",
-                "lt2Label": "LT2 — ngưỡng yếm khí",
-                "invalid": "Nhập giá trị hợp lệ: LT1 < LT2, và cả hai đều nhỏ hơn Nhịp tim tối đa.",
-                "save": "Lưu",
-                "saved": "Đã cập nhật vùng nhịp tim"
-            }
-        },
-        "activityData": {
-            "title": "Hoạt động",
-            "selectSport": "Chọn một môn để xem tóm tắt hoạt động.",
-            "sample": {
-                "label": "Preview",
-                "session": "Buổi tập tiếp theo của bạn",
-                "caption": "Đồng bộ một buổi đã xác nhận để thay thế bằng dữ liệu thật."
-            }
-        },
-        "achievements": {
-            "title": "Thành tựu",
-            "emptyTitle": "Chưa có thành tựu nào",
-            "empty": "Đồng bộ thiết bị đeo sau buổi tập để bắt đầu tích XP.",
-            "inProgress": "Đang tiến hành",
-            "earned": "Đã mở khóa",
-            "completed": "Đã hoàn thành",
-            "locked": "Chưa bắt đầu",
-            "showMore": "Xem thêm",
-            "earnedPeriod": "Hoàn thành kỳ này · làm mới kỳ sau",
-            "levelLabel": "CẤP ĐỘ THỂ CHẤT",
-            "level": "Cấp {level}",
-            "xpTotal": "{xp} XP",
-            "maxed": "Đã đạt cấp tối đa",
-            "toNext": "{current} / {total} XP để lên cấp",
-            "toast": {
-                "levelUp": "⬆️ Lên cấp!",
-                "unlocked": "🏆 Mở khóa {count} thành tựu mới"
-            },
-            "celebrate": {
-                "title": "Thành tựu mới",
-                "levelTitle": "Lên cấp!",
-                "unlocked": "Đã mở khóa",
-                "dismiss": "Tuyệt!"
-            }
-        },
-        "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
-        "metric": {
-            "restingHr": "Nhịp tim nghỉ",
-            "hrv": "HRV",
-            "weight": "Cân nặng",
-            "steps": "Số bước",
-            "distance": "Quãng đường",
-            "activeCalories": "Cal vận động",
-            "totalCalories": "Tổng cal"
-        },
-        "customize": {
-            "title": "Tùy chỉnh chỉ số"
-        },
-        "trend": {
-            "period": "90 ngày qua",
-            "insufficient": "Chưa đủ dữ liệu để vẽ biểu đồ."
-        },
-        "detected": {
-            "title": "Buổi tập được phát hiện",
-            "evidenceHigh": "Có buổi tập được ghi trong khung giờ này",
-            "evidenceMedium": "Nhịp tim tăng cao trong khung giờ này",
-            "attach": "Đính kèm",
-            "dismiss": "Bỏ qua",
-            "attached": "Đã đính kèm buổi tập"
-        },
-        "source": {
-            "lobby": "Lobby",
-            "professional": "Huấn luyện",
-            "self": "Cá nhân"
-        },
-        "recap": {
-            "duration": "Thời lượng",
-            "avgHr": "Nhịp tim TB",
-            "maxHr": "Nhịp tim tối đa",
-            "calories": "Calo",
-            "distance": "Quãng đường",
-            "effort": "Nỗ lực",
-            "hrCurve": "Nhịp tim",
-            "zones": "Vùng nhịp tim",
-            "estimated": "(ước tính)"
-        },
-        "zone": {
-            "easy": "Nhẹ",
-            "moderate": "Vừa",
-            "hard": "Nặng"
-        },
-        "sync": {
-            "done": "Đã đồng bộ {days} ngày, {activities} hoạt động",
-            "skipped": "Hãy liên kết dịch vụ sức khỏe trước",
-            "failed": "Đồng bộ thất bại. Vui lòng thử lại."
-        }
+    "coach": {
+      "title": "Nhanh thôi!",
+      "feed": "Feed — ảnh mới nhất từ bạn bè và lobby của bạn.",
+      "discover": "Khám phá — tìm đồng đội, đối thủ, HLV và sân bãi.",
+      "manage": "Quản lý — lobby, lịch chơi và lịch sử trận đấu.",
+      "health": "Sức khỏe — kết nối thiết bị đeo và mở khóa thành tích.",
+      "profile": "Hồ sơ — chỉnh trình độ, lịch rảnh và mạng lưới.",
+      "next": "Tiếp",
+      "skip": "Bỏ qua",
+      "finish": "Xong"
     },
-    "welcome": {
-        "skip": "Bỏ qua",
-        "next": "Tiếp",
-        "getStarted": "Bắt đầu",
-        "page1": {
-            "title": "Kết nối cộng đồng thể thao",
-            "description": "Tìm kiếm đồng đội và đối thủ phù hợp với trình độ và lịch trình của bạn"
-        },
-        "page2": {
-            "title": "Quản lý lịch chơi",
-            "description": "Tạo và tham gia các buổi chơi, theo dõi lịch hẹn dễ dàng"
-        },
-        "page3": {
-            "title": "Nâng cao kỹ năng",
-            "description": "Theo dõi tiến bộ, kết nối với huấn luyện viên và cải thiện phong độ"
-        }
-    },
-    "onboarding": {
-        "next": "Tiếp tục",
-        "back": "Quay lại",
-        "skip": "Bỏ qua",
-        "done": "Bắt đầu",
-        "story": {
-            "s1": {
-                "title": "Hẹn phủi, dễ như hẹn cà phê",
-                "body": "Passe kết nối bạn với đồng đội, đối thủ và sân bãi quanh bạn — theo đúng môn bạn chơi."
-            },
-            "s2": {
-                "title": "Lobby là đội của bạn",
-                "body": "Lập lobby, rủ bạn bè, lên lịch, tổng kết chi phí và theo dõi quá trình thi đấu của đội."
-            },
-            "s3": {
-                "title": "Càng chơi càng hợp",
-                "body": "Trình độ, lịch rảnh và các mối quan hệ của bạn giúp Passe ghép đôi ngày một chính xác hơn."
-            }
-        },
-        "sport": {
-            "title": "Chọn môn thể thao",
-            "body": "Passe hoạt động theo từng môn. Chọn môn bạn muốn bắt đầu — có thể đổi bất cứ lúc nào ở thanh trên cùng.",
-            "hint": "Chọn một môn để bắt đầu"
-        },
-        "profile": {
-            "title": "Vài thông tin để ghép đôi tốt hơn",
-            "body": "Chỉ mất 30 giây. Bạn có thể chỉnh lại bất cứ lúc nào ở tab Hồ sơ.",
-            "gender": "Giới tính",
-            "ageGroup": "Nhóm tuổi",
-            "playtime": "Lịch rảnh",
-            "addPlaytime": "Thêm khung giờ",
-            "skillIntro": "Trình độ ban đầu giúp Passe ghép bạn với đối thủ vừa sức ngay từ trận đầu tiên.",
-            "skillLevels": {
-                "beginner": "Mới làm quen hoặc còn đang học luật, kỹ thuật cơ bản.",
-                "casual": "Chơi đều đặn, đã nắm kỹ thuật căn bản.",
-                "tryhard": "Thi đấu nghiêm túc, muốn gặp đối thủ ngang tầm."
-            },
-            "skillLockWarning": "Trình độ ban đầu chỉ đặt được một lần và không thể đổi sau khi lưu.",
-            "save": "Lưu & tiếp tục",
-            "saveError": "Không lưu được hồ sơ. Bạn có thể thử lại ở tab Hồ sơ."
-        },
-        "guest": {
-            "title": "Xem hướng dẫn các tính năng của app?",
-            "body": "Một vòng ngắn qua các tính năng chính. Bạn có thể bỏ qua và tự khám phá.",
-            "accept": "Xem thử",
-            "decline": "Để sau"
-        },
-        "coach": {
-            "title": "Nhanh thôi!",
-            "feed": "Feed — ảnh mới nhất từ bạn bè và lobby của bạn.",
-            "discover": "Khám phá — tìm đồng đội, đối thủ, HLV và sân bãi.",
-            "manage": "Quản lý — lobby, lịch chơi và lịch sử trận đấu.",
-            "health": "Sức khỏe — kết nối thiết bị đeo và mở khóa thành tích.",
-            "profile": "Hồ sơ — chỉnh trình độ, lịch rảnh và mạng lưới.",
-            "next": "Tiếp",
-            "skip": "Bỏ qua",
-            "finish": "Xong"
-        },
-        "getStarted": {
-            "title": "Bạn muốn làm gì trước?",
-            "body": "Chọn một việc để bắt đầu ngay — bạn luôn có thể quay lại làm các việc còn lại sau.",
-            "createLobby": {
-                "title": "Tạo lobby với nhóm của bạn",
-                "subtitle": "Đã có sẵn nhóm chơi? Tạo lobby và lên lịch ngay",
-                "badge": "Khuyến nghị"
-            },
-            "friends": {
-                "title": "Kết bạn",
-                "subtitle": "Xem story và rủ bạn bè cùng chơi"
-            },
-            "lobby": {
-                "title": "Tìm đồng đội",
-                "subtitle": "Xin vào lobby hoặc tìm người chơi cùng"
-            },
-            "coach": {
-                "title": "Thuê HLV / trọng tài",
-                "subtitle": "Tiến bộ hơn mỗi ngày"
-            },
-            "wearable": {
-                "title": "Kết nối thiết bị đeo",
-                "subtitle": "Theo dõi thay đổi của cơ thể bạn và chinh phục thử thách",
-                "optional": "Tuỳ chọn"
-            }
-        }
-    },
-    "social": {
-        "friends": "Bạn bè",
-        "search": "Tìm",
-        "searchHint": "username hoặc username#tag",
-        "searchResults": "Kết quả tìm kiếm",
-        "noResults": "Không tìm thấy người chơi nào",
-        "searchFailed": "Không tìm được người chơi",
-        "incomingRequests": "Lời mời kết bạn",
-        "noFriends": "Bạn chưa có bạn nào",
-        "addFriend": "Kết bạn",
-        "addFriendGuest": "Đăng nhập để kết bạn",
-        "requestSentCancel": "Đã gửi lời mời — huỷ",
-        "accept": "Chấp nhận",
-        "decline": "Từ chối",
-        "alreadyFriends": "Đã là bạn bè",
-        "unfriend": "Huỷ kết bạn",
-        "unfriended": "Đã huỷ kết bạn",
-        "block": "Chặn người này",
-        "blocked": "Đã chặn",
-        "unblock": "Bỏ chặn",
-        "unblocked": "Đã bỏ chặn",
-        "blockExplainer": "Khi bị chặn, hai bên sẽ không thấy bài viết và không thể kết bạn với nhau.",
-        "actionFailed": "Không thực hiện được, thử lại sau",
-        "profileError": "Không tải được hồ sơ",
-        "profileMissing": "Không tìm thấy người chơi này",
-        "friendCount": "{count} bạn bè",
-        "sharedLobbyCount": "{count} lobby chung",
-        "wallAuthored": "Bài viết",
-        "wallTagged": "Được gắn thẻ",
-        "wallEmpty": "Chưa có bài viết nào",
-        "wallTaggedEmpty": "Chưa được gắn thẻ trong bài nào"
-    },
-    "feed": {
-        "compose": "Đăng bài",
-        "post": "Đăng",
-        "posted": "Đã đăng bài",
-        "postFailed": "Đăng bài không thành công",
-        "postSlow": "Đang xử lý — bài viết có thể đã được đăng, hãy kiểm tra lại bảng tin",
-        "alreadyPostedForSession": "Bạn đã đăng bài cho buổi chơi này rồi",
-        "pickSession": "Chọn buổi chơi để chia sẻ: ",
-        "pickSessionHint": "Chọn một buổi chơi",
-        "noPostableSessions": "Bạn chưa tham gia buổi chơi nào trong 7 ngày qua để chia sẻ. Bạn chỉ có thể chia sẻ những buổi chơi mà bạn đã xác nhận tham gia.",
-        "sessionsError": "Không tải được danh sách buổi chơi",
-        "untitledSession": "Buổi chơi",
-        "alreadyPosted": "Đã đăng",
-        "media": "Ảnh & video",
-        "addMedia": "Chọn ảnh hoặc video (tối đa 4)",
-        "changeMedia": "Đã chọn {count} mục — đổi",
-        "videoTooLong": "Video phải dưới 1 phút",
-        "videoTooLarge": "Video quá dung lượng cho phép (tối đa 25MB)",
-        "caption": "Chú thích",
-        "captionHint": "Chia sẻ cảm nghĩ",
-        "tagPeople": "Gắn thẻ",
-        "tagNone": "Chưa gắn thẻ ai",
-        "tagNeedsSession": "Chọn buổi chơi trước",
-        "tagLimit": "Chọn tối đa {max} người",
-        "tagAttended": "Có tham gia",
-        "tagMember": "Thành viên lobby",
-        "tagConfirm": "Xong ({count})",
-        "tagsError": "Không tải được danh sách",
-        "noTagCandidates": "Không có ai để gắn thẻ",
-        "ttl": "Tự động xóa sau",
-        "ttlDays": "{count} ngày",
-        "emptyTitle": "Chưa có bài viết",
-        "empty": "Chưa có bạn bè hoặc chưa có ai đăng bài. Kết thêm bạn hoặc tham gia thêm lobby để chia sẻ và kết nối đến mọi người.",
-        "findFriends": "Tìm bạn bè",
-        "error": "Không tải được Feed",
-        "guestTitle": "Bạn chưa đăng nhập",
-        "guest": "Đăng nhập để xem chia sẻ của bạn bè và đồng đội.",
-        "allSports": "Tất cả",
-        "expired": "Đã hết hạn",
-        "remainingMinutes": "còn {count} phút",
-        "remainingHours": "còn {count} giờ",
-        "remainingDays": "còn {count} ngày",
-        "deletePost": "Xoá bài",
-        "deleteFailed": "Không xoá được bài",
-        "reactFailed": "Không gửi được reaction",
-        "reportPost": "Báo cáo bài viết",
-        "reportSend": "Gửi báo cáo",
-        "reportSent": "Đã gửi báo cáo",
-        "reportFailed": "Không gửi được báo cáo",
-        "reportAlready": "Bạn đã báo cáo bài này rồi",
-        "reportNoteHint": "Mô tả thêm (không bắt buộc)",
-        "reportReason": {
-            "spam": "Spam",
-            "harassment": "Quấy rối",
-            "nudity": "Ảnh khoả thân/ nhạy cảm",
-            "violence": "Bạo lực",
-            "impersonation": "Mạo danh",
-            "other": "Khác"
-        }
+    "getStarted": {
+      "title": "Bạn muốn làm gì trước?",
+      "body": "Chọn một việc để bắt đầu ngay — bạn luôn có thể quay lại làm các việc còn lại sau.",
+      "createLobby": {
+        "title": "Tạo lobby với nhóm của bạn",
+        "subtitle": "Đã có sẵn nhóm chơi? Tạo lobby và lên lịch ngay",
+        "badge": "Khuyến nghị"
+      },
+      "friends": {
+        "title": "Kết bạn",
+        "subtitle": "Xem story và rủ bạn bè cùng chơi"
+      },
+      "lobby": {
+        "title": "Tìm đồng đội",
+        "subtitle": "Xin vào lobby hoặc tìm người chơi cùng"
+      },
+      "coach": {
+        "title": "Thuê HLV / trọng tài",
+        "subtitle": "Tiến bộ hơn mỗi ngày"
+      },
+      "wearable": {
+        "title": "Kết nối thiết bị đeo",
+        "subtitle": "Theo dõi thay đổi của cơ thể bạn và chinh phục thử thách",
+        "optional": "Tuỳ chọn"
+      }
     }
+  },
+  "social": {
+    "friends": "Bạn bè",
+    "search": "Tìm",
+    "searchHint": "username hoặc username#tag",
+    "searchResults": "Kết quả tìm kiếm",
+    "noResults": "Không tìm thấy người chơi nào",
+    "searchFailed": "Không tìm được người chơi",
+    "incomingRequests": "Lời mời kết bạn",
+    "noFriends": "Bạn chưa có bạn nào",
+    "addFriend": "Kết bạn",
+    "addFriendGuest": "Đăng nhập để kết bạn",
+    "requestSentCancel": "Đã gửi lời mời — huỷ",
+    "accept": "Chấp nhận",
+    "decline": "Từ chối",
+    "alreadyFriends": "Đã là bạn bè",
+    "unfriend": "Huỷ kết bạn",
+    "unfriended": "Đã huỷ kết bạn",
+    "block": "Chặn người này",
+    "blocked": "Đã chặn",
+    "unblock": "Bỏ chặn",
+    "unblocked": "Đã bỏ chặn",
+    "blockExplainer": "Khi bị chặn, hai bên sẽ không thấy bài viết và không thể kết bạn với nhau.",
+    "actionFailed": "Không thực hiện được, thử lại sau",
+    "profileError": "Không tải được hồ sơ",
+    "profileMissing": "Không tìm thấy người chơi này",
+    "friendCount": "{count} bạn bè",
+    "sharedLobbyCount": "{count} lobby chung",
+    "wallAuthored": "Bài viết",
+    "wallTagged": "Được gắn thẻ",
+    "wallEmpty": "Chưa có bài viết nào",
+    "wallTaggedEmpty": "Chưa được gắn thẻ trong bài nào"
+  },
+  "feed": {
+    "compose": "Đăng bài",
+    "post": "Đăng",
+    "posted": "Đã đăng bài",
+    "postFailed": "Đăng bài không thành công",
+    "postSlow": "Đang xử lý — bài viết có thể đã được đăng, hãy kiểm tra lại bảng tin",
+    "alreadyPostedForSession": "Bạn đã đăng bài cho buổi chơi này rồi",
+    "pickSession": "Chọn buổi chơi để chia sẻ: ",
+    "pickSessionHint": "Chọn một buổi chơi",
+    "noPostableSessions": "Bạn chưa tham gia buổi chơi nào trong 7 ngày qua để chia sẻ. Bạn chỉ có thể chia sẻ những buổi chơi mà bạn đã xác nhận tham gia.",
+    "sessionsError": "Không tải được danh sách buổi chơi",
+    "untitledSession": "Buổi chơi",
+    "alreadyPosted": "Đã đăng",
+    "media": "Ảnh & video",
+    "addMedia": "Chọn ảnh hoặc video (tối đa 4)",
+    "changeMedia": "Đã chọn {count} mục — đổi",
+    "videoTooLong": "Video phải dưới 1 phút",
+    "videoTooLarge": "Video quá dung lượng cho phép (tối đa 25MB)",
+    "caption": "Chú thích",
+    "captionHint": "Chia sẻ cảm nghĩ",
+    "tagPeople": "Gắn thẻ",
+    "tagNone": "Chưa gắn thẻ ai",
+    "tagNeedsSession": "Chọn buổi chơi trước",
+    "tagLimit": "Chọn tối đa {max} người",
+    "tagAttended": "Có tham gia",
+    "tagMember": "Thành viên lobby",
+    "tagConfirm": "Xong ({count})",
+    "tagsError": "Không tải được danh sách",
+    "noTagCandidates": "Không có ai để gắn thẻ",
+    "ttl": "Tự động xóa sau",
+    "ttlDays": "{count} ngày",
+    "emptyTitle": "Chưa có bài viết",
+    "empty": "Chưa có bạn bè hoặc chưa có ai đăng bài. Kết thêm bạn hoặc tham gia thêm lobby để chia sẻ và kết nối đến mọi người.",
+    "findFriends": "Tìm bạn bè",
+    "error": "Không tải được Feed",
+    "guestTitle": "Bạn chưa đăng nhập",
+    "guest": "Đăng nhập để xem chia sẻ của bạn bè và đồng đội.",
+    "allSports": "Tất cả",
+    "expired": "Đã hết hạn",
+    "remainingMinutes": "còn {count} phút",
+    "remainingHours": "còn {count} giờ",
+    "remainingDays": "còn {count} ngày",
+    "deletePost": "Xoá bài",
+    "deleteFailed": "Không xoá được bài",
+    "reactFailed": "Không gửi được reaction",
+    "reportPost": "Báo cáo bài viết",
+    "reportSend": "Gửi báo cáo",
+    "reportSent": "Đã gửi báo cáo",
+    "reportFailed": "Không gửi được báo cáo",
+    "reportAlready": "Bạn đã báo cáo bài này rồi",
+    "reportNoteHint": "Mô tả thêm (không bắt buộc)",
+    "reportReason": {
+      "spam": "Spam",
+      "harassment": "Quấy rối",
+      "nudity": "Ảnh khoả thân/ nhạy cảm",
+      "violence": "Bạo lực",
+      "impersonation": "Mạo danh",
+      "other": "Khác"
+    }
+  }
 }

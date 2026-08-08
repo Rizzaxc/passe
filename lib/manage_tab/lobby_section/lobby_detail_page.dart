@@ -21,7 +21,10 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
   /// Which of the 3 tabs (0 = Feed, 1 = Planner, 2 = History) to land on.
   final int initialIndex;
 
-  /// Threaded through to the Planner tab — see `LobbyPlannerTab`.
+  /// Threaded through to the Planner tab (`LobbyPlannerTab`) and, for
+  /// [highlightActivityId] alone, also to History (`HistoryView`) — a
+  /// past-session notification (payment request, match result) targets an
+  /// activity that only History can still show.
   final String? highlightActivityId;
   final String? highlightChallengeId;
 
@@ -137,7 +140,11 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
       FTabEntry(
         label: const Icon(FLucideIcons.clock),
         child: _builtIndices.contains(2)
-            ? HistoryView(lobbyId: widget.lobbyId, lobbyName: lobbyName)
+            ? HistoryView(
+                lobbyId: widget.lobbyId,
+                lobbyName: lobbyName,
+                highlightActivityId: widget.highlightActivityId,
+              )
             : const SizedBox.shrink(),
       ),
     ];

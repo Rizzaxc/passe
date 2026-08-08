@@ -24,7 +24,18 @@ class HistoryView extends ConsumerStatefulWidget {
   final String lobbyId;
   final String lobbyName;
 
-  const HistoryView({super.key, required this.lobbyId, this.lobbyName = ''});
+  /// Set when reached via a notification tap for a specific past activity
+  /// (e.g. a payment request) — that activity's card scrolls into view and
+  /// pulses once. Only `PastLobbyActivity` entries can match; a recorded
+  /// `LobbyMatch` has no equivalent deep-link today.
+  final String? highlightActivityId;
+
+  const HistoryView({
+    super.key,
+    required this.lobbyId,
+    this.lobbyName = '',
+    this.highlightActivityId,
+  });
 
   @override
   ConsumerState<HistoryView> createState() => _HistoryViewState();
@@ -32,6 +43,29 @@ class HistoryView extends ConsumerStatefulWidget {
 
 class _HistoryViewState extends ConsumerState<HistoryView> {
   _HistoryFilter _filter = _HistoryFilter.all;
+  final _cardKeys = <String, GlobalKey>{};
+  bool _scrolledToHighlight = false;
+
+  void _maybeScrollToHighlight(List<LobbyHistoryEntry> entries) {
+    final targetId = widget.highlightActivityId;
+    if (targetId == null || _scrolledToHighlight) return;
+    final hasTarget = entries.any(
+      (e) => e is PastLobbyActivity && e.id == targetId,
+    );
+    if (!hasTarget) return;
+
+    _scrolledToHighlight = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _cardKeys[targetId]?.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 300),
+          alignment: 0.1,
+        );
+      }
+    });
+  }
 
   List<LobbyHistoryEntry> _applyFilter(List<LobbyHistoryEntry> entries) {
     return switch (_filter) {
@@ -57,6 +91,7 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
     final history = historyAsync.value ?? const LobbyHistory([]);
     final stats = LobbyMatchStats.from(history.matches);
     final filtered = _applyFilter(history.entries);
+    _maybeScrollToHighlight(filtered);
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -113,10 +148,12 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
                   lobbyName: widget.lobbyName,
                 ),
                 PastLobbyActivity entry => ActivityCard(
+                  key: _cardKeys.putIfAbsent(entry.id, () => GlobalKey()),
                   lobbyId: widget.lobbyId,
                   upcoming: entry.activity,
                   isLeader: false,
                   isPast: true,
+                  highlighted: entry.id == widget.highlightActivityId,
                 ),
               },
             ),
