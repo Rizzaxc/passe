@@ -8,6 +8,8 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../auth/auth_controller.dart';
 import '../../social/friendship_controller.dart';
 import '../../ui/main.dart';
+import 'invite_link/invite_link_card.dart';
+import 'lobby_detail_controller.dart';
 import 'members/controller.dart';
 
 void showInviteMemberSheet(BuildContext context, String lobbyId) {
@@ -217,6 +219,9 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final canManage =
+        ref.watch(myLobbyPermissionProvider(widget.lobbyId)).value?.canManage ??
+        false;
 
     // Content alone (title + search box) is short enough to shrink-wrap
     // to a sliver of the screen; floor it at half height so the sheet
@@ -243,6 +248,12 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
                 child: const Icon(FLucideIcons.x),
               ),
             ),
+
+            // The same manager-only instant-join link flow exposed in Lobby
+            // Info. Keeping it here makes the Invite Member action the single
+            // place for both direct invites and shareable links.
+            if (canManage)
+              InviteLinkCard(lobbyId: widget.lobbyId, canManage: canManage),
 
             // Non-member friends, invitable in one tap instead of searching.
             _buildFriendShortlist(context),

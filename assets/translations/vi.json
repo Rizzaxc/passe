@@ -396,14 +396,14 @@
       "alreadyMember": "Người dùng đã là thành viên"
     },
     "inviteLink": {
-      "title": "Liên Kết Mời",
+      "title": "Invite Link",
       "description": "Bất kỳ ai có liên kết này sẽ vào lobby ngay, không cần duyệt.",
-      "create": "Tạo Liên Kết Mời",
+      "create": "Tạo Invite Link",
       "copy": "Sao chép",
       "share": "Chia sẻ",
       "regenerate": "Tạo lại",
       "remove": "Xóa",
-      "copied": "Đã sao chép liên kết mời",
+      "copied": "Đã sao chép Invite Link",
       "error": "Có lỗi xảy ra. Vui lòng thử lại.",
       "landingTitle": "Lời Mời Lobby",
       "invitedTo": "Bạn được mời vào",
@@ -412,10 +412,10 @@
       "join": "Tham Gia",
       "joined": "Bạn đã vào {name}",
       "alreadyMember": "Bạn đã là thành viên",
-      "invalid": "Liên kết mời này không còn hiệu lực",
-      "notFound": "Liên kết mời không hợp lệ",
-      "expired": "Liên kết mời đã hết hạn",
-      "revoked": "Liên kết mời đã bị xóa"
+      "invalid": "Invite Link này không còn hiệu lực",
+      "notFound": "Invite Link không hợp lệ",
+      "expired": "Invite Link đã hết hạn",
+      "revoked": "Invite Link đã bị xóa"
     }
   },
   "createLobby": {
