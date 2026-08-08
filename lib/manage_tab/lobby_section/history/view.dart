@@ -25,9 +25,8 @@ class HistoryView extends ConsumerStatefulWidget {
   final String lobbyName;
 
   /// Set when reached via a notification tap for a specific past activity
-  /// (e.g. a payment request) — that activity's card scrolls into view and
-  /// pulses once. Only `PastLobbyActivity` entries can match; a recorded
-  /// `LobbyMatch` has no equivalent deep-link today.
+  /// (e.g. a payment request) or from the calendar — that activity's card
+  /// scrolls into view. Plain past-activity cards also pulse once.
   final String? highlightActivityId;
 
   const HistoryView({
@@ -50,7 +49,10 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
     final targetId = widget.highlightActivityId;
     if (targetId == null || _scrolledToHighlight) return;
     final hasTarget = entries.any(
-      (e) => e is PastLobbyActivity && e.id == targetId,
+      (e) => switch (e) {
+        PastLobbyActivity activity => activity.id == targetId,
+        LobbyMatch match => match.activityId == targetId,
+      },
     );
     if (!hasTarget) return;
 
@@ -144,6 +146,12 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
               separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, i) => switch (filtered[i]) {
                 LobbyMatch match => _HistoryCard(
+                  key: match.activityId == null
+                      ? null
+                      : _cardKeys.putIfAbsent(
+                          match.activityId!,
+                          () => GlobalKey(),
+                        ),
                   match: match,
                   lobbyName: widget.lobbyName,
                 ),
@@ -314,7 +322,7 @@ class _HistoryCard extends StatelessWidget {
   final LobbyMatch match;
   final String lobbyName;
 
-  const _HistoryCard({required this.match, required this.lobbyName});
+  const _HistoryCard({super.key, required this.match, required this.lobbyName});
 
   @override
   Widget build(BuildContext context) {

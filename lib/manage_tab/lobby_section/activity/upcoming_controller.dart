@@ -221,7 +221,8 @@ class UpcomingActivity {
 /// Every current/future activity for a lobby, sorted soonest-first. A lobby
 /// can legitimately have several live at once (an organic session and a
 /// challenge match, several weeks of a recurring series once materialised,
-/// …) — each is its own row, so this is a plain `start_time > now` query.
+/// …) — each is its own row. Ended rows belong in History; rows without an
+/// end time switch to History as soon as their start time passes.
 @riverpod
 class LobbyUpcomingActivitiesController
     extends _$LobbyUpcomingActivitiesController {
@@ -235,7 +236,10 @@ class LobbyUpcomingActivitiesController
         .from('activity')
         .select(lobbyActivitySelect)
         .eq('lobby_id', lobbyId)
-        .gt('start_time', nowUtc.toIso8601String())
+        .or(
+          'end_time.gt.${nowUtc.toIso8601String()},'
+          'and(end_time.is.null,start_time.gt.${nowUtc.toIso8601String()})',
+        )
         .timeout(const Duration(seconds: 5));
 
     final rows = (response as List).cast<Map<String, dynamic>>();

@@ -23,7 +23,7 @@ void _openActivity(BuildContext context, ScheduleEvent event) {
   if (lobbyId == null) return;
   LobbyDetailRoute(
     id: lobbyId,
-    tab: 1,
+    tab: event.isCompletedAt(DateTime.now()) ? 2 : 1,
     highlightActivityId: event.activityId,
   ).go(context);
 }
@@ -85,6 +85,7 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
   DateTime _selectedDate = DateTime.now();
   _ViewMode _viewMode = _ViewMode.timeline;
   final ScrollController _scrollCtrl = ScrollController();
+  bool _needsScrollToNow = true;
 
   /// Events keyed by local date, from the latest provider value.
   Map<DateTime, List<ScheduleEvent>> _eventsByDate = const {};
@@ -125,7 +126,34 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
   void _switchMode(_ViewMode m) {
     setState(() {
       _viewMode = m;
-      _scrollCtrl.jumpTo(0);
+      _needsScrollToNow = m == _ViewMode.timeline;
+    });
+    if (_scrollCtrl.hasClients) _scrollCtrl.jumpTo(0);
+  }
+
+  void _maybeScrollToNow(int startHour, bool isToday) {
+    if (!_needsScrollToNow ||
+        _viewMode != _ViewMode.timeline ||
+        !isToday ||
+        startHour < 0) {
+      return;
+    }
+
+    _needsScrollToNow = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollCtrl.hasClients) return;
+
+      final now = DateTime.now();
+      final minutesFromGridStart = (now.hour - startHour) * 60 + now.minute;
+      final nowOffset = minutesFromGridStart * _TimeGrid.hourHeight / 60;
+      final position = _scrollCtrl.position;
+      // Keep a little context above the red current-time indicator instead
+      // of pinning it flush against the viewport's top edge.
+      final target = (nowOffset - position.viewportDimension * 0.2).clamp(
+        position.minScrollExtent,
+        position.maxScrollExtent,
+      );
+      _scrollCtrl.jumpTo(target);
     });
   }
 
@@ -153,6 +181,7 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
     final isToday = _isSameDay(_selectedDate, DateTime.now());
     final startHour = _gridStartHour(events, isToday);
     final rangeEnd = _emptyRangeEnd(events);
+    _maybeScrollToNow(startHour, isToday);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -182,8 +211,11 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
               daysToShow: isPhone ? 5 : 7,
               selectedDate: _selectedDate,
               onDateSelected: (date) {
-                setState(() => _selectedDate = date);
-                _scrollCtrl.jumpTo(0);
+                setState(() {
+                  _selectedDate = date;
+                  _needsScrollToNow = _isSameDay(date, DateTime.now());
+                });
+                if (_scrollCtrl.hasClients) _scrollCtrl.jumpTo(0);
               },
             ),
           )

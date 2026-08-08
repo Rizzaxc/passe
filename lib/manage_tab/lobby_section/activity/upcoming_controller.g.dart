@@ -11,7 +11,8 @@ part of 'upcoming_controller.dart';
 /// Every current/future activity for a lobby, sorted soonest-first. A lobby
 /// can legitimately have several live at once (an organic session and a
 /// challenge match, several weeks of a recurring series once materialised,
-/// …) — each is its own row, so this is a plain `start_time > now` query.
+/// …) — each is its own row. Ended rows belong in History; rows without an
+/// end time switch to History as soon as their start time passes.
 
 @ProviderFor(LobbyUpcomingActivitiesController)
 final lobbyUpcomingActivitiesControllerProvider =
@@ -20,7 +21,8 @@ final lobbyUpcomingActivitiesControllerProvider =
 /// Every current/future activity for a lobby, sorted soonest-first. A lobby
 /// can legitimately have several live at once (an organic session and a
 /// challenge match, several weeks of a recurring series once materialised,
-/// …) — each is its own row, so this is a plain `start_time > now` query.
+/// …) — each is its own row. Ended rows belong in History; rows without an
+/// end time switch to History as soon as their start time passes.
 final class LobbyUpcomingActivitiesControllerProvider
     extends
         $AsyncNotifierProvider<
@@ -30,7 +32,8 @@ final class LobbyUpcomingActivitiesControllerProvider
   /// Every current/future activity for a lobby, sorted soonest-first. A lobby
   /// can legitimately have several live at once (an organic session and a
   /// challenge match, several weeks of a recurring series once materialised,
-  /// …) — each is its own row, so this is a plain `start_time > now` query.
+  /// …) — each is its own row. Ended rows belong in History; rows without an
+  /// end time switch to History as soon as their start time passes.
   LobbyUpcomingActivitiesControllerProvider._({
     required LobbyUpcomingActivitiesControllerFamily super.from,
     required String super.argument,
@@ -71,12 +74,13 @@ final class LobbyUpcomingActivitiesControllerProvider
 }
 
 String _$lobbyUpcomingActivitiesControllerHash() =>
-    r'd64b7b8526a53c527b0f2230ac8d9c62ccc780ff';
+    r'0282c698029cdc1d33f2fb34dcc7335795bcfc10';
 
 /// Every current/future activity for a lobby, sorted soonest-first. A lobby
 /// can legitimately have several live at once (an organic session and a
 /// challenge match, several weeks of a recurring series once materialised,
-/// …) — each is its own row, so this is a plain `start_time > now` query.
+/// …) — each is its own row. Ended rows belong in History; rows without an
+/// end time switch to History as soon as their start time passes.
 
 final class LobbyUpcomingActivitiesControllerFamily extends $Family
     with
@@ -99,7 +103,8 @@ final class LobbyUpcomingActivitiesControllerFamily extends $Family
   /// Every current/future activity for a lobby, sorted soonest-first. A lobby
   /// can legitimately have several live at once (an organic session and a
   /// challenge match, several weeks of a recurring series once materialised,
-  /// …) — each is its own row, so this is a plain `start_time > now` query.
+  /// …) — each is its own row. Ended rows belong in History; rows without an
+  /// end time switch to History as soon as their start time passes.
 
   LobbyUpcomingActivitiesControllerProvider call(String lobbyId) =>
       LobbyUpcomingActivitiesControllerProvider._(
@@ -114,7 +119,8 @@ final class LobbyUpcomingActivitiesControllerFamily extends $Family
 /// Every current/future activity for a lobby, sorted soonest-first. A lobby
 /// can legitimately have several live at once (an organic session and a
 /// challenge match, several weeks of a recurring series once materialised,
-/// …) — each is its own row, so this is a plain `start_time > now` query.
+/// …) — each is its own row. Ended rows belong in History; rows without an
+/// end time switch to History as soon as their start time passes.
 
 abstract class _$LobbyUpcomingActivitiesController
     extends $AsyncNotifier<List<UpcomingActivity>> {

@@ -13,8 +13,8 @@ class ScheduleEvent {
   final String title;
   final String meta;
   final ScheduleEventTone tone;
-  final TimeOfDay start;
-  final TimeOfDay end;
+  final DateTime startAt;
+  final DateTime? endAt;
 
   const ScheduleEvent({
     required this.activityId,
@@ -22,9 +22,17 @@ class ScheduleEvent {
     required this.title,
     required this.meta,
     required this.tone,
-    required this.start,
-    required this.end,
+    required this.startAt,
+    required this.endAt,
   });
+
+  TimeOfDay get start => TimeOfDay.fromDateTime(startAt);
+  TimeOfDay get end =>
+      TimeOfDay.fromDateTime(endAt ?? startAt.add(const Duration(hours: 1)));
+
+  /// Completed activities belong in the lobby History tab; an activity that
+  /// is still in progress remains in Planner until its actual end time.
+  bool isCompletedAt(DateTime now) => !(endAt ?? startAt).isAfter(now);
 }
 
 /// The current user's activities (lobby sessions + coach bookings) for the
@@ -91,9 +99,7 @@ class ScheduleEvents extends _$ScheduleEvents {
       final activityId = row['id'] as String;
       final start = DateTime.parse(row['start_time'] as String).toLocal();
       final endStr = row['end_time'] as String?;
-      final end = endStr != null
-          ? DateTime.parse(endStr).toLocal()
-          : start.add(const Duration(hours: 1));
+      final end = endStr != null ? DateTime.parse(endStr).toLocal() : null;
 
       final ev = ScheduleEvent(
         activityId: activityId,
@@ -103,8 +109,8 @@ class ScheduleEvents extends _$ScheduleEvents {
         tone: (row['tone'] as String?) == 'coach'
             ? ScheduleEventTone.coach
             : ScheduleEventTone.sport,
-        start: TimeOfDay(hour: start.hour, minute: start.minute),
-        end: TimeOfDay(hour: end.hour, minute: end.minute),
+        startAt: start,
+        endAt: end,
       );
 
       // Recurring rows are real, independently-dated activity rows now

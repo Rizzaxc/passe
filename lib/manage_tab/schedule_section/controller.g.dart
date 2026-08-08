@@ -49,7 +49,7 @@ final class ScheduleEventsProvider
   ScheduleEvents create() => ScheduleEvents();
 }
 
-String _$scheduleEventsHash() => r'3f184c8d8cffad026e29bc7caf7371920f6a8139';
+String _$scheduleEventsHash() => r'd7c4a8667455a1e9f51ead224cc23eaef7183041';
 
 /// The current user's activities (lobby sessions + coach bookings) for the
 /// all sports, keyed by local date. Backed by the `my_schedule_data` RPC —
