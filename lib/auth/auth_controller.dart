@@ -43,12 +43,6 @@ class AuthController extends _$AuthController {
   final supabase = Supabase.instance.client;
   final talker = Talker();
 
-  // `updateUser` completes before the auth-state listener has necessarily
-  // replaced `currentUser`. Keep the successful setup visible to a
-  // immediately-following sensitive-action gate instead of sending an OAuth
-  // user through password setup a second time.
-  String? _passwordCredentialEstablishedForUserId;
-
   static const _stateKey = 'USER_DATA';
 
   // Offline cache TTL (24h) + timestamp key
@@ -304,8 +298,15 @@ class AuthController extends _$AuthController {
         nonce: rawNonce,
       );
     } on SignInWithAppleAuthorizationException catch (e, st) {
-      if (e.code == AuthorizationErrorCode.canceled) return;
+      // Always log: a user backing out of the native Apple sheet (swipe-dismiss,
+      // no iCloud account configured, etc.) doesn't reliably report `canceled` —
+      // iOS sometimes reports `unknown` for the same user-initiated dismissal.
+      // Treat both as "not an error worth surfacing", matching the Google branch.
       talker.handle(e, st);
+      if (e.code == AuthorizationErrorCode.canceled ||
+          e.code == AuthorizationErrorCode.unknown) {
+        return;
+      }
       rethrow;
     } catch (e, st) {
       talker.handle(e, st);
@@ -390,7 +391,7 @@ class AuthController extends _$AuthController {
 
     final data = await supabase
         .from('user')
-        .select('username, tag_number, details')
+        .select('username, tag_number, details, has_password')
         .eq('id', user.id)
         .maybeSingle()
         .timeout(const Duration(seconds: 5));
@@ -402,7 +403,7 @@ class AuthController extends _$AuthController {
     final username = data['username'] as String?;
     final tagNumber = data['tag_number'] as String?;
     final email = user.email;
-    
+
     // Safely parse details using fromJson if it exists
     final detailsMap = data['details'];
     final details =
@@ -414,6 +415,7 @@ class AuthController extends _$AuthController {
       tagNumber: tagNumber ?? '0000',
       email: email,
       details: details,
+      hasPassword: data['has_password'] as bool? ?? false,
     );
   }
 
@@ -460,39 +462,43 @@ class AuthController extends _$AuthController {
     await refresh();
   }
 
-  /// Whether the current session has an email/password credential set — false
-  /// for a user who only ever signed in via Google/Apple and has never set a
-  /// password. `identities` covers users who signed up directly with
-  /// email/password; `user_metadata.has_password` covers an OAuth-only user
-  /// who added a password afterwards, since `updateUser(password: ...)` alone
-  /// does not add an email identity for them. Read straight off the Supabase
-  /// user (this state isn't part of [PasseUser]/the offline cache), same
-  /// sanctioned-exception pattern as the rest of this file.
+  /// Whether the current session has an email/password credential set —
+  /// false for a user who only ever signed in via Google/Apple and has never
+  /// set a password. `identities` covers users who signed up directly with
+  /// email/password — stable, since they never go through an OAuth sign-in
+  /// that could touch it. `PasseUser.hasPassword` (`public.user.has_password`)
+  /// covers an OAuth-only user who added a password afterwards: that can't be
+  /// derived from `identities` (`updateUser(password: ...)` alone doesn't add
+  /// an email identity) or from Supabase Auth `user_metadata` (Google/Apple
+  /// sign-in re-syncs `user_metadata` from the provider's claims on every
+  /// login, silently wiping any custom key stored there) — so it's tracked as
+  /// our own durable fact instead.
   bool hasPasswordCredential() {
-    final user = supabase.auth.currentUser;
-    if (user != null && _passwordCredentialEstablishedForUserId == user.id) {
-      return true;
-    }
-
-    final hasEmailIdentity =
-        user?.identities?.any((identity) => identity.provider == 'email') ?? false;
-    // Auth metadata received from a restored session has historically been
-    // decoded as either a bool or a string, depending on the platform/cache.
-    final passwordFlag = user?.userMetadata?['has_password'];
-    final hasPasswordFlag = passwordFlag == true || passwordFlag == 'true';
-    return hasEmailIdentity || hasPasswordFlag;
+    final hasEmailIdentity = supabase.auth.currentUser?.identities
+            ?.any((identity) => identity.provider == 'email') ??
+        false;
+    return hasEmailIdentity || (state.value?.hasPassword ?? false);
   }
 
   Future<void> changePassword(String newPassword) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) throw Exception('Not authenticated');
+
     try {
       await supabase.auth
-          .updateUser(UserAttributes(password: newPassword, data: {'has_password': true}))
+          .updateUser(UserAttributes(password: newPassword))
           .timeout(const Duration(seconds: 5));
-      _passwordCredentialEstablishedForUserId = supabase.auth.currentUser?.id;
+      await supabase
+          .from('user')
+          .update({'has_password': true})
+          .eq('id', userId)
+          .timeout(const Duration(seconds: 5));
     } on AuthException catch (e, st) {
       talker.handle(e, st);
       rethrow;
     }
+
+    await refresh();
   }
 
   Future<void> refresh() async {

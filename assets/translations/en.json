@@ -1,1018 +1,1021 @@
 {
-    "timeslot": {
-        "dayOfWeek": {
-            "label": "Day Of Week",
-            "everyday": "Everyday",
-            "monday": "Monday",
-            "tuesday": "Tuesday",
-            "wednesday": "Wednesday",
-            "thursday": "Thursday",
-            "friday": "Friday",
-            "saturday": "Saturday",
-            "sunday": "Sunday",
-            "even": "Mon-Wed-Fri",
-            "odd": "Tue-Thu-Sat",
-            "weekend": "Weekend",
-            "shortName": {
-                "everyday": "All",
-                "monday": "Mon",
-                "tuesday": "Tue",
-                "wednesday": "Wed",
-                "thursday": "Thu",
-                "friday": "Fri",
-                "saturday": "Sat",
-                "sunday": "Sun",
-                "even": "M-W-F",
-                "odd": "T-Th-Sa",
-                "weekend": "Wkn"
-            }
-        },
-        "dayChunk": {
-            "label": "Time Range",
-            "early": "Early (4am-9am)",
-            "midday": "Midday (9am-2pm)",
-            "noon": "Afternoon (2pm-6pm)",
-            "night": "Evening (6pm-12am)",
-            "shortName": {
-                "early": "Early",
-                "midday": "Midday",
-                "noon": "Afternoon",
-                "night": "Evening"
-            }
-        }
+  "timeslot": {
+    "dayOfWeek": {
+      "label": "Day Of Week",
+      "everyday": "Everyday",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday",
+      "even": "Mon-Wed-Fri",
+      "odd": "Tue-Thu-Sat",
+      "weekend": "Weekend",
+      "shortName": {
+        "everyday": "All",
+        "monday": "Mon",
+        "tuesday": "Tue",
+        "wednesday": "Wed",
+        "thursday": "Thu",
+        "friday": "Fri",
+        "saturday": "Sat",
+        "sunday": "Sun",
+        "even": "M-W-F",
+        "odd": "T-Th-Sa",
+        "weekend": "Wkn"
+      }
     },
-    "gender": {
-        "male": "Male",
-        "female": "Female"
+    "dayChunk": {
+      "label": "Time Range",
+      "early": "Early (4am-9am)",
+      "midday": "Midday (9am-2pm)",
+      "noon": "Afternoon (2pm-6pm)",
+      "night": "Evening (6pm-12am)",
+      "shortName": {
+        "early": "Early",
+        "midday": "Midday",
+        "noon": "Afternoon",
+        "night": "Evening"
+      }
+    }
+  },
+  "gender": {
+    "male": "Male",
+    "female": "Female"
+  },
+  "ageGroup": {
+    "student": "Student",
+    "mature": "Mature",
+    "middleAge": "Middle Age"
+  },
+  "industry": {
+    "agriculture": "Agriculture",
+    "construction": "Construction",
+    "culinaryTourism": "Culinary & Tourism",
+    "educationAcademia": "Education & Academia",
+    "energy": "Energy",
+    "entertainmentContentCreation": "Entertainment & Content Creation",
+    "fashionBeauty": "Fashion & Beauty",
+    "financeConsulting": "Finance & Consulting",
+    "government": "Government",
+    "healthcare": "Healthcare",
+    "legalServices": "Legal Services",
+    "manufacturing": "Manufacturing",
+    "mediaCommunications": "Media & Communications",
+    "nonprofitCharity": "Non-profit & Charity",
+    "realEstate": "Real Estate",
+    "retailOnlineCommerce": "Retail & Online Commerce",
+    "technology": "Technology",
+    "transportation": "Transportation"
+  },
+  "networkCategory": {
+    "highSchool": "High School",
+    "giftedHighSchool": "Gifted High School",
+    "university": "University",
+    "company": "Company"
+  },
+  "city": {
+    "hochiminh": "Ho Chi Minh City",
+    "hanoi": "Hanoi"
+  },
+  "district": {
+    "ward": "Ward",
+    "commune": "Commune",
+    "searchHint": "Search wards, communes...",
+    "noResults": "No matching wards/communes found"
+  },
+  "homeTab": {
+    "title": "Home",
+    "filter": {
+      "location": "Location",
+      "time": "Time",
+      "weekdayLabel": "Weekday",
+      "dayChunkLabel": "Day Chunk",
+      "search": "Search",
+      "searchHint": "Enter keyword/ SearchID...",
+      "sport": "Sport",
+      "city": "City",
+      "district": "District",
+      "any": "Any",
+      "schedule": "Schedule",
+      "scheduleHint": "Leave blank",
+      "close": "Close",
+      "coach": {
+        "body": "Fine tune your search params for better results"
+      }
     },
-    "ageGroup": {
-        "student": "Student",
-        "mature": "Mature",
-        "middleAge": "Middle Age"
+    "empty": {
+      "title": "No results found",
+      "message": "Try adjusting your filters or check back later"
     },
-    "industry": {
-        "agriculture": "Agriculture",
-        "construction": "Construction",
-        "culinaryTourism": "Culinary & Tourism",
-        "educationAcademia": "Education & Academia",
-        "energy": "Energy",
-        "entertainmentContentCreation": "Entertainment & Content Creation",
-        "fashionBeauty": "Fashion & Beauty",
-        "financeConsulting": "Finance & Consulting",
-        "government": "Government",
-        "healthcare": "Healthcare",
-        "legalServices": "Legal Services",
-        "manufacturing": "Manufacturing",
-        "mediaCommunications": "Media & Communications",
-        "nonprofitCharity": "Non-profit & Charity",
-        "realEstate": "Real Estate",
-        "retailOnlineCommerce": "Retail & Online Commerce",
-        "technology": "Technology",
-        "transportation": "Transportation"
+    "error": {
+      "title": "Error loading teammates",
+      "retry": "Retry"
     },
-    "networkCategory": {
-        "highSchool": "High School",
-        "giftedHighSchool": "Gifted High School",
-        "university": "University",
-        "company": "Company"
+    "teammate": {
+      "title": "Teammates",
+      "join": "Join",
+      "sent": "Sent",
+      "undo": "Undo"
     },
-    "city": {
-        "hochiminh": "Ho Chi Minh City",
-        "hanoi": "Hanoi"
+    "challenger": {
+      "title": "Challengers",
+      "challenge": "Challenge",
+      "challengingAs": "Challenging as",
+      "sent": "Sent",
+      "alreadyPending": "A challenge is already pending",
+      "sportMismatch": "The two lobbies play different sports",
+      "sendFailed": "Couldn't send the challenge",
+      "mmr": "MMR",
+      "provisional": "provisional",
+      "costPerTeam": "{}đ/team",
+      "confirmTitle": "Confirm Challenge",
+      "confirmBody": "You're challenging as {}. If {} accepts, both lobbies get a session on the terms below.",
+      "kickoff": "Kickoff",
+      "venue": "Venue",
+      "cost": "Cost per team",
+      "refNote": "Cost shown excludes the referee fee — the home team hires the referee separately after accepting.",
+      "note": "Note (optional)",
+      "noteHint": "e.g. BO3, bring your own ball",
+      "confirmCta": "Send Challenge",
+      "favorability": {
+        "underdog": "Underdog",
+        "even": "Even",
+        "favored": "Favored"
+      },
+      "empty": {
+        "title": "No challengers found",
+        "message": "Try adjusting your filters or check back later"
+      },
+      "noLobby": {
+        "title": "You don't have a lobby yet",
+        "message": "Challenges are lobby vs lobby. Create your own lobby or join one to start challenging others.",
+        "findLobby": "Find a lobby",
+        "createLobby": "Create a lobby"
+      }
     },
-    "district": {
-        "ward": "Ward",
-        "commune": "Commune",
-        "searchHint": "Search wards, communes...",
-        "noResults": "No matching wards/communes found"
+    "location": {
+      "viewMap": "View Map",
+      "directions": "Directions",
+      "directionsFailed": "Couldn't open a maps app",
+      "unnamed": "Unnamed venue",
+      "address": "Address",
+      "amenities": "Amenities",
+      "amenity": {
+        "pitch": "Pitch/court",
+        "sports_centre": "Sports centre",
+        "stadium": "Stadium",
+        "swimming_pool": "Swimming pool"
+      },
+      "someUnmapped": "Some venues aren't mapped yet",
+      "roadmapNote": "Venue data is still being built out. Direct court booking arrives once we partner with local businesses.",
+      "empty": {
+        "title": "No venues found",
+        "message": "Try searching by name or adjusting filters"
+      }
     },
-    "homeTab": {
-        "title": "Home",
-        "filter": {
-            "location": "Location",
-            "time": "Time",
-            "weekdayLabel": "Weekday",
-            "dayChunkLabel": "Day Chunk",
-            "search": "Search",
-            "searchHint": "Enter keyword/ SearchID...",
-            "sport": "Sport",
-            "city": "City",
-            "district": "District",
-            "any": "Any",
-            "schedule": "Schedule",
-            "scheduleHint": "Leave blank",
-            "close": "Close",
-            "coach": {
-                "body": "Fine tune your search params for better results"
-            }
-        },
-        "empty": {
-            "title": "No results found",
-            "message": "Try adjusting your filters or check back later"
-        },
-        "error": {
-            "title": "Error loading teammates",
-            "retry": "Retry"
-        },
-        "teammate": {
-            "title": "Teammates",
-            "join": "Join",
-            "sent": "Sent",
-            "undo": "Undo"
-        },
-        "challenger": {
-            "title": "Challengers",
-            "challenge": "Challenge",
-            "challengingAs": "Challenging as",
-            "sent": "Sent",
-            "alreadyPending": "A challenge is already pending",
-            "sportMismatch": "The two lobbies play different sports",
-            "sendFailed": "Couldn't send the challenge",
-            "mmr": "MMR",
-            "provisional": "provisional",
-            "costPerTeam": "{}đ/team",
-            "confirmTitle": "Confirm Challenge",
-            "confirmBody": "You're challenging as {}. If {} accepts, both lobbies get a session on the terms below.",
-            "kickoff": "Kickoff",
-            "venue": "Venue",
-            "cost": "Cost per team",
-            "refNote": "Cost shown excludes the referee fee — the home team hires the referee separately after accepting.",
-            "note": "Note (optional)",
-            "noteHint": "e.g. BO3, bring your own ball",
-            "confirmCta": "Send Challenge",
-            "favorability": {
-                "underdog": "Underdog",
-                "even": "Even",
-                "favored": "Favored"
-            },
-            "empty": {
-                "title": "No challengers found",
-                "message": "Try adjusting your filters or check back later"
-            },
-            "noLobby": {
-                "title": "You don't have a lobby yet",
-                "message": "Challenges are lobby vs lobby. Create your own lobby or join one to start challenging others.",
-                "findLobby": "Find a lobby",
-                "createLobby": "Create a lobby"
-            }
-        },
-        "location": {
-            "viewMap": "View Map",
-            "directions": "Directions",
-            "directionsFailed": "Couldn't open a maps app",
-            "unnamed": "Unnamed venue",
-            "address": "Address",
-            "amenities": "Amenities",
-            "amenity": {
-                "pitch": "Pitch/court",
-                "sports_centre": "Sports centre",
-                "stadium": "Stadium",
-                "swimming_pool": "Swimming pool"
-            },
-            "someUnmapped": "Some venues aren't mapped yet",
-            "roadmapNote": "Venue data is still being built out. Direct court booking arrives once we partner with local businesses.",
-            "empty": {
-                "title": "No venues found",
-                "message": "Try searching by name or adjusting filters"
-            }
-        },
-        "professional": {
-            "title": "Professionals",
-            "filter": {
-                "all": "All",
-                "coach": "Coach",
-                "referee": "Referee",
-                "role": "Role"
-            },
-            "empty": {
-                "title": "No professionals found",
-                "message": "Try adjusting your filters or check back later"
-            },
-            "book": "Book",
-            "viewProfile": "View profile",
-            "experience": "{years} years experience",
-            "reviews": "{count} reviews",
-            "role": {
-                "coach": "Coach",
-                "referee": "Referee"
-            },
-            "booking": {
-                "title": "Book Session",
-                "confirm": "Confirm Booking",
-                "selectService": "Select Service",
-                "selectDate": "Select Date",
-                "selectTime": "Select Time",
-                "noSlots": "No available time slots for this date",
-                "notes": "Additional Notes",
-                "notesHint": "Add any special requests or notes...",
-                "summary": "Booking Summary",
-                "service": "Service",
-                "date": "Date",
-                "time": "Time",
-                "total": "Total",
-                "success": "Booking confirmed successfully!",
-                "error": "Failed to book session. Please try again."
-            },
-            "details": {
-                "bio": "Bio"
-            }
-        }
-    },
-    "manageTab": {
-        "title": "Manage",
-        "schedule": {
-            "title": "Schedule",
-            "today": "Today",
-            "tomorrow": "Tomorrow",
-            "participants": "{count} participants",
-            "selectDate": "Select a date to view schedule",
-            "stub": "Schedule content coming soon",
-            "noEvents": "No events",
-            "empty": {
-                "title": "No appointments scheduled",
-                "message": "Your upcoming appointments will appear here"
-            }
-        },
-        "lobby": {
-            "title": "Lobbies",
-            "participants": "{current}/{max} players",
-            "scheduledFor": "Scheduled for {time}",
-            "createNew": "Create New Lobby",
-            "createFirst": "Create Your First Lobby",
-            "navigate": "Navigate to Lobby",
-            "navigateMessage": "Opening {lobbyTitle} lobby...",
-            "createMessage": "Lobby creation coming soon!",
-            "empty": {
-                "title": "No {sport} lobbies found",
-                "message": "Create a {sport} lobby to start playing with others. Looking for a different sport? Check the sport selector at the top."
-            },
-            "guest": {
-                "title": "You're not signed in",
-                "message": "Sign in to create and manage your lobbies."
-            }
-        }
+    "professional": {
+      "title": "Professionals",
+      "filter": {
+        "all": "All",
+        "coach": "Coach",
+        "referee": "Referee",
+        "role": "Role"
+      },
+      "empty": {
+        "title": "No professionals found",
+        "message": "Try adjusting your filters or check back later"
+      },
+      "book": "Book",
+      "viewProfile": "View profile",
+      "experience": "{years} years experience",
+      "reviews": "{count} reviews",
+      "role": {
+        "coach": "Coach",
+        "referee": "Referee"
+      },
+      "booking": {
+        "title": "Book Session",
+        "confirm": "Confirm Booking",
+        "selectService": "Select Service",
+        "selectDate": "Select Date",
+        "selectTime": "Select Time",
+        "noSlots": "No available time slots for this date",
+        "notes": "Additional Notes",
+        "notesHint": "Add any special requests or notes...",
+        "summary": "Booking Summary",
+        "service": "Service",
+        "date": "Date",
+        "time": "Time",
+        "total": "Total",
+        "success": "Booking confirmed successfully!",
+        "error": "Failed to book session. Please try again."
+      },
+      "details": {
+        "bio": "Bio"
+      }
+    }
+  },
+  "manageTab": {
+    "title": "Manage",
+    "schedule": {
+      "title": "Schedule",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "participants": "{count} participants",
+      "selectDate": "Select a date to view schedule",
+      "stub": "Schedule content coming soon",
+      "noEvents": "No events",
+      "empty": {
+        "title": "No appointments scheduled",
+        "message": "Your upcoming appointments will appear here"
+      }
     },
     "lobby": {
-        "create": "Create Lobby",
-        "edit": "Edit Lobby",
-        "leader": "Leader",
-        "us": "Us",
-        "sportNotSelected": "Pick a sport before creating a lobby",
-        "signInRequired": "Sign in to create a lobby",
-        "noActivity": "No upcoming activity",
-        "nameRequired": "Lobby name is required",
-        "nameTooShort": "Name must be at least 3 characters",
-        "ageGroup": "Age Group",
-        "saveButton": "Save",
-        "saveFailed": "Failed to save lobby",
-        "avatarPickFailed": "Failed to pick a photo",
-        "emptyTitle": "No lobbies yet",
-        "emptyMessage": "Create a lobby to start playing with others",
-        "visibility": {
-            "private": "Private",
-            "privateDescription": "Invite only",
-            "discoverable": "Discoverable",
-            "discoverableDescription": "Searchable by ID",
-            "public": "Public",
-            "publicDescription": "Open to everyone"
-        },
-        "detail": {
-            "members": "Members",
-            "noMembers": "No members yet",
-            "upcoming": "Upcoming",
-            "noUpcoming": "No upcoming sessions",
-            "scheduleEvent": "Schedule",
-            "history": "Play History",
-            "noHistory": "No past sessions"
-        },
-        "scheduleActivity": "Schedule",
-        "lookingForActivity": "No upcoming session",
-        "searchIDCopied": "Lobby SearchID copied to clipboard",
-        "searchIDExplanation": "Other players can use this ID to join your lobby using the home screen filter.",
-        "shareId": "Share ID",
-        "invite": "Invite",
-        "leave": {
-            "title": "Leave Lobby?",
-            "message": "You will no longer be a member of this lobby.",
-            "confirm": "Leave Lobby",
-            "cancel": "Cancel"
-        },
-        "info": "Lobby Info",
-        "settings": "Settings",
-        "manageRequests": "Manage Join Requests",
-        "notifications": "Notifications",
-        "comingSoon": "Feature coming soon",
-        "inviteMember": "Invite Member",
-        "pendingRequests": "{count} pending",
-        "captainTransfer": {
-            "title": "Transfer Captaincy",
-            "message": "Select a member to become the new captain.",
-            "noOthers": "No other members to transfer captaincy to",
-            "success": "Captaincy transferred to {username}",
-            "failed": "Failed to transfer captaincy. Please try again."
-        },
-        "delete": {
-            "title": "Delete lobby?",
-            "message": "This action cannot be undone. The lobby will be permanently deleted.",
-            "confirm": "Delete lobby",
-            "failed": "Failed to delete lobby. Please try again."
-        },
-        "kick": {
-            "action": "Remove from lobby",
-            "title": "Remove {username} from lobby?",
-            "message": "The member will be removed from the lobby.",
-            "confirm": "Confirm",
-            "failed": "Failed to remove member. Please try again."
-        },
-        "memberRole": {
-            "member": "Member",
-            "coordinator": "Coordinator"
-        },
-        "coordinator": {
-            "makeAction": "Make Coordinator",
-            "removeAction": "Remove Coordinator role",
-            "setSuccess": "{username} is now a Coordinator",
-            "removeSuccess": "Removed {username}'s Coordinator role",
-            "failed": "Failed to update role. Please try again."
-        },
-        "joinRequests": {
-            "title": "Join Requests",
-            "empty": "No pending join requests."
-        },
-        "invites": {
-            "title": "Invites",
-            "empty": "You have no pending invites.",
-            "invitedBy": "{name} invited you to their lobby",
-            "pairFrom": "{name} wants to pair up",
-            "accepted": "Joined the lobby",
-            "declined": "Declined"
-        },
-        "inviteReview": {
-            "title": "Lobby Invite",
-            "invitedBy": "{name} invited you to join",
-            "memberCount": "{count} members",
-            "captainedBy": "Captain: {name}",
-            "fitscore": "FitScore {score}/5",
-            "homeGround": "Home ground: {name}",
-            "mmr": "MMR {value}",
-            "membersTitle": "Members",
-            "relationship": {
-                "friend": "You're friends",
-                "incoming": "Sent you a friend request",
-                "outgoing": "Friend request sent",
-                "blocked": "Blocked",
-                "none": "Not connected"
-            },
-            "accept": "Accept",
-            "reject": "Decline",
-            "declinedTitle": "You declined this invite",
-            "notFound": "This invite is invalid or no longer available",
-            "error": "Something went wrong. Please try again."
-        },
-        "challenges": {
-            "title": "Challenges",
-            "empty": "No challenges yet.",
-            "incoming": "Awaiting your response",
-            "outgoing": "Sent · pending",
-            "accepted": "Accepted",
-            "scheduled": "Locked in",
-            "accept": "Accept",
-            "decline": "Decline",
-            "cancelBtn": "Cancel"
-        },
-        "inviteUser": {
-            "friendsShortlist": "Quick invite",
-            "label": "Username",
-            "hint": "e.g. Thach#1234 or #1234",
-            "description": "Enter username#tag, just a username, or just #tag to search.",
-            "emptyError": "Enter a username or tag",
-            "notFound": "User \"{name}\" not found",
-            "success": "Invite sent to {username}",
-            "failed": "Failed to send invite. Please try again.",
-            "send": "Send Invite",
-            "search": "Search",
-            "alreadyMember": "User is already a member"
-        },
-        "inviteLink": {
-            "title": "Invite Link",
-            "description": "Anyone with this link joins instantly, no approval needed.",
-            "create": "Create Invite Link",
-            "copy": "Copy",
-            "share": "Share",
-            "regenerate": "Regenerate",
-            "remove": "Remove",
-            "copied": "Invite link copied",
-            "error": "Something went wrong. Please try again.",
-            "landingTitle": "Lobby Invite",
-            "invitedTo": "You're invited to join",
-            "memberCount": "{count} members",
-            "captainedBy": "Captain: {name}",
-            "join": "Join",
-            "joined": "You joined {name}",
-            "alreadyMember": "You're already a member",
-            "invalid": "This invite link no longer works",
-            "notFound": "This invite link is invalid",
-            "expired": "This invite link has expired",
-            "revoked": "This invite link has been removed"
-        }
+      "title": "Lobbies",
+      "participants": "{current}/{max} players",
+      "scheduledFor": "Scheduled for {time}",
+      "createNew": "Create New Lobby",
+      "createFirst": "Create Your First Lobby",
+      "navigate": "Navigate to Lobby",
+      "navigateMessage": "Opening {lobbyTitle} lobby...",
+      "createMessage": "Lobby creation coming soon!",
+      "empty": {
+        "title": "No {sport} lobbies found",
+        "message": "Create a {sport} lobby to start playing with others. Looking for a different sport? Check the sport selector at the top."
+      },
+      "guest": {
+        "title": "You're not signed in",
+        "message": "Sign in to create and manage your lobbies."
+      }
+    }
+  },
+  "lobby": {
+    "create": "Create Lobby",
+    "edit": "Edit Lobby",
+    "leader": "Leader",
+    "us": "Us",
+    "sportNotSelected": "Pick a sport before creating a lobby",
+    "signInRequired": "Sign in to create a lobby",
+    "noActivity": "No upcoming activity",
+    "nameRequired": "Lobby name is required",
+    "nameTooShort": "Name must be at least 3 characters",
+    "ageGroup": "Age Group",
+    "saveButton": "Save",
+    "saveFailed": "Failed to save lobby",
+    "avatarPickFailed": "Failed to pick a photo",
+    "emptyTitle": "No lobbies yet",
+    "emptyMessage": "Create a lobby to start playing with others",
+    "visibility": {
+      "private": "Private",
+      "privateDescription": "Invite only",
+      "discoverable": "Discoverable",
+      "discoverableDescription": "Searchable by ID",
+      "public": "Public",
+      "publicDescription": "Open to everyone"
     },
-    "createLobby": {
-        "title": "Create Lobby",
-        "create": "Create",
-        "lobbyName": "Lobby Name",
-        "lobbyNameHint": "Enter a name for your lobby",
-        "description": "Description",
-        "descriptionHint": "Describe your lobby (optional)",
-        "sport": "Sport",
-        "sportLocked": "Sport selection is locked",
-        "visibility": "Visibility",
-        "public": "Public",
-        "publicDescription": "Anyone can find and join your lobby",
-        "private": "Private",
-        "privateDescription": "Only people with the link can join",
-        "homeGround": "Home Ground",
-        "homeGroundDescription": "Members will use this as the default meeting point for activities",
-        "homeGroundHint": "Search by venue name...",
-        "homeGroundFreeHint": "Enter venue name or address...",
-        "homeGroundFreeTextMode": "Enter manually",
-        "homeGroundSearchMode": "Search venues",
-        "homeGroundSearchPrompt": "Type to search for a venue",
-        "streetNumber": "St. number",
-        "streetName": "Street name",
-        "district": "District",
-        "city": "City",
-        "specificLocation": "Specific Location",
-        "specificLocationHint": "Enter a specific location",
-        "playtime": "Playtime",
-        "playtimeShort": "Playtime",
-        "dayOfWeek": "Day of Week",
-        "timeSlot": "Time Slot",
-        "setTimeslot": "Set Timeslot",
-        "maxParticipants": "Maximum Participants",
-        "participantCount": "{count} participants"
+    "detail": {
+      "members": "Members",
+      "noMembers": "No members yet",
+      "upcoming": "Upcoming",
+      "noUpcoming": "No upcoming sessions",
+      "scheduleEvent": "Schedule",
+      "history": "Play History",
+      "noHistory": "No past sessions"
     },
-    "soccer": {
-        "position": {
-            "label": "Position",
-            "forward": "Forward",
-            "midfielder": "Midfielder",
-            "defender": "Defender",
-            "keeper": "Goalkeeper"
-        },
-        "pitch": {
-            "label": "Pitch Format",
-            "futsal": "Futsal",
-            "5v5": "5-a-side",
-            "7v7": "7-a-side"
-        }
+    "scheduleActivity": "Schedule",
+    "lookingForActivity": "No upcoming session",
+    "searchIDCopied": "Lobby SearchID copied to clipboard",
+    "searchIDExplanation": "Other players can use this ID to join your lobby using the home screen filter.",
+    "shareId": "Share ID",
+    "invite": "Invite",
+    "leave": {
+      "title": "Leave Lobby?",
+      "message": "You will no longer be a member of this lobby.",
+      "confirm": "Leave Lobby",
+      "cancel": "Cancel"
     },
-    "racketSport": {
-        "dominantHand": {
-            "label": "Dominant Hand",
-            "left": "Left",
-            "right": "Right"
-        },
-        "discipline": {
-            "label": "Discipline",
-            "singles": "Singles",
-            "doubles": "Doubles"
-        }
+    "info": "Lobby Info",
+    "settings": "Settings",
+    "manageRequests": "Manage Join Requests",
+    "notifications": "Notifications",
+    "comingSoon": "Feature coming soon",
+    "inviteMember": "Invite Member",
+    "pendingRequests": "{count} pending",
+    "captainTransfer": {
+      "title": "Transfer Captaincy",
+      "message": "Select a member to become the new captain.",
+      "noOthers": "No other members to transfer captaincy to",
+      "success": "Captaincy transferred to {username}",
+      "failed": "Failed to transfer captaincy. Please try again."
     },
-    "basketball": {
-        "position": {
-            "label": "Position",
-            "guard": "Guard",
-            "forward": "Forward",
-            "center": "Center"
-        },
-        "pitch": {
-            "label": "Court Type",
-            "indoor": "Indoor",
-            "outdoor": "Outdoor"
-        }
+    "delete": {
+      "title": "Delete lobby?",
+      "message": "This action cannot be undone. The lobby will be permanently deleted.",
+      "confirm": "Delete lobby",
+      "failed": "Failed to delete lobby. Please try again."
     },
-    "elo": {
-        "label": "Elo"
+    "kick": {
+      "action": "Remove from lobby",
+      "title": "Remove {username} from lobby?",
+      "message": "The member will be removed from the lobby.",
+      "confirm": "Confirm",
+      "failed": "Failed to remove member. Please try again."
     },
-    "eloSeed": {
-        "label": "Skill Level",
-        "description": "Used to seed your initial matchmaking. Play with others to update your Elo.",
-        "beginner": "Beginner",
-        "casual": "Casual",
-        "tryhard": "Tryhard",
-        "lockedHint": "Elo seed is locked after first commit"
+    "memberRole": {
+      "member": "Member",
+      "coordinator": "Coordinator"
+    },
+    "coordinator": {
+      "makeAction": "Make Coordinator",
+      "removeAction": "Remove Coordinator role",
+      "setSuccess": "{username} is now a Coordinator",
+      "removeSuccess": "Removed {username}'s Coordinator role",
+      "failed": "Failed to update role. Please try again."
+    },
+    "joinRequests": {
+      "title": "Join Requests",
+      "empty": "No pending join requests."
+    },
+    "invites": {
+      "title": "Invites",
+      "empty": "You have no pending invites.",
+      "invitedBy": "{name} invited you to their lobby",
+      "pairFrom": "{name} wants to pair up",
+      "accepted": "Joined the lobby",
+      "declined": "Declined"
+    },
+    "inviteReview": {
+      "title": "Lobby Invite",
+      "invitedBy": "{name} invited you to join",
+      "memberCount": "{count} members",
+      "captainedBy": "Captain: {name}",
+      "fitscore": "FitScore {score}/5",
+      "homeGround": "Home ground: {name}",
+      "mmr": "MMR {value}",
+      "membersTitle": "Members",
+      "relationship": {
+        "friend": "You're friends",
+        "incoming": "Sent you a friend request",
+        "outgoing": "Friend request sent",
+        "blocked": "Blocked",
+        "none": "Not connected"
+      },
+      "accept": "Accept",
+      "reject": "Decline",
+      "declinedTitle": "You declined this invite",
+      "notFound": "This invite is invalid or no longer available",
+      "error": "Something went wrong. Please try again."
+    },
+    "challenges": {
+      "title": "Challenges",
+      "empty": "No challenges yet.",
+      "incoming": "Awaiting your response",
+      "outgoing": "Sent · pending",
+      "accepted": "Accepted",
+      "scheduled": "Locked in",
+      "accept": "Accept",
+      "decline": "Decline",
+      "cancelBtn": "Cancel"
+    },
+    "inviteUser": {
+      "friendsShortlist": "Quick invite",
+      "label": "Username",
+      "hint": "e.g. Thach#1234 or #1234",
+      "description": "Enter username#tag, just a username, or just #tag to search.",
+      "emptyError": "Enter a username or tag",
+      "notFound": "User \"{name}\" not found",
+      "success": "Invite sent to {username}",
+      "failed": "Failed to send invite. Please try again.",
+      "send": "Send Invite",
+      "search": "Search",
+      "alreadyMember": "User is already a member"
+    },
+    "inviteLink": {
+      "title": "Invite Link",
+      "description": "Anyone with this link joins instantly, no approval needed.",
+      "create": "Create Invite Link",
+      "copy": "Copy",
+      "share": "Share",
+      "regenerate": "Regenerate",
+      "remove": "Remove",
+      "copied": "Invite link copied",
+      "error": "Something went wrong. Please try again.",
+      "landingTitle": "Lobby Invite",
+      "invitedTo": "You're invited to join",
+      "memberCount": "{count} members",
+      "captainedBy": "Captain: {name}",
+      "join": "Join",
+      "joined": "You joined {name}",
+      "alreadyMember": "You're already a member",
+      "invalid": "This invite link no longer works",
+      "notFound": "This invite link is invalid",
+      "expired": "This invite link has expired",
+      "revoked": "This invite link has been removed"
+    }
+  },
+  "createLobby": {
+    "title": "Create Lobby",
+    "create": "Create",
+    "lobbyName": "Lobby Name",
+    "lobbyNameHint": "Enter a name for your lobby",
+    "description": "Description",
+    "descriptionHint": "Describe your lobby (optional)",
+    "sport": "Sport",
+    "sportLocked": "Sport selection is locked",
+    "visibility": "Visibility",
+    "public": "Public",
+    "publicDescription": "Anyone can find and join your lobby",
+    "private": "Private",
+    "privateDescription": "Only people with the link can join",
+    "homeGround": "Home Ground",
+    "homeGroundDescription": "Members will use this as the default meeting point for activities",
+    "homeGroundHint": "Search by venue name...",
+    "homeGroundFreeHint": "Enter venue name or address...",
+    "homeGroundFreeTextMode": "Enter manually",
+    "homeGroundSearchMode": "Search venues",
+    "homeGroundSearchPrompt": "Type to search for a venue",
+    "streetNumber": "St. number",
+    "streetName": "Street name",
+    "district": "District",
+    "city": "City",
+    "specificLocation": "Specific Location",
+    "specificLocationHint": "Enter a specific location",
+    "playtime": "Playtime",
+    "playtimeShort": "Playtime",
+    "dayOfWeek": "Day of Week",
+    "timeSlot": "Time Slot",
+    "setTimeslot": "Set Timeslot",
+    "maxParticipants": "Maximum Participants",
+    "participantCount": "{count} participants"
+  },
+  "soccer": {
+    "position": {
+      "label": "Position",
+      "forward": "Forward",
+      "midfielder": "Midfielder",
+      "defender": "Defender",
+      "keeper": "Goalkeeper"
+    },
+    "pitch": {
+      "label": "Pitch Format",
+      "futsal": "Futsal",
+      "5v5": "5-a-side",
+      "7v7": "7-a-side"
+    }
+  },
+  "racketSport": {
+    "dominantHand": {
+      "label": "Dominant Hand",
+      "left": "Left",
+      "right": "Right"
+    },
+    "discipline": {
+      "label": "Discipline",
+      "singles": "Singles",
+      "doubles": "Doubles"
+    }
+  },
+  "basketball": {
+    "position": {
+      "label": "Position",
+      "guard": "Guard",
+      "forward": "Forward",
+      "center": "Center"
+    },
+    "pitch": {
+      "label": "Court Type",
+      "indoor": "Indoor",
+      "outdoor": "Outdoor"
+    }
+  },
+  "elo": {
+    "label": "Elo"
+  },
+  "eloSeed": {
+    "label": "Skill Level",
+    "description": "Used to seed your initial matchmaking. Play with others to update your Elo.",
+    "beginner": "Beginner",
+    "casual": "Casual",
+    "tryhard": "Tryhard",
+    "lockedHint": "Elo seed is locked after first commit"
+  },
+  "sport": {
+    "others": "Others",
+    "soccer": "Soccer",
+    "basketball": "Basketball",
+    "badminton": "Badminton",
+    "tennis": "Tennis",
+    "pickleball": "Pickleball",
+    "selectSport": "Please select a sport",
+    "othersAlertDescription": "Please select a specific sport to see relevant content."
+  },
+  "notSet": "Not set",
+  "done": "Done",
+  "error": "Error",
+  "errorGeneric": "Something went wrong. Please try again later.",
+  "auth": {
+    "welcome": "Welcome",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "emailEmpty": "Please enter your email",
+    "emailInvalid": "Please enter a valid email address",
+    "passwordEmpty": "Please enter your password",
+    "passwordLength": "Password must be at least 8 characters long",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "loginFailed": "Login Failed",
+    "signUpFailed": "Sign Up Failed",
+    "checkEmailTitle": "Check your email",
+    "checkEmailBody": "We sent a confirmation link to {email}. Confirm it to finish signing up.",
+    "guestPrompt": {
+      "title": "Sign in required",
+      "body": "Sign in or create an account to join lobbies, confirm sessions and more.",
+      "cta": "Sign in"
+    },
+    "orDivider": "or",
+    "googleContinue": "Continue with Google",
+    "appleContinue": "Continue with Apple",
+    "guestContinue": "Continue as Guest",
+    "googleLoginFailed": "Google Login Failed",
+    "appleLoginFailed": "Apple Login Failed",
+    "guestLoginFailed": "Guest Login Failed",
+    "credentialsInvalid": "Invalid email or password",
+    "userAlreadyRegistered": "This email is already registered",
+    "forgotPassword": "Forgot password?",
+    "forgotPasswordTitle": "Reset Password",
+    "forgotPasswordInstruction": "Enter your email and we'll send you a 6-digit code to reset your password.",
+    "sendResetCode": "Send code",
+    "resetCodeSent": "Code sent",
+    "resetCodeSentDescription": "Check your email for the 6-digit reset code.",
+    "resetPasswordTitle": "New Password",
+    "resetPasswordInstruction": "Enter the code sent to {} and choose a new password.",
+    "otpLabel": "Reset code",
+    "otpEmpty": "Please enter the code",
+    "otpInvalid": "The code must be 6 digits",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "Confirm password",
+    "passwordMismatch": "Passwords do not match",
+    "resetPassword": "Reset password",
+    "passwordResetSuccess": "Password reset successfully",
+    "resetFailed": "Reset Failed",
+    "otpInvalidOrExpired": "Invalid or expired code",
+    "resetEmailFailed": "Could not send the reset code"
+  },
+  "nav": {
+    "home": "Home",
+    "manage": "Manage",
+    "health": "Health",
+    "profile": "Profile",
+    "discover": "Discover",
+    "feed": "Feed"
+  },
+  "notification": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": {
+      "title": "No notifications yet",
+      "subtitle": "Activity, invites and requests will show up here"
+    },
+    "clearRead": {
+      "title": "Clear read notifications?",
+      "message": "This removes every read notification. Unread ones stay.",
+      "cancel": "Cancel",
+      "confirm": "Clear"
+    }
+  },
+  "home": {
+    "teammate": "Teammates",
+    "challenger": "Challengers",
+    "professional": "Professionals",
+    "location": "Locations"
+  },
+  "manage": {
+    "schedule": "Schedule Content",
+    "lobby": "Lobby Content"
+  },
+  "profile": {
+    "content": "Profile Content",
+    "logout": "Logout",
+    "accountInfo": "Account Info",
+    "username": "Username",
+    "email": "Email",
+    "changePassword": "Change Password",
+    "setPassword": "Set Password",
+    "generalInfo": "General Info",
+    "noGeneralInfo": "No general information provided",
+    "gender": "Gender",
+    "ageGroup": "Age Group",
+    "location": "Location",
+    "locationCity": "City",
+    "locationDistrict": "District",
+    "locationDistrictHint": "Pick up to 6 districts",
+    "playtime": "Playtime",
+    "sportProfile": "{} Profile",
+    "noSportProfile": "No sport information provided",
+    "commit": "Commit",
+    "genderLabel": "Gender",
+    "ageGroupLabel": "Age Group",
+    "industryLabel": "Industry",
+    "networkLabel": "Network",
+    "industryAndNetworkLabel": "Industry & Network",
+    "networkSelectionTitle": "Select Networks",
+    "networkSearchHint": "Search by name for schools/ universities/ companies",
+    "selectedNetworks": "Selected Networks",
+    "noNetworksFound": "No networks found matching the search criteria",
+    "industrySelectionTitle": "Select Industries",
+    "playtimeExplanation": "Choose the time slots you usually play to help Passe connect you with people who have similar free time.",
+    "networkFeatureExplanation": "Choose at most 5 schools/ universities/ companies that you were or are a part of. Passe will connect you with people who share your networks.",
+    "industryFeatureExplanation": "Choose at most 2 industries that you work in. Passe will connect you with people who share your industries.",
+    "sportFeatureExplanation": "Update your skill level to find better matches and connect with people who share your passion for sports.",
+    "profileFeatureExplanation": "Fill in your profile will help Passe connect you more effectively.",
+    "emptyNetwork": "No networks selected. Add your schools or companies to connect with others.",
+    "emptyIndustry": "No industries selected. Add your industries to find professional connections.",
+    "emptySportProfile": "Sport profile not set. Update your skill level to find better matches.",
+    "changeUsername": "Change Username",
+    "newUsername": "New Username",
+    "confirmUsername": "Confirm Username",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordChanged": "Password changed successfully",
+    "usernameMismatch": "Usernames do not match",
+    "usernameInvalidChars": "Username can only contain letters and numbers",
+    "usernameTaken": "This username is already taken",
+    "confirmLogout": "Confirm Logout?",
+    "alumni": "Alumni",
+    "currentMember": "Current Member",
+    "toggleAlumniStatus": "Toggle Alumni Status",
+    "randomizeAvatar": "Randomize",
+    "removeAvatar": "Remove",
+    "uploadPhoto": "Upload Photo",
+    "cropAvatar": "Adjust Photo",
+    "uploadFailed": "Failed to upload photo",
+    "networkMaxReached": "Maximum 5 networks. Remove one first.",
+    "discardChangesTitle": "Discard changes?",
+    "discardChangesBody": "Your profile changes have not been saved.",
+    "discardChangesStay": "Keep editing",
+    "discardChangesLeave": "Discard",
+    "paymentInfo": "Payment Info",
+    "paymentInfoExplanation": "Add banks or e-wallets you can receive money on. This is shown to your friends and lobby mates so they can pay you outside the app — Passe does not process any payments.",
+    "paymentInfoEmpty": "No payment info added yet. Add a bank or e-wallet so friends and lobby mates can pay you.",
+    "addPaymentInfo": "Add Payment Info",
+    "changePaymentInfo": "Change Payment Info",
+    "paymentInfoDeleteConfirmTitle": "Remove this payment info?",
+    "paymentInfoDeleteConfirmBody": "This will remove it from your profile. This can't be undone.",
+    "paymentInfoDeleteCancel": "Cancel",
+    "paymentInfoDeleteConfirmAction": "Remove"
+  },
+  "payment": {
+    "bankOrWallet": "Bank or e-wallet",
+    "accountNumber": "Account / phone number",
+    "accountHolderName": "Account holder name (optional)",
+    "copy": "Copy",
+    "copied": "Copied",
+    "share": "Share",
+    "openInApp": "Open in {} app",
+    "openInAppFailed": "Couldn't open the app. Is it installed?",
+    "autofillHint": "The app will pre-fill the transfer details.",
+    "setPreferredBank": "Set your banking app",
+    "choosePreferredBank": "Choose your banking app",
+    "preferredBank": "Your banking app",
+    "preferredBankNotSet": "Not set",
+    "preferredBankExplanation": "The app Passe opens for the \"Open in App\" button when you pay someone — this is your own bank, not theirs, so it stays the same no matter who you're paying.",
+    "disclaimer": "Passe does not verify or take responsibility for transfers made outside the app. Double-check the recipient's info before sending money.",
+    "payCoach": "Pay Coach",
+    "coachNoPaymentInfo": "This coach hasn't set up payment info yet.",
+    "lessonNote": "Payment for lesson with {}",
+    "confirmPasswordTitle": "Confirm your password",
+    "confirmPasswordExplanation": "For your security, confirm your account password before adding or changing payment info.",
+    "confirmPasswordAction": "Confirm",
+    "incorrectPassword": "Incorrect password",
+    "passwordSetupRequiredTitle": "Set up a password first",
+    "passwordSetupRequiredExplanation": "You haven't set an account password yet. Set one up to protect changes to your payment info."
+  },
+  "health": {
+    "title": "Health",
+    "notLinked": {
+      "title": "Connect Your Health Data",
+      "description": "Link Apple Health or Google Fit to track your fitness metrics, monitor activity trends, and earn achievements.",
+      "linkButton": "Link Health Service",
+      "notAvailableIOS": "Health services are not available. Please run on a physical device with the Health app installed.",
+      "notAvailableAndroid": "Health Connect is not available. Please install Health Connect from the Play Store."
+    },
+    "userHealth": {
+      "title": "Body"
+    },
+    "vitality": {
+      "title": "VITALITY SCORE",
+      "notEnoughData": "Not enough data yet — keep syncing for a couple weeks",
+      "streakBonus": "+{n} streak bonus",
+      "component": {
+        "consistency": "Consistency",
+        "load": "Load",
+        "recovery": "Recovery",
+        "volume": "Volume"
+      }
+    },
+    "hrZone": {
+      "title": "HR Zone",
+      "maxHrLine": "Max HR ~{value} bpm",
+      "zoneDesc": {
+        "easy": "Conversational pace. Builds your aerobic base and aids recovery.",
+        "moderate": "Sustainable tempo effort. Improves endurance and lactate clearance.",
+        "hard": "Above lactate threshold. Builds speed and anaerobic capacity."
+      },
+      "edit": {
+        "title": "Edit HR zone",
+        "description": "Declare your real lactate-threshold heart rates for more accurate zone breakdowns. Leave Max HR blank to let Passe estimate it from your age.",
+        "maxHrLabel": "Max HR (optional)",
+        "lt1Label": "LT1 — aerobic threshold",
+        "lt2Label": "LT2 — anaerobic threshold",
+        "invalid": "Enter valid HR values: LT1 < LT2, and both below Max HR.",
+        "save": "Save",
+        "saved": "HR zone updated"
+      }
+    },
+    "activityData": {
+      "title": "Activity",
+      "selectSport": "Choose a sport to see your activity recaps.",
+      "sample": {
+        "label": "Preview",
+        "session": "Your next session",
+        "caption": "Sync a confirmed session to replace this with your real data."
+      }
+    },
+    "achievements": {
+      "title": "Achievements",
+      "emptyTitle": "No achievements yet",
+      "empty": "Sync your wearable after a session to start earning XP.",
+      "inProgress": "In progress",
+      "earned": "Unlocked",
+      "completed": "Completed",
+      "locked": "Not started",
+      "showMore": "Show more",
+      "earnedPeriod": "Completed this period · resets next",
+      "levelLabel": "FITNESS LEVEL",
+      "level": "Level {level}",
+      "xpTotal": "{xp} XP",
+      "maxed": "Max level reached",
+      "toNext": "{current} / {total} XP to next level",
+      "toast": {
+        "levelUp": "⬆️ Level up!",
+        "unlocked": "🏆 {count} new achievement(s) unlocked"
+      },
+      "celebrate": {
+        "title": "New achievements",
+        "levelTitle": "Level up!",
+        "unlocked": "Unlocked",
+        "dismiss": "Nice!"
+      }
+    },
+    "error": "Something went wrong. Please try again.",
+    "metric": {
+      "restingHr": "Resting HR",
+      "hrv": "HRV",
+      "weight": "Weight",
+      "steps": "Steps",
+      "distance": "Distance",
+      "activeCalories": "Active cal",
+      "totalCalories": "Total cal"
+    },
+    "customize": {
+      "title": "Customize metrics"
+    },
+    "trend": {
+      "period": "Last 90 days",
+      "insufficient": "Not enough data to chart yet."
+    },
+    "detected": {
+      "title": "Detected workouts",
+      "evidenceHigh": "Workout recorded during this session",
+      "evidenceMedium": "Elevated heart rate during this session",
+      "attach": "Attach",
+      "dismiss": "Dismiss",
+      "attached": "Workout attached"
+    },
+    "source": {
+      "lobby": "Lobby",
+      "professional": "Coaching",
+      "self": "Personal"
+    },
+    "recap": {
+      "duration": "Duration",
+      "avgHr": "Avg HR",
+      "maxHr": "Max HR",
+      "calories": "Calories",
+      "distance": "Distance",
+      "effort": "Effort",
+      "hrCurve": "Heart rate",
+      "zones": "Zones",
+      "estimated": "(estimated)"
+    },
+    "zone": {
+      "easy": "Easy",
+      "moderate": "Moderate",
+      "hard": "Hard"
+    },
+    "sync": {
+      "done": "Synced {days} days, {activities} activities",
+      "skipped": "Link a health service first",
+      "failed": "Sync failed. Please try again."
+    }
+  },
+  "welcome": {
+    "skip": "Skip",
+    "next": "Next",
+    "getStarted": "Get Started",
+    "page1": {
+      "title": "Connect with community",
+      "description": "Find teammates and opponents that match your skill level and schedule"
+    },
+    "page2": {
+      "title": "Manage your games",
+      "description": "Create and join game sessions, track your appointments easily"
+    },
+    "page3": {
+      "title": "Improve your skills",
+      "description": "Track your progress, connect with coaches and improve your performance"
+    }
+  },
+  "onboarding": {
+    "next": "Continue",
+    "back": "Back",
+    "skip": "Skip",
+    "done": "Get started",
+    "story": {
+      "s1": {
+        "title": "Playing sports, as easy as scheduling coffee",
+        "body": "Passe connects you with teammates, rivals and venues nearby — scoped to the sport you play."
+      },
+      "s2": {
+        "title": "Your lobby is your team",
+        "body": "Form a lobby, invite friends, schedule sessions and track match history — all in one place."
+      },
+      "s3": {
+        "title": "The more you play, the better the matches",
+        "body": "Your skill level, free time and network help Passe match you more accurately over time."
+      }
     },
     "sport": {
-        "others": "Others",
-        "soccer": "Soccer",
-        "basketball": "Basketball",
-        "badminton": "Badminton",
-        "tennis": "Tennis",
-        "pickleball": "Pickleball",
-        "selectSport": "Please select a sport",
-        "othersAlertDescription": "Please select a specific sport to see relevant content."
-    },
-    "notSet": "Not set",
-    "done": "Done",
-    "error": "Error",
-    "errorGeneric": "Something went wrong. Please try again later.",
-    "auth": {
-        "welcome": "Welcome",
-        "emailLabel": "Email",
-        "passwordLabel": "Password",
-        "emailEmpty": "Please enter your email",
-        "emailInvalid": "Please enter a valid email address",
-        "passwordEmpty": "Please enter your password",
-        "passwordLength": "Password must be at least 8 characters long",
-        "signIn": "Sign In",
-        "signUp": "Sign Up",
-        "loginFailed": "Login Failed",
-        "signUpFailed": "Sign Up Failed",
-        "checkEmailTitle": "Check your email",
-        "checkEmailBody": "We sent a confirmation link to {email}. Confirm it to finish signing up.",
-        "guestPrompt": {
-            "title": "Sign in required",
-            "body": "Sign in or create an account to join lobbies, confirm sessions and more.",
-            "cta": "Sign in"
-        },
-        "orDivider": "or",
-        "googleContinue": "Continue with Google",
-        "appleContinue": "Continue with Apple",
-        "guestContinue": "Continue as Guest",
-        "googleLoginFailed": "Google Login Failed",
-        "appleLoginFailed": "Apple Login Failed",
-        "guestLoginFailed": "Guest Login Failed",
-        "credentialsInvalid": "Invalid email or password",
-        "userAlreadyRegistered": "This email is already registered",
-        "forgotPassword": "Forgot password?",
-        "forgotPasswordTitle": "Reset Password",
-        "forgotPasswordInstruction": "Enter your email and we'll send you a 6-digit code to reset your password.",
-        "sendResetCode": "Send code",
-        "resetCodeSent": "Code sent",
-        "resetCodeSentDescription": "Check your email for the 6-digit reset code.",
-        "resetPasswordTitle": "New Password",
-        "resetPasswordInstruction": "Enter the code sent to {} and choose a new password.",
-        "otpLabel": "Reset code",
-        "otpEmpty": "Please enter the code",
-        "otpInvalid": "The code must be 6 digits",
-        "newPasswordLabel": "New password",
-        "confirmPasswordLabel": "Confirm password",
-        "passwordMismatch": "Passwords do not match",
-        "resetPassword": "Reset password",
-        "passwordResetSuccess": "Password reset successfully",
-        "resetFailed": "Reset Failed",
-        "otpInvalidOrExpired": "Invalid or expired code",
-        "resetEmailFailed": "Could not send the reset code"
-    },
-    "nav": {
-        "home": "Home",
-        "manage": "Manage",
-        "health": "Health",
-        "profile": "Profile",
-        "discover": "Discover",
-        "feed": "Feed"
-    },
-    "notification": {
-        "title": "Notifications",
-        "markAllRead": "Mark all read",
-        "empty": {
-            "title": "No notifications yet",
-            "subtitle": "Activity, invites and requests will show up here"
-        },
-        "clearRead": {
-            "title": "Clear read notifications?",
-            "message": "This removes every read notification. Unread ones stay.",
-            "cancel": "Cancel",
-            "confirm": "Clear"
-        }
-    },
-    "home": {
-        "teammate": "Teammates",
-        "challenger": "Challengers",
-        "professional": "Professionals",
-        "location": "Locations"
-    },
-    "manage": {
-        "schedule": "Schedule Content",
-        "lobby": "Lobby Content"
+      "title": "Choose a sport",
+      "body": "Passe works one sport at a time. Pick the one you want to start with — you can switch anytime from the top bar.",
+      "hint": "Pick a sport to get started"
     },
     "profile": {
-        "content": "Profile Content",
-        "logout": "Logout",
-        "accountInfo": "Account Info",
-        "username": "Username",
-        "email": "Email",
-        "changePassword": "Change Password",
-        "setPassword": "Set Password",
-        "generalInfo": "General Info",
-        "noGeneralInfo": "No general information provided",
-        "gender": "Gender",
-        "ageGroup": "Age Group",
-        "location": "Location",
-        "locationCity": "City",
-        "locationDistrict": "District",
-        "locationDistrictHint": "Pick up to 6 districts",
-        "playtime": "Playtime",
-        "sportProfile": "{} Profile",
-        "noSportProfile": "No sport information provided",
-        "commit": "Commit",
-        "genderLabel": "Gender",
-        "ageGroupLabel": "Age Group",
-        "industryLabel": "Industry",
-        "networkLabel": "Network",
-        "industryAndNetworkLabel": "Industry & Network",
-        "networkSelectionTitle": "Select Networks",
-        "networkSearchHint": "Search by name for schools/ universities/ companies",
-        "selectedNetworks": "Selected Networks",
-        "noNetworksFound": "No networks found matching the search criteria",
-        "industrySelectionTitle": "Select Industries",
-        "networkFeatureExplanation": "Choose at most 5 schools/ universities/ companies that you were or are a part of. Passe will connect you with people who share your networks.",
-        "industryFeatureExplanation": "Choose at most 2 industries that you work in. Passe will connect you with people who share your industries.",
-        "sportFeatureExplanation": "Update your skill level to find better matches and connect with people who share your passion for sports.",
-        "profileFeatureExplanation": "Fill in your profile will help Passe connect you more effectively.",
-        "emptyNetwork": "No networks selected. Add your schools or companies to connect with others.",
-        "emptyIndustry": "No industries selected. Add your industries to find professional connections.",
-        "emptySportProfile": "Sport profile not set. Update your skill level to find better matches.",
-        "changeUsername": "Change Username",
-        "newUsername": "New Username",
-        "confirmUsername": "Confirm Username",
-        "newPassword": "New Password",
-        "confirmPassword": "Confirm Password",
-        "passwordMismatch": "Passwords do not match",
-        "passwordTooShort": "Password must be at least 8 characters",
-        "passwordChanged": "Password changed successfully",
-        "usernameMismatch": "Usernames do not match",
-        "usernameInvalidChars": "Username can only contain letters and numbers",
-        "usernameTaken": "This username is already taken",
-        "confirmLogout": "Confirm Logout?",
-        "alumni": "Alumni",
-        "currentMember": "Current Member",
-        "toggleAlumniStatus": "Toggle Alumni Status",
-        "randomizeAvatar": "Randomize",
-        "removeAvatar": "Remove",
-        "uploadPhoto": "Upload Photo",
-        "cropAvatar": "Adjust Photo",
-        "uploadFailed": "Failed to upload photo",
-        "networkMaxReached": "Maximum 5 networks. Remove one first.",
-        "discardChangesTitle": "Discard changes?",
-        "discardChangesBody": "Your profile changes have not been saved.",
-        "discardChangesStay": "Keep editing",
-        "discardChangesLeave": "Discard",
-        "paymentInfo": "Payment Info",
-        "paymentInfoExplanation": "Add banks or e-wallets you can receive money on. This is shown to your friends and lobby mates so they can pay you outside the app — Passe does not process any payments.",
-        "paymentInfoEmpty": "No payment info added yet. Add a bank or e-wallet so friends and lobby mates can pay you.",
-        "addPaymentInfo": "Add Payment Info",
-        "changePaymentInfo": "Change Payment Info",
-        "paymentInfoDeleteConfirmTitle": "Remove this payment info?",
-        "paymentInfoDeleteConfirmBody": "This will remove it from your profile. This can't be undone.",
-        "paymentInfoDeleteCancel": "Cancel",
-        "paymentInfoDeleteConfirmAction": "Remove"
+      "title": "A few details for better matches",
+      "body": "Takes 30 seconds. You can always change this later from the Profile tab.",
+      "gender": "Gender",
+      "ageGroup": "Age group",
+      "playtime": "Free time",
+      "addPlaytime": "Add a time slot",
+      "skillIntro": "Your starting skill level helps Passe match you against opponents around your level from your very first game.",
+      "skillLevels": {
+        "beginner": "New to the sport or still learning the basics.",
+        "casual": "Play regularly and know the fundamentals.",
+        "tryhard": "Play competitively and want evenly matched opponents."
+      },
+      "skillLockWarning": "Your starting skill level can only be set once and can't be changed after saving.",
+      "save": "Save & continue",
+      "saveError": "Couldn't save your profile. You can try again from the Profile tab."
     },
-    "payment": {
-        "bankOrWallet": "Bank or e-wallet",
-        "accountNumber": "Account / phone number",
-        "accountHolderName": "Account holder name (optional)",
-        "copy": "Copy",
-        "copied": "Copied",
-        "share": "Share",
-        "openInApp": "Open in {} app",
-        "openInAppFailed": "Couldn't open the app. Is it installed?",
-        "autofillHint": "The app will pre-fill the transfer details.",
-        "setPreferredBank": "Set your banking app",
-        "choosePreferredBank": "Choose your banking app",
-        "preferredBank": "Your banking app",
-        "preferredBankNotSet": "Not set",
-        "preferredBankExplanation": "The app Passe opens for the \"Open in App\" button when you pay someone — this is your own bank, not theirs, so it stays the same no matter who you're paying.",
-        "disclaimer": "Passe does not verify or take responsibility for transfers made outside the app. Double-check the recipient's info before sending money.",
-        "payCoach": "Pay Coach",
-        "coachNoPaymentInfo": "This coach hasn't set up payment info yet.",
-        "lessonNote": "Payment for lesson with {}",
-        "confirmPasswordTitle": "Confirm your password",
-        "confirmPasswordExplanation": "For your security, confirm your account password before adding or changing payment info.",
-        "confirmPasswordAction": "Confirm",
-        "incorrectPassword": "Incorrect password",
-        "passwordSetupRequiredTitle": "Set up a password first",
-        "passwordSetupRequiredExplanation": "You haven't set an account password yet. Set one up to protect changes to your payment info."
+    "guest": {
+      "title": "Want a quick look at how Passe works?",
+      "body": "A short walkthrough of the main features. You can skip it and explore on your own.",
+      "accept": "Show me",
+      "decline": "Not now"
     },
-    "health": {
-        "title": "Health",
-        "notLinked": {
-            "title": "Connect Your Health Data",
-            "description": "Link Apple Health or Google Fit to track your fitness metrics, monitor activity trends, and earn achievements.",
-            "linkButton": "Link Health Service",
-            "notAvailableIOS": "Health services are not available. Please run on a physical device with the Health app installed.",
-            "notAvailableAndroid": "Health Connect is not available. Please install Health Connect from the Play Store."
-        },
-        "userHealth": {
-            "title": "Body"
-        },
-        "vitality": {
-            "title": "VITALITY SCORE",
-            "notEnoughData": "Not enough data yet — keep syncing for a couple weeks",
-            "streakBonus": "+{n} streak bonus",
-            "component": {
-                "consistency": "Consistency",
-                "load": "Load",
-                "recovery": "Recovery",
-                "volume": "Volume"
-            }
-        },
-        "hrZone": {
-            "title": "HR Zone",
-            "maxHrLine": "Max HR ~{value} bpm",
-            "zoneDesc": {
-                "easy": "Conversational pace. Builds your aerobic base and aids recovery.",
-                "moderate": "Sustainable tempo effort. Improves endurance and lactate clearance.",
-                "hard": "Above lactate threshold. Builds speed and anaerobic capacity."
-            },
-            "edit": {
-                "title": "Edit HR zone",
-                "description": "Declare your real lactate-threshold heart rates for more accurate zone breakdowns. Leave Max HR blank to let Passe estimate it from your age.",
-                "maxHrLabel": "Max HR (optional)",
-                "lt1Label": "LT1 — aerobic threshold",
-                "lt2Label": "LT2 — anaerobic threshold",
-                "invalid": "Enter valid HR values: LT1 < LT2, and both below Max HR.",
-                "save": "Save",
-                "saved": "HR zone updated"
-            }
-        },
-        "activityData": {
-            "title": "Activity",
-            "selectSport": "Choose a sport to see your activity recaps.",
-            "sample": {
-                "label": "Preview",
-                "session": "Your next session",
-                "caption": "Sync a confirmed session to replace this with your real data."
-            }
-        },
-        "achievements": {
-            "title": "Achievements",
-            "emptyTitle": "No achievements yet",
-            "empty": "Sync your wearable after a session to start earning XP.",
-            "inProgress": "In progress",
-            "earned": "Unlocked",
-            "completed": "Completed",
-            "locked": "Not started",
-            "showMore": "Show more",
-            "earnedPeriod": "Completed this period · resets next",
-            "levelLabel": "FITNESS LEVEL",
-            "level": "Level {level}",
-            "xpTotal": "{xp} XP",
-            "maxed": "Max level reached",
-            "toNext": "{current} / {total} XP to next level",
-            "toast": {
-                "levelUp": "⬆️ Level up!",
-                "unlocked": "🏆 {count} new achievement(s) unlocked"
-            },
-            "celebrate": {
-                "title": "New achievements",
-                "levelTitle": "Level up!",
-                "unlocked": "Unlocked",
-                "dismiss": "Nice!"
-            }
-        },
-        "error": "Something went wrong. Please try again.",
-        "metric": {
-            "restingHr": "Resting HR",
-            "hrv": "HRV",
-            "weight": "Weight",
-            "steps": "Steps",
-            "distance": "Distance",
-            "activeCalories": "Active cal",
-            "totalCalories": "Total cal"
-        },
-        "customize": {
-            "title": "Customize metrics"
-        },
-        "trend": {
-            "period": "Last 90 days",
-            "insufficient": "Not enough data to chart yet."
-        },
-        "detected": {
-            "title": "Detected workouts",
-            "evidenceHigh": "Workout recorded during this session",
-            "evidenceMedium": "Elevated heart rate during this session",
-            "attach": "Attach",
-            "dismiss": "Dismiss",
-            "attached": "Workout attached"
-        },
-        "source": {
-            "lobby": "Lobby",
-            "professional": "Coaching",
-            "self": "Personal"
-        },
-        "recap": {
-            "duration": "Duration",
-            "avgHr": "Avg HR",
-            "maxHr": "Max HR",
-            "calories": "Calories",
-            "distance": "Distance",
-            "effort": "Effort",
-            "hrCurve": "Heart rate",
-            "zones": "Zones",
-            "estimated": "(estimated)"
-        },
-        "zone": {
-            "easy": "Easy",
-            "moderate": "Moderate",
-            "hard": "Hard"
-        },
-        "sync": {
-            "done": "Synced {days} days, {activities} activities",
-            "skipped": "Link a health service first",
-            "failed": "Sync failed. Please try again."
-        }
+    "coach": {
+      "title": "Quick tour",
+      "feed": "Feed — the latest photos from your friends and lobby.",
+      "discover": "Discover — find teammates, rivals, coaches/referees and venues.",
+      "manage": "Manage — your lobbies, schedule and match history.",
+      "health": "Health — link a wearable and unlock achievements.",
+      "profile": "Profile — edit your skill level, free time and network.",
+      "next": "Next",
+      "skip": "Skip",
+      "finish": "Done"
     },
-    "welcome": {
-        "skip": "Skip",
-        "next": "Next",
-        "getStarted": "Get Started",
-        "page1": {
-            "title": "Connect with community",
-            "description": "Find teammates and opponents that match your skill level and schedule"
-        },
-        "page2": {
-            "title": "Manage your games",
-            "description": "Create and join game sessions, track your appointments easily"
-        },
-        "page3": {
-            "title": "Improve your skills",
-            "description": "Track your progress, connect with coaches and improve your performance"
-        }
-    },
-    "onboarding": {
-        "next": "Continue",
-        "back": "Back",
-        "skip": "Skip",
-        "done": "Get started",
-        "story": {
-            "s1": {
-                "title": "Playing sports, as easy as scheduling coffee",
-                "body": "Passe connects you with teammates, rivals and venues nearby — scoped to the sport you play."
-            },
-            "s2": {
-                "title": "Your lobby is your team",
-                "body": "Form a lobby, invite friends, schedule sessions and track match history — all in one place."
-            },
-            "s3": {
-                "title": "The more you play, the better the matches",
-                "body": "Your skill level, free time and network help Passe match you more accurately over time."
-            }
-        },
-        "sport": {
-            "title": "Choose a sport",
-            "body": "Passe works one sport at a time. Pick the one you want to start with — you can switch anytime from the top bar.",
-            "hint": "Pick a sport to get started"
-        },
-        "profile": {
-            "title": "A few details for better matches",
-            "body": "Takes 30 seconds. You can always change this later from the Profile tab.",
-            "gender": "Gender",
-            "ageGroup": "Age group",
-            "playtime": "Free time",
-            "addPlaytime": "Add a time slot",
-            "skillIntro": "Your starting skill level helps Passe match you against opponents around your level from your very first game.",
-            "skillLevels": {
-                "beginner": "New to the sport or still learning the basics.",
-                "casual": "Play regularly and know the fundamentals.",
-                "tryhard": "Play competitively and want evenly matched opponents."
-            },
-            "skillLockWarning": "Your starting skill level can only be set once and can't be changed after saving.",
-            "save": "Save & continue",
-            "saveError": "Couldn't save your profile. You can try again from the Profile tab."
-        },
-        "guest": {
-            "title": "Want a quick look at how Passe works?",
-            "body": "A short walkthrough of the main features. You can skip it and explore on your own.",
-            "accept": "Show me",
-            "decline": "Not now"
-        },
-        "coach": {
-            "title": "Quick tour",
-            "feed": "Feed — the latest photos from your friends and lobby.",
-            "discover": "Discover — find teammates, rivals, coaches/referees and venues.",
-            "manage": "Manage — your lobbies, schedule and match history.",
-            "health": "Health — link a wearable and unlock achievements.",
-            "profile": "Profile — edit your skill level, free time and network.",
-            "next": "Next",
-            "skip": "Skip",
-            "finish": "Done"
-        },
-        "getStarted": {
-            "title": "What do you want to do first?",
-            "body": "Pick one to jump right in — you can always come back for the rest.",
-            "createLobby": {
-                "title": "Create a lobby with your group",
-                "subtitle": "Already have people to play with? Set it up and schedule a session now",
-                "badge": "Recommended"
-            },
-            "friends": {
-                "title": "Add friends",
-                "subtitle": "See their posts and invite them to play"
-            },
-            "lobby": {
-                "title": "Find teammates",
-                "subtitle": "Join a lobby or look for people to play with"
-            },
-            "coach": {
-                "title": "Hire a coach or referee",
-                "subtitle": "Book someone to train or officiate"
-            },
-            "wearable": {
-                "title": "Connect a wearable",
-                "subtitle": "Track heart rate and effort during sessions",
-                "optional": "Optional"
-            }
-        }
-    },
-    "social": {
-        "friends": "Friends",
-        "search": "Search",
-        "searchHint": "name or name#tag",
-        "searchResults": "Search results",
-        "noResults": "No players found",
-        "searchFailed": "Search failed",
-        "incomingRequests": "Friend requests",
-        "noFriends": "You have no friends yet",
-        "addFriend": "Add friend",
-        "addFriendGuest": "Sign in to add friends",
-        "requestSentCancel": "Request sent — cancel",
-        "accept": "Accept",
-        "decline": "Decline",
-        "alreadyFriends": "Friends",
-        "unfriend": "Unfriend",
-        "unfriended": "Unfriended",
-        "block": "Block this person",
-        "blocked": "Blocked",
-        "unblock": "Unblock",
-        "unblocked": "Unblocked",
-        "blockExplainer": "Blocking hides both of you from each other's posts and prevents friend requests.",
-        "actionFailed": "Something went wrong, try again",
-        "profileError": "Couldn't load this profile",
-        "profileMissing": "Player not found",
-        "friendCount": "{count} friends",
-        "sharedLobbyCount": "{count} shared lobbies",
-        "wallAuthored": "Posts",
-        "wallTagged": "Tagged",
-        "wallEmpty": "No posts yet",
-        "wallTaggedEmpty": "Not tagged in anything yet"
-    },
-    "feed": {
-        "compose": "New post",
-        "post": "Post",
-        "posted": "Posted",
-        "postFailed": "Couldn't post",
-        "pickSession": "Which session is this from?",
-        "pickSessionHint": "Pick a session",
-        "noPostableSessions": "You have no sessions from the last 7 days to post about. Only sessions you RSVP'd going to can be posted.",
-        "sessionsError": "Couldn't load your sessions",
-        "untitledSession": "Session",
-        "alreadyPosted": "Posted",
-        "media": "Photos & video",
-        "addMedia": "Pick photos or video (up to 4)",
-        "changeMedia": "{count} selected — change",
-        "videoTooLong": "Video must be under 1 minute",
-        "videoTooLarge": "Video is too large (max 25MB)",
-        "caption": "Caption",
-        "captionHint": "A few words about it (optional)",
-        "tagPeople": "Tag people",
-        "tagNone": "Nobody tagged",
-        "tagNeedsSession": "Pick a session first",
-        "tagLimit": "Pick up to {max} people",
-        "tagAttended": "Was there",
-        "tagMember": "Lobby member",
-        "tagConfirm": "Done ({count})",
-        "tagsError": "Couldn't load the list",
-        "noTagCandidates": "Nobody to tag",
-        "ttl": "Visible for",
-        "ttlDays": "{count} days",
-        "emptyTitle": "No posts yet",
-        "empty": "No posts yet. Add friends and join lobbies to see what people are up to.",
-        "findFriends": "Find friends",
-        "error": "Couldn't load the feed",
-        "guestTitle": "You're not signed in",
-        "guest": "Sign in to see posts from your friends and lobby mates.",
-        "allSports": "All",
-        "expired": "Expired",
-        "remainingMinutes": "{count}m left",
-        "remainingHours": "{count}h left",
-        "remainingDays": "{count}d left",
-        "deletePost": "Delete post",
-        "deleteFailed": "Couldn't delete",
-        "reactFailed": "Couldn't react",
-        "reportPost": "Report post",
-        "reportSend": "Send report",
-        "reportSent": "Report sent",
-        "reportFailed": "Couldn't send report",
-        "reportAlready": "You already reported this post",
-        "reportNoteHint": "Add detail (optional)",
-        "reportReason": {
-            "spam": "Spam",
-            "harassment": "Harassment",
-            "nudity": "Nudity or sexual content",
-            "violence": "Violence",
-            "impersonation": "Impersonation",
-            "other": "Other"
-        }
+    "getStarted": {
+      "title": "What do you want to do first?",
+      "body": "Pick one to jump right in — you can always come back for the rest.",
+      "createLobby": {
+        "title": "Create a lobby with your group",
+        "subtitle": "Already have people to play with? Set it up and schedule a session now",
+        "badge": "Recommended"
+      },
+      "friends": {
+        "title": "Add friends",
+        "subtitle": "See their posts and invite them to play"
+      },
+      "lobby": {
+        "title": "Find teammates",
+        "subtitle": "Join a lobby or look for people to play with"
+      },
+      "coach": {
+        "title": "Hire a coach or referee",
+        "subtitle": "Book someone to train or officiate"
+      },
+      "wearable": {
+        "title": "Connect a wearable",
+        "subtitle": "Track heart rate and effort during sessions",
+        "optional": "Optional"
+      }
     }
+  },
+  "social": {
+    "friends": "Friends",
+    "search": "Search",
+    "searchHint": "name or name#tag",
+    "searchResults": "Search results",
+    "noResults": "No players found",
+    "searchFailed": "Search failed",
+    "incomingRequests": "Friend requests",
+    "noFriends": "You have no friends yet",
+    "addFriend": "Add friend",
+    "addFriendGuest": "Sign in to add friends",
+    "requestSentCancel": "Request sent — cancel",
+    "accept": "Accept",
+    "decline": "Decline",
+    "alreadyFriends": "Friends",
+    "unfriend": "Unfriend",
+    "unfriended": "Unfriended",
+    "block": "Block this person",
+    "blocked": "Blocked",
+    "unblock": "Unblock",
+    "unblocked": "Unblocked",
+    "blockExplainer": "Blocking hides both of you from each other's posts and prevents friend requests.",
+    "actionFailed": "Something went wrong, try again",
+    "profileError": "Couldn't load this profile",
+    "profileMissing": "Player not found",
+    "friendCount": "{count} friends",
+    "sharedLobbyCount": "{count} shared lobbies",
+    "wallAuthored": "Posts",
+    "wallTagged": "Tagged",
+    "wallEmpty": "No posts yet",
+    "wallTaggedEmpty": "Not tagged in anything yet"
+  },
+  "feed": {
+    "compose": "New post",
+    "post": "Post",
+    "posted": "Posted",
+    "postFailed": "Couldn't post",
+    "postSlow": "Still working — check your feed, it may already be up",
+    "alreadyPostedForSession": "You've already posted about this session",
+    "pickSession": "Which session is this from?",
+    "pickSessionHint": "Pick a session",
+    "noPostableSessions": "You have no sessions from the last 7 days to post about. Only sessions you RSVP'd going to can be posted.",
+    "sessionsError": "Couldn't load your sessions",
+    "untitledSession": "Session",
+    "alreadyPosted": "Posted",
+    "media": "Photos & video",
+    "addMedia": "Pick photos or video (up to 4)",
+    "changeMedia": "{count} selected — change",
+    "videoTooLong": "Video must be under 1 minute",
+    "videoTooLarge": "Video is too large (max 25MB)",
+    "caption": "Caption",
+    "captionHint": "A few words about it (optional)",
+    "tagPeople": "Tag people",
+    "tagNone": "Nobody tagged",
+    "tagNeedsSession": "Pick a session first",
+    "tagLimit": "Pick up to {max} people",
+    "tagAttended": "Was there",
+    "tagMember": "Lobby member",
+    "tagConfirm": "Done ({count})",
+    "tagsError": "Couldn't load the list",
+    "noTagCandidates": "Nobody to tag",
+    "ttl": "Visible for",
+    "ttlDays": "{count} days",
+    "emptyTitle": "No posts yet",
+    "empty": "No posts yet. Add friends and join lobbies to see what people are up to.",
+    "findFriends": "Find friends",
+    "error": "Couldn't load the feed",
+    "guestTitle": "You're not signed in",
+    "guest": "Sign in to see posts from your friends and lobby mates.",
+    "allSports": "All",
+    "expired": "Expired",
+    "remainingMinutes": "{count}m left",
+    "remainingHours": "{count}h left",
+    "remainingDays": "{count}d left",
+    "deletePost": "Delete post",
+    "deleteFailed": "Couldn't delete",
+    "reactFailed": "Couldn't react",
+    "reportPost": "Report post",
+    "reportSend": "Send report",
+    "reportSent": "Report sent",
+    "reportFailed": "Couldn't send report",
+    "reportAlready": "You already reported this post",
+    "reportNoteHint": "Add detail (optional)",
+    "reportReason": {
+      "spam": "Spam",
+      "harassment": "Harassment",
+      "nudity": "Nudity or sexual content",
+      "violence": "Violence",
+      "impersonation": "Impersonation",
+      "other": "Other"
+    }
+  }
 }

@@ -14,6 +14,7 @@ _PasseUser _$PasseUserFromJson(Map json) => _PasseUser(
   details: json['details'] == null
       ? null
       : UserDetails.fromJson(Map<String, dynamic>.from(json['details'] as Map)),
+  hasPassword: json['hasPassword'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$PasseUserToJson(_PasseUser instance) =>
@@ -23,4 +24,5 @@ Map<String, dynamic> _$PasseUserToJson(_PasseUser instance) =>
       'tagNumber': instance.tagNumber,
       'email': ?instance.email,
       'details': ?instance.details?.toJson(),
+      'hasPassword': instance.hasPassword,
     };

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -120,6 +121,36 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
         context: context,
         icon: const Icon(FLucideIcons.check),
         title: Text('feed.posted'.tr()),
+        alignment: .bottomCenter,
+      );
+    } on TimeoutException catch (e, st) {
+      // The client gave up waiting, but create_wall_post's insert isn't
+      // cancelled by that — it may well have committed (see
+      // compose_controller.dart). Don't tell the user it failed when it may
+      // already be live; the feed provider was already invalidated so a
+      // real success shows up once they check.
+      Talker().handle(e, st, 'Create wall post timed out (outcome unknown)');
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.clock),
+        title: Text('feed.postSlow'.tr()),
+        alignment: .bottomCenter,
+      );
+    } on AlreadyPostedForSessionException {
+      // Not a failure in the "something broke" sense — the picker's cached
+      // list just said this session was still postable when it wasn't. The
+      // controller already invalidated postableSessionsProvider; drop the
+      // stale selection here too so re-opening the dropdown shows it greyed
+      // out immediately instead of letting the caller submit into the same
+      // wall again.
+      if (!mounted) return;
+      setState(() => _session = null);
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleCheck),
+        title: Text('feed.alreadyPostedForSession'.tr()),
         alignment: .bottomCenter,
       );
     } catch (e, st) {
@@ -276,7 +307,11 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
             ),
 
             FButton(
-              onPress: _session == null || _media.isEmpty || _submitting
+              onPress:
+                  _session == null ||
+                      _session!.alreadyPosted ||
+                      _media.isEmpty ||
+                      _submitting
                   ? null
                   : _submit,
               child: _submitting
@@ -290,6 +325,21 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
                     )
                   : Text('feed.post'.tr()),
             ),
+            // A session can be pre-selected already-posted (e.g. opened from
+            // an activity's own "Đăng bài" action for a session the user
+            // already covered) — the button above is disabled for it, but a
+            // disabled button with no explanation just looks broken.
+            if (_session?.alreadyPosted ?? false)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'feed.alreadyPostedForSession'.tr(),
+                  textAlign: TextAlign.center,
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ),
+              ),
             const SizedBox(height: 8),
           ],
         ),

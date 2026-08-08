@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
@@ -14,6 +15,20 @@ import '../core/model/wall_post.dart';
 import 'feed_controller.dart';
 
 part 'compose_controller.g.dart';
+
+/// Thrown when `create_wall_post` rejects the insert because the caller
+/// already has a post for this activity/booking (`wall_post_one_per_activity`
+/// / `wall_post_one_per_booking`). The [postableSessionsProvider] cache can
+/// say a session is still postable when it isn't — e.g. the post was made
+/// from another device, or an earlier attempt actually landed after being
+/// reported as failed (a slow-but-successful RPC, see the timeout handling
+/// below) — so this is a real, reachable case, not just a UI-guard backstop.
+class AlreadyPostedForSessionException implements Exception {
+  const AlreadyPostedForSessionException();
+  @override
+  String toString() => 'AlreadyPostedForSessionException: '
+      'already posted about this activity/booking';
+}
 
 /// Sessions the caller may hook a post to: lobby activities from the last 7
 /// days they RSVP'd `going` to, plus their coach lessons in the same window.
@@ -266,6 +281,9 @@ class ComposePostController extends _$ComposePostController {
       final name =
           '${DateTime.now().microsecondsSinceEpoch}_${random.nextInt(1 << 32)}.$ext';
       final path = '$userId/$name';
+      // Media bytes (up to 25MB video) legitimately need more headroom than
+      // the standard 5s RPC budget on a slow connection — 10s here, RPC
+      // calls below stay at 5s.
       await supabase.storage
           .from(bucket)
           .uploadBinary(
@@ -273,7 +291,7 @@ class ComposePostController extends _$ComposePostController {
             bytes,
             fileOptions: FileOptions(contentType: contentType),
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 10));
       uploaded.add((bucket, path));
       return path;
     }
@@ -312,24 +330,55 @@ class ComposePostController extends _$ComposePostController {
         }
       }
 
-      final id = await supabase.rpc('create_wall_post', params: {
-        'p_activity_id': activityId,
-        'p_booking_id': bookingId,
-        'p_media': mediaJson,
-        'p_caption': caption,
-        'p_ttl_days': ttlDays,
-        'p_tagged_users': taggedUserIds,
-      }).timeout(const Duration(seconds: 5));
+      final String id;
+      try {
+        id = await supabase.rpc('create_wall_post', params: {
+          'p_activity_id': activityId,
+          'p_booking_id': bookingId,
+          'p_media': mediaJson,
+          'p_caption': caption,
+          'p_ttl_days': ttlDays,
+          'p_tagged_users': taggedUserIds,
+        }).timeout(const Duration(seconds: 5)) as String;
+      } on TimeoutException {
+        // Postgrest's .timeout() races a local Timer against the request —
+        // it never actually cancels the in-flight HTTP call — so a timeout
+        // here does NOT mean create_wall_post's insert didn't commit. Don't
+        // delete the media a possibly-successful post now references (that
+        // was the old bug: a slow-but-successful post would come back with
+        // broken images a moment later), and refresh the feed so a real
+        // success is visible even though we report this call as failed.
+        ref.invalidate(wallFeedControllerProvider);
+        ref.invalidate(postableSessionsProvider);
+        rethrow;
+      }
 
       ref.invalidate(wallFeedControllerProvider);
       ref.invalidate(postableSessionsProvider);
       await evaluateAchievements(ref, userId);
-      return id as String;
-    } catch (_) {
-      // The files are already in their buckets but no post owns them. Queue
-      // them for the same GC pass the TTL sweep uses rather than leaving
-      // orphans nothing will ever collect.
+      return id;
+    } on TimeoutException {
+      // Raised by the create_wall_post branch above (already handled — feed
+      // invalidated) or by an upload's own .timeout(). Either way, whether
+      // anything actually landed server-side is unknown, so — unlike a real
+      // failure below — don't delete the uploaded media out from under a
+      // post that may reference it.
+      rethrow;
+    } catch (e) {
+      // A genuine failure (validation, network refusal, etc.) — nothing was
+      // written, so the files are safely orphaned. Queue them for the same
+      // GC pass the TTL sweep uses rather than leaving them uncollected.
       await _abandonUploads(uploaded);
+      if (e is PostgrestException &&
+          e.code == '23505' &&
+          (e.message.contains('wall_post_one_per_activity') ||
+              e.message.contains('wall_post_one_per_booking'))) {
+        // The picker's cached already_posted flag was wrong — refresh it so
+        // this session shows disabled immediately instead of letting the
+        // caller hit this same wall on a retry.
+        ref.invalidate(postableSessionsProvider);
+        throw const AlreadyPostedForSessionException();
+      }
       rethrow;
     }
   }

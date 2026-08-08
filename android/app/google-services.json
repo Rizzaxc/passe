@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "618362334941-b58jh6quscc85gpev9o6sgu9pqfo1hvf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "passe.vn.passe",
+            "certificate_hash": "72f4278ad828b7daaef12c1058b5690d1b2b6777"
+          }
+        },
+        {
           "client_id": "618362334941-o1s0qsusdgl1du2el5q98t5knhihg1pr.apps.googleusercontent.com",
           "client_type": 3
         }

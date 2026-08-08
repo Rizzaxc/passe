@@ -132,7 +132,7 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
           ),
           FTextField(
             label: const Text('Số tiền'),
-            hint: '50000',
+            hint: '50000?',
             control: FTextFieldControl.managed(controller: _amountController),
             keyboardType: const TextInputType.numberWithOptions(decimal: false),
           ),

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PasseUser {
 
- String? get id; String get username; String get tagNumber; String? get email; UserDetails? get details;
+ String? get id; String get username; String get tagNumber; String? get email; UserDetails? get details; bool get hasPassword;
 /// Create a copy of PasseUser
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $PasseUserCopyWith<PasseUser> get copyWith => _$PasseUserCopyWithImpl<PasseUser>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PasseUser&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.tagNumber, tagNumber) || other.tagNumber == tagNumber)&&(identical(other.email, email) || other.email == email)&&(identical(other.details, details) || other.details == details));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PasseUser&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.tagNumber, tagNumber) || other.tagNumber == tagNumber)&&(identical(other.email, email) || other.email == email)&&(identical(other.details, details) || other.details == details)&&(identical(other.hasPassword, hasPassword) || other.hasPassword == hasPassword));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,username,tagNumber,email,details);
+int get hashCode => Object.hash(runtimeType,id,username,tagNumber,email,details,hasPassword);
 
 @override
 String toString() {
-  return 'PasseUser(id: $id, username: $username, tagNumber: $tagNumber, email: $email, details: $details)';
+  return 'PasseUser(id: $id, username: $username, tagNumber: $tagNumber, email: $email, details: $details, hasPassword: $hasPassword)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $PasseUserCopyWith<$Res>  {
   factory $PasseUserCopyWith(PasseUser value, $Res Function(PasseUser) _then) = _$PasseUserCopyWithImpl;
 @useResult
 $Res call({
- String? id, String username, String tagNumber, String? email, UserDetails? details
+ String? id, String username, String tagNumber, String? email, UserDetails? details, bool hasPassword
 });
 
 
@@ -65,14 +65,15 @@ class _$PasseUserCopyWithImpl<$Res>
 
 /// Create a copy of PasseUser
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? username = null,Object? tagNumber = null,Object? email = freezed,Object? details = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? username = null,Object? tagNumber = null,Object? email = freezed,Object? details = freezed,Object? hasPassword = null,}) {
   return _then(_self.copyWith(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String?,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,tagNumber: null == tagNumber ? _self.tagNumber : tagNumber // ignore: cast_nullable_to_non_nullable
 as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String?,details: freezed == details ? _self.details : details // ignore: cast_nullable_to_non_nullable
-as UserDetails?,
+as UserDetails?,hasPassword: null == hasPassword ? _self.hasPassword : hasPassword // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 /// Create a copy of PasseUser
@@ -169,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id,  String username,  String tagNumber,  String? email,  UserDetails? details)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id,  String username,  String tagNumber,  String? email,  UserDetails? details,  bool hasPassword)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PasseUser() when $default != null:
-return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.details);case _:
+return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.details,_that.hasPassword);case _:
   return orElse();
 
 }
@@ -190,10 +191,10 @@ return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.detail
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id,  String username,  String tagNumber,  String? email,  UserDetails? details)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id,  String username,  String tagNumber,  String? email,  UserDetails? details,  bool hasPassword)  $default,) {final _that = this;
 switch (_that) {
 case _PasseUser():
-return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.details);case _:
+return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.details,_that.hasPassword);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -210,10 +211,10 @@ return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.detail
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id,  String username,  String tagNumber,  String? email,  UserDetails? details)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id,  String username,  String tagNumber,  String? email,  UserDetails? details,  bool hasPassword)?  $default,) {final _that = this;
 switch (_that) {
 case _PasseUser() when $default != null:
-return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.details);case _:
+return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.details,_that.hasPassword);case _:
   return null;
 
 }
@@ -225,7 +226,7 @@ return $default(_that.id,_that.username,_that.tagNumber,_that.email,_that.detail
 @JsonSerializable()
 
 class _PasseUser extends PasseUser {
-  const _PasseUser({this.id, this.username = 'Guest', this.tagNumber = '0000', this.email, this.details}): super._();
+  const _PasseUser({this.id, this.username = 'Guest', this.tagNumber = '0000', this.email, this.details, this.hasPassword = false}): super._();
   factory _PasseUser.fromJson(Map<String, dynamic> json) => _$PasseUserFromJson(json);
 
 @override final  String? id;
@@ -233,6 +234,7 @@ class _PasseUser extends PasseUser {
 @override@JsonKey() final  String tagNumber;
 @override final  String? email;
 @override final  UserDetails? details;
+@override@JsonKey() final  bool hasPassword;
 
 /// Create a copy of PasseUser
 /// with the given fields replaced by the non-null parameter values.
@@ -247,16 +249,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PasseUser&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.tagNumber, tagNumber) || other.tagNumber == tagNumber)&&(identical(other.email, email) || other.email == email)&&(identical(other.details, details) || other.details == details));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PasseUser&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.tagNumber, tagNumber) || other.tagNumber == tagNumber)&&(identical(other.email, email) || other.email == email)&&(identical(other.details, details) || other.details == details)&&(identical(other.hasPassword, hasPassword) || other.hasPassword == hasPassword));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,username,tagNumber,email,details);
+int get hashCode => Object.hash(runtimeType,id,username,tagNumber,email,details,hasPassword);
 
 @override
 String toString() {
-  return 'PasseUser(id: $id, username: $username, tagNumber: $tagNumber, email: $email, details: $details)';
+  return 'PasseUser(id: $id, username: $username, tagNumber: $tagNumber, email: $email, details: $details, hasPassword: $hasPassword)';
 }
 
 
@@ -267,7 +269,7 @@ abstract mixin class _$PasseUserCopyWith<$Res> implements $PasseUserCopyWith<$Re
   factory _$PasseUserCopyWith(_PasseUser value, $Res Function(_PasseUser) _then) = __$PasseUserCopyWithImpl;
 @override @useResult
 $Res call({
- String? id, String username, String tagNumber, String? email, UserDetails? details
+ String? id, String username, String tagNumber, String? email, UserDetails? details, bool hasPassword
 });
 
 
@@ -284,14 +286,15 @@ class __$PasseUserCopyWithImpl<$Res>
 
 /// Create a copy of PasseUser
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? username = null,Object? tagNumber = null,Object? email = freezed,Object? details = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? username = null,Object? tagNumber = null,Object? email = freezed,Object? details = freezed,Object? hasPassword = null,}) {
   return _then(_PasseUser(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String?,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,tagNumber: null == tagNumber ? _self.tagNumber : tagNumber // ignore: cast_nullable_to_non_nullable
 as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String?,details: freezed == details ? _self.details : details // ignore: cast_nullable_to_non_nullable
-as UserDetails?,
+as UserDetails?,hasPassword: null == hasPassword ? _self.hasPassword : hasPassword // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

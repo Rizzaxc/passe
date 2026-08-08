@@ -15,6 +15,7 @@ abstract class PasseUser with _$PasseUser {
     @Default('0000') String tagNumber,
     String? email,
     UserDetails? details,
+    @Default(false) bool hasPassword,
   }) = _PasseUser;
 
   factory PasseUser.fromJson(Map<String, dynamic> json) =>
