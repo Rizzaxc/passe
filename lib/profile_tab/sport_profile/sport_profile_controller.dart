@@ -188,10 +188,11 @@ class SoccerProfileController extends _$SoccerProfileController {
   Future<void> commit() async {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
+    final draft = state.profile;
     try {
       await _supabase
           .from('soccer_profile')
-          .upsert({'user_id': user!.id!, ...state.profile.toJson()})
+          .upsert({'user_id': user!.id!, ...draft.toJson()})
           .timeout(const Duration(seconds: 5));
       // `commit()` runs alongside `ProfileController.commit()` via
       // `Future.wait` on the profile screen's commit button, whose `finally`
@@ -200,9 +201,10 @@ class SoccerProfileController extends _$SoccerProfileController {
       // await returns, so the state write below must be `ref.mounted`-gated
       // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
       // after disposed" on the stale instance.
-      initialProfile = state.profile;
-      if (state.profile.eloSeed != null && ref.mounted) {
-        state = (profile: state.profile, eloSeedLocked: true);
+      if (!ref.mounted) return;
+      initialProfile = draft;
+      if (draft.eloSeed != null) {
+        state = (profile: draft, eloSeedLocked: true);
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error committing soccer profile');
@@ -261,10 +263,11 @@ class BasketballProfileController extends _$BasketballProfileController {
   Future<void> commit() async {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
+    final draft = state.profile;
     try {
       await _supabase
           .from('basketball_profile')
-          .upsert({'user_id': user!.id!, ...state.profile.toJson()})
+          .upsert({'user_id': user!.id!, ...draft.toJson()})
           .timeout(const Duration(seconds: 5));
       // `commit()` runs alongside `ProfileController.commit()` via
       // `Future.wait` on the profile screen's commit button, whose `finally`
@@ -273,9 +276,10 @@ class BasketballProfileController extends _$BasketballProfileController {
       // await returns, so the state write below must be `ref.mounted`-gated
       // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
       // after disposed" on the stale instance.
-      initialProfile = state.profile;
-      if (state.profile.eloSeed != null && ref.mounted) {
-        state = (profile: state.profile, eloSeedLocked: true);
+      if (!ref.mounted) return;
+      initialProfile = draft;
+      if (draft.eloSeed != null) {
+        state = (profile: draft, eloSeedLocked: true);
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error committing basketball profile');
@@ -334,10 +338,11 @@ class BadmintonProfileController extends _$BadmintonProfileController {
   Future<void> commit() async {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
+    final draft = state.profile;
     try {
       await _supabase
           .from('badminton_profile')
-          .upsert({'user_id': user!.id!, ...state.profile.toJson()})
+          .upsert({'user_id': user!.id!, ...draft.toJson()})
           .timeout(const Duration(seconds: 5));
       // `commit()` runs alongside `ProfileController.commit()` via
       // `Future.wait` on the profile screen's commit button, whose `finally`
@@ -346,9 +351,10 @@ class BadmintonProfileController extends _$BadmintonProfileController {
       // await returns, so the state write below must be `ref.mounted`-gated
       // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
       // after disposed" on the stale instance.
-      initialProfile = state.profile;
-      if (state.profile.eloSeed != null && ref.mounted) {
-        state = (profile: state.profile, eloSeedLocked: true);
+      if (!ref.mounted) return;
+      initialProfile = draft;
+      if (draft.eloSeed != null) {
+        state = (profile: draft, eloSeedLocked: true);
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error committing badminton profile');
@@ -404,10 +410,11 @@ class TennisProfileController extends _$TennisProfileController {
   Future<void> commit() async {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
+    final draft = state.profile;
     try {
       await _supabase
           .from('tennis_profile')
-          .upsert({'user_id': user!.id!, ...state.profile.toJson()})
+          .upsert({'user_id': user!.id!, ...draft.toJson()})
           .timeout(const Duration(seconds: 5));
       // `commit()` runs alongside `ProfileController.commit()` via
       // `Future.wait` on the profile screen's commit button, whose `finally`
@@ -416,9 +423,10 @@ class TennisProfileController extends _$TennisProfileController {
       // await returns, so the state write below must be `ref.mounted`-gated
       // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
       // after disposed" on the stale instance.
-      initialProfile = state.profile;
-      if (state.profile.eloSeed != null && ref.mounted) {
-        state = (profile: state.profile, eloSeedLocked: true);
+      if (!ref.mounted) return;
+      initialProfile = draft;
+      if (draft.eloSeed != null) {
+        state = (profile: draft, eloSeedLocked: true);
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error committing tennis profile');
@@ -477,10 +485,11 @@ class PickleballProfileController extends _$PickleballProfileController {
   Future<void> commit() async {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
+    final draft = state.profile;
     try {
       await _supabase
           .from('pickleball_profile')
-          .upsert({'user_id': user!.id!, ...state.profile.toJson()})
+          .upsert({'user_id': user!.id!, ...draft.toJson()})
           .timeout(const Duration(seconds: 5));
       // `commit()` runs alongside `ProfileController.commit()` via
       // `Future.wait` on the profile screen's commit button, whose `finally`
@@ -489,9 +498,10 @@ class PickleballProfileController extends _$PickleballProfileController {
       // await returns, so the state write below must be `ref.mounted`-gated
       // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
       // after disposed" on the stale instance.
-      initialProfile = state.profile;
-      if (state.profile.eloSeed != null && ref.mounted) {
-        state = (profile: state.profile, eloSeedLocked: true);
+      if (!ref.mounted) return;
+      initialProfile = draft;
+      if (draft.eloSeed != null) {
+        state = (profile: draft, eloSeedLocked: true);
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error committing pickleball profile');

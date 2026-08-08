@@ -268,7 +268,7 @@ class IndustryController extends _$IndustryController {
     if (user == null || user.id == null) return [];
 
     // Fetch initial data
-    final fetch = _fetchIndustries(user.id!);
+    _fetchIndustries(user.id!);
     return [];
   }
 
@@ -365,6 +365,8 @@ class ProfileController extends _$ProfileController {
   final supabase = Supabase.instance.client;
   final talker = Talker();
   ProfileState? _initialState;
+  String? _initialUserId;
+  bool _hasInitialUser = false;
 
   @override
   ProfileState build() {
@@ -390,7 +392,15 @@ class ProfileController extends _$ProfileController {
       networks: networks,
       industries: industries,
     );
-    _initialState ??= initial;
+    // This controller can first build while auth is loading, which produces a
+    // temporary Guest draft. Replace that baseline when the resolved identity
+    // changes; otherwise merely landing on Profile immediately after login is
+    // incorrectly treated as an edit to the Guest draft.
+    if (!_hasInitialUser || _initialUserId != user?.id) {
+      _initialState = initial;
+      _initialUserId = user?.id;
+      _hasInitialUser = true;
+    }
     return initial;
   }
 

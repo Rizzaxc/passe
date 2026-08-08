@@ -86,7 +86,7 @@ final class SoccerProfileControllerProvider
 }
 
 String _$soccerProfileControllerHash() =>
-    r'3250565495a0eb2c601e9a08380b70babc327ff2';
+    r'd6f123f500c285cd9f91384e7457aa647516bdf5';
 
 abstract class _$SoccerProfileController extends $Notifier<SoccerProfileState> {
   SoccerProfileState build();
@@ -141,7 +141,7 @@ final class BasketballProfileControllerProvider
 }
 
 String _$basketballProfileControllerHash() =>
-    r'207b9557a2c783f4fb4003a00cefdee3d8f95041';
+    r'6bf973666f1dbb18c91c4f2b1568d7f1fb7e1d7c';
 
 abstract class _$BasketballProfileController
     extends $Notifier<BasketballProfileState> {
@@ -198,7 +198,7 @@ final class BadmintonProfileControllerProvider
 }
 
 String _$badmintonProfileControllerHash() =>
-    r'9a971d385970cb480052047f1324dbbde59eb994';
+    r'5da0911e52b05c93a690d7eaf520c009c6875f31';
 
 abstract class _$BadmintonProfileController
     extends $Notifier<BadmintonProfileState> {
@@ -252,7 +252,7 @@ final class TennisProfileControllerProvider
 }
 
 String _$tennisProfileControllerHash() =>
-    r'7511559e39f01ee06e659df178c56a243dd6de51';
+    r'682d07d66b8817da7644fc47f4f895d6969750ec';
 
 abstract class _$TennisProfileController extends $Notifier<TennisProfileState> {
   TennisProfileState build();
@@ -307,7 +307,7 @@ final class PickleballProfileControllerProvider
 }
 
 String _$pickleballProfileControllerHash() =>
-    r'a421187d5ea34a07cc0982ef29fbd9488d8412d1';
+    r'c56534158ad5f66e58997b353ae2070313fd9a0d';
 
 abstract class _$PickleballProfileController
     extends $Notifier<PickleballProfileState> {
