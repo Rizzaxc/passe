@@ -502,6 +502,28 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
           factory: $HomeRoute._fromState,
           routes: [
             GoRouteData.$route(
+              path: 'freeplay',
+              hasOverriddenOnExit: false,
+              factory: $HomeFreeplayRoute._fromState,
+              routes: [
+                GoRouteData.$route(
+                  path: ':id',
+                  hasOverriddenOnExit: false,
+                  factory: $FreeplayDetailRoute._fromState,
+                ),
+              ],
+            ),
+            GoRouteData.$route(
+              path: 'freeplay-host/:id',
+              hasOverriddenOnExit: false,
+              factory: $FreeplayHostRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'freeplay-chat/:activityId/:requestId',
+              hasOverriddenOnExit: false,
+              factory: $FreeplayChatRoute._fromState,
+            ),
+            GoRouteData.$route(
               path: 'teammate',
               hasOverriddenOnExit: false,
               factory: $HomeTeammateRoute._fromState,
@@ -625,6 +647,103 @@ mixin $HomeRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/home');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $HomeFreeplayRoute on GoRouteData {
+  static HomeFreeplayRoute _fromState(GoRouterState state) =>
+      const HomeFreeplayRoute();
+
+  @override
+  String get location => GoRouteData.$location('/home/freeplay');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $FreeplayDetailRoute on GoRouteData {
+  static FreeplayDetailRoute _fromState(GoRouterState state) =>
+      FreeplayDetailRoute(id: state.pathParameters['id']!);
+
+  FreeplayDetailRoute get _self => this as FreeplayDetailRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/home/freeplay/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $FreeplayHostRoute on GoRouteData {
+  static FreeplayHostRoute _fromState(GoRouterState state) =>
+      FreeplayHostRoute(id: state.pathParameters['id']!);
+
+  FreeplayHostRoute get _self => this as FreeplayHostRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/home/freeplay-host/${Uri.encodeComponent(_self.id)}',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $FreeplayChatRoute on GoRouteData {
+  static FreeplayChatRoute _fromState(GoRouterState state) => FreeplayChatRoute(
+    activityId: state.pathParameters['activityId']!,
+    requestId: state.pathParameters['requestId']!,
+  );
+
+  FreeplayChatRoute get _self => this as FreeplayChatRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/home/freeplay-chat/${Uri.encodeComponent(_self.activityId)}/${Uri.encodeComponent(_self.requestId)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

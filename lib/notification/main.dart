@@ -151,6 +151,12 @@ IconData _iconFor(NotificationKind? kind) => switch (kind) {
   NotificationKind.friendAccepted => FLucideIcons.userPlus,
   NotificationKind.paymentRequested ||
   NotificationKind.debtCollected => FLucideIcons.wallet,
+  NotificationKind.freeplayRequestReceived ||
+  NotificationKind.freeplayRequestAccepted ||
+  NotificationKind.freeplayRequestDeclined ||
+  NotificationKind.freeplayRequestCancelled ||
+  NotificationKind.freeplayActivityCancelled ||
+  NotificationKind.freeplayChatMessage => FLucideIcons.ticket,
   null => FLucideIcons.bell,
 };
 

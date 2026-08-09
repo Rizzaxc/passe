@@ -17,6 +17,8 @@ import 'currency/wallet_purchase_history_screen.dart';
 import 'currency/wallet_spending_history_screen.dart';
 import 'currency/wallet_topup_screen.dart';
 import 'feed_tab/main.dart';
+import 'freeplay/detail_page.dart';
+import 'freeplay/host_page.dart';
 import 'health_tab/main.dart';
 import 'home_tab/main.dart';
 import 'main.dart';
@@ -442,6 +444,14 @@ class LobbyInvitePreviewRoute extends GoRouteData
         TypedGoRoute<HomeRoute>(
           path: '/home',
           routes: [
+            TypedGoRoute<HomeFreeplayRoute>(
+              path: 'freeplay',
+              routes: [TypedGoRoute<FreeplayDetailRoute>(path: ':id')],
+            ),
+            TypedGoRoute<FreeplayHostRoute>(path: 'freeplay-host/:id'),
+            TypedGoRoute<FreeplayChatRoute>(
+              path: 'freeplay-chat/:activityId/:requestId',
+            ),
             TypedGoRoute<HomeTeammateRoute>(path: 'teammate'),
             TypedGoRoute<HomeChallengerRoute>(path: 'challenger'),
             TypedGoRoute<HomeProfessionalRoute>(path: 'professional'),
@@ -515,6 +525,46 @@ class HomeRoute extends GoRouteData with $HomeRoute {
 }
 
 @immutable
+class HomeFreeplayRoute extends GoRouteData with $HomeFreeplayRoute {
+  const HomeFreeplayRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      HomeTab.withInitialTab(0);
+}
+
+@immutable
+class FreeplayDetailRoute extends GoRouteData with $FreeplayDetailRoute {
+  final String id;
+  const FreeplayDetailRoute({required this.id});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      FreeplayDetailPage(id: id);
+}
+
+@immutable
+class FreeplayHostRoute extends GoRouteData with $FreeplayHostRoute {
+  final String id;
+  const FreeplayHostRoute({required this.id});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      FreeplayHostPage(id: id);
+}
+
+@immutable
+class FreeplayChatRoute extends GoRouteData with $FreeplayChatRoute {
+  final String activityId;
+  final String requestId;
+  const FreeplayChatRoute({required this.activityId, required this.requestId});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      FreeplayChatLandingPage(activityId: activityId, requestId: requestId);
+}
+
+@immutable
 class HomeTeammateRoute extends GoRouteData with $HomeTeammateRoute {
   final bool openFilter;
 
@@ -522,7 +572,7 @@ class HomeTeammateRoute extends GoRouteData with $HomeTeammateRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(0, openFilter: openFilter);
+      HomeTab.withInitialTab(1, openFilter: openFilter);
 }
 
 @immutable
@@ -531,7 +581,7 @@ class HomeChallengerRoute extends GoRouteData with $HomeChallengerRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(1);
+      HomeTab.withInitialTab(2);
 }
 
 @immutable
@@ -540,7 +590,7 @@ class HomeProfessionalRoute extends GoRouteData with $HomeProfessionalRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(2);
+      HomeTab.withInitialTab(3);
 }
 
 @immutable
@@ -549,7 +599,7 @@ class HomePlaceRoute extends GoRouteData with $HomePlaceRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(3);
+      HomeTab.withInitialTab(4);
 }
 
 @immutable

@@ -194,6 +194,10 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
           'streetName': _streetNameCtrl.text,
           'district': _selectedDistrict?.getLocalizedFullName(context),
           'city': _selectedCity?.getLocalizedName(context),
+          // Stable DB identifiers for standalone features (Freeplay) that
+          // persist the structured venue instead of snapshotting display text.
+          'cityCluster': _selectedCity?.dbIndex.toString(),
+          'ward': _selectedDistrict?.id,
         });
       }
 

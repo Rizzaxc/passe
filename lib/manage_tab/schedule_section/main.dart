@@ -19,6 +19,10 @@ String _fmtTime(TimeOfDay t) =>
     '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
 void _openActivity(BuildContext context, ScheduleEvent event) {
+  if (event.tone == ScheduleEventTone.freeplay) {
+    FreeplayDetailRoute(id: event.activityId).push(context);
+    return;
+  }
   final lobbyId = event.lobbyId;
   if (lobbyId == null) return;
   LobbyDetailRoute(
@@ -454,12 +458,14 @@ class _EventRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final accent = event.tone == ScheduleEventTone.sport
-        ? colors.primary
-        : pbBlue;
+    final accent = switch (event.tone) {
+      ScheduleEventTone.sport => colors.primary,
+      ScheduleEventTone.coach => pbBlue,
+      ScheduleEventTone.freeplay => pbAmber,
+    };
 
     return FTappable(
-      onPress: event.lobbyId == null
+      onPress: event.lobbyId == null && event.tone != ScheduleEventTone.freeplay
           ? null
           : () => _openActivity(context, event),
       child: Container(
@@ -707,12 +713,14 @@ class _EventBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final accent = event.tone == ScheduleEventTone.sport
-        ? colors.primary
-        : pbBlue;
+    final accent = switch (event.tone) {
+      ScheduleEventTone.sport => colors.primary,
+      ScheduleEventTone.coach => pbBlue,
+      ScheduleEventTone.freeplay => pbAmber,
+    };
 
     return FTappable(
-      onPress: event.lobbyId == null
+      onPress: event.lobbyId == null && event.tone != ScheduleEventTone.freeplay
           ? null
           : () => _openActivity(context, event),
       child: Container(

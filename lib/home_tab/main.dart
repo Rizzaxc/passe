@@ -9,14 +9,15 @@ import 'package:riverpod/legacy.dart';
 import '../core/sport_selector.dart';
 import '../ui/main.dart';
 import 'challenger_section/main.dart';
+import 'freeplay_section/main.dart';
 import 'location_section/main.dart';
 import 'professional_section/main.dart';
 import 'teammate_section/main.dart';
 
 /// Set (then immediately consumed) to switch the Discover subtab from a
 /// widget that isn't `_DiscoverView` itself — e.g. a CTA inside one subtab
-/// that wants to send the user to another (`0` teammate, `1` challenger,
-/// `2` professional, `3` location). Do NOT navigate via the `Home*Route`s for
+/// that wants to send the user to another (`0` freeplay, `1` teammate,
+/// `2` challenger, `3` professional, `4` location). Do NOT navigate via the `Home*Route`s for
 /// this — those are nested routes *within* the home branch, so `.go()`ing
 /// between them from inside Home pushes a new stacked page instead of just
 /// switching the tab (the `Home*Route`s exist for deep-linking into Home
@@ -37,12 +38,12 @@ class HomeTab extends ConsumerWidget {
   final bool openFilter;
 
   const HomeTab({super.key, this.initialIndex = 0, this.openFilter = false})
-    : assert(initialIndex >= 0 && initialIndex <= 3);
+    : assert(initialIndex >= 0 && initialIndex <= 4);
 
   static final instance = HomeTab();
 
-  /// Deep-links a Discover subtab (`0` teammate, `1` challenger,
-  /// `2` professional, `3` location — see the `Home*Route` classes in
+  /// Deep-links a Discover subtab (`0` freeplay, `1` teammate, `2` challenger,
+  /// `3` professional, `4` location — see the `Home*Route` classes in
   /// `router.dart`).
   factory HomeTab.withInitialTab(int initialIndex, {bool openFilter = false}) {
     return HomeTab(initialIndex: initialIndex, openFilter: openFilter);
@@ -86,13 +87,18 @@ class _DiscoverViewState extends ConsumerState<_DiscoverView> {
   // Instance getter (not `static const`) because the teammate entry needs
   // `widget.openFilter` threaded in.
   List<({String titleKey, Widget child})> get _sections => [
-    (titleKey: 'home.teammate', child: TeammateSubtab(openFilter: widget.openFilter)),
+    (titleKey: 'freeplay', child: const FreeplaySubtab()),
+    (
+      titleKey: 'home.teammate',
+      child: TeammateSubtab(openFilter: widget.openFilter),
+    ),
     (titleKey: 'home.challenger', child: const ChallengerSubtab()),
     (titleKey: 'home.professional', child: const ProfessionalSubtab()),
     (titleKey: 'home.location', child: const LocationSubtab()),
   ];
 
   static const _icons = [
+    Icon(FLucideIcons.ticket),
     Icon(CupertinoIcons.person_2_fill),
     FaIcon(FontAwesomeIcons.fireFlameCurved),
     FaIcon(FontAwesomeIcons.flagCheckered),

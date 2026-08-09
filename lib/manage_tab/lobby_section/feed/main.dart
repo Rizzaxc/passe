@@ -8,6 +8,7 @@ import '../../../auth/auth_controller.dart';
 import '../../../core/state/selected_sport_state.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
+import '../freeplay_section/main.dart';
 import '../invite_member_sheet.dart';
 import '../schedule_activity_sheet.dart';
 import 'lobby_controller.dart';
@@ -39,6 +40,7 @@ class LobbySubtab extends ConsumerWidget {
 
     return Column(
       children: [
+        if (!isGuest) const PlayerFreeplaySection(),
         PSectionHeader(
           title: 'manageTab.lobby.title'.tr(),
           suffix: FButton.icon(

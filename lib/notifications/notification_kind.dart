@@ -22,7 +22,13 @@ enum NotificationKind {
   friendRequest('friend_request'),
   friendAccepted('friend_accepted'),
   paymentRequested('payment_requested'),
-  debtCollected('debt_collected');
+  debtCollected('debt_collected'),
+  freeplayRequestReceived('freeplay_request_received'),
+  freeplayRequestAccepted('freeplay_request_accepted'),
+  freeplayRequestDeclined('freeplay_request_declined'),
+  freeplayRequestCancelled('freeplay_request_cancelled'),
+  freeplayActivityCancelled('freeplay_activity_cancelled'),
+  freeplayChatMessage('freeplay_chat_message');
 
   const NotificationKind(this.value);
 

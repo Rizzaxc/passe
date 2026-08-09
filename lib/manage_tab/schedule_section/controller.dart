@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 part 'controller.g.dart';
 
-enum ScheduleEventTone { sport, coach }
+enum ScheduleEventTone { sport, coach, freeplay }
 
 /// A single calendar entry rendered by the schedule grid/card views.
 class ScheduleEvent {
@@ -106,9 +106,11 @@ class ScheduleEvents extends _$ScheduleEvents {
         lobbyId: lobbyIdsByActivity[activityId],
         title: (row['title'] as String?) ?? '',
         meta: (row['meta'] as String?) ?? '',
-        tone: (row['tone'] as String?) == 'coach'
-            ? ScheduleEventTone.coach
-            : ScheduleEventTone.sport,
+        tone: switch (row['tone'] as String?) {
+          'coach' => ScheduleEventTone.coach,
+          'freeplay' => ScheduleEventTone.freeplay,
+          _ => ScheduleEventTone.sport,
+        },
         startAt: start,
         endAt: end,
       );

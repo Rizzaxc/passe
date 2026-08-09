@@ -4,13 +4,16 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../core/sport_selector.dart';
+import '../core/state/host_mode_state.dart';
 import '../core/state/pro_mode_state.dart';
+import '../freeplay/repository.dart';
 import '../professional/controller.dart';
 import '../professional/pro_mode/booking_history_main.dart';
 import '../professional/pro_mode/pending_requests_main.dart';
 import '../professional/pro_mode/pro_schedule_main.dart';
 import '../ui/main.dart';
 import 'coaching_section/main.dart';
+import 'freeplay_section/main.dart';
 import 'lobby_section/feed/main.dart';
 import 'schedule_section/main.dart';
 
@@ -30,8 +33,11 @@ class ProfessionalRequestsLanding extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final professionalAsync = ref.watch(linkedProfessionalIdProvider);
     final modeAsync = ref.watch(proModeStateProvider);
+    final hostModeAsync = ref.watch(hostModeStateProvider);
 
-    if (professionalAsync.isLoading || modeAsync.isLoading) {
+    if (professionalAsync.isLoading ||
+        modeAsync.isLoading ||
+        hostModeAsync.isLoading) {
       return const FScaffold(child: Center(child: CircularProgressIndicator()));
     }
 
@@ -41,8 +47,10 @@ class ProfessionalRequestsLanding extends ConsumerWidget {
     }
 
     final proModeActive = modeAsync.asData?.value ?? false;
-    if (!proModeActive) {
+    final hostModeActive = hostModeAsync.asData?.value ?? false;
+    if (!proModeActive || hostModeActive) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(hostModeStateProvider.notifier).set(false);
         ref.read(proModeStateProvider.notifier).set(true);
       });
       return const FScaffold(child: Center(child: CircularProgressIndicator()));
@@ -133,7 +141,21 @@ class _ManageTabState extends State<ManageTab> {
             ?.value;
         final proModeActive =
             ref.watch(proModeStateProvider).asData?.value ?? false;
-        final sections = linkedProfessionalId != null && proModeActive
+        final linkedHost = ref.watch(linkedFreeplayHostProvider).asData?.value;
+        final hostModeActive =
+            ref.watch(hostModeStateProvider).asData?.value ?? false;
+        final sections = linkedHost != null && hostModeActive
+            ? const <FTabEntry>[
+                FTabEntry(
+                  child: HostFreeplaySection(scheduleOnly: true),
+                  label: Icon(FLucideIcons.calendarDays),
+                ),
+                FTabEntry(
+                  child: HostFreeplaySection(),
+                  label: Icon(FLucideIcons.ticket),
+                ),
+              ]
+            : linkedProfessionalId != null && proModeActive
             ? ManageTab.proManageSections(
                 linkedProfessionalId,
                 highlightBookingId: widget.highlightBookingId,

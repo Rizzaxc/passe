@@ -14,8 +14,11 @@ import '../core/model/enum.dart';
 import '../core/model/user_avatar.dart';
 import '../core/model/user_details.dart';
 import '../core/sport_selector.dart';
+import '../core/state/host_mode_state.dart';
 import '../core/state/pro_mode_state.dart';
 import '../core/state/selected_sport_state.dart';
+import '../freeplay/model.dart';
+import '../freeplay/repository.dart';
 import '../professional/controller.dart';
 import '../professional/pro_mode/service_editor_main.dart';
 import '../social/friends_screen.dart';
@@ -34,6 +37,56 @@ import 'playtime_selection_screen.dart';
 import 'profile_controller.dart';
 import 'sport_profile/sport_profile_controller.dart';
 import 'sport_profile/sport_profile_screen.dart';
+
+class _HostProfileView extends ConsumerWidget {
+  final FreeplayHost host;
+  const _HostProfileView({required this.host});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => ListView(
+    physics: const AlwaysScrollableScrollPhysics(),
+    padding: const EdgeInsets.all(24),
+    children: [
+      Align(
+        alignment: Alignment.centerRight,
+        child: FButton(
+          variant: .outline,
+          onPress: () => ref.read(hostModeStateProvider.notifier).set(false),
+          child: const Text('Về chế độ Người chơi'),
+        ),
+      ),
+      const SizedBox(height: 24),
+      CircleAvatar(
+        radius: 58,
+        backgroundImage: host.avatarUrl == null
+            ? null
+            : NetworkImage(host.avatarUrl!),
+        child: host.avatarUrl == null
+            ? const Icon(FLucideIcons.ticket, size: 42)
+            : null,
+      ),
+      const SizedBox(height: 16),
+      Text(
+        host.displayName,
+        textAlign: TextAlign.center,
+        style: context.theme.typography.body.xl2.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const Text('Host đã xác minh', textAlign: TextAlign.center),
+      const SizedBox(height: 24),
+      if (host.bio.isNotEmpty) Text(host.bio, textAlign: TextAlign.center),
+      const SizedBox(height: 16),
+      Text(
+        'Quản lý lịch và yêu cầu tại tab Manage.',
+        textAlign: TextAlign.center,
+        style: context.theme.typography.body.sm.copyWith(
+          color: context.theme.colors.mutedForeground,
+        ),
+      ),
+    ],
+  );
+}
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -62,9 +115,19 @@ class ProfileTab extends ConsumerWidget {
               ?.value;
           final proModeActive =
               ref.watch(proModeStateProvider).asData?.value ?? false;
+          final linkedHost = ref
+              .watch(linkedFreeplayHostProvider)
+              .asData
+              ?.value;
+          final hostModeActive =
+              ref.watch(hostModeStateProvider).asData?.value ?? false;
 
           if (linkedProfessionalId != null && proModeActive) {
             return ProProfileView(professionalId: linkedProfessionalId);
+          }
+
+          if (linkedHost != null && hostModeActive) {
+            return _HostProfileView(host: linkedHost);
           }
 
           return RefreshIndicator(
@@ -78,21 +141,49 @@ class ProfileTab extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (linkedProfessionalId != null) ...[
+                  if (linkedProfessionalId != null || linkedHost != null) ...[
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                       child: FTileGroup(
                         children: [
-                          FTile(
-                            prefix: const Icon(FLucideIcons.briefcaseBusiness),
-                            title: const Text('Chế Độ Chuyên Gia'),
-                            details: FSwitch(
-                              value: proModeActive,
-                              onChange: (v) => ref
-                                  .read(proModeStateProvider.notifier)
-                                  .set(v),
+                          if (linkedHost != null)
+                            FTile(
+                              prefix: const Icon(FLucideIcons.ticket),
+                              title: const Text('Chế Độ Host'),
+                              details: FSwitch(
+                                value: hostModeActive,
+                                onChange: (v) {
+                                  ref
+                                      .read(hostModeStateProvider.notifier)
+                                      .set(v);
+                                  if (v) {
+                                    ref
+                                        .read(proModeStateProvider.notifier)
+                                        .set(false);
+                                  }
+                                },
+                              ),
                             ),
-                          ),
+                          if (linkedProfessionalId != null)
+                            FTile(
+                              prefix: const Icon(
+                                FLucideIcons.briefcaseBusiness,
+                              ),
+                              title: const Text('Chế Độ Chuyên Gia'),
+                              details: FSwitch(
+                                value: proModeActive,
+                                onChange: (v) {
+                                  ref
+                                      .read(proModeStateProvider.notifier)
+                                      .set(v);
+                                  if (v) {
+                                    ref
+                                        .read(hostModeStateProvider.notifier)
+                                        .set(false);
+                                  }
+                                },
+                              ),
+                            ),
                         ],
                       ),
                     ),

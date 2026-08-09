@@ -29,6 +29,7 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
   // schema/push_notifications.sql) — so both are read here.
   final activityId = (data['activity_id'] ?? data['target_id']) as String?;
   final challengeId = data['challenge_id'] as String?;
+  final requestId = data['request_id'] as String?;
 
   return switch (kind) {
     // A newly-scheduled activity lives in the Planner tab — scroll to it.
@@ -145,6 +146,21 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
               tab: 2,
               highlightActivityId: activityId,
             ).location,
+    NotificationKind.freeplayRequestReceived ||
+    NotificationKind.freeplayRequestAccepted ||
+    NotificationKind.freeplayRequestDeclined ||
+    NotificationKind.freeplayRequestCancelled ||
+    NotificationKind.freeplayChatMessage =>
+      activityId == null || requestId == null
+          ? const ManageLobbyRoute().location
+          : FreeplayChatRoute(
+              activityId: activityId,
+              requestId: requestId,
+            ).location,
+    NotificationKind.freeplayActivityCancelled =>
+      activityId == null
+          ? const ManageLobbyRoute().location
+          : FreeplayDetailRoute(id: activityId).location,
   };
 }
 
