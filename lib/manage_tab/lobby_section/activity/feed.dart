@@ -412,30 +412,49 @@ final class WallPostItem extends FeedItem {
   const WallPostItem({required this.post});
 }
 
-/// One tagged payer on a [PaymentRequestItem] — who owes what, and whether
-/// they've self-reported paying (a `lobby_feed_item_reaction` row, best
-/// effort, no ledger behind it).
+enum PaymentPayeeStatus {
+  outstanding,
+  paidDirect,
+  clearedTogether;
+
+  static PaymentPayeeStatus fromDb(String? value) => switch (value) {
+    'paid_direct' => paidDirect,
+    'cleared_together' => clearedTogether,
+    _ => outstanding,
+  };
+
+  bool get isResolved => this != outstanding;
+}
+
+/// One tagged member on a [PaymentRequestItem]. New request rows are
+/// outstanding automatically; they can be cleared here or together from the
+/// lobby-wide money sheet.
 class PaymentPayee {
   final String userId;
   final String username;
   final String? generatedAvatar;
   final num amountOwed;
-  final bool paid;
+  final PaymentPayeeStatus status;
 
   const PaymentPayee({
     required this.userId,
     required this.username,
     this.generatedAvatar,
     required this.amountOwed,
-    required this.paid,
+    required this.status,
   });
 
   factory PaymentPayee.fromJson(Map<String, dynamic> j) => PaymentPayee(
     userId: j['user_id'] as String,
     username: j['username'] as String,
     generatedAvatar: j['generated_avatar'] as String?,
-    amountOwed: j['amount_owed'] as num,
-    paid: j['paid'] as bool,
+    amountOwed: j['amount_owed'] is num
+        ? j['amount_owed'] as num
+        : num.parse(j['amount_owed'] as String),
+    status: PaymentPayeeStatus.fromDb(
+      j['status'] as String? ??
+          ((j['paid'] as bool? ?? false) ? 'paid_direct' : null),
+    ),
   );
 }
 
@@ -482,7 +501,8 @@ final class PaymentRequestItem extends FeedItem {
     this.activityId,
   });
 
-  bool get isFullyPaid => payees.isNotEmpty && payees.every((p) => p.paid);
+  bool get isFullyPaid =>
+      payees.isNotEmpty && payees.every((p) => p.status.isResolved);
 }
 
 // ─── Feed item widget router ────────────────────────────────────
@@ -1398,18 +1418,22 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                                   ),
                                 ),
                                 Text(
-                                  payee.paid
-                                      ? 'Đã trả'
-                                      : '${payee.amountOwed.toStringAsFixed(0)}đ',
+                                  switch (payee.status) {
+                                    PaymentPayeeStatus.outstanding =>
+                                      '${payee.amountOwed.toStringAsFixed(0)}đ',
+                                    PaymentPayeeStatus.paidDirect => 'Đã gửi',
+                                    PaymentPayeeStatus.clearedTogether =>
+                                      'Đã tính chung',
+                                  },
                                   style: TextStyle(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
-                                    color: payee.paid
+                                    color: payee.status.isResolved
                                         ? pbGreen
                                         : colors.mutedForeground,
                                   ),
                                 ),
-                                if (payee.paid) ...[
+                                if (payee.status.isResolved) ...[
                                   const SizedBox(width: 4),
                                   const Icon(
                                     Icons.check_circle,
@@ -1420,7 +1444,9 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                               ],
                             ),
                           ),
-                        if (myPayee case final payee? when !payee.paid) ...[
+                        if (myPayee case final payee?
+                            when payee.status ==
+                                PaymentPayeeStatus.outstanding) ...[
                           const SizedBox(height: 4),
                           Row(
                             children: [
@@ -1428,7 +1454,7 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                                 child: FButton(
                                   variant: .outline,
                                   onPress: () => _pay(payee.amountOwed),
-                                  child: const Text('Thanh Toán'),
+                                  child: const Text('Gửi ngay'),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -1444,7 +1470,7 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                                             color: Colors.white,
                                           ),
                                         )
-                                      : const Text('Tôi Đã Trả'),
+                                      : const Text('Mình gửi rồi'),
                                 ),
                               ),
                             ],

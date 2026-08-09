@@ -10,6 +10,7 @@ import '../../../../ui/theme.dart';
 import '../../../../ui/user_avatar.dart';
 import '../../../feed_tab/compose_post_sheet.dart';
 import '../invite_member_sheet.dart';
+import 'money_sheet.dart';
 import 'poll_sheet.dart';
 
 const _crimson = Color(0xFFDC143C);
@@ -49,6 +50,12 @@ const _captainActions = [
 ];
 
 const _sharedActions = [
+  _ActionDef(
+    id: 'money',
+    icon: Icons.payments_outlined,
+    tone: 'green',
+    label: 'Tiền trong lobby',
+  ),
   _ActionDef(
     id: 'invite',
     icon: Icons.person_add_alt_1_outlined,
@@ -132,8 +139,11 @@ class ChatTriggerBar extends ConsumerWidget {
                         color: _crimson,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(FLucideIcons.plus,
-                          size: 14, color: Colors.white),
+                      child: const Icon(
+                        FLucideIcons.plus,
+                        size: 14,
+                        color: Colors.white,
+                      ),
                     ),
                   ],
                 ),
@@ -161,10 +171,7 @@ void showActionPickerSheet(
   showPSheet(
     context: context,
     padding: EdgeInsets.zero,
-    builder: (_) => _ActionPickerSheet(
-      isLeader: isLeader,
-      lobbyId: lobbyId,
-    ),
+    builder: (_) => _ActionPickerSheet(isLeader: isLeader, lobbyId: lobbyId),
   );
 }
 
@@ -172,10 +179,7 @@ class _ActionPickerSheet extends StatelessWidget {
   final bool isLeader;
   final String lobbyId;
 
-  const _ActionPickerSheet({
-    required this.isLeader,
-    required this.lobbyId,
-  });
+  const _ActionPickerSheet({required this.isLeader, required this.lobbyId});
 
   @override
   Widget build(BuildContext context) {
@@ -237,16 +241,12 @@ class _ActionPickerSheet extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  _ActionGroup(
-                    actions: _captainActions,
-                    lobbyId: lobbyId,
-                  ),
+                  _ActionGroup(actions: _captainActions, lobbyId: lobbyId),
                 ],
                 const SizedBox(height: 14),
                 PSheetSectionLabel(
                   label: 'Khác',
-                  trailing:
-                      _SectionDescription('Mọi thành viên đều đăng được'),
+                  trailing: _SectionDescription('Mọi thành viên đều đăng được'),
                 ),
                 const SizedBox(height: 6),
                 _ActionGroup(actions: _sharedActions, lobbyId: lobbyId),
@@ -323,6 +323,8 @@ class _ActionRow extends StatelessWidget {
     Navigator.of(context).pop();
     if (lobbyId == null) return;
     switch (def.id) {
+      case 'money':
+        showLobbyMoneySheet(context, lobbyId: lobbyId!);
       case 'invite':
         showInviteMemberSheet(context, lobbyId!);
       case 'photo':
@@ -369,9 +371,11 @@ class _ActionRow extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(FLucideIcons.chevronRight,
-                size: 16,
-                color: colors.mutedForeground.withValues(alpha: 0.6)),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: 16,
+              color: colors.mutedForeground.withValues(alpha: 0.6),
+            ),
           ],
         ),
       ),
@@ -379,18 +383,18 @@ class _ActionRow extends StatelessWidget {
   }
 
   static Color _toneFg(String tone) => switch (tone) {
-        'crimson' => _crimson,
-        'blue' => pbBlue,
-        'green' => pbGreen,
-        'amber' => _amber,
-        _ => const Color(0xFF71717A),
-      };
+    'crimson' => _crimson,
+    'blue' => pbBlue,
+    'green' => pbGreen,
+    'amber' => _amber,
+    _ => const Color(0xFF71717A),
+  };
 
   static Color _toneBg(String tone, dynamic colors) => switch (tone) {
-        'crimson' => _crimsonTint,
-        'blue' => _blueTint,
-        'green' => _greenTint,
-        'amber' => _amberTint,
-        _ => const Color(0xFFF4F4F5),
-      };
+    'crimson' => _crimsonTint,
+    'blue' => _blueTint,
+    'green' => _greenTint,
+    'amber' => _amberTint,
+    _ => const Color(0xFFF4F4F5),
+  };
 }

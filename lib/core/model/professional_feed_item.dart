@@ -10,6 +10,9 @@ class ProfessionalFeedItem {
   final double averageRating;
   final int reviewCount;
   final bool isVerified;
+  final int? preferredCityCluster;
+  final List<String> preferredDistricts;
+  final List<String> preferredLocationNames;
 
   /// Cheapest active `professional_service.price_amount` for the context sport,
   /// rolled up by the feed controller (not present on the `professional` row
@@ -27,6 +30,9 @@ class ProfessionalFeedItem {
     required this.averageRating,
     required this.reviewCount,
     required this.isVerified,
+    this.preferredCityCluster,
+    this.preferredDistricts = const [],
+    this.preferredLocationNames = const [],
     this.priceFrom,
     this.priceFromKind,
   });
@@ -53,6 +59,18 @@ class ProfessionalFeedItem {
           double.tryParse(json['average_rating']?.toString() ?? '') ?? 0,
       reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,
       isVerified: json['is_verified'] as bool? ?? false,
+      preferredCityCluster: (json['preferred_city_cluster'] as num?)?.toInt(),
+      preferredDistricts:
+          (json['preferred_districts'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      preferredLocationNames:
+          (json['preferred_location_names'] as List?)
+              ?.map((e) => e.toString())
+              .where((e) => e.trim().isNotEmpty)
+              .toList() ??
+          const [],
       priceFrom: priceFrom,
       priceFromKind: priceFrom == null
           ? null

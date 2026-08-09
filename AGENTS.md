@@ -419,12 +419,14 @@ referee → the referee records the result → both lobbies' history and Elo upd
   practice/opponent result from the History tab. A **challenge** match's result is still recorded by
   the referee (`record_challenge_match`) — see "Challenger System" above — and that's now the only
   way a `lobby_match` row gets written. History reads via `lobby_match_history_data`.
-- **đá currency is deferred, not built.** There is still no server-side ledger — `DaBalance`
-  (`lib/currency/`) is a local SharedPreferences int and confirming an activity does **not** actually
-  debit đá. The wallet's purchase/spending history is intentionally **empty** (not fabricated) and the
-  top-up screen is labelled test-only. Bill-splitting with đá is likewise unbuilt. When a real ledger +
-  payment provider land, wire debit-on-confirm / refund / split and replace the local int.
-  `activity.prepayment_amount` is a captain-set informational deposit label, not a charge.
+- **đá is permanently iced until an explicit product decision reopens it.** There is still no
+  server-side ledger — `DaBalance` (`lib/currency/`) is a local SharedPreferences int. Do not connect
+  đá to activities, payment requests, lobby money, refunds, splits, or any new feature. The wallet's
+  purchase/spending history stays intentionally **empty** (not fabricated) and top-up stays test-only.
+- **Lobby money is VND bookkeeping, not đá.** Each payment-request payee starts `outstanding`; members
+  can mark one request sent or use Feed ▸ “Tiền trong lobby” to subtract opposite outstanding amounts
+  with the same member and clear the pair together. Transfers remain outside Passe via VietQR/cash;
+  the app only records the member's acknowledgement. Schema: `schema/lobby_money.sql`.
   `DaAppbarButton` (`lib/currency/da_appbar_button.dart`) — the đá-balance pill — is hidden from
   every tab's appbar for the same reason; the widget and wallet routes still exist, just unlinked
   from the main nav until the ledger is real.

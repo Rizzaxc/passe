@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../auth/auth_controller.dart';
 import 'feed.dart';
+import 'money_controller.dart';
 
 part 'feed_controller.g.dart';
 
@@ -256,6 +257,7 @@ class LobbyFeedController extends _$LobbyFeedController {
         )
         .timeout(const Duration(seconds: 5));
 
+    ref.invalidate(lobbyMoneyControllerProvider(lobbyId));
     ref.invalidateSelf();
     await future;
   }

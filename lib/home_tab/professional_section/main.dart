@@ -273,7 +273,7 @@ class _SectionState extends State<_Section> {
                 itemBuilder: (context, i) => Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Center(
-                    child: _ProfessionalCard(item: widget.items[i]),
+                    child: ProfessionalCard(item: widget.items[i]),
                   ),
                 ),
               ),
@@ -326,6 +326,9 @@ class _ProAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final avatarColor = item.role == ProfessionalRole.coach
+        ? pbAmber
+        : pbCoral;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -334,10 +337,10 @@ class _ProAvatar extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: colors.primary,
+            color: avatarColor,
             boxShadow: [
               BoxShadow(
-                color: colors.primary.withValues(alpha: 0.24),
+                color: avatarColor.withValues(alpha: 0.28),
                 blurRadius: size * 0.18,
                 offset: Offset(0, size * 0.08),
               ),
@@ -349,8 +352,8 @@ class _ProAvatar extends StatelessWidget {
             style: TextStyle(
               fontFamily: context.theme.typography.body.xl2.fontFamily,
               fontSize: size * 0.38,
-              fontWeight: FontWeight.w700,
-              color: colors.primaryForeground,
+              fontWeight: FontWeight.w900,
+              color: pbInk,
               height: 1,
             ),
           ),
@@ -368,7 +371,7 @@ class _ProAvatar extends StatelessWidget {
               child: Icon(
                 FLucideIcons.badgeCheck,
                 size: size * 0.26,
-                color: pbBlue,
+                color: pbBlueDeep,
               ),
             ),
           ),
@@ -379,113 +382,343 @@ class _ProAvatar extends StatelessWidget {
 
 // ─── Discovery card ────────────────────────────────────────────
 
-class _ProfessionalCard extends StatelessWidget {
+class ProfessionalCard extends StatelessWidget {
   final ProfessionalFeedItem item;
 
-  const _ProfessionalCard({required this.item});
+  const ProfessionalCard({required this.item, super.key});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final roleColor = item.role == ProfessionalRole.coach ? pbAmber : pbCoral;
+    final radius = BorderRadius.circular(16);
 
-    return FTappable(
-      onPress: () => _openDetail(context, item),
-      child: PCard(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(child: _ProAvatar(item: item, size: 76)),
-              const SizedBox(height: 12),
-              Text(
-                item.displayName,
-                style: context.theme.typography.body.sm.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              // Rating + price on one line. A high review count or a long
-              // price both push this wide enough to overflow a narrow phone
-              // (this exact row overflowed on iPhone 13) — a single
-              // Text.rich in a Flexible truncates instead of ever
-              // rendering past the card's edge.
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(FLucideIcons.star, size: 13, color: pbStar),
-                  const SizedBox(width: 3),
-                  Flexible(
-                    child: Text.rich(
-                      TextSpan(
+    return POffsetFrame(
+      offsetColor: roleColor,
+      borderRadius: radius,
+      child: FTappable(
+        onPress: () => _openDetail(context, item),
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.card,
+            border: Border.all(color: pbInk.withValues(alpha: 0.16)),
+            borderRadius: radius,
+            boxShadow: context.theme.style.shadow,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 10,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ProAvatar(item: item, size: 62),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 6,
                         children: [
-                          TextSpan(
-                            text: item.averageRating.toStringAsFixed(1),
-                            style: context.theme.typography.body.sm.copyWith(
-                              fontWeight: FontWeight.w700,
+                          _RoleBadge(item: item, color: roleColor),
+                          Text(
+                            item.displayName,
+                            style: context.theme.typography.body.lg.copyWith(
+                              color: pbInk,
+                              fontWeight: FontWeight.w900,
+                              height: 1.08,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          TextSpan(
-                            text: ' (${item.reviewCount})',
-                            style: context.theme.typography.body.xs.copyWith(
-                              color: colors.mutedForeground,
-                            ),
-                          ),
-                          if (item.priceFrom != null) ...[
-                            TextSpan(
-                              text: '  ·  ',
-                              style: context.theme.typography.body.xs.copyWith(
-                                color: colors.mutedForeground,
-                              ),
-                            ),
-                            TextSpan(
-                              text:
-                                  'từ ${formatVnd(item.priceFrom!)}₫/'
-                                  '${item.priceFromKind == ProfessionalPricingKind.perSession ? 'buổi' : 'giờ'}',
-                              style: context.theme.typography.body.sm.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: colors.primary,
-                              ),
-                            ),
-                          ],
                         ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 40,
-                child: Text(
-                  item.bio ?? '',
-                  style: context.theme.typography.body.sm.copyWith(
-                    color: colors.mutedForeground,
-                    height: 1.4,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  ],
                 ),
-              ),
-              const SizedBox(height: 10),
-              FButton(
-                variant: .secondary,
-                onPress: () => _openDetail(context, item),
-                child: Text('homeTab.professional.viewProfile'.tr()),
-              ),
-            ],
+                _LocationAffinity(item: item),
+                SizedBox(
+                  height: 32,
+                  child: Text(
+                    item.bio ?? '',
+                    style: context.theme.typography.body.xs.copyWith(
+                      color: colors.mutedForeground,
+                      height: 1.45,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                _ProfessionalBoard(item: item),
+                FButton(
+                  size: .sm,
+                  style: FButtonStyleExtension.accentBlueStyle(
+                    context.theme.buttonStyles.primary.base,
+                  ),
+                  onPress: () => _openDetail(context, item),
+                  child: Text('homeTab.professional.viewProfile'.tr()),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+class _LocationAffinity extends ConsumerWidget {
+  final ProfessionalFeedItem item;
+
+  const _LocationAffinity({required this.item});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filter = ref.watch(filterStateProvider);
+    final selectedDistrictIds = filter.districts.map((d) => d.id).toSet();
+    final matchedDistrictIds = item.preferredDistricts
+        .where(selectedDistrictIds.contains)
+        .toList();
+    final cityMatches = item.preferredCityCluster == filter.city.dbIndex;
+    final isMatch = matchedDistrictIds.isNotEmpty || cityMatches;
+
+    final label = _professionalLocationLabel(
+      context,
+      item,
+      preferredDistrictIds: matchedDistrictIds,
+    );
+    if (label == null) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      decoration: BoxDecoration(
+        color: isMatch
+            ? pbMint.withValues(alpha: 0.34)
+            : pbBlueDeep.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            FLucideIcons.mapPin,
+            size: 13,
+            color: isMatch ? pbBlueDeep : pbInk.withValues(alpha: 0.68),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.theme.typography.body.xs.copyWith(
+                color: pbInk,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          if (isMatch) ...[
+            const SizedBox(width: 6),
+            Text(
+              'homeTab.professional.locationMatch'.tr().toUpperCase(),
+              style: context.theme.typography.body.xs.copyWith(
+                color: pbBlueDeep,
+                fontSize: 8,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+String? _professionalLocationLabel(
+  BuildContext context,
+  ProfessionalFeedItem item, {
+  List<String> preferredDistrictIds = const [],
+}) {
+  if (item.preferredLocationNames.isNotEmpty) {
+    final first = item.preferredLocationNames.first;
+    final extra = item.preferredLocationNames.length - 1;
+    return extra > 0 ? '$first +$extra' : first;
+  }
+
+  final districtIds = preferredDistrictIds.isNotEmpty
+      ? preferredDistrictIds
+      : item.preferredDistricts;
+  final districts = districtIds
+      .map(VietnamLocationData.instance.findDistrictById)
+      .whereType<District>()
+      .toList();
+  if (districts.isNotEmpty) {
+    final first = districts.first.getLocalizedFullName(context);
+    final extra = districts.length - 1;
+    return extra > 0 ? '$first +$extra' : first;
+  }
+
+  final city = City.values.where(
+    (city) => city.dbIndex == item.preferredCityCluster,
+  );
+  return city.isEmpty ? null : city.first.getLocalizedName(context);
+}
+
+class _RoleBadge extends StatelessWidget {
+  final ProfessionalFeedItem item;
+  final Color color;
+
+  const _RoleBadge({required this.item, required this.color});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.22),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 4,
+      children: [
+        Icon(
+          item.role == ProfessionalRole.coach
+              ? FLucideIcons.graduationCap
+              : FLucideIcons.flag,
+          size: 10,
+          color: pbInk,
+        ),
+        Flexible(
+          child: Text(
+            item.role.getLocalizedName(context).toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.theme.typography.body.xs.copyWith(
+              color: pbInk,
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.65,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ProfessionalBoard extends StatelessWidget {
+  final ProfessionalFeedItem item;
+
+  const _ProfessionalBoard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final price = item.priceFrom;
+    final hasPrice = price != null;
+    final hasExperience = item.experienceYears != null;
+
+    return PMatchBoard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 2,
+              children: [
+                _BoardLabel(
+                  label: 'homeTab.professional.reviews'.tr(
+                    namedArgs: {'count': '${item.reviewCount}'},
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  spacing: 5,
+                  children: [
+                    const Icon(FLucideIcons.star, size: 16, color: pbAmber),
+                    Text(
+                      item.averageRating.toStringAsFixed(1),
+                      style: context.theme.typography.body.xl2.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (hasPrice || hasExperience) ...[
+            Container(
+              width: 1,
+              height: 42,
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              color: Colors.white.withValues(alpha: 0.18),
+            ),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                spacing: 3,
+                children: [
+                  _BoardLabel(
+                    label: hasPrice
+                        ? 'TỪ'
+                        : 'homeTab.professional.experience'
+                              .tr(
+                                namedArgs: {
+                                  'years': '${item.experienceYears}',
+                                },
+                              )
+                              .toUpperCase(),
+                  ),
+                  Text(
+                    hasPrice
+                        ? '${formatVnd(price)}₫/${item.priceFromKind == ProfessionalPricingKind.perSession ? 'buổi' : 'giờ'}'
+                        : '${item.experienceYears} năm',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: context.theme.typography.body.sm.copyWith(
+                      color: pbAmber,
+                      fontWeight: FontWeight.w900,
+                      height: 1.1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BoardLabel extends StatelessWidget {
+  final String label;
+
+  const _BoardLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) => Text(
+    label.toUpperCase(),
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    style: context.theme.typography.body.xs.copyWith(
+      color: Colors.white.withValues(alpha: 0.58),
+      fontSize: 8,
+      fontWeight: FontWeight.w900,
+      letterSpacing: 0.8,
+    ),
+  );
 }
 
 // ─── Loading skeleton ──────────────────────────────────────────
