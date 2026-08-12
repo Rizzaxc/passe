@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../core/feature_flags.dart';
 import '../../core/format.dart';
 import '../../ui/main.dart';
 import 'pro_bookings_controller.dart';
@@ -174,7 +175,7 @@ class _BookingCard extends ConsumerWidget {
           // the lobby_match_complete_referee_booking trigger. Offering
           // "Đánh Dấu Hoàn Thành" alongside would be two buttons for one
           // outcome, so for a match booking it is *replaced*, not joined.
-          if (match != null)
+          if (ClientFeatureFlags.challengerFlow && match != null)
             if (match.resultRecorded)
               Text(
                 'Đã ghi kết quả',
@@ -215,7 +216,7 @@ class _BookingCard extends ConsumerWidget {
 
     // Tapping a match card is the entry point: it opens result entry once the
     // match has ended, and explains itself before that.
-    if (match == null) return card;
+    if (!ClientFeatureFlags.challengerFlow || match == null) return card;
     return FTappable(
       onPress: match.resultRecorded
           ? null

@@ -117,9 +117,9 @@ class NotificationPage extends ConsumerWidget {
             },
             child: ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
               itemCount: items.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 4),
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, i) => _NotificationRow(item: items[i]),
             ),
           );
@@ -245,83 +245,310 @@ class _NotificationRow extends ConsumerWidget {
     final lobbyInviteStatus = recordId == null
         ? null
         : ref.watch(lobbyInviteStatusProvider(recordId)).value;
+    final radius = BorderRadius.circular(14);
+    final frameColor = item.isUnread
+        ? pbBlueDeep.withValues(alpha: 0.28)
+        : colors.border.withValues(alpha: 0.72);
 
-    return FTappable(
-      onPress: () => _onTap(context, ref, lobbyInviteStatus: lobbyInviteStatus),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 12,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: item.isUnread ? colors.secondary : colors.muted,
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Icon(
-                _iconFor(item.kind),
-                size: 18,
-                color: item.isUnread
-                    ? colors.secondaryForeground
-                    : colors.mutedForeground,
-              ),
+    return POffsetFrame(
+      offsetColor: frameColor,
+      borderRadius: radius,
+      offset: 2,
+      child: FTappable(
+        onPress: () =>
+            _onTap(context, ref, lobbyInviteStatus: lobbyInviteStatus),
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.card,
+            border: Border.all(
+              color: item.isUnread
+                  ? pbBlueDeep.withValues(alpha: 0.16)
+                  : pbInk.withValues(alpha: 0.10),
             ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 2,
-                children: [
-                  Text(
-                    item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: typography.body.sm.copyWith(
-                      fontWeight: item.isUnread
-                          ? FontWeight.w700
-                          : FontWeight.w500,
+            borderRadius: radius,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: item.isUnread
+                            ? pbBlueDeep.withValues(alpha: 0.09)
+                            : colors.muted,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        _iconFor(item.kind),
+                        size: 18,
+                        color: item.isUnread
+                            ? pbBlueDeep
+                            : colors.mutedForeground,
+                      ),
                     ),
-                  ),
-                  Text(
-                    item.body,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: typography.body.xs.copyWith(
-                      color: colors.mutedForeground,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 3,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: typography.body.sm.copyWith(
+                                    color: pbInk,
+                                    fontWeight: item.isUnread
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    height: 1.25,
+                                  ),
+                                ),
+                              ),
+                              if (item.isUnread) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  margin: const EdgeInsets.only(top: 5),
+                                  decoration: const BoxDecoration(
+                                    color: pbBlueDeep,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: _notificationBodySpans(
+                                item,
+                                regularStyle: typography.body.xs.copyWith(
+                                  color: colors.mutedForeground,
+                                  height: 1.35,
+                                ),
+                                primaryEmphasisStyle: typography.body.xs
+                                    .copyWith(
+                                      color: pbGreen,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.35,
+                                    ),
+                                secondaryEmphasisStyle: typography.body.xs
+                                    .copyWith(
+                                      color: pbBlueDeep,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.35,
+                                    ),
+                              ),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            _relativeTime(item.createdAt),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: typography.body.xs.copyWith(
+                              color: colors.mutedForeground.withValues(
+                                alpha: 0.78,
+                              ),
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Text(
-                    _relativeTime(item.createdAt),
-                    style: typography.body.xs.copyWith(
-                      color: colors.mutedForeground,
+                    const SizedBox(width: 4),
+                    Tooltip(
+                      message: 'notification.delete'.tr(),
+                      child: FButton.icon(
+                        variant: .ghost,
+                        size: .xs,
+                        onPress: () => unawaited(_onDelete(context, ref)),
+                        child: Icon(
+                          FLucideIcons.trash2,
+                          size: 14,
+                          color: colors.mutedForeground,
+                        ),
+                      ),
                     ),
+                  ],
+                ),
+                if (recordId != null) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _LobbyInviteActions(recordId: recordId),
                   ),
                 ],
-              ),
+              ],
             ),
-            if (recordId != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: _LobbyInviteActions(recordId: recordId),
-              ),
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: FButton.icon(
-                variant: .destructive,
-                size: .xs,
-                onPress: () => unawaited(_onDelete(context, ref)),
-                child: const Icon(FLucideIcons.trash2, size: 14),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
+
+enum _BodyEmphasis { none, primary, secondary }
+
+typedef _PresentationField = ({String key, _BodyEmphasis emphasis});
+
+/// Highlights only exact semantic values snapshotted by the notification
+/// emitter. There is deliberately no text inference here: legacy rows and new
+/// notification kinds without an explicit presentation contract stay plain.
+List<InlineSpan> _notificationBodySpans(
+  NotificationItem item, {
+  required TextStyle regularStyle,
+  required TextStyle primaryEmphasisStyle,
+  required TextStyle secondaryEmphasisStyle,
+}) {
+  final body = item.body;
+  if (body.isEmpty) return [TextSpan(text: body, style: regularStyle)];
+  final emphasis = List<_BodyEmphasis>.filled(body.length, _BodyEmphasis.none);
+  final rawPresentation = item.data['presentation'];
+  if (rawPresentation is! Map) {
+    return [TextSpan(text: body, style: regularStyle)];
+  }
+  final presentation = rawPresentation.cast<String, dynamic>();
+
+  void emphasizeExact(String key, _BodyEmphasis level) {
+    final value = presentation[key];
+    if (value is! String || value.trim().isEmpty) return;
+    var start = body.indexOf(value);
+    while (start >= 0) {
+      for (var i = start; i < start + value.length; i++) {
+        if (emphasis[i] == _BodyEmphasis.none) emphasis[i] = level;
+      }
+      start = body.indexOf(value, start + value.length);
+    }
+  }
+
+  final fields = _presentationFieldsFor(item.kind);
+  // Entity/location values use the primary brand color and take precedence
+  // over secondary date/money values if two exact strings overlap.
+  for (final field in fields.where(
+    (field) => field.emphasis == _BodyEmphasis.primary,
+  )) {
+    emphasizeExact(field.key, field.emphasis);
+  }
+  for (final field in fields.where(
+    (field) => field.emphasis == _BodyEmphasis.secondary,
+  )) {
+    emphasizeExact(field.key, field.emphasis);
+  }
+
+  if (!emphasis.any((level) => level != _BodyEmphasis.none)) {
+    return [TextSpan(text: body, style: regularStyle)];
+  }
+
+  final spans = <InlineSpan>[];
+  var start = 0;
+  var current = emphasis.first;
+  for (var i = 1; i <= body.length; i++) {
+    final next = i == body.length ? null : emphasis[i];
+    if (next == current) continue;
+    spans.add(
+      TextSpan(
+        text: body.substring(start, i),
+        style: switch (current) {
+          _BodyEmphasis.none => regularStyle,
+          _BodyEmphasis.primary => primaryEmphasisStyle,
+          _BodyEmphasis.secondary => secondaryEmphasisStyle,
+        },
+      ),
+    );
+    start = i;
+    if (next != null) current = next;
+  }
+  return spans;
+}
+
+const _lobby = (key: 'lobby_name', emphasis: _BodyEmphasis.primary);
+const _username = (key: 'username', emphasis: _BodyEmphasis.primary);
+const _weekday = (key: 'weekday', emphasis: _BodyEmphasis.secondary);
+const _time = (key: 'time', emphasis: _BodyEmphasis.secondary);
+const _amount = (key: 'amount', emphasis: _BodyEmphasis.secondary);
+const _location = (key: 'location_name', emphasis: _BodyEmphasis.primary);
+const _address = (key: 'address', emphasis: _BodyEmphasis.primary);
+
+List<_PresentationField> _presentationFieldsFor(NotificationKind? kind) =>
+    switch (kind) {
+      NotificationKind.activityScheduled => const [
+        _lobby,
+        _weekday,
+        _time,
+        _location,
+        _address,
+      ],
+      NotificationKind.activityConfirmed => const [
+        _lobby,
+        _weekday,
+        _time,
+        _location,
+        _address,
+      ],
+      NotificationKind.lobbyInvite => const [_username, _lobby],
+      NotificationKind.lobbyJoinRequestApproved ||
+      NotificationKind.lobbyJoinRequestDenied ||
+      NotificationKind.memberKicked => const [_lobby],
+      NotificationKind.challengerConfirmed ||
+      NotificationKind.challengeReceived ||
+      NotificationKind.challengeDeclined ||
+      NotificationKind.challengeScheduled ||
+      NotificationKind.challengeLapsed ||
+      NotificationKind.matchResultRecorded => const [
+        _lobby,
+        _weekday,
+        _time,
+        _amount,
+        _location,
+        _address,
+      ],
+      NotificationKind.lobbyJoinRequest => const [_username, _lobby],
+      NotificationKind.professionalBookingRequested ||
+      NotificationKind.professionalBookingConfirmed ||
+      NotificationKind.professionalBookingRejected ||
+      NotificationKind.proSessionReminder => const [
+        _username,
+        _weekday,
+        _time,
+        _amount,
+        _location,
+        _address,
+      ],
+      NotificationKind.friendRequest ||
+      NotificationKind.friendAccepted => const [_username],
+      NotificationKind.paymentRequested ||
+      NotificationKind.debtCollected => const [_username, _lobby, _amount],
+      NotificationKind.freeplayRequestReceived ||
+      NotificationKind.freeplayRequestAccepted ||
+      NotificationKind.freeplayRequestDeclined ||
+      NotificationKind.freeplayRequestCancelled ||
+      NotificationKind.freeplayActivityCancelled ||
+      NotificationKind.freeplayChatMessage => const [
+        _username,
+        _weekday,
+        _time,
+        _amount,
+        _location,
+        _address,
+      ],
+      _ => const [],
+    };
 
 /// Inline Accept/Reject for a `lobby_invite` notification, or (once
 /// resolved) a small hint of what tapping the card now does. This is the
@@ -412,16 +639,16 @@ class _LobbyInvitePendingButtonsState
       spacing: 4,
       children: [
         FButton(
-          variant: .outline,
+          variant: .ghost,
           size: .xs,
           onPress: () => _respond(false),
-          child: const Text('No'),
+          child: Text('lobby.inviteReview.reject'.tr()),
         ),
         FButton(
-          variant: .primary,
+          variant: .secondary,
           size: .xs,
           onPress: () => _respond(true),
-          child: const Text('Yes'),
+          child: Text('lobby.inviteReview.accept'.tr()),
         ),
       ],
     );

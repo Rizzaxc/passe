@@ -582,6 +582,7 @@
   "notification": {
     "title": "Notifications",
     "markAllRead": "Mark all read",
+    "delete": "Delete notification",
     "empty": {
       "title": "No notifications yet",
       "subtitle": "Activity, invites and requests will show up here"
@@ -1012,6 +1013,7 @@
     "empty": "No posts yet. Add friends and join lobbies to see what people are up to.",
     "findFriends": "Find friends",
     "error": "Couldn't load the feed",
+    "loadMoreFailed": "Couldn't load more posts",
     "guestTitle": "You're not signed in",
     "guest": "Sign in to see posts from your friends and lobby mates.",
     "allSports": "All",
@@ -1021,6 +1023,13 @@
     "remainingDays": "{count}d left",
     "deletePost": "Delete post",
     "deleteFailed": "Couldn't delete",
+    "hidePost": "Hide from Feed",
+    "postHidden": "Post hidden from your Feed",
+    "hideFailed": "Couldn't hide this post",
+    "hiddenTitle": "You're all caught up",
+    "hidden": "You've hidden all current posts. New posts will appear here when they're shared.",
+    "showHiddenPosts": "Show hidden posts",
+    "restoreHiddenFailed": "Couldn't restore hidden posts",
     "reactFailed": "Couldn't react",
     "reportPost": "Report post",
     "reportSend": "Send report",

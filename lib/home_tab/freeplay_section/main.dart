@@ -23,7 +23,7 @@ class FreeplaySubtab extends ConsumerWidget {
               await ref.read(freeplayFeedProvider.future);
             },
             child: feed.when(
-              loading: () => const Center(child: FCircularProgress()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (_, _) => const _Empty(),
               data: (items) => items.isEmpty
                   ? const _Empty()

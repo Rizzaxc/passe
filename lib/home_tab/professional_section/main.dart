@@ -6,7 +6,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../core/format.dart';
 import '../../core/model/enum.dart';
 import '../../core/model/professional_feed_item.dart';
-import '../../professional/booking_sheet.dart';
 import '../../router.dart';
 import '../../ui/main.dart';
 import '../filter.dart';
@@ -207,6 +206,18 @@ class _SectionState extends State<_Section> {
       fontWeight: FontWeight.bold,
       height: 1.0,
     );
+    // The card now shows every preferred court / district instead of a
+    // clipped one-line summary. Give the horizontal pager enough vertical
+    // room for the longest location list in this section.
+    final estimatedLocationLines = widget.items.fold<int>(1, (longest, item) {
+      final characterCount = _professionalLocationLabels(
+        context,
+        item,
+      ).join(' • ').length;
+      final lines = characterCount == 0 ? 1 : (characterCount + 19) ~/ 20;
+      return lines > longest ? lines : longest;
+    });
+    final carouselHeight = 320.0 + (estimatedLocationLines - 1) * 15;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -261,7 +272,7 @@ class _SectionState extends State<_Section> {
           )
         else ...[
           SizedBox(
-            height: 320,
+            height: carouselHeight,
             child: NotificationListener<ScrollNotification>(
               onNotification: _onScroll,
               child: PageView.builder(
@@ -272,7 +283,8 @@ class _SectionState extends State<_Section> {
                 onPageChanged: (i) => setState(() => _page = i),
                 itemBuilder: (context, i) => Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Center(
+                  child: Align(
+                    alignment: Alignment.topCenter,
                     child: ProfessionalCard(item: widget.items[i]),
                   ),
                 ),
@@ -326,9 +338,7 @@ class _ProAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final avatarColor = item.role == ProfessionalRole.coach
-        ? pbAmber
-        : pbCoral;
+    final avatarColor = item.role == ProfessionalRole.coach ? pbAmber : pbCoral;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -486,12 +496,8 @@ class _LocationAffinity extends ConsumerWidget {
     final cityMatches = item.preferredCityCluster == filter.city.dbIndex;
     final isMatch = matchedDistrictIds.isNotEmpty || cityMatches;
 
-    final label = _professionalLocationLabel(
-      context,
-      item,
-      preferredDistrictIds: matchedDistrictIds,
-    );
-    if (label == null) return const SizedBox.shrink();
+    final labels = _professionalLocationLabels(context, item);
+    if (labels.isEmpty) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
@@ -502,18 +508,21 @@ class _LocationAffinity extends ConsumerWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            FLucideIcons.mapPin,
-            size: 13,
-            color: isMatch ? pbBlueDeep : pbInk.withValues(alpha: 0.68),
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(
+              FLucideIcons.mapPin,
+              size: 13,
+              color: isMatch ? pbBlueDeep : pbInk.withValues(alpha: 0.68),
+            ),
           ),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              labels.join(' • '),
+              softWrap: true,
               style: context.theme.typography.body.xs.copyWith(
                 color: pbInk,
                 fontSize: 10,
@@ -523,13 +532,16 @@ class _LocationAffinity extends ConsumerWidget {
           ),
           if (isMatch) ...[
             const SizedBox(width: 6),
-            Text(
-              'homeTab.professional.locationMatch'.tr().toUpperCase(),
-              style: context.theme.typography.body.xs.copyWith(
-                color: pbBlueDeep,
-                fontSize: 8,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.6,
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Text(
+                'homeTab.professional.locationMatch'.tr().toUpperCase(),
+                style: context.theme.typography.body.xs.copyWith(
+                  color: pbBlueDeep,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.6,
+                ),
               ),
             ),
           ],
@@ -539,34 +551,28 @@ class _LocationAffinity extends ConsumerWidget {
   }
 }
 
-String? _professionalLocationLabel(
+List<String> _professionalLocationLabels(
   BuildContext context,
-  ProfessionalFeedItem item, {
-  List<String> preferredDistrictIds = const [],
-}) {
+  ProfessionalFeedItem item,
+) {
   if (item.preferredLocationNames.isNotEmpty) {
-    final first = item.preferredLocationNames.first;
-    final extra = item.preferredLocationNames.length - 1;
-    return extra > 0 ? '$first +$extra' : first;
+    return item.preferredLocationNames;
   }
 
-  final districtIds = preferredDistrictIds.isNotEmpty
-      ? preferredDistrictIds
-      : item.preferredDistricts;
-  final districts = districtIds
+  final districts = item.preferredDistricts
       .map(VietnamLocationData.instance.findDistrictById)
       .whereType<District>()
       .toList();
   if (districts.isNotEmpty) {
-    final first = districts.first.getLocalizedFullName(context);
-    final extra = districts.length - 1;
-    return extra > 0 ? '$first +$extra' : first;
+    return districts
+        .map((district) => district.getLocalizedFullName(context))
+        .toList();
   }
 
   final city = City.values.where(
     (city) => city.dbIndex == item.preferredCityCluster,
   );
-  return city.isEmpty ? null : city.first.getLocalizedName(context);
+  return city.isEmpty ? const [] : [city.first.getLocalizedName(context)];
 }
 
 class _RoleBadge extends StatelessWidget {
@@ -673,9 +679,7 @@ class _ProfessionalBoard extends StatelessWidget {
                         ? 'TỪ'
                         : 'homeTab.professional.experience'
                               .tr(
-                                namedArgs: {
-                                  'years': '${item.experienceYears}',
-                                },
+                                namedArgs: {'years': '${item.experienceYears}'},
                               )
                               .toUpperCase(),
                   ),
@@ -823,208 +827,11 @@ class _ProfessionalSheetState extends State<_ProfessionalSheet> {
               ),
             ],
           ),
-          for (final item in widget.items) _SheetRow(item: item),
+          // Keep the full scrolling feed on the same card component as the
+          // Discover carousel. This prevents the two surfaces from drifting
+          // whenever the professional card is redesigned.
+          for (final item in widget.items) ProfessionalCard(item: item),
           const SizedBox(height: 8),
-        ],
-      ),
-    );
-  }
-}
-
-// Sheet row — surfaces full info: bio, sports, experience, verification, price.
-class _SheetRow extends StatelessWidget {
-  final ProfessionalFeedItem item;
-
-  const _SheetRow({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-
-    return FTappable(
-      onPress: () => _openDetail(context, item),
-      child: PCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 14,
-              children: [
-                _ProAvatar(item: item, size: 64),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 6,
-                    children: [
-                      Text(
-                        item.displayName,
-                        style: context.theme.typography.body.lg.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 4,
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(FLucideIcons.star, size: 15, color: pbStar),
-                              const SizedBox(width: 3),
-                              Text(
-                                item.averageRating.toStringAsFixed(1),
-                                style: context.theme.typography.body.sm
-                                    .copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '(${item.reviewCount} đánh giá)',
-                                style: context.theme.typography.body.sm
-                                    .copyWith(color: colors.mutedForeground),
-                              ),
-                            ],
-                          ),
-                          if (item.experienceYears != null)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  FLucideIcons.briefcaseBusiness,
-                                  size: 13,
-                                  color: colors.mutedForeground,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${item.experienceYears} năm kinh nghiệm',
-                                  style: context.theme.typography.body.sm
-                                      .copyWith(color: colors.mutedForeground),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            if (item.priceFrom != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                'từ ${formatVnd(item.priceFrom!)}₫/'
-                '${item.priceFromKind == ProfessionalPricingKind.perSession ? 'buổi' : 'giờ'}',
-                style: context.theme.typography.body.lg.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.primary,
-                ),
-              ),
-            ],
-
-            if (item.sports.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _RowLabel('Môn'),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final sportIdx in item.sports)
-                    _SportChip(
-                      sport: sportIdx >= 0 && sportIdx < Sport.values.length
-                          ? Sport.values[sportIdx]
-                          : Sport.others,
-                    ),
-                ],
-              ),
-            ],
-
-            if (item.bio != null && item.bio!.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _RowLabel('Giới thiệu'),
-              const SizedBox(height: 4),
-              Text(
-                item.bio!,
-                style: context.theme.typography.body.sm.copyWith(
-                  color: colors.foreground,
-                  height: 1.5,
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 14),
-            Row(
-              spacing: 8,
-              children: [
-                Expanded(
-                  child: FButton(
-                    variant: .outline,
-                    onPress: () => _openDetail(context, item),
-                    child: Text('homeTab.professional.viewProfile'.tr()),
-                  ),
-                ),
-                Expanded(
-                  child: FButton(
-                    onPress: () => showProfessionalBookingSheet(context, item),
-                    child: Text('homeTab.professional.book'.tr()),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RowLabel extends StatelessWidget {
-  final String text;
-
-  const _RowLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: context.theme.typography.body.xs.copyWith(
-        color: context.theme.colors.mutedForeground,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.5,
-      ),
-    );
-  }
-}
-
-class _SportChip extends StatelessWidget {
-  final Sport sport;
-
-  const _SportChip({required this.sport});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: colors.secondary,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 5,
-        children: [
-          sport.getIcon(size: 12),
-          Text(
-            sport.getLocalizedName(context),
-            style: context.theme.typography.body.xs.copyWith(
-              color: colors.secondaryForeground,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
         ],
       ),
     );

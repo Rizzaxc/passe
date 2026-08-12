@@ -7,6 +7,9 @@ class NotificationItem {
   final NotificationKind? kind;
   final String title;
   final String body;
+
+  /// Routing metadata plus the server-snapshotted `presentation` values used
+  /// for exact, kind-gated rich text in the in-app notification card.
   final Map<String, dynamic> data;
   final DateTime? readAt;
   final DateTime createdAt;

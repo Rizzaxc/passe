@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:passe/core/feature_flags.dart';
+import 'package:passe/home_tab/main.dart';
 import 'package:passe/notifications/notification_kind.dart';
 import 'package:passe/notifications/notification_router.dart';
 import 'package:passe/router.dart';
@@ -49,5 +51,25 @@ void main() {
         const HomeTeammateRoute().location,
       );
     });
+  });
+
+  test('challenge notification routing follows the client feature gate', () {
+    final location = resolveNotificationLocation({
+      'kind': 'challenge_received',
+      'lobby_id': 'lobby-1',
+    });
+
+    expect(
+      location,
+      ClientFeatureFlags.challengerFlow
+          ? const LobbyDetailRoute(id: 'lobby-1').location
+          : isNull,
+    );
+  });
+
+  test('Discover route indices match the enabled tab count', () {
+    expect(HomeTab.locationIndex, HomeTab.tabCount - 1);
+    expect(HomeTab.professionalIndex, lessThan(HomeTab.tabCount));
+    expect(HomeTab.tabCount, ClientFeatureFlags.challengerFlow ? 5 : 4);
   });
 }

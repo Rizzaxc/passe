@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod/legacy.dart';
+import '../core/feature_flags.dart';
 import '../core/sport_selector.dart';
 import '../ui/main.dart';
 import 'challenger_section/main.dart';
@@ -16,17 +17,18 @@ import 'teammate_section/main.dart';
 
 /// Set (then immediately consumed) to switch the Discover subtab from a
 /// widget that isn't `_DiscoverView` itself — e.g. a CTA inside one subtab
-/// that wants to send the user to another (`0` freeplay, `1` teammate,
-/// `2` challenger, `3` professional, `4` location). Do NOT navigate via the `Home*Route`s for
+/// that wants to send the user to another (`0` freeplay, `1` teammate, then
+/// the enabled discovery sections). Do NOT navigate via the `Home*Route`s for
 /// this — those are nested routes *within* the home branch, so `.go()`ing
 /// between them from inside Home pushes a new stacked page instead of just
 /// switching the tab (the `Home*Route`s exist for deep-linking into Home
 /// *from another tab*, where crossing branches is the correct, expected nav).
 final homeSubtabRequestProvider = StateProvider<int?>((ref) => null);
 
-/// Home ▸ Discover — four subtabs sharing one filter, all scoped to the
-/// context sport. Feed (the social surface) moved out to its own main tab —
-/// see `lib/feed_tab/` — so this is back to being a single-purpose screen.
+/// Home ▸ Discover — four shipped subtabs sharing one filter, all scoped to
+/// the context sport. Challenger is inserted only for explicitly enabled
+/// builds. Feed (the social surface) moved out to its own main tab — see
+/// `lib/feed_tab/` — so this is back to being a single-purpose screen.
 class HomeTab extends ConsumerWidget {
   final int initialIndex;
 
@@ -38,13 +40,18 @@ class HomeTab extends ConsumerWidget {
   final bool openFilter;
 
   const HomeTab({super.key, this.initialIndex = 0, this.openFilter = false})
-    : assert(initialIndex >= 0 && initialIndex <= 4);
+    : assert(initialIndex >= 0 && initialIndex < tabCount);
 
   static final instance = HomeTab();
 
-  /// Deep-links a Discover subtab (`0` freeplay, `1` teammate, `2` challenger,
-  /// `3` professional, `4` location — see the `Home*Route` classes in
-  /// `router.dart`).
+  /// Indices after teammate shift down in default builds because Challenger
+  /// is compiled as an opt-in client feature.
+  static const tabCount = ClientFeatureFlags.challengerFlow ? 5 : 4;
+  static int get challengerIndex => ClientFeatureFlags.challengerFlow ? 2 : 0;
+  static int get professionalIndex => ClientFeatureFlags.challengerFlow ? 3 : 2;
+  static int get locationIndex => tabCount - 1;
+
+  /// Deep-links a Discover subtab using one of the indices above.
   factory HomeTab.withInitialTab(int initialIndex, {bool openFilter = false}) {
     return HomeTab(initialIndex: initialIndex, openFilter: openFilter);
   }
@@ -61,7 +68,7 @@ class HomeTab extends ConsumerWidget {
   }
 }
 
-/// Four subtabs over a shared filter.
+/// Shipped subtabs over a shared filter, plus opt-in Challenger.
 class _DiscoverView extends ConsumerStatefulWidget {
   final int initialIndex;
   final bool openFilter;
@@ -86,23 +93,25 @@ class _DiscoverViewState extends ConsumerState<_DiscoverView> {
 
   // Instance getter (not `static const`) because the teammate entry needs
   // `widget.openFilter` threaded in.
-  List<({String titleKey, Widget child})> get _sections => [
-    (titleKey: 'freeplay', child: const FreeplaySubtab()),
+  List<({Widget icon, Widget child})> get _sections => [
+    (icon: const Icon(FLucideIcons.ticket), child: const FreeplaySubtab()),
     (
-      titleKey: 'home.teammate',
+      icon: const Icon(CupertinoIcons.person_2_fill),
       child: TeammateSubtab(openFilter: widget.openFilter),
     ),
-    (titleKey: 'home.challenger', child: const ChallengerSubtab()),
-    (titleKey: 'home.professional', child: const ProfessionalSubtab()),
-    (titleKey: 'home.location', child: const LocationSubtab()),
-  ];
-
-  static const _icons = [
-    Icon(FLucideIcons.ticket),
-    Icon(CupertinoIcons.person_2_fill),
-    FaIcon(FontAwesomeIcons.fireFlameCurved),
-    FaIcon(FontAwesomeIcons.flagCheckered),
-    FaIcon(FontAwesomeIcons.locationDot),
+    if (ClientFeatureFlags.challengerFlow)
+      (
+        icon: const FaIcon(FontAwesomeIcons.fireFlameCurved),
+        child: const ChallengerSubtab(),
+      ),
+    (
+      icon: const FaIcon(FontAwesomeIcons.flagCheckered),
+      child: const ProfessionalSubtab(),
+    ),
+    (
+      icon: const FaIcon(FontAwesomeIcons.locationDot),
+      child: const LocationSubtab(),
+    ),
   ];
 
   @override
@@ -138,12 +147,14 @@ class _DiscoverViewState extends ConsumerState<_DiscoverView> {
   }
 
   List<FTabEntry> _buildTabEntries() {
-    return List.generate(_sections.length, (index) {
-      final section = _sections[index];
+    final sections = _sections;
+    assert(sections.length == HomeTab.tabCount);
+    return List.generate(sections.length, (index) {
+      final section = sections[index];
       final built = _builtIndices.contains(index);
 
       return FTabEntry(
-        label: KeyedSubtree(key: const ValueKey('icon'), child: _icons[index]),
+        label: KeyedSubtree(key: const ValueKey('icon'), child: section.icon),
         child: built ? section.child : const SizedBox.shrink(),
       );
     });

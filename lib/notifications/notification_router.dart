@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../core/feature_flags.dart';
 import '../router.dart';
 import 'notification_kind.dart';
 
@@ -15,6 +16,7 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
   if (data == null) return null;
   final kind = NotificationKind.fromValue(data['kind'] as String?);
   if (kind == null) return null;
+  if (!ClientFeatureFlags.challengerFlow && kind.isChallengerFlow) return null;
 
   final lobbyId = data['lobby_id'] as String?;
   final recordId = data['record_id'] as String?;

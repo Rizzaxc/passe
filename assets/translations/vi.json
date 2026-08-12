@@ -582,6 +582,7 @@
   "notification": {
     "title": "Thông báo",
     "markAllRead": "Đánh dấu đã đọc",
+    "delete": "Xoá thông báo",
     "empty": {
       "title": "Chưa có thông báo",
       "subtitle": "Hoạt động, lời mời và yêu cầu sẽ xuất hiện ở đây"
@@ -1012,6 +1013,7 @@
     "empty": "Chưa có bạn bè hoặc chưa có ai đăng bài. Kết thêm bạn hoặc tham gia thêm lobby để chia sẻ và kết nối đến mọi người.",
     "findFriends": "Tìm bạn bè",
     "error": "Không tải được Feed",
+    "loadMoreFailed": "Không tải thêm được bài viết",
     "guestTitle": "Bạn chưa đăng nhập",
     "guest": "Đăng nhập để xem chia sẻ của bạn bè và đồng đội.",
     "allSports": "Tất cả",
@@ -1021,6 +1023,13 @@
     "remainingDays": "còn {count} ngày",
     "deletePost": "Xoá bài",
     "deleteFailed": "Không xoá được bài",
+    "hidePost": "Ẩn khỏi Feed",
+    "postHidden": "Đã ẩn bài viết khỏi Feed của bạn",
+    "hideFailed": "Không ẩn được bài viết",
+    "hiddenTitle": "Bạn đã xem hết",
+    "hidden": "Bạn đã ẩn tất cả bài viết hiện tại. Bài viết mới sẽ xuất hiện tại đây khi được chia sẻ.",
+    "showHiddenPosts": "Hiện lại bài viết đã ẩn",
+    "restoreHiddenFailed": "Không hiện lại được bài viết đã ẩn",
     "reactFailed": "Không gửi được reaction",
     "reportPost": "Báo cáo bài viết",
     "reportSend": "Gửi báo cáo",

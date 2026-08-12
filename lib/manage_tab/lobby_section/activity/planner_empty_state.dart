@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../../core/feature_flags.dart';
 import '../../../../ui/button_styles.dart';
 import '../challenge_offer_sheet.dart';
 import '../schedule_activity_sheet.dart';
@@ -104,7 +105,9 @@ class PlannerEmptyState extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(
               isLeader
-                  ? 'Lên lịch buổi mới, hoặc mở nhận thách đấu để đội khác tìm tới.'
+                  ? ClientFeatureFlags.challengerFlow
+                        ? 'Lên lịch buổi mới, hoặc mở nhận thách đấu để đội khác tìm tới.'
+                        : 'Lên lịch buổi mới để cả lobby cùng tham gia.'
                   : 'Đội trưởng chưa lên lịch buổi nào. Bạn có thể nhắc.',
               style: TextStyle(
                 fontSize: 12.5,
@@ -138,10 +141,11 @@ class PlannerEmptyState extends ConsumerWidget {
                   // your own lobby is retired (challenges start from Discover,
                   // against a lobby that actually opted in). What replaces it
                   // is the other half of that flow: opting *this* lobby in.
-                  ChallengeOfferControl(
-                    lobbyId: lobbyId,
-                    canManage: isLeader,
-                  ),
+                  if (ClientFeatureFlags.challengerFlow)
+                    ChallengeOfferControl(
+                      lobbyId: lobbyId,
+                      canManage: isLeader,
+                    ),
                 ],
               )
             else

@@ -7,6 +7,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../auth/auth_controller.dart';
+import '../../core/feature_flags.dart';
 import '../../core/model/lobby.dart';
 import '../../ui/dialog.dart';
 import '../../ui/sheet.dart';
@@ -554,12 +555,14 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
               // most likely to want challengers unable to opt in. This is the
               // always-reachable copy; both read the same provider.
               if (canManage) ...[
-                ChallengeOfferControl(
-                  lobbyId: widget.lobbyId,
-                  canManage: canManage,
-                  dense: true,
-                ),
-                const SizedBox(height: 8),
+                if (ClientFeatureFlags.challengerFlow) ...[
+                  ChallengeOfferControl(
+                    lobbyId: widget.lobbyId,
+                    canManage: canManage,
+                    dense: true,
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 InviteLinkCard(lobbyId: widget.lobbyId, canManage: canManage),
                 const SizedBox(height: 8),
               ],
@@ -600,18 +603,20 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                         indent: 50,
                         color: colors.border.withValues(alpha: 0.5),
                       ),
-                      _SettingsRow(
-                        icon: FLucideIcons.swords,
-                        label: 'lobby.challenges.title'.tr(),
-                        badge: _challengeBadge(ref, widget.lobbyId),
-                        onTap: () =>
-                            showChallengesSheet(context, widget.lobbyId),
-                      ),
-                      Divider(
-                        height: 1,
-                        indent: 50,
-                        color: colors.border.withValues(alpha: 0.5),
-                      ),
+                      if (ClientFeatureFlags.challengerFlow) ...[
+                        _SettingsRow(
+                          icon: FLucideIcons.swords,
+                          label: 'lobby.challenges.title'.tr(),
+                          badge: _challengeBadge(ref, widget.lobbyId),
+                          onTap: () =>
+                              showChallengesSheet(context, widget.lobbyId),
+                        ),
+                        Divider(
+                          height: 1,
+                          indent: 50,
+                          color: colors.border.withValues(alpha: 0.5),
+                        ),
+                      ],
                     ],
                     if (isCaptain) ...[
                       _SettingsRow(

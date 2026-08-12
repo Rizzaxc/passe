@@ -35,6 +35,25 @@ enum NotificationKind {
   /// The DB / wire value (matches `data.kind` on every push).
   final String value;
 
+  static const challengerFlowValues = <String>[
+    'challenger_confirmed',
+    'challenge_received',
+    'challenge_declined',
+    'challenge_scheduled',
+    'challenge_lapsed',
+    'match_result_recorded',
+  ];
+
+  bool get isChallengerFlow => switch (this) {
+    challengerConfirmed ||
+    challengeReceived ||
+    challengeDeclined ||
+    challengeScheduled ||
+    challengeLapsed ||
+    matchResultRecorded => true,
+    _ => false,
+  };
+
   /// Resolve a wire value to a kind, or null if unknown (forward-compat: a new
   /// server kind the installed app doesn't know yet is ignored, not crashed on).
   static NotificationKind? fromValue(String? value) {

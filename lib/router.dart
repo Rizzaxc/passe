@@ -581,7 +581,7 @@ class HomeChallengerRoute extends GoRouteData with $HomeChallengerRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(2);
+      HomeTab.withInitialTab(HomeTab.challengerIndex);
 }
 
 @immutable
@@ -590,7 +590,7 @@ class HomeProfessionalRoute extends GoRouteData with $HomeProfessionalRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(3);
+      HomeTab.withInitialTab(HomeTab.professionalIndex);
 }
 
 @immutable
@@ -599,7 +599,7 @@ class HomePlaceRoute extends GoRouteData with $HomePlaceRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(4);
+      HomeTab.withInitialTab(HomeTab.locationIndex);
 }
 
 @immutable

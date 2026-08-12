@@ -209,7 +209,7 @@ final class ComposePostControllerProvider
 }
 
 String _$composePostControllerHash() =>
-    r'3e0954f5063a995b7e94abfb10ada09e22f72bec';
+    r'db1fdfa9182d5b6349af362ac8236dce18fbed82';
 
 /// Uploads the picked media, then creates the post.
 ///

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../auth/auth_controller.dart';
 import '../core/achievement_evaluator.dart';
 import '../core/model/wall_post.dart';
+import '../core/user_preferences.dart';
 
 part 'feed_controller.g.dart';
 
@@ -34,32 +35,134 @@ class FeedVideoMuted extends _$FeedVideoMuted {
   void toggle() => state = !state;
 }
 
+/// Post ids the signed-in user chose to hide from the main Feed on this
+/// device. This is display state only: it does not mutate the post, affect
+/// other users, or hide the same card on lobby/profile surfaces.
+@Riverpod(keepAlive: true)
+class HiddenFeedPosts extends _$HiddenFeedPosts {
+  static const _prefKey = 'HIDDEN_FEED_POST_IDS';
+  static const _maxStoredIds = 200;
+
+  @override
+  Future<Set<String>> build() async {
+    final userId = ref.watch(currentUserIdProvider);
+    if (userId == null) return const {};
+    final stored =
+        await UserPreferences.instance.getStringList(_prefKey) ?? const [];
+    return stored.toSet();
+  }
+
+  Future<void> hide(String postId) async {
+    final ordered = [...?state.value]..remove(postId)..add(postId);
+    if (ordered.length > _maxStoredIds) {
+      ordered.removeRange(0, ordered.length - _maxStoredIds);
+    }
+    await _persist(ordered.toSet());
+  }
+
+  Future<void> clear() => _persist(const <String>{});
+
+  Future<void> _persist(Set<String> next) async {
+    final saved = await UserPreferences.instance.setStringList(
+      _prefKey,
+      next.toList(),
+    );
+    if (!saved) throw StateError('Could not persist hidden Feed posts');
+    state = AsyncData(next);
+  }
+}
+
 /// Posts from the caller, their friends, their lobby mates, and any post a
 /// friend of theirs is tagged in. Visibility is resolved server-side in
 /// `wall_feed_data` — the client never assembles the audience itself.
 @riverpod
 class WallFeedController extends _$WallFeedController {
+  static const _pageSize = 5;
+
   SupabaseClient get _supabase => Supabase.instance.client;
+  int _generation = 0;
+  int _nextPage = 1;
+  int? _sportId;
+  bool _hasMore = true;
+  bool _loadingMore = false;
+  bool _loadMoreFailed = false;
+
+  bool get hasMore => _hasMore;
+  bool get loadMoreFailed => _loadMoreFailed;
+  bool get canAutoLoadMore =>
+      _hasMore && !_loadingMore && !_loadMoreFailed;
 
   @override
   Future<List<WallPost>> build() async {
+    final generation = ++_generation;
+    _sportId = ref.watch(feedSportFilterProvider);
+    _nextPage = 1;
+    _hasMore = true;
+    _loadingMore = false;
+    _loadMoreFailed = false;
+
     // Guests have no friends and no lobbies, so the feed is empty by
     // definition — skip the round trip rather than returning an empty list
     // from the server.
     final userId = ref.watch(currentUserIdProvider);
-    if (userId == null) return const [];
+    if (userId == null) {
+      _hasMore = false;
+      return const [];
+    }
 
-    final sportId = ref.watch(feedSportFilterProvider);
+    final posts = await _fetchPage(0, sportId: _sportId);
+    if (generation == _generation) {
+      _hasMore = posts.length == _pageSize;
+    }
+    return posts;
+  }
 
+  Future<List<WallPost>> _fetchPage(
+    int pageNumber, {
+    required int? sportId,
+  }) async {
     final rows = await _supabase.rpc('wall_feed_data', params: {
       'p_sport_id': sportId,
-      'p_page_size': 20,
-      'p_page_number': 0,
+      'p_page_size': _pageSize,
+      'p_page_number': pageNumber,
     }).timeout(const Duration(seconds: 5));
 
     return (rows as List)
         .map((r) => WallPost.fromJson(r as Map<String, dynamic>))
         .toList();
+  }
+
+  /// Fetches the next five posts while retaining the already rendered page.
+  /// Deduplication protects the client from an item shifting between OFFSET
+  /// pages if a new post lands between requests.
+  Future<void> loadMore() async {
+    if (!_hasMore || _loadingMore) return;
+    final current = state.value;
+    if (current == null) return;
+
+    final generation = _generation;
+    final sportId = _sportId;
+    _loadingMore = true;
+    _loadMoreFailed = false;
+    try {
+      final page = await _fetchPage(_nextPage, sportId: sportId);
+      if (generation != _generation) return;
+      final knownIds = current.map((post) => post.id).toSet();
+      final combined = [
+        ...current,
+        ...page.where((post) => knownIds.add(post.id)),
+      ];
+      _nextPage++;
+      _hasMore = page.length == _pageSize;
+      state = AsyncData(combined);
+    } catch (_) {
+      if (generation != _generation) return;
+      _loadMoreFailed = true;
+      state = AsyncData(current);
+      rethrow;
+    } finally {
+      if (generation == _generation) _loadingMore = false;
+    }
   }
 
   /// Toggle one of the caller's reactions.

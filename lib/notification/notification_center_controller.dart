@@ -2,6 +2,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/feature_flags.dart';
+import '../notifications/notification_kind.dart';
 import 'notification_item.dart';
 import 'notification_unread_count_controller.dart';
 
@@ -21,10 +23,15 @@ class NotificationCenterController extends _$NotificationCenterController {
     final userId = ref.watch(currentUserIdProvider);
     if (userId == null) return const [];
 
-    final response = await supabase
+    var query = supabase
         .from('notification_outbox')
         .select('id, kind, title, body, data, read_at, created_at')
-        .eq('recipient_user_id', userId)
+        .eq('recipient_user_id', userId);
+    if (!ClientFeatureFlags.challengerFlow) {
+      query = query.not('kind', 'in', NotificationKind.challengerFlowValues);
+    }
+
+    final response = await query
         .order('created_at', ascending: false)
         .limit(50)
         .timeout(const Duration(seconds: 5));

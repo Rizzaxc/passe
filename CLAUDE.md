@@ -331,6 +331,11 @@ RPC that inserts straight into `lobby_member`. It replaced the retired email-inv
 
 ### Challenger System (built, full flow)
 
+The client flow is **disabled by default** and is not part of the normal shipped experience. All
+entry/continuation UI is gated by `ClientFeatureFlags.challengerFlow` in
+`lib/core/feature_flags.dart`; opt in only for explicit testing with
+`--dart-define=ENABLE_CHALLENGER_FLOW=true`. The schema and implementation remain in place.
+
 Separate from `lobby_befriend_record`. The flow: a lobby **publishes an offer** (opts in with terms)
 → it surfaces on Discover ▸ Challenger → another lobby's manager sends a challenge, accepting those
 terms → accepting materialises a linked activity for each side → both confirm → the home side hires a

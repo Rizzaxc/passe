@@ -6,8 +6,9 @@ covers what's specific to the home screen.
 
 ## Purpose
 
-Home is the **Discover** surface: four subtabs sharing one filter, all scoped to the context sport
-(`selectedSportStateProvider`). Each feed returns `[]` when no sport is selected.
+Home is the **Discover** surface: five implemented subtabs sharing one filter, all scoped to the
+context sport (`selectedSportStateProvider`). Challenger is client-gated off by default, so normal
+builds show four. Each feed returns `[]` when no sport is selected.
 
 The social surface (**Feed**) is a separate, first-positioned main tab — see
 [`lib/feed_tab/CLAUDE.md`](../feed_tab/CLAUDE.md). It used to live here behind a header pill toggle;
@@ -16,9 +17,10 @@ another screen), so `HomeTab` is back to being single-purpose.
 
 ## Layout
 
-- `main.dart` — `HomeTab`: `FScaffold` + `_DiscoverView` (the four `FTabs`).
-  - `HomeTab.withInitialTab(i)` deep-links a subtab (`0` teammate, `1` challenger, `2` professional,
-    `3` location — see the `Home*Route` classes in `router.dart`).
+- `main.dart` — `HomeTab`: `FScaffold` + `_DiscoverView` (four tabs by default).
+  - Default indices are `0` freeplay, `1` teammate, `2` professional, `3` location. When Challenger
+    is explicitly enabled it is inserted at `2`, shifting professional/location to `3`/`4`.
+    `HomeTab`'s named index getters keep the `Home*Route` classes independent of that shift.
 - Appbar suffixes: `NotificationIconButton`, `SportSelector`. (`DaAppbarButton` — the đá-balance
   pill — is hidden app-wide; the currency system is deferred/unbuilt, see root CLAUDE.md ▸ Activity
   & Currency System. The widget still exists in `lib/currency/` for when that ships.)
@@ -98,6 +100,9 @@ freezed) — edit them by hand, no build_runner.
 
 ### Challenger subtab
 
+- **Disabled by default in the client.** `ClientFeatureFlags.challengerFlow` gates the Discover
+  subtab and the related lobby/activity/pro/notification continuation UI. Enable an explicit test
+  build with `--dart-define=ENABLE_CHALLENGER_FLOW=true`; do not put it in a default ship command.
 - Shows lobbies that have **published a challenge offer** (team vs team, with stated terms — see
   root CLAUDE.md ▸ Challenger System for the full flow).
 - Requires `open_to_challengers boolean DEFAULT false NOT NULL` **plus** `challenge_offer_time` /

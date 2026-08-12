@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../auth/auth_controller.dart';
 import '../../../../auth/guest_prompt.dart';
+import '../../../../core/feature_flags.dart';
 import '../../../../core/model/enum.dart';
 import '../../../../feed_tab/compose_post_sheet.dart';
 import '../../../../ui/dialog.dart';
@@ -431,7 +432,9 @@ class ActivityCard extends ConsumerWidget {
                 ],
                 // Lobby-vs-lobby match: who we're playing, and the manager
                 // actions that turn an accepted challenge into a real one.
-                if (!isPast && upcoming.challenge != null) ...[
+                if (ClientFeatureFlags.challengerFlow &&
+                    !isPast &&
+                    upcoming.challenge != null) ...[
                   const SizedBox(height: 10),
                   _ChallengeBlock(
                     lobbyId: lobbyId,

@@ -65,11 +65,82 @@ class PostCard extends ConsumerWidget {
   }
 }
 
+/// Feed-only, full-page treatment. Media owns the flexible space while the
+/// post context stays in a compact, readable panel below it. Other surfaces
+/// continue to use [PostCard]'s conventional 4:3 card.
+class FeedPostCard extends ConsumerWidget {
+  final WallPost post;
+  final bool isActive;
+
+  const FeedPostCard({
+    super.key,
+    required this.post,
+    required this.isActive,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final isMine = ref.watch(currentUserIdProvider) == post.authorId;
+
+    return FCard(
+      clipBehavior: Clip.antiAlias,
+      builder: (context, _, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _Media(
+              media: post.media,
+              isActive: isActive,
+              fillAvailable: true,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _Header(post: post, isMine: isMine, allowHide: true),
+                const SizedBox(height: 8),
+                if (post.caption != null && post.caption!.isNotEmpty) ...[
+                  Text(
+                    post.caption!,
+                    style: context.theme.typography.body.sm,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                _SourceLine(post: post),
+                if (post.tags.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _Tags(tags: post.tags),
+                ],
+                const SizedBox(height: 6),
+                Divider(
+                  height: 12,
+                  color: colors.border.withValues(alpha: 0.5),
+                ),
+                ReactionBar(post: post),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Header extends ConsumerWidget {
   final WallPost post;
   final bool isMine;
+  final bool allowHide;
 
-  const _Header({required this.post, required this.isMine});
+  const _Header({
+    required this.post,
+    required this.isMine,
+    this.allowHide = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -181,6 +252,39 @@ class _Header extends ConsumerWidget {
               },
               child: Text('feed.reportPost'.tr()),
             ),
+          if (allowHide)
+            FButton(
+              variant: .outline,
+              prefix: const Icon(FLucideIcons.eyeOff),
+              onPress: () async {
+                final toastContext =
+                    Navigator.of(context, rootNavigator: true).context;
+                Navigator.of(sheetContext).pop();
+                try {
+                  await ref
+                      .read(hiddenFeedPostsProvider.notifier)
+                      .hide(post.id);
+                  if (!toastContext.mounted) return;
+                  showFToast(
+                    context: toastContext,
+                    icon: const Icon(FLucideIcons.eyeOff),
+                    title: Text('feed.postHidden'.tr()),
+                    alignment: .bottomCenter,
+                  );
+                } catch (e, st) {
+                  Talker().handle(e, st, 'Hide Feed post failed');
+                  if (!toastContext.mounted) return;
+                  showFToast(
+                    context: toastContext,
+                    icon: const Icon(FLucideIcons.circleX),
+                    variant: .destructive,
+                    title: Text('feed.hideFailed'.tr()),
+                    alignment: .bottomCenter,
+                  );
+                }
+              },
+              child: Text('feed.hidePost'.tr()),
+            ),
           const SizedBox(height: 8),
         ],
       ),
@@ -235,8 +339,13 @@ class _SourceLine extends StatelessWidget {
 class _Media extends StatefulWidget {
   final List<WallPostMedia> media;
   final bool isActive;
+  final bool fillAvailable;
 
-  const _Media({required this.media, required this.isActive});
+  const _Media({
+    required this.media,
+    required this.isActive,
+    this.fillAvailable = false,
+  });
 
   @override
   State<_Media> createState() => _MediaState();
@@ -255,47 +364,54 @@ class _MediaState extends State<_Media> {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    Widget buildItem(int i) {
+      final item = widget.media[i];
+      if (!item.isVideo) {
+        return CachedNetworkImage(
+          imageUrl: item.url,
+          fit: BoxFit.cover,
+          placeholder: (_, _) => Container(color: colors.muted),
+          errorWidget: (_, _, _) => Container(
+            color: colors.muted,
+            alignment: Alignment.center,
+            child: Icon(FLucideIcons.imageOff,
+                color: colors.mutedForeground),
+          ),
+        );
+      }
+      return _VideoPage(
+        key: ValueKey(item.path),
+        media: item,
+        shouldAutoplay: widget.isActive && i == _index,
+      );
+    }
+
+    // A one-item PageView still enters Flutter's gesture arena. Because the
+    // media fills most of the screen, a forceful diagonal swipe could let
+    // that horizontal pager beat the outer vertical Feed pager even though
+    // it had nowhere to scroll. Render the item directly in the common
+    // single-media case; only real carousels compete for horizontal drags.
+    final pager = widget.media.length == 1
+        ? buildItem(0)
+        : PageView.builder(
+            controller: _controller,
+            itemCount: widget.media.length,
+            onPageChanged: (i) => setState(() => _index = i),
+            itemBuilder: (_, i) => buildItem(i),
+          );
+
+    final media = ClipRRect(
+      borderRadius: context.theme.style.borderRadius.md,
+      child: widget.fillAvailable
+          ? pager
+          : AspectRatio(aspectRatio: 4 / 3, child: pager),
+    );
 
     return Column(
       children: [
-        ClipRRect(
-          borderRadius: context.theme.style.borderRadius.md,
-          // Fixed aspect ratio: items aren't measured before they load, so
-          // without this the card would jump as each one arrives. Video is
-          // letterboxed to fit inside it (BoxFit.contain) rather than
-          // cropped, since a portrait clip cropped into a 4:3 box loses far
-          // more than a typical photo crop does; photos keep the original
-          // cover-fit crop, unchanged.
-          child: AspectRatio(
-            aspectRatio: 4 / 3,
-            child: PageView.builder(
-              controller: _controller,
-              itemCount: widget.media.length,
-              onPageChanged: (i) => setState(() => _index = i),
-              itemBuilder: (_, i) {
-                final item = widget.media[i];
-                if (!item.isVideo) {
-                  return CachedNetworkImage(
-                    imageUrl: item.url,
-                    fit: BoxFit.cover,
-                    placeholder: (_, _) => Container(color: colors.muted),
-                    errorWidget: (_, _, _) => Container(
-                      color: colors.muted,
-                      alignment: Alignment.center,
-                      child: Icon(FLucideIcons.imageOff,
-                          color: colors.mutedForeground),
-                    ),
-                  );
-                }
-                return _VideoPage(
-                  key: ValueKey(item.path),
-                  media: item,
-                  shouldAutoplay: widget.isActive && i == _index,
-                );
-              },
-            ),
-          ),
-        ),
+        // Feed media flexes to consume the page; shared cards keep a stable
+        // 4:3 box so they do not jump while media loads.
+        if (widget.fillAvailable) Expanded(child: media) else media,
         if (widget.media.length > 1) ...[
           const SizedBox(height: 8),
           Row(
