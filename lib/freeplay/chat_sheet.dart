@@ -2,35 +2,14 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/icon/main.dart';
 import '../core/model/user_payment_info.dart';
 import '../core/payment/payment_qr_sheet.dart';
+import '../core/zalo_link.dart';
 import '../ui/main.dart';
 import 'repository.dart';
-
-Future<void> _openZalo(BuildContext context, String zalo) async {
-  var launched = false;
-  try {
-    final deeplink = Uri.https('zalo.me', '/$zalo');
-    if (await canLaunchUrl(deeplink)) {
-      launched = await launchUrl(deeplink, mode: LaunchMode.externalApplication);
-    }
-  } catch (_) {
-    launched = false;
-  }
-
-  if (!launched && context.mounted) {
-    showFToast(
-      context: context,
-      icon: const Icon(FLucideIcons.circleX),
-      variant: .destructive,
-      title: Text('payment.openInAppFailed'.tr()),
-      alignment: .bottomCenter,
-    );
-  }
-}
 
 Future<void> showFreeplayChatSheet(
   BuildContext context,
@@ -108,12 +87,15 @@ class _FreeplayChatState extends ConsumerState<_FreeplayChat> {
           if (counterpartZalo != null)
             Align(
               alignment: Alignment.centerLeft,
-              child: FButton(
+              child: FButton.icon(
                 variant: .outline,
                 size: .sm,
-                prefix: const Icon(FLucideIcons.externalLink, size: 16),
-                onPress: () => _openZalo(context, counterpartZalo),
-                child: Text('freeplay.chat.messageViaZalo'.tr()),
+                onPress: () => openZaloChat(context, counterpartZalo),
+                child: const SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: PasseIcons.zaloLogo,
+                ),
               ),
             ),
           const SizedBox(height: 12),

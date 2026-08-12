@@ -152,7 +152,7 @@ BEGIN
         v_user := array_append(v_user, v_id);
 
         -- soccer profile (the elo_seed trigger creates a user_rating row)
-        v_seed := (ARRAY['beginner','casual','tryhard'])[1 + (i % 3)];
+        v_seed := (ARRAY['beginner','casual','fair','good','advanced'])[1 + (i % 5)];
         INSERT INTO soccer_profile (user_id, "position", pitch, elo_seed)
         VALUES (
             v_id,

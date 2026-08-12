@@ -108,7 +108,7 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
           control: FTextFieldControl.managed(controller: _description),
         ),
         PSheetSectionLabel(label: 'freeplay.hostManage.recommendedSkill'.tr()),
-        for (final value in const ['beginner', 'casual', 'tryhard'])
+        for (final value in const ['beginner', 'casual', 'fair', 'good', 'advanced'])
           FCheckbox(
             value: _skills.contains(value),
             label: Text('freeplay.skill.$value'.tr()),

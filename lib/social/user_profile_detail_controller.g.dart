@@ -66,7 +66,7 @@ final class UserProfileDetailProvider
   }
 }
 
-String _$userProfileDetailHash() => r'b4a5a4b00ee010301938d0d2a39c6b3ab2a2bddb';
+String _$userProfileDetailHash() => r'04c3c89411f263a31d10e6c99478b4d9656a31c2';
 
 final class UserProfileDetailFamily extends $Family
     with

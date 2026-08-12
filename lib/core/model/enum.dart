@@ -723,8 +723,12 @@ enum EloSeed {
   beginner('eloSeed.beginner'),
   @JsonValue('casual')
   casual('eloSeed.casual'),
-  @JsonValue('tryhard')
-  tryhard('eloSeed.tryhard');
+  @JsonValue('fair')
+  fair('eloSeed.fair'),
+  @JsonValue('good')
+  good('eloSeed.good'),
+  @JsonValue('advanced')
+  advanced('eloSeed.advanced');
 
   final String intlKey;
   const EloSeed(this.intlKey);

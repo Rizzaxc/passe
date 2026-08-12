@@ -109,9 +109,10 @@ primary glossary until a `CONTEXT.md` exists (see `docs/agents/domain.md`).
   as "unknown" rather than crashing.
 - **Compat score** — matchmaking output on a lobby feed row: `timeslot_compat_score` (schedule
   overlap) and `profile_compat_score` (networks/industries/skill proximity, 0–5).
-- **ELO / elo seed** — skill rating. `elo_seed` (beginner/casual/tryhard) is the self-declared
-  starting point per sport profile; `user_rating` holds the live ELO per sport/format, updated by
-  `fn_apply_match_rating` on a scored, refereed challenge match (see "Challenger System").
+- **ELO / elo seed** — skill rating. `elo_seed` (beginner/casual/fair/good/advanced, 200 Elo apart —
+  see `fn_seed_initial_elo`) is the self-declared starting point per sport profile; `user_rating`
+  holds the live ELO per sport/format, updated by `fn_apply_match_rating` on a scored, refereed
+  challenge match (see "Challenger System").
 - **Guest** — an unauthenticated session (`PasseUser.isGuest`); read-only across most of the app.
 - **Tag number** — the 4-digit discriminator appended to a username (`username#tag_number`);
   uniqueness is on the *pair*.

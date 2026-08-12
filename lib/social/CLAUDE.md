@@ -21,16 +21,20 @@ Before this existed there was no `/user/:id` route at all and no way to connect 
   the relationship CTA, and their read-only profile overview.
 - `profile_overview_tab.dart` + `user_profile_detail_controller.dart` — the read-only overview
   section on `/user/:id`: general info (from `user_page_controller.dart`'s `UserProfile.details`,
-  already carried by `user_profile_data`), plus networks/industries/the current context sport's
-  profile (`userProfileDetailProvider`, three queries mirroring what `lib/profile_tab/`'s own
-  self-editing controllers already run, just parameterized by the viewed `userId` instead of
-  `auth.uid()` — all three tables are `USING (true)` readable, no new RPC needed). No wall/post
-  browsing here — that was tried and dropped as not useful for a first pass.
+  already carried by `user_profile_data`), plus networks/industries/contact/the current context
+  sport's profile (`userProfileDetailProvider`, four queries mirroring what `lib/profile_tab/`'s
+  own self-editing controllers already run, just parameterized by the viewed `userId` instead of
+  `auth.uid()` — networks/industries/sport-profile tables are `USING (true)` readable, no RPC
+  needed; `contact` (Zalo) is a plain `user_contact` select whose own RLS (friends / public /
+  freeplay-host) decides what comes back — an empty result there means "not visible to me", not
+  "not set"). No wall/post browsing here — that was tried and dropped as not useful for a first
+  pass.
 - `friends_screen.dart` — `FriendsScreen`, the friends hub (open requests + friend list +
   username#tag search). Pushed as a full page (`Navigator.push(MaterialPageRoute(...))`) from the
   Profile tab (below Industry & Network) and from the Feed tab's empty-state "Tìm bạn bè" CTA —
   **not** a `showPSheet` bottom sheet, styled after `profile_tab/network_selection_screen.dart`
-  (`FScaffold` + `FHeader` with `FHeaderAction.back` in `suffixes`). The search query is the same
+  (`FScaffold` + `FHeader.nested` with `FHeaderAction.back` in `prefixes` — left-aligned back,
+  centered title, matching every other pushed screen). The search query is the same
   shape as `invite_member_sheet.dart:66`. Search is a plain `PSearchField` (no submit button) —
   `_onQueryChanged` debounces via its own 1s `Timer`, distinct from `PSearchField`'s own internal
   300ms debounce (which only applies in its typeahead/`suggestionsBuilder` mode; unused here since

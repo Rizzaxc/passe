@@ -74,6 +74,9 @@ class PasseIcons {
 
   static const profile =
   SvgPicture(AssetBytesLoader('./assets/icons/profile.svg.vec'));
+
+  static const zaloLogo =
+  SvgPicture(AssetBytesLoader('./assets/icons/zalo.svg.vec'));
 }
 
 class SportIcons {

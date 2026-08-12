@@ -506,7 +506,9 @@
     "description": "Used to seed your initial matchmaking. Play with others to update your Elo.",
     "beginner": "Beginner",
     "casual": "Casual",
-    "tryhard": "Tryhard",
+    "fair": "Fair",
+    "good": "Good",
+    "advanced": "Advanced",
     "lockedHint": "Elo seed is locked after first commit"
   },
   "sport": {
@@ -523,6 +525,7 @@
   "done": "Done",
   "error": "Error",
   "errorGeneric": "Something went wrong. Please try again later.",
+  "zaloNotInstalled": "Zalo isn't installed — opening the app store",
   "auth": {
     "welcome": "Welcome",
     "emailLabel": "Email",
@@ -623,6 +626,8 @@
     "playtime": "Playtime",
     "zalo": "Zalo",
     "zaloHint": "Zalo phone number",
+    "zaloPrivacyDisclaimer": "By default, only your friends can see your Zalo number. Turn on \"Show publicly\" to let anyone see it.",
+    "zaloMakePublic": "Show publicly",
     "sportProfile": "{} Profile",
     "noSportProfile": "No sport information provided",
     "commit": "Commit",
@@ -1163,8 +1168,10 @@
       "skillIntro": "Your starting skill level helps Passe match you against opponents around your level from your very first game.",
       "skillLevels": {
         "beginner": "New to the sport or still learning the basics.",
-        "casual": "Play regularly and know the fundamentals.",
-        "tryhard": "Play competitively and want evenly matched opponents."
+        "casual": "Play occasionally and know the fundamentals.",
+        "fair": "Play regularly with an average grasp of tactics.",
+        "good": "Play consistently and perform above the average level.",
+        "advanced": "Play competitively and want evenly matched opponents."
       },
       "skillLockWarning": "Your starting skill level can only be set once and can't be changed after saving.",
       "save": "Save & continue",
@@ -1286,7 +1293,9 @@
     "skill": {
       "beginner": "Beginner",
       "casual": "Casual",
-      "tryhard": "Competitive",
+      "fair": "Fair",
+      "good": "Good",
+      "advanced": "Advanced",
       "undeclared": "Not specified"
     },
     "status": {
@@ -1321,8 +1330,7 @@
       "bank": "Bank",
       "noPaymentInfo": "No payment information available to send",
       "sendPaymentInfo": "Send payment information",
-      "messageHint": "Message…",
-      "messageViaZalo": "Message via Zalo"
+      "messageHint": "Message…"
     },
     "hostManage": {
       "schedule": "Drop-in Schedule",

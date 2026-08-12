@@ -41,7 +41,9 @@ const _$SoccerPitchEnumMap = {
 const _$EloSeedEnumMap = {
   EloSeed.beginner: 'beginner',
   EloSeed.casual: 'casual',
-  EloSeed.tryhard: 'tryhard',
+  EloSeed.fair: 'fair',
+  EloSeed.good: 'good',
+  EloSeed.advanced: 'advanced',
 };
 
 _BasketballProfile _$BasketballProfileFromJson(Map json) => _BasketballProfile(

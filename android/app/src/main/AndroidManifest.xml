@@ -107,5 +107,8 @@
             <action android:name="android.intent.action.VIEW"/>
             <data android:scheme="geo"/>
         </intent>
+        <!-- Lets canLaunchUrl detect whether Zalo is installed before
+             attempting a zalo.me chat deep link — see lib/core/zalo_link.dart. -->
+        <package android:name="com.zing.zalo"/>
     </queries>
 </manifest>

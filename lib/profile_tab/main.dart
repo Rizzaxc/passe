@@ -10,8 +10,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/icon/main.dart';
 import '../core/model/enum.dart';
 import '../core/model/user_avatar.dart';
+import '../core/model/user_contact.dart';
 import '../core/model/user_details.dart';
 import '../core/sport_selector.dart';
 import '../core/state/host_mode_state.dart';
@@ -486,7 +488,8 @@ class ProfileTab extends ConsumerWidget {
       if (details.gender == Gender.male) return FLucideIcons.mars;
       return FLucideIcons.venus;
     }();
-    final myZalo = ref.watch(userContactControllerProvider).value;
+    final myContact =
+        ref.watch(userContactControllerProvider).value ?? const UserContact();
 
     return FTileGroup(
       label: Text('profile.generalInfo'.tr()),
@@ -562,16 +565,23 @@ class ProfileTab extends ConsumerWidget {
           ),
         ),
         FTile(
-          title: Text('profile.zalo'.tr()),
+          suffix: myContact.zaloPublic
+              ? Icon(FLucideIcons.globe, color: context.theme.colors.primary)
+              : null,
+          title: const SizedBox(
+            width: 32,
+            height: 32,
+            child: PasseIcons.zaloLogo,
+          ),
           details: Text(
-            myZalo ?? 'notSet'.tr(),
+            myContact.zalo ?? 'notSet'.tr(),
             style: TextStyle(
-              color: myZalo != null
+              color: myContact.zalo != null
                   ? context.theme.colors.primary
                   : context.theme.colors.mutedForeground,
             ),
           ),
-          onPress: () => showEditZaloSheet(context, myZalo),
+          onPress: () => showEditZaloSheet(context, myContact),
         ),
       ],
     );

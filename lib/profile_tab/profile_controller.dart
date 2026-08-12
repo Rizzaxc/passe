@@ -9,6 +9,7 @@ import '../core/model/enum.dart';
 import '../core/model/network.dart';
 import '../core/model/user_avatar.dart';
 import '../core/model/user_details.dart';
+import 'user_contact_controller.dart';
 
 part 'profile_controller.freezed.dart';
 part 'profile_controller.g.dart';
@@ -18,9 +19,11 @@ bool profileHasUncommittedChanges(Ref ref) {
   ref.watch(profileControllerProvider);
   ref.watch(networkControllerProvider);
   ref.watch(industryControllerProvider);
+  ref.watch(userContactControllerProvider);
   return ref.read(profileControllerProvider.notifier).hasUncommittedChanges ||
       ref.read(networkControllerProvider.notifier).hasUncommittedChanges ||
-      ref.read(industryControllerProvider.notifier).hasUncommittedChanges;
+      ref.read(industryControllerProvider.notifier).hasUncommittedChanges ||
+      ref.read(userContactControllerProvider.notifier).hasUncommittedChanges;
 }
 
 class AvatarUploadFailedException implements Exception {
@@ -417,6 +420,7 @@ class ProfileController extends _$ProfileController {
     if (initial != null) state = initial;
     ref.read(networkControllerProvider.notifier).discardChanges();
     ref.read(industryControllerProvider.notifier).discardChanges();
+    ref.read(userContactControllerProvider.notifier).discardChanges();
   }
 
   void updateDraft({
@@ -471,6 +475,7 @@ class ProfileController extends _$ProfileController {
   void resetDraft() {
     ref.read(networkControllerProvider.notifier).reset();
     ref.read(industryControllerProvider.notifier).reset();
+    ref.read(userContactControllerProvider.notifier).reset();
 
     final user = ref.read(authControllerProvider).value;
     state = ProfileState(
@@ -556,6 +561,9 @@ class ProfileController extends _$ProfileController {
 
         // 4. Sync industries (user_industry table)
         ref.read(industryControllerProvider.notifier).commit(),
+
+        // 5. Sync contact info (user_contact table)
+        ref.read(userContactControllerProvider.notifier).commit(),
       ]);
 
       _initialState = state.copyWith(pickedAvatar: null);

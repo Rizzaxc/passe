@@ -480,7 +480,7 @@
       "right": "Tay Phải"
     },
     "discipline": {
-      "label": "Theer Thức",
+      "label": "Thể Thức",
       "singles": "Đơn",
       "doubles": "Đôi"
     }
@@ -504,9 +504,11 @@
   "eloSeed": {
     "label": "Trình Độ",
     "description": "Dùng để xếp hạng ban đầu. Chơi cùng người khác để cập nhật Elo.",
-    "beginner": "Tập Chơi",
-    "casual": "Biết Chơi",
-    "tryhard": "Tryhard",
+    "beginner": "Mới Chơi",
+    "casual": "Tập Chơi",
+    "fair": "Trung Bình",
+    "good": "Khá",
+    "advanced": "Cao",
     "lockedHint": "Trình độ ban đầu đã được lưu"
   },
   "sport": {
@@ -523,6 +525,7 @@
   "done": "Xong",
   "error": "Lỗi",
   "errorGeneric": "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+  "zaloNotInstalled": "Bạn chưa cài Zalo — đang mở App Store/Play Store",
   "auth": {
     "welcome": "Welcome",
     "emailLabel": "Email",
@@ -624,6 +627,8 @@
     "playtime": "Khung giờ thường chơi",
     "zalo": "Zalo",
     "zaloHint": "Số điện thoại Zalo",
+    "zaloPrivacyDisclaimer": "Mặc định, chỉ bạn bè mới xem được số Zalo của bạn. Bật \"Hiển thị công khai\" để mọi người đều xem được.",
+    "zaloMakePublic": "Hiển thị công khai",
     "playtimeShort": "Khung giờ",
     "sportProfile": "Hồ sơ {}",
     "noSportProfile": "Chưa cung cấp thông tin thể thao",
@@ -1159,8 +1164,10 @@
       "skillIntro": "Trình độ ban đầu giúp Passe ghép bạn với đối thủ vừa sức ngay từ trận đầu tiên.",
       "skillLevels": {
         "beginner": "Mới làm quen hoặc còn đang học luật, kỹ thuật cơ bản.",
-        "casual": "Chơi đều đặn, đã nắm kỹ thuật căn bản.",
-        "tryhard": "Thi đấu nghiêm túc, muốn gặp đối thủ ngang tầm."
+        "casual": "Thỉnh thoảng chơi, đã nắm kỹ thuật căn bản.",
+        "fair": "Chơi đều đặn, hiểu chiến thuật ở mức trung bình.",
+        "good": "Chơi thường xuyên, thể hiện tốt hơn mức trung bình.",
+        "advanced": "Thi đấu nghiêm túc, muốn gặp đối thủ ngang tầm."
       },
       "skillLockWarning": "Trình độ ban đầu chỉ đặt được một lần và không thể đổi sau khi lưu.",
       "save": "Lưu & tiếp tục",
@@ -1281,8 +1288,10 @@
     },
     "skill": {
       "beginner": "Mới chơi",
-      "casual": "Phong trào",
-      "tryhard": "Cạnh tranh",
+      "casual": "Tập chơi",
+      "fair": "Trung bình",
+      "good": "Khá",
+      "advanced": "Cao",
       "undeclared": "Chưa khai báo"
     },
     "status": {
@@ -1317,8 +1326,7 @@
       "bank": "Ngân hàng",
       "noPaymentInfo": "Chưa có thông tin thanh toán để gửi",
       "sendPaymentInfo": "Gửi thông tin thanh toán",
-      "messageHint": "Nhắn tin…",
-      "messageViaZalo": "Nhắn qua Zalo"
+      "messageHint": "Nhắn tin…"
     },
     "hostManage": {
       "schedule": "Lịch Xé vé",

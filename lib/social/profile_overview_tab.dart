@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../core/icon/main.dart';
 import '../core/model/enum.dart';
 import '../core/model/network.dart';
 import '../core/model/sport_profile.dart';
 import '../core/model/timeslot.dart';
 import '../core/model/user_details.dart';
 import '../core/state/selected_sport_state.dart';
+import '../core/zalo_link.dart';
 import '../ui/main.dart';
 import 'user_profile_detail_controller.dart';
 
@@ -42,7 +44,13 @@ class ProfileOverviewTab extends ConsumerWidget {
         // the home-indicator safe area, so the last section clips without it.
         padding: const EdgeInsets.fromLTRB(0, 8, 0, 32),
         children: [
-          _GeneralInfoSection(details: details),
+          // Rendered off the synchronously-available `details` right away, not
+          // gated on `detailAsync` — `zalo` (async, RLS-gated) just merges in
+          // as its own row once/if it resolves, same widget either way.
+          _GeneralInfoSection(
+            details: details,
+            zalo: detailAsync.value?.contact.zalo,
+          ),
           const SizedBox(height: 20),
           detailAsync.when(
             loading: () => const Padding(
@@ -70,13 +78,15 @@ class ProfileOverviewTab extends ConsumerWidget {
 
 class _GeneralInfoSection extends StatelessWidget {
   final UserDetails details;
-  const _GeneralInfoSection({required this.details});
+  final String? zalo;
+  const _GeneralInfoSection({required this.details, this.zalo});
 
   bool get _isEmpty =>
       details.gender == null &&
       details.ageGroup == null &&
       !_isLocationSet(details) &&
-      (details.playtime == null || details.playtime!.isEmpty);
+      (details.playtime == null || details.playtime!.isEmpty) &&
+      zalo == null;
 
   static bool _isLocationSet(UserDetails details) {
     final city = details.location?.city;
@@ -171,6 +181,29 @@ class _GeneralInfoSection extends StatelessWidget {
             ),
           ),
         ),
+        // Only rendered once `user_contact`'s own RLS lets the viewer see this
+        // contact — friends, anyone if the owner made it public, or a
+        // freeplay host (see `schema/user_contact.sql` /
+        // `schema/user_contact_zalo_public.sql`). Absent zalo isn't shown as
+        // "not set" like the fields above — silence here just means "not
+        // visible to me", not "unset".
+        if (zalo != null)
+          FTile(
+            suffix: Icon(
+              FLucideIcons.externalLink,
+              color: context.theme.colors.primary,
+            ),
+            title: const SizedBox(
+              width: 32,
+              height: 32,
+              child: PasseIcons.zaloLogo,
+            ),
+            details: Text(
+              zalo!,
+              style: TextStyle(color: context.theme.colors.primary),
+            ),
+            onPress: () => openZaloChat(context, zalo!),
+          ),
       ],
     );
   }

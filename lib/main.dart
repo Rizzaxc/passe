@@ -200,6 +200,10 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
     final navigationShell = widget.navigationShell;
     return FScaffold(
       footer: FBottomNavigationBar(
+        // Android edge-to-edge layouts place the footer behind the gesture /
+        // three-button system navigation area unless the bar consumes the
+        // device's bottom inset itself. Keep Forui's existing iOS spacing.
+        safeAreaBottom: defaultTargetPlatform == TargetPlatform.android,
         index: navigationShell.currentIndex,
         onChange: (index) => _onTap(context, index),
         children: [

@@ -50,7 +50,7 @@ final class ProfileHasUncommittedChangesProvider
 }
 
 String _$profileHasUncommittedChangesHash() =>
-    r'c3fbbd7bcad8bca2f2fbbf1ca31580011d755256';
+    r'69b3a647bdb7ff805dbd790c7ae83c507117aea2';
 
 @ProviderFor(NetworkSearchController)
 final networkSearchControllerProvider = NetworkSearchControllerProvider._();
@@ -242,7 +242,7 @@ final class ProfileControllerProvider
   }
 }
 
-String _$profileControllerHash() => r'e71d7cee41ca864226123c2c6cacebeaa7d91496';
+String _$profileControllerHash() => r'bc77ff9670aea9f7fb029384d55273c2cc491840';
 
 abstract class _$ProfileController extends $Notifier<ProfileState> {
   ProfileState build();

@@ -138,9 +138,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final friends = ref.watch(friendsProvider);
 
     return FScaffold(
-      header: FHeader(
+      header: FHeader.nested(
         title: Text('social.friends'.tr()),
-        suffixes: [
+        prefixes: [
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],
       ),

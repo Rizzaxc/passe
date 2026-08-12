@@ -3,27 +3,28 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../core/model/user_contact.dart';
 import '../ui/main.dart';
 import 'user_contact_controller.dart';
 
-void showEditZaloSheet(BuildContext context, String? zalo) {
+void showEditZaloSheet(BuildContext context, UserContact contact) {
   showPSheet(
     context: context,
-    builder: (_) => _EditZaloSheet(zalo: zalo),
+    builder: (_) => _EditZaloSheet(contact: contact),
   );
 }
 
 class _EditZaloSheet extends ConsumerStatefulWidget {
-  final String? zalo;
-  const _EditZaloSheet({required this.zalo});
+  final UserContact contact;
+  const _EditZaloSheet({required this.contact});
 
   @override
   ConsumerState<_EditZaloSheet> createState() => _EditZaloSheetState();
 }
 
 class _EditZaloSheetState extends ConsumerState<_EditZaloSheet> {
-  late final _controller = TextEditingController(text: widget.zalo ?? '');
-  bool _saving = false;
+  late final _controller = TextEditingController(text: widget.contact.zalo ?? '');
+  late bool _public = widget.contact.zaloPublic;
 
   @override
   void dispose() {
@@ -31,29 +32,14 @@ class _EditZaloSheetState extends ConsumerState<_EditZaloSheet> {
     super.dispose();
   }
 
-  Future<void> _save() async {
-    if (_saving) return;
-    setState(() => _saving = true);
+  void _save() {
     final value = _controller.text.trim();
-    try {
-      await ref
-          .read(userContactControllerProvider.notifier)
-          .setZalo(value.isEmpty ? null : value);
-      if (mounted) Navigator.of(context).pop();
-    } catch (_) {
-      if (mounted) {
-        showFToast(
-          context: context,
-          icon: const Icon(FLucideIcons.circleX),
-          variant: .destructive,
-          title: Text('error'.tr()),
-          description: Text('errorGeneric'.tr()),
-          alignment: .bottomCenter,
+    ref
+        .read(userContactControllerProvider.notifier)
+        .updateDraft(
+          UserContact(zalo: value.isEmpty ? null : value, zaloPublic: _public),
         );
-      }
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    Navigator.of(context).pop();
   }
 
   @override
@@ -75,17 +61,25 @@ class _EditZaloSheetState extends ConsumerState<_EditZaloSheet> {
         hint: 'profile.zaloHint'.tr(),
         keyboardType: TextInputType.phone,
       ),
-      const SizedBox(height: 16),
-      FButton(
-        onPress: _saving ? null : _save,
-        child: _saving
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : Text('done'.tr()),
+      const SizedBox(height: 12),
+      Text(
+        'profile.zaloPrivacyDisclaimer'.tr(),
+        style: context.theme.typography.body.sm.copyWith(
+          color: context.theme.colors.mutedForeground,
+        ),
       ),
+      const SizedBox(height: 8),
+      FTile(
+        prefix: const Icon(FLucideIcons.globe),
+        title: Text('profile.zaloMakePublic'.tr()),
+        subtitle: Text('profile.zaloMakePublicHint'.tr()),
+        details: FSwitch(
+          value: _public,
+          onChange: (v) => setState(() => _public = v),
+        ),
+      ),
+      const SizedBox(height: 16),
+      FButton(onPress: _save, child: Text('done'.tr())),
     ],
   );
 }

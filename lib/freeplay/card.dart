@@ -151,7 +151,9 @@ class FreeplayCard extends StatelessWidget {
 
   static String _skillLabel(String value) => switch (value) {
     'beginner' => 'freeplay.skill.beginner',
-    'tryhard' => 'freeplay.skill.tryhard',
+    'fair' => 'freeplay.skill.fair',
+    'good' => 'freeplay.skill.good',
+    'advanced' => 'freeplay.skill.advanced',
     _ => 'freeplay.skill.casual',
   };
 

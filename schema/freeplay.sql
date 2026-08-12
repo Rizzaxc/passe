@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS public.freeplay_activity (
   female_price numeric(10,2) NOT NULL CHECK (female_price > 0),
   recommended_skills text[] NOT NULL CHECK (
     cardinality(recommended_skills) > 0
-    AND recommended_skills <@ ARRAY['beginner','casual','tryhard']::text[]
+    AND recommended_skills <@ ARRAY['beginner','casual','fair','good','advanced']::text[]
   ),
   venue_name text,
   street_address text,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS public.freeplay_request (
   status public.freeplay_request_status NOT NULL DEFAULT 'pending',
   price_amount numeric(10,2) NOT NULL CHECK (price_amount > 0),
   gender text NOT NULL CHECK (gender IN ('male','female')),
-  skill text CHECK (skill IS NULL OR skill IN ('beginner','casual','tryhard')),
+  skill text CHECK (skill IS NULL OR skill IN ('beginner','casual','fair','good','advanced')),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   resolved_at timestamptz
