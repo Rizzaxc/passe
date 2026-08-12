@@ -172,12 +172,12 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
   }
 
   static String _filterLabel(_HistoryFilter f) => switch (f) {
-    _HistoryFilter.all => 'Tất cả',
-    _HistoryFilter.challenge => 'Thách đấu',
-    _HistoryFilter.practice => 'Tập nội bộ',
-    _HistoryFilter.win => 'Thắng',
-    _HistoryFilter.loss => 'Thua',
-    _HistoryFilter.draw => 'Hoà',
+    _HistoryFilter.all => 'lobbyHub.history.all'.tr(),
+    _HistoryFilter.challenge => 'lobbyHub.history.challenge'.tr(),
+    _HistoryFilter.practice => 'lobbyHub.history.practice'.tr(),
+    _HistoryFilter.win => 'lobbyHub.history.win'.tr(),
+    _HistoryFilter.loss => 'lobbyHub.history.loss'.tr(),
+    _HistoryFilter.draw => 'lobbyHub.history.draw'.tr(),
   };
 }
 
@@ -203,7 +203,7 @@ class _StatsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'THÀNH TÍCH',
+            'lobbyHub.history.record'.tr(),
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
@@ -220,16 +220,28 @@ class _StatsCard extends StatelessWidget {
               children: [
                 _HStat(
                   value: '${stats.total}',
-                  label: 'trận',
+                  label: 'lobbyHub.history.matches'.tr(),
                   color: c.foreground,
                 ),
-                _HStat(value: '${stats.wins}', label: 'thắng', color: _green),
-                _HStat(value: '${stats.losses}', label: 'thua', color: _orange),
+                _HStat(
+                  value: '${stats.wins}',
+                  label: 'lobbyHub.history.wins'.tr(),
+                  color: _green,
+                ),
+                _HStat(
+                  value: '${stats.losses}',
+                  label: 'lobbyHub.history.loss'.tr(),
+                  color: _orange,
+                ),
                 if (stats.draws > 0)
-                  _HStat(value: '${stats.draws}', label: 'hoà', color: _slate),
+                  _HStat(
+                    value: '${stats.draws}',
+                    label: 'lobbyHub.history.draws'.tr(),
+                    color: _slate,
+                  ),
                 _HStat(
                   value: '${stats.winRate}%',
-                  label: 'win rate',
+                  label: 'lobbyHub.history.winRate'.tr(),
                   color: _crimson,
                 ),
               ],
@@ -348,17 +360,17 @@ class _HistoryCard extends StatelessWidget {
         ? _slate
         : colors.mutedForeground;
     final String stripLabel = isWin
-        ? 'Thắng'
+        ? 'lobbyHub.history.win'.tr()
         : isLoss
-        ? 'Thua'
+        ? 'lobbyHub.history.loss'.tr()
         : isDraw
-        ? 'Hoà'
+        ? 'lobbyHub.history.draw'.tr()
         // A scoreless encounter is still a challenge — the match was
         // played, just unrefereed — so it reads differently from an
         // internal scrimmage even though both share `result: practice`.
         : isScoreless
-        ? 'Không tính điểm'
-        : 'Tập nội bộ';
+        ? 'lobbyHub.history.unrated'.tr()
+        : 'lobbyHub.history.practice'.tr();
 
     // Set tallies
     int? usWins, themWins;
@@ -465,7 +477,7 @@ class _HistoryCard extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              'Không có trọng tài — trận không tính điểm',
+                              'lobbyHub.history.noReferee'.tr(),
                               style: TextStyle(
                                 fontSize: 11.5,
                                 color: colors.mutedForeground,
@@ -574,7 +586,7 @@ class _HistoryCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Tập nội bộ',
+                              'lobbyHub.history.practice'.tr(),
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,

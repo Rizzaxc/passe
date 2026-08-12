@@ -122,7 +122,7 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
       showFToast(
         context: context,
         variant: .destructive,
-        title: const Text('Hãy điền đủ thông tin buổi chơi'),
+        title: Text('freeplay.hostManage.completeForm'.tr()),
       );
       return;
     }
@@ -156,7 +156,7 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
         showFToast(
           context: context,
           variant: .destructive,
-          title: const Text('Không tạo được buổi chơi'),
+          title: Text('freeplay.hostManage.createFailed'.tr()),
         );
       }
     } finally {
@@ -171,21 +171,26 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
       spacing: 16,
       children: [
         PSheetTitle(
-          label: 'Đăng vé mới',
+          label: 'freeplay.hostManage.createTitle'.tr(),
           trailing: FButton.icon(
             variant: .ghost,
             onPress: () => Navigator.pop(context),
             child: const Icon(FLucideIcons.x),
           ),
         ),
-        const PSheetSectionLabel(label: 'Thời gian'),
+        PSheetSectionLabel(label: 'freeplay.hostManage.time'.tr()),
         Row(
           children: [
             Expanded(
               child: FButton(
                 variant: .outline,
                 onPress: _pickDate,
-                child: Text(DateFormat('EEE, d/M', 'vi').format(_date)),
+                child: Text(
+                  DateFormat(
+                    'EEE, d/M',
+                    context.locale.toLanguageTag(),
+                  ).format(_date),
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -220,11 +225,14 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
             ),
           ],
         ),
-        const PSheetSectionLabel(label: 'Sân'),
+        PSheetSectionLabel(label: 'freeplay.hostManage.venue'.tr()),
         if (_usingSavedFreeVenue && _freeVenue != null)
           FTile(
             prefix: const Icon(FLucideIcons.mapPinned),
-            title: Text(_freeVenue!['locationName'] ?? 'Sân đã lưu'),
+            title: Text(
+              _freeVenue!['locationName'] ??
+                  'freeplay.hostManage.savedVenue'.tr(),
+            ),
             subtitle: Text(
               '${_freeVenue!['streetNumber'] ?? ''} ${_freeVenue!['streetName'] ?? ''}',
               maxLines: 1,
@@ -249,7 +257,13 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
                 _locationId = null;
               }),
               child: Text(
-                'Dùng lại ${_savedFreeVenue!['locationName'] ?? 'sân đã lưu'}',
+                'freeplay.hostManage.reuseVenue'.tr(
+                  namedArgs: {
+                    'venue':
+                        _savedFreeVenue!['locationName'] ??
+                        'freeplay.hostManage.savedVenue'.tr(),
+                  },
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -267,12 +281,12 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
             }),
           ),
         ],
-        const PSheetSectionLabel(label: 'Số chỗ và giá mỗi người'),
+        PSheetSectionLabel(label: 'freeplay.hostManage.capacityAndPrice'.tr()),
         Row(
           children: [
             Expanded(
               child: FTextField(
-                label: const Text('Số chỗ'),
+                label: Text('freeplay.hostManage.capacity'.tr()),
                 keyboardType: TextInputType.number,
                 control: FTextFieldControl.managed(controller: _capacity),
               ),
@@ -280,7 +294,7 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
             const SizedBox(width: 8),
             Expanded(
               child: FTextField(
-                label: const Text('Nam'),
+                label: Text('freeplay.hostManage.male'.tr()),
                 keyboardType: TextInputType.number,
                 control: FTextFieldControl.managed(controller: _malePrice),
               ),
@@ -288,14 +302,14 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
             const SizedBox(width: 8),
             Expanded(
               child: FTextField(
-                label: const Text('Nữ'),
+                label: Text('freeplay.hostManage.female'.tr()),
                 keyboardType: TextInputType.number,
                 control: FTextFieldControl.managed(controller: _femalePrice),
               ),
             ),
           ],
         ),
-        const PSheetSectionLabel(label: 'Trình độ đề xuất'),
+        PSheetSectionLabel(label: 'freeplay.hostManage.recommendedSkill'.tr()),
         for (final skill in EloSeed.values)
           FCheckbox(
             value: _skills.contains(skill),
@@ -309,13 +323,17 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
             }),
           ),
         FTextField(
-          label: const Text('Mô tả'),
+          label: Text('freeplay.hostManage.description'.tr()),
           maxLines: 5,
           control: FTextFieldControl.managed(controller: _description),
         ),
         FButton(
           onPress: _saving ? null : _save,
-          child: Text(_saving ? 'Đang đăng…' : 'Đăng vé'),
+          child: Text(
+            _saving
+                ? 'freeplay.hostManage.publishing'.tr()
+                : 'freeplay.hostManage.publish'.tr(),
+          ),
         ),
       ],
     ),

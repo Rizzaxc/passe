@@ -2,6 +2,7 @@
 // challenge block, attached coach/referee, RSVP strip + control, quick
 // actions, captain-only cancel. Extracted from the old pinned hero (one
 // card was assumed per lobby); a lobby can now have several of these.
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../auth/auth_controller.dart';
 import '../../../../auth/guest_prompt.dart';
 import '../../../../core/feature_flags.dart';
+import '../../../../core/format.dart';
 import '../../../../core/model/enum.dart';
 import '../../../../feed_tab/compose_post_sheet.dart';
 import '../../../../ui/dialog.dart';
@@ -68,7 +70,15 @@ class ActivityCard extends ConsumerWidget {
     this.isPast = false,
   });
 
-  static const _wd = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+  List<String> get _wd => [
+    'lobbyHub.schedule.weekdaysShort.monday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.tuesday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.wednesday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.thursday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.friday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.saturday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.sunday'.tr(),
+  ];
 
   String get _activityId => upcoming.activity.id!;
 
@@ -94,8 +104,20 @@ class ActivityCard extends ConsumerWidget {
     final amount = upcoming.costAmount;
     if (upcoming.costType == null || amount == null) return null;
     return upcoming.costType == 'per_pax'
-        ? '${amount.toStringAsFixed(0)}đ/người'
-        : '${amount.toStringAsFixed(0)}đ (tổng)';
+        ? '${formatVnd(amount)}đ/người'
+        : '${formatVnd(amount)}đ (tổng)';
+  }
+
+  String? _costWordsLabel() {
+    final amount = upcoming.costAmount;
+    if (upcoming.costType == null || amount == null) return null;
+    return upcoming.costType == 'per_pax'
+        ? 'lobbyHub.activity.costPerPersonWords'.tr(
+            namedArgs: {'amount': formatVndWords(amount)},
+          )
+        : 'lobbyHub.activity.costTotalWords'.tr(
+            namedArgs: {'amount': formatVndWords(amount)},
+          );
   }
 
   String? _deadlineLabel() {
@@ -104,7 +126,9 @@ class ActivityCard extends ConsumerWidget {
     final d = deadline.toLocal();
     final hh = d.hour.toString().padLeft(2, '0');
     final mm = d.minute.toString().padLeft(2, '0');
-    return 'Hạn xác nhận ${_wd[d.weekday - 1]}, ${d.day}/${d.month} $hh:$mm';
+    return 'lobbyHub.activity.deadline'.tr(
+      namedArgs: {'time': '${_wd[d.weekday - 1]}, ${d.day}/${d.month} $hh:$mm'},
+    );
   }
 
   Future<void> _copyAddress(BuildContext context) async {
@@ -117,7 +141,7 @@ class ActivityCard extends ConsumerWidget {
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.copy),
-        title: const Text('Đã sao chép địa chỉ'),
+        title: Text('lobbyHub.activity.addressCopied'.tr()),
         alignment: .bottomCenter,
       );
     }
@@ -169,7 +193,7 @@ class ActivityCard extends ConsumerWidget {
         context: context,
         icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
-        title: const Text('Không thể mở bản đồ'),
+        title: Text('lobbyHub.activity.mapFailed'.tr()),
         alignment: .bottomCenter,
       );
     }
@@ -194,7 +218,7 @@ class ActivityCard extends ConsumerWidget {
         showFToast(
           context: context,
           icon: const Icon(FLucideIcons.circleCheck),
-          title: const Text('Bạn đã báo đến muộn cho buổi này rồi'),
+          title: Text('lobbyHub.activity.lateDuplicate'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -205,7 +229,7 @@ class ActivityCard extends ConsumerWidget {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Không thể đăng'),
+          title: Text('lobbyHub.activity.postFailed'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -222,16 +246,14 @@ class ActivityCard extends ConsumerWidget {
       context: context,
       builder: (dialogCtx, style, animation) => PConfirmDialog(
         animation: animation,
-        title: const Text('Hủy buổi chơi?'),
-        body: const Text(
-          'Mọi thành viên sẽ thấy buổi này bị hủy trong Hoạt động.',
-        ),
+        title: Text('lobbyHub.activity.cancelTitle'.tr()),
+        body: Text('lobbyHub.activity.cancelBody'.tr()),
         direction: Axis.horizontal,
         actions: [
           FButton(
             variant: .outline,
             onPress: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('Đóng'),
+            child: Text('lobbyHub.common.cancel'.tr()),
           ),
           FButton(
             variant: .destructive,
@@ -239,7 +261,7 @@ class ActivityCard extends ConsumerWidget {
               Navigator.of(dialogCtx).pop();
               _doCancel(context, ref);
             },
-            child: const Text('Hủy Buổi'),
+            child: Text('lobbyHub.activity.cancelAction'.tr()),
           ),
         ],
       ),
@@ -258,7 +280,7 @@ class ActivityCard extends ConsumerWidget {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Không thể hủy buổi chơi'),
+          title: Text('lobbyHub.activity.cancelFailed'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -273,6 +295,7 @@ class ActivityCard extends ConsumerWidget {
         .watch(activityConfirmationControllerProvider(activityId))
         .value;
     final costLabel = _costLabel();
+    final costWordsLabel = _costWordsLabel();
     final deadlineLabel = isPast ? null : _deadlineLabel();
 
     // Light select-watch on the already-fetched lobby feed (shared with the
@@ -410,14 +433,16 @@ class ActivityCard extends ConsumerWidget {
                     runSpacing: 6,
                     children: [
                       if (upcoming.recurrenceDayOfWeek != null)
-                        const _Tag(
-                          text: 'Hằng tuần',
+                        _Tag(
+                          text: 'lobbyHub.activity.weekly'.tr(),
                           icon: Icons.repeat,
                           tone: 'neutral',
                         ),
                       if (costLabel != null)
                         _Tag(
-                          text: 'Chi phí $costLabel',
+                          text: 'lobbyHub.activity.cost'.tr(
+                            namedArgs: {'amount': costLabel},
+                          ),
                           icon: Icons.account_balance_wallet_outlined,
                           tone: 'neutral',
                         ),
@@ -429,6 +454,15 @@ class ActivityCard extends ConsumerWidget {
                         ),
                     ],
                   ),
+                  if (costWordsLabel != null) ...[
+                    const SizedBox(height: 5),
+                    Text(
+                      costWordsLabel,
+                      style: context.theme.typography.body.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ],
                 ],
                 // Lobby-vs-lobby match: who we're playing, and the manager
                 // actions that turn an accepted challenge into a real one.
@@ -448,14 +482,14 @@ class ActivityCard extends ConsumerWidget {
                   const SizedBox(height: 10),
                   if (upcoming.referee != null)
                     _AttachedProRow(
-                      label: 'Trọng tài',
+                      label: 'lobbyHub.activity.referee'.tr(),
                       icon: Icons.sports,
                       pro: upcoming.referee!,
                     ),
                   if (upcoming.coach != null) ...[
                     if (upcoming.referee != null) const SizedBox(height: 6),
                     _AttachedProRow(
-                      label: 'HLV',
+                      label: 'lobbyHub.common.coach'.tr(),
                       icon: Icons.school_outlined,
                       pro: upcoming.coach!,
                     ),
@@ -509,9 +543,7 @@ class ActivityCard extends ConsumerWidget {
                           context: context,
                           icon: const Icon(FLucideIcons.circleX),
                           variant: .destructive,
-                          title: const Text(
-                            'Không thể đổi trạng thái tham gia',
-                          ),
+                          title: Text('lobbyHub.activity.rsvpFailed'.tr()),
                           alignment: .bottomCenter,
                         );
                       }
@@ -519,9 +551,7 @@ class ActivityCard extends ConsumerWidget {
                     onLockedTap: () => showFToast(
                       context: context,
                       icon: const Icon(FLucideIcons.lock),
-                      title: const Text(
-                        'Buổi chơi đã chốt — không thể đổi trạng thái tham gia',
-                      ),
+                      title: Text('lobbyHub.activity.rsvpLocked'.tr()),
                       alignment: .bottomCenter,
                     ),
                   ),
@@ -538,7 +568,7 @@ class ActivityCard extends ConsumerWidget {
                             if (!alreadyNoted) ...[
                               _QuickAction(
                                 icon: Icons.sticky_note_2_outlined,
-                                label: 'Ghi Chú',
+                                label: 'lobbyHub.activity.note'.tr(),
                                 onTap: () => _openActivityNote(context, ref),
                               ),
                               const SizedBox(width: 6),
@@ -546,7 +576,7 @@ class ActivityCard extends ConsumerWidget {
                             if (upcoming.locationName != null) ...[
                               _QuickAction(
                                 icon: Icons.navigation_outlined,
-                                label: 'Chỉ Đường',
+                                label: 'lobbyHub.activity.directions'.tr(),
                                 onTap: () => _openDirections(context),
                               ),
                               const SizedBox(width: 6),
@@ -558,13 +588,13 @@ class ActivityCard extends ConsumerWidget {
                               // separate "add location" entry point.
                               _QuickAction(
                                 icon: Icons.calendar_month_outlined,
-                                label: 'Thay Đổi',
+                                label: 'lobbyHub.activity.edit'.tr(),
                                 onTap: () => _openReschedule(context),
                               ),
                               const SizedBox(width: 6),
                               _QuickAction(
                                 icon: Icons.school_outlined,
-                                label: 'Đặt HLV / Trọng Tài',
+                                label: 'lobbyHub.activity.bookPro'.tr(),
                                 onTap: () => _bookCoach(context, ref),
                               ),
                               const SizedBox(width: 6),
@@ -572,7 +602,7 @@ class ActivityCard extends ConsumerWidget {
                             if (!isPast)
                               _QuickAction(
                                 icon: Icons.person_add_alt_1_outlined,
-                                label: 'Mời',
+                                label: 'lobbyHub.activity.invite'.tr(),
                                 onTap: () =>
                                     showInviteMemberSheet(context, lobbyId),
                               ),
@@ -582,7 +612,7 @@ class ActivityCard extends ConsumerWidget {
                               const SizedBox(width: 6),
                               _QuickAction(
                                 icon: Icons.access_time_rounded,
-                                label: 'Đến Muộn',
+                                label: 'lobbyHub.activity.late'.tr(),
                                 onTap: () => _postLate(context, ref),
                               ),
                             ],
@@ -591,7 +621,7 @@ class ActivityCard extends ConsumerWidget {
                               const SizedBox(width: 6),
                               _QuickAction(
                                 icon: Icons.add_photo_alternate_outlined,
-                                label: 'Đăng Feed',
+                                label: 'lobbyHub.activity.postFeed'.tr(),
                                 onTap: () => showComposePostSheet(
                                   context,
                                   lobbyId: lobbyId,
@@ -601,7 +631,7 @@ class ActivityCard extends ConsumerWidget {
                               const SizedBox(width: 6),
                               _QuickAction(
                                 icon: Icons.local_cafe_outlined,
-                                label: 'Đòi Tiền',
+                                label: 'lobbyHub.activity.requestMoney'.tr(),
                                 onTap: () => showPaymentRequestSheet(
                                   context,
                                   lobbyId: lobbyId,
@@ -711,7 +741,7 @@ class _ActivityFeedLogState extends ConsumerState<_ActivityFeedLog> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Nhật ký hoạt động',
+                  'lobbyHub.activity.log'.tr(),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -771,7 +801,7 @@ class _ActivityFeedLogBody extends ConsumerWidget {
       error: (_, _) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
-          'Không tải được nhật ký',
+          'lobbyHub.activity.logFailed'.tr(),
           style: TextStyle(fontSize: 11.5, color: colors.mutedForeground),
         ),
       ),
@@ -787,7 +817,7 @@ class _ActivityFeedLogBody extends ConsumerWidget {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              'Chưa có hoạt động nào',
+              'lobbyHub.activity.logEmpty'.tr(),
               style: TextStyle(
                 fontSize: 11.5,
                 fontStyle: FontStyle.italic,
@@ -824,9 +854,11 @@ class _ActivityFeedLogBody extends ConsumerWidget {
     if (DateTime.now().isBefore(localDue)) {
       final hh = localDue.hour.toString().padLeft(2, '0');
       final mm = localDue.minute.toString().padLeft(2, '0');
-      return 'Chi phí sẽ được tổng kết tự động lúc $hh:$mm';
+      return 'lobbyHub.activity.settlementAt'.tr(
+        namedArgs: {'time': '$hh:$mm'},
+      );
     }
-    return 'Đang chờ hệ thống tổng kết chi phí · kéo xuống để làm mới';
+    return 'lobbyHub.activity.settlementPending'.tr();
   }
 }
 
@@ -913,7 +945,8 @@ class _ChallengeBlock extends ConsumerWidget {
                   TextSpan(
                     children: [
                       TextSpan(
-                        text: '${challenge.weAreHome ? 'Tiếp' : 'Làm khách'} ',
+                        text:
+                            '${challenge.weAreHome ? 'lobbyHub.activity.home'.tr() : 'lobbyHub.activity.away'.tr()} ',
                         style: TextStyle(color: colors.mutedForeground),
                       ),
                       TextSpan(
@@ -953,7 +986,9 @@ class _ChallengeBlock extends ConsumerWidget {
                         ? null
                         : () => _confirm(context, ref),
                     child: Text(
-                      confirmed ? 'Chờ đối thủ' : 'Xác Nhận Trận',
+                      confirmed
+                          ? 'lobbyHub.activity.waitingOpponent'.tr()
+                          : 'lobbyHub.activity.confirmMatch'.tr(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -966,8 +1001,8 @@ class _ChallengeBlock extends ConsumerWidget {
                       size: .sm,
                       variant: .outline,
                       onPress: () => _bookReferee(context, ref),
-                      child: const Text(
-                        'Đặt Trọng Tài',
+                      child: Text(
+                        'lobbyHub.activity.bookReferee'.tr(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -979,7 +1014,7 @@ class _ChallengeBlock extends ConsumerWidget {
           if (locked && upcoming.referee == null) ...[
             const SizedBox(height: 6),
             Text(
-              'Chưa có trọng tài — trận sẽ được ghi nhận nhưng không tính điểm.',
+              'lobbyHub.activity.unratedWarning'.tr(),
               style: TextStyle(fontSize: 11, color: colors.mutedForeground),
             ),
           ],
@@ -1126,7 +1161,7 @@ class _RsvpControl extends StatelessWidget {
         children: [
           _RsvpBtn(
             id: 'going',
-            label: 'Có Mặt',
+            label: 'lobbyHub.activity.going'.tr(),
             icon: Icons.check_rounded,
             active: value == 'going',
             tone: 'green',
@@ -1136,7 +1171,7 @@ class _RsvpControl extends StatelessWidget {
           ),
           _RsvpBtn(
             id: 'maybe',
-            label: 'Có Thể',
+            label: 'lobbyHub.activity.maybe'.tr(),
             icon: Icons.help_outline_rounded,
             active: value == 'maybe',
             tone: 'neutral',
@@ -1146,7 +1181,7 @@ class _RsvpControl extends StatelessWidget {
           ),
           _RsvpBtn(
             id: 'out',
-            label: 'Vắng',
+            label: 'lobbyHub.activity.out'.tr(),
             icon: Icons.close_rounded,
             active: value == 'out',
             tone: 'neutral',
@@ -1295,18 +1330,26 @@ class _AttachedProRow extends StatelessWidget {
     final colors = context.theme.colors;
     return switch (pro.status) {
       ProfessionalBookingStatus.requested => (
-        'Chờ xác nhận',
+        'lobbyHub.activity.bookingPending'.tr(),
         _amber,
         _amberTint,
       ),
       ProfessionalBookingStatus.confirmed => (
-        'Đã xác nhận',
+        'lobbyHub.activity.bookingConfirmed'.tr(),
         _green,
         _greenTint,
       ),
-      ProfessionalBookingStatus.completed => ('Hoàn thành', _green, _greenTint),
+      ProfessionalBookingStatus.completed => (
+        'lobbyHub.activity.bookingCompleted'.tr(),
+        _green,
+        _greenTint,
+      ),
       // rejected / cancelled_by_client / cancelled_by_pro
-      _ => ('Đã huỷ', colors.mutedForeground, colors.secondary),
+      _ => (
+        'lobbyHub.activity.bookingCancelled'.tr(),
+        colors.mutedForeground,
+        colors.secondary,
+      ),
     };
   }
 

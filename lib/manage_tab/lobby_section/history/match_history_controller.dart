@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -109,7 +110,15 @@ class LobbyMatchHistoryController extends _$LobbyMatchHistoryController {
     _ => throw StateError('Unknown lobby_match_result: $db'),
   };
 
-  static const _weekdayShort = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+  static List<String> get _weekdayShort => [
+    'lobbyHub.schedule.weekdaysShort.monday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.tuesday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.wednesday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.thursday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.friday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.saturday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.sunday'.tr(),
+  ];
 
   String _formatDate(DateTime t) {
     final wd = _weekdayShort[t.weekday - 1];

@@ -4,9 +4,9 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../../core/format.dart';
 import '../../../../core/payment/pay_recipient.dart';
 import '../../../../ui/main.dart';
-import 'feed_controller.dart';
 import 'money_controller.dart';
 
 Future<void> showLobbyMoneySheet(
@@ -48,9 +48,15 @@ class _LobbyMoneySheet extends ConsumerWidget {
         const SizedBox(height: 10),
         _SignLegend(),
         const SizedBox(height: 12),
-        Flexible(
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.65,
+          ),
           child: balances.when(
-            loading: () => const Center(child: FCircularProgress()),
+            loading: () => const SizedBox(
+              height: 120,
+              child: Center(child: FCircularProgress()),
+            ),
             error: (_, _) => _MoneyError(lobbyId: lobbyId),
             data: (items) => items.isEmpty
                 ? _MoneyEmpty()
@@ -138,7 +144,9 @@ class _MoneyCardState extends ConsumerState<_MoneyCard> {
       context,
       recipientUserId: balance.userId,
       amount: balance.signedTotal.abs(),
-      note: 'Tiền trong lobby với ${balance.username}',
+      note: 'lobbyHub.feed.moneyNote'.tr(
+        namedArgs: {'username': balance.username},
+      ),
       emptyMessage: 'payment.recipientMissingInfo'.tr(),
     );
     if (mounted) setState(() => _openedPayment = true);
@@ -151,7 +159,6 @@ class _MoneyCardState extends ConsumerState<_MoneyCard> {
       await ref
           .read(lobbyMoneyControllerProvider(widget.lobbyId).notifier)
           .settle(widget.balance.userId, idempotencyKey: _idempotencyKey);
-      ref.invalidate(lobbyFeedControllerProvider(widget.lobbyId));
       if (mounted) {
         showFToast(
           context: context,
@@ -221,8 +228,18 @@ class _MoneyCardState extends ConsumerState<_MoneyCard> {
               ),
             ],
           ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              formatVndWords(balance.signedTotal),
+              textAlign: TextAlign.right,
+              style: context.theme.typography.body.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+          ),
           const SizedBox(height: 10),
-          for (final entry in balance.entries)
+          for (final entry in balance.entries) ...[
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
@@ -244,38 +261,197 @@ class _MoneyCardState extends ConsumerState<_MoneyCard> {
                 ],
               ),
             ),
-          if (needsToSend || isEven) ...[
-            const SizedBox(height: 10),
-            if (needsToSend && !_openedPayment)
-              FButton(
-                onPress: _openPayment,
+            Padding(
+              padding: const EdgeInsets.only(bottom: 3),
+              child: Align(
+                alignment: Alignment.centerRight,
                 child: Text(
-                  'payment.sendAmount'.tr(
-                    namedArgs: {'amount': _vnd(balance.signedTotal.abs())},
+                  formatVndWords(entry.signedAmount),
+                  textAlign: TextAlign.right,
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: colors.mutedForeground,
                   ),
                 ),
-              )
-            else
-              FButton(
-                onPress: _settling ? null : _settle,
-                child: _settling
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        isEven
-                            ? 'payment.clearBothWays'.tr()
-                            : 'payment.sentDone'.tr(),
-                      ),
               ),
+            ),
           ],
+          const SizedBox(height: 10),
+          if (needsToSend && !_openedPayment)
+            FButton(
+              onPress: _openPayment,
+              child: Text(
+                'payment.sendAmount'.tr(
+                  namedArgs: {'amount': _vnd(balance.signedTotal.abs())},
+                ),
+              ),
+            )
+          else
+            _SwipeToConfirm(
+              loading: _settling,
+              onConfirm: _settle,
+              label: isEven
+                  ? 'payment.swipeClearBothWays'.tr()
+                  : needsToSend
+                  ? 'payment.swipeSent'.tr(
+                      namedArgs: {'amount': _vnd(balance.signedTotal.abs())},
+                    )
+                  : 'payment.swipeReceived'.tr(
+                      namedArgs: {'amount': _vnd(balance.signedTotal)},
+                    ),
+            ),
         ],
       ),
+    );
+  }
+}
+
+class _SwipeToConfirm extends StatefulWidget {
+  final String label;
+  final bool loading;
+  final Future<void> Function() onConfirm;
+
+  const _SwipeToConfirm({
+    required this.label,
+    required this.loading,
+    required this.onConfirm,
+  });
+
+  @override
+  State<_SwipeToConfirm> createState() => _SwipeToConfirmState();
+}
+
+class _SwipeToConfirmState extends State<_SwipeToConfirm> {
+  static const _height = 52.0;
+  static const _inset = 4.0;
+  static const _thumbSize = _height - (_inset * 2);
+  static const _completionThreshold = 0.80;
+
+  double _dragOffset = 0;
+  bool _dragging = false;
+  bool _committing = false;
+
+  bool get _disabled => widget.loading || _committing;
+
+  void _updateDrag(double delta, double maxDrag) {
+    if (_disabled) return;
+    final next = (_dragOffset + delta).clamp(0.0, maxDrag);
+    setState(() => _dragOffset = next);
+    if (next >= maxDrag * _completionThreshold) {
+      _finish(maxDrag);
+    }
+  }
+
+  Future<void> _finish(double maxDrag) async {
+    if (_disabled) return;
+    if (_dragOffset < maxDrag * _completionThreshold) {
+      setState(() {
+        _dragging = false;
+        _dragOffset = 0;
+      });
+      return;
+    }
+
+    setState(() {
+      _dragging = false;
+      _committing = true;
+      _dragOffset = maxDrag;
+    });
+    await widget.onConfirm();
+    if (!mounted) return;
+    setState(() {
+      _committing = false;
+      _dragOffset = 0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxDrag = (constraints.maxWidth - _thumbSize - (_inset * 2))
+            .clamp(0.0, double.infinity);
+        final offset = _dragOffset.clamp(0.0, maxDrag);
+
+        return Semantics(
+          button: true,
+          label: widget.label,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragStart: _disabled
+                ? null
+                : (_) => setState(() => _dragging = true),
+            onHorizontalDragUpdate: _disabled
+                ? null
+                : (details) => _updateDrag(details.delta.dx, maxDrag),
+            onHorizontalDragEnd: _disabled ? null : (_) => _finish(maxDrag),
+            onHorizontalDragCancel: _disabled
+                ? null
+                : () => setState(() {
+                    _dragging = false;
+                    _dragOffset = 0;
+                  }),
+            child: Container(
+              height: _height,
+              decoration: BoxDecoration(
+                color: colors.secondary,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: colors.border),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 58),
+                    child: Text(
+                      widget.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: context.theme.typography.body.sm.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colors.foreground,
+                      ),
+                    ),
+                  ),
+                  AnimatedPositionedDirectional(
+                    duration: _dragging
+                        ? Duration.zero
+                        : const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    start: _inset + offset,
+                    top: _inset,
+                    child: Container(
+                      width: _thumbSize,
+                      height: _thumbSize,
+                      decoration: BoxDecoration(
+                        color: pbBlue,
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: Center(
+                        child: _disabled
+                            ? const SizedBox(
+                                width: 17,
+                                height: 17,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                FLucideIcons.chevronsRight,
+                                size: 20,
+                                color: Colors.white,
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -285,6 +461,7 @@ class _MoneyEmpty extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 30),
     child: Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         const Icon(FLucideIcons.partyPopper, size: 28, color: pbGreen),
         const SizedBox(height: 9),
@@ -303,6 +480,7 @@ class _MoneyError extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 24),
     child: Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text('errorGeneric'.tr()),
         const SizedBox(height: 8),
@@ -321,8 +499,7 @@ String _date(DateTime date) =>
     '${date.month.toString().padLeft(2, '0')}';
 
 String _vnd(num value) {
-  final digits = value.abs().round().toString();
-  return '${digits.replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.')}đ';
+  return '${formatVnd(value.abs())}đ';
 }
 
 String _signedVnd(num value) => '${value >= 0 ? '+' : '−'}${_vnd(value)}';

@@ -1,5 +1,6 @@
 // Feed item models + renderers — action-based; activity notes are the one
 // intentionally short free-text action.
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -8,6 +9,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../../../ui/theme.dart';
 import '../../../../ui/user_avatar.dart';
 import '../../../auth/auth_controller.dart';
+import '../../../core/format.dart';
 import '../../../core/model/wall_post.dart';
 import '../../../core/payment/pay_recipient.dart';
 import '../../../feed_tab/post_card.dart';
@@ -60,46 +62,61 @@ enum UpdateKind {
 enum PersonalActionKind {
   comeEarly(
     'come_early',
-    'Đến sớm khởi động',
+    'lobbyHub.feed.personal.comeEarly',
     FeedTone.amber,
     Icons.local_fire_department_outlined,
   ),
-  late('late', 'Đến muộn', FeedTone.crimson, Icons.access_time_rounded),
-  note('note', 'Ghi chú', FeedTone.blue, Icons.sticky_note_2_outlined),
+  late(
+    'late',
+    'lobbyHub.feed.personal.late',
+    FeedTone.crimson,
+    Icons.access_time_rounded,
+  ),
+  note(
+    'note',
+    'lobbyHub.feed.personal.note',
+    FeedTone.blue,
+    Icons.sticky_note_2_outlined,
+  ),
   bringGear(
     'bring_gear',
-    'Mang thêm gear',
+    'lobbyHub.feed.personal.bringGear',
     FeedTone.green,
     Icons.sports_tennis_outlined,
   ),
   needLift(
     'need_lift',
-    'Cần đi nhờ',
+    'lobbyHub.feed.personal.needLift',
     FeedTone.blue,
     Icons.directions_car_outlined,
   ),
   offerLift(
     'offer_lift',
-    'Cho đi nhờ',
+    'lobbyHub.feed.personal.offerLift',
     FeedTone.blue,
     Icons.directions_car_outlined,
   ),
   paid(
     'paid',
-    'Đã chuyển tiền sân',
+    'lobbyHub.feed.personal.paid',
     FeedTone.green,
     Icons.account_balance_wallet_outlined,
   ),
-  skip('skip', 'Vắng buổi này', FeedTone.crimson, Icons.close_rounded),
+  skip(
+    'skip',
+    'lobbyHub.feed.personal.skip',
+    FeedTone.crimson,
+    Icons.close_rounded,
+  ),
   cheer(
     'cheer',
-    'Tăng động năng lượng',
+    'lobbyHub.feed.personal.cheer',
     FeedTone.neutral,
     Icons.emoji_emotions_outlined,
   ),
   remindCaptain(
     'remind_captain',
-    'Đã nhắc đội trưởng',
+    'lobbyHub.feed.personal.remindCaptain',
     FeedTone.neutral,
     Icons.notifications_active_outlined,
   );
@@ -646,9 +663,9 @@ class _AuthorRow extends StatelessWidget {
               color: _crimsonTint,
               borderRadius: BorderRadius.circular(6),
             ),
-            child: const Text(
-              'ĐỘI TRƯỞNG',
-              style: TextStyle(
+            child: Text(
+              'lobbyHub.feed.captain'.tr(),
+              style: const TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
                 color: _crimson,
@@ -736,7 +753,7 @@ class _PersonalCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.action.label,
+                          item.action.label.tr(),
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,
@@ -1002,7 +1019,7 @@ class _PollCardState extends ConsumerState<_PollCard> {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Bình chọn thất bại'),
+          title: Text('lobbyHub.poll.voteFailed'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -1069,9 +1086,9 @@ class _PollCardState extends ConsumerState<_PollCard> {
                           color: pbBlue,
                         ),
                         const SizedBox(width: 6),
-                        const Text(
-                          'BÌNH CHỌN',
-                          style: TextStyle(
+                        Text(
+                          'lobbyHub.poll.badge'.tr(),
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: pbBlue,
@@ -1120,7 +1137,12 @@ class _PollCardState extends ConsumerState<_PollCard> {
                           ),
                         const SizedBox(height: 4),
                         Text(
-                          '$total/${widget.item.totalMembers} đã bình chọn',
+                          'lobbyHub.poll.votes'.tr(
+                            namedArgs: {
+                              'current': '$total',
+                              'total': '${widget.item.totalMembers}',
+                            },
+                          ),
                           style: TextStyle(
                             fontSize: 11,
                             color: colors.mutedForeground,
@@ -1260,7 +1282,7 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Không thể xác nhận đã trả'),
+          title: Text('lobbyHub.feed.paidConfirmFailed'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -1274,8 +1296,8 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
       context,
       recipientUserId: widget.item.recipientId,
       amount: amount,
-      note: widget.item.note ?? 'Chia tiền buổi chơi',
-      emptyMessage: 'Người nhận chưa có thông tin thanh toán',
+      note: widget.item.note ?? 'lobbyHub.feed.splitFallback'.tr(),
+      emptyMessage: 'lobbyHub.feed.recipientMissing'.tr(),
     );
   }
 
@@ -1346,7 +1368,9 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          isSplit ? 'CHIA TIỀN' : 'ĐÒI TIỀN',
+                          isSplit
+                              ? 'lobbyHub.feed.split'.tr()
+                              : 'lobbyHub.feed.request'.tr(),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -1357,7 +1381,7 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                         const Spacer(),
                         if (item.isFullyPaid)
                           Text(
-                            'Đã thu đủ',
+                            'lobbyHub.feed.collected'.tr(),
                             style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w600,
@@ -1385,8 +1409,13 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                           const SizedBox(height: 6),
                         ],
                         Text(
-                          '${item.perPersonAmount.toStringAsFixed(0)}đ / người'
-                          ' · Tổng ${item.totalAmount.toStringAsFixed(0)}đ',
+                          'lobbyHub.feed.perPersonTotal'.tr(
+                            namedArgs: {
+                              'perPerson':
+                                  '${formatVnd(item.perPersonAmount)}đ',
+                              'total': '${formatVnd(item.totalAmount)}đ',
+                            },
+                          ),
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
@@ -1417,20 +1446,30 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                Text(
-                                  switch (payee.status) {
-                                    PaymentPayeeStatus.outstanding =>
-                                      '${payee.amountOwed.toStringAsFixed(0)}đ',
-                                    PaymentPayeeStatus.paidDirect => 'Đã gửi',
-                                    PaymentPayeeStatus.clearedTogether =>
-                                      'Đã tính chung',
-                                  },
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: payee.status.isResolved
-                                        ? pbGreen
-                                        : colors.mutedForeground,
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        switch (payee.status) {
+                                          PaymentPayeeStatus.outstanding =>
+                                            '${formatVnd(payee.amountOwed)}đ',
+                                          PaymentPayeeStatus.paidDirect =>
+                                            'lobbyHub.feed.sent'.tr(),
+                                          PaymentPayeeStatus.clearedTogether =>
+                                            'lobbyHub.feed.cleared'.tr(),
+                                        },
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: payee.status.isResolved
+                                              ? pbGreen
+                                              : colors.mutedForeground,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 if (payee.status.isResolved) ...[
@@ -1454,7 +1493,7 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                                 child: FButton(
                                   variant: .outline,
                                   onPress: () => _pay(payee.amountOwed),
-                                  child: const Text('Gửi ngay'),
+                                  child: Text('lobbyHub.feed.payNow'.tr()),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -1470,7 +1509,7 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                                             color: Colors.white,
                                           ),
                                         )
-                                      : const Text('Mình gửi rồi'),
+                                      : Text('lobbyHub.feed.paid'.tr()),
                                 ),
                               ),
                             ],

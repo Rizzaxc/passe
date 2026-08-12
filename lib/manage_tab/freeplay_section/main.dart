@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -19,7 +20,9 @@ class HostFreeplaySection extends ConsumerWidget {
     return Column(
       children: [
         PSectionHeader(
-          title: scheduleOnly ? 'Lịch Xé vé' : 'Vé đang đăng',
+          title: scheduleOnly
+              ? 'freeplay.hostManage.schedule'.tr()
+              : 'freeplay.hostManage.openListings'.tr(),
           suffix: scheduleOnly
               ? null
               : FButton.icon(
@@ -36,18 +39,19 @@ class HostFreeplaySection extends ConsumerWidget {
             },
             child: activities.when(
               loading: () => const Center(child: FCircularProgress()),
-              error: (_, _) =>
-                  const Center(child: Text('Không tải được lịch Host')),
+              error: (_, _) => Center(
+                child: Text('freeplay.hostManage.scheduleLoadFailed'.tr()),
+              ),
               data: (items) {
                 final sorted = [...items]
                   ..sort((a, b) => a.startTime.compareTo(b.startTime));
                 if (sorted.isEmpty) {
                   return ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
+                    children: [
                       PEmptySectionPlaceholder(
-                        title: 'Chưa có buổi chơi',
-                        subtitle: 'Đăng một vé để bắt đầu nhận người chơi.',
+                        title: 'freeplay.hostManage.emptyTitle'.tr(),
+                        subtitle: 'freeplay.hostManage.emptySubtitle'.tr(),
                       ),
                     ],
                   );
@@ -89,7 +93,12 @@ class HostFreeplaySection extends ConsumerWidget {
                                     sorted[index].id,
                                   ),
                                   child: Text(
-                                    'Yêu cầu ${sorted[index].pendingCount}',
+                                    'freeplay.hostManage.pendingRequests'.tr(
+                                      namedArgs: {
+                                        'count':
+                                            '${sorted[index].pendingCount}',
+                                      },
+                                    ),
                                   ),
                                 ),
                               ],

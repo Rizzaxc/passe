@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -14,12 +15,12 @@ class FreeplayHostPage extends ConsumerWidget {
     final profile = ref.watch(freeplayHostProfileProvider(id));
     final open = ref.watch(freeplayHostOpenProvider(id));
     return FScaffold(
-      header: FHeader.nested(title: const Text('Host')),
+      header: FHeader.nested(title: Text('freeplay.host.title'.tr())),
       child: profile.when(
         loading: () => const Center(child: FCircularProgress()),
-        error: (_, _) => const Center(child: Text('Không tải được Host')),
+        error: (_, _) => Center(child: Text('freeplay.host.loadFailed'.tr())),
         data: (host) => host == null
-            ? const Center(child: Text('Không tìm thấy Host'))
+            ? Center(child: Text('freeplay.host.notFound'.tr()))
             : ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
@@ -37,17 +38,22 @@ class FreeplayHostPage extends ConsumerWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const Text('Host đã xác minh', textAlign: TextAlign.center),
+                  Text(
+                    'freeplay.verifiedHost'.tr(),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 20),
                   if (host.bio.isNotEmpty) Text(host.bio),
                   const SizedBox(height: 16),
                   Text(
-                    '${host.completedCount} buổi đã hoàn thành',
+                    'freeplay.host.completedCount'.tr(
+                      namedArgs: {'count': '${host.completedCount}'},
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 28),
                   Text(
-                    'Vé đang mở',
+                    'freeplay.host.openListings'.tr(),
                     style: context.theme.typography.body.lg.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -55,9 +61,9 @@ class FreeplayHostPage extends ConsumerWidget {
                   const SizedBox(height: 12),
                   open.when(
                     loading: () => const Center(child: FCircularProgress()),
-                    error: (_, _) => const Text('Không tải được vé đang mở'),
+                    error: (_, _) => Text('freeplay.host.openLoadFailed'.tr()),
                     data: (items) => items.isEmpty
-                        ? const Text('Host chưa có vé đang mở.')
+                        ? Text('freeplay.host.noOpenListings'.tr())
                         : Column(
                             children: [
                               for (final activity in items) ...[

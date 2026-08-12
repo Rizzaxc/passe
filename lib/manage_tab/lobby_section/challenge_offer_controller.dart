@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -71,7 +72,9 @@ class ChallengeOfferController extends _$ChallengeOfferController {
       locationName:
           (row['offer_venue'] as Map<String, dynamic>?)?['name'] as String?,
       // numeric comes back as String from Supabase.
-      costPerTeam: double.tryParse(row['challenge_offer_cost']?.toString() ?? ''),
+      costPerTeam: double.tryParse(
+        row['challenge_offer_cost']?.toString() ?? '',
+      ),
       homegroundId: row['home_ground'] as String?,
       homegroundName:
           (row['homeground'] as Map<String, dynamic>?)?['name'] as String?,
@@ -85,23 +88,30 @@ class ChallengeOfferController extends _$ChallengeOfferController {
     required String locationId,
     required double costPerTeam,
   }) async {
-    await Supabase.instance.client.rpc('set_lobby_challenge_offer', params: {
-      'p_lobby_id': lobbyId,
-      'p_open': true,
-      'p_time': kickoff.toUtc().toIso8601String(),
-      'p_location': locationId,
-      'p_cost': costPerTeam,
-    }).timeout(const Duration(seconds: 5));
+    await Supabase.instance.client
+        .rpc(
+          'set_lobby_challenge_offer',
+          params: {
+            'p_lobby_id': lobbyId,
+            'p_open': true,
+            'p_time': kickoff.toUtc().toIso8601String(),
+            'p_location': locationId,
+            'p_cost': costPerTeam,
+          },
+        )
+        .timeout(const Duration(seconds: 5));
     ref.invalidateSelf();
   }
 
   /// Withdraw the offer. Clears the terms too, so nothing stale is left behind
   /// an unchecked box.
   Future<void> withdraw() async {
-    await Supabase.instance.client.rpc('set_lobby_challenge_offer', params: {
-      'p_lobby_id': lobbyId,
-      'p_open': false,
-    }).timeout(const Duration(seconds: 5));
+    await Supabase.instance.client
+        .rpc(
+          'set_lobby_challenge_offer',
+          params: {'p_lobby_id': lobbyId, 'p_open': false},
+        )
+        .timeout(const Duration(seconds: 5));
     ref.invalidateSelf();
   }
 }
@@ -110,9 +120,13 @@ class ChallengeOfferController extends _$ChallengeOfferController {
 String challengeOfferErrorMessage(Object e) {
   final msg = e.toString();
   if (msg.contains('not a manager')) {
-    return 'Chỉ đội trưởng hoặc điều phối viên mới đặt được';
+    return 'lobbyHub.challenge.offerManagerOnly'.tr();
   }
-  if (msg.contains('in the past')) return 'Giờ thi đấu phải ở tương lai';
-  if (msg.contains('negative')) return 'Chi phí không hợp lệ';
-  return 'Không thể cập nhật lời mời thách đấu';
+  if (msg.contains('in the past')) {
+    return 'lobbyHub.challenge.futureTime'.tr();
+  }
+  if (msg.contains('negative')) {
+    return 'lobbyHub.challenge.offerCostError'.tr();
+  }
+  return 'lobbyHub.challenge.offerUpdateError'.tr();
 }

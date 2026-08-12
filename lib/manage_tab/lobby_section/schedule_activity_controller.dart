@@ -1,7 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth/auth_controller.dart';
+import '../../core/format.dart';
 import 'activity/feed_controller.dart';
 import 'activity/upcoming_controller.dart';
 import 'lobby_detail_controller.dart';
@@ -64,7 +66,9 @@ class ScheduleActivityController extends _$ScheduleActivityController {
       )).length;
       if (currentCount >= maxConcurrentActivities) {
         throw StateError(
-          'Lobby đã đạt giới hạn $maxConcurrentActivities hoạt động sắp tới',
+          'lobbyHub.schedule.limitReached'.tr(
+            namedArgs: {'count': '$maxConcurrentActivities'},
+          ),
         );
       }
 
@@ -122,19 +126,28 @@ class ScheduleActivityController extends _$ScheduleActivityController {
             'author_id': user.id,
             'kind': 'update',
             'payload': {
-              'title': 'Lên lịch buổi chơi',
+              'title': 'lobbyHub.schedule.feedCreatedTitle'.tr(),
               'kind': 'scheduled',
               'tone': 'blue',
               'fields': [
-                ['Ngày', _fmtDate(start)],
-                ['Giờ', '${_fmtTime(start)} - ${_fmtTime(end)}'],
-                if (recurrenceDayOfWeek != null) ['Lặp lại', 'Hằng tuần'],
+                ['lobbyHub.schedule.date'.tr(), _fmtDate(start)],
+                [
+                  'lobbyHub.schedule.time'.tr(),
+                  '${_fmtTime(start)} - ${_fmtTime(end)}',
+                ],
+                if (recurrenceDayOfWeek != null)
+                  [
+                    'lobbyHub.schedule.recurrence'.tr(),
+                    'lobbyHub.schedule.weekly'.tr(),
+                  ],
                 if (costType != null && costAmount != null)
                   [
-                    'Chi phí',
+                    'lobbyHub.schedule.cost'.tr(),
                     costType == ActivityCostType.perPax
-                        ? '$costAmount đ/người'
-                        : '$costAmount đ (tổng)',
+                        ? '${formatVnd(costAmount)}đ/người · '
+                              '${formatVndWords(costAmount)}'
+                        : '${formatVnd(costAmount)}đ (tổng) · '
+                              '${formatVndWords(costAmount)}',
                   ],
               ],
             },
@@ -179,8 +192,12 @@ class ScheduleActivityController extends _$ScheduleActivityController {
             'start_time': start.toUtc().toIso8601String(),
             'end_time': end.toUtc().toIso8601String(),
             'location_id': locationId,
-            'cost_type': costType != null && costAmount != null ? costType.db : null,
-            'cost_amount': costType != null && costAmount != null ? costAmount : null,
+            'cost_type': costType != null && costAmount != null
+                ? costType.db
+                : null,
+            'cost_amount': costType != null && costAmount != null
+                ? costAmount
+                : null,
             'confirmation_threshold': confirmationThreshold,
             'confirmation_deadline': confirmationDeadline
                 ?.toUtc()
@@ -212,12 +229,15 @@ class ScheduleActivityController extends _$ScheduleActivityController {
             'author_id': user.id,
             'kind': 'update',
             'payload': {
-              'title': 'Thay đổi buổi chơi',
+              'title': 'lobbyHub.schedule.feedChangedTitle'.tr(),
               'kind': 'rescheduled',
               'tone': 'crimson',
               'fields': [
-                ['Ngày', _fmtDate(start)],
-                ['Giờ', '${_fmtTime(start)} - ${_fmtTime(end)}'],
+                ['lobbyHub.schedule.date'.tr(), _fmtDate(start)],
+                [
+                  'lobbyHub.schedule.time'.tr(),
+                  '${_fmtTime(start)} - ${_fmtTime(end)}',
+                ],
               ],
             },
           })
@@ -262,7 +282,7 @@ class ScheduleActivityController extends _$ScheduleActivityController {
             'author_id': user.id,
             'kind': 'update',
             'payload': {
-              'title': 'Đã hủy buổi chơi',
+              'title': 'lobbyHub.schedule.feedCancelledTitle'.tr(),
               'kind': 'cancelled',
               'tone': 'crimson',
               'fields': <List<String>>[],
@@ -278,7 +298,15 @@ class ScheduleActivityController extends _$ScheduleActivityController {
     }
   }
 
-  static const _wd = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+  static List<String> get _wd => [
+    'lobbyHub.schedule.weekdaysShort.monday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.tuesday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.wednesday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.thursday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.friday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.saturday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.sunday'.tr(),
+  ];
 
   static String _fmtDate(DateTime d) =>
       '${_wd[d.weekday - 1]}, ${d.day}/${d.month}/${d.year}';

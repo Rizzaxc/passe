@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -47,7 +48,7 @@ class _ActivityNoteSheetState extends ConsumerState<_ActivityNoteSheet> {
         context: context,
         icon: const Icon(FLucideIcons.circleAlert),
         variant: .destructive,
-        title: const Text('Ghi chú phải có từ 1–72 ký tự'),
+        title: Text('lobbyHub.note.lengthError'.tr()),
         alignment: .bottomCenter,
       );
       return;
@@ -64,7 +65,7 @@ class _ActivityNoteSheetState extends ConsumerState<_ActivityNoteSheet> {
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.check),
-        title: const Text('Đã thêm ghi chú'),
+        title: Text('lobbyHub.note.added'.tr()),
         alignment: .bottomCenter,
       );
     } on AlreadyPostedActivityNoteException {
@@ -73,7 +74,7 @@ class _ActivityNoteSheetState extends ConsumerState<_ActivityNoteSheet> {
         showFToast(
           context: context,
           icon: const Icon(FLucideIcons.circleCheck),
-          title: const Text('Bạn đã ghi chú cho buổi này rồi'),
+          title: Text('lobbyHub.note.duplicate'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -84,7 +85,7 @@ class _ActivityNoteSheetState extends ConsumerState<_ActivityNoteSheet> {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Không thể thêm ghi chú'),
+          title: Text('lobbyHub.note.failed'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -103,7 +104,7 @@ class _ActivityNoteSheetState extends ConsumerState<_ActivityNoteSheet> {
         spacing: 16,
         children: [
           PSheetTitle(
-            label: 'Ghi Chú Buổi Chơi',
+            label: 'lobbyHub.note.title'.tr(),
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),
@@ -111,8 +112,8 @@ class _ActivityNoteSheetState extends ConsumerState<_ActivityNoteSheet> {
             ),
           ),
           FTextField(
-            label: const Text('Ghi chú'),
-            hint: 'Nhắn mọi người về buổi chơi…',
+            label: Text('lobbyHub.common.note'.tr()),
+            hint: 'lobbyHub.note.hint'.tr(),
             maxLines: 3,
             maxLength: maxActivityNoteLength,
             autofocus: true,
@@ -128,7 +129,7 @@ class _ActivityNoteSheetState extends ConsumerState<_ActivityNoteSheet> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Đăng Ghi Chú'),
+                : Text('lobbyHub.note.submit'.tr()),
           ),
           const SizedBox(height: 8),
         ],

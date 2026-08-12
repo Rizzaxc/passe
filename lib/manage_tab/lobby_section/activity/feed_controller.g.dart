@@ -69,7 +69,7 @@ final class LobbyFeedControllerProvider
 }
 
 String _$lobbyFeedControllerHash() =>
-    r'23033cc33e50a05cbfd664a73606bbd60fa204c1';
+    r'7679e8fc133d9be0a3233e0befa30c355f5bf582';
 
 /// Activity-tab feed (chat-style action stream) for a lobby.
 ///

@@ -2,11 +2,13 @@
 // an ancillary payment request against tagged lobby mates. Candidate/tag
 // data reuses the wall composer's taggable-users infra (attendees + lobby
 // members, attendees first) — same shape, different destination.
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../core/format.dart';
 import '../../../feed_tab/compose_controller.dart';
 import '../../../ui/main.dart';
 import 'feed_controller.dart';
@@ -19,7 +21,8 @@ void showPaymentRequestSheet(
   showPSheet(
     context: context,
     maxHeightRatio: 1.0,
-    builder: (_) => _PaymentRequestSheet(lobbyId: lobbyId, activityId: activityId),
+    builder: (_) =>
+        _PaymentRequestSheet(lobbyId: lobbyId, activityId: activityId),
   );
 }
 
@@ -29,13 +32,17 @@ class _PaymentRequestSheet extends ConsumerStatefulWidget {
   const _PaymentRequestSheet({required this.lobbyId, required this.activityId});
 
   @override
-  ConsumerState<_PaymentRequestSheet> createState() => _PaymentRequestSheetState();
+  ConsumerState<_PaymentRequestSheet> createState() =>
+      _PaymentRequestSheetState();
 }
 
 class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
   final _amountController = TextEditingController();
-  final _noteController = TextEditingController(text: 'Trà đá');
-  Set<String>? _selected; // null until candidates load, then seeded to attendees
+  final _noteController = TextEditingController(
+    text: 'lobbyHub.paymentRequest.defaultNote'.tr(),
+  );
+  Set<String>?
+  _selected; // null until candidates load, then seeded to attendees
   bool _saving = false;
 
   @override
@@ -58,7 +65,7 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
         context: context,
         icon: const Icon(FLucideIcons.circleAlert),
         variant: .destructive,
-        title: const Text('Số tiền không hợp lệ'),
+        title: Text('lobbyHub.paymentRequest.invalidAmount'.tr()),
         alignment: .bottomCenter,
       );
       return;
@@ -68,7 +75,7 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
         context: context,
         icon: const Icon(FLucideIcons.circleAlert),
         variant: .destructive,
-        title: const Text('Chọn ít nhất một người'),
+        title: Text('lobbyHub.paymentRequest.selectPerson'.tr()),
         alignment: .bottomCenter,
       );
       return;
@@ -91,7 +98,7 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.check),
-        title: const Text('Đã gửi yêu cầu thanh toán'),
+        title: Text('lobbyHub.paymentRequest.sent'.tr()),
         alignment: .bottomCenter,
       );
     } catch (e, st) {
@@ -101,7 +108,7 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Không thể gửi yêu cầu'),
+          title: Text('lobbyHub.paymentRequest.sendFailed'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -112,8 +119,9 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final candidatesAsync =
-        ref.watch(taggableUsersProvider(activityId: widget.activityId));
+    final candidatesAsync = ref.watch(
+      taggableUsersProvider(activityId: widget.activityId),
+    );
 
     return SingleChildScrollView(
       primary: false,
@@ -123,7 +131,7 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
         spacing: 12,
         children: [
           PSheetTitle(
-            label: 'Đòi Tiền Trà Đá',
+            label: 'lobbyHub.paymentRequest.title'.tr(),
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),
@@ -131,30 +139,41 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
             ),
           ),
           FTextField(
-            label: const Text('Số tiền'),
+            label: Text('lobbyHub.common.amount'.tr()),
             hint: '50000?',
+            description: AnimatedBuilder(
+              animation: _amountController,
+              builder: (_, _) {
+                final amount = num.tryParse(_amountController.text.trim());
+                return Text(
+                  amount == null || amount < 0
+                      ? 'lobbyHub.common.enterAmountReading'.tr()
+                      : formatVndWords(amount),
+                );
+              },
+            ),
             control: FTextFieldControl.managed(controller: _amountController),
             keyboardType: const TextInputType.numberWithOptions(decimal: false),
           ),
           FTextField(
-            label: const Text('Ghi chú'),
-            hint: 'Trà đá',
+            label: Text('lobbyHub.common.note'.tr()),
+            hint: 'lobbyHub.paymentRequest.defaultNote'.tr(),
             control: FTextFieldControl.managed(controller: _noteController),
           ),
-          PSheetSectionLabel(label: 'Chia cho'),
+          PSheetSectionLabel(label: 'lobbyHub.paymentRequest.splitAmong'.tr()),
           candidatesAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, st) =>
-                const PEmptySectionPlaceholder(subtitle: 'Không tải được danh sách'),
+            error: (e, st) => PEmptySectionPlaceholder(
+              subtitle: 'lobbyHub.paymentRequest.loadFailed'.tr(),
+            ),
             data: (candidates) {
               _seedIfNeeded(candidates);
               if (candidates.isEmpty) {
-                return const PEmptySectionPlaceholder(subtitle: 'Không có ai để chọn');
+                return PEmptySectionPlaceholder(
+                  subtitle: 'lobbyHub.paymentRequest.noCandidates'.tr(),
+                );
               }
               final selected = _selected ?? const <String>{};
-              final perPerson = selected.isEmpty
-                  ? null
-                  : num.tryParse(_amountController.text.trim());
               return Column(
                 children: [
                   for (final c in candidates)
@@ -170,10 +189,16 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      subtitle: Text(c.attended ? 'Đã tham gia' : 'Thành viên lobby'),
+                      subtitle: Text(
+                        c.attended
+                            ? 'lobbyHub.common.attended'.tr()
+                            : 'lobbyHub.common.member'.tr(),
+                      ),
                       suffix: selected.contains(c.userId)
-                          ? Icon(FLucideIcons.circleCheck,
-                              color: context.theme.colors.primary)
+                          ? Icon(
+                              FLucideIcons.circleCheck,
+                              color: context.theme.colors.primary,
+                            )
                           : const Icon(FLucideIcons.circle),
                       onPress: () => setState(() {
                         final next = {...selected};
@@ -185,14 +210,31 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
                         _selected = next;
                       }),
                     ),
-                  if (perPerson != null && selected.isNotEmpty) ...[
+                  if (selected.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text(
-                      'Mỗi người khoảng ${(perPerson / selected.length).ceil()}đ '
-                      '(làm tròn đến 1.000đ)',
-                      style: context.theme.typography.body.xs.copyWith(
-                        color: context.theme.colors.mutedForeground,
-                      ),
+                    AnimatedBuilder(
+                      animation: _amountController,
+                      builder: (_, _) {
+                        final total = num.tryParse(
+                          _amountController.text.trim(),
+                        );
+                        if (total == null || total <= 0) {
+                          return const SizedBox.shrink();
+                        }
+                        final perPerson =
+                            (total / selected.length / 1000).ceil() * 1000;
+                        return Text(
+                          'lobbyHub.paymentRequest.eachApprox'.tr(
+                            namedArgs: {
+                              'amount': '${formatVnd(perPerson)}đ',
+                              'words': formatVndWords(perPerson),
+                            },
+                          ),
+                          style: context.theme.typography.body.xs.copyWith(
+                            color: context.theme.colors.mutedForeground,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ],
@@ -207,7 +249,7 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Gửi Yêu Cầu'),
+                : Text('lobbyHub.paymentRequest.submit'.tr()),
           ),
           const SizedBox(height: 8),
         ],

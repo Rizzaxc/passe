@@ -46,17 +46,22 @@ class _ChallengesSheet extends ConsumerWidget {
             ),
             error: (_, _) => Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('errorGeneric'.tr(),
-                  style: TextStyle(color: colors.destructive)),
+              child: Text(
+                'errorGeneric'.tr(),
+                style: TextStyle(color: colors.destructive),
+              ),
             ),
             data: (list) {
               if (list.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 32),
                   child: Center(
-                    child: Text('lobby.challenges.empty'.tr(),
-                        style: context.theme.typography.body.sm
-                            .copyWith(color: colors.mutedForeground)),
+                    child: Text(
+                      'lobby.challenges.empty'.tr(),
+                      style: context.theme.typography.body.sm.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
                   ),
                 );
               }
@@ -65,7 +70,8 @@ class _ChallengesSheet extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 spacing: 8,
                 children: [
-                  for (final c in list) _ChallengeRow(lobbyId: lobbyId, item: c),
+                  for (final c in list)
+                    _ChallengeRow(lobbyId: lobbyId, item: c),
                 ],
               );
             },
@@ -97,8 +103,9 @@ class _TermLine extends StatelessWidget {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.theme.typography.body.xs
-                .copyWith(color: colors.secondaryForeground),
+            style: context.theme.typography.body.xs.copyWith(
+              color: colors.secondaryForeground,
+            ),
           ),
         ),
       ],
@@ -142,8 +149,9 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow> {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final c = widget.item;
-    final notifier =
-        ref.read(lobbyChallengesControllerProvider(widget.lobbyId).notifier);
+    final notifier = ref.read(
+      lobbyChallengesControllerProvider(widget.lobbyId).notifier,
+    );
 
     // Anything past 'requested' is a match in motion — the accept/decline pair
     // is replaced by its state.
@@ -162,22 +170,29 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow> {
         children: [
           Row(
             children: [
-              Icon(c.isIncoming ? FLucideIcons.swords : FLucideIcons.send,
-                  size: 15, color: colors.primary),
+              Icon(
+                c.isIncoming ? FLucideIcons.swords : FLucideIcons.send,
+                size: 15,
+                color: colors.primary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   c.otherLobbyName,
-                  style: context.theme.typography.body.sm
-                      .copyWith(fontWeight: FontWeight.w700),
+                  style: context.theme.typography.body.sm.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (c.otherLobbyMmr != null)
-                Text('${c.otherLobbyMmr} MMR',
-                    style: context.theme.typography.body.xs
-                        .copyWith(color: colors.mutedForeground)),
+                Text(
+                  '${c.otherLobbyMmr} MMR',
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                ),
             ],
           ),
           // The agreed terms, snapshotted when the challenge was sent — not a
@@ -188,26 +203,28 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow> {
               text: formatMatchDateTime(c.proposedTime!),
             ),
           if (c.proposedLocationName != null)
-            _TermLine(
-              icon: FLucideIcons.mapPin,
-              text: c.proposedLocationName!,
-            ),
+            _TermLine(icon: FLucideIcons.mapPin, text: c.proposedLocationName!),
           if (c.agreedCost != null)
             _TermLine(
               icon: FLucideIcons.wallet,
-              text: '${formatVnd(c.agreedCost!)}đ/đội',
+              text:
+                  '${formatVnd(c.agreedCost!)}đ/đội · '
+                  '${formatVndWords(c.agreedCost!)}',
             ),
           if (accepted)
             _TermLine(
               icon: FLucideIcons.userCheck,
               text: c.refereeBooked
-                  ? 'Đã có trọng tài — trận sẽ được tính điểm'
-                  : 'Chưa có trọng tài — trận sẽ không tính điểm',
+                  ? 'lobbyHub.challenge.refereeBooked'.tr()
+                  : 'lobbyHub.challenge.refereeMissing'.tr(),
             ),
           if (c.note != null && c.note!.isNotEmpty)
-            Text(c.note!,
-                style: context.theme.typography.body.xs
-                    .copyWith(color: colors.mutedForeground)),
+            Text(
+              c.note!,
+              style: context.theme.typography.body.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
           Row(
             children: [
               Expanded(
@@ -215,10 +232,10 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow> {
                   c.isScheduled
                       ? 'lobby.challenges.scheduled'.tr()
                       : accepted
-                          ? 'lobby.challenges.accepted'.tr()
-                          : c.isIncoming
-                              ? 'lobby.challenges.incoming'.tr()
-                              : 'lobby.challenges.outgoing'.tr(),
+                      ? 'lobby.challenges.accepted'.tr()
+                      : c.isIncoming
+                      ? 'lobby.challenges.incoming'.tr()
+                      : 'lobby.challenges.outgoing'.tr(),
                   style: context.theme.typography.body.xs.copyWith(
                     color: accepted ? colors.primary : colors.mutedForeground,
                     fontWeight: FontWeight.w600,
@@ -227,9 +244,10 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow> {
               ),
               if (_busy)
                 const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2))
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               else if (!accepted && c.isIncoming) ...[
                 FButton(
                   size: .sm,

@@ -27,6 +27,7 @@ import '../ui/main.dart';
 import 'age_group_selection_screen.dart';
 import 'change_password_screen.dart';
 import 'change_username_screen.dart';
+import 'edit_zalo_sheet.dart';
 import 'guest_profile_view.dart';
 import 'industry_selection_screen.dart';
 import 'location_selection_screen.dart';
@@ -37,6 +38,7 @@ import 'playtime_selection_screen.dart';
 import 'profile_controller.dart';
 import 'sport_profile/sport_profile_controller.dart';
 import 'sport_profile/sport_profile_screen.dart';
+import 'user_contact_controller.dart';
 
 class _HostProfileView extends ConsumerWidget {
   final FreeplayHost host;
@@ -52,7 +54,7 @@ class _HostProfileView extends ConsumerWidget {
         child: FButton(
           variant: .outline,
           onPress: () => ref.read(hostModeStateProvider.notifier).set(false),
-          child: const Text('Về chế độ Người chơi'),
+          child: Text('freeplay.hostMode.backToPlayer'.tr()),
         ),
       ),
       const SizedBox(height: 24),
@@ -73,12 +75,12 @@ class _HostProfileView extends ConsumerWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
-      const Text('Host đã xác minh', textAlign: TextAlign.center),
+      Text('freeplay.verifiedHost'.tr(), textAlign: TextAlign.center),
       const SizedBox(height: 24),
       if (host.bio.isNotEmpty) Text(host.bio, textAlign: TextAlign.center),
       const SizedBox(height: 16),
       Text(
-        'Quản lý lịch và yêu cầu tại tab Manage.',
+        'freeplay.hostMode.manageHint'.tr(),
         textAlign: TextAlign.center,
         style: context.theme.typography.body.sm.copyWith(
           color: context.theme.colors.mutedForeground,
@@ -149,7 +151,7 @@ class ProfileTab extends ConsumerWidget {
                           if (linkedHost != null)
                             FTile(
                               prefix: const Icon(FLucideIcons.ticket),
-                              title: const Text('Chế Độ Host'),
+                              title: Text('freeplay.hostMode.title'.tr()),
                               details: FSwitch(
                                 value: hostModeActive,
                                 onChange: (v) {
@@ -484,6 +486,7 @@ class ProfileTab extends ConsumerWidget {
       if (details.gender == Gender.male) return FLucideIcons.mars;
       return FLucideIcons.venus;
     }();
+    final myZalo = ref.watch(userContactControllerProvider).value;
 
     return FTileGroup(
       label: Text('profile.generalInfo'.tr()),
@@ -557,6 +560,18 @@ class ProfileTab extends ConsumerWidget {
               builder: (context) => const PlaytimeSelectionScreen(),
             ),
           ),
+        ),
+        FTile(
+          title: Text('profile.zalo'.tr()),
+          details: Text(
+            myZalo ?? 'notSet'.tr(),
+            style: TextStyle(
+              color: myZalo != null
+                  ? context.theme.colors.primary
+                  : context.theme.colors.mutedForeground,
+            ),
+          ),
+          onPress: () => showEditZaloSheet(context, myZalo),
         ),
       ],
     );

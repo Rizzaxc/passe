@@ -1,4 +1,5 @@
 // Chat-style trigger bar + action picker overlay
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -45,7 +46,7 @@ const _captainActions = [
     id: 'poll',
     icon: Icons.bar_chart_rounded,
     tone: 'blue',
-    label: 'Tạo bình chọn',
+    label: 'lobbyHub.actions.poll',
   ),
 ];
 
@@ -54,13 +55,13 @@ const _sharedActions = [
     id: 'money',
     icon: Icons.payments_outlined,
     tone: 'green',
-    label: 'Tiền trong lobby',
+    label: 'lobbyHub.actions.money',
   ),
   _ActionDef(
     id: 'invite',
     icon: Icons.person_add_alt_1_outlined,
     tone: 'blue',
-    label: 'Mời thành viên',
+    label: 'lobbyHub.actions.invite',
   ),
   // Restored now that wall posts exist. This was pulled in the 2026-07 pass
   // for want of a storage bucket; it now opens the wall composer scoped to
@@ -69,7 +70,7 @@ const _sharedActions = [
     id: 'photo',
     icon: Icons.photo_camera_outlined,
     tone: 'amber',
-    label: 'Đăng ảnh buổi chơi',
+    label: 'lobbyHub.actions.photo',
   ),
 ];
 
@@ -122,8 +123,8 @@ class ChatTriggerBar extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         isLeader
-                            ? 'Bạn muốn đăng gì cho lobby?'
-                            : 'Bạn muốn đăng gì?',
+                            ? 'lobbyHub.actions.leaderPrompt'.tr()
+                            : 'lobbyHub.actions.prompt'.tr(),
                         style: context.theme.typography.body.sm.copyWith(
                           fontStyle: FontStyle.italic,
                           color: colors.mutedForeground,
@@ -194,7 +195,7 @@ class _ActionPickerSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               PSheetTitle(
-                label: 'Đăng hoạt động',
+                label: 'lobbyHub.actions.title'.tr(),
                 trailing: FButton.icon(
                   variant: .ghost,
                   onPress: () => Navigator.of(context).pop(),
@@ -205,7 +206,7 @@ class _ActionPickerSheet extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text(
-                  'Chọn một hành động để đăng vào feed của lobby',
+                  'lobbyHub.actions.description'.tr(),
                   style: TextStyle(
                     fontSize: 11.5,
                     color: colors.mutedForeground,
@@ -226,7 +227,7 @@ class _ActionPickerSheet extends StatelessWidget {
                 if (isLeader) ...[
                   const SizedBox(height: 8),
                   PSheetSectionLabel(
-                    label: 'Đội trưởng',
+                    label: 'lobbyHub.actions.captain'.tr(),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -236,7 +237,9 @@ class _ActionPickerSheet extends StatelessWidget {
                           color: context.theme.colors.mutedForeground,
                         ),
                         const SizedBox(width: 6),
-                        _SectionDescription('Chỉ đội trưởng'),
+                        _SectionDescription(
+                          'lobbyHub.actions.captainOnly'.tr(),
+                        ),
                       ],
                     ),
                   ),
@@ -245,8 +248,10 @@ class _ActionPickerSheet extends StatelessWidget {
                 ],
                 const SizedBox(height: 14),
                 PSheetSectionLabel(
-                  label: 'Khác',
-                  trailing: _SectionDescription('Mọi thành viên đều đăng được'),
+                  label: 'lobbyHub.actions.other'.tr(),
+                  trailing: _SectionDescription(
+                    'lobbyHub.actions.allMembers'.tr(),
+                  ),
                 ),
                 const SizedBox(height: 6),
                 _ActionGroup(actions: _sharedActions, lobbyId: lobbyId),
@@ -361,7 +366,7 @@ class _ActionRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    def.label,
+                    def.label.tr(),
                     style: const TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,

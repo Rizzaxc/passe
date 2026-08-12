@@ -1,3 +1,5 @@
+import 'package:number_to_vietnamese_words/number_to_vietnamese_words.dart';
+
 const _weekdays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
 /// A match kickoff, Vietnamese-style: `"T7 12/9 · 18:00"`. Shared by every
@@ -13,7 +15,7 @@ String formatTimeOfDay(DateTime d) =>
 
 /// Groups a numeric amount with `.` thousands separators (Vietnamese
 /// currency style), e.g. `350000` -> `"350.000"`.
-String formatVnd(double amount) {
+String formatVnd(num amount) {
   final digits = amount.round().toString();
   final buf = StringBuffer();
   for (var i = 0; i < digits.length; i++) {
@@ -22,3 +24,9 @@ String formatVnd(double amount) {
   }
   return buf.toString();
 }
+
+/// Reads a whole-VND amount in Vietnamese, e.g. `350000` becomes
+/// `"Ba trăm năm mươi nghìn đồng"`. Money surfaces display absolute amounts;
+/// their surrounding labels communicate who pays or receives.
+String formatVndWords(num amount) =>
+    '${amount.abs().round().toVietnameseWords()} đồng';

@@ -1,5 +1,6 @@
 // Planner tab empty state — shown when a lobby has zero current/future
 // activities. Extracted from the old pinned hero's empty branch.
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -36,7 +37,7 @@ class PlannerEmptyState extends ConsumerWidget {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Không thể gửi nhắc nhở'),
+          title: Text('lobbyHub.planner.remindFailed'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -46,7 +47,7 @@ class PlannerEmptyState extends ConsumerWidget {
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.check),
-        title: const Text('Đã nhắc đội trưởng'),
+        title: Text('lobbyHub.planner.reminded'.tr()),
         alignment: .bottomCenter,
       );
     }
@@ -93,8 +94,8 @@ class PlannerEmptyState extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Chưa có buổi chơi nào',
+            Text(
+              'lobbyHub.planner.emptyTitle'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -106,9 +107,9 @@ class PlannerEmptyState extends ConsumerWidget {
             Text(
               isLeader
                   ? ClientFeatureFlags.challengerFlow
-                        ? 'Lên lịch buổi mới, hoặc mở nhận thách đấu để đội khác tìm tới.'
-                        : 'Lên lịch buổi mới để cả lobby cùng tham gia.'
-                  : 'Đội trưởng chưa lên lịch buổi nào. Bạn có thể nhắc.',
+                        ? 'lobbyHub.planner.leaderChallengeHint'.tr()
+                        : 'lobbyHub.planner.leaderHint'.tr()
+                  : 'lobbyHub.planner.memberHint'.tr(),
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w400,
@@ -131,9 +132,12 @@ class PlannerEmptyState extends ConsumerWidget {
                       ),
                       onPress: () =>
                           showScheduleActivitySheet(context, lobbyId),
-                      child: const _CTALabel(
-                        icon: Icon(Icons.calendar_month_outlined, size: 16),
-                        label: 'Lên Lịch',
+                      child: _CTALabel(
+                        icon: const Icon(
+                          Icons.calendar_month_outlined,
+                          size: 16,
+                        ),
+                        label: 'lobbyHub.planner.schedule'.tr(),
                       ),
                     ),
                   ),
@@ -172,7 +176,7 @@ class PlannerEmptyState extends ConsumerWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Nhắc đội trưởng',
+                        'lobbyHub.planner.remind'.tr(),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,

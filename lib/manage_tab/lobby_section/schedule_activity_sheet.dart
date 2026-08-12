@@ -1,7 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../core/format.dart';
 import '../../ui/dialog.dart';
 import '../../ui/sheet.dart';
 import 'activity/upcoming_controller.dart';
@@ -23,7 +25,8 @@ void showScheduleActivitySheet(
 }) {
   showPSheet(
     context: context,
-    builder: (_) => _ScheduleActivitySheet(lobbyId: lobbyId, existing: existing),
+    builder: (_) =>
+        _ScheduleActivitySheet(lobbyId: lobbyId, existing: existing),
   );
 }
 
@@ -92,8 +95,11 @@ class _ScheduleActivitySheetState
       _seedFromExisting(existing);
     } else {
       final now = DateTime.now();
-      _date = DateTime(now.year, now.month, now.day)
-          .add(const Duration(days: 1));
+      _date = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).add(const Duration(days: 1));
       // Lobby home ground default — populated once async info resolves.
       _seedDefaultsFromLobby();
     }
@@ -197,18 +203,11 @@ class _ScheduleActivitySheetState
   }
 
   int _toMinutes(TimeOfDay t) => t.hour * 60 + t.minute;
-  TimeOfDay _addHours(TimeOfDay t, int hours) => TimeOfDay(
-        hour: (t.hour + hours) % 24,
-        minute: t.minute,
-      );
+  TimeOfDay _addHours(TimeOfDay t, int hours) =>
+      TimeOfDay(hour: (t.hour + hours) % 24, minute: t.minute);
 
-  DateTime get _startInstant => DateTime(
-        _date.year,
-        _date.month,
-        _date.day,
-        _start.hour,
-        _start.minute,
-      );
+  DateTime get _startInstant =>
+      DateTime(_date.year, _date.month, _date.day, _start.hour, _start.minute);
 
   /// The session is too soon for a confirmation cutoff if start is less
   /// than the minimum lead time (2h) away — the deadline UI flips off and
@@ -216,8 +215,9 @@ class _ScheduleActivitySheetState
   /// future.
   bool get _tooSoonForDeadline {
     final now = DateTime.now();
-    return _startInstant
-        .isBefore(now.add(const Duration(hours: _minDeadlineLeadHours)));
+    return _startInstant.isBefore(
+      now.add(const Duration(hours: _minDeadlineLeadHours)),
+    );
   }
 
   /// The largest lead time the slider can offer right now: the 72h cap,
@@ -245,8 +245,9 @@ class _ScheduleActivitySheetState
       _confirmationDeadline = null;
       return;
     }
-    _confirmationDeadline = _startInstant
-        .subtract(Duration(minutes: (_deadlineLeadHours * 60).round()));
+    _confirmationDeadline = _startInstant.subtract(
+      Duration(minutes: (_deadlineLeadHours * 60).round()),
+    );
   }
 
   // ── Submit ────────────────────────────────────────────────────
@@ -256,7 +257,8 @@ class _ScheduleActivitySheetState
   /// lobby can legitimately run several activities at once (see
   /// upcoming_controller.dart), so this only warns; it never blocks.
   UpcomingActivity? _findConflict(DateTime start, DateTime end) {
-    final others = ref
+    final others =
+        ref
             .read(lobbyUpcomingActivitiesControllerProvider(widget.lobbyId))
             .value ??
         const <UpcomingActivity>[];
@@ -266,7 +268,8 @@ class _ScheduleActivitySheetState
       final oStart = other.nextStart;
       final oEnd = other.nextEnd ?? oStart;
       final overlaps = start.isBefore(oEnd) && oStart.isBefore(end);
-      final sameLocation = _locationId != null && _locationId == other.locationId;
+      final sameLocation =
+          _locationId != null && _locationId == other.locationId;
       if (overlaps && sameLocation) return other;
     }
     return null;
@@ -278,23 +281,28 @@ class _ScheduleActivitySheetState
       context: context,
       builder: (dialogCtx, style, animation) => PConfirmDialog(
         animation: animation,
-        title: const Text('Trùng lịch?'),
+        title: Text('lobbyHub.schedule.conflictTitle'.tr()),
         body: Text(
-          'Lobby đã có một buổi khác vào ${_fmtDate(DateTime(start.year, start.month, start.day))} '
-          'lúc ${_fmtTime(TimeOfDay(hour: start.hour, minute: start.minute))} '
-          'tại cùng địa điểm. Bạn vẫn muốn lên lịch?',
+          'lobbyHub.schedule.conflictBody'.tr(
+            namedArgs: {
+              'date': _fmtDate(DateTime(start.year, start.month, start.day)),
+              'time': _fmtTime(
+                TimeOfDay(hour: start.hour, minute: start.minute),
+              ),
+            },
+          ),
         ),
         direction: Axis.horizontal,
         actions: [
           FButton(
             variant: .outline,
             onPress: () => Navigator.of(dialogCtx).pop(false),
-            child: const Text('Sửa Lại'),
+            child: Text('lobbyHub.schedule.editAgain'.tr()),
           ),
           FButton(
             variant: .destructive,
             onPress: () => Navigator.of(dialogCtx).pop(true),
-            child: const Text('Vẫn Lên Lịch'),
+            child: Text('lobbyHub.schedule.scheduleAnyway'.tr()),
           ),
         ],
       ),
@@ -324,7 +332,7 @@ class _ScheduleActivitySheetState
         context: context,
         icon: const Icon(FLucideIcons.circleAlert),
         variant: .destructive,
-        title: const Text('Không thể lên lịch vào thời điểm đã qua'),
+        title: Text('lobbyHub.schedule.pastError'.tr()),
         alignment: .bottomCenter,
       );
       return;
@@ -337,7 +345,7 @@ class _ScheduleActivitySheetState
         context: context,
         icon: const Icon(FLucideIcons.circleAlert),
         variant: .destructive,
-        title: const Text('Chi phí không hợp lệ'),
+        title: Text('lobbyHub.schedule.invalidCost'.tr()),
         alignment: .bottomCenter,
       );
       return;
@@ -353,8 +361,9 @@ class _ScheduleActivitySheetState
     // 1..7 (Mon..Sun) so subtract one.
     final dayOfWeek = _recurring ? _date.weekday - 1 : null;
     final existing = widget.existing;
-    final controller =
-        ref.read(scheduleActivityControllerProvider(widget.lobbyId).notifier);
+    final controller = ref.read(
+      scheduleActivityControllerProvider(widget.lobbyId).notifier,
+    );
 
     try {
       if (existing != null) {
@@ -398,7 +407,11 @@ class _ScheduleActivitySheetState
     showFToast(
       context: context,
       icon: const Icon(FLucideIcons.check),
-      title: Text(existing != null ? 'Đã cập nhật lịch' : 'Đã lên lịch buổi chơi'),
+      title: Text(
+        existing != null
+            ? 'lobbyHub.schedule.updated'.tr()
+            : 'lobbyHub.schedule.created'.tr(),
+      ),
       alignment: .bottomCenter,
     );
   }
@@ -434,7 +447,9 @@ class _ScheduleActivitySheetState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PSheetTitle(
-            label: widget.existing != null ? 'Đổi Giờ Buổi Chơi' : 'Lên Lịch Buổi Chơi',
+            label: widget.existing != null
+                ? 'lobbyHub.schedule.editTitle'.tr()
+                : 'lobbyHub.schedule.createTitle'.tr(),
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),
@@ -444,23 +459,23 @@ class _ScheduleActivitySheetState
 
           // ── Time & place section ────────────────────────────
           _Section(
-            label: 'Khi nào & ở đâu',
+            label: 'lobbyHub.schedule.whenWhere'.tr(),
             children: [
               _PickerRow(
                 icon: FLucideIcons.calendar,
-                label: 'Ngày',
+                label: 'lobbyHub.schedule.date'.tr(),
                 value: _fmtDate(_date),
                 onTap: _pickDate,
               ),
               _PickerRow(
                 icon: FLucideIcons.clock,
-                label: 'Bắt đầu',
+                label: 'lobbyHub.schedule.start'.tr(),
                 value: _fmtTime(_start),
                 onTap: _pickStart,
               ),
               _PickerRow(
                 icon: FLucideIcons.clock,
-                label: 'Kết thúc',
+                label: 'lobbyHub.schedule.end'.tr(),
                 value: _fmtTime(_end),
                 onTap: _pickEnd,
               ),
@@ -485,12 +500,14 @@ class _ScheduleActivitySheetState
               ),
               _SwitchRow(
                 icon: FLucideIcons.repeat,
-                label: 'Lặp lại hằng tuần',
+                label: 'lobbyHub.schedule.repeatWeekly'.tr(),
                 sub: _seriesLocked
-                    ? 'Đã là một phần của chuỗi lặp lại'
+                    ? 'lobbyHub.schedule.seriesLocked'.tr()
                     : _recurring
-                        ? 'Vào ${_weekdayLong(_date.weekday)} hằng tuần'
-                        : 'Chỉ một lần',
+                    ? 'lobbyHub.schedule.repeatsOn'.tr(
+                        namedArgs: {'weekday': _weekdayLong(_date.weekday)},
+                      )
+                    : 'lobbyHub.schedule.once'.tr(),
                 value: _recurring,
                 onChanged: (v) => setState(() => _recurring = v),
                 locked: _seriesLocked,
@@ -500,14 +517,14 @@ class _ScheduleActivitySheetState
 
           // ── Cost section ─────────────────────────────────────
           _Section(
-            label: 'Chi phí',
+            label: 'lobbyHub.schedule.cost'.tr(),
             children: [
               _SwitchRow(
                 icon: FLucideIcons.wallet,
-                label: 'Buổi chơi có chi phí',
+                label: 'lobbyHub.schedule.hasCost'.tr(),
                 sub: _costEnabled
-                    ? 'Chia tiền tự động sau khi kết thúc'
-                    : 'Miễn phí',
+                    ? 'lobbyHub.schedule.autoSplit'.tr()
+                    : 'lobbyHub.schedule.free'.tr(),
                 value: _costEnabled,
                 onChanged: (v) => setState(() => _costEnabled = v),
               ),
@@ -516,22 +533,18 @@ class _ScheduleActivitySheetState
                   value: _costType,
                   onChanged: (v) => setState(() => _costType = v),
                 ),
-                _AmountRow(
-                  controller: _amountController,
-                  suffix: 'đ',
-                ),
+                _AmountRow(controller: _amountController, suffix: 'đ'),
               ],
             ],
           ),
 
           // ── Confirmation section ────────────────────────────
           _Section(
-            label: 'Xác nhận tham gia',
+            label: 'lobbyHub.schedule.attendance'.tr(),
             children: [
               _ThresholdRow(
                 value: _confirmationThreshold,
-                onChanged: (v) =>
-                    setState(() => _confirmationThreshold = v),
+                onChanged: (v) => setState(() => _confirmationThreshold = v),
               ),
               _DeadlineRow(
                 tooSoon: _tooSoonForDeadline,
@@ -565,14 +578,19 @@ class _ScheduleActivitySheetState
                       color: Colors.white,
                     ),
                   )
-                : Text(widget.existing != null ? 'Cập Nhật' : 'Xác Nhận Lịch'),
+                : Text(
+                    widget.existing != null
+                        ? 'lobbyHub.schedule.update'.tr()
+                        : 'lobbyHub.schedule.confirm'.tr(),
+                  ),
           ),
           Text(
-            'Mọi thành viên sẽ thấy buổi này ở Hoạt động và '
-            'có thể xác nhận để tham gia'
-            '${_costEnabled ? ", tiền sẽ được chia sau khi buổi chơi kết thúc" : ""}.',
-            style: context.theme.typography.body.sm
-                .copyWith(color: colors.mutedForeground),
+            _costEnabled
+                ? 'lobbyHub.schedule.visibilityNoteWithCost'.tr()
+                : 'lobbyHub.schedule.visibilityNote'.tr(),
+            style: context.theme.typography.body.sm.copyWith(
+              color: colors.mutedForeground,
+            ),
           ),
         ],
       ),
@@ -581,15 +599,23 @@ class _ScheduleActivitySheetState
 
   // ── Formatting ────────────────────────────────────────────────
 
-  static const _weekdayShort = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-  static const _weekdayLongNames = [
-    'Thứ Hai',
-    'Thứ Ba',
-    'Thứ Tư',
-    'Thứ Năm',
-    'Thứ Sáu',
-    'Thứ Bảy',
-    'Chủ Nhật',
+  List<String> get _weekdayShort => [
+    'lobbyHub.schedule.weekdaysShort.monday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.tuesday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.wednesday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.thursday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.friday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.saturday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.sunday'.tr(),
+  ];
+  List<String> get _weekdayLongNames => [
+    'lobbyHub.schedule.weekdays.monday'.tr(),
+    'lobbyHub.schedule.weekdays.tuesday'.tr(),
+    'lobbyHub.schedule.weekdays.wednesday'.tr(),
+    'lobbyHub.schedule.weekdays.thursday'.tr(),
+    'lobbyHub.schedule.weekdays.friday'.tr(),
+    'lobbyHub.schedule.weekdays.saturday'.tr(),
+    'lobbyHub.schedule.weekdays.sunday'.tr(),
   ];
 
   String _fmtDate(DateTime d) =>
@@ -662,8 +688,9 @@ class _PickerRow extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: context.theme.typography.body.sm
-                    .copyWith(fontWeight: FontWeight.w600),
+                style: context.theme.typography.body.sm.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             Flexible(
@@ -678,7 +705,11 @@ class _PickerRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            Icon(FLucideIcons.chevronRight, size: 16, color: colors.mutedForeground),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: 16,
+              color: colors.mutedForeground,
+            ),
           ],
         ),
       ),
@@ -729,15 +760,17 @@ class _SwitchRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: context.theme.typography.body.sm
-                      .copyWith(fontWeight: FontWeight.w600),
+                  style: context.theme.typography.body.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 if (sub != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     sub!,
-                    style: context.theme.typography.body.xs
-                        .copyWith(color: colors.mutedForeground),
+                    style: context.theme.typography.body.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
                   ),
                 ],
               ],
@@ -745,10 +778,7 @@ class _SwitchRow extends StatelessWidget {
           ),
           Opacity(
             opacity: locked ? 0.5 : 1,
-            child: FSwitch(
-              value: value,
-              onChange: locked ? null : onChanged,
-            ),
+            child: FSwitch(value: value, onChange: locked ? null : onChanged),
           ),
         ],
       ),
@@ -775,12 +805,12 @@ class _CostTypePicker extends StatelessWidget {
       child: Row(
         children: [
           _CostTypeOption(
-            label: 'Mỗi người',
+            label: 'lobbyHub.schedule.perPerson'.tr(),
             active: value == ActivityCostType.perPax,
             onTap: () => onChanged(ActivityCostType.perPax),
           ),
           _CostTypeOption(
-            label: 'Tổng cộng',
+            label: 'lobbyHub.schedule.total'.tr(),
             active: value == ActivityCostType.total,
             onTap: () => onChanged(ActivityCostType.total),
           ),
@@ -819,8 +849,9 @@ class _CostTypeOption extends StatelessWidget {
             label,
             style: context.theme.typography.body.sm.copyWith(
               fontWeight: FontWeight.w700,
-              color:
-                  active ? colors.primaryForeground : colors.secondaryForeground,
+              color: active
+                  ? colors.primaryForeground
+                  : colors.secondaryForeground,
             ),
           ),
         ),
@@ -838,26 +869,48 @@ class _AmountRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: FTextField(
-            label: const Text('Số tiền'),
-            hint: '50000',
-            control: FTextFieldControl.managed(controller: controller),
-            keyboardType: const TextInputType.numberWithOptions(decimal: false),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Padding(
-          padding: const EdgeInsets.only(top: 24),
-          child: Text(
-            suffix,
-            style: context.theme.typography.body.sm.copyWith(
-              fontWeight: FontWeight.w700,
-              color: colors.secondaryForeground,
+        Row(
+          children: [
+            Expanded(
+              child: FTextField(
+                label: Text('lobbyHub.common.amount'.tr()),
+                hint: '50000',
+                control: FTextFieldControl.managed(controller: controller),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: false,
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(top: 24),
+              child: Text(
+                suffix,
+                style: context.theme.typography.body.sm.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.secondaryForeground,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        AnimatedBuilder(
+          animation: controller,
+          builder: (_, _) {
+            final amount = num.tryParse(controller.text.trim());
+            return Text(
+              amount == null || amount < 0
+                  ? 'lobbyHub.common.enterAmountReading'.tr()
+                  : formatVndWords(amount),
+              style: context.theme.typography.body.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            );
+          },
         ),
       ],
     );
@@ -890,14 +943,16 @@ class _ThresholdRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Ngưỡng xác nhận',
-                  style: context.theme.typography.body.sm
-                      .copyWith(fontWeight: FontWeight.w600),
+                  'lobbyHub.schedule.threshold'.tr(),
+                  style: context.theme.typography.body.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 Text(
-                  'Buổi chơi chính thức khi đủ số người',
-                  style: context.theme.typography.body.xs
-                      .copyWith(color: colors.mutedForeground),
+                  'lobbyHub.schedule.thresholdHint'.tr(),
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
                 ),
               ],
             ),
@@ -975,10 +1030,12 @@ class _DeadlineRow extends StatelessWidget {
     final colors = context.theme.colors;
     final on = !tooSoon && !manuallyOff;
     final sub = tooSoon
-        ? 'Buổi quá gần (<2 giờ) — tắt sẵn'
+        ? 'lobbyHub.schedule.tooSoon'.tr()
         : on
-            ? 'Hạn: ${_fmtAbs(deadline!)}'
-            : 'Không có hạn chót';
+        ? 'lobbyHub.schedule.deadlineAt'.tr(
+            namedArgs: {'time': _fmtAbs(deadline!)},
+          )
+        : 'lobbyHub.schedule.noDeadline'.tr();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -989,7 +1046,11 @@ class _DeadlineRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(FLucideIcons.alarmClock, size: 18, color: colors.secondaryForeground),
+          Icon(
+            FLucideIcons.alarmClock,
+            size: 18,
+            color: colors.secondaryForeground,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -997,31 +1058,38 @@ class _DeadlineRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Hạn chót xác nhận',
-                  style: context.theme.typography.body.sm
-                      .copyWith(fontWeight: FontWeight.w600),
+                  'lobbyHub.schedule.deadline'.tr(),
+                  style: context.theme.typography.body.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 Text(
                   sub,
-                  style: context.theme.typography.body.xs
-                      .copyWith(color: colors.mutedForeground),
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
                 ),
               ],
             ),
           ),
           Opacity(
             opacity: tooSoon ? 0.5 : 1,
-            child: FSwitch(
-              value: on,
-              onChange: tooSoon ? null : onChanged,
-            ),
+            child: FSwitch(value: on, onChange: tooSoon ? null : onChanged),
           ),
         ],
       ),
     );
   }
 
-  static const _wd = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+  List<String> get _wd => [
+    'lobbyHub.schedule.weekdaysShort.monday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.tuesday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.wednesday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.thursday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.friday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.saturday'.tr(),
+    'lobbyHub.schedule.weekdaysShort.sunday'.tr(),
+  ];
 
   String _fmtAbs(DateTime d) {
     final wd = _wd[d.weekday - 1];
@@ -1050,8 +1118,9 @@ class _DeadlineLeadSlider extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final range = maxHours - _minDeadlineLeadHours;
-    final fraction =
-        range <= 0 ? 0.0 : ((hours - _minDeadlineLeadHours) / range).clamp(0.0, 1.0);
+    final fraction = range <= 0
+        ? 0.0
+        : ((hours - _minDeadlineLeadHours) / range).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1066,9 +1135,10 @@ class _DeadlineLeadSlider extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Khóa xác nhận trước',
-                style: context.theme.typography.body.sm
-                    .copyWith(fontWeight: FontWeight.w600),
+                'lobbyHub.schedule.lockBefore'.tr(),
+                style: context.theme.typography.body.sm.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const Spacer(),
               Text(
@@ -1087,8 +1157,8 @@ class _DeadlineLeadSlider extends StatelessWidget {
               value: FSliderValue(max: fraction),
               onChange: (v) {
                 if (range <= 0) return;
-                final picked =
-                    (_minDeadlineLeadHours + v.max * range).roundToDouble();
+                final picked = (_minDeadlineLeadHours + v.max * range)
+                    .roundToDouble();
                 onChanged(picked);
               },
             ),
@@ -1104,8 +1174,8 @@ class _DeadlineLeadSlider extends StatelessWidget {
     final rounded = h.round();
     if (rounded % 24 == 0) {
       final days = rounded ~/ 24;
-      return '$days ngày';
+      return 'lobbyHub.schedule.leadDays'.tr(namedArgs: {'count': '$days'});
     }
-    return '$rounded giờ';
+    return 'lobbyHub.schedule.leadHours'.tr(namedArgs: {'count': '$rounded'});
   }
 }

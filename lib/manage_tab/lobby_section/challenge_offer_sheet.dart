@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -59,14 +60,18 @@ class ChallengeOfferControl extends ConsumerWidget {
             if (offer!.kickoff != null) formatMatchDateTime(offer.kickoff!),
             if (offer.locationName != null) offer.locationName!,
             if (offer.costPerTeam != null)
-              '${formatVnd(offer.costPerTeam!)}đ/đội',
+              '${formatVnd(offer.costPerTeam!)}đ/đội '
+                  '(${formatVndWords(offer.costPerTeam!)})',
           ].join(' · ')
-        : 'Đăng lịch, sân và chi phí để đội khác thách đấu';
+        : 'lobbyHub.challenge.summaryPrompt'.tr();
 
     return FTappable(
       onPress: open,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: dense ? 12 : 14),
+        padding: EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: dense ? 12 : 14,
+        ),
         decoration: BoxDecoration(
           color: live ? colors.primary.withValues(alpha: 0.06) : colors.card,
           borderRadius: BorderRadius.circular(12),
@@ -88,9 +93,10 @@ class ChallengeOfferControl extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Nhận Thách Đấu',
-                    style: context.theme.typography.body.sm
-                        .copyWith(fontWeight: FontWeight.w700),
+                    'lobbyHub.challenge.title'.tr(),
+                    style: context.theme.typography.body.sm.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -106,8 +112,11 @@ class ChallengeOfferControl extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 6),
-            Icon(FLucideIcons.chevronRight,
-                size: 16, color: colors.mutedForeground),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: 16,
+              color: colors.mutedForeground,
+            ),
           ],
         ),
       ),
@@ -202,27 +211,29 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
   Future<void> _submit() async {
     final kickoff = _kickoff;
     final locationId = _locationId;
-    final cost = double.tryParse(_costController.text.trim().replaceAll('.', ''));
+    final cost = double.tryParse(
+      _costController.text.trim().replaceAll('.', ''),
+    );
 
-    if (kickoff == null) return _toast('Chọn giờ thi đấu');
+    if (kickoff == null) return _toast('lobbyHub.challenge.chooseTime'.tr());
     if (!kickoff.isAfter(DateTime.now())) {
-      return _toast('Giờ thi đấu phải ở tương lai');
+      return _toast('lobbyHub.challenge.futureTime'.tr());
     }
-    if (locationId == null) return _toast('Chọn sân thi đấu');
-    if (cost == null || cost < 0) return _toast('Nhập chi phí mỗi đội');
+    if (locationId == null) {
+      return _toast('lobbyHub.challenge.chooseVenue'.tr());
+    }
+    if (cost == null || cost < 0) {
+      return _toast('lobbyHub.challenge.enterCost'.tr());
+    }
 
     setState(() => _busy = true);
     try {
       await ref
           .read(challengeOfferControllerProvider(widget.lobbyId).notifier)
-          .publish(
-            kickoff: kickoff,
-            locationId: locationId,
-            costPerTeam: cost,
-          );
+          .publish(kickoff: kickoff, locationId: locationId, costPerTeam: cost);
       if (!mounted) return;
       Navigator.of(context).pop();
-      _toast('Đã mở nhận thách đấu', bad: false);
+      _toast('lobbyHub.challenge.published'.tr(), bad: false);
     } catch (e, st) {
       Talker().handle(e, st, 'publish challenge offer failed');
       if (!mounted) return;
@@ -252,7 +263,9 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final offer = ref.watch(challengeOfferControllerProvider(widget.lobbyId)).value;
+    final offer = ref
+        .watch(challengeOfferControllerProvider(widget.lobbyId))
+        .value;
     _seed(offer);
     final editing = offer?.isLive ?? false;
 
@@ -263,7 +276,7 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PSheetTitle(
-            label: 'Nhận Thách Đấu',
+            label: 'lobbyHub.challenge.title'.tr(),
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),
@@ -272,16 +285,19 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
           ),
 
           Text(
-            'Đội bạn là chủ nhà. Nêu rõ giờ, sân và chi phí — các đội khác sẽ '
-            'thấy đúng những điều kiện này trên mục Thách đấu và gửi lời thách đấu.',
-            style: context.theme.typography.body.xs
-                .copyWith(color: colors.mutedForeground, height: 1.45),
+            'lobbyHub.challenge.hostInfo'.tr(),
+            style: context.theme.typography.body.xs.copyWith(
+              color: colors.mutedForeground,
+              height: 1.45,
+            ),
           ),
 
           _FieldTile(
             icon: FLucideIcons.calendar,
-            label: 'Giờ thi đấu',
-            value: _kickoff == null ? 'Chưa chọn' : formatMatchDateTime(_kickoff!),
+            label: 'lobbyHub.challenge.kickoff'.tr(),
+            value: _kickoff == null
+                ? 'lobbyHub.challenge.notChosen'.tr()
+                : formatMatchDateTime(_kickoff!),
             filled: _kickoff != null,
             onTap: _pickKickoff,
           ),
@@ -295,10 +311,26 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
           ),
 
           FTextField(
-            label: const Text('Chi phí mỗi đội'),
-            hint: 'vd. 300000',
-            description: const Text(
-              'Chưa gồm phí trọng tài — trọng tài do đội chủ nhà thuê riêng.',
+            label: Text('lobbyHub.challenge.costPerTeam'.tr()),
+            hint: 'lobbyHub.challenge.costHint'.tr(),
+            description: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AnimatedBuilder(
+                  animation: _costController,
+                  builder: (_, _) {
+                    final cost = num.tryParse(
+                      _costController.text.trim().replaceAll('.', ''),
+                    );
+                    return Text(
+                      cost == null || cost < 0
+                          ? 'lobbyHub.common.enterAmountReading'.tr()
+                          : formatVndWords(cost),
+                    );
+                  },
+                ),
+                Text('lobbyHub.challenge.refereeExcluded'.tr()),
+              ],
             ),
             keyboardType: TextInputType.number,
             control: FTextFieldControl.managed(controller: _costController),
@@ -315,7 +347,11 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
                       color: Colors.white,
                     ),
                   )
-                : Text(editing ? 'Cập Nhật' : 'Mở Nhận Thách Đấu'),
+                : Text(
+                    editing
+                        ? 'lobbyHub.challenge.update'.tr()
+                        : 'lobbyHub.challenge.publish'.tr(),
+                  ),
           ),
 
           if (editing)
@@ -323,7 +359,7 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
               variant: .ghost,
               onPress: _busy ? null : _withdraw,
               child: Text(
-                'Ngừng nhận thách đấu',
+                'lobbyHub.challenge.withdraw'.tr(),
                 style: TextStyle(color: colors.destructive),
               ),
             ),
@@ -368,8 +404,9 @@ class _FieldTile extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: context.theme.typography.body.sm
-                    .copyWith(fontWeight: FontWeight.w600),
+                style: context.theme.typography.body.sm.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             // The value is a formatted date or a venue name — unbounded, so it
@@ -389,8 +426,11 @@ class _FieldTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            Icon(FLucideIcons.chevronRight,
-                size: 16, color: colors.mutedForeground),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: 16,
+              color: colors.mutedForeground,
+            ),
           ],
         ),
       ),
@@ -441,12 +481,13 @@ class _VenuePickerState extends State<_VenuePicker> {
         spacing: 8,
         children: [
           Text(
-            'Sân thi đấu',
-            style: context.theme.typography.body.sm
-                .copyWith(fontWeight: FontWeight.bold),
+            'lobbyHub.challenge.venue'.tr(),
+            style: context.theme.typography.body.sm.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           PSearchField<Location>(
-            hint: 'Tìm sân...',
+            hint: 'lobbyHub.challenge.venueSearch'.tr(),
             controller: _searchController,
             suggestionsBuilder: _search,
             displayStringForOption: (loc) => loc.fullAddress ?? loc.name,
@@ -464,7 +505,7 @@ class _VenuePickerState extends State<_VenuePicker> {
 
     return _FieldTile(
       icon: FLucideIcons.mapPin,
-      label: 'Sân thi đấu',
+      label: 'lobbyHub.challenge.venue'.tr(),
       value: name,
       filled: true,
       onTap: () => setState(() => _changing = true),

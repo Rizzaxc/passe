@@ -40,8 +40,7 @@ class ActivityConfirmationStatus {
 /// frame), then reconcile against the server re-read; on failure the
 /// previous snapshot is restored.
 @riverpod
-class ActivityConfirmationController
-    extends _$ActivityConfirmationController {
+class ActivityConfirmationController extends _$ActivityConfirmationController {
   final supabase = Supabase.instance.client;
 
   @override
@@ -51,9 +50,10 @@ class ActivityConfirmationController
 
   Future<ActivityConfirmationStatus> _fetch(String activityId) async {
     final rows = await supabase
-        .rpc('activity_confirmation_status', params: {
-          'p_activity_id': activityId,
-        })
+        .rpc(
+          'activity_confirmation_status',
+          params: {'p_activity_id': activityId},
+        )
         .timeout(const Duration(seconds: 5));
 
     final row = (rows as List).first as Map<String, dynamic>;
@@ -74,12 +74,12 @@ class ActivityConfirmationController
   ) {
     final wasGoing = s.myAttendance == Attendance.going;
     final wasMaybe = s.myAttendance == Attendance.maybe;
-    final going = s.confirmedCount +
+    final going =
+        s.confirmedCount +
         (next == Attendance.going ? 1 : 0) -
         (wasGoing ? 1 : 0);
-    final maybe = s.maybeCount +
-        (next == Attendance.maybe ? 1 : 0) -
-        (wasMaybe ? 1 : 0);
+    final maybe =
+        s.maybeCount + (next == Attendance.maybe ? 1 : 0) - (wasMaybe ? 1 : 0);
     return ActivityConfirmationStatus(
       confirmedCount: going.clamp(0, 1 << 30),
       maybeCount: maybe.clamp(0, 1 << 30),
@@ -140,7 +140,8 @@ Future<List<Attendee>> activityAttendees(Ref ref, String activityId) async {
   final rows = await supabase
       .from('activity_confirmation')
       .select(
-          'attendance, user!activity_confirmation_user_id_fkey(id, username, details)')
+        'attendance, user!activity_confirmation_user_id_fkey(id, username, details)',
+      )
       .eq('activity_id', activityId)
       .inFilter('attendance', ['going', 'maybe'])
       .order('confirmed_at')

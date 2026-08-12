@@ -59,7 +59,7 @@ class FreeplayCard extends StatelessWidget {
                         children: [
                           Text(
                             activity.hostName.isEmpty
-                                ? 'Xé vé'
+                                ? 'freeplay.title'.tr()
                                 : activity.hostName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -111,18 +111,34 @@ class FreeplayCard extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     _Pill(
-                      label:
-                          '${NumberFormat.decimalPattern('vi').format(activity.malePrice)}đ nam',
+                      label: 'freeplay.malePrice'.tr(
+                        namedArgs: {
+                          'amount': NumberFormat.simpleCurrency(
+                            locale: context.locale.toLanguageTag(),
+                            name: 'VND',
+                            decimalDigits: 0,
+                          ).format(activity.malePrice),
+                        },
+                      ),
                     ),
                     _Pill(
-                      label:
-                          '${NumberFormat.decimalPattern('vi').format(activity.femalePrice)}đ nữ',
+                      label: 'freeplay.femalePrice'.tr(
+                        namedArgs: {
+                          'amount': NumberFormat.simpleCurrency(
+                            locale: context.locale.toLanguageTag(),
+                            name: 'VND',
+                            decimalDigits: 0,
+                          ).format(activity.femalePrice),
+                        },
+                      ),
                     ),
                     ...activity.recommendedSkills.map(
-                      (skill) => _Pill(label: _skillLabel(skill)),
+                      (skill) => _Pill(label: _skillLabel(skill).tr()),
                     ),
                     if (activity.myRequestStatus != null)
-                      _Pill(label: _statusLabel(activity.myRequestStatus!)),
+                      _Pill(
+                        label: _statusLabel(activity.myRequestStatus!).tr(),
+                      ),
                   ],
                 ),
               ],
@@ -134,19 +150,19 @@ class FreeplayCard extends StatelessWidget {
   }
 
   static String _skillLabel(String value) => switch (value) {
-    'beginner' => 'Mới chơi',
-    'tryhard' => 'Cạnh tranh',
-    _ => 'Phong trào',
+    'beginner' => 'freeplay.skill.beginner',
+    'tryhard' => 'freeplay.skill.tryhard',
+    _ => 'freeplay.skill.casual',
   };
 
   static String _statusLabel(FreeplayRequestStatus status) => switch (status) {
-    FreeplayRequestStatus.pending => 'Đang chờ',
-    FreeplayRequestStatus.accepted => 'Đã nhận',
-    FreeplayRequestStatus.declined => 'Bị từ chối',
-    FreeplayRequestStatus.cancelled => 'Đã huỷ',
-    FreeplayRequestStatus.hostCancelled => 'Host đã huỷ',
-    FreeplayRequestStatus.lapsed => 'Hết hạn',
-    FreeplayRequestStatus.blocked => 'Đã chặn',
+    FreeplayRequestStatus.pending => 'freeplay.status.pending',
+    FreeplayRequestStatus.accepted => 'freeplay.status.accepted',
+    FreeplayRequestStatus.declined => 'freeplay.status.declined',
+    FreeplayRequestStatus.cancelled => 'freeplay.status.cancelled',
+    FreeplayRequestStatus.hostCancelled => 'freeplay.status.hostCancelled',
+    FreeplayRequestStatus.lapsed => 'freeplay.status.lapsed',
+    FreeplayRequestStatus.blocked => 'freeplay.status.blocked',
   };
 }
 

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -89,18 +90,20 @@ class LobbyChallengesController extends _$LobbyChallengesController {
   /// Accept or decline an incoming challenge (target-manager only, enforced by
   /// the `respond_challenge` RPC).
   Future<void> respond(String challengeId, String action) async {
-    await supabase.rpc('respond_challenge', params: {
-      'p_challenge_id': challengeId,
-      'p_action': action,
-    }).timeout(const Duration(seconds: 5));
+    await supabase
+        .rpc(
+          'respond_challenge',
+          params: {'p_challenge_id': challengeId, 'p_action': action},
+        )
+        .timeout(const Duration(seconds: 5));
     ref.invalidateSelf();
   }
 
   /// Cancel an outgoing challenge (initiator-manager only).
   Future<void> cancel(String challengeId) async {
-    await supabase.rpc('cancel_challenge', params: {
-      'p_challenge_id': challengeId,
-    }).timeout(const Duration(seconds: 5));
+    await supabase
+        .rpc('cancel_challenge', params: {'p_challenge_id': challengeId})
+        .timeout(const Duration(seconds: 5));
     ref.invalidateSelf();
   }
 }
@@ -120,9 +123,12 @@ class ConfirmChallengeActivityController
   Future<void> confirm(String activityId) async {
     state = true;
     try {
-      await Supabase.instance.client.rpc('confirm_challenge_activity', params: {
-        'p_activity_id': activityId,
-      }).timeout(const Duration(seconds: 5));
+      await Supabase.instance.client
+          .rpc(
+            'confirm_challenge_activity',
+            params: {'p_activity_id': activityId},
+          )
+          .timeout(const Duration(seconds: 5));
       ref.invalidate(lobbyUpcomingActivitiesControllerProvider(lobbyId));
       ref.invalidate(lobbyChallengesControllerProvider(lobbyId));
     } finally {
@@ -135,17 +141,19 @@ class ConfirmChallengeActivityController
 String confirmChallengeErrorMessage(Object e) {
   final msg = e.toString();
   if (msg.contains('not enough confirmations')) {
-    return 'Chưa đủ thành viên xác nhận tham gia';
+    return 'lobbyHub.challenge.quorumError'.tr();
   }
   if (msg.contains('not a manager')) {
-    return 'Chỉ đội trưởng hoặc điều phối viên mới xác nhận được';
+    return 'lobbyHub.challenge.managerOnly'.tr();
   }
-  return 'Không thể xác nhận trận đấu';
+  return 'lobbyHub.challenge.confirmError'.tr();
 }
 
 /// Count of open incoming challenges — drives the badge on the lobby detail.
 @riverpod
 Future<int> incomingChallengeCount(Ref ref, String lobbyId) async {
-  final list = await ref.watch(lobbyChallengesControllerProvider(lobbyId).future);
+  final list = await ref.watch(
+    lobbyChallengesControllerProvider(lobbyId).future,
+  );
   return list.where((c) => c.isIncoming && c.isOpen).length;
 }

@@ -17,6 +17,12 @@ import 'controller.dart';
 
 /// Messaging has no backing flow at all (no message/conversation table in
 /// the schema), so the CTA honestly says so instead of silently no-op'ing.
+/// TODO: when a real messaging flow ships here, also surface a Zalo
+/// deep-link option (see `lib/freeplay/chat_sheet.dart`'s `_openZalo` /
+/// the `user_contact` table) for professionals who've set up their
+/// contact — their `freeplay_host`-style "public" visibility rule would
+/// need extending to `professional`, since `user_contact`'s RLS today
+/// only special-cases freeplay hosts.
 void _showComingSoon(BuildContext context, String feature) {
   showFToast(
     context: context,
@@ -247,18 +253,21 @@ class _ProfileHero extends StatelessWidget {
                   ),
                   if (location != null)
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          FLucideIcons.mapPin,
-                          size: 13,
-                          color: pbBlueDeep,
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Icon(
+                            FLucideIcons.mapPin,
+                            size: 13,
+                            color: pbBlueDeep,
+                          ),
                         ),
                         const SizedBox(width: 5),
                         Expanded(
                           child: Text(
                             location,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
                             style: context.theme.typography.body.xs.copyWith(
                               color: pbBlueDeep,
                               fontWeight: FontWeight.w700,
@@ -629,8 +638,7 @@ class _AreaChip extends StatelessWidget {
         Flexible(
           child: Text(
             label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            softWrap: true,
             style: context.theme.typography.body.xs.copyWith(
               color: pbInk,
               fontWeight: FontWeight.w700,
@@ -665,8 +673,7 @@ class _CourtRow extends StatelessWidget {
             children: [
               Text(
                 court.hasName ? court.name : 'Địa điểm',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                softWrap: true,
                 style: context.theme.typography.body.sm.copyWith(
                   color: pbInk,
                   fontWeight: FontWeight.w800,
@@ -675,8 +682,7 @@ class _CourtRow extends StatelessWidget {
               if (court.displayAddress.isNotEmpty)
                 Text(
                   court.displayAddress,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  softWrap: true,
                   style: context.theme.typography.body.xs.copyWith(
                     color: context.theme.colors.mutedForeground,
                   ),
@@ -698,9 +704,7 @@ class _ProfileActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => Container(
     decoration: BoxDecoration(
       color: context.theme.colors.background,
-      border: Border(
-        top: BorderSide(color: pbInk.withValues(alpha: 0.1)),
-      ),
+      border: Border(top: BorderSide(color: pbInk.withValues(alpha: 0.1))),
     ),
     padding: EdgeInsets.fromLTRB(
       18,
@@ -793,20 +797,16 @@ String _initials(String displayName) {
 
 String? _coverageLabel(BuildContext context, ProfessionalFeedItem item) {
   if (item.preferredLocationNames.isNotEmpty) {
-    final extra = item.preferredLocationNames.length - 1;
-    return extra > 0
-        ? '${item.preferredLocationNames.first} +$extra'
-        : item.preferredLocationNames.first;
+    return item.preferredLocationNames.join(' • ');
   }
   final districts = item.preferredDistricts
       .map(VietnamLocationData.instance.findDistrictById)
       .whereType<District>()
       .toList();
   if (districts.isNotEmpty) {
-    final extra = districts.length - 1;
-    return extra > 0
-        ? '${districts.first.getLocalizedFullName(context)} +$extra'
-        : districts.first.getLocalizedFullName(context);
+    return districts
+        .map((district) => district.getLocalizedFullName(context))
+        .join(' • ');
   }
   final city = City.values.where(
     (city) => city.dbIndex == item.preferredCityCluster,

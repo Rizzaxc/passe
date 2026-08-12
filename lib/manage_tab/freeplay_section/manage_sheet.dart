@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -53,7 +54,7 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
       showFToast(
         context: context,
         variant: .destructive,
-        title: const Text('Số chỗ chỉ có thể tăng'),
+        title: Text('freeplay.hostManage.capacityCanOnlyIncrease'.tr()),
       );
       return;
     }
@@ -74,7 +75,7 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
         showFToast(
           context: context,
           variant: .destructive,
-          title: const Text('Không cập nhật được vé'),
+          title: Text('freeplay.hostManage.updateFailed'.tr()),
         );
       }
     } finally {
@@ -89,7 +90,7 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
       spacing: 14,
       children: [
         PSheetTitle(
-          label: 'Quản lý vé',
+          label: 'freeplay.hostManage.manageTitle'.tr(),
           trailing: FButton.icon(
             variant: .ghost,
             onPress: () => Navigator.pop(context),
@@ -97,35 +98,31 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
           ),
         ),
         FTextField(
-          label: const Text('Số chỗ'),
+          label: Text('freeplay.hostManage.capacity'.tr()),
           keyboardType: TextInputType.number,
           control: FTextFieldControl.managed(controller: _capacity),
         ),
         FTextField(
-          label: const Text('Mô tả'),
+          label: Text('freeplay.hostManage.description'.tr()),
           maxLines: 5,
           control: FTextFieldControl.managed(controller: _description),
         ),
-        const PSheetSectionLabel(label: 'Trình độ đề xuất'),
-        for (final value in const {
-          'beginner': 'Mới chơi',
-          'casual': 'Phong trào',
-          'tryhard': 'Cạnh tranh',
-        }.entries)
+        PSheetSectionLabel(label: 'freeplay.hostManage.recommendedSkill'.tr()),
+        for (final value in const ['beginner', 'casual', 'tryhard'])
           FCheckbox(
-            value: _skills.contains(value.key),
-            label: Text(value.value),
+            value: _skills.contains(value),
+            label: Text('freeplay.skill.$value'.tr()),
             onChange: (selected) => setState(() {
               if (selected) {
-                _skills.add(value.key);
+                _skills.add(value);
               } else if (_skills.length > 1) {
-                _skills.remove(value.key);
+                _skills.remove(value);
               }
             }),
           ),
         FButton(
           onPress: _busy ? null : _save,
-          child: const Text('Lưu thay đổi'),
+          child: Text('freeplay.hostManage.saveChanges'.tr()),
         ),
         FButton(
           variant: .outline,
@@ -152,8 +149,8 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
                 },
           child: Text(
             widget.activity.intakeClosed
-                ? 'Mở nhận yêu cầu'
-                : 'Đóng nhận yêu cầu',
+                ? 'freeplay.hostManage.openIntake'.tr()
+                : 'freeplay.hostManage.closeIntake'.tr(),
           ),
         ),
         FButton(
@@ -166,21 +163,23 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
                     builder: (dialogContext, style, animation) =>
                         PConfirmDialog(
                           animation: animation,
-                          title: const Text('Huỷ buổi chơi?'),
-                          body: const Text(
-                            'Tất cả yêu cầu và chỗ đã nhận sẽ bị huỷ.',
+                          title: Text(
+                            'freeplay.hostManage.cancelConfirmTitle'.tr(),
+                          ),
+                          body: Text(
+                            'freeplay.hostManage.cancelConfirmBody'.tr(),
                           ),
                           actions: [
                             FButton(
                               variant: .ghost,
                               onPress: () =>
                                   Navigator.pop(dialogContext, false),
-                              child: const Text('Giữ lại'),
+                              child: Text('freeplay.hostManage.keep'.tr()),
                             ),
                             FButton(
                               variant: .destructive,
                               onPress: () => Navigator.pop(dialogContext, true),
-                              child: const Text('Huỷ buổi'),
+                              child: Text('freeplay.hostManage.cancel'.tr()),
                             ),
                           ],
                         ),
@@ -198,7 +197,7 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
                     if (mounted) setState(() => _busy = false);
                   }
                 },
-          child: const Text('Huỷ buổi chơi'),
+          child: Text('freeplay.hostManage.cancel'.tr()),
         ),
       ],
     ),

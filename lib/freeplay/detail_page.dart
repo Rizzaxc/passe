@@ -18,12 +18,13 @@ class FreeplayDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(freeplayDetailProvider(id));
     return FScaffold(
-      header: FHeader.nested(title: const Text('Xé vé')),
+      header: FHeader.nested(title: Text('freeplay.title'.tr())),
       child: detail.when(
         loading: () => const Center(child: FCircularProgress()),
-        error: (_, _) => const Center(child: Text('Không tải được buổi chơi')),
+        error: (_, _) =>
+            Center(child: Text('freeplay.activityLoadFailed'.tr())),
         data: (activity) => activity == null
-            ? const Center(child: Text('Buổi chơi không còn mở'))
+            ? Center(child: Text('freeplay.activityClosed'.tr()))
             : _Body(activity: activity),
       ),
     );
@@ -78,17 +79,17 @@ class _BodyState extends ConsumerState<_Body> {
       context: context,
       builder: (dialogContext, style, animation) => PConfirmDialog(
         animation: animation,
-        title: const Text('Xin một chỗ'),
+        title: Text('freeplay.requestSeat'.tr()),
         body: FTextField(
           control: FTextFieldControl.managed(controller: message),
-          hint: 'Lời nhắn cho Host (không bắt buộc)',
+          hint: 'freeplay.requestMessageHint'.tr(),
           maxLines: 3,
         ),
         actions: [
           FButton(
             variant: .ghost,
             onPress: () => Navigator.pop(dialogContext),
-            child: const Text('Để sau'),
+            child: Text('freeplay.later'.tr()),
           ),
           FButton(
             onPress: () async {
@@ -106,14 +107,14 @@ class _BodyState extends ConsumerState<_Body> {
                   showFToast(
                     context: context,
                     variant: .destructive,
-                    title: const Text('Không gửi được yêu cầu'),
+                    title: Text('freeplay.requestFailed'.tr()),
                   );
                 }
               } finally {
                 if (mounted) setState(() => _busy = false);
               }
             },
-            child: const Text('Gửi yêu cầu'),
+            child: Text('freeplay.sendRequest'.tr()),
           ),
         ],
       ),
@@ -135,7 +136,7 @@ class _BodyState extends ConsumerState<_Body> {
         showFToast(
           context: context,
           variant: .destructive,
-          title: const Text('Không huỷ được yêu cầu'),
+          title: Text('freeplay.cancelRequestFailed'.tr()),
         );
       }
     } finally {
@@ -196,7 +197,7 @@ class _BodyState extends ConsumerState<_Body> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const Text('Host đã xác minh'),
+                      Text('freeplay.verifiedHost'.tr()),
                     ],
                   ),
                 ),
@@ -206,12 +207,19 @@ class _BodyState extends ConsumerState<_Body> {
           ),
           const SizedBox(height: 24),
           Text(
-            DateFormat('EEEE, d/M · HH:mm', 'vi').format(a.startTime),
+            DateFormat(
+              'EEEE, d/M · HH:mm',
+              context.locale.toLanguageTag(),
+            ).format(a.startTime),
             style: context.theme.typography.body.xl.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
-          Text('đến ${DateFormat('HH:mm').format(a.endTime)}'),
+          Text(
+            'freeplay.untilTime'.tr(
+              namedArgs: {'time': DateFormat('HH:mm').format(a.endTime)},
+            ),
+          ),
           const SizedBox(height: 16),
           _Line(
             icon: FLucideIcons.mapPin,
@@ -220,22 +228,37 @@ class _BodyState extends ConsumerState<_Body> {
           ),
           _Line(
             icon: FLucideIcons.users,
-            title: '${a.acceptedCount}/${a.capacity} người',
-            subtitle: a.isFull ? 'Đã đủ chỗ' : 'Còn ${a.seatsLeft} chỗ',
+            title: 'freeplay.peopleCount'.tr(
+              namedArgs: {
+                'accepted': '${a.acceptedCount}',
+                'capacity': '${a.capacity}',
+              },
+            ),
+            subtitle: a.isFull
+                ? 'freeplay.full'.tr()
+                : 'freeplay.seatsLeft'.tr(
+                    namedArgs: {'count': '${a.seatsLeft}'},
+                  ),
           ),
           _Line(
             icon: FLucideIcons.badgeDollarSign,
-            title:
-                '${NumberFormat.decimalPattern('vi').format(a.malePrice)}đ nam · ${NumberFormat.decimalPattern('vi').format(a.femalePrice)}đ nữ',
-            subtitle: 'Thanh toán trực tiếp với Host',
+            title: 'freeplay.prices'.tr(
+              namedArgs: {
+                'male': _formatVnd(context, a.malePrice),
+                'female': _formatVnd(context, a.femalePrice),
+              },
+            ),
+            subtitle: 'freeplay.payHostDirectly'.tr(),
           ),
           _Line(
             icon: FLucideIcons.gauge,
-            title: a.recommendedSkills.join(' · '),
+            title: a.recommendedSkills
+                .map((skill) => 'freeplay.skill.$skill'.tr())
+                .join(' · '),
             subtitle:
                 a.mySkill != null && !a.recommendedSkills.contains(a.mySkill)
-                ? 'Trình độ của bạn khác mức Host đề xuất'
-                : 'Trình độ tự đánh giá',
+                ? 'freeplay.skillMismatch'.tr()
+                : 'freeplay.selfAssessedSkill'.tr(),
           ),
           if (a.description.isNotEmpty) ...[
             const SizedBox(height: 16),
@@ -244,7 +267,7 @@ class _BodyState extends ConsumerState<_Body> {
           if (accepted && a.roster.isNotEmpty) ...[
             const SizedBox(height: 24),
             Text(
-              'Người tham gia',
+              'freeplay.participants'.tr(),
               style: context.theme.typography.body.lg.copyWith(
                 fontWeight: FontWeight.w700,
               ),
@@ -252,7 +275,9 @@ class _BodyState extends ConsumerState<_Body> {
             ...a.roster.map(
               (member) => ListTile(
                 title: Text(member.username),
-                subtitle: member.skill == null ? null : Text(member.skill!),
+                subtitle: member.skill == null
+                    ? null
+                    : Text('freeplay.skill.${member.skill}'.tr()),
               ),
             ),
           ],
@@ -260,40 +285,42 @@ class _BodyState extends ConsumerState<_Body> {
           if (chatWritable)
             FButton(
               onPress: () => showFreeplayChatSheet(context, a.myRequestId!),
-              child: const Text('Mở trò chuyện'),
+              child: Text('freeplay.openChat'.tr()),
             ),
           if (chatWritable && canCancel) const SizedBox(height: 8),
           if (canCancel)
             FButton(
               variant: .outline,
               onPress: _busy ? null : _cancel,
-              child: Text(accepted ? 'Huỷ chỗ' : 'Huỷ yêu cầu'),
+              child: Text(
+                accepted
+                    ? 'freeplay.cancelSpot'.tr()
+                    : 'freeplay.cancelRequest'.tr(),
+              ),
             ),
           if (canRequest)
             FButton(
               onPress: _busy ? null : _request,
-              child: const Text('Xin một chỗ'),
+              child: Text('freeplay.requestSeat'.tr()),
             ),
           if (isHost)
-            const Text(
-              'Bạn là Host của buổi chơi này.',
-              textAlign: TextAlign.center,
-            ),
+            Text('freeplay.youAreHost'.tr(), textAlign: TextAlign.center),
           if (!isHost && !chatWritable && !canCancel && !canRequest)
             Text(
               ended
-                  ? 'Buổi chơi đã kết thúc.'
+                  ? 'freeplay.state.ended'.tr()
                   : a.isFull && status == null
-                  ? 'Buổi chơi đã đủ chỗ.'
+                  ? 'freeplay.state.full'.tr()
                   : switch (status) {
                       FreeplayRequestStatus.declined =>
-                        'Yêu cầu đã bị từ chối.',
+                        'freeplay.state.declined'.tr(),
                       FreeplayRequestStatus.hostCancelled =>
-                        'Host đã huỷ buổi chơi.',
-                      FreeplayRequestStatus.lapsed => 'Yêu cầu đã hết hạn.',
+                        'freeplay.state.hostCancelled'.tr(),
+                      FreeplayRequestStatus.lapsed =>
+                        'freeplay.state.lapsed'.tr(),
                       FreeplayRequestStatus.blocked =>
-                        'Yêu cầu không còn khả dụng.',
-                      _ => 'Yêu cầu không còn hoạt động.',
+                        'freeplay.state.blocked'.tr(),
+                      _ => 'freeplay.state.inactive'.tr(),
                     },
               textAlign: TextAlign.center,
             ),
@@ -302,6 +329,13 @@ class _BodyState extends ConsumerState<_Body> {
     );
   }
 }
+
+String _formatVnd(BuildContext context, num amount) =>
+    NumberFormat.simpleCurrency(
+      locale: context.locale.toLanguageTag(),
+      name: 'VND',
+      decimalDigits: 0,
+    ).format(amount);
 
 class _Line extends StatelessWidget {
   final IconData icon;

@@ -1,5 +1,6 @@
 // Planner tab — every current/future activity for a lobby, chronological,
 // soonest-first, with an always-reachable "+" to schedule another one.
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -74,9 +75,11 @@ class _LobbyPlannerTabState extends ConsumerState<LobbyPlannerTab> {
 
   @override
   Widget build(BuildContext context) {
-    final activitiesAsync =
-        ref.watch(lobbyUpcomingActivitiesControllerProvider(widget.lobbyId));
-    final atCap = (activitiesAsync.value?.length ?? 0) >=
+    final activitiesAsync = ref.watch(
+      lobbyUpcomingActivitiesControllerProvider(widget.lobbyId),
+    );
+    final atCap =
+        (activitiesAsync.value?.length ?? 0) >=
         ScheduleActivityController.maxConcurrentActivities;
 
     return Column(
@@ -85,16 +88,16 @@ class _LobbyPlannerTabState extends ConsumerState<LobbyPlannerTab> {
         Padding(
           padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
           child: PSectionHeader(
-            title: 'Hoạt Động',
+            title: 'lobbyHub.planner.activityTitle'.tr(),
             suffix: widget.isLeader
                 ? FButton.icon(
                     variant: .ghost,
                     onPress: atCap
                         ? null
                         : () => showScheduleActivitySheet(
-                              context,
-                              widget.lobbyId,
-                            ),
+                            context,
+                            widget.lobbyId,
+                          ),
                     child: const Icon(FLucideIcons.plus),
                   )
                 : null,
@@ -107,13 +110,15 @@ class _LobbyPlannerTabState extends ConsumerState<LobbyPlannerTab> {
                 lobbyUpcomingActivitiesControllerProvider(widget.lobbyId),
               );
               await ref.read(
-                lobbyUpcomingActivitiesControllerProvider(widget.lobbyId).future,
+                lobbyUpcomingActivitiesControllerProvider(
+                  widget.lobbyId,
+                ).future,
               );
             },
             child: activitiesAsync.when(
               loading: () => ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
+                children: [
                   Padding(
                     padding: EdgeInsets.only(top: 80),
                     child: Center(child: CircularProgressIndicator()),
@@ -122,8 +127,10 @@ class _LobbyPlannerTabState extends ConsumerState<LobbyPlannerTab> {
               ),
               error: (_, _) => ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  PEmptySectionPlaceholder(subtitle: 'Không tải được hoạt động'),
+                children: [
+                  PEmptySectionPlaceholder(
+                    subtitle: 'lobbyHub.planner.loadFailed'.tr(),
+                  ),
                 ],
               ),
               data: (activities) {

@@ -24,7 +24,7 @@ class PlayerFreeplaySection extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         PSectionHeader(
-          title: 'Xé vé của bạn',
+          title: 'lobbyHub.freeplay.yourRequests'.tr(),
           suffix: FButton.icon(
             variant: .ghost,
             onPress: () => _showHistory(context),
@@ -41,7 +41,7 @@ class PlayerFreeplaySection extends ConsumerWidget {
               ? Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                   child: Text(
-                    'Các yêu cầu và buổi đã nhận sẽ xuất hiện ở đây.',
+                    'lobbyHub.freeplay.empty'.tr(),
                     style: context.theme.typography.body.sm.copyWith(
                       color: context.theme.colors.mutedForeground,
                     ),
@@ -81,7 +81,7 @@ class _SessionTile extends StatelessWidget {
       overflow: TextOverflow.ellipsis,
     ),
     subtitle: Text(
-      '${DateFormat('EEE d/M, HH:mm', 'vi').format(activity.startTime)} · ${activity.venueName}',
+      '${DateFormat('EEE d/M, HH:mm', context.locale.toLanguageTag()).format(activity.startTime)} · ${activity.venueName}',
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     ),
@@ -100,7 +100,7 @@ class _History extends ConsumerWidget {
       child: Column(
         children: [
           PSheetTitle(
-            label: 'Lịch sử Xé vé',
+            label: 'lobbyHub.freeplay.history'.tr(),
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.pop(context),
@@ -112,9 +112,9 @@ class _History extends ConsumerWidget {
             child: history.when(
               loading: () => const Center(child: FCircularProgress()),
               error: (_, _) =>
-                  const Center(child: Text('Không tải được lịch sử')),
+                  Center(child: Text('lobbyHub.freeplay.loadFailed'.tr())),
               data: (items) => items.isEmpty
-                  ? const Center(child: Text('Chưa có lịch sử'))
+                  ? Center(child: Text('lobbyHub.freeplay.noHistory'.tr()))
                   : ListView.separated(
                       itemCount: items.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 6),

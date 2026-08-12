@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -15,7 +16,10 @@ class FreeplaySubtab extends ConsumerWidget {
     final feed = ref.watch(freeplayFeedProvider);
     return Column(
       children: [
-        const PSectionHeader(title: 'Xé vé', suffix: FilterWidget()),
+        PSectionHeader(
+          title: 'freeplay.title'.tr(),
+          suffix: const FilterWidget(),
+        ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
@@ -55,8 +59,8 @@ class _Empty extends StatelessWidget {
           size: 64,
           color: context.theme.colors.mutedForeground,
         ),
-        title: 'Chưa có vé phù hợp',
-        subtitle: 'Thử đổi khung giờ hoặc khu vực để xem thêm buổi chơi.',
+        title: 'freeplay.discoveryEmptyTitle'.tr(),
+        subtitle: 'freeplay.discoveryEmptySubtitle'.tr(),
       ),
     ],
   );

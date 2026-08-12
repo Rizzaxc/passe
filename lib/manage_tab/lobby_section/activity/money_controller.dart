@@ -65,7 +65,9 @@ class LobbyMoneyController extends _$LobbyMoneyController {
   final _supabase = Supabase.instance.client;
 
   @override
-  Future<List<LobbyMoneyBalance>> build(String lobbyId) async {
+  Future<List<LobbyMoneyBalance>> build(String lobbyId) => _load();
+
+  Future<List<LobbyMoneyBalance>> _load() async {
     final response = await _supabase
         .rpc('lobby_money_data', params: {'p_lobby_id': lobbyId})
         .timeout(const Duration(seconds: 5));
@@ -89,8 +91,7 @@ class LobbyMoneyController extends _$LobbyMoneyController {
         )
         .timeout(const Duration(seconds: 5));
 
-    ref.invalidateSelf();
-    await future;
+    state = AsyncData(await _load());
   }
 }
 

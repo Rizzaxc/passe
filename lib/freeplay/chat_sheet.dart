@@ -1,12 +1,36 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/model/user_payment_info.dart';
 import '../core/payment/payment_qr_sheet.dart';
 import '../ui/main.dart';
 import 'repository.dart';
+
+Future<void> _openZalo(BuildContext context, String zalo) async {
+  var launched = false;
+  try {
+    final deeplink = Uri.https('zalo.me', '/$zalo');
+    if (await canLaunchUrl(deeplink)) {
+      launched = await launchUrl(deeplink, mode: LaunchMode.externalApplication);
+    }
+  } catch (_) {
+    launched = false;
+  }
+
+  if (!launched && context.mounted) {
+    showFToast(
+      context: context,
+      icon: const Icon(FLucideIcons.circleX),
+      variant: .destructive,
+      title: Text('payment.openInAppFailed'.tr()),
+      alignment: .bottomCenter,
+    );
+  }
+}
 
 Future<void> showFreeplayChatSheet(
   BuildContext context,
@@ -51,7 +75,7 @@ class _FreeplayChatState extends ConsumerState<_FreeplayChat> {
         showFToast(
           context: context,
           variant: .destructive,
-          title: const Text('Không gửi được tin nhắn'),
+          title: Text('freeplay.chat.sendFailed'.tr()),
         );
       }
     } finally {
@@ -63,25 +87,41 @@ class _FreeplayChatState extends ConsumerState<_FreeplayChat> {
   Widget build(BuildContext context) {
     final messages = ref.watch(freeplayChatProvider(widget.requestId));
     final me = ref.watch(currentUserIdProvider);
+    final counterpartZalo = ref
+        .watch(freeplayChatCounterpartZaloProvider(widget.requestId))
+        .value;
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * .72,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PSheetTitle(
-            label: 'Trao đổi với ${widget.host ? 'người chơi' : 'Host'}',
+            label: widget.host
+                ? 'freeplay.chat.withPlayer'.tr()
+                : 'freeplay.chat.withHost'.tr(),
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.pop(context),
               child: const Icon(FLucideIcons.x),
             ),
           ),
+          if (counterpartZalo != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FButton(
+                variant: .outline,
+                size: .sm,
+                prefix: const Icon(FLucideIcons.externalLink, size: 16),
+                onPress: () => _openZalo(context, counterpartZalo),
+                child: Text('freeplay.chat.messageViaZalo'.tr()),
+              ),
+            ),
           const SizedBox(height: 12),
           Expanded(
             child: messages.when(
               loading: () => const Center(child: FCircularProgress()),
               error: (_, _) =>
-                  const Center(child: Text('Không tải được cuộc trò chuyện')),
+                  Center(child: Text('freeplay.chat.loadFailed'.tr())),
               data: (items) => RefreshIndicator(
                 onRefresh: () async {
                   ref.invalidate(freeplayChatProvider(widget.requestId));
@@ -97,7 +137,7 @@ class _FreeplayChatState extends ConsumerState<_FreeplayChat> {
                         message.accountNumber != null) {
                       return FTile(
                         prefix: const Icon(FLucideIcons.qrCode),
-                        title: const Text('Thông tin chuyển khoản'),
+                        title: Text('freeplay.chat.paymentInfo'.tr()),
                         subtitle: Text(
                           '${message.bankCode ?? ''} · ${message.accountNumber}',
                         ),
@@ -109,7 +149,7 @@ class _FreeplayChatState extends ConsumerState<_FreeplayChat> {
                             bankDisplayName:
                                 message.bankDisplayName ??
                                 message.bankCode ??
-                                'Ngân hàng',
+                                'freeplay.chat.bank'.tr(),
                             value: message.accountNumber!,
                             accountName: message.accountName,
                             createdAt: message.createdAt,
@@ -161,14 +201,12 @@ class _FreeplayChatState extends ConsumerState<_FreeplayChat> {
                       showFToast(
                         context: context,
                         variant: .destructive,
-                        title: const Text(
-                          'Chưa có thông tin thanh toán để gửi',
-                        ),
+                        title: Text('freeplay.chat.noPaymentInfo'.tr()),
                       );
                     }
                   }
                 },
-                child: const Text('Gửi thông tin thanh toán'),
+                child: Text('freeplay.chat.sendPaymentInfo'.tr()),
               ),
             ),
           Row(
@@ -176,7 +214,7 @@ class _FreeplayChatState extends ConsumerState<_FreeplayChat> {
               Expanded(
                 child: FTextField(
                   control: FTextFieldControl.managed(controller: _controller),
-                  hint: 'Nhắn tin…',
+                  hint: 'freeplay.chat.messageHint'.tr(),
                   maxLines: 3,
                   minLines: 1,
                 ),

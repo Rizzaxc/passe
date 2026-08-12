@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -29,7 +30,7 @@ class _Requests extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PSheetTitle(
-            label: 'Yêu cầu tham gia',
+            label: 'freeplay.hostManage.requestsTitle'.tr(),
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.pop(context),
@@ -40,10 +41,11 @@ class _Requests extends ConsumerWidget {
           Expanded(
             child: requests.when(
               loading: () => const Center(child: FCircularProgress()),
-              error: (_, _) =>
-                  const Center(child: Text('Không tải được yêu cầu')),
+              error: (_, _) => Center(
+                child: Text('freeplay.hostManage.requestsLoadFailed'.tr()),
+              ),
               data: (items) => items.isEmpty
-                  ? const Center(child: Text('Chưa có yêu cầu'))
+                  ? Center(child: Text('freeplay.hostManage.noRequests'.tr()))
                   : ListView.separated(
                       itemCount: items.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
@@ -57,7 +59,7 @@ class _Requests extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           subtitle: Text(
-                            '${request.skill ?? 'Chưa khai báo'} · ${request.status.name}',
+                            '${request.skill == null ? 'freeplay.skill.undeclared'.tr() : 'freeplay.skill.${request.skill}'.tr()} · ${_statusKey(request.status).tr()}',
                           ),
                           suffix:
                               request.status == FreeplayRequestStatus.pending
@@ -98,8 +100,9 @@ class _Requests extends ConsumerWidget {
                                             showFToast(
                                               context: context,
                                               variant: .destructive,
-                                              title: const Text(
-                                                'Buổi chơi đã đủ chỗ',
+                                              title: Text(
+                                                'freeplay.hostManage.sessionFull'
+                                                    .tr(),
                                               ),
                                             );
                                           }
@@ -137,3 +140,13 @@ class _Requests extends ConsumerWidget {
     );
   }
 }
+
+String _statusKey(FreeplayRequestStatus status) => switch (status) {
+  FreeplayRequestStatus.pending => 'freeplay.status.pending',
+  FreeplayRequestStatus.accepted => 'freeplay.status.accepted',
+  FreeplayRequestStatus.declined => 'freeplay.status.declined',
+  FreeplayRequestStatus.cancelled => 'freeplay.status.cancelled',
+  FreeplayRequestStatus.hostCancelled => 'freeplay.status.hostCancelled',
+  FreeplayRequestStatus.lapsed => 'freeplay.status.lapsed',
+  FreeplayRequestStatus.blocked => 'freeplay.status.blocked',
+};

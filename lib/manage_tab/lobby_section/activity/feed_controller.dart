@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -80,8 +81,8 @@ class LobbyFeedController extends _$LobbyFeedController {
     final yesterday = today.subtract(const Duration(days: 1));
 
     String labelFor(DateTime day) {
-      if (day == today) return 'Hôm nay';
-      if (day == yesterday) return 'Hôm qua';
+      if (day == today) return 'lobbyHub.feed.today'.tr();
+      if (day == yesterday) return 'lobbyHub.feed.yesterday'.tr();
       return '${day.day.toString().padLeft(2, '0')}/'
           '${day.month.toString().padLeft(2, '0')}';
     }

@@ -52,7 +52,7 @@ final class LobbyMoneyControllerProvider
 }
 
 String _$lobbyMoneyControllerHash() =>
-    r'b55580d9d876528fb35a7bf86be75bdfbff6bf6c';
+    r'87707198e8b745ad28484847130b6b8ac3d13c69';
 
 final class LobbyMoneyControllerFamily extends $Family
     with

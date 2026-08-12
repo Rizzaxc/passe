@@ -130,6 +130,31 @@ final freeplayChatProvider = FutureProvider.autoDispose
           .toList();
     });
 
+final freeplayChatCounterpartZaloProvider = FutureProvider.autoDispose
+    .family<String?, String>((ref, requestId) async {
+      final response = await Supabase.instance.client
+          .rpc(
+            'freeplay_chat_counterpart_data',
+            params: {'p_request_id': requestId},
+          )
+          .timeout(_rpcTimeout);
+      final rows = response as List;
+      if (rows.isEmpty) return null;
+      final counterpartId =
+          (rows.first as Map<String, dynamic>)['counterpart_id'] as String?;
+      if (counterpartId == null) return null;
+      // Whether this returns a row at all is governed by user_contact's own
+      // RLS (friends-only, freeplay hosts public) — not re-checked here.
+      final contact = await Supabase.instance.client
+          .from('user_contact')
+          .select('zalo')
+          .eq('user_id', counterpartId)
+          .maybeSingle()
+          .timeout(_rpcTimeout);
+      final zalo = contact?['zalo'] as String?;
+      return zalo?.trim().isEmpty == true ? null : zalo;
+    });
+
 class FreeplayRepository {
   const FreeplayRepository();
   SupabaseClient get _client => Supabase.instance.client;

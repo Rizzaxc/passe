@@ -1,6 +1,7 @@
 // Captain-only "create a poll" sheet — posts a lobby_feed_item(kind: 'poll').
 // RLS ("Captain can post updates and polls") enforces the captain-only part
 // server-side too; the picker already only shows this tile to the captain.
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -69,7 +70,7 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
         context: context,
         icon: const Icon(FLucideIcons.circleAlert),
         variant: .destructive,
-        title: const Text('Cần câu hỏi và ít nhất 2 lựa chọn'),
+        title: Text('lobbyHub.poll.validation'.tr()),
         alignment: .bottomCenter,
       );
       return;
@@ -84,23 +85,29 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
       // falls back to the option count's own vote total if the roster
       // hasn't loaded, since the CHECK constraint only requires the key
       // to be present, not accurate.
-      final members =
-          ref.read(lobbyMembersControllerProvider(widget.lobbyId)).value;
+      final members = ref
+          .read(lobbyMembersControllerProvider(widget.lobbyId))
+          .value;
       final totalMembers = members?.length ?? options.length;
 
-      await Supabase.instance.client.from('lobby_feed_item').insert({
-        'lobby_id': widget.lobbyId,
-        'author_id': userId,
-        'kind': 'poll',
-        'payload': {
-          'question': question,
-          'options': [for (final label in options) {'label': label}],
-          'total_members': totalMembers,
-          // No real poll-deadline scheduling yet — fixed copy, tweak
-          // later if that becomes a real field.
-          'deadline': 'Trong 24 giờ',
-        },
-      }).timeout(const Duration(seconds: 5));
+      await Supabase.instance.client
+          .from('lobby_feed_item')
+          .insert({
+            'lobby_id': widget.lobbyId,
+            'author_id': userId,
+            'kind': 'poll',
+            'payload': {
+              'question': question,
+              'options': [
+                for (final label in options) {'label': label},
+              ],
+              'total_members': totalMembers,
+              // No real poll-deadline scheduling yet — fixed copy, tweak
+              // later if that becomes a real field.
+              'deadline': 'lobbyHub.poll.deadline'.tr(),
+            },
+          })
+          .timeout(const Duration(seconds: 5));
 
       ref.invalidate(lobbyFeedControllerProvider(widget.lobbyId));
       if (!mounted) return;
@@ -108,7 +115,7 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.check),
-        title: const Text('Đã tạo bình chọn'),
+        title: Text('lobbyHub.poll.created'.tr()),
         alignment: .bottomCenter,
       );
     } catch (e, st) {
@@ -118,7 +125,7 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Không thể tạo bình chọn'),
+          title: Text('lobbyHub.poll.failed'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -135,7 +142,7 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PSheetTitle(
-            label: 'Tạo Bình Chọn',
+            label: 'lobbyHub.poll.title'.tr(),
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),
@@ -143,8 +150,8 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
             ),
           ),
           FTextField(
-            label: const Text('Câu hỏi'),
-            hint: 'Sân nào tiện cho mọi người?',
+            label: Text('lobbyHub.poll.question'.tr()),
+            hint: 'lobbyHub.poll.questionHint'.tr(),
             control: FTextFieldControl.managed(controller: _questionController),
           ),
           for (var i = 0; i < _optionControllers.length; i++)
@@ -152,9 +159,14 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
               children: [
                 Expanded(
                   child: FTextField(
-                    label: Text('Lựa chọn ${i + 1}'),
-                    control:
-                        FTextFieldControl.managed(controller: _optionControllers[i]),
+                    label: Text(
+                      'lobbyHub.poll.option'.tr(
+                        namedArgs: {'number': '${i + 1}'},
+                      ),
+                    ),
+                    control: FTextFieldControl.managed(
+                      controller: _optionControllers[i],
+                    ),
                   ),
                 ),
                 if (_optionControllers.length > _minOptions)
@@ -169,7 +181,7 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
             FButton(
               variant: .outline,
               onPress: _addOption,
-              child: const Text('Thêm lựa chọn'),
+              child: Text('lobbyHub.poll.addOption'.tr()),
             ),
           FButton(
             onPress: _saving ? null : _submit,
@@ -179,7 +191,7 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Tạo Bình Chọn'),
+                : Text('lobbyHub.poll.submit'.tr()),
           ),
         ],
       ),
