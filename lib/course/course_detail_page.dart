@@ -258,87 +258,318 @@ class _SessionCard extends ConsumerWidget {
     final colors = context.theme.colors;
     final controller = ref.watch(courseActionControllerProvider.notifier);
     final busy = ref.watch(courseActionControllerProvider);
+    final start = session.startTime.toLocal();
+    final end = session.endTime?.toLocal();
+    final weekdays = [
+      'lobbyHub.schedule.weekdaysShort.monday'.tr(),
+      'lobbyHub.schedule.weekdaysShort.tuesday'.tr(),
+      'lobbyHub.schedule.weekdaysShort.wednesday'.tr(),
+      'lobbyHub.schedule.weekdaysShort.thursday'.tr(),
+      'lobbyHub.schedule.weekdaysShort.friday'.tr(),
+      'lobbyHub.schedule.weekdaysShort.saturday'.tr(),
+      'lobbyHub.schedule.weekdaysShort.sunday'.tr(),
+    ];
+    final dateLabel =
+        '${weekdays[start.weekday - 1]}, '
+        '${start.day}/${start.month}';
+    final startLabel = formatTimeOfDay(start);
+    final timeLabel = end == null
+        ? startLabel
+        : '$startLabel – ${formatTimeOfDay(end)}';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.fromLTRB(4, 0, 4, 12),
       decoration: BoxDecoration(
-        color: colors.secondary,
-        borderRadius: BorderRadius.circular(16),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  formatMatchDateTime(session.startTime),
+          const SizedBox(height: 3, child: ColoredBox(color: _courseCrimson)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  dateLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.theme.typography.body.xl3.copyWith(
+                    color: const Color(0xFF09090B),
+                    fontWeight: FontWeight.w800,
+                    height: 1.05,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  timeLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: context.theme.typography.body.md.copyWith(
-                    fontWeight: FontWeight.w600,
+                    color: _courseCrimson,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
                   ),
                 ),
-              ),
-              if (course.isCoach)
-                FButton.icon(
-                  variant: .ghost,
-                  onPress: busy
-                      ? null
-                      : () => showSessionActionsSheet(context, course, session),
-                  child: const Icon(FLucideIcons.ellipsis),
+                if (session.venueName != null) ...[
+                  const SizedBox(height: 10),
+                  _CourseSessionDetailRow(
+                    icon: FLucideIcons.mapPin,
+                    text: session.venueName!,
+                  ),
+                ],
+                if (session.note != null) ...[
+                  const SizedBox(height: 8),
+                  _CourseSessionDetailRow(
+                    icon: FLucideIcons.stickyNote,
+                    text: session.note!,
+                    maxLines: 2,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(
+                      FLucideIcons.circleCheck,
+                      size: 14,
+                      color: session.goingCount > 0
+                          ? _courseGreen
+                          : colors.mutedForeground,
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        'course.goingCount'.plural(session.goingCount),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.theme.typography.body.sm.copyWith(
+                          color: session.goingCount > 0
+                              ? _courseGreen
+                              : colors.secondaryForeground,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-            ],
-          ),
-          if (session.venueName != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              session.venueName!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.theme.typography.body.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
+                if (course.canManage) ...[
+                  const SizedBox(height: 10),
+                  _CourseRsvpControl(
+                    value: session.myAttendance ?? '',
+                    enabled: !busy,
+                    onChange: (option) => controller.rsvp(
+                      session.activityId,
+                      option,
+                      courseId: course.courseId,
+                    ),
+                  ),
+                ],
+                if (course.isCoach) ...[
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Semantics(
+                      button: true,
+                      label: 'course.cancelSession'.tr(),
+                      child: FButton.icon(
+                        variant: .outline,
+                        size: .sm,
+                        onPress: busy
+                            ? null
+                            : () => showSessionActionsSheet(
+                                context,
+                                course,
+                                session,
+                              ),
+                        child: const Icon(FLucideIcons.ellipsis, size: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ],
-          if (session.note != null) ...[
-            const SizedBox(height: 6),
-            Text(session.note!, style: context.theme.typography.body.sm),
-          ],
-          const SizedBox(height: 12),
-          // No quorum on a course session: RSVP is attendance intent, and
-          // nothing is gated on the count.
-          Row(
-            children: [
-              for (final option in const ['going', 'maybe', 'out'])
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: FButton(
-                    variant: session.myAttendance == option
-                        ? .primary
-                        : .outline,
-                    size: .sm,
-                    onPress: busy
-                        ? null
-                        : () => controller.rsvp(
-                            session.activityId,
-                            option,
-                            courseId: course.courseId,
-                          ),
-                    child: Text('course.rsvp.$option'.tr()),
-                  ),
-                ),
-              const Spacer(),
-              Text(
-                'course.goingCount'.plural(session.goingCount),
-                style: context.theme.typography.body.xs.copyWith(
-                  color: colors.mutedForeground,
-                ),
-              ),
-            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+const _courseCrimson = Color(0xFFDC143C);
+const _courseGreen = Color(0xFF959D54);
+const _courseGreenTint = Color(0xFFEEF2E4);
+
+class _CourseSessionDetailRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final int maxLines;
+
+  const _CourseSessionDetailRow({
+    required this.icon,
+    required this.text,
+    this.maxLines = 1,
+  });
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.only(top: 1),
+        child: Icon(
+          icon,
+          size: 14,
+          color: context.theme.colors.mutedForeground,
+        ),
+      ),
+      const SizedBox(width: 6),
+      Expanded(
+        child: Text(
+          text,
+          maxLines: maxLines,
+          overflow: TextOverflow.ellipsis,
+          style: context.theme.typography.body.sm.copyWith(
+            color: context.theme.colors.secondaryForeground,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+class _CourseRsvpControl extends StatelessWidget {
+  final String value;
+  final bool enabled;
+  final ValueChanged<String> onChange;
+
+  const _CourseRsvpControl({
+    required this.value,
+    required this.enabled,
+    required this.onChange,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: colors.background,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colors.border.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        children: [
+          _CourseRsvpButton(
+            id: 'going',
+            label: 'course.rsvp.going'.tr(),
+            icon: FLucideIcons.check,
+            active: value == 'going',
+            positive: true,
+            enabled: enabled,
+            onTap: onChange,
+          ),
+          _CourseRsvpButton(
+            id: 'maybe',
+            label: 'course.rsvp.maybe'.tr(),
+            icon: FLucideIcons.circleHelp,
+            active: value == 'maybe',
+            enabled: enabled,
+            onTap: onChange,
+          ),
+          _CourseRsvpButton(
+            id: 'out',
+            label: 'course.rsvp.out'.tr(),
+            icon: FLucideIcons.x,
+            active: value == 'out',
+            enabled: enabled,
+            onTap: onChange,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CourseRsvpButton extends StatelessWidget {
+  final String id;
+  final String label;
+  final IconData icon;
+  final bool active;
+  final bool positive;
+  final bool enabled;
+  final ValueChanged<String> onTap;
+
+  const _CourseRsvpButton({
+    required this.id,
+    required this.label,
+    required this.icon,
+    required this.active,
+    required this.enabled,
+    required this.onTap,
+    this.positive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final activeForeground = positive
+        ? _courseGreen
+        : colors.secondaryForeground;
+    final activeBackground = positive ? _courseGreenTint : colors.secondary;
+
+    return Expanded(
+      child: Semantics(
+        button: true,
+        selected: active,
+        enabled: enabled,
+        label: label,
+        child: FTappable(
+          onPress: enabled ? () => onTap(id) : null,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+            decoration: BoxDecoration(
+              color: active ? activeBackground : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 14,
+                  color: active ? activeForeground : colors.mutedForeground,
+                ),
+                const SizedBox(width: 5),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.theme.typography.body.sm.copyWith(
+                      color: active
+                          ? activeForeground
+                          : colors.secondaryForeground,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
