@@ -1465,7 +1465,8 @@
       "activity_rescheduled": "Session rescheduled",
       "activity_cancelled": "Session cancelled",
       "course_ended": "Course ended",
-      "target_reached": "The course reached {target} sessions"
+      "target_reached": "The course reached {target} sessions",
+      "no_students_left": "This course has no students left"
     }
   },
   "course": {

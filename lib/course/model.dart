@@ -262,6 +262,10 @@ class CourseDetail {
   final String? coachName;
   final String? coachUserId;
   final bool isCoach;
+
+  /// The viewer's own membership status, or null for the coach (who isn't a
+  /// `course_member` row at all).
+  final CourseMemberStatus? myMemberStatus;
   final int? targetSessionCount;
   final int heldSessionCount;
   final List<CourseMember> members;
@@ -275,6 +279,7 @@ class CourseDetail {
     required this.sportId,
     required this.professionalId,
     required this.isCoach,
+    this.myMemberStatus,
     this.conversationId,
     this.name,
     this.description,
@@ -287,6 +292,12 @@ class CourseDetail {
     this.reports = const [],
     this.myReviewRating,
   });
+
+  /// Whether the viewer may act on the course — propose/schedule sessions,
+  /// RSVP, see the planner and history. An inquiring (unenrolled) student
+  /// has course *access* (they can read the thread) but not this — the
+  /// coach hasn't accepted them yet, so there's nothing to plan or attend.
+  bool get canManage => isCoach || (myMemberStatus?.isEnrolled ?? false);
 
   List<CourseSession> get upcoming => sessions
       .where((s) => !s.hasFinished && s.proposalStatus == ProposalStatus.approved)
@@ -321,6 +332,9 @@ class CourseDetail {
     coachName: json['coach_name'] as String?,
     coachUserId: json['coach_user_id']?.toString(),
     isCoach: json['is_coach'] as bool? ?? false,
+    myMemberStatus: json['my_member_status'] == null
+        ? null
+        : CourseMemberStatus.fromDb(json['my_member_status'].toString()),
     targetSessionCount: json['target_session_count'] == null
         ? null
         : int.tryParse(json['target_session_count'].toString()),

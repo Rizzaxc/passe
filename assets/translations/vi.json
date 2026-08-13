@@ -935,7 +935,7 @@
       "winRate": "tỷ lệ thắng"
     },
     "freeplay": {
-      "yourRequests": "Xé vé của bạn",
+      "yourRequests": "Xé vé",
       "empty": "Các yêu cầu và buổi đã nhận sẽ xuất hiện ở đây.",
       "history": "Lịch sử Xé vé",
       "loadFailed": "Không tải được lịch sử",
@@ -1461,7 +1461,8 @@
       "activity_rescheduled": "Buổi tập đã đổi giờ",
       "activity_cancelled": "Buổi tập đã bị huỷ",
       "course_ended": "Khoá học đã kết thúc",
-      "target_reached": "Khoá học đã đủ {target} buổi"
+      "target_reached": "Khoá học đã đủ {target} buổi",
+      "no_students_left": "Khoá học không còn học viên nào"
     }
   },
   "course": {

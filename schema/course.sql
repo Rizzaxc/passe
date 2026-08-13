@@ -465,10 +465,48 @@ BEGIN
 END
 $$;
 
+-- A departure only matters here if it was an *enrolled* student leaving —
+-- an inquiring lead going cold isn't "the course losing its last student".
+-- Mirrors fn_sweep_course_targets' posture exactly: prompt, never
+-- auto-close. Only the coach ends a course (see end_course) — that
+-- invariant holds even when the roster hits zero.
+CREATE OR REPLACE FUNCTION public.fn_course_prompt_if_no_students(
+  p_course_id uuid, p_was_enrolled boolean
+) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path TO '' AS $$
+DECLARE v_coach uuid;
+BEGIN
+  IF NOT p_was_enrolled THEN RETURN; END IF;
+  IF EXISTS (
+    SELECT 1 FROM public.course_member m
+    WHERE m.course_id = p_course_id AND m.status = 'enrolled' AND m.left_at IS NULL
+  ) THEN RETURN; END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.course WHERE id = p_course_id AND status = 'active') THEN
+    RETURN;
+  END IF;
+
+  PERFORM public.fn_course_system_message(p_course_id, 'no_students_left');
+
+  SELECT p.linked_user_id INTO v_coach FROM public.professional p
+  JOIN public.course c ON c.professional_id = p.id WHERE c.id = p_course_id;
+  IF v_coach IS NOT NULL THEN
+    -- Reuses the 'course_ended' kind, same as the target-reached sweep — the
+    -- client already renders it as a generic "look at this course" prompt.
+    PERFORM public.fn_enqueue_notification('course_ended', ARRAY[v_coach],
+      'Khoá học không còn học viên', 'Bạn có thể mời học viên mới hoặc kết thúc khoá học.',
+      jsonb_build_object('course_id', p_course_id));
+  END IF;
+END
+$$;
+REVOKE ALL ON FUNCTION public.fn_course_prompt_if_no_students(uuid,boolean)
+  FROM PUBLIC, anon, authenticated;
+
 CREATE OR REPLACE FUNCTION public.leave_course(p_course_id uuid)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path TO '' AS $$
-DECLARE v_uid uuid := auth.uid(); v_username text;
+DECLARE v_uid uuid := auth.uid(); v_username text; v_was_enrolled boolean;
 BEGIN
+  SELECT (m.status = 'enrolled') INTO v_was_enrolled FROM public.course_member m
+  WHERE m.course_id = p_course_id AND m.user_id = v_uid AND m.left_at IS NULL;
+
   UPDATE public.course_member SET status = 'left', left_at = now()
   WHERE course_id = p_course_id AND user_id = v_uid AND left_at IS NULL;
   IF NOT FOUND THEN RAISE EXCEPTION 'membership not found'; END IF;
@@ -480,16 +518,21 @@ BEGIN
   SELECT u.username::text INTO v_username FROM public."user" u WHERE u.id = v_uid;
   PERFORM public.fn_course_system_message(p_course_id, 'member_left',
     jsonb_build_object('username', v_username));
+
+  PERFORM public.fn_course_prompt_if_no_students(p_course_id, coalesce(v_was_enrolled, false));
 END
 $$;
 
 CREATE OR REPLACE FUNCTION public.remove_course_member(p_course_id uuid, p_user_id uuid)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path TO '' AS $$
-DECLARE v_uid uuid := auth.uid(); v_username text;
+DECLARE v_uid uuid := auth.uid(); v_username text; v_was_enrolled boolean;
 BEGIN
   IF NOT public.fn_is_course_coach(p_course_id, v_uid) THEN
     RAISE EXCEPTION 'coach access required';
   END IF;
+
+  SELECT (m.status = 'enrolled') INTO v_was_enrolled FROM public.course_member m
+  WHERE m.course_id = p_course_id AND m.user_id = p_user_id AND m.left_at IS NULL;
 
   UPDATE public.course_member SET status = 'removed', left_at = now()
   WHERE course_id = p_course_id AND user_id = p_user_id AND left_at IS NULL;
@@ -505,6 +548,8 @@ BEGIN
   PERFORM public.fn_enqueue_notification('course_member_removed', ARRAY[p_user_id],
     'Bạn đã rời khoá học', 'Huấn luyện viên đã kết thúc khoá học với bạn.',
     jsonb_build_object('course_id', p_course_id));
+
+  PERFORM public.fn_course_prompt_if_no_students(p_course_id, coalesce(v_was_enrolled, false));
 END
 $$;
 
@@ -987,12 +1032,16 @@ $$;
 -- One course: header, roster, and every session the caller may see.
 -- Reports are filtered to the caller's own unless they're the coach — a
 -- student must never read another student's write-up.
+-- `my_member_status` (null for the coach) lets the client tell an inquiring
+-- (unenrolled) student apart from an enrolled one — see
+-- course_viewer_status.sql for why that matters.
 CREATE OR REPLACE FUNCTION public.course_detail_data(p_course_id uuid)
 RETURNS TABLE(
   course_id uuid, conversation_id uuid, name text, description text, status text,
   sport_id bigint, professional_id uuid, coach_name text, coach_user_id uuid,
-  is_coach boolean, target_session_count integer, held_session_count integer,
-  members jsonb, sessions jsonb, reports jsonb, my_review_rating smallint
+  is_coach boolean, my_member_status text, target_session_count integer,
+  held_session_count integer, members jsonb, sessions jsonb, reports jsonb,
+  my_review_rating smallint
 ) LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO '' AS $$
 DECLARE v_uid uuid := auth.uid(); v_is_coach boolean;
 BEGIN
@@ -1004,6 +1053,8 @@ BEGIN
   RETURN QUERY
   SELECT c.id, conv.id, c.name, c.description, c.status::text, c.sport_id,
          c.professional_id, p.display_name, p.linked_user_id, v_is_coach,
+         (SELECT m.status::text FROM public.course_member m
+          WHERE m.course_id = c.id AND m.user_id = v_uid AND m.left_at IS NULL),
          c.target_session_count, public.fn_course_held_sessions(c.id),
          coalesce((
            SELECT jsonb_agg(jsonb_build_object(

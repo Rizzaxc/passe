@@ -486,6 +486,10 @@ Replaced the coach half of the booking system. Full schema notes live in
   **rescheduling clears every RSVP**. Cancelled sessions never count toward the target.
 - **Reaching the target prompts, it doesn't close.** `fn_sweep_course_targets` (on the existing
   1-minute cron tick) posts a system message once; only the coach ends a course.
+- **Losing its last student prompts too, same posture.** If the departing member being marked
+  `left`/`removed` was actually `enrolled` (an inquiring lead going cold doesn't count) and no other
+  `enrolled` member remains, `leave_course`/`remove_course_member` post a `no_students_left` system
+  message and notify the coach — they still have to end it themselves.
 - **A coach clash is a warning, never a block** (`course_activity_conflicts`), shown both when
   scheduling and when approving — approving is where the coach commits to the time. It returns
   times only, so a student can't probe who else their coach teaches.

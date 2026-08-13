@@ -49,31 +49,36 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
             ),
         ],
       ),
+      // An inquiring (unenrolled) student has nothing to plan or attend yet —
+      // the coach hasn't accepted them — so Planner/History would be two
+      // permanently-empty tabs. Feed (the thread) is the whole inquiry.
       child: async.when(
         loading: () => const Center(child: FCircularProgress()),
         error: (_, _) => Center(child: Text('course.loadFailed'.tr())),
-        data: (course) => FTabs(
-          expands: true,
-          contentPhysics: const NeverScrollableScrollPhysics(),
-          control: FTabControl.lifted(
-            index: _tab,
-            onChange: (i) => setState(() => _tab = i),
-          ),
-          children: [
-            FTabEntry(
-              label: Text('course.tab.feed'.tr()),
-              child: _FeedTab(course: course),
-            ),
-            FTabEntry(
-              label: Text('course.tab.planner'.tr()),
-              child: _PlannerTab(course: course),
-            ),
-            FTabEntry(
-              label: Text('course.tab.history'.tr()),
-              child: _HistoryTab(course: course),
-            ),
-          ],
-        ),
+        data: (course) => !course.canManage
+            ? _FeedTab(course: course)
+            : FTabs(
+                expands: true,
+                contentPhysics: const NeverScrollableScrollPhysics(),
+                control: FTabControl.lifted(
+                  index: _tab,
+                  onChange: (i) => setState(() => _tab = i),
+                ),
+                children: [
+                  FTabEntry(
+                    label: Text('course.tab.feed'.tr()),
+                    child: _FeedTab(course: course),
+                  ),
+                  FTabEntry(
+                    label: Text('course.tab.planner'.tr()),
+                    child: _PlannerTab(course: course),
+                  ),
+                  FTabEntry(
+                    label: Text('course.tab.history'.tr()),
+                    child: _HistoryTab(course: course),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -212,7 +217,7 @@ class _PlannerTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final upcoming = course.upcoming;
-    final canPropose = course.status == CourseStatus.active;
+    final canPropose = course.status == CourseStatus.active && course.canManage;
 
     return RefreshIndicator(
       onRefresh: () =>
