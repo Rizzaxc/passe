@@ -81,8 +81,8 @@ Future<List<ProfessionalServiceOption>> professionalServices(
 
 /// Soft availability check: existing *confirmed* bookings for this
 /// professional overlapping the requested window
-/// (`professional_booking_conflicts` RPC). Warns in the booking sheet UI —
-/// the hard gate is `accept_professional_booking`'s atomic overlap check.
+/// (`referee_booking_conflicts` RPC). Warns in the booking sheet UI —
+/// the hard gate is `accept_referee_booking`'s atomic overlap check.
 @riverpod
 Future<bool> hasBookingConflict(
   Ref ref,
@@ -92,7 +92,7 @@ Future<bool> hasBookingConflict(
 ) async {
   final response = await Supabase.instance.client
       .rpc(
-        'professional_booking_conflicts',
+        'referee_booking_conflicts',
         params: {
           'p_professional_id': professionalId,
           'p_start': start.toUtc().toIso8601String(),
@@ -114,12 +114,12 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
   @override
   bool build(String professionalId) => false; // in-flight flag
 
-  /// [existingPackageId] schedules the next session of an already-purchased
-  /// rolling package (no new package row). [createPackage] creates a fresh
-  /// `professional_booking_package` container plus its first session.
-  /// [participantUserIds] populates `booking_additional_users` for a group
-  /// service. [activityId] links the booking to a *lobby* activity in the
-  /// coach/referee slot derived from the professional's role.
+  /// [participantUserIds] populates `referee_booking_additional_users` for a
+  /// group service. [activityId] links the booking to a *lobby* activity's
+  /// referee slot.
+  ///
+  /// Packages are gone with the coach half of the booking system — a referee
+  /// books one match at a time, and the RPC rejects package parameters.
   Future<void> book({
     required String serviceId,
     required DateTime start,
@@ -128,8 +128,6 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
     String? locationId,
     String? customLocationName,
     List<String>? participantUserIds,
-    String? existingPackageId,
-    bool createPackage = false,
     String? activityId,
   }) async {
     final userId = ref.read(currentUserIdProvider);
@@ -143,7 +141,7 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
     try {
       await supabase
           .rpc(
-            'request_professional_booking',
+            'request_referee_booking',
             params: {
               'p_professional_id': professionalId,
               'p_service_id': serviceId,
@@ -153,8 +151,6 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
               'p_location_id': locationId,
               'p_custom_location_name': customLocationName,
               'p_participant_user_ids': participantUserIds ?? const <String>[],
-              'p_existing_package_id': existingPackageId,
-              'p_create_package': createPackage,
               'p_activity_id': activityId,
             },
           )

@@ -33,14 +33,16 @@ WHERE lm.lobby_id = l.id
 DELETE FROM activity a
 WHERE a.lobby_id IN (SELECT id FROM lobby WHERE name LIKE 'mocked_%')
    OR a.user_id  IN (SELECT id FROM "user" WHERE username LIKE 'mockeduser%')
-   OR a.professional_booking_id IN (
-        SELECT pb.id FROM professional_booking pb
-        JOIN professional p ON p.id = pb.professional_id
+   OR a.course_id IN (
+        SELECT c.id FROM course c
+        JOIN professional p ON p.id = c.professional_id
         WHERE p.display_name LIKE 'mocked_%');
 
-DELETE FROM professional_booking pb
+-- Courses replaced coach bookings; `referee_booking` is left alone here since
+-- nothing mocked ever created one.
+DELETE FROM course c
 USING professional p
-WHERE pb.professional_id = p.id
+WHERE c.professional_id = p.id
   AND p.display_name LIKE 'mocked_%';
 
 DELETE FROM lobby WHERE name LIKE 'mocked_%';            -- cascades captain member + feed/match
@@ -66,8 +68,8 @@ DECLARE
     v_id        uuid;
     v_cap       uuid;
     v_pro       uuid;
-    v_svc       uuid;
-    v_booking   uuid;
+    v_course       uuid;
+    v_conversation uuid;
     i           int;
     j           int;
     v_target    int;
@@ -294,27 +296,34 @@ BEGIN
         INSERT INTO activity (user_id, sport_id, start_time, end_time, lobby_id, recurrence_day_of_week)
         VALUES (v_current, 1, v_today + interval '19 hours', v_today + interval '21 hours', v_lobby[3], 2);
 
-        -- one coach engagement (booking + activity → coach-tone schedule row)
-        SELECT ps.id, p.id INTO v_svc, v_pro
-        FROM professional_service ps
-        JOIN professional p ON p.id = ps.professional_id
-        WHERE p.display_name LIKE 'mocked_HLV%' AND p.is_verified AND ps.is_active
+        -- one coaching relationship: an enrolled course with an approved
+        -- upcoming session, which is what produces the coach-tone schedule row
+        -- now that lessons aren't bookings.
+        SELECT p.id INTO v_pro
+        FROM professional p
+        WHERE p.display_name LIKE 'mocked_HLV%' AND p.is_verified
+          AND p.professional_role = 'coach'
         ORDER BY p.display_name LIMIT 1;
 
-        IF v_svc IS NOT NULL THEN
-            INSERT INTO professional_booking (client_user_id, service_id, professional_id, location_id,
-                                              booking_time_start, booking_time_end, agreed_rate, status, client_notes)
-            VALUES (v_current, v_svc, v_pro, v_loc[1],
-                    v_today + interval '1 day 7 hours 30 minutes',
-                    v_today + interval '1 day 9 hours',
-                    300, 'confirmed', 'mocked_ buổi tập kỹ thuật')
-            RETURNING id INTO v_booking;
+        IF v_pro IS NOT NULL THEN
+            INSERT INTO course (professional_id, sport_id, name, target_session_count)
+            VALUES (v_pro, 1, 'mocked_ Khoá kỹ thuật cơ bản', 8)
+            RETURNING id INTO v_course;
 
-            INSERT INTO activity (user_id, sport_id, start_time, end_time, professional_booking_id, location_id)
+            INSERT INTO conversation (kind, course_id) VALUES ('course', v_course)
+            RETURNING id INTO v_conversation;
+
+            INSERT INTO course_member (course_id, user_id, status)
+            VALUES (v_course, v_current, 'enrolled');
+            INSERT INTO conversation_member (conversation_id, user_id)
+            VALUES (v_conversation, v_current);
+
+            INSERT INTO activity (user_id, sport_id, start_time, end_time,
+                                  course_id, proposal_status, location_id)
             VALUES (v_current, 1,
                     v_today + interval '1 day 7 hours 30 minutes',
                     v_today + interval '1 day 9 hours',
-                    v_booking, v_loc[1]);
+                    v_course, 'approved', v_loc[1]);
         END IF;
     END IF;
 END $$;

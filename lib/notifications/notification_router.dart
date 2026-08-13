@@ -31,6 +31,7 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
   // schema/push_notifications.sql) — so both are read here.
   final activityId = (data['activity_id'] ?? data['target_id']) as String?;
   final challengeId = data['challenge_id'] as String?;
+  final courseId = data['course_id'] as String?;
   final requestId = data['request_id'] as String?;
 
   return switch (kind) {
@@ -119,6 +120,23 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
       const ManageScheduleRoute().location,
     NotificationKind.professionalBookingRejected =>
       const ManageScheduleRoute().location,
+    // Every course push carries its own `course_id`, so each opens the course
+    // it's about. Without one (an old or malformed payload) fall back to the
+    // hub rather than a dead end — index 2 is the course list in player mode
+    // and the course inbox in pro mode, so it lands right for both sides.
+    NotificationKind.courseMessage ||
+    NotificationKind.courseEnrollmentOffer ||
+    NotificationKind.courseEnrollmentAccepted ||
+    NotificationKind.courseActivityProposed ||
+    NotificationKind.courseActivityApproved ||
+    NotificationKind.courseActivityChanged ||
+    NotificationKind.courseSessionReport ||
+    NotificationKind.courseEnded =>
+      courseId == null
+          ? const ManageCourseRoute().location
+          : CourseDetailRoute(id: courseId).location,
+    // Removed from the course — it's no longer theirs to open.
+    NotificationKind.courseMemberRemoved => const ManageCourseRoute().location,
     // Both friendship kinds open the other person's page: the request can be
     // answered from its CTA, and an acceptance is best celebrated by landing
     // on the new friend.

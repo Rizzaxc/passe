@@ -116,24 +116,24 @@ final class ProfessionalServicesFamily extends $Family
 
 /// Soft availability check: existing *confirmed* bookings for this
 /// professional overlapping the requested window
-/// (`professional_booking_conflicts` RPC). Warns in the booking sheet UI —
-/// the hard gate is `accept_professional_booking`'s atomic overlap check.
+/// (`referee_booking_conflicts` RPC). Warns in the booking sheet UI —
+/// the hard gate is `accept_referee_booking`'s atomic overlap check.
 
 @ProviderFor(hasBookingConflict)
 final hasBookingConflictProvider = HasBookingConflictFamily._();
 
 /// Soft availability check: existing *confirmed* bookings for this
 /// professional overlapping the requested window
-/// (`professional_booking_conflicts` RPC). Warns in the booking sheet UI —
-/// the hard gate is `accept_professional_booking`'s atomic overlap check.
+/// (`referee_booking_conflicts` RPC). Warns in the booking sheet UI —
+/// the hard gate is `accept_referee_booking`'s atomic overlap check.
 
 final class HasBookingConflictProvider
     extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
     with $FutureModifier<bool>, $FutureProvider<bool> {
   /// Soft availability check: existing *confirmed* bookings for this
   /// professional overlapping the requested window
-  /// (`professional_booking_conflicts` RPC). Warns in the booking sheet UI —
-  /// the hard gate is `accept_professional_booking`'s atomic overlap check.
+  /// (`referee_booking_conflicts` RPC). Warns in the booking sheet UI —
+  /// the hard gate is `accept_referee_booking`'s atomic overlap check.
   HasBookingConflictProvider._({
     required HasBookingConflictFamily super.from,
     required (String, DateTime, DateTime) super.argument,
@@ -178,12 +178,12 @@ final class HasBookingConflictProvider
 }
 
 String _$hasBookingConflictHash() =>
-    r'2a5ecc6b183cfc2959a1d401fdd928cf2a195a78';
+    r'998ed75dee5bf1429eb73f6f67e23bd7395d7c47';
 
 /// Soft availability check: existing *confirmed* bookings for this
 /// professional overlapping the requested window
-/// (`professional_booking_conflicts` RPC). Warns in the booking sheet UI —
-/// the hard gate is `accept_professional_booking`'s atomic overlap check.
+/// (`referee_booking_conflicts` RPC). Warns in the booking sheet UI —
+/// the hard gate is `accept_referee_booking`'s atomic overlap check.
 
 final class HasBookingConflictFamily extends $Family
     with
@@ -202,8 +202,8 @@ final class HasBookingConflictFamily extends $Family
 
   /// Soft availability check: existing *confirmed* bookings for this
   /// professional overlapping the requested window
-  /// (`professional_booking_conflicts` RPC). Warns in the booking sheet UI —
-  /// the hard gate is `accept_professional_booking`'s atomic overlap check.
+  /// (`referee_booking_conflicts` RPC). Warns in the booking sheet UI —
+  /// the hard gate is `accept_referee_booking`'s atomic overlap check.
 
   HasBookingConflictProvider call(
     String professionalId,
@@ -283,7 +283,7 @@ final class ProfessionalBookingControllerProvider
 }
 
 String _$professionalBookingControllerHash() =>
-    r'4275464850cc894e96766e58210269c5cf4b0b84';
+    r'd66d3736e8b178caed8a1c521a8b7abc4ae1f4ef';
 
 /// Requests a booking through the server-side professional booking workflow.
 /// The RPC derives ownership, price, package details, and the initial status;

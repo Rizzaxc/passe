@@ -1,5 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../auth/auth_controller.dart';
+import '../core/feature_flags.dart';
 import '../core/model/enum.dart';
 import '../core/model/timeslot.dart';
 
@@ -21,10 +23,9 @@ class FilterData {
     this.city = City.hochiminh,
     this.districts = const {},
     this.schedule = const [],
-    this.visibleRoles = const {
-      ProfessionalRole.coach,
-      ProfessionalRole.referee,
-    },
+    this.visibleRoles = ClientFeatureFlags.refereeFlow
+        ? const {ProfessionalRole.coach, ProfessionalRole.referee}
+        : const {ProfessionalRole.coach},
   });
 
   FilterData copyWith({

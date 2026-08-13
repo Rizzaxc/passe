@@ -71,7 +71,7 @@ final class ProPendingRequestsProvider
 }
 
 String _$proPendingRequestsHash() =>
-    r'504f2e6621195243be4cb3e3ac784fa4adbf4e85';
+    r'7470ac4cc5097035ca6d4acb8a7cf40e07d8417f';
 
 /// Pending requests for the linked professional — `status = requested`.
 
@@ -158,7 +158,7 @@ final class ProUpcomingBookingsProvider
 }
 
 String _$proUpcomingBookingsHash() =>
-    r'4047472969d54c4ba0b87e0deb290313a3a32df3';
+    r'b8265084e183b7fe82d9ed289e1578209e73dc71';
 
 /// Confirmed upcoming sessions — the pro-mode "schedule" surface.
 
@@ -244,7 +244,7 @@ final class ProBookingHistoryProvider
   }
 }
 
-String _$proBookingHistoryHash() => r'6d6e2aa8d9849b7822208d49736f159ea0e62170';
+String _$proBookingHistoryHash() => r'377493c4fd1986a6ff337bbb25cad1ca0af6e9e6';
 
 /// Past bookings — completed, rejected, or cancelled, most recent first.
 
@@ -418,19 +418,19 @@ abstract class _$RecordChallengeResultController extends $Notifier<bool> {
 }
 
 /// Accept/reject/mark-complete actions for the professional side, backed by
-/// the validated `accept_professional_booking`/`reject_professional_booking`
+/// the validated `accept_referee_booking`/`reject_referee_booking`
 /// RPCs (accept needs an atomic overlap check a bare UPDATE can't express).
 
 @ProviderFor(ProBookingActionController)
 final proBookingActionControllerProvider = ProBookingActionControllerFamily._();
 
 /// Accept/reject/mark-complete actions for the professional side, backed by
-/// the validated `accept_professional_booking`/`reject_professional_booking`
+/// the validated `accept_referee_booking`/`reject_referee_booking`
 /// RPCs (accept needs an atomic overlap check a bare UPDATE can't express).
 final class ProBookingActionControllerProvider
     extends $NotifierProvider<ProBookingActionController, bool> {
   /// Accept/reject/mark-complete actions for the professional side, backed by
-  /// the validated `accept_professional_booking`/`reject_professional_booking`
+  /// the validated `accept_referee_booking`/`reject_referee_booking`
   /// RPCs (accept needs an atomic overlap check a bare UPDATE can't express).
   ProBookingActionControllerProvider._({
     required ProBookingActionControllerFamily super.from,
@@ -478,10 +478,10 @@ final class ProBookingActionControllerProvider
 }
 
 String _$proBookingActionControllerHash() =>
-    r'73d72dbb120bbc10ecb75f5768ce1e26533c7f94';
+    r'd82fa8800f5caa6dcb1b964ee41923b1c6fe91a7';
 
 /// Accept/reject/mark-complete actions for the professional side, backed by
-/// the validated `accept_professional_booking`/`reject_professional_booking`
+/// the validated `accept_referee_booking`/`reject_referee_booking`
 /// RPCs (accept needs an atomic overlap check a bare UPDATE can't express).
 
 final class ProBookingActionControllerFamily extends $Family
@@ -503,7 +503,7 @@ final class ProBookingActionControllerFamily extends $Family
       );
 
   /// Accept/reject/mark-complete actions for the professional side, backed by
-  /// the validated `accept_professional_booking`/`reject_professional_booking`
+  /// the validated `accept_referee_booking`/`reject_referee_booking`
   /// RPCs (accept needs an atomic overlap check a bare UPDATE can't express).
 
   ProBookingActionControllerProvider call(String professionalId) =>
@@ -517,7 +517,7 @@ final class ProBookingActionControllerFamily extends $Family
 }
 
 /// Accept/reject/mark-complete actions for the professional side, backed by
-/// the validated `accept_professional_booking`/`reject_professional_booking`
+/// the validated `accept_referee_booking`/`reject_referee_booking`
 /// RPCs (accept needs an atomic overlap check a bare UPDATE can't express).
 
 abstract class _$ProBookingActionController extends $Notifier<bool> {

@@ -14,7 +14,6 @@ import 'compose_controller.dart';
 Future<List<TaggableUser>?> showTagPickerSheet(
   BuildContext context, {
   String? activityId,
-  String? bookingId,
   required List<TaggableUser> initial,
 }) {
   return showPSheet<List<TaggableUser>>(
@@ -22,7 +21,6 @@ Future<List<TaggableUser>?> showTagPickerSheet(
     maxHeightRatio: 1.0,
     builder: (_) => _TagPickerSheet(
       activityId: activityId,
-      bookingId: bookingId,
       initial: initial,
     ),
   );
@@ -32,13 +30,11 @@ const _maxTags = 5;
 
 class _TagPickerSheet extends ConsumerStatefulWidget {
   final String? activityId;
-  final String? bookingId;
   final List<TaggableUser> initial;
 
   const _TagPickerSheet({
     required this.initial,
     this.activityId,
-    this.bookingId,
   });
 
   @override
@@ -52,7 +48,6 @@ class _TagPickerSheetState extends ConsumerState<_TagPickerSheet> {
   Widget build(BuildContext context) {
     final candidatesAsync = ref.watch(taggableUsersProvider(
       activityId: widget.activityId,
-      bookingId: widget.bookingId,
     ));
 
     return SingleChildScrollView(

@@ -108,7 +108,6 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
           .read(composePostControllerProvider.notifier)
           .submit(
             activityId: session.activityId,
-            bookingId: session.bookingId,
             media: _media,
             caption: _caption.text.trim(),
             ttlDays: _ttlDays,
@@ -285,7 +284,6 @@ class _ComposePostScreenState extends ConsumerState<_ComposePostScreen> {
                       final result = await showTagPickerSheet(
                         context,
                         activityId: _session!.activityId,
-                        bookingId: _session!.bookingId,
                         initial: _tagged,
                       );
                       if (result != null && mounted) {

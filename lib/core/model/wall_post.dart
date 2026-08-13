@@ -198,8 +198,13 @@ class WallPost {
 
 /// A session the composer is allowed to hook a post to (`postable_activities`).
 class PostableSession {
+  /// Always set. Coach lessons used to arrive as a separate `bookingId`; a
+  /// lesson is now an ordinary course activity, so there's one hook again.
   final String? activityId;
-  final String? bookingId;
+
+  /// Set when this session belongs to a coaching course — the only thing that
+  /// still distinguishes a lesson from a lobby or freeplay session.
+  final String? courseId;
   final int sportId;
   final String? lobbyId;
   final String? sourceLabel;
@@ -212,18 +217,16 @@ class PostableSession {
     required this.startTime,
     required this.alreadyPosted,
     this.activityId,
-    this.bookingId,
+    this.courseId,
     this.lobbyId,
     this.sourceLabel,
     this.venueName,
   });
 
-  bool get isLesson => bookingId != null;
-
   factory PostableSession.fromJson(Map<String, dynamic> json) =>
       PostableSession(
         activityId: json['activity_id'] as String?,
-        bookingId: json['booking_id'] as String?,
+        courseId: json['course_id'] as String?,
         sportId: (json['sport_id'] as num?)?.toInt() ?? 0,
         lobbyId: json['lobby_id'] as String?,
         sourceLabel: json['source_label'] as String?,
@@ -233,4 +236,6 @@ class PostableSession {
         venueName: json['venue_name'] as String?,
         alreadyPosted: json['already_posted'] as bool? ?? false,
       );
+
+  bool get isLesson => courseId != null;
 }

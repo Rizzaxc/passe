@@ -5,7 +5,7 @@ import '../../core/model/enum.dart';
 
 part 'pro_bookings_controller.g.dart';
 
-/// One `professional_booking` row from the *pro's* perspective — the client
+/// One `referee_booking` row from the *pro's* perspective — the client
 /// they're booked with, not their own name/rating (that's
 /// [ProfessionalBookingItem]'s client-side shape).
 class ProBookingItem {
@@ -19,7 +19,6 @@ class ProBookingItem {
   final String? clientNotes;
   final String? professionalNotes;
   final String? locationName;
-  final String? packageId;
 
   /// Set only when this booking is a referee hire attached to a lobby-vs-lobby
   /// challenge activity — the case where the professional is the one who
@@ -38,7 +37,6 @@ class ProBookingItem {
     this.clientNotes,
     this.professionalNotes,
     this.locationName,
-    this.packageId,
     this.match,
   });
 
@@ -61,7 +59,6 @@ class ProBookingItem {
       locationName:
           location?['name'] as String? ??
           json['custom_location_name'] as String?,
-      packageId: json['package_id'] as String?,
       match: RefereedMatch.fromEmbed(json['activity']),
     );
   }
@@ -141,7 +138,7 @@ Future<List<ProBookingItem>> proPendingRequests(
   String professionalId,
 ) async {
   final response = await Supabase.instance.client
-      .from('professional_booking')
+      .from('referee_booking')
       .select(_proSelectColumns)
       .eq('professional_id', professionalId)
       .eq('status', 'requested')
@@ -160,7 +157,7 @@ Future<List<ProBookingItem>> proUpcomingBookings(
   String professionalId,
 ) async {
   final response = await Supabase.instance.client
-      .from('professional_booking')
+      .from('referee_booking')
       .select(_proSelectColumns)
       .eq('professional_id', professionalId)
       .eq('status', 'confirmed')
@@ -179,7 +176,7 @@ Future<List<ProBookingItem>> proBookingHistory(
   String professionalId,
 ) async {
   final response = await Supabase.instance.client
-      .from('professional_booking')
+      .from('referee_booking')
       .select(_proSelectColumns)
       .eq('professional_id', professionalId)
       .inFilter('status', [
@@ -259,7 +256,7 @@ void _invalidateAll(Ref ref, String professionalId) {
 }
 
 /// Accept/reject/mark-complete actions for the professional side, backed by
-/// the validated `accept_professional_booking`/`reject_professional_booking`
+/// the validated `accept_referee_booking`/`reject_referee_booking`
 /// RPCs (accept needs an atomic overlap check a bare UPDATE can't express).
 @riverpod
 class ProBookingActionController extends _$ProBookingActionController {
@@ -273,7 +270,7 @@ class ProBookingActionController extends _$ProBookingActionController {
     try {
       await supabase
           .rpc(
-            'accept_professional_booking',
+            'accept_referee_booking',
             params: {'p_booking_id': bookingId},
           )
           .timeout(const Duration(seconds: 5));
@@ -288,7 +285,7 @@ class ProBookingActionController extends _$ProBookingActionController {
     try {
       await supabase
           .rpc(
-            'reject_professional_booking',
+            'reject_referee_booking',
             params: {'p_booking_id': bookingId, 'p_reason': reason},
           )
           .timeout(const Duration(seconds: 5));
@@ -306,7 +303,7 @@ class ProBookingActionController extends _$ProBookingActionController {
     try {
       await supabase
           .rpc(
-            'complete_professional_booking',
+            'complete_referee_booking',
             params: {'p_booking_id': bookingId},
           )
           .timeout(const Duration(seconds: 5));

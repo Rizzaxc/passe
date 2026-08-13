@@ -6,13 +6,13 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../core/sport_selector.dart';
 import '../core/state/host_mode_state.dart';
 import '../core/state/pro_mode_state.dart';
+import '../course/course_hub.dart';
 import '../freeplay/repository.dart';
 import '../professional/controller.dart';
 import '../professional/pro_mode/booking_history_main.dart';
 import '../professional/pro_mode/pending_requests_main.dart';
 import '../professional/pro_mode/pro_schedule_main.dart';
 import '../ui/main.dart';
-import 'coaching_section/main.dart';
 import 'freeplay_section/main.dart';
 import 'lobby_section/feed/main.dart';
 import 'schedule_section/main.dart';
@@ -85,7 +85,7 @@ class ManageTab extends StatefulWidget {
     FTabEntry(child: ScheduleSection(), label: Icon(FLucideIcons.calendarDays)),
     FTabEntry(child: LobbySubtab(), label: Icon(FLucideIcons.users)),
     FTabEntry(
-      child: CoachingSection(),
+      child: CourseHubSection(),
       label: Icon(FLucideIcons.graduationCap),
     ),
   ];
@@ -95,25 +95,47 @@ class ManageTab extends StatefulWidget {
   // `my_schedule_data`), index 1 is pending requests (what
   // `ManageRequestsRoute` deep-links to), index 2 is history — no lobby or
   // client-side coaching subtab while in pro mode.
+  //
+  // A **coach** gets Courses at index 2 instead of booking history: coaching
+  // no longer runs on bookings at all, so their pro mode is
+  // [schedule, courses, history-of-courses]. Referee pro mode keeps the
+  // booking-shaped tabs, and those are gated behind `refereeFlow` — see
+  // `lib/core/feature_flags.dart`.
   static List<FTabEntry> proManageSections(
     String professionalId, {
     String? highlightBookingId,
+    bool isCoach = false,
   }) => [
     FTabEntry(
       child: ProScheduleSection(professionalId: professionalId),
       label: const Icon(FLucideIcons.calendarDays),
     ),
-    FTabEntry(
-      child: ProPendingRequestsSection(
-        professionalId: professionalId,
-        highlightBookingId: highlightBookingId,
+    if (isCoach)
+      const FTabEntry(
+        child: ProCoursesSection(),
+        label: Icon(FLucideIcons.graduationCap),
+      )
+    else
+      FTabEntry(
+        child: ProPendingRequestsSection(
+          professionalId: professionalId,
+          highlightBookingId: highlightBookingId,
+        ),
+        label: const Icon(FLucideIcons.inbox),
       ),
-      label: const Icon(FLucideIcons.inbox),
-    ),
-    FTabEntry(
-      child: ProBookingHistorySection(professionalId: professionalId),
-      label: const Icon(FLucideIcons.history),
-    ),
+    // History means different things per role: a coach's past work is ended
+    // courses, and `ProBookingHistorySection` reads `referee_booking` — which
+    // a coach can never have a row in, so it would sit permanently empty.
+    if (isCoach)
+      const FTabEntry(
+        child: ProCoursesSection(endedOnly: true),
+        label: Icon(FLucideIcons.history),
+      )
+    else
+      FTabEntry(
+        child: ProBookingHistorySection(professionalId: professionalId),
+        label: const Icon(FLucideIcons.history),
+      ),
   ];
 
   @override
@@ -159,6 +181,7 @@ class _ManageTabState extends State<ManageTab> {
             ? ManageTab.proManageSections(
                 linkedProfessionalId,
                 highlightBookingId: widget.highlightBookingId,
+                isCoach: ref.watch(isLinkedCoachProvider).asData?.value ?? false,
               )
             : ManageTab.manageSections;
         final index = _currentIndex.clamp(0, sections.length - 1);

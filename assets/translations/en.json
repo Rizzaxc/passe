@@ -1437,5 +1437,126 @@
       "impersonation": "Impersonation",
       "other": "Other"
     }
+  },
+  "messaging": {
+    "loadFailed": "Could not load the conversation",
+    "sendFailed": "Could not send the message",
+    "messageHint": "Message…",
+    "empty": "No messages yet. Say hello!",
+    "readOnly": "This conversation is closed",
+    "paymentInfo": "Payment details",
+    "bank": "Bank",
+    "pollVotes": {
+      "zero": "No votes yet",
+      "other": "{} votes"
+    },
+    "system": {
+      "request_accepted": "Request accepted",
+      "request_declined": "Request declined",
+      "request_cancelled": "Request cancelled",
+      "enrollment_accepted": "{username} joined the course",
+      "member_left": "{username} left the course",
+      "member_removed": "{username} left the course",
+      "activity_scheduled": "The coach scheduled a session",
+      "activity_proposed": "{username} proposed a session",
+      "activity_approved": "Session approved",
+      "activity_rejected": "Proposal declined",
+      "activity_withdrawn": "Proposal withdrawn",
+      "activity_rescheduled": "Session rescheduled",
+      "activity_cancelled": "Session cancelled",
+      "course_ended": "Course ended",
+      "target_reached": "The course reached {target} sessions"
+    }
+  },
+  "course": {
+    "title": "Course",
+    "newInquiry": "New enquiry",
+    "ended": "Ended",
+    "loadFailed": "Could not load courses",
+    "actionFailed": "That didn't work",
+    "emptyPlayer": "No courses yet. Message a coach to get started.",
+    "emptyCoach": "No students have reached out yet.",
+    "sessionProgress": "{held}/{target} sessions held",
+    "members": "Members",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "tab": {
+      "feed": "Feed",
+      "planner": "Planner",
+      "history": "History"
+    },
+    "status": {
+      "inquiring": "Enquiring",
+      "enrolled": "Enrolled",
+      "left": "Left",
+      "removed": "Removed"
+    },
+    "rsvp": {
+      "going": "Going",
+      "maybe": "Maybe",
+      "out": "Out"
+    },
+    "goingCount": {
+      "zero": "No RSVPs yet",
+      "other": "{} going"
+    },
+    "offerPending": "Offer waiting",
+    "rsvpPending": {
+      "other": "{} sessions need an RSVP"
+    },
+    "proposalsPending": {
+      "other": "{} proposals to review"
+    },
+    "reportsPending": {
+      "other": "{} reports to write"
+    },
+    "studentCount": {
+      "other": "{} students"
+    },
+    "inquiringCount": {
+      "other": "{} enquiring"
+    },
+    "hours": {
+      "other": "{}h"
+    },
+    "pendingProposals": "Proposals to review",
+    "noThread": "No conversation yet",
+    "withdraw": "Withdraw",
+    "scheduleSession": "Schedule a session",
+    "proposeSession": "Propose a session",
+    "proposalNeedsApproval": "Your proposal needs the coach's approval.",
+    "noUpcoming": "No upcoming sessions",
+    "noHistory": "No sessions held yet",
+    "startTime": "Start time",
+    "pickTime": "Pick a time",
+    "note": "Note",
+    "rescheduleWarning": "Rescheduling clears every RSVP.",
+    "cancelSession": "Cancel session",
+    "sendOffer": "Send enrollment offer",
+    "noCandidates": "Nobody to invite yet",
+    "offerName": "Course name",
+    "offerDescription": "Description (optional)",
+    "offerTarget": "Target session count (optional)",
+    "removeMemberTitle": "Remove from course?",
+    "removeMemberBody": "They'll stop seeing new content.",
+    "remove": "Remove",
+    "endTitle": "End this course?",
+    "endBody": "Upcoming sessions are cancelled. This can't be undone.",
+    "end": "End course",
+    "leaveTitle": "Leave this course?",
+    "leaveBody": "You'll stop seeing new content.",
+    "leave": "Leave course",
+    "writeReport": "Write a report",
+    "reportBody": "Report for this student",
+    "reportFinal": "A report can't be edited or deleted once sent.",
+    "writeReview": "Review your coach",
+    "reviewComment": "Your comments (optional)",
+    "reviewFinal": "A review can't be edited once sent.",
+    "clashTitle": "Overlapping session",
+    "clashBody": "You already have a session in this time slot.",
+    "clashProceed": "Schedule anyway",
+    "emptyCoachHistory": "No finished courses yet",
+    "pickSportFirst": "Pick a sport first",
+    "messageCoachIntro": "Send your first message to {coach}. Nothing is saved until you hit send."
   }
 }

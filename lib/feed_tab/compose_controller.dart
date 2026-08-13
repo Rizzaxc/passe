@@ -27,11 +27,13 @@ class AlreadyPostedForSessionException implements Exception {
   const AlreadyPostedForSessionException();
   @override
   String toString() => 'AlreadyPostedForSessionException: '
-      'already posted about this activity/booking';
+      'already posted about this activity';
 }
 
-/// Sessions the caller may hook a post to: lobby activities from the last 7
-/// days they RSVP'd `going` to, plus their coach lessons in the same window.
+/// Sessions the caller may hook a post to: any activity from the last 7 days
+/// they RSVP'd `going` to — lobby sessions, freeplay games and coach lessons
+/// alike, since a coach lesson is now an ordinary course activity rather than
+/// a separate booking.
 /// Comes straight from `postable_activities()` so the picker can never offer
 /// something `create_wall_post` would then reject.
 @riverpod
@@ -48,8 +50,9 @@ Future<List<PostableSession>> postableSessions(Ref ref) async {
       .toList();
 }
 
-/// Someone the composer may tag — the session's attendees and lobby members
-/// (attendees first). Mirrors the server-side tag guard.
+/// Someone the composer may tag — the session's attendees, plus its lobby
+/// members or course members (attendees first). Mirrors the server-side tag
+/// guard.
 class TaggableUser {
   final String userId;
   final String username;
@@ -82,14 +85,9 @@ class TaggableUser {
 }
 
 @riverpod
-Future<List<TaggableUser>> taggableUsers(
-  Ref ref, {
-  String? activityId,
-  String? bookingId,
-}) async {
+Future<List<TaggableUser>> taggableUsers(Ref ref, {String? activityId}) async {
   final rows = await Supabase.instance.client.rpc('taggable_users', params: {
     'p_activity_id': activityId,
-    'p_booking_id': bookingId,
   }).timeout(const Duration(seconds: 5));
 
   return (rows as List)
@@ -256,7 +254,6 @@ class ComposePostController extends _$ComposePostController {
 
   Future<String> submit({
     String? activityId,
-    String? bookingId,
     required List<PreparedMedia> media,
     String? caption,
     required int ttlDays,
@@ -334,7 +331,6 @@ class ComposePostController extends _$ComposePostController {
       try {
         id = await supabase.rpc('create_wall_post', params: {
           'p_activity_id': activityId,
-          'p_booking_id': bookingId,
           'p_media': mediaJson,
           'p_caption': caption,
           'p_ttl_days': ttlDays,

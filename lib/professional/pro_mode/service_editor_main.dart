@@ -48,7 +48,7 @@ class ProProfileView extends ConsumerWidget {
                 children: [
                   FTile(
                     prefix: const Icon(FLucideIcons.briefcaseBusiness),
-                    title: const Text('Chế Độ Chuyên Gia'),
+                    title: const Text('Chế Độ HLV'),
                     subtitle: const Text('Tắt để quay lại hồ sơ người chơi'),
                     details: FSwitch(
                       value: true,

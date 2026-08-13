@@ -477,23 +477,15 @@ class ActivityCard extends ConsumerWidget {
                     isLeader: isLeader,
                   ),
                 ],
-                // Hired neutrals (referee / coach) attached to this session.
-                if (upcoming.referee != null || upcoming.coach != null) ...[
+                // The hired referee, when there is one. A coach is never
+                // attached to a lobby session any more — coaching is a course.
+                if (upcoming.referee != null) ...[
                   const SizedBox(height: 10),
-                  if (upcoming.referee != null)
-                    _AttachedProRow(
-                      label: 'lobbyHub.activity.referee'.tr(),
-                      icon: Icons.sports,
-                      pro: upcoming.referee!,
-                    ),
-                  if (upcoming.coach != null) ...[
-                    if (upcoming.referee != null) const SizedBox(height: 6),
-                    _AttachedProRow(
-                      label: 'lobbyHub.common.coach'.tr(),
-                      icon: Icons.school_outlined,
-                      pro: upcoming.coach!,
-                    ),
-                  ],
+                  _AttachedProRow(
+                    label: 'lobbyHub.activity.referee'.tr(),
+                    icon: Icons.sports,
+                    pro: upcoming.referee!,
+                  ),
                 ],
                 const SizedBox(height: 12),
                 // Confirmation summary — status from

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+
+import '../core/feature_flags.dart';
 import '../core/model/enum.dart';
 import '../core/model/timeslot.dart';
 import '../core/state/selected_sport_state.dart';
@@ -204,9 +206,10 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
         spacing: 20,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Role section (professional subtab only). Both checked by
-          // default; each role is toggled independently.
-          if (widget.showRoleFilter)
+          // Role section (professional subtab only). Each role is toggled
+          // independently. While refereeing is iced there is only one role to
+          // choose from, so the whole section is pointless — hide it.
+          if (widget.showRoleFilter && ClientFeatureFlags.refereeFlow)
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 8,

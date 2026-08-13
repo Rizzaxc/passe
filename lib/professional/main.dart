@@ -3,26 +3,30 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/feature_flags.dart';
 import '../core/format.dart';
 import '../core/model/enum.dart';
 import '../core/model/location.dart';
 import '../core/model/professional_feed_item.dart';
+import '../core/state/selected_sport_state.dart';
+import '../course/course_controller.dart';
+import '../course/message_coach_sheet.dart';
 import '../router.dart';
 import '../ui/main.dart';
 import 'booking_location_field.dart';
 import 'booking_sheet.dart';
 import 'controller.dart';
 
-/// Messaging has no backing flow at all (no message/conversation table in
-/// the schema), so the CTA honestly says so instead of silently no-op'ing.
-/// TODO: when a real messaging flow ships here, also surface a Zalo
-/// deep-link option (see `lib/freeplay/chat_sheet.dart`'s `_openZalo` /
-/// the `user_contact` table) for professionals who've set up their
-/// contact — their `freeplay_host`-style "public" visibility rule would
-/// need extending to `professional`, since `user_contact`'s RLS today
-/// only special-cases freeplay hosts.
+/// Still used for **referees**: they have no course flow, and there's no
+/// direct-message surface for them yet. Coaches now go through
+/// [_messageCoach] instead — messaging a coach opens their course thread.
+/// TODO: when referee messaging ships, also surface a Zalo deep-link option
+/// (see `lib/freeplay/chat_sheet.dart` / the `user_contact` table) for
+/// professionals who've set up their contact — that table's RLS today only
+/// special-cases freeplay hosts.
 void _showComingSoon(BuildContext context, String feature) {
   showFToast(
     context: context,
@@ -695,6 +699,80 @@ class _CourtRow extends StatelessWidget {
   );
 }
 
+/// Opens the course thread with this coach for the context sport if one
+/// already exists, otherwise opens the ephemeral first-message sheet.
+///
+/// Nothing is created server-side by tapping "Nhắn tin" alone — a course only
+/// comes into existence once a real first message is sent
+/// (`message_coach_sheet.dart`). A bare inquiry-with-no-message used to be
+/// created eagerly here, which left the coach a course-list entry with no
+/// message, no sender, and no notification the moment a student opened the
+/// thread and backed out without typing anything.
+///
+/// A coach's sport list can be wider than the sport the user is browsing in;
+/// the context sport is what scopes the course, matching every other feed on
+/// this screen. Guests get the standard sign-in prompt instead.
+Future<void> _messageCoach(
+  BuildContext context,
+  WidgetRef ref,
+  ProfessionalFeedItem item,
+) async {
+  if (ref.read(currentUserIdProvider) == null) {
+    const ProfileRoute().go(context);
+    return;
+  }
+
+  // A course is bound to one sport for its whole life, so there's nothing
+  // sensible to create without one. Say so rather than letting the tap do
+  // nothing — the sport selector is right there in the appbar.
+  final sport = ref.read(selectedSportStateProvider).value;
+  if (sport == null || sport == Sport.others) {
+    showFToast(
+      context: context,
+      icon: const Icon(FLucideIcons.circleAlert),
+      title: Text('course.pickSportFirst'.tr()),
+      alignment: .bottomCenter,
+    );
+    return;
+  }
+
+  try {
+    final existingCourseId = await ref.read(
+      courseWithCoachProvider(item.id, sport.index).future,
+    );
+    if (!context.mounted) return;
+
+    if (existingCourseId != null) {
+      // go(), not push(): this profile page is a root-level screen, and
+      // CourseDetailRoute is nested under the Manage tab's shell branch.
+      // Pushing a nested-shell path onto a root screen collides with the
+      // shell's own preserved branch state — go_router throws a duplicate-
+      // GlobalKey assertion the moment the SAME course is opened a second
+      // time. go() replaces the stack instead of appending to it, so it
+      // can't collide. Same fix as notification/main.dart's tap handler,
+      // which hit this exact pattern first.
+      CourseDetailRoute(id: existingCourseId).go(context);
+      return;
+    }
+
+    await showMessageCoachSheet(
+      context,
+      professionalId: item.id,
+      sportId: sport.index,
+      coachName: item.displayName,
+    );
+  } catch (e, st) {
+    Talker().handle(e, st, 'Message coach failed');
+    if (context.mounted) {
+      showFToast(
+        context: context,
+        variant: .destructive,
+        title: Text('course.actionFailed'.tr()),
+      );
+    }
+  }
+}
+
 class _ProfileActions extends ConsumerWidget {
   final ProfessionalFeedItem item;
 
@@ -718,32 +796,56 @@ class _ProfileActions extends ConsumerWidget {
         child: Row(
           spacing: 9,
           children: [
-            Expanded(
-              child: FButton(
-                variant: .outline,
-                onPress: () => _showComingSoon(
-                  context,
-                  'homeTab.professional.message'.tr(),
+            // A coach's only CTA is "message" — that's the entry point into
+            // the whole course flow: the first message creates the course (in
+            // `inquiring` state) and the coach turns it into an enrollment
+            // from their side. The RPC is idempotent, so tapping again reopens
+            // the same thread rather than starting a second one.
+            //
+            // A referee still gets the booking CTA, gated with the challenger
+            // flow it exists to serve. There is deliberately no disabled
+            // "book" button on a coach: coaching is not a booking any more,
+            // so offering one greyed-out would just be a lie about what's
+            // coming.
+            if (item.role == ProfessionalRole.coach)
+              Expanded(
+                child: FButton(
+                  style: FButtonStyleExtension.accentBlueStyle(
+                    context.theme.buttonStyles.primary.base,
+                  ),
+                  onPress: () => _messageCoach(context, ref, item),
+                  child: Text('homeTab.professional.message'.tr()),
                 ),
-                child: Text('homeTab.professional.message'.tr()),
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: FButton(
-                style: FButtonStyleExtension.accentBlueStyle(
-                  context.theme.buttonStyles.primary.base,
+              )
+            else
+              Expanded(
+                child: FButton(
+                  variant: .outline,
+                  onPress: () => _showComingSoon(
+                    context,
+                    'homeTab.professional.message'.tr(),
+                  ),
+                  child: Text('homeTab.professional.message'.tr()),
                 ),
-                onPress: () {
-                  if (ref.read(currentUserIdProvider) == null) {
-                    const ProfileRoute().go(context);
-                    return;
-                  }
-                  showProfessionalBookingSheet(context, item);
-                },
-                child: Text('homeTab.professional.book'.tr()),
               ),
-            ),
+            if (item.role == ProfessionalRole.referee &&
+                ClientFeatureFlags.refereeFlow)
+              Expanded(
+                flex: 2,
+                child: FButton(
+                  style: FButtonStyleExtension.accentBlueStyle(
+                    context.theme.buttonStyles.primary.base,
+                  ),
+                  onPress: () {
+                    if (ref.read(currentUserIdProvider) == null) {
+                      const ProfileRoute().go(context);
+                      return;
+                    }
+                    showProfessionalBookingSheet(context, item);
+                  },
+                  child: Text('homeTab.professional.book'.tr()),
+                ),
+              ),
           ],
         ),
       ),

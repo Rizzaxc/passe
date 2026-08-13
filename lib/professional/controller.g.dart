@@ -169,3 +169,47 @@ final class LinkedProfessionalIdProvider
 
 String _$linkedProfessionalIdHash() =>
     r'b58d26f84e9f8ef9f8f4fe13f3a0ab285f807134';
+
+/// Whether the signed-in user's linked professional profile is a **coach**
+/// (as opposed to a referee). Pro mode branches on this: a coach runs courses,
+/// a referee runs bookings.
+
+@ProviderFor(isLinkedCoach)
+final isLinkedCoachProvider = IsLinkedCoachProvider._();
+
+/// Whether the signed-in user's linked professional profile is a **coach**
+/// (as opposed to a referee). Pro mode branches on this: a coach runs courses,
+/// a referee runs bookings.
+
+final class IsLinkedCoachProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Whether the signed-in user's linked professional profile is a **coach**
+  /// (as opposed to a referee). Pro mode branches on this: a coach runs courses,
+  /// a referee runs bookings.
+  IsLinkedCoachProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'isLinkedCoachProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$isLinkedCoachHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    return isLinkedCoach(ref);
+  }
+}
+
+String _$isLinkedCoachHash() => r'b8491176e7847cee7bfd9a50c6e54e2f97ec37f6';

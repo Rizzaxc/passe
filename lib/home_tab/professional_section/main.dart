@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../core/feature_flags.dart';
 import '../../core/format.dart';
 import '../../core/model/enum.dart';
 import '../../core/model/professional_feed_item.dart';
@@ -108,7 +109,11 @@ class _Sections extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final showCoaches = visibleRoles.contains(ProfessionalRole.coach);
-    final showReferees = visibleRoles.contains(ProfessionalRole.referee);
+    // Refereeing is iced with the challenger flow it exists to serve, so the
+    // section stays hidden regardless of the filter's saved state.
+    final showReferees =
+        ClientFeatureFlags.refereeFlow &&
+        visibleRoles.contains(ProfessionalRole.referee);
 
     // Each role can now be hidden independently (checkboxes, not a single
     // either/or toggle), so the filter needs to stay reachable from

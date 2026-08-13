@@ -8,21 +8,22 @@ part 'upcoming_controller.g.dart';
 
 /// Shared PostgREST projection for both Planner and completed History cards.
 /// Keeping one shape lets both screens render the same [ActivityCard].
+// The coach embed is gone with `activity.coach_booking_id`: a coach session is
+// a course activity now, not a booking attached to a lobby session. Only the
+// referee attachment survives, over the renamed `referee_booking` table (the
+// FK constraint name followed the table through the rename).
 const lobbyActivitySelect =
     '*, location(name, district, lat, lon), '
-    'coach:professional_booking!activity_coach_booking_id_fkey('
-    'id, status, professional_id, '
-    'professional:professional_id(display_name, is_verified)), '
-    'referee:professional_booking!activity_referee_booking_id_fkey('
+    'referee:referee_booking!activity_referee_booking_id_fkey('
     'id, status, professional_id, '
     'professional:professional_id(display_name, is_verified)), '
     'challenge:lobby_challenge(id, status, target_lobby_id, agreed_cost, '
     'initiator:initiator_lobby_id(name, mmr), '
     'target:target_lobby_id(name, mmr))';
 
-/// A professional (coach or referee) hired for a lobby activity, resolved from
-/// the `coach_booking_id` / `referee_booking_id` embed. Enough to render the
-/// hero card's attachment row and deep-link to the pro's profile.
+/// A referee hired for a lobby activity, resolved from the
+/// `referee_booking_id` embed. Enough to render the hero card's attachment row
+/// and deep-link to the pro's profile.
 class AttachedProfessional {
   final String bookingId;
   final String professionalId;
@@ -133,9 +134,9 @@ class UpcomingActivity {
   final int? confirmationThreshold;
   final DateTime? confirmationDeadline;
 
-  /// Attached professionals (null when no coach / referee is hired for this
-  /// session). See schema/activity_professional_attachment.sql.
-  final AttachedProfessional? coach;
+  /// The hired referee, null when none is attached. Coaching no longer
+  /// attaches to a lobby session at all — it is its own course activity.
+  /// See schema/activity_professional_attachment.sql.
   final AttachedProfessional? referee;
 
   /// Set when this activity was materialised by accepting a lobby-vs-lobby
@@ -160,7 +161,6 @@ class UpcomingActivity {
     required this.costAmount,
     required this.confirmationThreshold,
     required this.confirmationDeadline,
-    required this.coach,
     required this.referee,
     this.challenge,
     this.managerConfirmedAt,
@@ -184,7 +184,6 @@ class UpcomingActivity {
       confirmationDeadline: row['confirmation_deadline'] != null
           ? DateTime.parse(row['confirmation_deadline'] as String)
           : null,
-      coach: AttachedProfessional.fromEmbed(row['coach']),
       referee: AttachedProfessional.fromEmbed(row['referee']),
       challenge: ChallengeContext.fromEmbed(row['challenge'], lobbyId),
       managerConfirmedAt: row['manager_confirmed_at'] != null
@@ -196,7 +195,6 @@ class UpcomingActivity {
   static Map<String, dynamic> _stripProjection(Map<String, dynamic> row) {
     return {...row}
       ..remove('location')
-      ..remove('coach')
       ..remove('referee')
       ..remove('challenge')
       ..remove('challenge_id')

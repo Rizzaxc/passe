@@ -118,16 +118,18 @@ final freeplayRequestsProvider = FutureProvider.autoDispose
           .toList();
     });
 
-final freeplayChatProvider = FutureProvider.autoDispose
-    .family<List<FreeplayChatMessage>, String>((ref, requestId) async {
+/// Resolves a seat request to its thread on the shared messaging layer.
+///
+/// The chat itself is `conversationControllerProvider` — freeplay only needs
+/// the id, because every entry point into the chat (detail page, host requests
+/// sheet, push tap) holds a *request* id. The RPC provisions the conversation
+/// on first call, so requests made before the messaging migration still open.
+final freeplayConversationIdProvider = FutureProvider.autoDispose
+    .family<String, String>((ref, requestId) async {
       final response = await Supabase.instance.client
-          .rpc('freeplay_chat_data', params: {'p_request_id': requestId})
+          .rpc('freeplay_conversation_id', params: {'p_request_id': requestId})
           .timeout(_rpcTimeout);
-      return (response as List)
-          .map(
-            (row) => FreeplayChatMessage.fromJson(row as Map<String, dynamic>),
-          )
-          .toList();
+      return response.toString();
     });
 
 final freeplayChatCounterpartZaloProvider = FutureProvider.autoDispose
@@ -184,16 +186,9 @@ class FreeplayRepository {
       )
       .timeout(_rpcTimeout);
 
-  Future<void> sendMessage(String requestId, String body) => _client
-      .rpc(
-        'send_freeplay_message',
-        params: {'p_request_id': requestId, 'p_body': body.trim()},
-      )
-      .timeout(_rpcTimeout);
-
-  Future<void> sharePaymentInfo(String requestId) => _client
-      .rpc('share_freeplay_payment_info', params: {'p_request_id': requestId})
-      .timeout(_rpcTimeout);
+  // Sending and payment-info sharing moved to the shared messaging layer
+  // (`ConversationController.send` / `.sharePaymentInfo`) along with the
+  // `send_freeplay_message` / `share_freeplay_payment_info` RPCs they called.
 
   Future<String> create(Map<String, dynamic> params) async =>
       (await _client

@@ -158,7 +158,6 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
             participantUserIds: _participants.isEmpty
                 ? null
                 : _participants.map((p) => p.id).toList(),
-            createPackage: service.isPackage,
             activityId: activityId,
           );
     } catch (e, st) {

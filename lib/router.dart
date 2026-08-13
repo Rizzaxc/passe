@@ -11,6 +11,7 @@ import 'auth/reset_password_screen.dart';
 import 'auth/welcome_screen.dart';
 import 'core/model/passe_user.dart';
 import 'core/model/professional_feed_item.dart';
+import 'course/course_detail_page.dart';
 import 'currency/wallet_home_screen.dart';
 import 'currency/wallet_intro_screen.dart';
 import 'currency/wallet_purchase_history_screen.dart';
@@ -471,6 +472,10 @@ class LobbyInvitePreviewRoute extends GoRouteData
               path: 'lobby',
               routes: [TypedGoRoute<LobbyDetailRoute>(path: ':id')],
             ),
+            TypedGoRoute<ManageCourseRoute>(
+              path: 'course',
+              routes: [TypedGoRoute<CourseDetailRoute>(path: ':id')],
+            ),
           ],
         ),
       ],
@@ -677,6 +682,29 @@ class ManageLobbyRoute extends GoRouteData with $ManageLobbyRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       ManageTab.withInitialTab(1);
+}
+
+/// Deep-link target for course notifications. Index 2 is the course hub in
+/// player mode and the course inbox in pro mode, so this lands correctly for
+/// both a student and their coach without a mode guard.
+@immutable
+class ManageCourseRoute extends GoRouteData with $ManageCourseRoute {
+  const ManageCourseRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ManageTab.withInitialTab(2);
+}
+
+@immutable
+class CourseDetailRoute extends GoRouteData with $CourseDetailRoute {
+  final String id;
+
+  const CourseDetailRoute({required this.id});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      CourseDetailPage(id: id);
 }
 
 @immutable

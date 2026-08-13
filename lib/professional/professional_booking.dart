@@ -1,6 +1,6 @@
 import '../core/model/enum.dart';
 
-/// One row of `professional_booking`, joined with the professional, the
+/// One row of `referee_booking`, joined with the professional, the
 /// service booked, the venue (if any), and the caller's own review (if
 /// any) — enough to render a session card without extra round-trips.
 ///
@@ -28,16 +28,11 @@ class ProfessionalBookingItem {
   final String? professionalNotes;
   final String? locationName;
 
-  /// Whether the caller has already left a `professional_booking_review`
+  /// Whether the caller has already left a `referee_booking_review`
   /// for this booking.
   final bool reviewed;
 
-  /// Set when this booking is one session of a rolling package.
-  final String? packageId;
-  final int? packageSessionsTotal;
-  final int? packageSessionsUsed;
 
-  /// Needed to schedule the *next* session of a package (same service).
   final String? serviceId;
   final int? maxParticipants;
 
@@ -58,9 +53,6 @@ class ProfessionalBookingItem {
     this.professionalNotes,
     this.locationName,
     required this.reviewed,
-    this.packageId,
-    this.packageSessionsTotal,
-    this.packageSessionsUsed,
     this.serviceId,
     this.maxParticipants,
   });
@@ -82,45 +74,22 @@ class ProfessionalBookingItem {
   /// booking, only the *final* session is review-eligible — earlier
   /// sessions in the same package are skipped (one review per package, not
   /// per session).
-  bool get reviewEligible {
-    if (status != ProfessionalBookingStatus.completed || reviewed) {
-      return false;
-    }
-    if (packageSessionsTotal == null) return true;
-    return packageSessionsUsed != null &&
-        packageSessionsUsed! >= packageSessionsTotal!;
-  }
-
-  /// True once this package session has completed but the package isn't
-  /// finished yet — the client should be prompted to schedule the next one.
-  bool get needsNextPackageSession =>
-      status == ProfessionalBookingStatus.completed &&
-      packageId != null &&
-      packageSessionsTotal != null &&
-      packageSessionsUsed != null &&
-      packageSessionsUsed! < packageSessionsTotal!;
+  /// Packages were a coach concept and went with the coach half of the
+  /// booking system; a referee books one match at a time, so a completed
+  /// booking is reviewable outright.
+  bool get reviewEligible =>
+      status == ProfessionalBookingStatus.completed && !reviewed;
 
   factory ProfessionalBookingItem.fromJson(Map<String, dynamic> json) {
     final pro = json['professional'] as Map<String, dynamic>?;
     final service = json['professional_service'] as Map<String, dynamic>?;
     final location = json['location'] as Map<String, dynamic>?;
-    final reviewRaw = json['professional_booking_review'];
+    final reviewRaw = json['referee_booking_review'];
     final review = reviewRaw is List
         ? (reviewRaw.isNotEmpty
               ? reviewRaw.first as Map<String, dynamic>?
               : null)
         : reviewRaw as Map<String, dynamic>?;
-    final packageRaw = json['professional_booking_package'];
-    final package = packageRaw is List
-        ? (packageRaw.isNotEmpty
-              ? packageRaw.first as Map<String, dynamic>?
-              : null)
-        : packageRaw as Map<String, dynamic>?;
-    final packageReviewRaw = package?['professional_booking_review'];
-    final packageHasReview = packageReviewRaw is List
-        ? packageReviewRaw.isNotEmpty
-        : packageReviewRaw != null;
-
     return ProfessionalBookingItem(
       id: json['id'] as String,
       professionalId: json['professional_id'] as String,
@@ -142,10 +111,7 @@ class ProfessionalBookingItem {
       locationName:
           location?['name'] as String? ??
           json['custom_location_name'] as String?,
-      reviewed: review != null || packageHasReview,
-      packageId: json['package_id'] as String?,
-      packageSessionsTotal: (package?['sessions_total'] as num?)?.toInt(),
-      packageSessionsUsed: (package?['sessions_used'] as num?)?.toInt(),
+      reviewed: review != null,
       serviceId: json['service_id'] as String?,
       maxParticipants: (service?['max_participants'] as num?)?.toInt(),
     );

@@ -157,6 +157,17 @@ IconData _iconFor(NotificationKind? kind) => switch (kind) {
   NotificationKind.freeplayRequestCancelled ||
   NotificationKind.freeplayActivityCancelled ||
   NotificationKind.freeplayChatMessage => FLucideIcons.ticket,
+  // A course message reads as a message; everything else about a course
+  // reads as coaching.
+  NotificationKind.courseMessage => FLucideIcons.messageCircle,
+  NotificationKind.courseEnrollmentOffer ||
+  NotificationKind.courseEnrollmentAccepted ||
+  NotificationKind.courseActivityProposed ||
+  NotificationKind.courseActivityApproved ||
+  NotificationKind.courseActivityChanged ||
+  NotificationKind.courseSessionReport ||
+  NotificationKind.courseEnded ||
+  NotificationKind.courseMemberRemoved => FLucideIcons.graduationCap,
   null => FLucideIcons.bell,
 };
 

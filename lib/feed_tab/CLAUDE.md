@@ -3,6 +3,19 @@
 Read the root [`CLAUDE.md`](../../CLAUDE.md) first for project-wide conventions (build_runner,
 navigation, forui/theme, identity rules). This file covers what's specific to the Feed screen.
 
+## Post hooks: one, not two
+
+A wall post hooks to exactly one thing, and that thing is now always an **activity**
+(`wall_post.activity_id`). The old `professional_booking_id` hook — a coach lesson — is gone, because
+a coach lesson is an ordinary course activity now. Removed with it: the exclusivity trigger
+(`fn_wall_post_source_exclusivity`), the second partial unique index (`wall_post_one_per_booking`),
+and the booking branch of `fn_can_see_wall_post` / `postable_activities` / `create_wall_post` /
+`taggable_users` / `fn_wall_post_tag_guard`. See `schema/coach_booking_fallout.sql`.
+
+`postable_activities` now returns `course_id` where it used to return `booking_id`; that's what the
+composer uses to show a lesson's graduation-cap icon (`PostableSession.isLesson`). Course members
+join lobby mates and attendees as legitimate tag targets.
+
 ## Purpose
 
 Feed is a **main tab in its own right, first in the bottom nav** — ephemeral photo posts from you,
@@ -83,9 +96,11 @@ longer exist.)
 
 ## Wall post rules (enforced server-side, mirrored in the UI)
 
-- **Postable** = a lobby activity that started in the last 7 days which you RSVP'd `going` to, or a
-  coach `professional_booking` you were the client on in the same window. `postable_activities()`
-  is the single source for the picker so it can never offer something `create_wall_post` rejects.
+- **Postable** = any activity that started in the last 7 days which you RSVP'd `going` to — lobby
+  session, freeplay game or coaching session alike, since a coach lesson is now an ordinary
+  `activity` with a `course_id` (an unapproved course proposal is excluded).
+  `postable_activities()` is the single source for the picker so it can never offer something
+  `create_wall_post` rejects.
 - **One post per author per session**, 1–4 images, ≤140-char caption, ≤5 tags.
 - **The activity link is a label, not integrity.** `source_label` / `source_start_time` /
   `source_venue_name` are snapshotted onto the post; both FKs are `ON DELETE SET NULL`. This is why

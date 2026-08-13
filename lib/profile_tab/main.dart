@@ -173,7 +173,7 @@ class ProfileTab extends ConsumerWidget {
                               prefix: const Icon(
                                 FLucideIcons.briefcaseBusiness,
                               ),
-                              title: const Text('Chế Độ Chuyên Gia'),
+                              title: const Text('Chế Độ HLV'),
                               details: FSwitch(
                                 value: proModeActive,
                                 onChange: (v) {

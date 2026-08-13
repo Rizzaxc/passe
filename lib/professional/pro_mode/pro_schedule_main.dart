@@ -140,8 +140,6 @@ class _BookingCard extends ConsumerWidget {
               ),
               if (match != null)
                 Icon(FLucideIcons.swords, size: 14, color: colors.mutedForeground),
-              if (booking.packageId != null)
-                Icon(FLucideIcons.package, size: 14, color: colors.mutedForeground),
             ],
           ),
           if (booking.serviceType != null) Text(booking.serviceType!),

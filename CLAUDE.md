@@ -88,7 +88,16 @@ primary glossary until a `CONTEXT.md` exists (see `docs/agents/domain.md`).
 - **đá** ("rocks") — the app's internal currency, spent to confirm activities and to split bills.
   Not yet in the DB; currently a local int in `lib/currency/`.
 - **Professional** / **Neutral** — a hireable coach or referee (`professional`, `professional_role`).
-  The Home "Neutrals" subtab surfaces them; engagements are *bookings* (`professional_booking`).
+  The Home "Neutrals" subtab surfaces them. A **coach** engagement is a *course* (see below); a
+  **referee** engagement is still a booking (`referee_booking`), and referee hiring is currently
+  **iced behind `ClientFeatureFlags.refereeFlow`** along with the challenger flow it serves.
+- **Course** — the container for a coaching relationship: one coach, one fixed sport, many students,
+  a persistent thread, and sessions the coach approves (`course`, `course_member`). Replaced
+  per-lesson coach bookings. A student may have only one *enrolled* coach per sport. Messaging a
+  coach creates the course in the `inquiring` state; accepting an **enrollment offer**
+  (`course_enrollment_offer`) promotes the member. Only the coach ends a course.
+- **Session report** — a coach's private, immutable write-up of one student's session
+  (`course_session_report`), readable only by that student and the coach.
 - **Network** — a shared affiliation a user can claim (high school, gifted high school, university,
   company) used for matchmaking; *alumni* flag marks past membership. Tables: `network`,
   `user_network`.
@@ -146,12 +155,16 @@ Tables are `snake_case`, singular. Client identity is `auth.uid()`; RLS enforces
 - `lobby_feed_item` (+ `lobby_feed_poll_vote`) — a lobby's action-stream; `payload` jsonb shape varies
   by `kind` (update/personal/system/poll/photo) per a CHECK. Canonical shapes:
   `lib/manage_tab/lobby_section/activity/feed.dart`.
-- `activity` — a play session. `professional_booking_id` marks a *standalone* client pro-session
-  (the coach branch of `my_schedule_data`) and is mutually exclusive with `lobby_id`
-  (`activity_source_exclusivity` CHECK). Separately, a lobby activity may **attach** a hired
-  `coach_booking_id` and/or `referee_booking_id` (FK → `professional_booking`, *coexist* with
-  `lobby_id`, role-guarded by a trigger) — these surface on the activity hero card. See
-  `schema/activity_professional_attachment.sql`.
+- `activity` — a play session, and now the single shape behind every kind of session. Its *source*
+  is exactly one of `lobby_id`, `freeplay_host_id` or `course_id` (`activity_source_exclusivity`
+  CHECK). A `course_id` activity is a coaching session and carries a `proposal_status`
+  (`pending|approved|rejected|withdrawn`, required iff `course_id` is set — only the coach
+  approves). Separately, a **lobby** activity may attach a hired `referee_booking_id`
+  (FK → `referee_booking`, *coexists* with `lobby_id`, role-guarded by a trigger), which surfaces on
+  the activity hero card. The old `professional_booking_id` / `coach_booking_id` columns are
+  **dropped**: a coach lesson is a course activity, not a booking. See
+  `schema/activity_professional_attachment.sql`, `schema/course.sql`,
+  `schema/referee_booking_rename.sql`.
 - `lobby_match` — recorded results; `sets` is a JSON array of `[us, them]`; challenge matches require
   a `referee_booking_id`.
 
@@ -159,10 +172,32 @@ Tables are `snake_case`, singular. Client identity is `auth.uid()`; RLS enforces
 - `professional` — the hireable profile (role, `sports bigint[]`, `average_rating`, `review_count`,
   `is_verified`).
 - `professional_service` — offered services (type, `price_amount`, `pricing_kind`, duration,
-  participants). `pricing_kind` is `hourly` or `per_session`.
-- `professional_booking` (+ `booking_additional_users`) — an engagement; status enum
-  (`requested` → … never directly `completed`). `professional_booking_review` holds the rating that
-  rolls up into `professional.average_rating`.
+  participants). For a coach this is now **informational profile data only**: courses carry no money.
+- `referee_booking` (+ `referee_booking_additional_users`, `referee_booking_review`) — a referee
+  engagement, renamed from `professional_booking` when coaching moved to courses
+  (`schema/referee_booking_rename.sql`). **Not deleted**: a scored challenge match requires a referee
+  booking, and that CHECK is what gates the only writer of live ELO. Coach lesson *packages* are gone.
+
+**Courses (coaching)**
+- `course` — one coach, one sport, `name`/`description`/`target_session_count` (all null until an
+  offer is accepted), `status` active|ended.
+- `course_member` — roster; `sport_id`/`professional_id` are denormalised so "one enrolled coach per
+  sport" and "one live thread per coach+sport" are plain partial unique indexes rather than triggers.
+- `course_enrollment_offer`, `course_session_report`, `course_review` — reports and reviews are
+  **immutable** (no UPDATE/DELETE policies, grants withheld). `course_review` rolls up into
+  `professional.average_rating`.
+- A course session is an `activity` with `course_id` + `proposal_status`
+  (`pending|approved|rejected|withdrawn`) — not a separate table, so RSVP, health metrics, wall posts
+  and the schedule all keep working unchanged. Schema: `schema/course_enums.sql` + `schema/course.sql`.
+
+**Messaging (shared)**
+- `conversation` / `conversation_member` / `message` / `message_poll_vote` — one threaded-chat layer
+  behind both freeplay seat requests and courses (`schema/messaging.sql`). **`conversation_member` is
+  the visibility floor**: a member reads only messages created inside their own
+  `[joined_at, left_at]` window, so a student added on day 30 cannot read day 1. Delivery is Supabase
+  **Realtime broadcast-from-database** on a private `conversation:<id>` topic
+  (`schema/messaging_realtime.sql`); `conversation_data(p_conversation_id, p_since)` exists for
+  reconnect backfill and the client calls it on every resubscribe and app resume.
 
 **Health & gamification**
 - `user_health_link` — which platform (Apple Health / Health Connect) the user linked + sync times.
@@ -284,8 +319,8 @@ JSON — parse with `double.tryParse`. Complex reads go through Postgres functio
   schedule read real data from the DB — loading shows a spinner, empty/error shows
   `PEmptySectionPlaceholder` (schedule surfaces errors via a toast). Synthetic integration data
   (`mocked_` lobbies/locations/pros, `mockeduser%` users) is seeded by `schema/mocked_seed.sql`.
-  The Manage **coaching** section is the one remaining hard-coded prototype — it has no backing
-  tables yet (`coaching_section/main.dart`).
+  The Manage **coaching** section is real: it lists `course` rows (`lib/course/course_hub.dart`).
+  It was a hard-coded prototype, then briefly a booking-backed stand-in, before courses landed.
 
 ## Internationalization
 
@@ -436,6 +471,28 @@ referee → the referee records the result → both lobbies' history and Elo upd
   every tab's appbar for the same reason; the widget and wallet routes still exist, just unlinked
   from the main nav until the ledger is real.
 
+### Coaching Courses
+
+Replaced the coach half of the booking system. Full schema notes live in
+[`schema/course.sql`](schema/course.sql)'s header; the shape that matters most:
+
+- **The thread is the course.** Messaging a coach from their profile calls `start_course_inquiry`
+  (idempotent) and opens `/manage/course/:id`. A course that never receives an enrollment offer is
+  just an inquiry that went nowhere — there is no separate inquiry object.
+- **Late joiners don't get the back-story**, enforced in SQL by the messaging layer's visibility
+  floor, never client-side.
+- **Coach approves, no quorum.** Either side proposes a session; a coach's is born `approved`, a
+  student's starts `pending`. After approval only the coach reschedules or cancels, and
+  **rescheduling clears every RSVP**. Cancelled sessions never count toward the target.
+- **Reaching the target prompts, it doesn't close.** `fn_sweep_course_targets` (on the existing
+  1-minute cron tick) posts a system message once; only the coach ends a course.
+- **A coach clash is a warning, never a block** (`course_activity_conflicts`), shown both when
+  scheduling and when approving — approving is where the coach commits to the time. It returns
+  times only, so a student can't probe who else their coach teaches.
+- **No money.** No rate, no payment flow, no packages; a coach states rates on their profile and
+  settles off-app. This is the one deliberate regression from the booking system.
+- Client: [`lib/course/`](lib/course/). Player hub and coach inbox are both Manage index 2.
+
 ### Friends & Feed
 
 Friendship is a mutual `friendship` edge; the `pair` befriend interaction is **retired**
@@ -474,7 +531,10 @@ Push (raw FCM HTTP v1, iOS + Android) is **built**. Design + remaining provision
   reschedule/cancel, which stay feed-only; see `schema/activity_scheduled_notify.sql`),
   `activity_confirmed`, `pro_session_reminder`, `lobby_invite`, `professional_booking_*`, (with
   the challenge handshake) `challenger_confirmed`, `challenge_received`, `challenge_declined`,
-  `challenge_scheduled`, `challenge_lapsed`, `match_result_recorded`, (with friendship)
+  `challenge_scheduled`, `challenge_lapsed`, `match_result_recorded`, (with courses)
+  `course_message`, `course_enrollment_offer`, `course_enrollment_accepted`,
+  `course_activity_proposed`, `course_activity_approved`, `course_activity_changed`,
+  `course_session_report`, `course_ended`, `course_member_removed`, (with friendship)
   `friend_request`, `friend_accepted`, and `member_kicked` (a captain removes a member —
   `schema/lobby_member_kicked_notify.sql`; kicking is a direct client-side `DELETE` on
   `lobby_member`, same as a voluntary leave, so the emitter tells the two apart by comparing

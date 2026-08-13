@@ -575,12 +575,12 @@
     "resetEmailFailed": "Không thể gửi mã đặt lại"
   },
   "nav": {
-    "home": "Home",
-    "manage": "Manage",
-    "health": "Health",
-    "profile": "Profile",
-    "discover": "Discover",
-    "feed": "Feed"
+    "home": "Trang chủ",
+    "manage": "Quản lý",
+    "health": "Sức khỏe",
+    "profile": "Hồ sơ",
+    "discover": "Khám phá",
+    "feed": "Bảng tin"
   },
   "notification": {
     "title": "Thông báo",
@@ -1433,5 +1433,126 @@
       "impersonation": "Mạo danh",
       "other": "Khác"
     }
+  },
+  "messaging": {
+    "loadFailed": "Không tải được cuộc trò chuyện",
+    "sendFailed": "Không gửi được tin nhắn",
+    "messageHint": "Nhắn tin…",
+    "empty": "Chưa có tin nhắn nào. Gửi lời chào đi!",
+    "readOnly": "Cuộc trò chuyện đã đóng",
+    "paymentInfo": "Thông tin chuyển khoản",
+    "bank": "Ngân hàng",
+    "pollVotes": {
+      "zero": "Chưa có lượt bình chọn",
+      "other": "{} lượt bình chọn"
+    },
+    "system": {
+      "request_accepted": "Yêu cầu đã được chấp nhận",
+      "request_declined": "Yêu cầu đã bị từ chối",
+      "request_cancelled": "Yêu cầu đã được huỷ",
+      "enrollment_accepted": "{username} đã tham gia khoá học",
+      "member_left": "{username} đã rời khoá học",
+      "member_removed": "{username} đã rời khoá học",
+      "activity_scheduled": "Huấn luyện viên đã đặt một buổi tập",
+      "activity_proposed": "{username} đề xuất một buổi tập",
+      "activity_approved": "Buổi tập đã được duyệt",
+      "activity_rejected": "Đề xuất bị từ chối",
+      "activity_withdrawn": "Đề xuất đã được rút lại",
+      "activity_rescheduled": "Buổi tập đã đổi giờ",
+      "activity_cancelled": "Buổi tập đã bị huỷ",
+      "course_ended": "Khoá học đã kết thúc",
+      "target_reached": "Khoá học đã đủ {target} buổi"
+    }
+  },
+  "course": {
+    "title": "Khoá học",
+    "newInquiry": "Liên hệ mới",
+    "ended": "Đã kết thúc",
+    "loadFailed": "Không tải được khoá học",
+    "actionFailed": "Không thực hiện được",
+    "emptyPlayer": "Bạn chưa có khoá học nào. Nhắn tin cho một huấn luyện viên để bắt đầu.",
+    "emptyCoach": "Chưa có học viên nào liên hệ.",
+    "sessionProgress": "{held}/{target} buổi đã học",
+    "members": "Thành viên",
+    "cancel": "Huỷ",
+    "submit": "Gửi",
+    "tab": {
+      "feed": "Trao đổi",
+      "planner": "Lịch tập",
+      "history": "Lịch sử"
+    },
+    "status": {
+      "inquiring": "Đang liên hệ",
+      "enrolled": "Đã tham gia",
+      "left": "Đã rời",
+      "removed": "Đã bị mời khỏi"
+    },
+    "rsvp": {
+      "going": "Tham gia",
+      "maybe": "Có thể",
+      "out": "Vắng"
+    },
+    "goingCount": {
+      "zero": "Chưa ai xác nhận",
+      "other": "{} người tham gia"
+    },
+    "offerPending": "Có lời mời",
+    "rsvpPending": {
+      "other": "{} buổi chưa trả lời"
+    },
+    "proposalsPending": {
+      "other": "{} đề xuất chờ duyệt"
+    },
+    "reportsPending": {
+      "other": "{} nhận xét chưa viết"
+    },
+    "studentCount": {
+      "other": "{} học viên"
+    },
+    "inquiringCount": {
+      "other": "{} đang liên hệ"
+    },
+    "hours": {
+      "other": "{} giờ"
+    },
+    "pendingProposals": "Đề xuất chờ duyệt",
+    "noThread": "Chưa có cuộc trò chuyện",
+    "withdraw": "Rút lại",
+    "scheduleSession": "Đặt lịch buổi tập",
+    "proposeSession": "Đề xuất buổi tập",
+    "proposalNeedsApproval": "Đề xuất của bạn cần huấn luyện viên duyệt.",
+    "noUpcoming": "Chưa có buổi tập nào sắp tới",
+    "noHistory": "Chưa có buổi tập nào đã diễn ra",
+    "startTime": "Thời gian bắt đầu",
+    "pickTime": "Chọn thời gian",
+    "note": "Ghi chú",
+    "rescheduleWarning": "Đổi giờ sẽ xoá toàn bộ xác nhận tham gia.",
+    "cancelSession": "Huỷ buổi tập",
+    "sendOffer": "Gửi lời mời tham gia",
+    "noCandidates": "Chưa có ai để mời",
+    "offerName": "Tên khoá học",
+    "offerDescription": "Mô tả (không bắt buộc)",
+    "offerTarget": "Số buổi dự kiến (không bắt buộc)",
+    "removeMemberTitle": "Mời khỏi khoá học?",
+    "removeMemberBody": "Học viên sẽ không xem được nội dung mới.",
+    "remove": "Mời khỏi",
+    "endTitle": "Kết thúc khoá học?",
+    "endBody": "Các buổi tập sắp tới sẽ bị huỷ. Không thể hoàn tác.",
+    "end": "Kết thúc khoá học",
+    "leaveTitle": "Rời khoá học?",
+    "leaveBody": "Bạn sẽ không xem được nội dung mới.",
+    "leave": "Rời khoá học",
+    "writeReport": "Viết nhận xét",
+    "reportBody": "Nhận xét cho học viên",
+    "reportFinal": "Nhận xét đã gửi thì không sửa hay xoá được.",
+    "writeReview": "Đánh giá huấn luyện viên",
+    "reviewComment": "Cảm nhận của bạn (không bắt buộc)",
+    "reviewFinal": "Đánh giá đã gửi thì không sửa được.",
+    "clashTitle": "Trùng lịch",
+    "clashBody": "Bạn đã có buổi tập khác vào khung giờ này.",
+    "clashProceed": "Vẫn tiếp tục",
+    "emptyCoachHistory": "Chưa có khoá học nào kết thúc",
+    "pickSportFirst": "Hãy chọn môn thể thao trước",
+    "messageCoachIntro": "Hãy gửi tin nhắn đầu tiên cho {coach}. Không có gì được lưu lại cho đến khi bạn nhấn gửi."
   }
 }

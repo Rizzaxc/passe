@@ -10,9 +10,17 @@ coaching courses. Unlike Home (discovery), this is about entities the user is al
 ## Layout
 
 - `main.dart` — `ManageTab`: `FScaffold` + `FTabs` over 3 subtabs (`schedule`, `lobby`, `coaching`).
-  `ManageTab.withInitialTab(0|1)` deep-links schedule/lobby (see `Manage*Route` in `router.dart`).
+  `ManageTab.withInitialTab(0|1|2)` deep-links schedule/lobby/course (see `Manage*Route` in
+  `router.dart`).
 - `schedule_section/main.dart` — calendar view of the user's activities. Uses `lib/ui/calendar.dart`.
-- `coaching_section/main.dart` — ongoing courses with a coach.
+- Index 2 is **courses**, and it lives in [`lib/course/`](../course/), not here — the same code
+  serves both sides of the relationship (`CourseHubSection` for a student, `ProCoursesSection` for a
+  coach in pro mode), so it isn't manage-tab-specific. `coaching_section/` is **deleted**: it read
+  `professional_booking` rows and grouped them by coach to look like courses.
+- **Pro mode branches by role.** A coach gets `[schedule, courses, history]`; a referee keeps
+  `[schedule, requests, history]` over `referee_booking`, and every referee entry point is gated
+  behind `ClientFeatureFlags.refereeFlow`. `ManageCourseRoute` (index 2) is the deep-link target for
+  course notifications and lands correctly for student and coach alike without a mode guard.
 - `lobby_section/` — the bulk of this tab:
   - `feed/main.dart` — `LobbySubtab`: the list of the user's lobbies (`userLobbiesControllerProvider`)
     — a direct `lobby` query filtered by the **context sport** (`sport_id == Sport.index`) and an

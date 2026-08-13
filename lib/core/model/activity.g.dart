@@ -15,8 +15,8 @@ _Activity _$ActivityFromJson(Map json) => _Activity(
       ? null
       : DateTime.parse(json['end_time'] as String),
   lobbyId: json['lobby_id'] as String?,
-  professionalBookingId: json['professional_booking_id'] as String?,
-  coachBookingId: json['coach_booking_id'] as String?,
+  courseId: json['course_id'] as String?,
+  proposalStatus: json['proposal_status'] as String?,
   refereeBookingId: json['referee_booking_id'] as String?,
   createdAt: json['created_at'] == null
       ? null
@@ -30,8 +30,8 @@ Map<String, dynamic> _$ActivityToJson(_Activity instance) => <String, dynamic>{
   'start_time': instance.startTime.toIso8601String(),
   'end_time': ?instance.endTime?.toIso8601String(),
   'lobby_id': ?instance.lobbyId,
-  'professional_booking_id': ?instance.professionalBookingId,
-  'coach_booking_id': ?instance.coachBookingId,
+  'course_id': ?instance.courseId,
+  'proposal_status': ?instance.proposalStatus,
   'referee_booking_id': ?instance.refereeBookingId,
   'created_at': ?instance.createdAt?.toIso8601String(),
 };

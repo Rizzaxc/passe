@@ -576,6 +576,18 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
                 ),
               ],
             ),
+            GoRouteData.$route(
+              path: 'course',
+              hasOverriddenOnExit: false,
+              factory: $ManageCourseRoute._fromState,
+              routes: [
+                GoRouteData.$route(
+                  path: ':id',
+                  hasOverriddenOnExit: false,
+                  factory: $CourseDetailRoute._fromState,
+                ),
+              ],
+            ),
           ],
         ),
       ],
@@ -987,6 +999,51 @@ mixin $LobbyDetailRoute on GoRouteData {
   @override
   void replace(BuildContext context) =>
       context.replace(location, extra: _self.$extra);
+}
+
+mixin $ManageCourseRoute on GoRouteData {
+  static ManageCourseRoute _fromState(GoRouterState state) =>
+      const ManageCourseRoute();
+
+  @override
+  String get location => GoRouteData.$location('/manage/course');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CourseDetailRoute on GoRouteData {
+  static CourseDetailRoute _fromState(GoRouterState state) =>
+      CourseDetailRoute(id: state.pathParameters['id']!);
+
+  CourseDetailRoute get _self => this as CourseDetailRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/manage/course/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
 }
 
 mixin $HealthRoute on GoRouteData {

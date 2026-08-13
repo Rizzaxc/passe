@@ -8,16 +8,20 @@ part of 'compose_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Sessions the caller may hook a post to: lobby activities from the last 7
-/// days they RSVP'd `going` to, plus their coach lessons in the same window.
+/// Sessions the caller may hook a post to: any activity from the last 7 days
+/// they RSVP'd `going` to — lobby sessions, freeplay games and coach lessons
+/// alike, since a coach lesson is now an ordinary course activity rather than
+/// a separate booking.
 /// Comes straight from `postable_activities()` so the picker can never offer
 /// something `create_wall_post` would then reject.
 
 @ProviderFor(postableSessions)
 final postableSessionsProvider = PostableSessionsProvider._();
 
-/// Sessions the caller may hook a post to: lobby activities from the last 7
-/// days they RSVP'd `going` to, plus their coach lessons in the same window.
+/// Sessions the caller may hook a post to: any activity from the last 7 days
+/// they RSVP'd `going` to — lobby sessions, freeplay games and coach lessons
+/// alike, since a coach lesson is now an ordinary course activity rather than
+/// a separate booking.
 /// Comes straight from `postable_activities()` so the picker can never offer
 /// something `create_wall_post` would then reject.
 
@@ -31,8 +35,10 @@ final class PostableSessionsProvider
     with
         $FutureModifier<List<PostableSession>>,
         $FutureProvider<List<PostableSession>> {
-  /// Sessions the caller may hook a post to: lobby activities from the last 7
-  /// days they RSVP'd `going` to, plus their coach lessons in the same window.
+  /// Sessions the caller may hook a post to: any activity from the last 7 days
+  /// they RSVP'd `going` to — lobby sessions, freeplay games and coach lessons
+  /// alike, since a coach lesson is now an ordinary course activity rather than
+  /// a separate booking.
   /// Comes straight from `postable_activities()` so the picker can never offer
   /// something `create_wall_post` would then reject.
   PostableSessionsProvider._()
@@ -78,7 +84,7 @@ final class TaggableUsersProvider
         $FutureProvider<List<TaggableUser>> {
   TaggableUsersProvider._({
     required TaggableUsersFamily super.from,
-    required ({String? activityId, String? bookingId}) super.argument,
+    required String? super.argument,
   }) : super(
          retry: null,
          name: r'taggableUsersProvider',
@@ -94,7 +100,7 @@ final class TaggableUsersProvider
   String toString() {
     return r'taggableUsersProvider'
         ''
-        '$argument';
+        '($argument)';
   }
 
   @$internal
@@ -105,12 +111,8 @@ final class TaggableUsersProvider
 
   @override
   FutureOr<List<TaggableUser>> create(Ref ref) {
-    final argument = this.argument as ({String? activityId, String? bookingId});
-    return taggableUsers(
-      ref,
-      activityId: argument.activityId,
-      bookingId: argument.bookingId,
-    );
+    final argument = this.argument as String?;
+    return taggableUsers(ref, activityId: argument);
   }
 
   @override
@@ -124,14 +126,10 @@ final class TaggableUsersProvider
   }
 }
 
-String _$taggableUsersHash() => r'02fc3f46ca762025c5e67a64b15a7a1ba76ae34a';
+String _$taggableUsersHash() => r'98c4a7b6fb4cb6599d0fa94d2644dc431a3b83f8';
 
 final class TaggableUsersFamily extends $Family
-    with
-        $FunctionalFamilyOverride<
-          FutureOr<List<TaggableUser>>,
-          ({String? activityId, String? bookingId})
-        > {
+    with $FunctionalFamilyOverride<FutureOr<List<TaggableUser>>, String?> {
   TaggableUsersFamily._()
     : super(
         retry: null,
@@ -141,11 +139,8 @@ final class TaggableUsersFamily extends $Family
         isAutoDispose: true,
       );
 
-  TaggableUsersProvider call({String? activityId, String? bookingId}) =>
-      TaggableUsersProvider._(
-        argument: (activityId: activityId, bookingId: bookingId),
-        from: this,
-      );
+  TaggableUsersProvider call({String? activityId}) =>
+      TaggableUsersProvider._(argument: activityId, from: this);
 
   @override
   String toString() => r'taggableUsersProvider';
@@ -209,7 +204,7 @@ final class ComposePostControllerProvider
 }
 
 String _$composePostControllerHash() =>
-    r'db1fdfa9182d5b6349af362ac8236dce18fbed82';
+    r'3e87c87017d864be8c4e702baca9669102297c8e';
 
 /// Uploads the picked media, then creates the post.
 ///

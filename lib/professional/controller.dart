@@ -43,3 +43,21 @@ Future<String?> linkedProfessionalId(Ref ref) async {
 
   return response?['id'] as String?;
 }
+
+/// Whether the signed-in user's linked professional profile is a **coach**
+/// (as opposed to a referee). Pro mode branches on this: a coach runs courses,
+/// a referee runs bookings.
+@riverpod
+Future<bool> isLinkedCoach(Ref ref) async {
+  final userId = ref.watch(currentUserIdProvider);
+  if (userId == null) return false;
+
+  final response = await Supabase.instance.client
+      .from('professional')
+      .select('professional_role')
+      .eq('linked_user_id', userId)
+      .maybeSingle()
+      .timeout(const Duration(seconds: 5));
+
+  return response?['professional_role'] == 'coach';
+}

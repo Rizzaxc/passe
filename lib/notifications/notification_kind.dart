@@ -16,9 +16,21 @@ enum NotificationKind {
   lobbyJoinRequestApproved('lobby_join_request_approved'),
   lobbyJoinRequestDenied('lobby_join_request_denied'),
   memberKicked('member_kicked'),
+  // Referee bookings only — the coach half of the booking system was replaced
+  // by courses. Server-side these are disabled in `enabled_notification_kind`
+  // while refereeing is iced (see ClientFeatureFlags.refereeFlow).
   professionalBookingRequested('professional_booking_requested'),
   professionalBookingConfirmed('professional_booking_confirmed'),
   professionalBookingRejected('professional_booking_rejected'),
+  courseMessage('course_message'),
+  courseEnrollmentOffer('course_enrollment_offer'),
+  courseEnrollmentAccepted('course_enrollment_accepted'),
+  courseActivityProposed('course_activity_proposed'),
+  courseActivityApproved('course_activity_approved'),
+  courseActivityChanged('course_activity_changed'),
+  courseSessionReport('course_session_report'),
+  courseEnded('course_ended'),
+  courseMemberRemoved('course_member_removed'),
   friendRequest('friend_request'),
   friendAccepted('friend_accepted'),
   paymentRequested('payment_requested'),
@@ -43,6 +55,27 @@ enum NotificationKind {
     'challenge_lapsed',
     'match_result_recorded',
   ];
+
+  /// Referee-hiring pushes, gated by the same define as the challenger flow.
+  bool get isRefereeFlow => switch (this) {
+    professionalBookingRequested ||
+    professionalBookingConfirmed ||
+    professionalBookingRejected => true,
+    _ => false,
+  };
+
+  bool get isCourseFlow => switch (this) {
+    courseMessage ||
+    courseEnrollmentOffer ||
+    courseEnrollmentAccepted ||
+    courseActivityProposed ||
+    courseActivityApproved ||
+    courseActivityChanged ||
+    courseSessionReport ||
+    courseEnded ||
+    courseMemberRemoved => true,
+    _ => false,
+  };
 
   bool get isChallengerFlow => switch (this) {
     challengerConfirmed ||
