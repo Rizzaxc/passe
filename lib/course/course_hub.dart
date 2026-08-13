@@ -9,11 +9,8 @@ import 'course_card.dart';
 import 'course_controller.dart';
 import 'model.dart';
 
-/// Manage ▸ Coaching (player side): every course the user is enrolled in plus
-/// every coach they've messaged.
-///
-/// Replaced the booking-backed `CoachingSection`, which grouped
-/// `professional_booking` rows by coach to *look* like a course.
+/// Manage ▸ Courses (player side): every course the user is enrolled in plus
+/// every coach they have messaged.
 class CourseHubSection extends ConsumerWidget {
   const CourseHubSection({super.key});
 
@@ -33,40 +30,54 @@ class CourseHubSection extends ConsumerWidget {
       }
     });
 
-    return async.when(
-      loading: () => const Center(child: FCircularProgress()),
-      error: (_, _) => _Refreshable(
-        onRefresh: () => ref.refresh(myCoursesProvider.future),
-        child: PEmptySectionPlaceholder(subtitle: 'course.loadFailed'.tr()),
-      ),
-      data: (courses) => _Refreshable(
-        onRefresh: () => ref.refresh(myCoursesProvider.future),
-        child: courses.isEmpty
-            ? PEmptySectionPlaceholder(subtitle: 'course.emptyPlayer'.tr())
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (final course in courses)
-                    CourseCard(
-                      course: course,
-                      onTap: () =>
-                          CourseDetailRoute(id: course.courseId).push(context),
-                    ),
-                ],
-              ),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PSectionHeader(
+          title: 'course.title'.tr(),
+          suffix: Semantics(
+            button: true,
+            label: 'course.findCoach'.tr(),
+            child: FButton.icon(
+              variant: .ghost,
+              onPress: () => const HomeProfessionalRoute().go(context),
+              child: const Icon(FLucideIcons.search),
+            ),
+          ),
+        ),
+        Expanded(
+          child: async.when(
+            loading: () => const _CourseListSkeleton(),
+            error: (_, _) => _CourseListState(
+              icon: FLucideIcons.cloudOff,
+              message: 'course.loadFailed'.tr(),
+              actionLabel: 'course.retry'.tr(),
+              actionIcon: FLucideIcons.refreshCw,
+              onAction: () => ref.invalidate(myCoursesProvider),
+              onRefresh: () => ref.refresh(myCoursesProvider.future),
+            ),
+            data: (courses) => courses.isEmpty
+                ? _CourseListState(
+                    icon: FLucideIcons.graduationCap,
+                    message: 'course.emptyPlayer'.tr(),
+                    actionLabel: 'course.findCoach'.tr(),
+                    actionIcon: FLucideIcons.search,
+                    onAction: () => const HomeProfessionalRoute().go(context),
+                    onRefresh: () => ref.refresh(myCoursesProvider.future),
+                  )
+                : _CourseList(
+                    courses: courses,
+                    onRefresh: () => ref.refresh(myCoursesProvider.future),
+                  ),
+          ),
+        ),
+      ],
     );
   }
 }
 
-/// Pro mode ▸ Courses (coach side): the same relationships from the other end,
-/// with the coach's to-do counts surfaced on each card.
-///
-/// One provider backs two tabs: the inbox shows live courses, and pro mode's
-/// third tab passes [endedOnly] to become a course history. Splitting them
-/// client-side keeps a coach's "what needs me today" list free of finished
-/// work without a second round trip — `pro_courses_data` already returns the
-/// status.
+/// Coach Manage ▸ Courses / History. Both tabs deliberately reuse the same
+/// hub hierarchy; only the status filter and empty copy differ.
 class ProCoursesSection extends ConsumerWidget {
   final bool endedOnly;
 
@@ -76,61 +87,172 @@ class ProCoursesSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(proCoursesProvider);
 
-    return async.when(
-      loading: () => const Center(child: FCircularProgress()),
-      error: (_, _) => _Refreshable(
-        onRefresh: () => ref.refresh(proCoursesProvider.future),
-        child: PEmptySectionPlaceholder(subtitle: 'course.loadFailed'.tr()),
-      ),
-      data: (all) {
-        final courses = all
-            .where(
-              (c) => endedOnly
-                  ? c.status == CourseStatus.ended
-                  : c.status == CourseStatus.active,
-            )
-            .toList();
+    ref.listen(proCoursesProvider, (_, next) {
+      if (next is AsyncError && context.mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: Text('course.loadFailed'.tr()),
+          alignment: .bottomCenter,
+        );
+      }
+    });
 
-        return _Refreshable(
-          onRefresh: () => ref.refresh(proCoursesProvider.future),
-          child: courses.isEmpty
-              ? PEmptySectionPlaceholder(
-                  subtitle: endedOnly
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PSectionHeader(
+          title: endedOnly
+              ? 'course.courseHistory'.tr()
+              : 'course.activeCourses'.tr(),
+        ),
+        Expanded(
+          child: async.when(
+            loading: () => const _CourseListSkeleton(),
+            error: (_, _) => _CourseListState(
+              icon: FLucideIcons.cloudOff,
+              message: 'course.loadFailed'.tr(),
+              actionLabel: 'course.retry'.tr(),
+              actionIcon: FLucideIcons.refreshCw,
+              onAction: () => ref.invalidate(proCoursesProvider),
+              onRefresh: () => ref.refresh(proCoursesProvider.future),
+            ),
+            data: (all) {
+              final courses = all
+                  .where(
+                    (course) => endedOnly
+                        ? course.status == CourseStatus.ended
+                        : course.status == CourseStatus.active,
+                  )
+                  .toList();
+
+              if (courses.isEmpty) {
+                return _CourseListState(
+                  icon: endedOnly
+                      ? FLucideIcons.archive
+                      : FLucideIcons.graduationCap,
+                  message: endedOnly
                       ? 'course.emptyCoachHistory'.tr()
                       : 'course.emptyCoach'.tr(),
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final course in courses)
-                      CourseCard(
-                        course: course,
-                        coachSide: true,
-                        onTap: () =>
-                            CourseDetailRoute(id: course.courseId).push(context),
-                      ),
-                  ],
-                ),
-        );
-      },
+                  onRefresh: () => ref.refresh(proCoursesProvider.future),
+                );
+              }
+
+              return _CourseList(
+                courses: courses,
+                coachSide: true,
+                onRefresh: () => ref.refresh(proCoursesProvider.future),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
 
-/// Every feed-like screen in the app is pull-to-refresh; these are no exception.
-class _Refreshable extends StatelessWidget {
+class _CourseList extends StatelessWidget {
+  final List<CourseSummary> courses;
+  final bool coachSide;
   final Future<void> Function() onRefresh;
-  final Widget child;
 
-  const _Refreshable({required this.onRefresh, required this.child});
+  const _CourseList({
+    required this.courses,
+    required this.onRefresh,
+    this.coachSide = false,
+  });
 
   @override
   Widget build(BuildContext context) => RefreshIndicator(
     onRefresh: onRefresh,
-    child: ListView(
+    child: ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      children: [child],
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 32),
+      itemCount: courses.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final course = courses[index];
+        return CourseCard(
+          course: course,
+          coachSide: coachSide,
+          onTap: () => CourseDetailRoute(id: course.courseId).push(context),
+        );
+      },
+    ),
+  );
+}
+
+class _CourseListSkeleton extends StatelessWidget {
+  const _CourseListSkeleton();
+
+  @override
+  Widget build(BuildContext context) => ListView.separated(
+    padding: const EdgeInsets.fromLTRB(0, 4, 0, 32),
+    itemCount: 3,
+    separatorBuilder: (_, _) => const SizedBox(height: 8),
+    itemBuilder: (_, _) => const CourseCardSkeleton(),
+  );
+}
+
+class _CourseListState extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final String? actionLabel;
+  final IconData? actionIcon;
+  final VoidCallback? onAction;
+  final Future<void> Function() onRefresh;
+
+  const _CourseListState({
+    required this.icon,
+    required this.message,
+    required this.onRefresh,
+    this.actionLabel,
+    this.actionIcon,
+    this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) => RefreshIndicator(
+    onRefresh: onRefresh,
+    child: LayoutBuilder(
+      builder: (context, constraints) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+        children: [
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: (constraints.maxHeight - 56).clamp(0, double.infinity),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  PEmptySectionPlaceholder(
+                    hero: Icon(
+                      icon,
+                      size: 64,
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                    subtitle: message,
+                  ),
+                  if (actionLabel != null && onAction != null) ...[
+                    const SizedBox(height: 4),
+                    FButton(
+                      onPress: onAction,
+                      prefix: actionIcon == null
+                          ? null
+                          : Icon(actionIcon, size: 16),
+                      child: Text(actionLabel!),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }

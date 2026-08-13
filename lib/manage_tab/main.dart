@@ -90,24 +90,19 @@ class ManageTab extends StatefulWidget {
     ),
   ];
 
-  // Pro mode replaces [manageSections] entirely: index 0 is still a
-  // schedule-shaped view (the pro's own confirmed bookings, not
-  // `my_schedule_data`), index 1 is pending requests (what
-  // `ManageRequestsRoute` deep-links to), index 2 is history — no lobby or
-  // client-side coaching subtab while in pro mode.
-  //
-  // A **coach** gets Courses at index 2 instead of booking history: coaching
-  // no longer runs on bookings at all, so their pro mode is
-  // [schedule, courses, history-of-courses]. Referee pro mode keeps the
-  // booking-shaped tabs, and those are gated behind `refereeFlow` — see
-  // `lib/core/feature_flags.dart`.
+  // Coach mode uses the normal Manage schedule verbatim: `my_schedule_data`
+  // already returns the coach's approved course sessions, so a parallel
+  // professional calendar would create two structures for the same data.
+  // Referees keep the booking-specific schedule/requests/history surfaces.
   static List<FTabEntry> proManageSections(
     String professionalId, {
     String? highlightBookingId,
     bool isCoach = false,
   }) => [
     FTabEntry(
-      child: ProScheduleSection(professionalId: professionalId),
+      child: isCoach
+          ? const ScheduleSection()
+          : ProScheduleSection(professionalId: professionalId),
       label: const Icon(FLucideIcons.calendarDays),
     ),
     if (isCoach)
@@ -181,7 +176,8 @@ class _ManageTabState extends State<ManageTab> {
             ? ManageTab.proManageSections(
                 linkedProfessionalId,
                 highlightBookingId: widget.highlightBookingId,
-                isCoach: ref.watch(isLinkedCoachProvider).asData?.value ?? false,
+                isCoach:
+                    ref.watch(isLinkedCoachProvider).asData?.value ?? false,
               )
             : ManageTab.manageSections;
         final index = _currentIndex.clamp(0, sections.length - 1);
