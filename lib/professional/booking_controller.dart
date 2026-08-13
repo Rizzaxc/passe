@@ -10,6 +10,7 @@ part 'booking_controller.g.dart';
 /// lets the client pick from.
 class ProfessionalServiceOption {
   final String id;
+  final int sportId;
   final String serviceType;
   final String? description;
   final double? priceAmount;
@@ -20,6 +21,7 @@ class ProfessionalServiceOption {
 
   const ProfessionalServiceOption({
     required this.id,
+    this.sportId = 0,
     required this.serviceType,
     this.description,
     this.priceAmount,
@@ -45,6 +47,7 @@ class ProfessionalServiceOption {
   factory ProfessionalServiceOption.fromJson(Map<String, dynamic> json) {
     return ProfessionalServiceOption(
       id: json['id'] as String,
+      sportId: (json['sport_id'] as num?)?.toInt() ?? 0,
       serviceType: json['service_type'] as String,
       description: json['service_description'] as String?,
       priceAmount: double.tryParse(json['price_amount']?.toString() ?? ''),
@@ -72,6 +75,7 @@ Future<List<ProfessionalServiceOption>> professionalServices(
       .select()
       .eq('professional_id', professionalId)
       .eq('is_active', true)
+      .order('created_at')
       .timeout(const Duration(seconds: 5));
 
   return (response as List)

@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../auth/auth_controller.dart';
 import '../core/format.dart';
 import '../messaging/conversation_view.dart';
 import '../ui/main.dart';
@@ -49,36 +50,37 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
             ),
         ],
       ),
-      // An inquiring (unenrolled) student has nothing to plan or attend yet —
-      // the coach hasn't accepted them — so Planner/History would be two
-      // permanently-empty tabs. Feed (the thread) is the whole inquiry.
+      // All 3 tabs are visible to anyone with course access, inquiring
+      // students included — an inquiring student can already see scheduled
+      // sessions via the feed's system messages, so hiding Planner/History
+      // outright bought no real privacy, just an inconsistent, confusing
+      // surface. Actions (propose, RSVP, write a report/review) stay gated
+      // on `canManage` inside each tab instead.
       child: async.when(
         loading: () => const Center(child: FCircularProgress()),
         error: (_, _) => Center(child: Text('course.loadFailed'.tr())),
-        data: (course) => !course.canManage
-            ? _FeedTab(course: course)
-            : FTabs(
-                expands: true,
-                contentPhysics: const NeverScrollableScrollPhysics(),
-                control: FTabControl.lifted(
-                  index: _tab,
-                  onChange: (i) => setState(() => _tab = i),
-                ),
-                children: [
-                  FTabEntry(
-                    label: Text('course.tab.feed'.tr()),
-                    child: _FeedTab(course: course),
-                  ),
-                  FTabEntry(
-                    label: Text('course.tab.planner'.tr()),
-                    child: _PlannerTab(course: course),
-                  ),
-                  FTabEntry(
-                    label: Text('course.tab.history'.tr()),
-                    child: _HistoryTab(course: course),
-                  ),
-                ],
-              ),
+        data: (course) => FTabs(
+          expands: true,
+          contentPhysics: const NeverScrollableScrollPhysics(),
+          control: FTabControl.lifted(
+            index: _tab,
+            onChange: (i) => setState(() => _tab = i),
+          ),
+          children: [
+            FTabEntry(
+              label: Text('course.tab.feed'.tr()),
+              child: _FeedTab(course: course),
+            ),
+            FTabEntry(
+              label: Text('course.tab.planner'.tr()),
+              child: _PlannerTab(course: course),
+            ),
+            FTabEntry(
+              label: Text('course.tab.history'.tr()),
+              child: _HistoryTab(course: course),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -94,6 +96,9 @@ class _FeedTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final conversationId = course.conversationId;
+    final hasInquirer = course.members.any(
+      (m) => m.status == CourseMemberStatus.inquiring,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -120,10 +125,67 @@ class _FeedTab extends ConsumerWidget {
                     // A course is a group thread even when it currently has
                     // one student — the coach may add more at any time.
                     showSenderNames: true,
+                    // Right above the composer, not buried in the info
+                    // sheet — the coach is already looking at this exact
+                    // student's messages when the decision to enroll them
+                    // comes up.
+                    composerAccessory:
+                        course.isCoach &&
+                            course.status == CourseStatus.active &&
+                            hasInquirer
+                        ? _EnrollInquirerChip(course: course)
+                        : null,
                   ),
                 ),
         ),
       ],
+    );
+  }
+}
+
+/// Opens the enrollment-offer sheet scoped to just the inquiring member(s)
+/// already in this thread — no search, since the whole point is "this
+/// person is right here, enroll them" (search stays behind the info
+/// sheet's own "Send enrollment offer" for the rarer cold-invite case).
+class _EnrollInquirerChip extends StatelessWidget {
+  final CourseDetail course;
+
+  const _EnrollInquirerChip({required this.course});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: GestureDetector(
+        onTap: () =>
+            showEnrollmentOfferSheet(context, course, allowSearch: false),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: colors.primary,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                FLucideIcons.userPlus,
+                size: 14,
+                color: colors.primaryForeground,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'course.enrollChip'.tr(),
+                style: context.theme.typography.body.sm.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.primaryForeground,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -138,6 +200,11 @@ class _ProposalRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.watch(courseActionControllerProvider.notifier);
     final busy = ref.watch(courseActionControllerProvider);
+    // withdraw_course_proposal is proposer-only server-side; only show the
+    // button to the one viewer it would actually work for. Everyone else
+    // (including another inquiring/enrolled student who isn't the proposer)
+    // just reads the row.
+    final isMine = session.proposedBy == ref.watch(currentUserIdProvider);
 
     return FTile(
       title: Text(
@@ -168,7 +235,8 @@ class _ProposalRow extends ConsumerWidget {
                 ),
               ],
             )
-          : FButton(
+          : isMine
+          ? FButton(
               variant: .outline,
               size: .sm,
               onPress: busy
@@ -178,7 +246,8 @@ class _ProposalRow extends ConsumerWidget {
                       courseId: course.courseId,
                     ),
               child: Text('course.withdraw'.tr()),
-            ),
+            )
+          : null,
     );
   }
 
@@ -209,6 +278,13 @@ class _ProposalRow extends ConsumerWidget {
   }
 }
 
+/// Mirrors the lobby hub's Planner tab shape: a section header with an
+/// always-reachable "+" rather than a full-width button buried in the list,
+/// and a card-style empty state instead of a bare placeholder line. Unlike
+/// the lobby version there's no "member has no button" branch to handle —
+/// this tab only mounts for `course.canManage` (coach or enrolled student,
+/// see course_detail_page.dart's tab gating), and both of those may propose
+/// a session, so the CTA is unconditional here.
 class _PlannerTab extends ConsumerWidget {
   final CourseDetail course;
 
@@ -217,31 +293,112 @@ class _PlannerTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final upcoming = course.upcoming;
+    // Both tabs now show to every viewer with course access, including an
+    // inquiring student — but only the coach and an enrolled student may
+    // actually schedule/propose.
     final canPropose = course.status == CourseStatus.active && course.canManage;
 
-    return RefreshIndicator(
-      onRefresh: () =>
-          ref.refresh(courseDetailProvider(course.courseId).future),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        children: [
-          if (canPropose)
-            FButton(
-              onPress: () => showProposeSessionSheet(context, course),
-              child: Text(
-                course.isCoach
-                    ? 'course.scheduleSession'.tr()
-                    : 'course.proposeSession'.tr(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+          child: PSectionHeader(
+            title: 'course.tab.planner'.tr(),
+            suffix: canPropose
+                ? FButton.icon(
+                    variant: .ghost,
+                    onPress: () => showProposeSessionSheet(context, course),
+                    child: const Icon(FLucideIcons.plus),
+                  )
+                : null,
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () =>
+                ref.refresh(courseDetailProvider(course.courseId).future),
+            child: upcoming.isEmpty
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                    children: [
+                      _PlannerEmptyState(course: course, canPropose: canPropose),
+                    ],
+                  )
+                : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                    itemCount: upcoming.length,
+                    itemBuilder: (context, i) =>
+                        _SessionCard(course: course, session: upcoming[i]),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PlannerEmptyState extends StatelessWidget {
+  final CourseDetail course;
+  final bool canPropose;
+
+  const _PlannerEmptyState({required this.course, required this.canPropose});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  FLucideIcons.calendarDays,
+                  size: 22,
+                  color: colors.primary,
+                ),
               ),
             ),
-          const SizedBox(height: 16),
-          if (upcoming.isEmpty)
-            PEmptySectionPlaceholder(subtitle: 'course.noUpcoming'.tr())
-          else
-            for (final session in upcoming)
-              _SessionCard(course: course, session: session),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              'course.noUpcoming'.tr(),
+              textAlign: TextAlign.center,
+              style: context.theme.typography.body.md.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (canPropose) ...[
+              const SizedBox(height: 12),
+              FButton(
+                size: .sm,
+                onPress: () => showProposeSessionSheet(context, course),
+                child: Text(
+                  course.isCoach
+                      ? 'course.scheduleSession'.tr()
+                      : 'course.proposeSession'.tr(),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -308,27 +465,31 @@ class _SessionCard extends ConsumerWidget {
           ],
           const SizedBox(height: 12),
           // No quorum on a course session: RSVP is attendance intent, and
-          // nothing is gated on the count.
+          // nothing is gated on the count. RSVP itself is enrolled/coach
+          // only server-side (activity_confirmation RLS) — an inquiring
+          // viewer gets the read-only count, not buttons that would just
+          // fail.
           Row(
             children: [
-              for (final option in const ['going', 'maybe', 'out'])
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: FButton(
-                    variant: session.myAttendance == option
-                        ? .primary
-                        : .outline,
-                    size: .sm,
-                    onPress: busy
-                        ? null
-                        : () => controller.rsvp(
-                            session.activityId,
-                            option,
-                            courseId: course.courseId,
-                          ),
-                    child: Text('course.rsvp.$option'.tr()),
+              if (course.canManage)
+                for (final option in const ['going', 'maybe', 'out'])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: FButton(
+                      variant: session.myAttendance == option
+                          ? .primary
+                          : .outline,
+                      size: .sm,
+                      onPress: busy
+                          ? null
+                          : () => controller.rsvp(
+                              session.activityId,
+                              option,
+                              courseId: course.courseId,
+                            ),
+                      child: Text('course.rsvp.$option'.tr()),
+                    ),
                   ),
-                ),
               const Spacer(),
               Text(
                 'course.goingCount'.plural(session.goingCount),
@@ -364,6 +525,7 @@ class _HistoryTab extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           if (course.status == CourseStatus.ended &&
+              course.canManage &&
               !course.isCoach &&
               course.myReviewRating == null)
             Padding(

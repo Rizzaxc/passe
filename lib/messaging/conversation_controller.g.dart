@@ -95,7 +95,7 @@ final class ConversationControllerProvider
 }
 
 String _$conversationControllerHash() =>
-    r'4286d9eeb8aa0017189e6e91ed15e45af3b135b0';
+    r'ec42ff071693edee335ba6dbb0b0d4c8b92a8580';
 
 /// Live view of one conversation (`schema/messaging.sql` + `messaging_realtime.sql`).
 ///

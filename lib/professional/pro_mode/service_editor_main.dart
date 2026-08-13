@@ -100,6 +100,8 @@ class _ProfileFieldsSection extends ConsumerStatefulWidget {
 }
 
 class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _displayNameCtrl;
   late final TextEditingController _bioCtrl;
   late final TextEditingController _phoneCtrl;
   late final TextEditingController _scheduleNoteCtrl;
@@ -108,6 +110,7 @@ class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
   @override
   void initState() {
     super.initState();
+    _displayNameCtrl = TextEditingController(text: widget.profile.displayName);
     _bioCtrl = TextEditingController(text: widget.profile.bio);
     _phoneCtrl = TextEditingController(text: widget.profile.contactPhone);
     _scheduleNoteCtrl = TextEditingController(
@@ -118,6 +121,7 @@ class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
 
   @override
   void dispose() {
+    _displayNameCtrl.dispose();
     _bioCtrl.dispose();
     _phoneCtrl.dispose();
     _scheduleNoteCtrl.dispose();
@@ -125,12 +129,15 @@ class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
   }
 
   Future<void> _save() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
     try {
       await ref
           .read(
             proProfileEditControllerProvider(widget.professionalId).notifier,
           )
           .commit(
+            displayName: _displayNameCtrl.text.trim(),
             bio: _bioCtrl.text.trim(),
             contactPhone: _phoneCtrl.text.trim(),
             schedule: _schedule,
@@ -164,93 +171,106 @@ class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
       proProfileEditControllerProvider(widget.professionalId),
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 12,
-        children: [
-          Text(
-            widget.profile.displayName,
-            style: context.theme.typography.body.xl.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          FTextField(
-            label: const Text('Giới thiệu'),
-            control: FTextFieldControl.managed(controller: _bioCtrl),
-            maxLines: 4,
-          ),
-          FTextField(
-            label: const Text('Số điện thoại liên hệ'),
-            control: FTextFieldControl.managed(controller: _phoneCtrl),
-          ),
-          Text(
-            'Lịch rảnh',
-            style: context.theme.typography.body.sm.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (_schedule.isEmpty)
-            Text(
-              'Chưa có khung giờ nào',
-              style: context.theme.typography.body.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
+    return Form(
+      key: _formKey,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 12,
+          children: [
+            FTextFormField(
+              label: const Text('Tên chuyên nghiệp'),
+              hint: 'Tên thật hoặc tên bạn dùng khi làm HLV / trọng tài',
+              description: const Text(
+                'Tên này hiển thị trên hồ sơ chuyên nghiệp và không thay đổi username của bạn.',
               ),
-            )
-          else
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final t in _schedule)
-                  FBadge(
-                    variant: .outline,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${t.dayChunk.getShortName(context)} ${t.dayOfWeek.getFullName(context)}',
-                        ),
-                        const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: () => setState(() => _schedule.remove(t)),
-                          child: const Icon(FLucideIcons.x, size: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+              maxLength: 80,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              control: FTextFieldControl.managed(controller: _displayNameCtrl),
+              validator: (value) {
+                final name = value?.trim() ?? '';
+                if (name.isEmpty) return 'Vui lòng nhập tên chuyên nghiệp';
+                if (name.length > 80) return 'Tên không được quá 80 ký tự';
+                return null;
+              },
             ),
-          FButton(
-            variant: .outline,
-            onPress: () async {
-              final t = await showTimeslotPicker(context: context);
-              if (t != null && !_schedule.contains(t)) {
-                setState(() => _schedule.add(t));
-              }
-            },
-            child: const Text('Thêm khung giờ'),
-          ),
-          FTextField(
-            label: const Text('Ghi chú lịch rảnh (tuỳ chọn)'),
-            control: FTextFieldControl.managed(controller: _scheduleNoteCtrl),
-            maxLines: 2,
-          ),
-          FButton(
-            onPress: saving ? null : _save,
-            child: saving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+            FTextField(
+              label: const Text('Giới thiệu'),
+              control: FTextFieldControl.managed(controller: _bioCtrl),
+              maxLines: 4,
+            ),
+            FTextField(
+              label: const Text('Số điện thoại liên hệ'),
+              control: FTextFieldControl.managed(controller: _phoneCtrl),
+            ),
+            Text(
+              'Lịch rảnh',
+              style: context.theme.typography.body.sm.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (_schedule.isEmpty)
+              Text(
+                'Chưa có khung giờ nào',
+                style: context.theme.typography.body.sm.copyWith(
+                  color: context.theme.colors.mutedForeground,
+                ),
+              )
+            else
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final t in _schedule)
+                    FBadge(
+                      variant: .outline,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${t.dayChunk.getShortName(context)} ${t.dayOfWeek.getFullName(context)}',
+                          ),
+                          const SizedBox(width: 4),
+                          GestureDetector(
+                            onTap: () => setState(() => _schedule.remove(t)),
+                            child: const Icon(FLucideIcons.x, size: 12),
+                          ),
+                        ],
+                      ),
                     ),
-                  )
-                : const Text('Lưu Thông Tin'),
-          ),
-        ],
+                ],
+              ),
+            FButton(
+              variant: .outline,
+              onPress: () async {
+                final t = await showTimeslotPicker(context: context);
+                if (t != null && !_schedule.contains(t)) {
+                  setState(() => _schedule.add(t));
+                }
+              },
+              child: const Text('Thêm khung giờ'),
+            ),
+            FTextField(
+              label: const Text('Ghi chú lịch rảnh (tuỳ chọn)'),
+              control: FTextFieldControl.managed(controller: _scheduleNoteCtrl),
+              maxLines: 2,
+            ),
+            FButton(
+              onPress: saving ? null : _save,
+              child: saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Lưu Thông Tin'),
+            ),
+          ],
+        ),
       ),
     );
   }

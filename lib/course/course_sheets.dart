@@ -2,7 +2,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
+import '../auth/auth_controller.dart';
 import '../core/format.dart';
 import '../ui/main.dart';
 import 'course_controller.dart';
@@ -192,18 +195,46 @@ class _CourseInfoSheet extends ConsumerWidget {
 
 Future<void> showEnrollmentOfferSheet(
   BuildContext context,
-  CourseDetail course,
-) => showPSheet(
+  CourseDetail course, {
+  bool allowSearch = true,
+}) => showPSheet(
   context: context,
-  builder: (_) => _EnrollmentOfferSheet(course: course),
+  builder: (_) =>
+      _EnrollmentOfferSheet(course: course, allowSearch: allowSearch),
 );
+
+class _EnrollCandidate {
+  final String userId;
+  final String username;
+  final String? tagNumber;
+  final String? generatedAvatar;
+
+  const _EnrollCandidate({
+    required this.userId,
+    required this.username,
+    this.tagNumber,
+    this.generatedAvatar,
+  });
+}
 
 /// The coach's offer: a name, an optional description, an optional target
 /// session count. Accepting it is what turns an inquiry into an enrollment.
+///
+/// Candidates come from two places — anyone already `inquiring` in this
+/// course (the common case: promoting whoever just messaged), and, when
+/// [allowSearch] is on, a username/tag search for anyone else.
+/// `send_enrollment_offer` adds a not-yet-member as `inquiring` itself
+/// (course.sql), so search is the only way to enroll someone who hasn't
+/// messaged first. The Feed tab's "Chấp nhận học viên" chip opens this with
+/// search off — that entry point exists precisely because someone is
+/// already inquiring right there in the thread, so search would just be
+/// noise; the info sheet's own "Send enrollment offer" keeps search on for
+/// the rarer proactive-invite case.
 class _EnrollmentOfferSheet extends ConsumerStatefulWidget {
   final CourseDetail course;
+  final bool allowSearch;
 
-  const _EnrollmentOfferSheet({required this.course});
+  const _EnrollmentOfferSheet({required this.course, this.allowSearch = true});
 
   @override
   ConsumerState<_EnrollmentOfferSheet> createState() =>
@@ -214,7 +245,11 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
   final _name = TextEditingController();
   final _description = TextEditingController();
   final _target = TextEditingController();
+  final _search = TextEditingController();
   String? _userId;
+  _EnrollCandidate? _searchSelection;
+  List<_EnrollCandidate>? _searchResults;
+  bool _searching = false;
 
   @override
   void initState() {
@@ -234,11 +269,82 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
     _name.dispose();
     _description.dispose();
     _target.dispose();
+    _search.dispose();
     super.dispose();
+  }
+
+  Future<void> _runSearch() async {
+    final raw = _search.text.trim();
+    if (raw.isEmpty) return;
+
+    setState(() {
+      _searching = true;
+      _searchResults = null;
+    });
+
+    try {
+      final tagOnly = raw.startsWith('#');
+      final parts = raw.split('#');
+      final username = tagOnly ? null : parts[0].trim();
+      final tagNumber = parts.length > 1
+          ? parts[1].trim()
+          : (tagOnly ? parts[0].replaceAll('#', '').trim() : null);
+
+      // Never surface the coach themselves, or anyone already inquiring/
+      // enrolled — those are already one-tap picks in the list above.
+      final activeIds = widget.course.members
+          .where(
+            (m) =>
+                m.status != CourseMemberStatus.left &&
+                m.status != CourseMemberStatus.removed,
+          )
+          .map((m) => m.userId)
+          .toSet();
+      final myId = ref.read(currentUserIdProvider);
+
+      var query = Supabase.instance.client
+          .from('user')
+          .select('id, username, tag_number, details');
+      if (username != null && username.isNotEmpty) {
+        query = query.ilike('username', '%$username%');
+      }
+      if (tagNumber != null && tagNumber.isNotEmpty) {
+        query = query.eq('tag_number', tagNumber);
+      }
+      if (myId != null) query = query.neq('id', myId);
+      final rows = await query.limit(10).timeout(const Duration(seconds: 5));
+
+      if (!mounted) return;
+      setState(() {
+        _searchResults = (rows as List)
+            .map((r) {
+              final details = r['details'] as Map<String, dynamic>?;
+              return _EnrollCandidate(
+                userId: r['id'] as String,
+                username: r['username'] as String,
+                tagNumber: r['tag_number']?.toString(),
+                generatedAvatar: details?['generatedAvatar'] as String?,
+              );
+            })
+            .where((c) => !activeIds.contains(c.userId))
+            .toList();
+      });
+    } catch (e, st) {
+      Talker().handle(e, st, 'Course user search failed');
+      if (!mounted) return;
+      showFToast(
+        context: context,
+        variant: .destructive,
+        title: Text('course.actionFailed'.tr()),
+      );
+    } finally {
+      if (mounted) setState(() => _searching = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.theme.colors;
     final candidates = widget.course.members
         .where((m) => m.status == CourseMemberStatus.inquiring)
         .toList();
@@ -265,9 +371,112 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
                 suffix: _userId == member.userId
                     ? const Icon(FLucideIcons.check)
                     : null,
-                onPress: () => setState(() => _userId = member.userId),
+                onPress: () => setState(() {
+                  _userId = member.userId;
+                  _searchSelection = null;
+                }),
               ),
-          const SizedBox(height: 12),
+          if (widget.allowSearch) ...[
+            const SizedBox(height: 16),
+            PSectionHeader(title: 'course.enrollUser.label'.tr()),
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: FTextField(
+                    hint: 'course.enrollUser.hint'.tr(),
+                    control: FTextFieldControl.managed(controller: _search),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FButton(
+                  variant: .outline,
+                  onPress: _searching ? null : _runSearch,
+                  child: _searching
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text('course.enrollUser.search'.tr()),
+                ),
+              ],
+            ),
+            if (_searchResults != null) ...[
+              const SizedBox(height: 8),
+              if (_searchResults!.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'course.enrollUser.notFound'.tr(
+                      namedArgs: {'name': _search.text.trim()},
+                    ),
+                    style: context.theme.typography.body.sm.copyWith(
+                      color: colors.mutedForeground,
+                      fontStyle: FontStyle.italic,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              else
+                Container(
+                  decoration: BoxDecoration(
+                    color: colors.card,
+                    borderRadius: context.theme.style.borderRadius.md,
+                    border: Border.all(color: colors.border),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (var i = 0; i < _searchResults!.length; i++) ...[
+                        FTile(
+                          prefix: PUserAvatar(
+                            userId: _searchResults![i].userId,
+                            username: _searchResults![i].username,
+                            generatedAvatar: _searchResults![i].generatedAvatar,
+                            radius: 16,
+                          ),
+                          title: Text(
+                            _searchResults![i].tagNumber == null
+                                ? _searchResults![i].username
+                                : '${_searchResults![i].username} #${_searchResults![i].tagNumber}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          suffix: _userId == _searchResults![i].userId
+                              ? const Icon(FLucideIcons.check)
+                              : null,
+                          onPress: () => setState(() {
+                            _userId = _searchResults![i].userId;
+                            _searchSelection = _searchResults![i];
+                          }),
+                        ),
+                        if (i < _searchResults!.length - 1)
+                          Divider(
+                            height: 1,
+                            indent: 48,
+                            color: colors.border.withValues(alpha: 0.5),
+                          ),
+                      ],
+                    ],
+                  ),
+                ),
+            ],
+            if (_searchSelection != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'course.enrollUser.selected'.tr(
+                  namedArgs: {'username': _searchSelection!.username},
+                ),
+                style: context.theme.typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+            ],
+          ],
+          const SizedBox(height: 16),
           FTextField(
             control: FTextFieldControl.managed(controller: _name),
             label: Text('course.offerName'.tr()),
@@ -408,9 +617,8 @@ class _ProposeSessionSheetState extends ConsumerState<_ProposeSessionSheet> {
                   child: FButton(
                     variant: _duration.inHours == hours ? .primary : .outline,
                     size: .sm,
-                    onPress: () => setState(
-                      () => _duration = Duration(hours: hours),
-                    ),
+                    onPress: () =>
+                        setState(() => _duration = Duration(hours: hours)),
                     child: Text('course.hours'.plural(hours)),
                   ),
                 ),
@@ -624,13 +832,11 @@ class _SessionReportSheetState extends ConsumerState<_SessionReportSheet> {
   }
 }
 
-Future<void> showCourseReviewSheet(
-  BuildContext context,
-  CourseDetail course,
-) => showPSheet(
-  context: context,
-  builder: (_) => _CourseReviewSheet(course: course),
-);
+Future<void> showCourseReviewSheet(BuildContext context, CourseDetail course) =>
+    showPSheet(
+      context: context,
+      builder: (_) => _CourseReviewSheet(course: course),
+    );
 
 class _CourseReviewSheet extends ConsumerStatefulWidget {
   final CourseDetail course;
@@ -667,9 +873,7 @@ class _CourseReviewSheetState extends ConsumerState<_CourseReviewSheet> {
                 IconButton(
                   onPressed: () => setState(() => _rating = star),
                   icon: Icon(
-                    star <= _rating
-                        ? FLucideIcons.star
-                        : FLucideIcons.starOff,
+                    star <= _rating ? FLucideIcons.star : FLucideIcons.starOff,
                     color: context.theme.colors.primary,
                   ),
                 ),

@@ -80,7 +80,7 @@ final class ProfessionalServicesProvider
 }
 
 String _$professionalServicesHash() =>
-    r'78ed88e977594ea870a7b20d529f2f69656b607e';
+    r'2e4f202a8e1ddad5cc390cf0c2223f70c149b3d1';
 
 /// Active services offered by one professional, for the booking sheet's
 /// service picker. RLS only exposes services for *verified* professionals

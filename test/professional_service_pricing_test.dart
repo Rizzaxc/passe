@@ -32,6 +32,26 @@ void main() {
     expect(service.priceFor(const Duration(minutes: 90)), 300000);
   });
 
+  test('professional service preserves its sport and public details', () {
+    final service = ProfessionalServiceOption.fromJson({
+      'id': 'service',
+      'sport_id': 3,
+      'service_type': 'Kèm riêng',
+      'service_description': 'Buổi tập cá nhân',
+      'price_amount': '350000.00',
+      'min_duration_minutes': 90,
+      'max_participants': 1,
+      'session_count': 4,
+      'pricing_kind': 'per_session',
+    });
+
+    expect(service.sportId, 3);
+    expect(service.description, 'Buổi tập cá nhân');
+    expect(service.priceAmount, 350000);
+    expect(service.sessionCount, 4);
+    expect(service.pricingKind, ProfessionalPricingKind.perSession);
+  });
+
   test('professional feed preserves the price kind returned by the RPC', () {
     final item = ProfessionalFeedItem.fromJson({
       'id': 'professional',

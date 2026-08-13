@@ -5,8 +5,9 @@ import '../../core/model/timeslot.dart';
 
 part 'pro_profile_controller.g.dart';
 
-/// Self-editable subset of a linked professional's own row — `display_name`,
-/// certifications, and `is_verified` stay admin-managed, out of scope here.
+/// Self-editable subset of a linked professional's own row. The professional
+/// display name is intentionally independent from the linked account's
+/// username; certifications and verification remain admin-managed.
 class ProSelfProfile {
   final String displayName;
   final String? bio;
@@ -29,7 +30,8 @@ class ProSelfProfile {
       displayName: json['display_name'] as String? ?? '',
       bio: json['bio'] as String?,
       contactPhone: contact?['phone'] as String?,
-      schedule: scheduleJson
+      schedule:
+          scheduleJson
               ?.map((e) => Timeslot.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -53,8 +55,8 @@ Future<ProSelfProfile> myProfessionalProfile(
   return ProSelfProfile.fromJson(response);
 }
 
-/// Commits bio/contact/schedule edits. RLS ("Linked users can manage their
-/// own professional profile") already scopes writes to the caller's own row.
+/// Commits public name, bio, contact, and schedule edits. RLS scopes writes to
+/// the linked professional row owned by the caller.
 @riverpod
 class ProProfileEditController extends _$ProProfileEditController {
   final supabase = Supabase.instance.client;
@@ -63,6 +65,7 @@ class ProProfileEditController extends _$ProProfileEditController {
   bool build(String professionalId) => false; // in-flight flag
 
   Future<void> commit({
+    required String displayName,
     required String? bio,
     required String? contactPhone,
     required List<Timeslot> schedule,
@@ -73,6 +76,7 @@ class ProProfileEditController extends _$ProProfileEditController {
       await supabase
           .from('professional')
           .update({
+            'display_name': displayName,
             'bio': bio,
             'contact_details': contactPhone == null || contactPhone.isEmpty
                 ? null

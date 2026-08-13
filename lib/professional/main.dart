@@ -16,6 +16,7 @@ import '../course/course_controller.dart';
 import '../course/message_coach_sheet.dart';
 import '../router.dart';
 import '../ui/main.dart';
+import 'booking_controller.dart';
 import 'booking_location_field.dart';
 import 'booking_sheet.dart';
 import 'controller.dart';
@@ -136,6 +137,7 @@ class _Body extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final courtsAsync = ref.watch(preferredCourtsProvider(item.id));
+    final servicesAsync = ref.watch(professionalServicesProvider(item.id));
 
     return _Shell(
       child: Column(
@@ -151,6 +153,15 @@ class _Body extends ConsumerWidget {
                       _ProfileHero(item: item),
                       const SizedBox(height: 18),
                       _CredentialBoard(item: item),
+                      const SizedBox(height: 14),
+                      _ProfileSection(
+                        icon: FLucideIcons.listChecks,
+                        title: 'homeTab.professional.services'.tr(),
+                        accent: item.role == ProfessionalRole.coach
+                            ? pbAmber
+                            : pbCoral,
+                        child: _ServicesContent(servicesAsync: servicesAsync),
+                      ),
                       const SizedBox(height: 18),
                       _ProfileSection(
                         icon: FLucideIcons.mapPinned,
@@ -546,6 +557,181 @@ class _ProfileSection extends StatelessWidget {
           ],
         ),
         child,
+      ],
+    ),
+  );
+}
+
+class _ServicesContent extends StatelessWidget {
+  final AsyncValue<List<ProfessionalServiceOption>> servicesAsync;
+
+  const _ServicesContent({required this.servicesAsync});
+
+  @override
+  Widget build(BuildContext context) => servicesAsync.when(
+    loading: () => const LinearProgressIndicator(minHeight: 2),
+    error: (_, _) => Text(
+      'homeTab.professional.servicesLoadFailed'.tr(),
+      style: context.theme.typography.body.sm.copyWith(
+        color: context.theme.colors.mutedForeground,
+      ),
+    ),
+    data: (services) {
+      if (services.isEmpty) {
+        return Text(
+          'homeTab.professional.noServices'.tr(),
+          style: context.theme.typography.body.sm.copyWith(
+            color: context.theme.colors.mutedForeground,
+          ),
+        );
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 10,
+        children: [
+          for (final service in services) _PublicServiceCard(service: service),
+        ],
+      );
+    },
+  );
+}
+
+class _PublicServiceCard extends StatelessWidget {
+  final ProfessionalServiceOption service;
+
+  const _PublicServiceCard({required this.service});
+
+  @override
+  Widget build(BuildContext context) {
+    final sport = service.sportId >= 0 && service.sportId < Sport.values.length
+        ? Sport.values[service.sportId]
+        : Sport.others;
+    final price = service.priceAmount;
+    final priceLabel = price == null
+        ? null
+        : (service.pricingKind == ProfessionalPricingKind.hourly
+                  ? 'homeTab.professional.pricePerHour'
+                  : 'homeTab.professional.pricePerSession')
+              .tr(namedArgs: {'price': formatVnd(price)});
+
+    return Container(
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: pbBlueDeep.withValues(alpha: 0.045),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: pbInk.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 8,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  service.serviceType,
+                  style: context.theme.typography.body.sm.copyWith(
+                    color: pbInk,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (priceLabel != null) ...[
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    priceLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: context.theme.typography.body.sm.copyWith(
+                      color: pbBlueDeep,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (service.description?.trim().isNotEmpty == true)
+            Text(
+              service.description!.trim(),
+              style: context.theme.typography.body.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+                height: 1.45,
+              ),
+            ),
+          Wrap(
+            spacing: 7,
+            runSpacing: 7,
+            children: [
+              _ServiceDetailChip(
+                icon: FLucideIcons.trophy,
+                label: sport.getLocalizedName(context),
+              ),
+              if (service.minDurationMinutes != null)
+                _ServiceDetailChip(
+                  icon: FLucideIcons.clock,
+                  label: 'homeTab.professional.minimumDuration'.tr(
+                    namedArgs: {'minutes': '${service.minDurationMinutes}'},
+                  ),
+                ),
+              if (service.sessionCount > 1)
+                _ServiceDetailChip(
+                  icon: FLucideIcons.layers,
+                  label: 'homeTab.professional.sessionCount'.tr(
+                    namedArgs: {'count': '${service.sessionCount}'},
+                  ),
+                ),
+              if (service.maxParticipants != null &&
+                  service.maxParticipants! > 1)
+                _ServiceDetailChip(
+                  icon: FLucideIcons.users,
+                  label: 'homeTab.professional.maxParticipants'.tr(
+                    namedArgs: {'count': '${service.maxParticipants}'},
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ServiceDetailChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _ServiceDetailChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+    decoration: BoxDecoration(
+      color: context.theme.colors.card,
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: pbInk.withValues(alpha: 0.09)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 5,
+      children: [
+        Icon(icon, size: 11, color: pbBlueDeep),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.theme.typography.body.xs.copyWith(
+              color: pbInk,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
       ],
     ),
   );

@@ -85,18 +85,18 @@ final class MyProfessionalProfileFamily extends $Family
   String toString() => r'myProfessionalProfileProvider';
 }
 
-/// Commits bio/contact/schedule edits. RLS ("Linked users can manage their
-/// own professional profile") already scopes writes to the caller's own row.
+/// Commits public name, bio, contact, and schedule edits. RLS scopes writes to
+/// the linked professional row owned by the caller.
 
 @ProviderFor(ProProfileEditController)
 final proProfileEditControllerProvider = ProProfileEditControllerFamily._();
 
-/// Commits bio/contact/schedule edits. RLS ("Linked users can manage their
-/// own professional profile") already scopes writes to the caller's own row.
+/// Commits public name, bio, contact, and schedule edits. RLS scopes writes to
+/// the linked professional row owned by the caller.
 final class ProProfileEditControllerProvider
     extends $NotifierProvider<ProProfileEditController, bool> {
-  /// Commits bio/contact/schedule edits. RLS ("Linked users can manage their
-  /// own professional profile") already scopes writes to the caller's own row.
+  /// Commits public name, bio, contact, and schedule edits. RLS scopes writes to
+  /// the linked professional row owned by the caller.
   ProProfileEditControllerProvider._({
     required ProProfileEditControllerFamily super.from,
     required String super.argument,
@@ -143,10 +143,10 @@ final class ProProfileEditControllerProvider
 }
 
 String _$proProfileEditControllerHash() =>
-    r'e0996d502b664e824d222305886824ff958d1f2f';
+    r'619a68baabaa3dd25d476f09b7387cd7ae1bdd2a';
 
-/// Commits bio/contact/schedule edits. RLS ("Linked users can manage their
-/// own professional profile") already scopes writes to the caller's own row.
+/// Commits public name, bio, contact, and schedule edits. RLS scopes writes to
+/// the linked professional row owned by the caller.
 
 final class ProProfileEditControllerFamily extends $Family
     with
@@ -166,8 +166,8 @@ final class ProProfileEditControllerFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Commits bio/contact/schedule edits. RLS ("Linked users can manage their
-  /// own professional profile") already scopes writes to the caller's own row.
+  /// Commits public name, bio, contact, and schedule edits. RLS scopes writes to
+  /// the linked professional row owned by the caller.
 
   ProProfileEditControllerProvider call(String professionalId) =>
       ProProfileEditControllerProvider._(argument: professionalId, from: this);
@@ -176,8 +176,8 @@ final class ProProfileEditControllerFamily extends $Family
   String toString() => r'proProfileEditControllerProvider';
 }
 
-/// Commits bio/contact/schedule edits. RLS ("Linked users can manage their
-/// own professional profile") already scopes writes to the caller's own row.
+/// Commits public name, bio, contact, and schedule edits. RLS scopes writes to
+/// the linked professional row owned by the caller.
 
 abstract class _$ProProfileEditController extends $Notifier<bool> {
   late final _$args = ref.$arg as String;
