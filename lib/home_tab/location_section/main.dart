@@ -1,13 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/map_directions.dart';
 import '../../core/model/enum.dart';
 import '../../core/model/location.dart';
 import '../../ui/main.dart';
@@ -263,9 +261,9 @@ class _VenueCard extends StatelessWidget {
                   FButton(
                     size: .sm,
                     variant: .secondary,
-                    onPress: location.coord == null
-                        ? null
-                        : () => _openDirections(context, location),
+                    onPress: _hasDirectionsTarget(location)
+                        ? () => _openDirections(context, location)
+                        : null,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       spacing: 4,
@@ -585,9 +583,9 @@ class _VenueDetailSheet extends StatelessWidget {
             ),
           ],
           FButton(
-            onPress: coord == null
-                ? null
-                : () => _openDirections(context, location),
+            onPress: _hasDirectionsTarget(location)
+                ? () => _openDirections(context, location)
+                : null,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               spacing: 6,
@@ -629,49 +627,23 @@ class _VenueDetailSheet extends StatelessWidget {
 
 // ── Directions handoff ─────────────────────────────────────────────────────
 
-/// Hands off to whatever maps app the device has via a platform-appropriate
-/// URI — Apple Maps on iOS, a `geo:` intent (native app chooser) on Android —
-/// falling back to a Google Maps web URL. No API key or billing; the OS routes
-/// the intent. No-op with a toast if the venue has no coordinates.
+bool _hasDirectionsTarget(Location location) =>
+    mapDirectionsDestination(
+      lat: location.lat,
+      lon: location.lon,
+      address: location.displayAddress,
+      label: location.name,
+    ) !=
+    null;
+
+/// Hands off to the shared maps-app chooser, preferring coordinates and
+/// falling back to the venue's address or name when it has not been geocoded.
 Future<void> _openDirections(BuildContext context, Location location) async {
-  final coord = location.coord;
-  if (coord == null) return;
-
-  final lat = coord.latitude;
-  final lon = coord.longitude;
-  final label = Uri.encodeComponent(location.name);
-
-  final nativeUri = defaultTargetPlatform == TargetPlatform.iOS
-      // Apple Maps: `daddr` + current location gives turn-by-turn directions.
-      ? Uri.parse('https://maps.apple.com/?daddr=$lat,$lon&q=$label')
-      // Android: `geo:` opens the maps-app chooser dropping a labelled pin.
-      : Uri.parse('geo:$lat,$lon?q=$lat,$lon($label)');
-  final webUri = Uri.parse(
-    'https://www.google.com/maps/search/?api=1&query=$lat,$lon',
+  await openMapDirections(
+    context,
+    lat: location.lat,
+    lon: location.lon,
+    address: location.displayAddress,
+    label: location.name,
   );
-
-  var launched = false;
-  try {
-    if (await canLaunchUrl(nativeUri)) {
-      launched = await launchUrl(
-        nativeUri,
-        mode: LaunchMode.externalApplication,
-      );
-    }
-    if (!launched) {
-      launched = await launchUrl(webUri, mode: LaunchMode.externalApplication);
-    }
-  } catch (_) {
-    launched = false;
-  }
-
-  if (!launched && context.mounted) {
-    showFToast(
-      context: context,
-      icon: const Icon(FLucideIcons.circleX),
-      variant: .destructive,
-      title: Text('homeTab.location.directionsFailed'.tr()),
-      alignment: .bottomCenter,
-    );
-  }
 }

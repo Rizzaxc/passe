@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../auth/guest_prompt.dart';
+import '../core/map_directions.dart';
 import '../router.dart';
 import '../ui/main.dart';
 import 'card.dart';
@@ -82,6 +83,14 @@ class _Body extends ConsumerStatefulWidget {
 
 class _BodyState extends ConsumerState<_Body> {
   bool _busy = false;
+
+  Future<void> _openDirections() => openMapDirections(
+    context,
+    lat: widget.activity.locationLat,
+    lon: widget.activity.locationLon,
+    address: widget.activity.streetAddress,
+    label: widget.activity.venueName,
+  );
 
   Future<void> _request() async {
     if (!ensureSignedIn(context, ref) || _busy) return;
@@ -192,6 +201,21 @@ class _BodyState extends ConsumerState<_Body> {
             showAddress: true,
             showMetadata: false,
           ),
+          if (mapDirectionsDestination(
+                lat: a.locationLat,
+                lon: a.locationLon,
+                address: a.streetAddress,
+                label: a.venueName,
+              ) !=
+              null) ...[
+            const SizedBox(height: 8),
+            FButton(
+              variant: .outline,
+              prefix: const Icon(FLucideIcons.navigation, size: 16),
+              onPress: _openDirections,
+              child: Text('freeplay.directions'.tr()),
+            ),
+          ],
           const SizedBox(height: 12),
           FTappable(
             onPress: () => FreeplayHostRoute(id: a.hostId).push(context),

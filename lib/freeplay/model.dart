@@ -29,8 +29,15 @@ class FreeplayActivity {
   final String description;
   final DateTime startTime;
   final DateTime endTime;
+  final String? locationId;
   final String venueName;
   final String streetAddress;
+  final String? locationStreetNumber;
+  final String? locationStreetName;
+  final String? locationDistrict;
+  final String? locationCity;
+  final double? locationLat;
+  final double? locationLon;
   final int capacity;
   final int acceptedCount;
   final int pendingCount;
@@ -58,6 +65,13 @@ class FreeplayActivity {
     required this.malePrice,
     required this.femalePrice,
     required this.recommendedSkills,
+    this.locationId,
+    this.locationStreetNumber,
+    this.locationStreetName,
+    this.locationDistrict,
+    this.locationCity,
+    this.locationLat,
+    this.locationLon,
     this.hostAvatarUrl,
     this.mySkill,
     this.myRequestId,
@@ -83,8 +97,15 @@ class FreeplayActivity {
       description: (json['description'] ?? '').toString(),
       startTime: DateTime.parse(json['start_time'].toString()).toLocal(),
       endTime: DateTime.parse(json['end_time'].toString()).toLocal(),
+      locationId: json['location_id']?.toString(),
       venueName: (json['venue_name'] ?? '').toString(),
       streetAddress: (json['street_address'] ?? '').toString(),
+      locationStreetNumber: json['location_street_number']?.toString(),
+      locationStreetName: json['location_street_name']?.toString(),
+      locationDistrict: json['location_district']?.toString(),
+      locationCity: json['location_city']?.toString(),
+      locationLat: (json['location_lat'] as num?)?.toDouble(),
+      locationLon: (json['location_lon'] as num?)?.toDouble(),
       capacity: (json['capacity'] as num?)?.toInt() ?? 0,
       acceptedCount: (json['accepted_count'] as num?)?.toInt() ?? 0,
       pendingCount: (json['pending_count'] as num?)?.toInt() ?? 0,

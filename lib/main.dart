@@ -145,9 +145,11 @@ class Passe extends HookConsumerWidget {
       restorationScopeId: 'app',
       builder: (_, child) => FTheme(
         data: ui.pbThemeLight,
-        child: DefaultTextStyle(
-          style: ui.pbThemeLight.typography.body.md,
-          child: FToaster(child: child!),
+        child: ui.PKeyboardDismiss(
+          child: DefaultTextStyle(
+            style: ui.pbThemeLight.typography.body.md,
+            child: FToaster(child: child!),
+          ),
         ),
       ),
       theme: ui.pbThemeLight.toApproximateMaterialTheme(),
@@ -201,48 +203,49 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
   @override
   Widget build(BuildContext context) {
     final navigationShell = widget.navigationShell;
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
     return FScaffold(
       // Every branch supplies its own page scaffold. Let that inner scaffold
-      // handle the keyboard exactly once; resizing here as well subtracts the
-      // same view inset twice. On short iPhones the second subtraction can
-      // leave forms (notably GuestProfileView's embedded AuthForm) with a
-      // negative or near-zero content height.
+      // handle the keyboard exactly once. The footer is hidden while the IME
+      // is open so its height is not still reserved above the keyboard.
       resizeToAvoidBottomInset: false,
-      footer: FBottomNavigationBar(
-        // Android edge-to-edge layouts place the footer behind the gesture /
-        // three-button system navigation area unless the bar consumes the
-        // device's bottom inset itself. Keep Forui's existing iOS spacing.
-        safeAreaBottom: defaultTargetPlatform == TargetPlatform.android,
-        index: navigationShell.currentIndex,
-        onChange: (index) => _onTap(context, index),
-        children: [
-          FBottomNavigationBarItem(
-            key: NavCoachKeys.feed,
-            icon: Icon(FLucideIcons.clapperboard),
-            label: _NavLabel('nav.feed'.tr(), group: _navLabelGroup),
-          ),
-          FBottomNavigationBarItem(
-            key: NavCoachKeys.discover,
-            icon: Icon(FLucideIcons.house),
-            label: _NavLabel('nav.discover'.tr(), group: _navLabelGroup),
-          ),
-          FBottomNavigationBarItem(
-            key: NavCoachKeys.manage,
-            icon: Icon(FLucideIcons.calendar),
-            label: _NavLabel('nav.manage'.tr(), group: _navLabelGroup),
-          ),
-          FBottomNavigationBarItem(
-            key: NavCoachKeys.health,
-            icon: Icon(FLucideIcons.heartPulse),
-            label: _NavLabel('nav.health'.tr(), group: _navLabelGroup),
-          ),
-          FBottomNavigationBarItem(
-            key: NavCoachKeys.profile,
-            icon: Icon(FLucideIcons.userCog),
-            label: _NavLabel('nav.profile'.tr(), group: _navLabelGroup),
-          ),
-        ],
-      ),
+      footer: keyboardVisible
+          ? null
+          : FBottomNavigationBar(
+              // Android edge-to-edge layouts place the footer behind the gesture /
+              // three-button system navigation area unless the bar consumes the
+              // device's bottom inset itself. Keep Forui's existing iOS spacing.
+              safeAreaBottom: defaultTargetPlatform == TargetPlatform.android,
+              index: navigationShell.currentIndex,
+              onChange: (index) => _onTap(context, index),
+              children: [
+                FBottomNavigationBarItem(
+                  key: NavCoachKeys.feed,
+                  icon: Icon(FLucideIcons.clapperboard),
+                  label: _NavLabel('nav.feed'.tr(), group: _navLabelGroup),
+                ),
+                FBottomNavigationBarItem(
+                  key: NavCoachKeys.discover,
+                  icon: Icon(FLucideIcons.house),
+                  label: _NavLabel('nav.discover'.tr(), group: _navLabelGroup),
+                ),
+                FBottomNavigationBarItem(
+                  key: NavCoachKeys.manage,
+                  icon: Icon(FLucideIcons.calendar),
+                  label: _NavLabel('nav.manage'.tr(), group: _navLabelGroup),
+                ),
+                FBottomNavigationBarItem(
+                  key: NavCoachKeys.health,
+                  icon: Icon(FLucideIcons.heartPulse),
+                  label: _NavLabel('nav.health'.tr(), group: _navLabelGroup),
+                ),
+                FBottomNavigationBarItem(
+                  key: NavCoachKeys.profile,
+                  icon: Icon(FLucideIcons.userCog),
+                  label: _NavLabel('nav.profile'.tr(), group: _navLabelGroup),
+                ),
+              ],
+            ),
       child: navigationShell,
     );
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../../core/user_preferences.dart';
@@ -27,7 +28,10 @@ class LobbyHubTourTargets {
 class LobbyHubTourPrefs {
   LobbyHubTourPrefs._();
 
-  static const _shownUserIdsKey = 'LOBBY_HUB_TOUR_SHOWN_USER_IDS';
+  // V2 replaces the first implementation, whose live tab-label targets could
+  // disappear during an async lobby rebuild and end the tour after step 1.
+  // The version bump gives anyone affected by that bug one corrected pass.
+  static const _shownUserIdsKey = 'LOBBY_HUB_TOUR_V2_SHOWN_USER_IDS';
 
   static UserPreferences get _prefs => UserPreferences.instance;
 
@@ -59,15 +63,36 @@ Future<void> maybeShowLobbyHubTour({
   required String userId,
   required LobbyHubTourTargets targets,
 }) async {
-  if (_showingForUserIds.contains(userId) ||
-      await LobbyHubTourPrefs.hasSeen(userId)) {
+  if (_showingForUserIds.contains(userId)) return;
+
+  final keys = [...targets.all, NavCoachKeys.health];
+  if (keys.any((key) => key.currentContext == null)) {
     return;
   }
 
-  final keys = [...targets.all, NavCoachKeys.health];
-  if (!context.mounted || keys.any((key) => key.currentContext == null)) {
-    return;
+  // Capture every target up front. The lobby detail providers can resolve
+  // and rebuild while the overlay is animating; using the live GlobalKeys on
+  // every step gave the coach-mark package a chance to observe a transiently
+  // unmounted Forui tab label, which it treats as "tour finished". These
+  // controls are stationary for the lifetime of the overlay, so stable root-
+  // overlay rectangles are the appropriate target representation here.
+  final rootOverlay = Overlay.of(context, rootOverlay: true);
+  final overlayBox = rootOverlay.context.findRenderObject();
+  if (overlayBox is! RenderBox || !overlayBox.hasSize) return;
+
+  final positions = <TargetPosition>[];
+  for (final key in keys) {
+    final targetBox = key.currentContext?.findRenderObject();
+    if (targetBox is! RenderBox || !targetBox.hasSize) return;
+    positions.add(
+      TargetPosition(
+        targetBox.size,
+        targetBox.localToGlobal(Offset.zero, ancestor: overlayBox),
+      ),
+    );
   }
+
+  if (await LobbyHubTourPrefs.hasSeen(userId) || !rootOverlay.mounted) return;
 
   _showingForUserIds.add(userId);
   var completionStarted = false;
@@ -94,7 +119,7 @@ Future<void> maybeShowLobbyHubTour({
     for (var i = 0; i < steps.length; i++)
       TargetFocus(
         identify: steps[i].$1,
-        keyTarget: keys[i],
+        targetPosition: positions[i],
         shape: ShapeLightFocus.RRect,
         radius: 14,
         paddingFocus: 5,
@@ -109,6 +134,7 @@ Future<void> maybeShowLobbyHubTour({
               total: steps.length,
               title: steps[i].$2.tr(),
               body: steps[i].$3.tr(),
+              onNext: controller.next,
             ),
           ),
         ],
@@ -124,7 +150,7 @@ Future<void> maybeShowLobbyHubTour({
       unawaited(complete());
       return true;
     },
-  ).show(context: context, rootOverlay: true);
+  ).showWithOverlayState(overlay: rootOverlay, rootOverlay: true);
 }
 
 class _TourCopy extends StatelessWidget {
@@ -132,12 +158,14 @@ class _TourCopy extends StatelessWidget {
   final int total;
   final String title;
   final String body;
+  final VoidCallback onNext;
 
   const _TourCopy({
     required this.step,
     required this.total,
     required this.title,
     required this.body,
+    required this.onNext,
   });
 
   @override
@@ -165,6 +193,16 @@ class _TourCopy extends StatelessWidget {
               color: Colors.white,
               fontSize: 15,
               height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FButton(
+              onPress: onNext,
+              child: Text(
+                step == total ? 'onboarding.done'.tr() : 'onboarding.next'.tr(),
+              ),
             ),
           ),
         ],

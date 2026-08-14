@@ -7,6 +7,8 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/format.dart';
+import '../core/location_repository.dart';
+import '../manage_tab/lobby_section/feed/home_ground_selector.dart';
 import '../ui/main.dart';
 import 'course_controller.dart';
 import 'model.dart';
@@ -553,6 +555,8 @@ class _ProposeSessionSheetState extends ConsumerState<_ProposeSessionSheet> {
   final _note = TextEditingController();
   DateTime? _start;
   Duration _duration = const Duration(hours: 1);
+  String? _locationId;
+  Map<String, String?>? _freeAddress;
 
   @override
   void dispose() {
@@ -591,6 +595,7 @@ class _ProposeSessionSheetState extends ConsumerState<_ProposeSessionSheet> {
     final isCoach = widget.course.isCoach;
 
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -625,10 +630,26 @@ class _ProposeSessionSheetState extends ConsumerState<_ProposeSessionSheet> {
             ],
           ),
           const SizedBox(height: 12),
+          PSheetSectionLabel(label: 'course.venue'.tr()),
+          const SizedBox(height: 6),
+          HomeGroundField(
+            value: _locationId,
+            prefixIcon: FLucideIcons.mapPin,
+            onChanged: (id) => setState(() {
+              _locationId = id.isEmpty ? null : id;
+              _freeAddress = null;
+            }),
+            onFreeAddressChanged: (address) => setState(() {
+              _freeAddress = address;
+              if (address != null) _locationId = null;
+            }),
+          ),
+          const SizedBox(height: 12),
           FTextField(
             control: FTextFieldControl.managed(controller: _note),
             label: Text('course.note'.tr()),
             maxLines: 2,
+            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
           ),
           if (!isCoach) ...[
             const SizedBox(height: 12),
@@ -667,12 +688,17 @@ class _ProposeSessionSheetState extends ConsumerState<_ProposeSessionSheet> {
     }
 
     try {
+      final locationId = await resolveLocationId(
+        pickedId: _locationId,
+        freeAddress: _freeAddress,
+      );
       await ref
           .read(courseActionControllerProvider.notifier)
           .proposeSession(
             courseId: widget.course.courseId,
             start: start,
             end: end,
+            locationId: locationId,
             note: _note.text.trim().isEmpty ? null : _note.text,
           );
       if (mounted) Navigator.pop(context);
@@ -694,34 +720,173 @@ Future<void> showSessionActionsSheet(
   CourseSession session,
 ) => showPSheet(
   context: context,
-  builder: (_) => Consumer(
-    builder: (context, ref, _) => Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        PSheetTitle(label: formatMatchDateTime(session.startTime)),
-        // Rescheduling clears every RSVP server-side, so say so before they do it.
-        Text(
-          'course.rescheduleWarning'.tr(),
-          style: context.theme.typography.body.xs.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
-        ),
-        const SizedBox(height: 16),
-        FButton(
-          variant: .destructive,
-          onPress: () async {
-            await ref
-                .read(courseActionControllerProvider.notifier)
-                .cancelSession(session.activityId, courseId: course.courseId);
-            if (context.mounted) Navigator.pop(context);
-          },
-          child: Text('course.cancelSession'.tr()),
-        ),
-      ],
-    ),
-  ),
+  builder: (_) => _RescheduleSessionSheet(course: course, session: session),
 );
+
+class _RescheduleSessionSheet extends ConsumerStatefulWidget {
+  final CourseDetail course;
+  final CourseSession session;
+
+  const _RescheduleSessionSheet({required this.course, required this.session});
+
+  @override
+  ConsumerState<_RescheduleSessionSheet> createState() =>
+      _RescheduleSessionSheetState();
+}
+
+class _RescheduleSessionSheetState
+    extends ConsumerState<_RescheduleSessionSheet> {
+  late DateTime _start = widget.session.startTime.toLocal();
+  late Duration _duration = widget.session.endTime == null
+      ? const Duration(hours: 1)
+      : widget.session.endTime!.difference(widget.session.startTime);
+  late String? _locationId = widget.session.locationId;
+  Map<String, String?>? _freeAddress;
+
+  Future<void> _pick() async {
+    final now = DateTime.now();
+    final initialDate = _start.isBefore(now) ? now : _start;
+    final date = await showDatePicker(
+      context: context,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+      initialDate: initialDate,
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_start),
+    );
+    if (time == null) return;
+    setState(() {
+      _start = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    });
+  }
+
+  Future<void> _save() async {
+    final end = _start.add(_duration);
+    try {
+      final locationId = await resolveLocationId(
+        pickedId: _locationId,
+        freeAddress: _freeAddress,
+      );
+      await ref
+          .read(courseActionControllerProvider.notifier)
+          .reschedule(
+            activityId: widget.session.activityId,
+            start: _start,
+            end: end,
+            locationId: locationId,
+            courseId: widget.course.courseId,
+          );
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (mounted) {
+        showFToast(
+          context: context,
+          variant: .destructive,
+          title: Text('course.actionFailed'.tr()),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final busy = ref.watch(courseActionControllerProvider);
+    return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PSheetTitle(label: 'course.editSession'.tr()),
+          FTile(
+            title: Text('course.startTime'.tr()),
+            subtitle: Text(formatMatchDateTime(_start)),
+            onPress: _pick,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              for (final hours in const [1, 2, 3])
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: FButton(
+                    variant: _duration == Duration(hours: hours)
+                        ? .primary
+                        : .outline,
+                    size: .sm,
+                    onPress: () =>
+                        setState(() => _duration = Duration(hours: hours)),
+                    child: Text('course.hours'.plural(hours)),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          PSheetSectionLabel(label: 'course.venue'.tr()),
+          const SizedBox(height: 6),
+          HomeGroundField(
+            value: _locationId,
+            prefixIcon: FLucideIcons.mapPin,
+            onChanged: (id) => setState(() {
+              _locationId = id.isEmpty ? null : id;
+              _freeAddress = null;
+            }),
+            onFreeAddressChanged: (address) => setState(() {
+              _freeAddress = address;
+              if (address != null) _locationId = null;
+            }),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'course.rescheduleWarning'.tr(),
+            style: context.theme.typography.body.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+          const SizedBox(height: 16),
+          FButton(
+            onPress: busy ? null : _save,
+            child: Text('course.saveSession'.tr()),
+          ),
+          const SizedBox(height: 8),
+          FButton(
+            variant: .destructive,
+            onPress: busy
+                ? null
+                : () async {
+                    try {
+                      await ref
+                          .read(courseActionControllerProvider.notifier)
+                          .cancelSession(
+                            widget.session.activityId,
+                            courseId: widget.course.courseId,
+                          );
+                      if (context.mounted) Navigator.pop(context);
+                    } catch (_) {
+                      if (context.mounted) {
+                        showFToast(
+                          context: context,
+                          variant: .destructive,
+                          title: Text('course.actionFailed'.tr()),
+                        );
+                      }
+                    }
+                  },
+            child: Text('course.cancelSession'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 Future<void> showSessionReportSheet(
   BuildContext context,

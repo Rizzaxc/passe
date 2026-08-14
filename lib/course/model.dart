@@ -178,7 +178,9 @@ class CourseMember {
     userId: json['user_id'].toString(),
     username: json['username']?.toString() ?? '',
     generatedAvatar: json['generated_avatar'] as String?,
-    status: CourseMemberStatus.fromDb(json['status']?.toString() ?? 'inquiring'),
+    status: CourseMemberStatus.fromDb(
+      json['status']?.toString() ?? 'inquiring',
+    ),
   );
 }
 
@@ -186,7 +188,15 @@ class CourseSession {
   final String activityId;
   final DateTime startTime;
   final DateTime? endTime;
+  final String? locationId;
   final String? venueName;
+  final String? streetAddress;
+  final String? locationStreetNumber;
+  final String? locationStreetName;
+  final String? locationDistrict;
+  final String? locationCity;
+  final double? locationLat;
+  final double? locationLon;
   final String? note;
   final ProposalStatus proposalStatus;
   final String? proposedBy;
@@ -200,7 +210,15 @@ class CourseSession {
     required this.startTime,
     required this.proposalStatus,
     this.endTime,
+    this.locationId,
     this.venueName,
+    this.streetAddress,
+    this.locationStreetNumber,
+    this.locationStreetName,
+    this.locationDistrict,
+    this.locationCity,
+    this.locationLat,
+    this.locationLon,
     this.note,
     this.proposedBy,
     this.myAttendance,
@@ -209,8 +227,7 @@ class CourseSession {
 
   bool get isPending => proposalStatus == ProposalStatus.pending;
 
-  bool get hasFinished =>
-      (endTime ?? startTime).isBefore(DateTime.now());
+  bool get hasFinished => (endTime ?? startTime).isBefore(DateTime.now());
 
   factory CourseSession.fromJson(Map<String, dynamic> json) => CourseSession(
     activityId: json['activity_id'].toString(),
@@ -218,7 +235,15 @@ class CourseSession {
     endTime: json['end_time'] == null
         ? null
         : DateTime.parse(json['end_time'].toString()).toLocal(),
+    locationId: json['location_id']?.toString(),
     venueName: json['venue_name'] as String?,
+    streetAddress: json['street_address'] as String?,
+    locationStreetNumber: json['location_street_number']?.toString(),
+    locationStreetName: json['location_street_name']?.toString(),
+    locationDistrict: json['location_district']?.toString(),
+    locationCity: json['location_city']?.toString(),
+    locationLat: (json['location_lat'] as num?)?.toDouble(),
+    locationLon: (json['location_lon'] as num?)?.toDouble(),
     note: json['note'] as String?,
     proposalStatus: ProposalStatus.fromDb(json['proposal_status']?.toString()),
     proposedBy: json['proposed_by']?.toString(),
@@ -300,14 +325,18 @@ class CourseDetail {
   bool get canManage => isCoach || (myMemberStatus?.isEnrolled ?? false);
 
   List<CourseSession> get upcoming => sessions
-      .where((s) => !s.hasFinished && s.proposalStatus == ProposalStatus.approved)
+      .where(
+        (s) => !s.hasFinished && s.proposalStatus == ProposalStatus.approved,
+      )
       .toList();
 
   List<CourseSession> get pendingProposals =>
       sessions.where((s) => s.isPending).toList();
 
   List<CourseSession> get past => sessions
-      .where((s) => s.hasFinished && s.proposalStatus == ProposalStatus.approved)
+      .where(
+        (s) => s.hasFinished && s.proposalStatus == ProposalStatus.approved,
+      )
       .toList()
       .reversed
       .toList();
@@ -316,9 +345,7 @@ class CourseDetail {
     Object? raw,
     T Function(Map<String, dynamic>) parse,
   ) =>
-      (raw as List?)
-          ?.map((e) => parse(e as Map<String, dynamic>))
-          .toList() ??
+      (raw as List?)?.map((e) => parse(e as Map<String, dynamic>)).toList() ??
       const [];
 
   factory CourseDetail.fromJson(Map<String, dynamic> json) => CourseDetail(

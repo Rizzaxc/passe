@@ -187,9 +187,11 @@ freezed) — edit them by hand, no build_runner.
   (OpenStreetMap tiles, no API key). Tapping a card **or** a map marker opens the venue detail sheet
   (`showPSheet`, `maxHeightRatio: 1.0`) with a static mini-map, address, sport/amenity chips, and a
   directions CTA.
-- **Directions** hand off to the device's maps app via a `geo:` URI (falls back to a Google Maps web
-  URL) using `url_launcher` — no API key / billing, the OS routes the intent. Disabled when the
-  venue has no `lat/lon`. Google Maps SDK was deliberately *not* used (poor VN coverage + cost).
+- **Directions** use the shared `core/map_directions.dart` handoff. iOS presents a Passe sheet with
+  Google Maps first and Apple Maps second (Google falls back to its directions website when the app
+  is missing); Android uses the native `geo:` chooser with the same web fallback. Disabled when the
+  venue has neither coordinates nor usable address/name text; otherwise an unmapped venue routes by
+  its URL-encoded address or name. Google Maps SDK was deliberately *not* used (poor VN coverage + cost).
 - **OSM tile usage policy compliance**: identifying `User-Agent` (`_tileUserAgent`) and visible
   attribution (`_OsmAttribution`) are set in `main.dart` of this folder; the 7-day-minimum tile
   cache the policy requires is flutter_map's built-in `NetworkTileProvider` disk cache (on by

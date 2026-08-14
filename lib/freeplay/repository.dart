@@ -201,6 +201,7 @@ class FreeplayRepository {
     required int capacity,
     required String description,
     required List<String> skills,
+    String? locationId,
   }) => _client
       .rpc(
         'edit_freeplay_listing',
@@ -209,6 +210,7 @@ class FreeplayRepository {
           'p_capacity': capacity,
           'p_description': description,
           'p_recommended_skills': skills,
+          'p_location_id': locationId,
         },
       )
       .timeout(_rpcTimeout);

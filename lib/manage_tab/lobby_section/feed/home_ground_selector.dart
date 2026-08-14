@@ -318,6 +318,8 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
               flex: 2,
               child: FTextField(
                 hint: 'createLobby.streetNumber'.tr(),
+                onTapOutside: (_) =>
+                    FocusManager.instance.primaryFocus?.unfocus(),
                 control: FTextFieldControl.managed(
                   controller: _streetNumberCtrl,
                   onChange: (_) => _onFieldEdited(),
@@ -328,6 +330,8 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
               flex: 5,
               child: FTextField(
                 hint: 'createLobby.streetName'.tr(),
+                onTapOutside: (_) =>
+                    FocusManager.instance.primaryFocus?.unfocus(),
                 control: FTextFieldControl.managed(
                   controller: _streetNameCtrl,
                   onChange: (_) => _onFieldEdited(),

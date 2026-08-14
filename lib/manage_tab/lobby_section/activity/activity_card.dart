@@ -4,14 +4,10 @@
 // card was assumed per lobby); a lobby can now have several of these.
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../auth/auth_controller.dart';
 import '../../../../auth/guest_prompt.dart';
@@ -22,6 +18,7 @@ import '../../../../feed_tab/compose_post_sheet.dart';
 import '../../../../ui/dialog.dart';
 import '../../../../ui/theme.dart';
 import '../../../../ui/user_avatar.dart';
+import '../../../core/map_directions.dart';
 import '../../../professional/pending_activity_booking_state.dart';
 import '../../../router.dart';
 import '../challenges_controller.dart';
@@ -132,72 +129,22 @@ class ActivityCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _copyAddress(BuildContext context) async {
-    final name = upcoming.locationName;
-    if (name == null) return;
-    final district = upcoming.locationDistrict;
-    final text = district == null ? name : '$name, $district';
-    await Clipboard.setData(ClipboardData(text: text));
-    if (context.mounted) {
-      showFToast(
-        context: context,
-        icon: const Icon(FLucideIcons.copy),
-        title: Text('lobbyHub.activity.addressCopied'.tr()),
-        alignment: .bottomCenter,
-      );
-    }
-  }
-
-  /// Hands off to whatever maps app the device has, same pattern as
-  /// `lib/home_tab/location_section/main.dart`'s `_openDirections` — Apple
-  /// Maps on iOS, a `geo:` intent (native app chooser) on Android, falling
-  /// back to a Google Maps web URL. Unlike a Location venue, an activity's
-  /// location can legitimately have no geocode yet (e.g. a lobby homeground
-  /// scraped without lat/lon), so this falls back to the old copy-to-
-  /// clipboard behavior instead of a dead/disabled button.
+  /// Uses coordinates when available, otherwise routes with the custom
+  /// address/location name rather than falling back to the clipboard.
   Future<void> _openDirections(BuildContext context) async {
     final lat = upcoming.locationLat;
     final lon = upcoming.locationLon;
-    if (lat == null || lon == null) {
-      await _copyAddress(context);
-      return;
-    }
+    final name = upcoming.locationName ?? '';
+    final district = upcoming.locationDistrict;
+    final address = district == null ? name : '$name, $district';
 
-    final label = Uri.encodeComponent(upcoming.locationName ?? '');
-    final nativeUri = defaultTargetPlatform == TargetPlatform.iOS
-        ? Uri.parse('https://maps.apple.com/?daddr=$lat,$lon&q=$label')
-        : Uri.parse('geo:$lat,$lon?q=$lat,$lon($label)');
-    final webUri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=$lat,$lon',
+    await openMapDirections(
+      context,
+      lat: lat,
+      lon: lon,
+      address: address,
+      label: name,
     );
-
-    var launched = false;
-    try {
-      if (await canLaunchUrl(nativeUri)) {
-        launched = await launchUrl(
-          nativeUri,
-          mode: LaunchMode.externalApplication,
-        );
-      }
-      if (!launched) {
-        launched = await launchUrl(
-          webUri,
-          mode: LaunchMode.externalApplication,
-        );
-      }
-    } catch (_) {
-      launched = false;
-    }
-
-    if (!launched && context.mounted) {
-      showFToast(
-        context: context,
-        icon: const Icon(FLucideIcons.circleX),
-        variant: .destructive,
-        title: Text('lobbyHub.activity.mapFailed'.tr()),
-        alignment: .bottomCenter,
-      );
-    }
   }
 
   void _openReschedule(BuildContext context) {

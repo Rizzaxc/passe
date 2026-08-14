@@ -194,6 +194,20 @@ JSON — parse with `double.tryParse`. Complex reads go through Postgres functio
   borders only, keyboard-aware bottom padding). Pass `maxHeightRatio: 1.0` for info-style sheets that may grow to the
   full screen; the default `0.9` covers everything else. Sheet content should be just the inner widgets (e.g. a
   `SingleChildScrollView` + `Column`) — no outer `FSheets` or padded container
+- **Every text-input surface must dismiss the keyboard and must account for the IME exactly once.** This applies to
+  every `FTextField` / `FTextFormField`, including the coach profile/service editor (this bug first recurred across
+  those inputs). `Passe` wraps the routed app in `PKeyboardDismiss`, which overrides Flutter's
+  `EditableTextTapOutsideIntent` once for every current and future Forui/native field; do not remove or bypass that
+  boundary, and do not add repetitive field-level `onTapOutside` callbacks unless a field needs behavior other than
+  unfocus. Flutter's mobile default does not unfocus for outside touch events. Keyboard layout has three distinct
+  cases:
+  (1) pages inside `ScaffoldWithNavBar` let their branch `FScaffold` resize once; the root shell deliberately uses
+  `resizeToAvoidBottomInset: false` and removes the bottom-nav footer from layout while
+  `MediaQuery.viewInsetsOf(context).bottom > 0`, otherwise the hidden footer leaves a nav-height empty strip above
+  the keyboard; (2) standalone full-screen forms that set `resizeToAvoidBottomInset: false` must use a
+  `SingleChildScrollView` with bottom padding of `basePadding + MediaQuery.viewInsetsOf(context).bottom` (see the
+  welcome auth flow); (3) sheets use `showPSheet`, which already owns the keyboard inset — never add another
+  `viewInsets.bottom` inside the sheet. Do not patch keyboard gaps with arbitrary `SizedBox`/fixed bottom padding.
 - Use Riverpod for state management. Avoid using Provider
 - For the signed-in user's identity, read `currentUserIdProvider` (or `authControllerProvider` for the full
   `PasseUser`) — NEVER `Supabase.instance.client.auth.currentUser` directly. The raw getter bypasses the guest model

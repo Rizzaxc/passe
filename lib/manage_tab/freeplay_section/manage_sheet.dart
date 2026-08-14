@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../core/location_repository.dart';
 import '../../freeplay/model.dart';
 import '../../freeplay/repository.dart';
 import '../../ui/main.dart';
+import '../lobby_section/feed/home_ground_selector.dart';
 
 Future<void> showManageFreeplaySheet(
   BuildContext context,
@@ -32,7 +34,12 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
     text: widget.activity.description,
   );
   late final Set<String> _skills = widget.activity.recommendedSkills.toSet();
+  late String? _locationId = widget.activity.locationId;
+  Map<String, String?>? _freeAddress;
   bool _busy = false;
+
+  bool get _canEditLocation =>
+      widget.activity.acceptedCount == 0 && widget.activity.pendingCount == 0;
 
   @override
   void dispose() {
@@ -60,6 +67,12 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
     }
     setState(() => _busy = true);
     try {
+      final locationId = _canEditLocation
+          ? await resolveLocationId(
+              pickedId: _locationId,
+              freeAddress: _freeAddress,
+            )
+          : widget.activity.locationId;
       await ref
           .read(freeplayRepositoryProvider)
           .update(
@@ -67,6 +80,7 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
             capacity: capacity,
             description: _description.text.trim(),
             skills: _skills.toList(),
+            locationId: locationId,
           );
       _refresh();
       if (mounted) Navigator.pop(context);
@@ -85,6 +99,7 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
 
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
+    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 14,
@@ -97,18 +112,67 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
             child: const Icon(FLucideIcons.x),
           ),
         ),
+        PSheetSectionLabel(label: 'freeplay.hostManage.venue'.tr()),
+        if (_canEditLocation)
+          HomeGroundField(
+            value: _locationId,
+            prefixIcon: FLucideIcons.mapPin,
+            onChanged: (id) => setState(() {
+              _locationId = id.isEmpty ? null : id;
+              _freeAddress = null;
+            }),
+            onFreeAddressChanged: (address) => setState(() {
+              _freeAddress = address;
+              if (address != null) _locationId = null;
+            }),
+          )
+        else
+          FTileGroup(
+            children: [
+              FTile(
+                prefix: const Icon(FLucideIcons.mapPin),
+                title: Text(
+                  widget.activity.venueName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  widget.activity.streetAddress.isNotEmpty
+                      ? widget.activity.streetAddress
+                      : 'freeplay.hostManage.locationLocked'.tr(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        if (!_canEditLocation)
+          Text(
+            'freeplay.hostManage.locationLocked'.tr(),
+            style: context.theme.typography.body.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
         FTextField(
           label: Text('freeplay.hostManage.capacity'.tr()),
           keyboardType: TextInputType.number,
           control: FTextFieldControl.managed(controller: _capacity),
+          onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
         ),
         FTextField(
           label: Text('freeplay.hostManage.description'.tr()),
           maxLines: 5,
           control: FTextFieldControl.managed(controller: _description),
+          onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
         ),
         PSheetSectionLabel(label: 'freeplay.hostManage.recommendedSkill'.tr()),
-        for (final value in const ['beginner', 'casual', 'fair', 'good', 'advanced'])
+        for (final value in const [
+          'beginner',
+          'casual',
+          'fair',
+          'good',
+          'advanced',
+        ])
           FCheckbox(
             value: _skills.contains(value),
             label: Text('freeplay.skill.$value'.tr()),

@@ -169,6 +169,7 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
 
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
+    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 16,
@@ -253,6 +254,8 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
                 label: Text('freeplay.hostManage.capacity'.tr()),
                 keyboardType: TextInputType.number,
                 control: FTextFieldControl.managed(controller: _capacity),
+                onTapOutside: (_) =>
+                    FocusManager.instance.primaryFocus?.unfocus(),
               ),
             ),
             const SizedBox(width: 8),
@@ -261,6 +264,8 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
                 label: Text('freeplay.hostManage.male'.tr()),
                 keyboardType: TextInputType.number,
                 control: FTextFieldControl.managed(controller: _malePrice),
+                onTapOutside: (_) =>
+                    FocusManager.instance.primaryFocus?.unfocus(),
               ),
             ),
             const SizedBox(width: 8),
@@ -269,6 +274,8 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
                 label: Text('freeplay.hostManage.female'.tr()),
                 keyboardType: TextInputType.number,
                 control: FTextFieldControl.managed(controller: _femalePrice),
+                onTapOutside: (_) =>
+                    FocusManager.instance.primaryFocus?.unfocus(),
               ),
             ),
           ],
@@ -290,6 +297,7 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
           label: Text('freeplay.hostManage.description'.tr()),
           maxLines: 5,
           control: FTextFieldControl.managed(controller: _description),
+          onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
         ),
         FButton(
           onPress: _saving ? null : _save,

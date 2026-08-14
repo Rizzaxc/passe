@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/format.dart';
+import '../core/map_directions.dart';
 import '../messaging/conversation_view.dart';
 import '../ui/main.dart';
 import 'course_controller.dart';
@@ -487,6 +488,10 @@ class _SessionCard extends ConsumerWidget {
                   _CourseSessionDetailRow(
                     icon: FLucideIcons.mapPin,
                     text: session.venueName!,
+                    subtitle: session.streetAddress,
+                    onPress: _hasCourseSessionDirections(session)
+                        ? () => _openCourseSessionDirections(context, session)
+                        : null,
                   ),
                 ],
                 if (session.note != null) ...[
@@ -570,43 +575,92 @@ const _courseCrimson = Color(0xFFDC143C);
 const _courseGreen = Color(0xFF959D54);
 const _courseGreenTint = Color(0xFFEEF2E4);
 
+bool _hasCourseSessionDirections(CourseSession session) =>
+    mapDirectionsDestination(
+      lat: session.locationLat,
+      lon: session.locationLon,
+      address: session.streetAddress,
+      label: session.venueName,
+    ) !=
+    null;
+
+Future<void> _openCourseSessionDirections(
+  BuildContext context,
+  CourseSession session,
+) => openMapDirections(
+  context,
+  lat: session.locationLat,
+  lon: session.locationLon,
+  address: session.streetAddress,
+  label: session.venueName ?? '',
+);
+
 class _CourseSessionDetailRow extends StatelessWidget {
   final IconData icon;
   final String text;
+  final String? subtitle;
   final int maxLines;
+  final VoidCallback? onPress;
 
   const _CourseSessionDetailRow({
     required this.icon,
     required this.text,
+    this.subtitle,
     this.maxLines = 1,
+    this.onPress,
   });
 
   @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: const EdgeInsets.only(top: 1),
-        child: Icon(
-          icon,
-          size: 14,
-          color: context.theme.colors.mutedForeground,
-        ),
-      ),
-      const SizedBox(width: 6),
-      Expanded(
-        child: Text(
-          text,
-          maxLines: maxLines,
-          overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.body.sm.copyWith(
-            color: context.theme.colors.secondaryForeground,
-            fontWeight: FontWeight.w500,
+  Widget build(BuildContext context) {
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(
+            icon,
+            size: 14,
+            color: context.theme.colors.mutedForeground,
           ),
         ),
-      ),
-    ],
-  );
+        const SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                text,
+                maxLines: maxLines,
+                overflow: TextOverflow.ellipsis,
+                style: context.theme.typography.body.sm.copyWith(
+                  color: context.theme.colors.secondaryForeground,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (subtitle?.trim().isNotEmpty == true)
+                Text(
+                  subtitle!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        if (onPress != null) ...[
+          const SizedBox(width: 6),
+          Icon(
+            FLucideIcons.navigation,
+            size: 14,
+            color: context.theme.colors.mutedForeground,
+          ),
+        ],
+      ],
+    );
+    return onPress == null ? row : FTappable(onPress: onPress!, child: row);
+  }
 }
 
 class _CourseRsvpControl extends StatelessWidget {
@@ -806,6 +860,9 @@ class _PastSessionTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+            onPress: _hasCourseSessionDirections(session)
+                ? () => _openCourseSessionDirections(context, session)
+                : null,
             suffix: course.isCoach
                 ? FButton(
                     variant: .outline,

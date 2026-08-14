@@ -52,12 +52,11 @@
 		</array>
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
-		<!-- Lets canLaunchUrl detect whether Zalo is installed (zalosdk:// is the
-		     scheme Zalo's own app registers for this, per its SDK integration
-		     docs) before attempting a zalo.me chat deep link — see
-		     lib/core/zalo_link.dart. -->
+		<!-- Lets canLaunchUrl detect Google Maps for the directions chooser and
+		     Zalo before attempting a chat deep link. -->
 		<key>LSApplicationQueriesSchemes</key>
 		<array>
+			<string>comgooglemaps</string>
 			<string>zalosdk</string>
 		</array>
 		<key>LSRequiresIPhoneOS</key>
