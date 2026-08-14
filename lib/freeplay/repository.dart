@@ -157,6 +157,23 @@ final freeplayChatCounterpartZaloProvider = FutureProvider.autoDispose
       return zalo?.trim().isEmpty == true ? null : zalo;
     });
 
+/// The host's own Zalo, shown next to the detail page's main CTA — unlike
+/// [freeplayChatCounterpartZaloProvider] this doesn't need an active request
+/// first: `user_contact`'s RLS already makes an active host's contact row
+/// readable by anyone (`fn_is_active_freeplay_host`), so a browsing player
+/// can reach it before ever requesting a seat. `freeplay_host` itself is
+/// RPC-only ("Freeplay Host is RPC only" RESTRICTIVE USING (false)), so the
+/// host_id -> user_id -> zalo lookup goes through a SECURITY DEFINER
+/// function rather than two direct `.from()` selects (schema/freeplay_host_zalo.sql).
+final freeplayHostZaloProvider = FutureProvider.autoDispose
+    .family<String?, String>((ref, hostId) async {
+      final zalo = await Supabase.instance.client
+          .rpc('fn_freeplay_host_zalo', params: {'p_host_id': hostId})
+          .timeout(_rpcTimeout);
+      final value = zalo as String?;
+      return value?.trim().isEmpty == true ? null : value;
+    });
+
 class FreeplayRepository {
   const FreeplayRepository();
   SupabaseClient get _client => Supabase.instance.client;

@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../auth/auth_controller.dart';
 import '../../onboarding/onboarding_controller.dart';
+import '../../router.dart';
 import '../../ui/lobby_avatar.dart';
 import 'activity/main.dart';
 import 'activity/planner_tab.dart';
@@ -238,13 +240,20 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Custom header — avatar + name only, with overflow access
-            // to the info sheet. Back nav is handled by system gesture.
+            // Custom header — avatar + name, with an explicit back button
+            // next to the overflow trigger for the info sheet.
             _LobbyHeader(
               infoKey: _tourTargets.info,
               lobbyId: widget.lobbyId,
               lobbyName: lobbyName,
               hasAvatar: infoAsync.value?.lobby.details?.hasAvatar ?? false,
+              onBackTap: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  const ManageLobbyRoute().go(context);
+                }
+              },
               onInfoTap: () {
                 if (infoAsync.value != null) {
                   showLobbyInfoSheet(context, infoAsync.value!, widget.lobbyId);
@@ -278,16 +287,16 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
 
 // ─── Header ────────────────────────────────────────────────────
 
-/// Slim lobby-detail header: oversize letter avatar + name, with a
-/// single overflow trigger for the info sheet. No back button —
-/// system back gesture handles navigation — and no captain / sport /
-/// member-count signage; those live in the info sheet now.
+/// Slim lobby-detail header: oversize letter avatar + name, with a back
+/// button and the overflow trigger for the info sheet side by side. No
+/// captain / sport / member-count signage; those live in the info sheet.
 class _LobbyHeader extends StatelessWidget {
   static const _avatarSize = 56.0;
 
   final String lobbyId;
   final String lobbyName;
   final bool hasAvatar;
+  final VoidCallback onBackTap;
   final VoidCallback onInfoTap;
   final Key? infoKey;
 
@@ -295,6 +304,7 @@ class _LobbyHeader extends StatelessWidget {
     required this.lobbyId,
     required this.lobbyName,
     required this.hasAvatar,
+    required this.onBackTap,
     required this.onInfoTap,
     this.infoKey,
   });
@@ -342,6 +352,16 @@ class _LobbyHeader extends StatelessWidget {
             ),
           ),
 
+          IconButton(
+            onPressed: onBackTap,
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 19,
+              color: colors.secondaryForeground,
+            ),
+            padding: const EdgeInsets.all(7),
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          ),
           IconButton(
             key: infoKey,
             onPressed: onInfoTap,

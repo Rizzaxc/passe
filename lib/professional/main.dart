@@ -8,10 +8,12 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../auth/auth_controller.dart';
 import '../core/feature_flags.dart';
 import '../core/format.dart';
+import '../core/icon/main.dart';
 import '../core/model/enum.dart';
 import '../core/model/location.dart';
 import '../core/model/professional_feed_item.dart';
 import '../core/state/selected_sport_state.dart';
+import '../core/zalo_link.dart';
 import '../course/course_controller.dart';
 import '../course/message_coach_sheet.dart';
 import '../router.dart';
@@ -24,10 +26,10 @@ import 'controller.dart';
 /// Still used for **referees**: they have no course flow, and there's no
 /// direct-message surface for them yet. Coaches now go through
 /// [_messageCoach] instead — messaging a coach opens their course thread.
-/// TODO: when referee messaging ships, also surface a Zalo deep-link option
-/// (see `lib/freeplay/chat_sheet.dart` / the `user_contact` table) for
-/// professionals who've set up their contact — that table's RLS today only
-/// special-cases freeplay hosts.
+/// A referee who's set up their Zalo (`professionalZalo` in controller.dart,
+/// `user_contact` table) surfaces it as a deep-link button next to this one
+/// (`_ProfileActions`) in the meantime — see
+/// `schema/user_contact_professional_visibility.sql`.
 void _showComingSoon(BuildContext context, String feature) {
   showFToast(
     context: context,
@@ -965,78 +967,109 @@ class _ProfileActions extends ConsumerWidget {
   const _ProfileActions({required this.item});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Container(
-    decoration: BoxDecoration(
-      color: context.theme.colors.background,
-      border: Border(top: BorderSide(color: pbInk.withValues(alpha: 0.1))),
-    ),
-    padding: EdgeInsets.fromLTRB(
-      18,
-      12,
-      18,
-      MediaQuery.paddingOf(context).bottom + 12,
-    ),
-    child: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720),
-        child: Row(
-          spacing: 9,
-          children: [
-            // A coach's only CTA is "message" — that's the entry point into
-            // the whole course flow: the first message creates the course (in
-            // `inquiring` state) and the coach turns it into an enrollment
-            // from their side. The RPC is idempotent, so tapping again reopens
-            // the same thread rather than starting a second one.
-            //
-            // A referee still gets the booking CTA, gated with the challenger
-            // flow it exists to serve. There is deliberately no disabled
-            // "book" button on a coach: coaching is not a booking any more,
-            // so offering one greyed-out would just be a lie about what's
-            // coming.
-            if (item.role == ProfessionalRole.coach)
-              Expanded(
-                child: FButton(
-                  style: FButtonStyleExtension.accentBlueStyle(
-                    context.theme.buttonStyles.primary.base,
+  Widget build(BuildContext context, WidgetRef ref) {
+    // The feed already excludes a coach/referee's own listing
+    // (home_professional_data_exclude_self.sql), but this page is also
+    // reachable by id directly (deep link, notification, a stale $extra) —
+    // message_coach() itself rejects self-messaging server-side, but the
+    // button shouldn't be there to tap in the first place.
+    final isOwnListing =
+        ref.watch(linkedProfessionalIdProvider).value == item.id;
+    final zalo = isOwnListing
+        ? null
+        : ref.watch(professionalZaloProvider(item.id)).value;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.theme.colors.background,
+        border: Border(top: BorderSide(color: pbInk.withValues(alpha: 0.1))),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        18,
+        12,
+        18,
+        MediaQuery.paddingOf(context).bottom + 12,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: isOwnListing
+              ? Text(
+                  'homeTab.professional.ownListing'.tr(),
+                  textAlign: TextAlign.center,
+                  style: context.theme.typography.body.sm.copyWith(
+                    color: context.theme.colors.mutedForeground,
                   ),
-                  onPress: () => _messageCoach(context, ref, item),
-                  child: Text('homeTab.professional.message'.tr()),
+                )
+              : Row(
+                  spacing: 9,
+                  children: [
+                    // A coach's only CTA is "message" — that's the entry point into
+                    // the whole course flow: the first message creates the course (in
+                    // `inquiring` state) and the coach turns it into an enrollment
+                    // from their side. The RPC is idempotent, so tapping again reopens
+                    // the same thread rather than starting a second one.
+                    //
+                    // A referee still gets the booking CTA, gated with the challenger
+                    // flow it exists to serve. There is deliberately no disabled
+                    // "book" button on a coach: coaching is not a booking any more,
+                    // so offering one greyed-out would just be a lie about what's
+                    // coming.
+                    if (item.role == ProfessionalRole.coach)
+                      Expanded(
+                        child: FButton(
+                          style: FButtonStyleExtension.accentBlueStyle(
+                            context.theme.buttonStyles.primary.base,
+                          ),
+                          onPress: () => _messageCoach(context, ref, item),
+                          child: Text('homeTab.professional.message'.tr()),
+                        ),
+                      )
+                    else
+                      Expanded(
+                        child: FButton(
+                          variant: .outline,
+                          onPress: () => _showComingSoon(
+                            context,
+                            'homeTab.professional.message'.tr(),
+                          ),
+                          child: Text('homeTab.professional.message'.tr()),
+                        ),
+                      ),
+                    if (zalo != null)
+                      FButton.icon(
+                        variant: .outline,
+                        onPress: () => openZaloChat(context, zalo),
+                        child: const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: PasseIcons.zaloLogo,
+                        ),
+                      ),
+                    if (item.role == ProfessionalRole.referee &&
+                        ClientFeatureFlags.refereeFlow)
+                      Expanded(
+                        flex: 2,
+                        child: FButton(
+                          style: FButtonStyleExtension.accentBlueStyle(
+                            context.theme.buttonStyles.primary.base,
+                          ),
+                          onPress: () {
+                            if (ref.read(currentUserIdProvider) == null) {
+                              const ProfileRoute().go(context);
+                              return;
+                            }
+                            showProfessionalBookingSheet(context, item);
+                          },
+                          child: Text('homeTab.professional.book'.tr()),
+                        ),
+                      ),
+                  ],
                 ),
-              )
-            else
-              Expanded(
-                child: FButton(
-                  variant: .outline,
-                  onPress: () => _showComingSoon(
-                    context,
-                    'homeTab.professional.message'.tr(),
-                  ),
-                  child: Text('homeTab.professional.message'.tr()),
-                ),
-              ),
-            if (item.role == ProfessionalRole.referee &&
-                ClientFeatureFlags.refereeFlow)
-              Expanded(
-                flex: 2,
-                child: FButton(
-                  style: FButtonStyleExtension.accentBlueStyle(
-                    context.theme.buttonStyles.primary.base,
-                  ),
-                  onPress: () {
-                    if (ref.read(currentUserIdProvider) == null) {
-                      const ProfileRoute().go(context);
-                      return;
-                    }
-                    showProfessionalBookingSheet(context, item);
-                  },
-                  child: Text('homeTab.professional.book'.tr()),
-                ),
-              ),
-          ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _SportChip extends StatelessWidget {

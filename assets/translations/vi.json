@@ -206,6 +206,7 @@
       "sessionCount": "{count} buổi",
       "maxParticipants": "Tối đa {count} người",
       "message": "Nhắn tin",
+      "ownListing": "Đây là hồ sơ của bạn",
       "startingFrom": "Giá từ",
       "experience": "{years} năm kinh nghiệm",
       "reviews": "{count} đánh giá",
@@ -214,7 +215,7 @@
         "referee": "Trọng Tài"
       },
       "mode": {
-        "title": "Chế Độ Chuyên Nghiệp",
+        "title": "Chế Độ HLV",
         "backToPlayer": "Tắt để quay lại hồ sơ người chơi",
         "profile": {
           "saveFailed": "Không thể lưu hồ sơ chuyên nghiệp",

@@ -44,6 +44,34 @@ Future<String?> linkedProfessionalId(Ref ref) async {
   return response?['id'] as String?;
 }
 
+/// A professional's own Zalo — the same `user_contact` row they (or, for a
+/// referee, presumably nobody yet) edit in user mode / pro mode, sourced by
+/// a two-step lookup (`professional.linked_user_id` → `user_contact.zalo`)
+/// rather than widening `home_professional_data`'s return shape. Readable
+/// regardless of `zalo_public`/friendship — see
+/// `schema/user_contact_professional_visibility.sql`. `null` when unlinked
+/// or unset, which callers treat as "no Zalo button".
+@riverpod
+Future<String?> professionalZalo(Ref ref, String professionalId) async {
+  final pro = await Supabase.instance.client
+      .from('professional')
+      .select('linked_user_id')
+      .eq('id', professionalId)
+      .maybeSingle()
+      .timeout(const Duration(seconds: 5));
+  final linkedUserId = pro?['linked_user_id'] as String?;
+  if (linkedUserId == null) return null;
+
+  final contact = await Supabase.instance.client
+      .from('user_contact')
+      .select('zalo')
+      .eq('user_id', linkedUserId)
+      .maybeSingle()
+      .timeout(const Duration(seconds: 5));
+  final zalo = contact?['zalo'] as String?;
+  return zalo?.trim().isEmpty == true ? null : zalo;
+}
+
 /// Whether the signed-in user's linked professional profile is a **coach**
 /// (as opposed to a referee). Pro mode branches on this: a coach runs courses,
 /// a referee runs bookings.

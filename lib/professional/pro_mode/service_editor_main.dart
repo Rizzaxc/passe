@@ -5,10 +5,14 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../core/format.dart';
+import '../../core/icon/main.dart';
 import '../../core/model/enum.dart';
 import '../../core/model/timeslot.dart';
+import '../../core/model/user_contact.dart';
 import '../../core/state/pro_mode_state.dart';
 import '../../core/timeslot_picker.dart';
+import '../../profile_tab/edit_zalo_sheet.dart';
+import '../../profile_tab/user_contact_controller.dart';
 import '../../ui/main.dart';
 import 'pro_profile_controller.dart';
 import 'service_editor_controller.dart';
@@ -173,6 +177,12 @@ class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
     final saving = ref.watch(
       proProfileEditControllerProvider(widget.professionalId),
     );
+    // Same `user_contact` row user mode edits, via the same edit sheet — pro
+    // mode fully replaces the player profile screen, so without this the
+    // Zalo tile is unreachable while pro mode is on. `contactPhone` above is
+    // a separate, unrelated field (professional.contact_details.phone).
+    final myContact =
+        ref.watch(userContactControllerProvider).value ?? const UserContact();
 
     return Form(
       key: _formKey,
@@ -214,6 +224,32 @@ class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
                 'homeTab.professional.mode.profile.contactPhone'.tr(),
               ),
               control: FTextFieldControl.managed(controller: _phoneCtrl),
+            ),
+            FTileGroup(
+              children: [
+                FTile(
+                  suffix: myContact.zaloPublic
+                      ? Icon(
+                          FLucideIcons.globe,
+                          color: context.theme.colors.primary,
+                        )
+                      : null,
+                  title: const SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: PasseIcons.zaloLogo,
+                  ),
+                  details: Text(
+                    myContact.zalo ?? 'notSet'.tr(),
+                    style: TextStyle(
+                      color: myContact.zalo != null
+                          ? context.theme.colors.primary
+                          : context.theme.colors.mutedForeground,
+                    ),
+                  ),
+                  onPress: () => showEditZaloSheet(context, myContact),
+                ),
+              ],
             ),
             Text(
               'homeTab.professional.mode.profile.availability'.tr(),

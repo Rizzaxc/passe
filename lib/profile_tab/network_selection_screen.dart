@@ -20,6 +20,10 @@ class NetworkSelectionScreen extends HookConsumerWidget {
     final networkController = ref.read(networkControllerProvider.notifier);
 
     return FScaffold(
+      // Keep the page itself stable and let the scroll view own the keyboard
+      // inset, matching the welcome auth form. Resizing this pushed scaffold
+      // leaves a second-looking band above the IME inside the tab shell.
+      resizeToAvoidBottomInset: false,
       header: FHeader.nested(
         title: Text('profile.networkLabel'.tr()),
         prefixes: [
@@ -27,7 +31,11 @@ class NetworkSelectionScreen extends HookConsumerWidget {
         ],
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: EdgeInsets.only(
+          top: 16,
+          bottom: 16 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
         child: Column(
           spacing: 4,
           children: [

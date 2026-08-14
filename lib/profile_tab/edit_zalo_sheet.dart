@@ -72,7 +72,6 @@ class _EditZaloSheetState extends ConsumerState<_EditZaloSheet> {
       FTile(
         prefix: const Icon(FLucideIcons.globe),
         title: Text('profile.zaloMakePublic'.tr()),
-        subtitle: Text('profile.zaloMakePublicHint'.tr()),
         details: FSwitch(
           value: _public,
           onChange: (v) => setState(() => _public = v),

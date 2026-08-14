@@ -6,8 +6,8 @@ import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../core/feature_flags.dart';
 import '../core/model/enum.dart';
-import '../core/model/timeslot.dart';
 import '../core/state/selected_sport_state.dart';
+import '../core/timeslot_picker.dart';
 import '../core/user_preferences.dart';
 import '../social/friends_screen.dart';
 import '../ui/district_select.dart';
@@ -112,8 +112,6 @@ class FilterSheet extends ConsumerStatefulWidget {
 class _FilterSheetState extends ConsumerState<FilterSheet> {
   late TextEditingController _searchController;
   final ScrollController _scrollController = ScrollController();
-  DayChunk _pendingDayChunk = DayChunk.night;
-  DayOfWeek _pendingDayOfWeek = DayOfWeek.weekend;
 
   final _confirmKey = GlobalKey(debugLabel: 'filter.confirm');
 
@@ -459,93 +457,27 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 },
               ),
               // Same gap the Location section uses between its city
-              // and district fields, so the picker row visually
+              // and district fields, so the add-button visually
               // separates from the selected-timeslot chip strip
               // above it.
               const SizedBox(height: 8),
-              Row(
-                spacing: 8,
-                // .center keeps the ghost add-button vertically
-                // centred on the field row — `.end` anchored it to
-                // the bottom, which both looked slightly off and let
-                // the pressed-state highlight bleed below the row.
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: FSelect<DayChunk>.rich(
-                      hint: _pendingDayChunk.getFullName(context),
-                      format: (chunk) => chunk.getFullName(context),
-                      autoHide: true,
-                      // Default popover width matches the trigger's own
-                      // width (`FAutoWidthPortalConstraints`), which is only
-                      // half the row here — long labels like "Trưa
-                      // (9h-14h)" got clipped when the dropdown opened.
-                      // A bounded (not infinite — that crashes layout with
-                      // "given an infinite size") maxWidth lets it show the
-                      // full label instead of matching the trigger.
-                      contentConstraints: const FPortalConstraints(
-                        maxWidth: 130,
-                        maxHeight: 300,
-                      ),
-                      control: FSelectControl.lifted(
-                        value: _pendingDayChunk,
-                        onChange: (chunk) {
-                          if (chunk != null) {
-                            setState(() => _pendingDayChunk = chunk);
-                          }
-                        },
-                      ),
-                      children: [
-                        for (final chunk in DayChunk.values)
-                          FSelectItem<DayChunk>(
-                            title: Text(chunk.getFullName(context)),
-                            value: chunk,
-                          ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: FSelect<DayOfWeek>.rich(
-                      hint: _pendingDayOfWeek.getFullName(context),
-                      format: (day) => day.getFullName(context),
-                      autoHide: true,
-                      contentConstraints: const FPortalConstraints(
-                        maxWidth: 130,
-                        maxHeight: 300,
-                      ),
-                      control: FSelectControl.lifted(
-                        value: _pendingDayOfWeek,
-                        onChange: (day) {
-                          if (day != null) {
-                            setState(() => _pendingDayOfWeek = day);
-                          }
-                        },
-                      ),
-                      children: [
-                        for (final day in DayOfWeek.values)
-                          FSelectItem<DayOfWeek>(
-                            title: Text(day.getFullName(context)),
-                            value: day,
-                          ),
-                      ],
-                    ),
-                  ),
-                  FButton.icon(
-                    variant: .ghost,
-                    onPress: () {
-                      final timeslot = Timeslot(
-                        _pendingDayOfWeek,
-                        _pendingDayChunk,
-                      );
-                      final updated = [...filter.schedule];
-                      if (!updated.contains(timeslot)) {
-                        updated.add(timeslot);
-                        notifier.setSchedule(updated);
-                      }
-                    },
-                    child: const Icon(FLucideIcons.plus),
-                  ),
-                ],
+              SizedBox(
+                width: double.infinity,
+                child: FButton(
+                  variant: .outline,
+                  onPress: () async {
+                    final timeslot = await showTimeslotPicker(
+                      context: context,
+                    );
+                    if (timeslot == null) return;
+                    final updated = [...filter.schedule];
+                    if (!updated.contains(timeslot)) {
+                      updated.add(timeslot);
+                      notifier.setSchedule(updated);
+                    }
+                  },
+                  child: const Icon(FLucideIcons.plus),
+                ),
               ),
             ],
           ),

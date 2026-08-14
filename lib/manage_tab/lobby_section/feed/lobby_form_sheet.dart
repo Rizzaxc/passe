@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/model/enum.dart';
 import '../../../core/model/lobby.dart';
 import '../../../core/model/timeslot.dart';
+import '../../../core/timeslot_picker.dart';
 import '../../../notifications/notification_service.dart';
 import '../../../ui/main.dart';
 import 'home_ground_selector.dart';
@@ -42,9 +43,6 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
   final _formKey = GlobalKey<FormState>(debugLabel: 'lobby_form');
   late final TextEditingController _nameController;
   final ScrollController _scrollController = ScrollController();
-
-  DayChunk _pendingDayChunk = DayChunk.night;
-  DayOfWeek _pendingDayOfWeek = DayOfWeek.weekend;
 
   @override
   void initState() {
@@ -185,14 +183,7 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
             // Playtime
             _TimeslotSection(
               playtime: lobby.playtime ?? [],
-              pendingDayChunk: _pendingDayChunk,
-              pendingDayOfWeek: _pendingDayOfWeek,
-              onDayChunkChanged: (chunk) =>
-                  setState(() => _pendingDayChunk = chunk),
-              onDayOfWeekChanged: (day) =>
-                  setState(() => _pendingDayOfWeek = day),
-              onAdd: () {
-                final timeslot = Timeslot(_pendingDayOfWeek, _pendingDayChunk);
+              onAdd: (timeslot) {
                 final updated = <Timeslot>[...(lobby.playtime ?? [])];
                 if (!updated.contains(timeslot)) {
                   updated.add(timeslot);
@@ -346,19 +337,11 @@ class _AvatarSection extends StatelessWidget {
 
 class _TimeslotSection extends StatelessWidget {
   final List<Timeslot> playtime;
-  final DayChunk pendingDayChunk;
-  final DayOfWeek pendingDayOfWeek;
-  final ValueChanged<DayChunk> onDayChunkChanged;
-  final ValueChanged<DayOfWeek> onDayOfWeekChanged;
-  final VoidCallback onAdd;
+  final ValueChanged<Timeslot> onAdd;
   final ValueChanged<Timeslot> onRemove;
 
   const _TimeslotSection({
     required this.playtime,
-    required this.pendingDayChunk,
-    required this.pendingDayOfWeek,
-    required this.onDayChunkChanged,
-    required this.onDayOfWeekChanged,
     required this.onAdd,
     required this.onRemove,
   });
@@ -458,65 +441,17 @@ class _TimeslotSection extends StatelessWidget {
           ),
         ),
 
-        // Pickers row
-        Row(
-          spacing: 8,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: FSelect<DayChunk>.rich(
-                hint: pendingDayChunk.getFullName(context),
-                format: (chunk) => chunk.getFullName(context),
-                autoHide: true,
-                contentConstraints: const FPortalConstraints(
-                  maxWidth: 180,
-                  maxHeight: 300,
-                ),
-                control: FSelectControl.lifted(
-                  value: pendingDayChunk,
-                  onChange: (chunk) {
-                    if (chunk != null) onDayChunkChanged(chunk);
-                  },
-                ),
-                children: [
-                  for (final chunk in DayChunk.values)
-                    FSelectItem<DayChunk>(
-                      title: Text(chunk.getFullName(context)),
-                      value: chunk,
-                    ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: FSelect<DayOfWeek>.rich(
-                hint: pendingDayOfWeek.getFullName(context),
-                format: (day) => day.getFullName(context),
-                autoHide: true,
-                contentConstraints: const FPortalConstraints(
-                  maxWidth: 180,
-                  maxHeight: 300,
-                ),
-                control: FSelectControl.lifted(
-                  value: pendingDayOfWeek,
-                  onChange: (day) {
-                    if (day != null) onDayOfWeekChanged(day);
-                  },
-                ),
-                children: [
-                  for (final day in DayOfWeek.values)
-                    FSelectItem<DayOfWeek>(
-                      title: Text(day.getFullName(context)),
-                      value: day,
-                    ),
-                ],
-              ),
-            ),
-            FButton.icon(
-              variant: .ghost,
-              onPress: onAdd,
-              child: const Icon(FLucideIcons.plus),
-            ),
-          ],
+        // Add button — opens the wheel picker sheet
+        SizedBox(
+          width: double.infinity,
+          child: FButton(
+            variant: .outline,
+            onPress: () async {
+              final timeslot = await showTimeslotPicker(context: context);
+              if (timeslot != null) onAdd(timeslot);
+            },
+            child: const Icon(FLucideIcons.plus),
+          ),
         ),
       ],
     );

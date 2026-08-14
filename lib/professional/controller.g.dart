@@ -170,6 +170,114 @@ final class LinkedProfessionalIdProvider
 String _$linkedProfessionalIdHash() =>
     r'b58d26f84e9f8ef9f8f4fe13f3a0ab285f807134';
 
+/// A professional's own Zalo — the same `user_contact` row they (or, for a
+/// referee, presumably nobody yet) edit in user mode / pro mode, sourced by
+/// a two-step lookup (`professional.linked_user_id` → `user_contact.zalo`)
+/// rather than widening `home_professional_data`'s return shape. Readable
+/// regardless of `zalo_public`/friendship — see
+/// `schema/user_contact_professional_visibility.sql`. `null` when unlinked
+/// or unset, which callers treat as "no Zalo button".
+
+@ProviderFor(professionalZalo)
+final professionalZaloProvider = ProfessionalZaloFamily._();
+
+/// A professional's own Zalo — the same `user_contact` row they (or, for a
+/// referee, presumably nobody yet) edit in user mode / pro mode, sourced by
+/// a two-step lookup (`professional.linked_user_id` → `user_contact.zalo`)
+/// rather than widening `home_professional_data`'s return shape. Readable
+/// regardless of `zalo_public`/friendship — see
+/// `schema/user_contact_professional_visibility.sql`. `null` when unlinked
+/// or unset, which callers treat as "no Zalo button".
+
+final class ProfessionalZaloProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  /// A professional's own Zalo — the same `user_contact` row they (or, for a
+  /// referee, presumably nobody yet) edit in user mode / pro mode, sourced by
+  /// a two-step lookup (`professional.linked_user_id` → `user_contact.zalo`)
+  /// rather than widening `home_professional_data`'s return shape. Readable
+  /// regardless of `zalo_public`/friendship — see
+  /// `schema/user_contact_professional_visibility.sql`. `null` when unlinked
+  /// or unset, which callers treat as "no Zalo button".
+  ProfessionalZaloProvider._({
+    required ProfessionalZaloFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'professionalZaloProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$professionalZaloHash();
+
+  @override
+  String toString() {
+    return r'professionalZaloProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    final argument = this.argument as String;
+    return professionalZalo(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ProfessionalZaloProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$professionalZaloHash() => r'bab19533100e1017dfcbe4cf095b3b1b62b8858a';
+
+/// A professional's own Zalo — the same `user_contact` row they (or, for a
+/// referee, presumably nobody yet) edit in user mode / pro mode, sourced by
+/// a two-step lookup (`professional.linked_user_id` → `user_contact.zalo`)
+/// rather than widening `home_professional_data`'s return shape. Readable
+/// regardless of `zalo_public`/friendship — see
+/// `schema/user_contact_professional_visibility.sql`. `null` when unlinked
+/// or unset, which callers treat as "no Zalo button".
+
+final class ProfessionalZaloFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<String?>, String> {
+  ProfessionalZaloFamily._()
+    : super(
+        retry: null,
+        name: r'professionalZaloProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A professional's own Zalo — the same `user_contact` row they (or, for a
+  /// referee, presumably nobody yet) edit in user mode / pro mode, sourced by
+  /// a two-step lookup (`professional.linked_user_id` → `user_contact.zalo`)
+  /// rather than widening `home_professional_data`'s return shape. Readable
+  /// regardless of `zalo_public`/friendship — see
+  /// `schema/user_contact_professional_visibility.sql`. `null` when unlinked
+  /// or unset, which callers treat as "no Zalo button".
+
+  ProfessionalZaloProvider call(String professionalId) =>
+      ProfessionalZaloProvider._(argument: professionalId, from: this);
+
+  @override
+  String toString() => r'professionalZaloProvider';
+}
+
 /// Whether the signed-in user's linked professional profile is a **coach**
 /// (as opposed to a referee). Pro mode branches on this: a coach runs courses,
 /// a referee runs bookings.

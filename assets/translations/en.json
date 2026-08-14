@@ -207,6 +207,7 @@
       "sessionCount": "{count} sessions",
       "maxParticipants": "Up to {count} people",
       "message": "Message",
+      "ownListing": "This is your own listing",
       "startingFrom": "From",
       "experience": "{years} years experience",
       "reviews": "{count} reviews",

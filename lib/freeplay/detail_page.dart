@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../auth/guest_prompt.dart';
+import '../core/icon/main.dart';
 import '../core/map_directions.dart';
+import '../core/zalo_link.dart';
 import '../router.dart';
 import '../ui/main.dart';
 import 'card.dart';
@@ -185,6 +187,9 @@ class _BodyState extends ConsumerState<_Body> {
         !ended &&
         !a.isFull &&
         (status == null || status == FreeplayRequestStatus.cancelled);
+    final hostZalo = !isHost
+        ? ref.watch(freeplayHostZaloProvider(a.hostId)).value
+        : null;
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(freeplayDetailProvider(a.id));
@@ -333,9 +338,27 @@ class _BodyState extends ConsumerState<_Body> {
           ],
           const SizedBox(height: 24),
           if (chatWritable)
-            FButton(
-              onPress: () => showFreeplayChatSheet(context, a.myRequestId!),
-              child: Text('freeplay.openChat'.tr()),
+            Row(
+              spacing: 8,
+              children: [
+                Expanded(
+                  child: FButton(
+                    onPress: () =>
+                        showFreeplayChatSheet(context, a.myRequestId!),
+                    child: Text('freeplay.openChat'.tr()),
+                  ),
+                ),
+                if (hostZalo != null)
+                  FButton.icon(
+                    variant: .outline,
+                    onPress: () => openZaloChat(context, hostZalo),
+                    child: const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: PasseIcons.zaloLogo,
+                    ),
+                  ),
+              ],
             ),
           if (chatWritable && canCancel) const SizedBox(height: 8),
           if (canCancel)
@@ -349,9 +372,26 @@ class _BodyState extends ConsumerState<_Body> {
               ),
             ),
           if (canRequest)
-            FButton(
-              onPress: _busy ? null : _request,
-              child: Text('freeplay.requestSeat'.tr()),
+            Row(
+              spacing: 8,
+              children: [
+                Expanded(
+                  child: FButton(
+                    onPress: _busy ? null : _request,
+                    child: Text('freeplay.requestSeat'.tr()),
+                  ),
+                ),
+                if (hostZalo != null)
+                  FButton.icon(
+                    variant: .outline,
+                    onPress: () => openZaloChat(context, hostZalo),
+                    child: const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: PasseIcons.zaloLogo,
+                    ),
+                  ),
+              ],
             ),
           if (isHost)
             Text('freeplay.youAreHost'.tr(), textAlign: TextAlign.center),

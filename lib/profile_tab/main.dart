@@ -115,6 +115,12 @@ class _HostProfileViewState extends ConsumerState<_HostProfileView> {
     final displayNameAsync = ref.watch(
       myHostDisplayNameProvider(widget.host.id),
     );
+    // Same `user_contact` row user mode edits — host mode fully replaces the
+    // player profile screen, so without this the Zalo tile is unreachable
+    // while host mode is on, even though the freeplay chat sheet already
+    // reads this exact field for players contacting the host.
+    final myContact =
+        ref.watch(userContactControllerProvider).value ?? const UserContact();
     ref.listen(myHostDisplayNameProvider(widget.host.id), (previous, next) {
       final latestName = next.value;
       final previousName = previous?.value ?? widget.host.displayName;
@@ -197,6 +203,30 @@ class _HostProfileViewState extends ConsumerState<_HostProfileView> {
               ),
             ],
           ),
+        ),
+        const SizedBox(height: 16),
+        FTileGroup(
+          children: [
+            FTile(
+              suffix: myContact.zaloPublic
+                  ? Icon(FLucideIcons.globe, color: context.theme.colors.primary)
+                  : null,
+              title: const SizedBox(
+                width: 32,
+                height: 32,
+                child: PasseIcons.zaloLogo,
+              ),
+              details: Text(
+                myContact.zalo ?? 'notSet'.tr(),
+                style: TextStyle(
+                  color: myContact.zalo != null
+                      ? context.theme.colors.primary
+                      : context.theme.colors.mutedForeground,
+                ),
+              ),
+              onPress: () => showEditZaloSheet(context, myContact),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         Text(
