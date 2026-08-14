@@ -968,6 +968,11 @@ mixin $LobbyDetailRoute on GoRouteData {
     tab: _$convertMapValue('tab', state.uri.queryParameters, int.tryParse),
     highlightActivityId: state.uri.queryParameters['highlight-activity-id'],
     highlightChallengeId: state.uri.queryParameters['highlight-challenge-id'],
+    openActivityPlanner: _$convertMapValue(
+      'open-activity-planner',
+      state.uri.queryParameters,
+      _$boolConverter,
+    ),
     $extra: state.extra as String?,
   );
 
@@ -982,6 +987,8 @@ mixin $LobbyDetailRoute on GoRouteData {
         'highlight-activity-id': _self.highlightActivityId,
       if (_self.highlightChallengeId != null)
         'highlight-challenge-id': _self.highlightChallengeId,
+      if (_self.openActivityPlanner != null)
+        'open-activity-planner': _self.openActivityPlanner!.toString(),
     },
   );
 

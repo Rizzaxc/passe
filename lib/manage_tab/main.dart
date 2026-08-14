@@ -21,7 +21,7 @@ import 'schedule_section/main.dart';
 ///
 /// Both OS push taps and the in-app notification center resolve to
 /// `ManageRequestsRoute`. That route must not rely on the user's last saved
-/// mode: index 1 is Lobby in player mode and Requests in professional mode.
+/// mode: index 0 is Lobby in player mode and Requests in referee mode.
 /// Wait for both lookups, verify this is still a linked professional, then
 /// activate professional mode before mounting the requested tab.
 class ProfessionalRequestsLanding extends ConsumerWidget {
@@ -43,7 +43,7 @@ class ProfessionalRequestsLanding extends ConsumerWidget {
 
     final professionalId = professionalAsync.asData?.value;
     if (professionalId == null) {
-      return ManageTab.withInitialTab(0);
+      return ManageTab.withInitialTab(ManageTab.scheduleIndex);
     }
 
     final proModeActive = modeAsync.asData?.value ?? false;
@@ -56,18 +56,77 @@ class ProfessionalRequestsLanding extends ConsumerWidget {
       return const FScaffold(child: Center(child: CircularProgressIndicator()));
     }
 
-    return ManageTab.withInitialTab(1, highlightBookingId: highlightBookingId);
+    return ManageTab.withInitialTab(
+      ManageTab.primaryIndex,
+      highlightBookingId: highlightBookingId,
+    );
+  }
+}
+
+/// Mode-aware landing for `/manage/course` notification fallbacks.
+///
+/// Player mode keeps Course third, while coach mode now puts Courses first.
+/// Referee and host modes have no course surface, so leave those modes before
+/// mounting the player's course hub rather than clamping to an unrelated tab.
+class CourseHubLanding extends ConsumerWidget {
+  const CourseHubLanding({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final modeAsync = ref.watch(proModeStateProvider);
+    final hostModeAsync = ref.watch(hostModeStateProvider);
+
+    if (modeAsync.isLoading || hostModeAsync.isLoading) {
+      return const FScaffold(child: Center(child: CircularProgressIndicator()));
+    }
+
+    final proModeActive = modeAsync.asData?.value ?? false;
+    final hostModeActive = hostModeAsync.asData?.value ?? false;
+
+    if (hostModeActive) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(hostModeStateProvider.notifier).set(false);
+      });
+      return const FScaffold(child: Center(child: CircularProgressIndicator()));
+    }
+
+    if (!proModeActive) {
+      return ManageTab.withInitialTab(ManageTab.playerCourseIndex);
+    }
+
+    final isCoachAsync = ref.watch(isLinkedCoachProvider);
+    if (isCoachAsync.isLoading) {
+      return const FScaffold(child: Center(child: CircularProgressIndicator()));
+    }
+    if (isCoachAsync.asData?.value ?? false) {
+      return ManageTab.withInitialTab(ManageTab.primaryIndex);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(proModeStateProvider.notifier).set(false);
+    });
+    return const FScaffold(child: Center(child: CircularProgressIndicator()));
   }
 }
 
 class ManageTab extends StatefulWidget {
+  /// Index contract shared by every Manage mode: the mode's primary hub is
+  /// first and its schedule is second.
+  static const primaryIndex = 0;
+  static const scheduleIndex = 1;
+  static const playerCourseIndex = 2;
+
   final int initialIndex;
 
   // Set from a professional_booking_requested notification tap — threaded
   // down to ProPendingRequestsSection to scroll/highlight that one card.
   final String? highlightBookingId;
 
-  const ManageTab({super.key, this.initialIndex = 0, this.highlightBookingId});
+  const ManageTab({
+    super.key,
+    this.initialIndex = primaryIndex,
+    this.highlightBookingId,
+  });
 
   static final instance = ManageTab();
 
@@ -82,11 +141,19 @@ class ManageTab extends StatefulWidget {
   }
 
   static const manageSections = <FTabEntry>[
-    FTabEntry(child: ScheduleSection(), label: Icon(FLucideIcons.calendarDays)),
     FTabEntry(child: LobbySubtab(), label: Icon(FLucideIcons.users)),
+    FTabEntry(child: ScheduleSection(), label: Icon(FLucideIcons.calendarDays)),
     FTabEntry(
       child: CourseHubSection(),
       label: Icon(FLucideIcons.graduationCap),
+    ),
+  ];
+
+  static const hostManageSections = <FTabEntry>[
+    FTabEntry(child: HostFreeplaySection(), label: Icon(FLucideIcons.ticket)),
+    FTabEntry(
+      child: HostFreeplaySection(scheduleOnly: true),
+      label: Icon(FLucideIcons.calendarDays),
     ),
   ];
 
@@ -99,12 +166,6 @@ class ManageTab extends StatefulWidget {
     String? highlightBookingId,
     bool isCoach = false,
   }) => [
-    FTabEntry(
-      child: isCoach
-          ? const ScheduleSection()
-          : ProScheduleSection(professionalId: professionalId),
-      label: const Icon(FLucideIcons.calendarDays),
-    ),
     if (isCoach)
       const FTabEntry(
         child: ProCoursesSection(),
@@ -118,6 +179,12 @@ class ManageTab extends StatefulWidget {
         ),
         label: const Icon(FLucideIcons.inbox),
       ),
+    FTabEntry(
+      child: isCoach
+          ? const ScheduleSection()
+          : ProScheduleSection(professionalId: professionalId),
+      label: const Icon(FLucideIcons.calendarDays),
+    ),
     // History means different things per role: a coach's past work is ended
     // courses, and `ProBookingHistorySection` reads `referee_booking` — which
     // a coach can never have a row in, so it would sit permanently empty.
@@ -162,16 +229,7 @@ class _ManageTabState extends State<ManageTab> {
         final hostModeActive =
             ref.watch(hostModeStateProvider).asData?.value ?? false;
         final sections = linkedHost != null && hostModeActive
-            ? const <FTabEntry>[
-                FTabEntry(
-                  child: HostFreeplaySection(scheduleOnly: true),
-                  label: Icon(FLucideIcons.calendarDays),
-                ),
-                FTabEntry(
-                  child: HostFreeplaySection(),
-                  label: Icon(FLucideIcons.ticket),
-                ),
-              ]
+            ? ManageTab.hostManageSections
             : linkedProfessionalId != null && proModeActive
             ? ManageTab.proManageSections(
                 linkedProfessionalId,

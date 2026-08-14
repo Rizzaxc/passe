@@ -56,9 +56,7 @@ class ProBookingItem {
           ProfessionalBookingStatus.requested,
       clientNotes: json['client_notes'] as String?,
       professionalNotes: json['professional_notes'] as String?,
-      locationName:
-          location?['name'] as String? ??
-          json['custom_location_name'] as String?,
+      locationName: location?['name'] as String?,
       match: RefereedMatch.fromEmbed(json['activity']),
     );
   }
@@ -119,7 +117,7 @@ class RefereedMatch {
 
 const _proSelectColumns = '''
   id, booking_time_start, booking_time_end, agreed_rate, status,
-  client_notes, professional_notes, package_id, custom_location_name,
+  client_notes, professional_notes, package_id,
   client:client_user_id(username),
   professional_service(service_type),
   location(name),

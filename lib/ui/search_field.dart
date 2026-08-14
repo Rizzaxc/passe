@@ -28,6 +28,13 @@ class PSearchField<T> extends StatefulWidget {
   final String Function(T item)? displayStringForOption;
   final ValueChanged<T>? onSuggestionSelected;
 
+  /// Caption shown above the suggestion list next to a close (X) button that
+  /// hides the dropdown without picking anything or clearing the typed text —
+  /// the escape hatch for "none of these are it, let me keep typing/fill the
+  /// fields myself." Defaults to a plain Vietnamese caption; pass a
+  /// localized string to override.
+  final String dismissLabel;
+
   const PSearchField({
     super.key,
     this.hint,
@@ -39,6 +46,7 @@ class PSearchField<T> extends StatefulWidget {
     this.formatSuggestion = _defaultFormat,
     this.displayStringForOption,
     this.onSuggestionSelected,
+    this.dismissLabel = 'Không đúng địa điểm của bạn?',
   });
 
   static Widget _defaultFormat(BuildContext context, dynamic item) =>
@@ -161,6 +169,8 @@ class _PSearchFieldState<T> extends State<PSearchField<T>> {
               suggestions: _suggestions,
               formatSuggestion: widget.formatSuggestion,
               onSelected: _select,
+              dismissLabel: widget.dismissLabel,
+              onDismiss: () => _overlayController.hide(),
             ),
           ),
         ),
@@ -178,11 +188,15 @@ class _SuggestionDropdown<T> extends StatelessWidget {
   final List<T> suggestions;
   final Widget Function(BuildContext, T) formatSuggestion;
   final ValueChanged<T> onSelected;
+  final String dismissLabel;
+  final VoidCallback onDismiss;
 
   const _SuggestionDropdown({
     required this.suggestions,
     required this.formatSuggestion,
     required this.onSelected,
+    required this.dismissLabel,
+    required this.onDismiss,
   });
 
   @override
@@ -197,28 +211,60 @@ class _SuggestionDropdown<T> extends StatelessWidget {
           border: Border.all(color: colors.border, width: style.borderWidth),
           boxShadow: style.shadow,
         ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 220),
-          child: ListView.separated(
-            padding: EdgeInsets.zero,
-            shrinkWrap: true,
-            itemCount: suggestions.length,
-            separatorBuilder: (_, _) => Divider(
-              height: 1,
-              color: colors.border,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      dismissLabel,
+                      style: context.theme.typography.body.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ),
+                  FTappable(
+                    onPress: onDismiss,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        FLucideIcons.x,
+                        size: 14,
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            itemBuilder: (context, i) {
-              final item = suggestions[i];
-              return FTappable(
-                onPress: () => onSelected(item),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
-                  child: formatSuggestion(context, item),
+            Divider(height: 1, color: colors.border),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: ListView.separated(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: suggestions.length,
+                separatorBuilder: (_, _) => Divider(
+                  height: 1,
+                  color: colors.border,
                 ),
-              );
-            },
-          ),
+                itemBuilder: (context, i) {
+                  final item = suggestions[i];
+                  return FTappable(
+                    onPress: () => onSelected(item),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      child: formatSuggestion(context, item),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
     );
   }

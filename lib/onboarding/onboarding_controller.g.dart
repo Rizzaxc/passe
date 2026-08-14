@@ -42,7 +42,7 @@ final class OnboardingStateProvider
   OnboardingState create() => OnboardingState();
 }
 
-String _$onboardingStateHash() => r'3114c353eb5e2d2ed6902efa76e4bfe0c26cf715';
+String _$onboardingStateHash() => r'd8f485711f59642493f19a3f8938762530e1b909';
 
 /// Persisted onboarding status — the single source of truth `router.dart`'s
 /// `redirect` gates on (`coreDone`) and the shell's coach-mark pass consumes

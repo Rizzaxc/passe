@@ -7,14 +7,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/model/enum.dart';
 import '../../../core/model/location.dart';
 import '../../../ui/district_select.dart';
-import '../../../ui/pill_toggle.dart';
 import '../../../ui/search_field.dart';
 import 'lobby_controller.dart';
 
-/// Typeahead field for selecting a named PoI.
-/// Once a location is picked the field switches to a tile display.
-/// A toggle lets the user switch to free-text mode with structured address fields;
-/// in that mode [onFreeAddressChanged] is called instead of [onChanged].
+/// Typeahead + manual-entry field for selecting a named PoI, merged into one
+/// continuous form — there's no mode toggle to discover. Typing in the name
+/// field searches; picking a suggestion auto-fills the structured address
+/// rows below and collapses to a compact summary tile. Typing without
+/// picking (or editing any field after a pick) is a valid manual entry as
+/// -is — there's no separate "add" button. The caller is responsible for
+/// resolving the current draft (a picked [Location] id via [onChanged], or a
+/// free-text draft via [onFreeAddressChanged]) into a real `location_id` at
+/// its own submit time — see `lib/core/location_repository.dart`'s
+/// `resolveLocationId`.
 class HomeGroundField extends ConsumerStatefulWidget {
   final String? value;
   final ValueChanged<String> onChanged;
@@ -42,20 +47,29 @@ class HomeGroundField extends ConsumerStatefulWidget {
 }
 
 class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
-  late final TextEditingController _controller;
   late final TextEditingController _nameCtrl;
   late final TextEditingController _streetNumberCtrl;
   late final TextEditingController _streetNameCtrl;
-  Location? _selected;
-  bool _freeTextMode = false;
   City? _selectedCity;
   District? _selectedDistrict;
+
+  /// The location the current fields cleanly correspond to, if any.
+  /// Non-null renders the compact summary tile; null renders the editable
+  /// form. Set by picking a typeahead suggestion, cleared the moment the
+  /// user actually edits a field afterward.
+  Location? _selected;
+
+  /// Guards programmatic field writes (prefilling from a picked location on
+  /// edit, or hydrating from [HomeGroundField.value]) from being mistaken
+  /// for a user edit — so opening the edit view and saving without changing
+  /// anything keeps reusing the original location instead of silently
+  /// reporting a duplicate free-text draft.
+  bool _prefilling = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController()..addListener(_onControllerChanged);
-    _nameCtrl = TextEditingController()..addListener(_onControllerChanged);
+    _nameCtrl = TextEditingController();
     _streetNumberCtrl = TextEditingController();
     _streetNameCtrl = TextEditingController();
     _hydrateFromValue();
@@ -66,16 +80,13 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
     super.didUpdateWidget(old);
     // Re-hydrate if the caller pushed a new id in (e.g. the lobby
     // controller's data landed after first build).
-    if (widget.value != old.value && _selected == null && !_freeTextMode) {
+    if (widget.value != old.value && _selected == null) {
       _hydrateFromValue();
     }
   }
 
   /// Look up the location row identified by `widget.value` so the
-  /// picker can render it as already-selected on first paint. The
-  /// previous behavior was to ignore the prop entirely and force the
-  /// user to re-search even when they were just defaulting to the
-  /// lobby's existing home ground.
+  /// picker can render it as already-selected on first paint.
   Future<void> _hydrateFromValue() async {
     final id = widget.value;
     if (id == null || id.isEmpty) return;
@@ -100,11 +111,8 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
   /// assumption the surrounding section title is doing the labelling.
   bool get _showOuterLabel => widget.prefixIcon == null;
 
-  void _onControllerChanged() => setState(() {});
-
   @override
   void dispose() {
-    _controller.dispose();
     _nameCtrl.dispose();
     _streetNumberCtrl.dispose();
     _streetNameCtrl.dispose();
@@ -112,62 +120,77 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
   }
 
   void _clear() {
-    setState(() => _selected = null);
-    _controller.clear();
-    widget.onChanged('');
-  }
-
-  void _toggleMode() {
     setState(() {
-      _freeTextMode = !_freeTextMode;
       _selected = null;
-      _controller.clear();
       _nameCtrl.clear();
       _streetNumberCtrl.clear();
       _streetNameCtrl.clear();
       _selectedCity = null;
       _selectedDistrict = null;
     });
-    if (_freeTextMode) {
-      widget.onFreeAddressChanged({
-        'locationName': '',
-        'streetNumber': '',
-        'streetName': '',
-        'district': null,
-        'city': null,
-      });
-    } else {
-      widget.onFreeAddressChanged(null);
-      widget.onChanged('');
+    widget.onChanged('');
+    widget.onFreeAddressChanged(null);
+  }
+
+  void _reportDraft() {
+    widget.onChanged('');
+    widget.onFreeAddressChanged({
+      'locationName': _nameCtrl.text,
+      'streetNumber': _streetNumberCtrl.text,
+      'streetName': _streetNameCtrl.text,
+      'district': _selectedDistrict?.getLocalizedFullName(context),
+      'city': _selectedCity?.getLocalizedName(context),
+      // Stable DB identifiers for standalone features (Freeplay) that
+      // persist the structured venue instead of snapshotting display text.
+      'cityCluster': _selectedCity?.dbIndex.toString(),
+      'ward': _selectedDistrict?.id,
+    });
+  }
+
+  void _onFieldEdited() {
+    if (_prefilling) return;
+    if (_selected != null) {
+      setState(() => _selected = null);
     }
+    _reportDraft();
   }
 
-  Widget _modeToggle(BuildContext context) {
-    return PPillToggle<bool>(
-      value: _freeTextMode,
-      options: const [
-        PPillOption(value: false, icon: FLucideIcons.search),
-        PPillOption(value: true, icon: FLucideIcons.pencil),
-      ],
-      onChanged: (freeText) {
-        if (freeText != _freeTextMode) _toggleMode();
-      },
-    );
+  void _onSuggestionSelected(Location loc) {
+    _prefilling = true;
+    _nameCtrl.text = loc.name;
+    _streetNumberCtrl.text = loc.streetNumber ?? '';
+    _streetNameCtrl.text = loc.streetName ?? '';
+    _prefilling = false;
+    setState(() {
+      _selected = loc;
+      _selectedCity = null;
+      _selectedDistrict = null;
+    });
+    widget.onFreeAddressChanged(null);
+    widget.onChanged(loc.id);
   }
 
-  Widget _labelRow(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        if (_showOuterLabel)
-          Text(
-            'createLobby.homeGround'.tr(),
-            style: context.theme.typography.body.sm.copyWith(fontWeight: .bold),
-          )
-        else
-          const SizedBox.shrink(),
-        _modeToggle(context),
-      ],
+  /// Reveals the editable form pre-filled from the current pick, without
+  /// telling the parent anything changed yet — see [_prefilling].
+  void _startEditingSelected() {
+    final loc = _selected;
+    if (loc == null) return;
+    _prefilling = true;
+    _nameCtrl.text = loc.name;
+    _streetNumberCtrl.text = loc.streetNumber ?? '';
+    _streetNameCtrl.text = loc.streetName ?? '';
+    _prefilling = false;
+    // City/district aren't reverse-mapped from the location's raw strings
+    // back to an enum — the user can re-pick either if they need to change
+    // it; name/street number/street name (the fields most likely to just
+    // need a typo fix) stay prefilled either way.
+    setState(() => _selected = null);
+  }
+
+  Widget _outerLabel(BuildContext context) {
+    return Text(
+      'createLobby.homeGround'.tr(),
+      style: context.theme.typography.body.sm.copyWith(fontWeight: .bold),
     );
   }
 
@@ -186,123 +209,14 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
       lobbyFormControllerProvider(widget.lobbyId).notifier,
     );
 
-    if (_freeTextMode) {
-      void notifyAddress() {
-        widget.onFreeAddressChanged({
-          'locationName': _nameCtrl.text,
-          'streetNumber': _streetNumberCtrl.text,
-          'streetName': _streetNameCtrl.text,
-          'district': _selectedDistrict?.getLocalizedFullName(context),
-          'city': _selectedCity?.getLocalizedName(context),
-          // Stable DB identifiers for standalone features (Freeplay) that
-          // persist the structured venue instead of snapshotting display text.
-          'cityCluster': _selectedCity?.dbIndex.toString(),
-          'ward': _selectedDistrict?.id,
-        });
-      }
-
-      void notify(_) => notifyAddress();
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 8,
-        children: [
-          _labelRow(context),
-          if (_showOuterLabel) _helperText(context),
-          // Row 1: Location name (required)
-          FTextField(
-            hint: 'createLobby.homeGroundFreeHint'.tr(),
-            prefixBuilder: (context, style, states) => Padding(
-              padding: const EdgeInsets.fromLTRB(8, 4, 0, 4),
-              child: Icon(widget.prefixIcon ?? FLucideIcons.pencil),
-            ),
-            control: FTextFieldControl.managed(
-              controller: _nameCtrl,
-              onChange: notify,
-            ),
-          ),
-          // Row 2: Street number + street name
-          Row(
-            spacing: 8,
-            children: [
-              Expanded(
-                flex: 2,
-                child: FTextField(
-                  hint: 'createLobby.streetNumber'.tr(),
-                  control: FTextFieldControl.managed(
-                    controller: _streetNumberCtrl,
-                    onChange: notify,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 5,
-                child: FTextField(
-                  hint: 'createLobby.streetName'.tr(),
-                  control: FTextFieldControl.managed(
-                    controller: _streetNameCtrl,
-                    onChange: notify,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          // Row 3: City + District
-          Row(
-            spacing: 8,
-            children: [
-              Expanded(
-                child: FSelect<City>.rich(
-                  hint: context.tr('createLobby.city'),
-                  format: (city) => city.getLocalizedName(context),
-                  autoHide: true,
-                  control: FSelectControl.lifted(
-                    value: _selectedCity,
-                    onChange: (city) {
-                      setState(() {
-                        _selectedCity = city;
-                        _selectedDistrict = null;
-                      });
-                      notifyAddress();
-                    },
-                  ),
-                  children: [
-                    FSelectItem<City>(
-                      title: Text(City.hochiminh.getLocalizedName(context)),
-                      value: City.hochiminh,
-                    ),
-                    FSelectItem<City>(
-                      title: Text(City.hanoi.getLocalizedName(context)),
-                      value: City.hanoi,
-                    ),
-                  ],
-                ),
-              ),
-              if (_selectedCity != null)
-                Expanded(
-                  child: _SingleDistrictSelect(
-                    key: ValueKey(_selectedCity),
-                    city: _selectedCity!,
-                    selected: _selectedDistrict,
-                    onChanged: (d) {
-                      setState(() => _selectedDistrict = d);
-                      notifyAddress();
-                    },
-                  ),
-                ),
-            ],
-          ),
-        ],
-      );
-    }
-
     if (_selected != null) {
+      final loc = _selected!;
       final fieldStyle = context.theme.textFieldStyles.md;
       final locAddr = [
-        _selected!.streetNumber?.toString(),
-        _selected!.streetName,
-        _selected!.district,
-        _selected!.city,
+        loc.streetNumber?.toString(),
+        loc.streetName,
+        loc.district,
+        loc.city,
       ].where((s) => s != null && s.isNotEmpty).join(', ');
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,12 +227,7 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
               padding: fieldStyle.labelPadding,
               child: DefaultTextStyle.merge(
                 style: fieldStyle.labelTextStyle.resolve({}),
-                child: Text(
-                  'createLobby.homeGround'.tr(),
-                  style: context.theme.typography.body.sm.copyWith(
-                    fontWeight: .bold,
-                  ),
-                ),
+                child: _outerLabel(context),
               ),
             ),
           if (_showOuterLabel) _helperText(context),
@@ -328,14 +237,14 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
                 prefix: widget.prefixIcon != null
                     ? Icon(widget.prefixIcon)
                     : null,
-                title: Text(_selected!.name),
+                title: Text(loc.name),
                 subtitle: locAddr.isNotEmpty ? Text(locAddr) : null,
                 suffix: Row(
                   mainAxisSize: MainAxisSize.min,
                   spacing: 8,
                   children: [
                     GestureDetector(
-                      onTap: _toggleMode,
+                      onTap: _startEditingSelected,
                       child: Icon(
                         FLucideIcons.pencil,
                         size: 16,
@@ -357,21 +266,19 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 4,
+      spacing: 8,
       children: [
-        _labelRow(context),
+        if (_showOuterLabel) _outerLabel(context),
         if (_showOuterLabel) _helperText(context),
         PSearchField<Location>(
           prefixIcon: widget.prefixIcon,
           hint: 'createLobby.homeGroundHint'.tr(),
-          controller: _controller,
+          controller: _nameCtrl,
           suggestionsBuilder: lobbyFormController.searchHomeGround,
           displayStringForOption: (loc) => loc.fullAddress ?? loc.name,
-          onSuggestionSelected: (loc) {
-            setState(() => _selected = loc);
-            widget.onChanged(loc.id);
-          },
-          onChange: widget.onChanged,
+          onSuggestionSelected: _onSuggestionSelected,
+          onChange: (_) => _onFieldEdited(),
+          dismissLabel: 'createLobby.homeGroundDismissSuggestions'.tr(),
           formatSuggestion: (context, loc) {
             final locAddr = [
               loc.streetNumber,
@@ -400,6 +307,78 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
               ],
             );
           },
+        ),
+        // Structured address rows — always visible, not gated behind a
+        // separate "manual entry" mode. A typeahead pick fills these in;
+        // typing here directly is just as valid a way to fill them.
+        Row(
+          spacing: 8,
+          children: [
+            Expanded(
+              flex: 2,
+              child: FTextField(
+                hint: 'createLobby.streetNumber'.tr(),
+                control: FTextFieldControl.managed(
+                  controller: _streetNumberCtrl,
+                  onChange: (_) => _onFieldEdited(),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 5,
+              child: FTextField(
+                hint: 'createLobby.streetName'.tr(),
+                control: FTextFieldControl.managed(
+                  controller: _streetNameCtrl,
+                  onChange: (_) => _onFieldEdited(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          spacing: 8,
+          children: [
+            Expanded(
+              child: FSelect<City>.rich(
+                hint: context.tr('createLobby.city'),
+                format: (city) => city.getLocalizedName(context),
+                autoHide: true,
+                control: FSelectControl.lifted(
+                  value: _selectedCity,
+                  onChange: (city) {
+                    setState(() {
+                      _selectedCity = city;
+                      _selectedDistrict = null;
+                    });
+                    _onFieldEdited();
+                  },
+                ),
+                children: [
+                  FSelectItem<City>(
+                    title: Text(City.hochiminh.getLocalizedName(context)),
+                    value: City.hochiminh,
+                  ),
+                  FSelectItem<City>(
+                    title: Text(City.hanoi.getLocalizedName(context)),
+                    value: City.hanoi,
+                  ),
+                ],
+              ),
+            ),
+            if (_selectedCity != null)
+              Expanded(
+                child: _SingleDistrictSelect(
+                  key: ValueKey(_selectedCity),
+                  city: _selectedCity!,
+                  selected: _selectedDistrict,
+                  onChanged: (d) {
+                    setState(() => _selectedDistrict = d);
+                    _onFieldEdited();
+                  },
+                ),
+              ),
+          ],
         ),
       ],
     );

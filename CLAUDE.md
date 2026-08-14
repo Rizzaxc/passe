@@ -23,9 +23,9 @@ find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
     - Neutrals: hire coaches, referees, etc for your sport
     - Locations: find available venues according to criteria
 - Manage:
+    - their lobbies' activities: view, accept/ reject play invite, split bill, inspect history etc
     - the user's schedule as a calendar view (links to activities)
     - ongoing courses with a coach
-    - their lobbies' activities: view, accept/ reject play invite, split bill, inspect history etc
 - Health: integrate with user's wearables
     - capture data during activities
     - gamify and encourage further interactions (goals/ achievements etc)
@@ -495,7 +495,8 @@ Replaced the coach half of the booking system. Full schema notes live in
   times only, so a student can't probe who else their coach teaches.
 - **No money.** No rate, no payment flow, no packages; a coach states rates on their profile and
   settles off-app. This is the one deliberate regression from the booking system.
-- Client: [`lib/course/`](lib/course/). Player hub and coach inbox are both Manage index 2.
+- Client: [`lib/course/`](lib/course/). The player hub is Manage index 2; the coach's course inbox is
+  index 0 in coach mode. `ManageCourseRoute` resolves that difference for notification fallbacks.
 
 ### Friends & Feed
 

@@ -9,7 +9,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
 import '../core/icon/main.dart';
 import '../router.dart';
-import '../ui/main.dart';
 import 'auth_controller.dart';
 
 class AuthScreen extends ConsumerWidget {
@@ -218,16 +217,18 @@ class _AuthFormState extends ConsumerState<AuthForm> {
             ),
           ),
           const SizedBox(height: 12),
-          PDualButton(
-            firstChild: Text(
+          FButton(
+            onPress: onLogin,
+            child: Text(
               'auth.signIn'.tr(),
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            secondChild: Text('auth.signUp'.tr()),
-            onFirstPressed: onLogin,
-            onSecondPressed: onRegister,
-            secondVariant: .destructive,
-            flex: 60,
+          ),
+          const SizedBox(height: 12),
+          FButton(
+            variant: .outline,
+            onPress: onRegister,
+            child: Text('auth.signUp'.tr()),
           ),
         ],
       ),

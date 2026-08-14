@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -10,7 +9,6 @@ import '../../../router.dart';
 import '../../../ui/main.dart';
 import '../freeplay_section/main.dart';
 import '../invite_member_sheet.dart';
-import '../schedule_activity_sheet.dart';
 import 'lobby_controller.dart';
 import 'lobby_form_sheet.dart';
 
@@ -280,46 +278,38 @@ class ManageLobbyCard extends StatelessWidget {
                 _NextActivityBoard(nextActivity: item.nextActivity),
                 Row(
                   children: [
-                    if (canManage && lobby.id != null)
-                      Expanded(
-                        child: FButton(
-                          size: .sm,
-                          style: FButtonStyleExtension.accentBlueStyle(
-                            context.theme.buttonStyles.primary.base,
-                          ),
-                          prefix: const Icon(
-                            FLucideIcons.calendarPlus,
-                            size: 16,
-                          ),
-                          onPress: () =>
-                              showScheduleActivitySheet(context, lobby.id!),
-                          child: Text('lobby.scheduleActivity'.tr()),
+                    Expanded(
+                      child: FButton(
+                        size: .sm,
+                        style: FButtonStyleExtension.accentBlueStyle(
+                          context.theme.buttonStyles.primary.base,
                         ),
-                      )
-                    else
-                      const Spacer(),
+                        onPress: lobby.id != null
+                            ? () => LobbyDetailRoute(
+                                id: lobby.id!,
+                                $extra: lobby.name,
+                              ).go(context)
+                            : null,
+                        child: Text(
+                          'lobby.enterHub'.tr(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 6),
                     FButton.icon(
                       size: .sm,
                       variant: .outline,
-                      onPress: lobby.searchableId != null
-                          ? () async {
-                              await Clipboard.setData(
-                                ClipboardData(text: lobby.searchableId!),
-                              );
-                              if (!context.mounted) return;
-                              showFToast(
-                                context: context,
-                                icon: const Icon(FLucideIcons.info),
-                                title: Text('lobby.searchIDCopied'.tr()),
-                                description: Text(
-                                  'lobby.searchIDExplanation'.tr(),
-                                ),
-                                alignment: .bottomCenter,
-                              );
-                            }
+                      onPress: lobby.id != null
+                          ? () => LobbyDetailRoute(
+                              id: lobby.id!,
+                              $extra: lobby.name,
+                              tab: 1,
+                              openActivityPlanner: canManage ? true : null,
+                            ).go(context)
                           : null,
-                      child: const Icon(FLucideIcons.copy, size: 16),
+                      child: const Icon(FLucideIcons.calendarPlus, size: 16),
                     ),
                     if (lobby.id != null) ...[
                       const SizedBox(width: 6),

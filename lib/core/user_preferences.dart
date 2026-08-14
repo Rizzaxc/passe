@@ -104,22 +104,34 @@ class UserPreferences {
   }
 
   /// Copies [key]'s value from the device's guest namespace into the current
-  /// user's namespace, only if the current user has no value for it yet.
-  /// No-op when the current user *is* the guest namespace.
+  /// user's namespace, only if the current user has no value for it yet, then
+  /// removes the guest-namespaced copy. No-op when the current user *is* the
+  /// guest namespace.
   ///
   /// Guests share a single `'guest'`-prefixed namespace and gain a stable id
   /// only once they sign up (see [_userPrefix]), so state written while
   /// guest (e.g. "has seen onboarding") doesn't automatically carry over to
   /// the new namespace a sign-up creates. This is the bridge for that.
+  ///
+  /// The guest key is deleted (consumed) once adopted, not left behind: this
+  /// namespace is shared by every unauthenticated session on the device, so
+  /// a stale value from one guest/account would otherwise silently get
+  /// re-adopted by the *next*, unrelated account that signs up on the same
+  /// device — e.g. a device that once finished onboarding as a guest would
+  /// permanently exempt every future signup from onboarding too, regardless
+  /// of who they are.
   Future<void> adoptGuestValue(String key) async {
     final currentPrefix = _userPrefix;
     if (currentPrefix == _guestPrefix) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final currentKey = '${currentPrefix}_$key';
-    if (prefs.containsKey(currentKey)) return;
-
     final guestKey = '${_guestPrefix}_$key';
+    final currentKey = '${currentPrefix}_$key';
+    if (prefs.containsKey(currentKey)) {
+      await prefs.remove(guestKey);
+      return;
+    }
+
     final value = prefs.get(guestKey);
     switch (value) {
       case bool v:
@@ -135,6 +147,7 @@ class UserPreferences {
       case null:
         break;
     }
+    await prefs.remove(guestKey);
   }
 
   /// Clears all key-value pairs that belong to the current user.

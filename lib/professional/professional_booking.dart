@@ -108,9 +108,7 @@ class ProfessionalBookingItem {
           ProfessionalBookingStatus.requested,
       clientNotes: json['client_notes'] as String?,
       professionalNotes: json['professional_notes'] as String?,
-      locationName:
-          location?['name'] as String? ??
-          json['custom_location_name'] as String?,
+      locationName: location?['name'] as String?,
       reviewed: review != null,
       serviceId: json['service_id'] as String?,
       maxParticipants: (service?['max_participants'] as num?)?.toInt(),

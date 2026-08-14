@@ -63,6 +63,25 @@ class OnboardingPrefs {
   static Future<void> markGuestDeclined() =>
       _prefs.setBool(guestDeclinedKey, true);
 
+  /// Freshly reads this device's persisted `SELECTED_SPORT` sport id under
+  /// the *current* namespace — deliberately bypassing
+  /// `selectedSportStateProvider` (`lib/core/state/selected_sport_state.dart`),
+  /// whose Riverpod-cached value isn't tied to auth identity and can lag an
+  /// identity change: it's `autoDispose` and only torn down once its last
+  /// widget listener unmounts, so right after a sign-out it can still be
+  /// holding the *outgoing* account's sport in memory for a moment even
+  /// though `UserPreferences` has already switched to the next namespace
+  /// (the shared `'guest'` one, immediately post-sign-out). Reading through
+  /// that cache here previously let `OnboardingState`'s lazy migration
+  /// mistake the outgoing account's stale sport for genuine evidence and
+  /// write a false "already onboarded" flag into the wrong namespace — which
+  /// then got bridged onto the very next sign-in via
+  /// [bridgeGuestFlagsToCurrentUser], permanently skipping onboarding (with
+  /// no sport ever actually restored) for that account from then on. A
+  /// direct disk read has no cache to go stale — it always reflects
+  /// whatever `_userPrefix` resolves to at the exact moment it's called.
+  static Future<int> readStoredSportId() async => await _prefs.getInt(_sportKey) ?? 0;
+
   /// Idempotent, no-op for guests. Carries onboarding progress and the
   /// picked `SELECTED_SPORT` over from this device's guest namespace into
   /// the just-signed-up real user's namespace, so a guest who already saw

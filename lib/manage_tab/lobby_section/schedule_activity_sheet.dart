@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../core/format.dart';
+import '../../core/location_repository.dart';
 import '../../ui/dialog.dart';
 import '../../ui/sheet.dart';
 import 'activity/upcoming_controller.dart';
@@ -62,6 +63,10 @@ class _ScheduleActivitySheetState
   // Seeded from the lobby's home_ground when the lobby info resolves;
   // HomeGroundField below renders the picker UI around this id.
   String? _locationId;
+
+  // Set when the user is editing/typing a manual venue instead of picking
+  // one — resolved into a real location id at submit time (see _submit).
+  Map<String, String?>? _freeAddress;
 
   bool _recurring = false;
 
@@ -365,13 +370,18 @@ class _ScheduleActivitySheetState
       scheduleActivityControllerProvider(widget.lobbyId).notifier,
     );
 
+    final resolvedLocationId = await resolveLocationId(
+      pickedId: _locationId,
+      freeAddress: _freeAddress,
+    );
+
     try {
       if (existing != null) {
         await controller.reschedule(
           activityId: existing.activity.id!,
           start: start,
           end: end,
-          locationId: _locationId,
+          locationId: resolvedLocationId,
           costType: _costEnabled ? _costType : null,
           costAmount: amount,
           confirmationThreshold: _confirmationThreshold,
@@ -382,7 +392,7 @@ class _ScheduleActivitySheetState
         await controller.schedule(
           start: start,
           end: end,
-          locationId: _locationId,
+          locationId: resolvedLocationId,
           costType: _costEnabled ? _costType : null,
           costAmount: amount,
           confirmationThreshold: _confirmationThreshold,
@@ -488,14 +498,14 @@ class _ScheduleActivitySheetState
                 prefixIcon: FLucideIcons.mapPin,
                 onChanged: (id) => setState(() {
                   _locationId = id.isEmpty ? null : id;
+                  _freeAddress = null;
                 }),
-                // Activities can't point at an ad-hoc address yet —
-                // schema currently only stores `location_id`. If the
-                // user lands in free-text mode we just drop the
-                // selection so the row reverts to "no location" until
-                // they pick a real one.
-                onFreeAddressChanged: (_) => setState(() {
+                // A manually-entered venue is resolved into a real
+                // location id at submit time (see _submit) — no longer
+                // dropped.
+                onFreeAddressChanged: (addr) => setState(() {
                   _locationId = null;
+                  _freeAddress = addr;
                 }),
               ),
               _SwitchRow(

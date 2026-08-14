@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -169,6 +170,8 @@ class ScaffoldWithNavBar extends ConsumerStatefulWidget {
 }
 
 class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
+  final AutoSizeGroup _navLabelGroup = AutoSizeGroup();
+
   @override
   void initState() {
     super.initState();
@@ -199,6 +202,12 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
   Widget build(BuildContext context) {
     final navigationShell = widget.navigationShell;
     return FScaffold(
+      // Every branch supplies its own page scaffold. Let that inner scaffold
+      // handle the keyboard exactly once; resizing here as well subtracts the
+      // same view inset twice. On short iPhones the second subtraction can
+      // leave forms (notably GuestProfileView's embedded AuthForm) with a
+      // negative or near-zero content height.
+      resizeToAvoidBottomInset: false,
       footer: FBottomNavigationBar(
         // Android edge-to-edge layouts place the footer behind the gesture /
         // three-button system navigation area unless the bar consumes the
@@ -210,27 +219,27 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
           FBottomNavigationBarItem(
             key: NavCoachKeys.feed,
             icon: Icon(FLucideIcons.clapperboard),
-            label: Text('nav.feed'.tr()),
+            label: _NavLabel('nav.feed'.tr(), group: _navLabelGroup),
           ),
           FBottomNavigationBarItem(
             key: NavCoachKeys.discover,
             icon: Icon(FLucideIcons.house),
-            label: Text('nav.discover'.tr()),
+            label: _NavLabel('nav.discover'.tr(), group: _navLabelGroup),
           ),
           FBottomNavigationBarItem(
             key: NavCoachKeys.manage,
             icon: Icon(FLucideIcons.calendar),
-            label: Text('nav.manage'.tr()),
+            label: _NavLabel('nav.manage'.tr(), group: _navLabelGroup),
           ),
           FBottomNavigationBarItem(
             key: NavCoachKeys.health,
             icon: Icon(FLucideIcons.heartPulse),
-            label: Text('nav.health'.tr()),
+            label: _NavLabel('nav.health'.tr(), group: _navLabelGroup),
           ),
           FBottomNavigationBarItem(
             key: NavCoachKeys.profile,
             icon: Icon(FLucideIcons.userCog),
-            label: Text('nav.profile'.tr()),
+            label: _NavLabel('nav.profile'.tr(), group: _navLabelGroup),
           ),
         ],
       ),
@@ -288,4 +297,23 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
       initialLocation: index == widget.navigationShell.currentIndex,
     );
   }
+}
+
+class _NavLabel extends StatelessWidget {
+  const _NavLabel(this.label, {required this.group});
+
+  final String label;
+  final AutoSizeGroup group;
+
+  @override
+  Widget build(BuildContext context) => AutoSizeText(
+    label,
+    group: group,
+    minFontSize: 1,
+    maxLines: 1,
+    softWrap: false,
+    wrapWords: false,
+    overflow: TextOverflow.visible,
+    textAlign: TextAlign.center,
+  );
 }

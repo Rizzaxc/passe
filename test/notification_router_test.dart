@@ -67,6 +67,43 @@ void main() {
     );
   });
 
+  group('Manage notification routes', () {
+    test('schedule notifications keep the named Schedule route', () {
+      expect(
+        resolveNotificationLocation({'kind': 'pro_session_reminder'}),
+        const ManageScheduleRoute().location,
+      );
+      expect(
+        resolveNotificationLocation({'kind': 'professional_booking_confirmed'}),
+        const ManageScheduleRoute().location,
+      );
+    });
+
+    test('removed lobby member falls back to the Lobby hub', () {
+      expect(
+        resolveNotificationLocation({'kind': 'member_kicked'}),
+        const ManageLobbyRoute().location,
+      );
+    });
+
+    test('course notification without an id falls back to the Course hub', () {
+      expect(
+        resolveNotificationLocation({'kind': 'course_member_removed'}),
+        const ManageCourseRoute().location,
+      );
+    });
+
+    test('referee request preserves the highlighted request route', () {
+      expect(
+        resolveNotificationLocation({
+          'kind': 'professional_booking_requested',
+          'booking_id': 'booking-1',
+        }),
+        const ManageRequestsRoute(highlightBookingId: 'booking-1').location,
+      );
+    });
+  });
+
   test('Discover route indices match the enabled tab count', () {
     expect(HomeTab.locationIndex, HomeTab.tabCount - 1);
     expect(HomeTab.professionalIndex, lessThan(HomeTab.tabCount));

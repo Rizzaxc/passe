@@ -9,18 +9,20 @@ coaching courses. Unlike Home (discovery), this is about entities the user is al
 
 ## Layout
 
-- `main.dart` — `ManageTab`: `FScaffold` + `FTabs` over 3 subtabs (`schedule`, `lobby`, `coaching`).
-  `ManageTab.withInitialTab(0|1|2)` deep-links schedule/lobby/course (see `Manage*Route` in
-  `router.dart`).
+- `main.dart` — `ManageTab`: `FScaffold` + `FTabs` over 3 player subtabs (`lobby`, `schedule`,
+  `course`). `ManageTab.withInitialTab(0|1|2)` deep-links lobby/schedule/course (see `Manage*Route`
+  in `router.dart`).
 - `schedule_section/main.dart` — calendar view of the user's activities. Uses `lib/ui/calendar.dart`.
 - Index 2 is **courses**, and it lives in [`lib/course/`](../course/), not here — the same code
   serves both sides of the relationship (`CourseHubSection` for a student, `ProCoursesSection` for a
   coach in pro mode), so it isn't manage-tab-specific. `coaching_section/` is **deleted**: it read
   `professional_booking` rows and grouped them by coach to look like courses.
-- **Pro mode branches by role.** A coach gets `[schedule, courses, history]`; a referee keeps
-  `[schedule, requests, history]` over `referee_booking`, and every referee entry point is gated
-  behind `ClientFeatureFlags.refereeFlow`. `ManageCourseRoute` (index 2) is the deep-link target for
-  course notifications and lands correctly for student and coach alike without a mode guard.
+- **Pro mode branches by role.** A coach gets `[courses, schedule, history]`; a referee gets
+  `[requests, schedule, history]` over `referee_booking`, and every referee entry point is gated
+  behind `ClientFeatureFlags.refereeFlow`. `ManageCourseRoute` is the mode-aware deep-link target for
+  course notifications: it selects player index 2 or coach index 0 and exits host/referee mode when
+  the destination must be the player's course hub.
+- **Host mode follows the same primary-first contract:** `[open listings, schedule]`.
 - `lobby_section/` — the bulk of this tab:
   - `feed/main.dart` — `LobbySubtab`: the list of the user's lobbies (`userLobbiesControllerProvider`)
     — a direct `lobby` query filtered by the **context sport** (`sport_id == Sport.index`) and an
@@ -104,7 +106,9 @@ coaching courses. Unlike Home (discovery), this is about entities the user is al
 - The lobby list surfaces errors through a `ref.listen(... AsyncError ...)` → `showFToast`, not an
   inline error widget. The empty state uses `PEmptySectionPlaceholder`.
 - `lobby.searchableId` (a `nanoid`) is the human-shareable lobby code, copied to clipboard from the
-  card — distinct from the UUID `lobby.id` used in routes.
+  lobby info sheet — distinct from the UUID `lobby.id` used in routes. The list card uses that former
+  copy shortcut for scheduling instead: every member lands on Planner, while captains/coordinators
+  also open the activity planner sheet after `LobbyPermission.canManage` resolves true.
 - Navigate to detail with `LobbyDetailRoute(id: lobby.id!, $extra: lobby.name).go(context)` — passing
   the name via `$extra` lets the page show a title before the row loads.
 - All RPCs/queries keep the `.timeout(const Duration(seconds: 5))`.

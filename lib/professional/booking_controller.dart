@@ -130,7 +130,6 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
     required DateTime end,
     String? notes,
     String? locationId,
-    String? customLocationName,
     List<String>? participantUserIds,
     String? activityId,
   }) async {
@@ -153,7 +152,6 @@ class ProfessionalBookingController extends _$ProfessionalBookingController {
               'p_end': end.toUtc().toIso8601String(),
               'p_notes': notes,
               'p_location_id': locationId,
-              'p_custom_location_name': customLocationName,
               'p_participant_user_ids': participantUserIds ?? const <String>[],
               'p_activity_id': activityId,
             },

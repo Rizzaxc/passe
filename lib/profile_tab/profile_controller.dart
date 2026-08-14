@@ -383,9 +383,19 @@ class ProfileController extends _$ProfileController {
     var details = user?.details ?? const UserDetails();
 
     if (details.avatar == null) {
-      final seed = username == 'Guest'
-          ? '${DateTime.now().millisecondsSinceEpoch}'
-          : '${username}_$tagNumber';
+      // A fixed seed, not a timestamp: this branch also fires transiently
+      // while `authControllerProvider` is between AsyncLoading and AsyncData
+      // (every sign-in briefly passes through this), and `ProfileTab` shows
+      // a spinner rather than this controller's state during that gap, so a
+      // stable placeholder here is never actually seen by a real guest — it
+      // only needs to stay *identical* across repeated rebuilds. A
+      // per-rebuild-unique seed made `hasUncommittedChanges` (below) read
+      // true for a user who never touched anything: the `_initialUserId`
+      // guard only re-baselines `_initialState` when `user?.id` *changes*,
+      // so two consecutive null-user rebuilds (both `id == null`) each got a
+      // fresh random seed while only the first one was captured as the
+      // baseline.
+      final seed = username == 'Guest' ? 'guest' : '${username}_$tagNumber';
       details = details.copyWith(avatar: GeneratedAvatar(seed));
     }
 

@@ -31,7 +31,7 @@ Future<List<Location>> preferredCourts(Ref ref, String professionalId) async {
 }
 
 Future<List<Location>> _searchLocations(String query) async {
-  if (query.length < 8) return [];
+  if (query.length < 2) return [];
   final response = await Supabase.instance.client
       .rpc('search_locations', params: {'search_term': query})
       .timeout(const Duration(seconds: 5));
@@ -41,26 +41,26 @@ Future<List<Location>> _searchLocations(String query) async {
 }
 
 /// Required location picker for a coach booking: pick one of the coach's
-/// preferred courts, suggest an existing venue, or provide a booking-scoped
-/// free-text location. Free text is stored on the booking instead of inserting
-/// an incomplete row into the global `location` directory. Deliberately does
-/// *not* reuse `HomeGroundField` — that widget
-/// is bound to the lobby home-ground's single-value contract and its own
-/// form controller; duplicating its full structured-address UI here would
-/// be a lot of surface for a field that mostly just needs "pick one of
-/// these known courts."
+/// preferred courts, or search/type another venue. Search and manual entry
+/// are merged into one continuous form — no separate "add" button; typing a
+/// name without picking a suggestion is a valid entry as-is, resolved into a
+/// real `location_id` at the booking sheet's own submit time (see
+/// `lib/core/location_repository.dart`'s `resolveLocationId`). Deliberately
+/// does *not* reuse `HomeGroundField` — that widget's structured-address
+/// rows are more surface than a field that mostly just needs "pick one of
+/// these known courts, or type a name."
 class BookingLocationField extends ConsumerStatefulWidget {
   final String professionalId;
   final String? locationId;
-  final String? customLocationName;
-  final void Function(String? locationId, String? customLocationName) onChanged;
+  final ValueChanged<String> onChanged;
+  final ValueChanged<Map<String, String?>?> onFreeAddressChanged;
 
   const BookingLocationField({
     super.key,
     required this.professionalId,
     required this.locationId,
-    required this.customLocationName,
     required this.onChanged,
+    required this.onFreeAddressChanged,
   });
 
   @override
@@ -71,31 +71,43 @@ class BookingLocationField extends ConsumerStatefulWidget {
 class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
   bool _suggestingOther = false;
   final _searchController = TextEditingController();
-  final _newNameController = TextEditingController();
+  final _nameController = TextEditingController();
   Location? _selectedOther;
-  String? _customLocationName;
-
-  @override
-  void initState() {
-    super.initState();
-    _customLocationName = widget.customLocationName;
-  }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _newNameController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
-  void _useFreeTextLocation() {
-    final name = _newNameController.text.trim();
-    if (name.isEmpty) return;
-    setState(() {
-      _selectedOther = null;
-      _customLocationName = name;
-    });
-    widget.onChanged(null, name);
+  void _onNameEdited(String text) {
+    setState(() => _selectedOther = null);
+    final name = text.trim();
+    widget.onChanged('');
+    widget.onFreeAddressChanged(
+      name.isEmpty ? null : {'locationName': name},
+    );
+  }
+
+  void _selectOther(Location loc) {
+    setState(() => _selectedOther = loc);
+    widget.onFreeAddressChanged(null);
+    widget.onChanged(loc.id);
+  }
+
+  void _clearOther() {
+    _searchController.clear();
+    _nameController.clear();
+    setState(() => _selectedOther = null);
+    widget.onChanged('');
+    widget.onFreeAddressChanged(null);
+  }
+
+  void _selectCourt(Location court) {
+    setState(() => _selectedOther = null);
+    widget.onFreeAddressChanged(null);
+    widget.onChanged(court.id);
   }
 
   @override
@@ -129,22 +141,16 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
           ],
         ),
         if (_suggestingOther) ...[
-          if (_selectedOther != null || _customLocationName != null)
+          if (_selectedOther != null)
             FTileGroup(
               children: [
                 FTile(
-                  title: Text(_selectedOther?.name ?? _customLocationName!),
-                  subtitle: _selectedOther?.displayAddress.isNotEmpty == true
+                  title: Text(_selectedOther!.name),
+                  subtitle: _selectedOther!.displayAddress.isNotEmpty
                       ? Text(_selectedOther!.displayAddress)
                       : null,
                   suffix: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedOther = null;
-                        _customLocationName = null;
-                      });
-                      widget.onChanged(null, null);
-                    },
+                    onTap: _clearOther,
                     child: const Icon(FLucideIcons.x, size: 16),
                   ),
                 ),
@@ -156,34 +162,17 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
               controller: _searchController,
               suggestionsBuilder: _searchLocations,
               displayStringForOption: (loc) => loc.fullAddress ?? loc.name,
-              onSuggestionSelected: (loc) {
-                setState(() {
-                  _selectedOther = loc;
-                  _customLocationName = null;
-                });
-                widget.onChanged(loc.id, null);
-              },
+              onSuggestionSelected: _selectOther,
               onChange: (_) {},
               formatSuggestion: (context, loc) =>
                   Text(loc.fullAddress ?? loc.name),
             ),
-            Row(
-              spacing: 8,
-              children: [
-                Expanded(
-                  child: FTextField(
-                    hint: 'Hoặc nhập tên địa điểm mới',
-                    control: FTextFieldControl.managed(
-                      controller: _newNameController,
-                    ),
-                  ),
-                ),
-                FButton(
-                  variant: .outline,
-                  onPress: _useFreeTextLocation,
-                  child: const Text('Thêm'),
-                ),
-              ],
+            FTextField(
+              hint: 'Hoặc nhập tên địa điểm mới',
+              control: FTextFieldControl.managed(
+                controller: _nameController,
+                onChange: (value) => _onNameEdited(value.text),
+              ),
             ),
           ],
         ] else
@@ -212,13 +201,7 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
                 children: [
                   for (final court in courts)
                     FTappable(
-                      onPress: () {
-                        setState(() {
-                          _selectedOther = null;
-                          _customLocationName = null;
-                        });
-                        widget.onChanged(court.id, null);
-                      },
+                      onPress: () => _selectCourt(court),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,

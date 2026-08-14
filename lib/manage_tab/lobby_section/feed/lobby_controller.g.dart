@@ -106,7 +106,7 @@ final class LobbyFormControllerProvider
 }
 
 String _$lobbyFormControllerHash() =>
-    r'f848ab383c2a0f565ff999ed943743e2e85b72dc';
+    r'6930ff9e6b287728c48c71c0c5e0ab70babd5456';
 
 final class LobbyFormControllerFamily extends $Family
     with

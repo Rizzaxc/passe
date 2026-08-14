@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../auth/auth_controller.dart';
+import '../../../core/location_repository.dart';
 import '../../../core/model/enum.dart';
 import '../../../core/model/lobby.dart';
 import '../../../core/model/location.dart';
@@ -331,7 +332,7 @@ class LobbyFormController extends _$LobbyFormController {
   }
 
   Future<List<Location>> searchHomeGround(String query) async {
-    if (query.length < 8) return [];
+    if (query.length < 2) return [];
 
     final response = await supabase
         .rpc('search_locations', params: {'search_term': query})
@@ -406,8 +407,12 @@ class LobbyFormController extends _$LobbyFormController {
           'p_playtime': state.lobby.playtime?.map((t) => t.toJson()).toList(),
           if (details != null) 'p_details': details.toJson(),
         };
-        if (state.lobby.homeGround != null) {
-          params['p_home_ground_id'] = state.lobby.homeGround;
+        final locationId = await resolveLocationId(
+          pickedId: state.lobby.homeGround,
+          freeAddress: state.freeAddress,
+        );
+        if (locationId != null) {
+          params['p_home_ground_id'] = locationId;
         }
         await supabase
             .rpc('update_lobby', params: params)
@@ -433,25 +438,12 @@ class LobbyFormController extends _$LobbyFormController {
             'p_details': state.lobby.details!.toJson(),
         };
 
-        final fa = state.freeAddress;
-        if (fa != null) {
-          if ((fa['locationName'] ?? '').isNotEmpty) {
-            params['p_location_name'] = fa['locationName'];
-          }
-          if ((fa['streetNumber'] ?? '').isNotEmpty) {
-            params['p_street_number'] = fa['streetNumber'];
-          }
-          if ((fa['streetName'] ?? '').isNotEmpty) {
-            params['p_street_name'] = fa['streetName'];
-          }
-          if ((fa['district'] ?? '').isNotEmpty) {
-            params['p_district'] = fa['district'];
-          }
-          if ((fa['city'] ?? '').isNotEmpty) {
-            params['p_city'] = fa['city'];
-          }
-        } else if (state.lobby.homeGround != null) {
-          params['p_home_ground_id'] = state.lobby.homeGround;
+        final locationId = await resolveLocationId(
+          pickedId: state.lobby.homeGround,
+          freeAddress: state.freeAddress,
+        );
+        if (locationId != null) {
+          params['p_home_ground_id'] = locationId;
         }
 
         final response = await supabase

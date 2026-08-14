@@ -33,7 +33,10 @@ class PSheet extends StatelessWidget {
     // padding so a tall sheet's CTA stays above the on-screen keyboard.
     final resolved = padding
         .resolve(Directionality.of(context))
-        .copyWith(bottom: padding.resolve(Directionality.of(context)).bottom + bottomInset);
+        .copyWith(
+          bottom:
+              padding.resolve(Directionality.of(context)).bottom + bottomInset,
+        );
 
     return FSheets(
       child: Container(
@@ -73,6 +76,10 @@ Future<T?> showPSheet<T>({
     useSafeArea: true,
     side: .btt,
     mainAxisMaxRatio: maxHeightRatio,
+    // PSheet already adds viewInsets.bottom to its internal padding. Forui's
+    // default also shifts the entire sheet by that inset; enabling both moves
+    // form content twice and can push the top of a tall sheet off-screen.
+    resizeToAvoidBottomInset: false,
     builder: (ctx) => PSheet(
       padding: padding,
       child: Builder(builder: builder),
@@ -93,11 +100,7 @@ class PSheetTitle extends StatelessWidget {
   final String label;
   final Widget? trailing;
 
-  const PSheetTitle({
-    super.key,
-    required this.label,
-    this.trailing,
-  });
+  const PSheetTitle({super.key, required this.label, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -108,8 +111,9 @@ class PSheetTitle extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: context.theme.typography.body.xl2
-                  .copyWith(fontWeight: FontWeight.bold),
+              style: context.theme.typography.body.xl2.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           ?trailing,
@@ -133,11 +137,7 @@ class PSheetSectionLabel extends StatelessWidget {
   final String label;
   final Widget? trailing;
 
-  const PSheetSectionLabel({
-    super.key,
-    required this.label,
-    this.trailing,
-  });
+  const PSheetSectionLabel({super.key, required this.label, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -159,10 +159,7 @@ class PSheetSectionLabel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           text,
-          if (trailing != null) ...[
-            const Spacer(),
-            trailing!,
-          ],
+          if (trailing != null) ...[const Spacer(), trailing!],
         ],
       ),
     );

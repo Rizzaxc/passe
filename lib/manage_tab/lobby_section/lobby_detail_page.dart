@@ -10,6 +10,7 @@ import 'activity/planner_tab.dart';
 import 'history/view.dart';
 import 'lobby_detail_controller.dart';
 import 'lobby_info_sheet.dart';
+import 'schedule_activity_sheet.dart';
 
 const _crimson = Color(0xFFDC143C);
 const _crimsonTint = Color(0xFFFFEBED);
@@ -28,6 +29,10 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
   final String? highlightActivityId;
   final String? highlightChallengeId;
 
+  /// Opens the scheduling sheet after landing on Planner, provided the
+  /// signed-in member's permission resolves to captain/coordinator.
+  final bool openActivityPlanner;
+
   const LobbyDetailPage({
     super.key,
     required this.lobbyId,
@@ -35,6 +40,7 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
     this.initialIndex = 0,
     this.highlightActivityId,
     this.highlightChallengeId,
+    this.openActivityPlanner = false,
   }) : assert(initialIndex >= 0 && initialIndex <= 2);
 
   /// Deep-links a specific tab (and, for Planner, a specific activity or
@@ -45,6 +51,7 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
     String? lobbyName,
     String? highlightActivityId,
     String? highlightChallengeId,
+    bool openActivityPlanner = false,
   }) {
     return LobbyDetailPage(
       lobbyId: lobbyId,
@@ -52,6 +59,7 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
       initialIndex: initialIndex,
       highlightActivityId: highlightActivityId,
       highlightChallengeId: highlightChallengeId,
+      openActivityPlanner: openActivityPlanner,
     );
   }
 
@@ -71,6 +79,7 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
   // `_DiscoverViewState`.
   late final Set<int> _builtIndices;
   Timer? _settleTimer;
+  bool _didOpenActivityPlanner = false;
 
   @override
   void initState() {
@@ -101,6 +110,17 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
     });
   }
 
+  void _maybeOpenActivityPlanner(bool canManage) {
+    if (!widget.openActivityPlanner || !canManage || _didOpenActivityPlanner) {
+      return;
+    }
+    _didOpenActivityPlanner = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showScheduleActivitySheet(context, widget.lobbyId);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final infoAsync = ref.watch(lobbyDetailControllerProvider(widget.lobbyId));
@@ -114,6 +134,7 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
     final canManage =
         ref.watch(myLobbyPermissionProvider(widget.lobbyId)).value?.canManage ??
         false;
+    _maybeOpenActivityPlanner(canManage);
 
     final sections = <FTabEntry>[
       FTabEntry(

@@ -630,12 +630,17 @@ class LobbyDetailRoute extends GoRouteData with $LobbyDetailRoute {
   final String? highlightActivityId;
   final String? highlightChallengeId;
 
+  /// One-shot intent from the Manage lobby card's schedule shortcut. The
+  /// destination still verifies manage permission before opening the sheet.
+  final bool? openActivityPlanner;
+
   const LobbyDetailRoute({
     required this.id,
     this.$extra,
     this.tab,
     this.highlightActivityId,
     this.highlightChallengeId,
+    this.openActivityPlanner,
   });
 
   @override
@@ -646,6 +651,7 @@ class LobbyDetailRoute extends GoRouteData with $LobbyDetailRoute {
         lobbyName: $extra,
         highlightActivityId: highlightActivityId,
         highlightChallengeId: highlightChallengeId,
+        openActivityPlanner: openActivityPlanner ?? false,
       );
 }
 
@@ -655,7 +661,7 @@ class ManageScheduleRoute extends GoRouteData with $ManageScheduleRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      ManageTab.withInitialTab(0);
+      ManageTab.withInitialTab(ManageTab.scheduleIndex);
 }
 
 @immutable
@@ -666,10 +672,10 @@ class ManageRequestsRoute extends GoRouteData with $ManageRequestsRoute {
 
   const ManageRequestsRoute({this.highlightBookingId});
 
-  // In pro mode, ManageTab's subtab list is [schedule, pending requests,
-  // history] instead of [schedule, lobby, coaching]. The landing widget
+  // In referee mode, ManageTab's subtab list is [pending requests, schedule,
+  // history] instead of [lobby, schedule, course]. The landing widget
   // verifies the linked professional and activates pro mode before mounting
-  // index 1, so notification taps can never fall through to the Lobby tab.
+  // index 0, so notification taps can never fall through to the Lobby tab.
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       ProfessionalRequestsLanding(highlightBookingId: highlightBookingId);
@@ -681,19 +687,19 @@ class ManageLobbyRoute extends GoRouteData with $ManageLobbyRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      ManageTab.withInitialTab(1);
+      ManageTab.withInitialTab(ManageTab.primaryIndex);
 }
 
-/// Deep-link target for course notifications. Index 2 is the course hub in
-/// player mode and the course inbox in pro mode, so this lands correctly for
-/// both a student and their coach without a mode guard.
+/// Deep-link target for course notifications. Course is index 2 in player
+/// mode but index 0 in coach mode, so the landing resolves the active mode and
+/// exits host/referee modes before choosing the destination.
 @immutable
 class ManageCourseRoute extends GoRouteData with $ManageCourseRoute {
   const ManageCourseRoute();
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      ManageTab.withInitialTab(2);
+      const CourseHubLanding();
 }
 
 @immutable

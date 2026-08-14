@@ -2,6 +2,7 @@
 // challenge block, attached coach/referee, RSVP strip + control, quick
 // actions, captain-only cancel. Extracted from the old pinned hero (one
 // card was assumed per lobby); a lobby can now have several of these.
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, TargetPlatform;
@@ -1142,47 +1143,67 @@ class _RsvpControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: colors.border.withValues(alpha: 0.6)),
-      ),
-      child: Row(
-        children: [
-          _RsvpBtn(
-            id: 'going',
-            label: 'lobbyHub.activity.going'.tr(),
-            icon: Icons.check_rounded,
-            active: value == 'going',
-            tone: 'green',
-            locked: locked,
-            onTap: onChange,
-            onLockedTap: onLockedTap,
+    final labelGroup = AutoSizeGroup();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 3),
+          child: Text(
+            'lobbyHub.schedule.attendance'.tr(),
+            style: context.theme.typography.body.xs.copyWith(
+              color: colors.secondaryForeground,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          _RsvpBtn(
-            id: 'maybe',
-            label: 'lobbyHub.activity.maybe'.tr(),
-            icon: Icons.help_outline_rounded,
-            active: value == 'maybe',
-            tone: 'neutral',
-            locked: locked,
-            onTap: onChange,
-            onLockedTap: onLockedTap,
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: colors.background,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: colors.border.withValues(alpha: 0.6)),
           ),
-          _RsvpBtn(
-            id: 'out',
-            label: 'lobbyHub.activity.out'.tr(),
-            icon: Icons.close_rounded,
-            active: value == 'out',
-            tone: 'neutral',
-            locked: locked,
-            onTap: onChange,
-            onLockedTap: onLockedTap,
+          child: Row(
+            children: [
+              _RsvpBtn(
+                id: 'going',
+                label: 'lobbyHub.activity.going'.tr(),
+                icon: Icons.check_rounded,
+                active: value == 'going',
+                tone: 'primary',
+                labelGroup: labelGroup,
+                locked: locked,
+                onTap: onChange,
+                onLockedTap: onLockedTap,
+              ),
+              _RsvpBtn(
+                id: 'maybe',
+                label: 'lobbyHub.activity.maybe'.tr(),
+                icon: Icons.help_outline_rounded,
+                active: value == 'maybe',
+                tone: 'green',
+                labelGroup: labelGroup,
+                locked: locked,
+                onTap: onChange,
+                onLockedTap: onLockedTap,
+              ),
+              _RsvpBtn(
+                id: 'out',
+                label: 'lobbyHub.activity.out'.tr(),
+                icon: Icons.close_rounded,
+                active: value == 'out',
+                tone: 'destructive',
+                labelGroup: labelGroup,
+                locked: locked,
+                onTap: onChange,
+                onLockedTap: onLockedTap,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -1193,6 +1214,7 @@ class _RsvpBtn extends StatelessWidget {
   final IconData icon;
   final bool active;
   final String tone;
+  final AutoSizeGroup labelGroup;
   final bool locked;
   final ValueChanged<String> onTap;
   final VoidCallback? onLockedTap;
@@ -1203,6 +1225,7 @@ class _RsvpBtn extends StatelessWidget {
     required this.icon,
     required this.active,
     required this.tone,
+    required this.labelGroup,
     this.locked = false,
     required this.onTap,
     this.onLockedTap,
@@ -1211,10 +1234,19 @@ class _RsvpBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    // Only "going" gets the green semantic accent — "maybe" / "out" are
-    // both neutral, differentiated by their icon rather than a hue.
-    final fg = tone == 'green' ? _green : colors.secondaryForeground;
-    final bg = tone == 'green' ? _greenTint : colors.secondary;
+    final brand = context.theme.brand;
+    final (fg, bg) = switch (tone) {
+      'green' => (brand.green, brand.green.withValues(alpha: 0.12)),
+      'primary' => (
+        colors.primary,
+        colors.primary.withValues(alpha: 0.08),
+      ),
+      'destructive' => (
+        colors.destructive,
+        colors.destructive.withValues(alpha: 0.10),
+      ),
+      _ => (colors.secondaryForeground, colors.secondary),
+    };
 
     return Expanded(
       child: GestureDetector(
@@ -1225,6 +1257,9 @@ class _RsvpBtn extends StatelessWidget {
           decoration: BoxDecoration(
             color: active ? bg : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: active ? fg.withValues(alpha: 0.45) : Colors.transparent,
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1238,18 +1273,23 @@ class _RsvpBtn extends StatelessWidget {
                 Icon(
                   icon,
                   size: 14,
-                  color: active ? fg : colors.mutedForeground,
+                  color: active ? fg : fg.withValues(alpha: 0.72),
                 ),
               const SizedBox(width: 5),
               Flexible(
-                child: Text(
+                child: AutoSizeText(
                   label,
+                  group: labelGroup,
+                  minFontSize: 1,
+                  maxLines: 1,
+                  softWrap: false,
+                  wrapWords: false,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: active ? FontWeight.w700 : FontWeight.w600,
                     color: active ? fg : colors.secondaryForeground,
                   ),
-                  overflow: TextOverflow.ellipsis,
+                  overflow: TextOverflow.visible,
                 ),
               ),
             ],

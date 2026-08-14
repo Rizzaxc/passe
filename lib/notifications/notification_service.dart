@@ -307,8 +307,7 @@ class NotificationService with WidgetsBindingObserver {
             const PSheetTitle(label: 'Bật thông báo?'),
             const SizedBox(height: 12),
             Text(
-              'Cho phép thông báo để biết khi nào hoạt động được chốt và '
-              'khi sắp tới giờ tập với coach.',
+              'Cho phép thông báo để nhận thông tin về lịch hoạt động, các lời mời hoặc trao đổi với HLV?',
               style: typography.body.md,
             ),
             const SizedBox(height: 24),

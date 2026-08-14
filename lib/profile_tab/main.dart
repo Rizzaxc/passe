@@ -146,50 +146,41 @@ class ProfileTab extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (linkedProfessionalId != null || linkedHost != null) ...[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: FTileGroup(
-                        children: [
-                          if (linkedHost != null)
-                            FTile(
-                              prefix: const Icon(FLucideIcons.ticket),
-                              title: Text('freeplay.hostMode.title'.tr()),
-                              details: FSwitch(
-                                value: hostModeActive,
-                                onChange: (v) {
-                                  ref
-                                      .read(hostModeStateProvider.notifier)
-                                      .set(v);
-                                  if (v) {
-                                    ref
-                                        .read(proModeStateProvider.notifier)
-                                        .set(false);
-                                  }
-                                },
-                              ),
-                            ),
-                          if (linkedProfessionalId != null)
-                            FTile(
-                              prefix: const Icon(
-                                FLucideIcons.briefcaseBusiness,
-                              ),
-                              title: const Text('Chế Độ HLV'),
-                              details: FSwitch(
-                                value: proModeActive,
-                                onChange: (v) {
+                    FTileGroup(
+                      children: [
+                        if (linkedHost != null)
+                          FTile(
+                            prefix: const Icon(FLucideIcons.ticket),
+                            title: Text('freeplay.hostMode.title'.tr()),
+                            details: FSwitch(
+                              value: hostModeActive,
+                              onChange: (v) {
+                                ref.read(hostModeStateProvider.notifier).set(v);
+                                if (v) {
                                   ref
                                       .read(proModeStateProvider.notifier)
-                                      .set(v);
-                                  if (v) {
-                                    ref
-                                        .read(hostModeStateProvider.notifier)
-                                        .set(false);
-                                  }
-                                },
-                              ),
+                                      .set(false);
+                                }
+                              },
                             ),
-                        ],
-                      ),
+                          ),
+                        if (linkedProfessionalId != null)
+                          FTile(
+                            prefix: const Icon(FLucideIcons.briefcaseBusiness),
+                            title: const Text('Chế Độ HLV'),
+                            details: FSwitch(
+                              value: proModeActive,
+                              onChange: (v) {
+                                ref.read(proModeStateProvider.notifier).set(v);
+                                if (v) {
+                                  ref
+                                      .read(hostModeStateProvider.notifier)
+                                      .set(false);
+                                }
+                              },
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                   ],

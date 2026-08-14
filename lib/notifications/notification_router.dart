@@ -122,8 +122,8 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
       const ManageScheduleRoute().location,
     // Every course push carries its own `course_id`, so each opens the course
     // it's about. Without one (an old or malformed payload) fall back to the
-    // hub rather than a dead end — index 2 is the course list in player mode
-    // and the course inbox in pro mode, so it lands right for both sides.
+    // hub rather than a dead end. ManageCourseRoute resolves the differing
+    // player (index 2) and coach (index 0) layouts at the destination.
     NotificationKind.courseMessage ||
     NotificationKind.courseEnrollmentOffer ||
     NotificationKind.courseEnrollmentAccepted ||

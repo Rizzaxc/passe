@@ -242,7 +242,7 @@ final class ProfileControllerProvider
   }
 }
 
-String _$profileControllerHash() => r'bc77ff9670aea9f7fb029384d55273c2cc491840';
+String _$profileControllerHash() => r'6a2d6c1b70923caa950dd50f4ede7744e1f63e53';
 
 abstract class _$ProfileController extends $Notifier<ProfileState> {
   ProfileState build();

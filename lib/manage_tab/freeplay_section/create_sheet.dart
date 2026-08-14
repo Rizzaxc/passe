@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../core/location_repository.dart';
 import '../../core/model/enum.dart';
 import '../../core/state/selected_sport_state.dart';
 import '../../core/user_preferences.dart';
@@ -37,8 +38,6 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
   TimeOfDay _end = const TimeOfDay(hour: 20, minute: 0);
   String? _locationId;
   Map<String, String?>? _freeVenue;
-  Map<String, String?>? _savedFreeVenue;
-  bool _usingSavedFreeVenue = false;
   final Set<EloSeed> _skills = {EloSeed.casual};
   bool _saving = false;
 
@@ -48,18 +47,16 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
     _loadSavedVenue();
   }
 
+  /// Seeds the venue field with the last-used location id. `HomeGroundField`
+  /// hydrates and renders it as an already-picked tile on its own, so there's
+  /// no separate "reuse venue" affordance to maintain here.
   Future<void> _loadSavedVenue() async {
     final value = await UserPreferences.instance.getString(_savedVenueKey);
     if (!mounted || value == null) return;
     try {
       final json = jsonDecode(value) as Map<String, dynamic>;
-      final saved = json['freeVenue'] as Map<String, dynamic>?;
-      setState(() {
-        _locationId = json['locationId'] as String?;
-        _savedFreeVenue = saved?.map(
-          (key, value) => MapEntry(key, value?.toString()),
-        );
-      });
+      final locationId = json['locationId'] as String?;
+      if (locationId != null) setState(() => _locationId = locationId);
     } catch (_) {}
   }
 
@@ -98,16 +95,9 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
     final capacity = int.tryParse(_capacity.text);
     final male = double.tryParse(_malePrice.text.replaceAll(',', '.'));
     final female = double.tryParse(_femalePrice.text.replaceAll(',', '.'));
-    final free = _freeVenue;
-    final street = free == null
-        ? null
-        : '${free['streetNumber'] ?? ''} ${free['streetName'] ?? ''}'.trim();
-    final freeComplete =
-        free != null &&
-        (free['locationName'] ?? '').trim().isNotEmpty &&
-        (street ?? '').isNotEmpty &&
-        free['cityCluster'] != null &&
-        free['ward'] != null;
+    final hasLocation =
+        _locationId != null ||
+        (_freeVenue?['locationName']?.trim().isNotEmpty ?? false);
     if (sport == null ||
         sport == Sport.others ||
         capacity == null ||
@@ -118,7 +108,7 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
         female <= 0 ||
         _endAt.isBefore(_startAt) ||
         _endAt == _startAt ||
-        (_locationId == null && !freeComplete)) {
+        !hasLocation) {
       showFToast(
         context: context,
         variant: .destructive,
@@ -128,6 +118,10 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
     }
     setState(() => _saving = true);
     try {
+      final resolvedLocationId = await resolveLocationId(
+        pickedId: _locationId,
+        freeAddress: _freeVenue,
+      );
       await ref.read(freeplayRepositoryProvider).create({
         'p_sport_id': sport.index,
         'p_start_time': _startAt.toUtc().toIso8601String(),
@@ -137,17 +131,11 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
         'p_female_price': female,
         'p_recommended_skills': _skills.map((skill) => skill.name).toList(),
         'p_description': _description.text.trim(),
-        'p_location_id': _locationId,
-        'p_venue_name': free?['locationName'],
-        'p_street_address': street,
-        'p_city_cluster': free?['cityCluster'] == null
-            ? null
-            : int.tryParse(free!['cityCluster']!),
-        'p_ward': free?['ward'],
+        'p_location_id': resolvedLocationId,
       });
       await UserPreferences.instance.setString(
         _savedVenueKey,
-        jsonEncode({'locationId': _locationId, 'freeVenue': free}),
+        jsonEncode({'locationId': resolvedLocationId}),
       );
       ref.invalidate(hostFreeplayProvider(false));
       if (mounted) Navigator.pop(context);
@@ -226,61 +214,22 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
           ],
         ),
         PSheetSectionLabel(label: 'freeplay.hostManage.venue'.tr()),
-        if (_usingSavedFreeVenue && _freeVenue != null)
-          FTile(
-            prefix: const Icon(FLucideIcons.mapPinned),
-            title: Text(
-              _freeVenue!['locationName'] ??
-                  'freeplay.hostManage.savedVenue'.tr(),
-            ),
-            subtitle: Text(
-              '${_freeVenue!['streetNumber'] ?? ''} ${_freeVenue!['streetName'] ?? ''}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            suffix: FButton.icon(
-              variant: .ghost,
-              onPress: () => setState(() {
-                _usingSavedFreeVenue = false;
-                _freeVenue = null;
-              }),
-              child: const Icon(FLucideIcons.x),
-            ),
-          )
-        else ...[
-          if (_savedFreeVenue != null)
-            FButton(
-              variant: .outline,
-              onPress: () => setState(() {
-                _usingSavedFreeVenue = true;
-                _freeVenue = Map<String, String?>.from(_savedFreeVenue!);
-                _locationId = null;
-              }),
-              child: Text(
-                'freeplay.hostManage.reuseVenue'.tr(
-                  namedArgs: {
-                    'venue':
-                        _savedFreeVenue!['locationName'] ??
-                        'freeplay.hostManage.savedVenue'.tr(),
-                  },
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          HomeGroundField(
-            value: _locationId,
-            prefixIcon: FLucideIcons.mapPin,
-            onChanged: (id) => setState(() {
-              _locationId = id.isEmpty ? null : id;
-              _freeVenue = null;
-            }),
-            onFreeAddressChanged: (value) => setState(() {
-              _freeVenue = value;
-              if (value != null) _locationId = null;
-            }),
-          ),
-        ],
+        // HomeGroundField hydrates and shows an already-picked tile on its
+        // own when `value` resolves, so a last-used location id (seeded by
+        // _loadSavedVenue) is already "reuse the saved venue" — no separate
+        // chip/button needed.
+        HomeGroundField(
+          value: _locationId,
+          prefixIcon: FLucideIcons.mapPin,
+          onChanged: (id) => setState(() {
+            _locationId = id.isEmpty ? null : id;
+            _freeVenue = null;
+          }),
+          onFreeAddressChanged: (value) => setState(() {
+            _freeVenue = value;
+            if (value != null) _locationId = null;
+          }),
+        ),
         PSheetSectionLabel(label: 'freeplay.hostManage.capacityAndPrice'.tr()),
         Row(
           children: [

@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/format.dart';
+import '../core/location_repository.dart';
 import '../core/model/enum.dart';
 import '../core/model/professional_feed_item.dart';
 import '../ui/sheet.dart';
@@ -45,7 +46,7 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
   final _participantInputController = TextEditingController();
 
   String? _locationId;
-  String? _customLocationName;
+  Map<String, String?>? _freeAddress;
   final List<_Participant> _participants = [];
   bool get _isCoach => widget.item.role == ProfessionalRole.coach;
 
@@ -130,7 +131,10 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
       DateTime(_date.year, _date.month, _date.day, _start.hour, _start.minute);
 
   Future<void> _submit(ProfessionalServiceOption service) async {
-    if (_isCoach && (_locationId == null || _locationId!.isEmpty)) {
+    final hasLocation =
+        _locationId != null ||
+        (_freeAddress?['locationName']?.trim().isNotEmpty ?? false);
+    if (_isCoach && !hasLocation) {
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.circleX),
@@ -146,6 +150,12 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
     final end = start.add(Duration(minutes: durationMinutes));
     final activityId = ref.read(pendingActivityBookingStateProvider);
     try {
+      final resolvedLocationId = _isCoach
+          ? await resolveLocationId(
+              pickedId: _locationId,
+              freeAddress: _freeAddress,
+            )
+          : null;
       await ref
           .read(professionalBookingControllerProvider(widget.item.id).notifier)
           .book(
@@ -153,8 +163,7 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
             start: start,
             end: end,
             notes: _notesController.text.trim(),
-            locationId: _isCoach ? _locationId : null,
-            customLocationName: _isCoach ? _customLocationName : null,
+            locationId: resolvedLocationId,
             participantUserIds: _participants.isEmpty
                 ? null
                 : _participants.map((p) => p.id).toList(),
@@ -311,10 +320,13 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
                     BookingLocationField(
                       professionalId: widget.item.id,
                       locationId: _locationId,
-                      customLocationName: _customLocationName,
-                      onChanged: (id, name) => setState(() {
-                        _locationId = id;
-                        _customLocationName = name;
+                      onChanged: (id) => setState(() {
+                        _locationId = id.isEmpty ? null : id;
+                        _freeAddress = null;
+                      }),
+                      onFreeAddressChanged: (addr) => setState(() {
+                        _locationId = null;
+                        _freeAddress = addr;
                       }),
                     ),
                   if (selected.isGroup)
