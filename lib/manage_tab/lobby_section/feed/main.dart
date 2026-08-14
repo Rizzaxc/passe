@@ -63,8 +63,7 @@ class LobbySubtab extends ConsumerWidget {
           child: isGuest
               ? const _GuestLobbyState()
               : lobbiesAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
+                  loading: () => const Center(child: FCircularProgress()),
                   error: (_, _) => const SizedBox.shrink(),
                   data: (lobbies) => lobbies.isEmpty
                       ? PEmptySectionPlaceholder(
