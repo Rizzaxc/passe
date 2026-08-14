@@ -5,13 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../freeplay/repository.dart';
 import '../../router.dart';
 import '../../ui/main.dart';
+import '../freeplay_section/schedule_controller.dart';
 import 'controller.dart';
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 
 enum _ViewMode { timeline, cards }
+
+enum ScheduleDataSource { user, host }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -55,31 +59,25 @@ List<DateTime> get _cardRange {
   return List.generate(totalDays, (i) => yesterday.add(Duration(days: i)));
 }
 
-String _dayLabel(DateTime date) {
+String _dayLabel(BuildContext context, DateTime date) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final target = DateTime(date.year, date.month, date.day);
   final diff = target.difference(today).inDays;
   return switch (diff) {
-    -1 => 'Hôm qua',
-    0 => 'Hôm nay',
-    1 => 'Ngày mai',
-    _ => const [
-      'Chủ nhật',
-      'Thứ Hai',
-      'Thứ Ba',
-      'Thứ Tư',
-      'Thứ Năm',
-      'Thứ Sáu',
-      'Thứ Bảy',
-    ][date.weekday % 7],
+    -1 => 'manageTab.schedule.yesterday'.tr(),
+    0 => 'manageTab.schedule.today'.tr(),
+    1 => 'manageTab.schedule.tomorrow'.tr(),
+    _ => DateFormat.EEEE(context.locale.toLanguageTag()).format(date),
   };
 }
 
 // ─── Root widget ──────────────────────────────────────────────────────────────
 
 class ScheduleSection extends ConsumerStatefulWidget {
-  const ScheduleSection({super.key});
+  final ScheduleDataSource dataSource;
+
+  const ScheduleSection({this.dataSource = ScheduleDataSource.user, super.key});
 
   @override
   ConsumerState<ScheduleSection> createState() => _ScheduleSectionState();
@@ -164,7 +162,10 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
   @override
   Widget build(BuildContext context) {
     // Surface load errors but keep the calendar usable.
-    ref.listen(scheduleEventsProvider, (_, next) {
+    void onEventsChanged(
+      AsyncValue<Map<DateTime, List<ScheduleEvent>>>? _,
+      AsyncValue<Map<DateTime, List<ScheduleEvent>>> next,
+    ) {
       if (next is AsyncError && context.mounted) {
         showFToast(
           context: context,
@@ -175,8 +176,21 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
           alignment: .bottomCenter,
         );
       }
-    });
-    _eventsByDate = ref.watch(scheduleEventsProvider).value ?? const {};
+    }
+
+    final eventsState = switch (widget.dataSource) {
+      ScheduleDataSource.user => ref.watch(scheduleEventsProvider),
+      ScheduleDataSource.host => ref.watch(hostScheduleEventsProvider),
+    };
+    switch (widget.dataSource) {
+      case ScheduleDataSource.user:
+        ref.listen(scheduleEventsProvider, onEventsChanged);
+        break;
+      case ScheduleDataSource.host:
+        ref.listen(hostScheduleEventsProvider, onEventsChanged);
+        break;
+    }
+    _eventsByDate = eventsState.value ?? const {};
 
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isPhone = screenWidth < context.theme.breakpoints.sm;
@@ -192,7 +206,9 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
       children: [
         // ── Section header with view toggle as suffix ────────────────
         PSectionHeader(
-          title: 'manageTab.schedule.title'.tr(),
+          title: widget.dataSource == ScheduleDataSource.host
+              ? 'freeplay.hostManage.schedule'.tr()
+              : 'manageTab.schedule.title'.tr(),
           suffix: PPillToggle<_ViewMode>(
             value: _viewMode,
             options: const [
@@ -230,8 +246,17 @@ class _ScheduleSectionState extends ConsumerState<ScheduleSection> {
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
-              ref.invalidate(scheduleEventsProvider);
-              await ref.read(scheduleEventsProvider.future);
+              switch (widget.dataSource) {
+                case ScheduleDataSource.user:
+                  ref.invalidate(scheduleEventsProvider);
+                  await ref.read(scheduleEventsProvider.future);
+                  break;
+                case ScheduleDataSource.host:
+                  ref.invalidate(hostFreeplayProvider(false));
+                  ref.invalidate(hostScheduleEventsProvider);
+                  await ref.read(hostScheduleEventsProvider.future);
+                  break;
+              }
             },
             child: _viewMode == _ViewMode.timeline && startHour < 0
                 ? LayoutBuilder(
@@ -321,7 +346,7 @@ class _DaySection extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                _dayLabel(date),
+                _dayLabel(context, date),
                 style: context.theme.typography.body.sm.copyWith(
                   fontWeight: FontWeight.w700,
                   color: _isToday ? colors.primary : colors.foreground,
@@ -330,7 +355,7 @@ class _DaySection extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                '${date.day}/${date.month}',
+                DateFormat.Md(context.locale.toLanguageTag()).format(date),
                 style: context.theme.typography.body.xs.copyWith(
                   color: colors.mutedForeground,
                 ),
@@ -607,98 +632,107 @@ class _TimeGrid extends StatelessWidget {
     final gridHeight = (_endHour - startHour) * hourHeight;
     final now = TimeOfDay.now();
     final nowOffset = _offsetFor(now);
+    final eventLayouts = layoutOverlappingScheduleEvents(events);
 
-    return SizedBox(
-      height: gridHeight,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Full-hour lines
-          for (var h = startHour; h <= _endHour; h++)
-            Positioned(
-              top: (h - startHour) * hourHeight,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 1,
-                color: colors.border.withValues(
-                  alpha: h == startHour ? 0.7 : 0.4,
-                ),
-              ),
-            ),
-
-          // Half-hour lines
-          for (var h = startHour; h < _endHour; h++)
-            Positioned(
-              top: (h - startHour) * hourHeight + hourHeight / 2,
-              left: timeColumnWidth,
-              right: 0,
-              child: Container(
-                height: 1,
-                color: colors.border.withValues(alpha: 0.18),
-              ),
-            ),
-
-          // Hour labels
-          for (var h = startHour; h < _endHour; h++)
-            Positioned(
-              top: (h - startHour) * hourHeight - 8,
-              left: 0,
-              width: timeColumnWidth,
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: Text(
-                    '${h.toString().padLeft(2, '0')}:00',
-                    style: TextStyle(
-                      fontFamily: context.theme.typography.body.xs.fontFamily,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w500,
-                      color: colors.mutedForeground,
-                      height: 1,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final eventAreaWidth = constraints.maxWidth - timeColumnWidth;
+        return SizedBox(
+          height: gridHeight,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Full-hour lines
+              for (var h = startHour; h <= _endHour; h++)
+                Positioned(
+                  top: (h - startHour) * hourHeight,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 1,
+                    color: colors.border.withValues(
+                      alpha: h == startHour ? 0.7 : 0.4,
                     ),
                   ),
                 ),
-              ),
-            ),
 
-          // Event blocks
-          for (final event in events)
-            Positioned(
-              top: _offsetFor(event.start),
-              left: timeColumnWidth,
-              right: 0,
-              height: _blockHeight(event),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 1, 0, 1),
-                child: _EventBlock(event: event),
-              ),
-            ),
-
-          // Now indicator
-          if (showNowIndicator) ...[
-            Positioned(
-              top: nowOffset - 4,
-              left: timeColumnWidth - 4,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFDC143C),
-                  shape: BoxShape.circle,
+              // Half-hour lines
+              for (var h = startHour; h < _endHour; h++)
+                Positioned(
+                  top: (h - startHour) * hourHeight + hourHeight / 2,
+                  left: timeColumnWidth,
+                  right: 0,
+                  child: Container(
+                    height: 1,
+                    color: colors.border.withValues(alpha: 0.18),
+                  ),
                 ),
-              ),
-            ),
-            Positioned(
-              top: nowOffset,
-              left: timeColumnWidth,
-              right: 0,
-              child: Container(height: 1.5, color: const Color(0xFFDC143C)),
-            ),
-          ],
-        ],
-      ),
+
+              // Hour labels
+              for (var h = startHour; h < _endHour; h++)
+                Positioned(
+                  top: (h - startHour) * hourHeight - 8,
+                  left: 0,
+                  width: timeColumnWidth,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: Text(
+                        '${h.toString().padLeft(2, '0')}:00',
+                        style: TextStyle(
+                          fontFamily:
+                              context.theme.typography.body.xs.fontFamily,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w500,
+                          color: colors.mutedForeground,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Event blocks
+              for (final layout in eventLayouts)
+                Positioned(
+                  top: _offsetFor(layout.event.start),
+                  left:
+                      timeColumnWidth +
+                      eventAreaWidth * layout.column / layout.columnCount,
+                  width: eventAreaWidth / layout.columnCount,
+                  height: _blockHeight(layout.event),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 1, 0, 1),
+                    child: _EventBlock(event: layout.event),
+                  ),
+                ),
+
+              // Now indicator
+              if (showNowIndicator) ...[
+                Positioned(
+                  top: nowOffset - 4,
+                  left: timeColumnWidth - 4,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFDC143C),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: nowOffset,
+                  left: timeColumnWidth,
+                  right: 0,
+                  child: Container(height: 1.5, color: const Color(0xFFDC143C)),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }

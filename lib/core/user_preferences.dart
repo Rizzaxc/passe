@@ -97,6 +97,23 @@ class UserPreferences {
     return prefs.setStringList(_namespaceKey(key), value);
   }
 
+  /// Gets a device-wide string list that deliberately is not namespaced by
+  /// the current user.
+  ///
+  /// Most app state belongs in the per-user methods above. This escape hatch
+  /// is for device-level account bookkeeping that must survive logout, when
+  /// [clearUserData] removes every value in the outgoing user's namespace.
+  Future<List<String>?> getDeviceStringList(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(key);
+  }
+
+  /// Sets a device-wide string list. See [getDeviceStringList].
+  Future<bool> setDeviceStringList(String key, List<String> value) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.setStringList(key, value);
+  }
+
   /// Removes a value from SharedPreferences.
   Future<bool> remove(String key) async {
     final prefs = await SharedPreferences.getInstance();
@@ -170,7 +187,9 @@ class UserPreferences {
 
     // Get all keys and filter for current user's keys
     final allKeys = prefs.getKeys();
-    final userKeys = allKeys.where((key) => key.startsWith(prefixPattern)).toList();
+    final userKeys = allKeys
+        .where((key) => key.startsWith(prefixPattern))
+        .toList();
 
     // Remove all user-specific keys
     bool allRemoved = true;

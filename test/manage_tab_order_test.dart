@@ -34,15 +34,10 @@ void main() {
 
   test('host Manage order is Listings, Schedule', () {
     expect(ManageTab.hostManageSections[0].child, isA<HostFreeplaySection>());
+    expect(ManageTab.hostManageSections[1].child, isA<ScheduleSection>());
     expect(
-      (ManageTab.hostManageSections[0].child as HostFreeplaySection)
-          .scheduleOnly,
-      isFalse,
-    );
-    expect(
-      (ManageTab.hostManageSections[1].child as HostFreeplaySection)
-          .scheduleOnly,
-      isTrue,
+      (ManageTab.hostManageSections[1].child as ScheduleSection).dataSource,
+      ScheduleDataSource.host,
     );
   });
 }

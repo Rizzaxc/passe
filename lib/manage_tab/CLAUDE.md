@@ -22,7 +22,10 @@ coaching courses. Unlike Home (discovery), this is about entities the user is al
   behind `ClientFeatureFlags.refereeFlow`. `ManageCourseRoute` is the mode-aware deep-link target for
   course notifications: it selects player index 2 or coach index 0 and exits host/referee mode when
   the destination must be the player's course hub.
-- **Host mode follows the same primary-first contract:** `[open listings, schedule]`.
+- **Host mode follows the same primary-first contract:** `[open listings, schedule]`. Its schedule
+  reuses the player calendar's timeline/card views and routes each card to the freeplay detail page.
+  Hosted activities are bucketed independently, so simultaneous sessions render side by side rather
+  than one hiding another.
 - `lobby_section/` — the bulk of this tab:
   - `feed/main.dart` — `LobbySubtab`: the list of the user's lobbies (`userLobbiesControllerProvider`)
     — a direct `lobby` query filtered by the **context sport** (`sport_id == Sport.index`) and an

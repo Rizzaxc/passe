@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../auth/auth_controller.dart';
+import '../../onboarding/onboarding_controller.dart';
 import '../../ui/lobby_avatar.dart';
 import 'activity/main.dart';
 import 'activity/planner_tab.dart';
 import 'history/view.dart';
 import 'lobby_detail_controller.dart';
+import 'lobby_hub_tour.dart';
 import 'lobby_info_sheet.dart';
 import 'schedule_activity_sheet.dart';
 
@@ -69,6 +72,7 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
 
 class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
   late int _currentIndex;
+  final _tourTargets = LobbyHubTourTargets();
 
   // Which tabs are actually inflated right now. FTabs' content viewport has
   // a ~250px cache extent on either side of the active page, so the
@@ -80,6 +84,8 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
   late final Set<int> _builtIndices;
   Timer? _settleTimer;
   bool _didOpenActivityPlanner = false;
+  bool _activityPlannerSheetOpen = false;
+  bool _didAttemptTour = false;
 
   @override
   void initState() {
@@ -115,9 +121,45 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
       return;
     }
     _didOpenActivityPlanner = true;
+    _activityPlannerSheetOpen = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      showScheduleActivitySheet(context, widget.lobbyId);
+      if (!mounted) {
+        _activityPlannerSheetOpen = false;
+        return;
+      }
+      unawaited(() async {
+        await showScheduleActivitySheet(context, widget.lobbyId);
+        if (!mounted) return;
+        _activityPlannerSheetOpen = false;
+        _maybeScheduleTour(
+          ref.read(currentUserIdProvider),
+          ref.read(onboardingStateProvider).value?.getStartedDone ?? false,
+        );
+      }());
+    });
+  }
+
+  void _maybeScheduleTour(String? userId, bool onboardingDone) {
+    if (_didAttemptTour ||
+        _activityPlannerSheetOpen ||
+        userId == null ||
+        !onboardingDone) {
+      return;
+    }
+    _didAttemptTour = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Let the root shell finish any route transition before measuring both
+      // the lobby tabs and its Health bottom-nav item in the root overlay.
+      Future<void>.delayed(const Duration(milliseconds: 350), () {
+        if (!mounted) return;
+        unawaited(
+          maybeShowLobbyHubTour(
+            context: context,
+            userId: userId,
+            targets: _tourTargets,
+          ),
+        );
+      });
     });
   }
 
@@ -125,6 +167,9 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
   Widget build(BuildContext context) {
     final infoAsync = ref.watch(lobbyDetailControllerProvider(widget.lobbyId));
     final colors = context.theme.colors;
+    final userId = ref.watch(currentUserIdProvider);
+    final onboardingDone =
+        ref.watch(onboardingStateProvider).value?.getStartedDone ?? false;
 
     final lobbyName = infoAsync.value?.lobby.name ?? widget.lobbyName ?? '';
     // The Feed/Planner tabs' actions (schedule/reschedule/cancel, poll,
@@ -135,10 +180,16 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
         ref.watch(myLobbyPermissionProvider(widget.lobbyId)).value?.canManage ??
         false;
     _maybeOpenActivityPlanner(canManage);
+    _maybeScheduleTour(userId, onboardingDone);
 
     final sections = <FTabEntry>[
       FTabEntry(
-        label: const Icon(FLucideIcons.messageCircle),
+        label: SizedBox(
+          key: _tourTargets.feed,
+          width: 44,
+          height: 32,
+          child: const Icon(FLucideIcons.messageCircle),
+        ),
         child: _builtIndices.contains(0)
             ? LobbyFeedTab(
                 lobbyId: widget.lobbyId,
@@ -148,7 +199,12 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
             : const SizedBox.shrink(),
       ),
       FTabEntry(
-        label: const Icon(FLucideIcons.activity),
+        label: SizedBox(
+          key: _tourTargets.planner,
+          width: 44,
+          height: 32,
+          child: const Icon(FLucideIcons.activity),
+        ),
         child: _builtIndices.contains(1)
             ? LobbyPlannerTab(
                 lobbyId: widget.lobbyId,
@@ -159,7 +215,12 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
             : const SizedBox.shrink(),
       ),
       FTabEntry(
-        label: const Icon(FLucideIcons.clock),
+        label: SizedBox(
+          key: _tourTargets.history,
+          width: 44,
+          height: 32,
+          child: const Icon(FLucideIcons.clock),
+        ),
         child: _builtIndices.contains(2)
             ? HistoryView(
                 lobbyId: widget.lobbyId,
@@ -180,6 +241,7 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
             // Custom header — avatar + name only, with overflow access
             // to the info sheet. Back nav is handled by system gesture.
             _LobbyHeader(
+              infoKey: _tourTargets.info,
               lobbyId: widget.lobbyId,
               lobbyName: lobbyName,
               hasAvatar: infoAsync.value?.lobby.details?.hasAvatar ?? false,
@@ -227,12 +289,14 @@ class _LobbyHeader extends StatelessWidget {
   final String lobbyName;
   final bool hasAvatar;
   final VoidCallback onInfoTap;
+  final Key? infoKey;
 
   const _LobbyHeader({
     required this.lobbyId,
     required this.lobbyName,
     required this.hasAvatar,
     required this.onInfoTap,
+    this.infoKey,
   });
 
   @override
@@ -279,6 +343,7 @@ class _LobbyHeader extends StatelessWidget {
           ),
 
           IconButton(
+            key: infoKey,
             onPressed: onInfoTap,
             icon: Icon(
               Icons.more_horiz_rounded,

@@ -211,6 +211,112 @@
         "coach": "Coach",
         "referee": "Referee"
       },
+      "mode": {
+        "title": "Professional Mode",
+        "backToPlayer": "Turn off to return to your player profile",
+        "profile": {
+          "saveFailed": "Couldn't save your professional profile",
+          "saved": "Professional profile saved",
+          "displayName": "Professional name",
+          "displayNameHint": "Your real name or the name clients know you by",
+          "displayNameDescription": "This name appears on your professional profile and does not change your username.",
+          "displayNameRequired": "Please enter a professional name",
+          "displayNameTooLong": "Professional name cannot exceed 80 characters",
+          "bio": "Bio",
+          "contactPhone": "Contact phone number",
+          "availability": "Availability",
+          "noAvailability": "No timeslots added",
+          "addTimeslot": "Add timeslot",
+          "scheduleNote": "Availability note (optional)",
+          "save": "Save Profile"
+        },
+        "services": {
+          "mine": "My Services",
+          "loadFailed": "Couldn't load your services",
+          "emptyTitle": "No services yet",
+          "emptySubtitle": "Add a service so clients can book you.",
+          "sessionCount": {
+            "one": "{} session",
+            "other": "{} sessions"
+          },
+          "maxParticipants": {
+            "one": "Up to {} person",
+            "other": "Up to {} people"
+          },
+          "saveFailed": "Couldn't save the service",
+          "add": "Add Service",
+          "edit": "Edit Service",
+          "sport": "Sport",
+          "name": "Service name",
+          "nameHint": "e.g. One-on-one, group class...",
+          "descriptionOptional": "Description (optional)",
+          "durationMinutes": "Duration (minutes)",
+          "maxParticipantsLabel": "Maximum participants",
+          "sessionCountLabel": "Sessions (1 = single booking, >1 = package)",
+          "hourly": "Hourly",
+          "perSession": "Per session",
+          "hourlyPrice": "Price per hour",
+          "perSessionPrice": "Price per session",
+          "save": "Save"
+        },
+        "requests": {
+          "loadFailed": "Couldn't load booking requests",
+          "emptyTitle": "No booking requests",
+          "emptySubtitle": "New booking requests will appear here.",
+          "acceptConflict": "Couldn't confirm—this timeslot may overlap another booking",
+          "rejectTitle": "Reject this request?",
+          "reasonHint": "Reason (optional)",
+          "close": "Close",
+          "reject": "Reject",
+          "rejectFailed": "Couldn't reject the request",
+          "accept": "Confirm"
+        },
+        "schedule": {
+          "loadFailed": "Couldn't load your schedule",
+          "emptyTitle": "No confirmed sessions",
+          "emptySubtitle": "Confirmed sessions will appear here.",
+          "completeFailed": "Couldn't mark the session as complete",
+          "recordAfterMatch": "Record the result after the match ends",
+          "resultRecorded": "Result recorded",
+          "recordResult": "Record Result",
+          "markComplete": "Mark Complete"
+        },
+        "history": {
+          "loadFailed": "Couldn't load booking history",
+          "emptyTitle": "No booking history",
+          "emptySubtitle": "Past sessions will appear here."
+        },
+        "status": {
+          "completed": "Completed",
+          "rejected": "Rejected",
+          "cancelledByClient": "Cancelled by client",
+          "cancelledByPro": "Cancelled by you",
+          "requested": "Awaiting confirmation",
+          "confirmed": "Confirmed"
+        },
+        "result": {
+          "title": "Record Result",
+          "home": "Home",
+          "away": "Away",
+          "versus": "vs",
+          "set": "Set {count}",
+          "addSet": "Add set",
+          "winner": "{team} wins",
+          "draw": "Draw",
+          "enterScore": "Enter scores to determine the result",
+          "noteOptional": "Note (optional)",
+          "finalNotice": "The referee's result is final and will update both teams' MMR.",
+          "missingScore": "Enter a score for at least one set",
+          "saved": "Result recorded",
+          "error": {
+            "alreadyRecorded": "This match already has a result",
+            "notFinished": "The match hasn't ended yet",
+            "wrongReferee": "Only the booked referee can record the result",
+            "noReferee": "This match has no referee",
+            "generic": "Couldn't record the result"
+          }
+        }
+      },
       "booking": {
         "title": "Book Session",
         "confirm": "Confirm Booking",
@@ -237,6 +343,7 @@
     "title": "Manage",
     "schedule": {
       "title": "Schedule",
+      "yesterday": "Yesterday",
       "today": "Today",
       "tomorrow": "Tomorrow",
       "participants": "{count} participants",
@@ -596,6 +703,31 @@
     "title": "Notifications",
     "markAllRead": "Mark all read",
     "delete": "Delete notification",
+    "channel": {
+      "name": "Passe notifications",
+      "description": "Activity, challenge and coaching updates"
+    },
+    "permission": {
+      "title": "Turn on notifications?",
+      "rationale": "Allow notifications for activity updates, invitations and conversations with coaches?",
+      "allow": "Allow",
+      "later": "Later"
+    },
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo": {
+        "one": "{} minute ago",
+        "other": "{} minutes ago"
+      },
+      "hoursAgo": {
+        "one": "{} hour ago",
+        "other": "{} hours ago"
+      },
+      "daysAgo": {
+        "one": "{} day ago",
+        "other": "{} days ago"
+      }
+    },
     "empty": {
       "title": "No notifications yet",
       "subtitle": "Activity, invites and requests will show up here"
@@ -695,6 +827,19 @@
     "paymentInfoDeleteConfirmAction": "Remove"
   },
   "lobbyHub": {
+    "tour": {
+      "skip": "Skip tour",
+      "infoTitle": "Lobby information",
+      "infoBody": "Open this menu for the roster, roles, lobby settings, invite link, join requests, and challenge controls available to you.",
+      "feedTitle": "Feed",
+      "feedBody": "The lobby's shared stream for updates, polls, session photos, quick notes, and money bookkeeping.",
+      "plannerTitle": "Activities & RSVP",
+      "plannerBody": "See every upcoming session here. RSVP Going, Maybe, or Can't go—Going counts toward the confirmation threshold and may lock once the session is official. A played session also anchors synced workout metrics in Health.",
+      "historyTitle": "History",
+      "historyBody": "Review past sessions and recorded challenge results. Rated matches and their outcome appear here after the referee submits the result.",
+      "healthTitle": "From play to Health",
+      "healthBody": "When a wearable is linked, activity metrics such as heart rate, effort, and calories can be attached to your played sessions and contribute to Health goals and achievements."
+    },
     "common": {
       "amount": "Amount",
       "note": "Note",
@@ -1267,6 +1412,8 @@
     "title": "Drop-ins",
     "discoveryEmptyTitle": "No matching drop-ins",
     "discoveryEmptySubtitle": "Try changing the time or area to find more sessions.",
+    "activityDetails": "Session details",
+    "description": "Description",
     "activityLoadFailed": "Unable to load this session",
     "activityClosed": "This session is no longer open",
     "verifiedHost": "Verified Host",
@@ -1329,7 +1476,16 @@
     "hostMode": {
       "title": "Host Mode",
       "backToPlayer": "Return to Player Mode",
-      "manageHint": "Manage your schedule and requests from the Manage tab."
+      "manageHint": "Manage your schedule and requests from the Manage tab.",
+      "displayName": "Host name",
+      "displayNameHint": "Your real name or the name players know you by",
+      "displayNameDescription": "This name appears on your Host profile and does not change your username.",
+      "displayNameRequired": "Please enter a Host name",
+      "displayNameTooLong": "Host name cannot exceed 80 characters",
+      "save": "Save Host Name",
+      "saving": "Saving…",
+      "saved": "Host name saved",
+      "saveFailed": "Unable to save Host name"
     },
     "chat": {
       "withPlayer": "Chat with player",
@@ -1351,6 +1507,7 @@
       "pendingRequests": "Requests {count}",
       "createTitle": "Publish New Drop-in",
       "completeForm": "Please complete all session information",
+      "futureTime": "Session time must be in the future",
       "createFailed": "Unable to create session",
       "time": "Time",
       "venue": "Venue",

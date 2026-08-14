@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -60,14 +61,18 @@ class _ProPendingRequestsSectionState
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(proPendingRequestsProvider(widget.professionalId));
-        await ref.read(proPendingRequestsProvider(widget.professionalId).future);
+        await ref.read(
+          proPendingRequestsProvider(widget.professionalId).future,
+        );
       },
       child: requestsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            PEmptySectionPlaceholder(subtitle: 'Không tải được yêu cầu'),
+          children: [
+            PEmptySectionPlaceholder(
+              subtitle: 'homeTab.professional.mode.requests.loadFailed'.tr(),
+            ),
           ],
         ),
         data: (requests) {
@@ -75,10 +80,11 @@ class _ProPendingRequestsSectionState
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 40),
-              children: const [
+              children: [
                 PEmptySectionPlaceholder(
-                  title: 'Không có yêu cầu nào',
-                  subtitle: 'Yêu cầu đặt lịch mới sẽ xuất hiện ở đây.',
+                  title: 'homeTab.professional.mode.requests.emptyTitle'.tr(),
+                  subtitle: 'homeTab.professional.mode.requests.emptySubtitle'
+                      .tr(),
                 ),
               ],
             );
@@ -130,7 +136,7 @@ class _RequestCard extends ConsumerWidget {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Không thể xác nhận — có thể đã trùng lịch'),
+          title: Text('homeTab.professional.mode.requests.acceptConflict'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -143,9 +149,9 @@ class _RequestCard extends ConsumerWidget {
       context: context,
       builder: (dialogCtx, style, animation) => PConfirmDialog(
         animation: animation,
-        title: const Text('Từ chối yêu cầu?'),
+        title: Text('homeTab.professional.mode.requests.rejectTitle'.tr()),
         body: FTextField(
-          hint: 'Lý do (tuỳ chọn)',
+          hint: 'homeTab.professional.mode.requests.reasonHint'.tr(),
           control: FTextFieldControl.managed(controller: reasonCtrl),
         ),
         direction: Axis.horizontal,
@@ -153,12 +159,12 @@ class _RequestCard extends ConsumerWidget {
           FButton(
             variant: .outline,
             onPress: () => Navigator.of(dialogCtx).pop(false),
-            child: const Text('Đóng'),
+            child: Text('homeTab.professional.mode.requests.close'.tr()),
           ),
           FButton(
             variant: .destructive,
             onPress: () => Navigator.of(dialogCtx).pop(true),
-            child: const Text('Từ Chối'),
+            child: Text('homeTab.professional.mode.requests.reject'.tr()),
           ),
         ],
       ),
@@ -181,7 +187,7 @@ class _RequestCard extends ConsumerWidget {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Không thể từ chối yêu cầu'),
+          title: Text('homeTab.professional.mode.requests.rejectFailed'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -210,7 +216,11 @@ class _RequestCard extends ConsumerWidget {
           Row(
             spacing: 6,
             children: [
-              Icon(FLucideIcons.calendar, size: 14, color: colors.mutedForeground),
+              Icon(
+                FLucideIcons.calendar,
+                size: 14,
+                color: colors.mutedForeground,
+              ),
               Text(
                 '${request.start.day}/${request.start.month} · '
                 '${request.start.hour.toString().padLeft(2, '0')}:${request.start.minute.toString().padLeft(2, '0')}'
@@ -225,7 +235,11 @@ class _RequestCard extends ConsumerWidget {
             Row(
               spacing: 6,
               children: [
-                Icon(FLucideIcons.mapPin, size: 14, color: colors.mutedForeground),
+                Icon(
+                  FLucideIcons.mapPin,
+                  size: 14,
+                  color: colors.mutedForeground,
+                ),
                 Expanded(
                   child: Text(
                     request.locationName!,
@@ -260,8 +274,10 @@ class _RequestCard extends ConsumerWidget {
               Expanded(
                 child: FButton(
                   variant: .outline,
-                  onPress: saving ? null : () => _rejectWithReason(context, ref),
-                  child: const Text('Từ Chối'),
+                  onPress: saving
+                      ? null
+                      : () => _rejectWithReason(context, ref),
+                  child: Text('homeTab.professional.mode.requests.reject'.tr()),
                 ),
               ),
               Expanded(
@@ -276,7 +292,7 @@ class _RequestCard extends ConsumerWidget {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('Xác Nhận'),
+                      : Text('homeTab.professional.mode.requests.accept'.tr()),
                 ),
               ),
             ],

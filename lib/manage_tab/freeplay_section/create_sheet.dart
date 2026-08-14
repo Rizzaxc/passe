@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../core/location_repository.dart';
 import '../../core/model/enum.dart';
@@ -33,7 +34,7 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
   final _capacity = TextEditingController(text: '4');
   final _malePrice = TextEditingController();
   final _femalePrice = TextEditingController();
-  DateTime _date = DateTime.now();
+  late DateTime _date;
   TimeOfDay _start = const TimeOfDay(hour: 18, minute: 0);
   TimeOfDay _end = const TimeOfDay(hour: 20, minute: 0);
   String? _locationId;
@@ -44,6 +45,11 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    final todayAtDefaultStart = DateTime(now.year, now.month, now.day, 18);
+    _date = now.isBefore(todayAtDefaultStart)
+        ? now
+        : now.add(const Duration(days: 1));
     _loadSavedVenue();
   }
 
@@ -98,6 +104,14 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
     final hasLocation =
         _locationId != null ||
         (_freeVenue?['locationName']?.trim().isNotEmpty ?? false);
+    if (!_endAt.isAfter(DateTime.now())) {
+      showFToast(
+        context: context,
+        variant: .destructive,
+        title: Text('freeplay.hostManage.futureTime'.tr()),
+      );
+      return;
+    }
     if (sport == null ||
         sport == Sport.others ||
         capacity == null ||
@@ -139,7 +153,8 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
       );
       ref.invalidate(hostFreeplayProvider(false));
       if (mounted) Navigator.pop(context);
-    } catch (_) {
+    } catch (e, st) {
+      Talker().handle(e, st, 'Create freeplay activity failed');
       if (mounted) {
         showFToast(
           context: context,

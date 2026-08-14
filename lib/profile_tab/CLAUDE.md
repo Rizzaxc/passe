@@ -27,6 +27,10 @@ compatibility scores used by the Home feeds.
   context sport to `SoccerProfileWidget` / `Basketball…` / `Badminton…` / `Tennis…` /
   `Pickleball…`, each with its own `*ProfileController`, backed by a `<sport>_profile` table). ELO is
   seeded via `elo_seed_field.dart` (`EloSeed` enum → `fn_seed_initial_elo`).
+- Host mode replaces the player profile with the Host's public profile. Its editable
+  `freeplay_host.display_name` is independent from `user.username`, matching the professional
+  profile contract; the write is limited to the linked Host row and that column by RLS/grants in
+  `schema/freeplay_host_display_name_self_service.sql`.
 
 ## Draft / commit pattern
 

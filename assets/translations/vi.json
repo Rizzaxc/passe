@@ -210,6 +210,112 @@
         "coach": "Huấn Luyện Viên",
         "referee": "Trọng Tài"
       },
+      "mode": {
+        "title": "Chế Độ Chuyên Nghiệp",
+        "backToPlayer": "Tắt để quay lại hồ sơ người chơi",
+        "profile": {
+          "saveFailed": "Không thể lưu hồ sơ chuyên nghiệp",
+          "saved": "Đã lưu hồ sơ chuyên nghiệp",
+          "displayName": "Tên chuyên nghiệp",
+          "displayNameHint": "Tên thật hoặc tên khách hàng biết đến bạn",
+          "displayNameDescription": "Tên này hiển thị trên hồ sơ chuyên nghiệp và không thay đổi username của bạn.",
+          "displayNameRequired": "Vui lòng nhập tên chuyên nghiệp",
+          "displayNameTooLong": "Tên chuyên nghiệp không được quá 80 ký tự",
+          "bio": "Giới thiệu",
+          "contactPhone": "Số điện thoại liên hệ",
+          "availability": "Lịch rảnh",
+          "noAvailability": "Chưa có khung giờ nào",
+          "addTimeslot": "Thêm khung giờ",
+          "scheduleNote": "Ghi chú lịch rảnh (tuỳ chọn)",
+          "save": "Lưu Thông Tin"
+        },
+        "services": {
+          "mine": "Dịch vụ của tôi",
+          "loadFailed": "Không tải được danh sách dịch vụ",
+          "emptyTitle": "Chưa có dịch vụ nào",
+          "emptySubtitle": "Thêm một dịch vụ để khách hàng có thể đặt lịch.",
+          "sessionCount": {
+            "one": "{} buổi",
+            "other": "{} buổi"
+          },
+          "maxParticipants": {
+            "one": "Tối đa {} người",
+            "other": "Tối đa {} người"
+          },
+          "saveFailed": "Không thể lưu dịch vụ",
+          "add": "Thêm Dịch Vụ",
+          "edit": "Sửa Dịch Vụ",
+          "sport": "Môn thể thao",
+          "name": "Tên dịch vụ",
+          "nameHint": "VD: 1-kèm-1, lớp nhóm...",
+          "descriptionOptional": "Mô tả (tuỳ chọn)",
+          "durationMinutes": "Thời lượng (phút)",
+          "maxParticipantsLabel": "Số người tối đa",
+          "sessionCountLabel": "Số buổi (1 = đặt lẻ, >1 = gói buổi)",
+          "hourly": "Theo giờ",
+          "perSession": "Theo buổi",
+          "hourlyPrice": "Giá mỗi giờ",
+          "perSessionPrice": "Giá mỗi buổi",
+          "save": "Lưu"
+        },
+        "requests": {
+          "loadFailed": "Không tải được yêu cầu đặt lịch",
+          "emptyTitle": "Không có yêu cầu nào",
+          "emptySubtitle": "Yêu cầu đặt lịch mới sẽ xuất hiện ở đây.",
+          "acceptConflict": "Không thể xác nhận—khung giờ có thể đã bị trùng",
+          "rejectTitle": "Từ chối yêu cầu?",
+          "reasonHint": "Lý do (tuỳ chọn)",
+          "close": "Đóng",
+          "reject": "Từ Chối",
+          "rejectFailed": "Không thể từ chối yêu cầu",
+          "accept": "Xác Nhận"
+        },
+        "schedule": {
+          "loadFailed": "Không tải được lịch",
+          "emptyTitle": "Chưa có buổi nào được xác nhận",
+          "emptySubtitle": "Các buổi đã xác nhận sẽ hiện ở đây.",
+          "completeFailed": "Không thể đánh dấu hoàn thành",
+          "recordAfterMatch": "Ghi kết quả sau khi trận kết thúc",
+          "resultRecorded": "Đã ghi kết quả",
+          "recordResult": "Ghi Kết Quả",
+          "markComplete": "Đánh Dấu Hoàn Thành"
+        },
+        "history": {
+          "loadFailed": "Không tải được lịch sử đặt lịch",
+          "emptyTitle": "Chưa có lịch sử",
+          "emptySubtitle": "Các buổi đã qua sẽ hiện ở đây."
+        },
+        "status": {
+          "completed": "Hoàn thành",
+          "rejected": "Đã từ chối",
+          "cancelledByClient": "Khách huỷ",
+          "cancelledByPro": "Bạn đã huỷ",
+          "requested": "Chờ xác nhận",
+          "confirmed": "Đã xác nhận"
+        },
+        "result": {
+          "title": "Ghi Kết Quả",
+          "home": "Chủ nhà",
+          "away": "Khách",
+          "versus": "vs",
+          "set": "Hiệp {count}",
+          "addSet": "Thêm hiệp",
+          "winner": "{team} thắng",
+          "draw": "Hoà",
+          "enterScore": "Nhập tỉ số để xác định kết quả",
+          "noteOptional": "Ghi chú (tuỳ chọn)",
+          "finalNotice": "Kết quả do trọng tài ghi là kết quả cuối cùng và sẽ cập nhật điểm MMR của cả hai đội.",
+          "missingScore": "Nhập ít nhất một hiệp có tỉ số",
+          "saved": "Đã ghi kết quả",
+          "error": {
+            "alreadyRecorded": "Trận này đã có kết quả",
+            "notFinished": "Trận đấu chưa kết thúc",
+            "wrongReferee": "Chỉ trọng tài được thuê mới ghi được kết quả",
+            "noReferee": "Trận này chưa có trọng tài",
+            "generic": "Không thể ghi kết quả"
+          }
+        }
+      },
       "booking": {
         "title": "Đặt Lịch Hẹn",
         "confirm": "Xác Nhận Đặt Lịch",
@@ -239,6 +345,7 @@
     "title": "Quản Lý",
     "schedule": {
       "title": "Thời gian biểu",
+      "yesterday": "Hôm qua",
       "today": "Hôm nay",
       "tomorrow": "Ngày mai",
       "participants": "{count} người tham gia",
@@ -596,6 +703,31 @@
     "title": "Thông báo",
     "markAllRead": "Đánh dấu đã đọc",
     "delete": "Xoá thông báo",
+    "channel": {
+      "name": "Thông báo Passe",
+      "description": "Thông báo về hoạt động, challenge và lịch tập"
+    },
+    "permission": {
+      "title": "Bật thông báo?",
+      "rationale": "Cho phép thông báo để nhận thông tin về lịch hoạt động, các lời mời hoặc trao đổi với HLV?",
+      "allow": "Cho phép",
+      "later": "Để sau"
+    },
+    "time": {
+      "justNow": "Vừa xong",
+      "minutesAgo": {
+        "one": "{} phút trước",
+        "other": "{} phút trước"
+      },
+      "hoursAgo": {
+        "one": "{} giờ trước",
+        "other": "{} giờ trước"
+      },
+      "daysAgo": {
+        "one": "{} ngày trước",
+        "other": "{} ngày trước"
+      }
+    },
     "empty": {
       "title": "Chưa có thông báo",
       "subtitle": "Hoạt động, lời mời và yêu cầu sẽ xuất hiện ở đây"
@@ -695,6 +827,19 @@
     "paymentInfoDeleteConfirmAction": "Xoá"
   },
   "lobbyHub": {
+    "tour": {
+      "skip": "Bỏ qua",
+      "infoTitle": "Thông tin lobby",
+      "infoBody": "Mở menu này để xem thành viên, vai trò, cài đặt lobby, link mời, yêu cầu tham gia và các quyền thách đấu của bạn.",
+      "feedTitle": "Feed",
+      "feedBody": "Luồng chung của lobby dành cho cập nhật, bình chọn, ảnh buổi chơi, ghi chú nhanh và quản lý tiền trong lobby.",
+      "plannerTitle": "Hoạt động & RSVP",
+      "plannerBody": "Xem mọi buổi sắp tới tại đây. RSVP Tham gia, Có thể hoặc Không đi — lựa chọn Tham gia được tính vào ngưỡng xác nhận và có thể bị khóa khi buổi chơi đã chính thức. Buổi đã chơi cũng là mốc để gắn dữ liệu tập luyện đồng bộ trong Health.",
+      "historyTitle": "Lịch sử",
+      "historyBody": "Xem lại các buổi đã qua và kết quả thách đấu. Trận tính điểm cùng kết quả sẽ xuất hiện tại đây sau khi trọng tài ghi nhận.",
+      "healthTitle": "Từ buổi chơi đến Health",
+      "healthBody": "Khi đã kết nối wearable, các chỉ số như nhịp tim, mức gắng sức và calories có thể được gắn với buổi bạn đã chơi, đồng thời đóng góp vào mục tiêu và thành tích trong Health."
+    },
     "common": {
       "amount": "Số tiền",
       "note": "Ghi chú",
@@ -1263,6 +1408,8 @@
     "title": "Xé vé",
     "discoveryEmptyTitle": "Chưa có buổi phù hợp",
     "discoveryEmptySubtitle": "Thử đổi khung giờ hoặc khu vực để xem thêm buổi chơi.",
+    "activityDetails": "Chi tiết buổi chơi",
+    "description": "Mô tả",
     "activityLoadFailed": "Không tải được buổi chơi",
     "activityClosed": "Buổi chơi không còn mở",
     "verifiedHost": "Host đã xác minh",
@@ -1325,7 +1472,16 @@
     "hostMode": {
       "title": "Chế Độ Host",
       "backToPlayer": "Về chế độ Người chơi",
-      "manageHint": "Quản lý lịch và yêu cầu tại tab Manage."
+      "manageHint": "Quản lý lịch và yêu cầu tại tab Quản lý.",
+      "displayName": "Tên Host",
+      "displayNameHint": "Tên thật hoặc tên người chơi biết đến bạn",
+      "displayNameDescription": "Tên này hiển thị trên hồ sơ Host và không thay đổi username của bạn.",
+      "displayNameRequired": "Vui lòng nhập tên Host",
+      "displayNameTooLong": "Tên Host không được quá 80 ký tự",
+      "save": "Lưu Tên Host",
+      "saving": "Đang lưu…",
+      "saved": "Đã lưu tên Host",
+      "saveFailed": "Không thể lưu tên Host"
     },
     "chat": {
       "withPlayer": "Trao đổi với người chơi",
@@ -1347,6 +1503,7 @@
       "pendingRequests": "Yêu cầu {count}",
       "createTitle": "Đăng vé mới",
       "completeForm": "Hãy điền đủ thông tin buổi chơi",
+      "futureTime": "Thời gian buổi chơi phải ở tương lai",
       "createFailed": "Không tạo được buổi chơi",
       "time": "Thời gian",
       "venue": "Sân",

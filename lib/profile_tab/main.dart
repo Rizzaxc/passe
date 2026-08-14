@@ -8,6 +8,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/icon/main.dart';
@@ -19,6 +20,7 @@ import '../core/sport_selector.dart';
 import '../core/state/host_mode_state.dart';
 import '../core/state/pro_mode_state.dart';
 import '../core/state/selected_sport_state.dart';
+import '../freeplay/host_profile_controller.dart';
 import '../freeplay/model.dart';
 import '../freeplay/repository.dart';
 import '../professional/controller.dart';
@@ -42,54 +44,171 @@ import 'sport_profile/sport_profile_controller.dart';
 import 'sport_profile/sport_profile_screen.dart';
 import 'user_contact_controller.dart';
 
-class _HostProfileView extends ConsumerWidget {
+class _HostProfileView extends ConsumerStatefulWidget {
   final FreeplayHost host;
   const _HostProfileView({required this.host});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => ListView(
-    physics: const AlwaysScrollableScrollPhysics(),
-    padding: const EdgeInsets.all(24),
-    children: [
-      Align(
-        alignment: Alignment.centerRight,
-        child: FButton(
-          variant: .outline,
-          onPress: () => ref.read(hostModeStateProvider.notifier).set(false),
-          child: Text('freeplay.hostMode.backToPlayer'.tr()),
+  ConsumerState<_HostProfileView> createState() => _HostProfileViewState();
+}
+
+class _HostProfileViewState extends ConsumerState<_HostProfileView> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _displayNameController;
+
+  @override
+  void initState() {
+    super.initState();
+    _displayNameController = TextEditingController(
+      text: widget.host.displayName,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _HostProfileView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.host.displayName != widget.host.displayName &&
+        _displayNameController.text == oldWidget.host.displayName) {
+      _displayNameController.text = widget.host.displayName;
+    }
+  }
+
+  @override
+  void dispose() {
+    _displayNameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    try {
+      await ref
+          .read(hostProfileEditControllerProvider(widget.host.id).notifier)
+          .commit(displayName: _displayNameController.text.trim());
+    } catch (e, st) {
+      Talker().handle(e, st, 'Host profile save failed');
+      if (mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: Text('freeplay.hostMode.saveFailed'.tr()),
+          alignment: .bottomCenter,
+        );
+      }
+      return;
+    }
+
+    if (!mounted) return;
+    showFToast(
+      context: context,
+      icon: const Icon(FLucideIcons.check),
+      title: Text('freeplay.hostMode.saved'.tr()),
+      alignment: .bottomCenter,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final saving = ref.watch(hostProfileEditControllerProvider(widget.host.id));
+    final displayNameAsync = ref.watch(
+      myHostDisplayNameProvider(widget.host.id),
+    );
+    ref.listen(myHostDisplayNameProvider(widget.host.id), (previous, next) {
+      final latestName = next.value;
+      final previousName = previous?.value ?? widget.host.displayName;
+      if (latestName != null && _displayNameController.text == previousName) {
+        _displayNameController.text = latestName;
+      }
+    });
+    final displayName = displayNameAsync.value ?? widget.host.displayName;
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(24),
+      children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: FButton(
+            variant: .outline,
+            onPress: () => ref.read(hostModeStateProvider.notifier).set(false),
+            child: Text('freeplay.hostMode.backToPlayer'.tr()),
+          ),
         ),
-      ),
-      const SizedBox(height: 24),
-      CircleAvatar(
-        radius: 58,
-        backgroundImage: host.avatarUrl == null
-            ? null
-            : NetworkImage(host.avatarUrl!),
-        child: host.avatarUrl == null
-            ? const Icon(FLucideIcons.ticket, size: 42)
-            : null,
-      ),
-      const SizedBox(height: 16),
-      Text(
-        host.displayName,
-        textAlign: TextAlign.center,
-        style: context.theme.typography.body.xl2.copyWith(
-          fontWeight: FontWeight.w700,
+        const SizedBox(height: 24),
+        CircleAvatar(
+          radius: 58,
+          backgroundImage: widget.host.avatarUrl == null
+              ? null
+              : NetworkImage(widget.host.avatarUrl!),
+          child: widget.host.avatarUrl == null
+              ? const Icon(FLucideIcons.ticket, size: 42)
+              : null,
         ),
-      ),
-      Text('freeplay.verifiedHost'.tr(), textAlign: TextAlign.center),
-      const SizedBox(height: 24),
-      if (host.bio.isNotEmpty) Text(host.bio, textAlign: TextAlign.center),
-      const SizedBox(height: 16),
-      Text(
-        'freeplay.hostMode.manageHint'.tr(),
-        textAlign: TextAlign.center,
-        style: context.theme.typography.body.sm.copyWith(
-          color: context.theme.colors.mutedForeground,
+        const SizedBox(height: 16),
+        Text(
+          displayName,
+          textAlign: TextAlign.center,
+          style: context.theme.typography.body.xl2.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
-      ),
-    ],
-  );
+        Text('freeplay.verifiedHost'.tr(), textAlign: TextAlign.center),
+        const SizedBox(height: 24),
+        if (widget.host.bio.isNotEmpty)
+          Text(widget.host.bio, textAlign: TextAlign.center),
+        const SizedBox(height: 24),
+        Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 12,
+            children: [
+              FTextFormField(
+                label: Text('freeplay.hostMode.displayName'.tr()),
+                hint: 'freeplay.hostMode.displayNameHint'.tr(),
+                description: Text(
+                  'freeplay.hostMode.displayNameDescription'.tr(),
+                ),
+                maxLength: 80,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                control: FTextFieldControl.managed(
+                  controller: _displayNameController,
+                ),
+                validator: (value) {
+                  final name = value?.trim() ?? '';
+                  if (name.isEmpty) {
+                    return 'freeplay.hostMode.displayNameRequired'.tr();
+                  }
+                  if (name.length > 80) {
+                    return 'freeplay.hostMode.displayNameTooLong'.tr();
+                  }
+                  return null;
+                },
+              ),
+              FButton(
+                onPress: saving ? null : _save,
+                child: Text(
+                  saving
+                      ? 'freeplay.hostMode.saving'.tr()
+                      : 'freeplay.hostMode.save'.tr(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'freeplay.hostMode.manageHint'.tr(),
+          textAlign: TextAlign.center,
+          style: context.theme.typography.body.sm.copyWith(
+            color: context.theme.colors.mutedForeground,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class ProfileTab extends ConsumerWidget {
@@ -167,7 +286,7 @@ class ProfileTab extends ConsumerWidget {
                         if (linkedProfessionalId != null)
                           FTile(
                             prefix: const Icon(FLucideIcons.briefcaseBusiness),
-                            title: const Text('Chế Độ HLV'),
+                            title: Text('homeTab.professional.mode.title'.tr()),
                             details: FSwitch(
                               value: proModeActive,
                               onChange: (v) {

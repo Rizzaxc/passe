@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -48,8 +49,10 @@ class ProProfileView extends ConsumerWidget {
                 children: [
                   FTile(
                     prefix: const Icon(FLucideIcons.briefcaseBusiness),
-                    title: const Text('Chế Độ HLV'),
-                    subtitle: const Text('Tắt để quay lại hồ sơ người chơi'),
+                    title: Text('homeTab.professional.mode.title'.tr()),
+                    subtitle: Text(
+                      'homeTab.professional.mode.backToPlayer'.tr(),
+                    ),
                     details: FSwitch(
                       value: true,
                       onChange: (active) =>
@@ -150,7 +153,7 @@ class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Không thể lưu thông tin'),
+          title: Text('homeTab.professional.mode.profile.saveFailed'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -160,7 +163,7 @@ class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
     showFToast(
       context: context,
       icon: const Icon(FLucideIcons.check),
-      title: const Text('Đã lưu'),
+      title: Text('homeTab.professional.mode.profile.saved'.tr()),
       alignment: .bottomCenter,
     );
   }
@@ -180,39 +183,47 @@ class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
           spacing: 12,
           children: [
             FTextFormField(
-              label: const Text('Tên chuyên nghiệp'),
-              hint: 'Tên thật hoặc tên bạn dùng khi làm HLV / trọng tài',
-              description: const Text(
-                'Tên này hiển thị trên hồ sơ chuyên nghiệp và không thay đổi username của bạn.',
+              label: Text('homeTab.professional.mode.profile.displayName'.tr()),
+              hint: 'homeTab.professional.mode.profile.displayNameHint'.tr(),
+              description: Text(
+                'homeTab.professional.mode.profile.displayNameDescription'.tr(),
               ),
               maxLength: 80,
               autovalidateMode: AutovalidateMode.onUserInteraction,
               control: FTextFieldControl.managed(controller: _displayNameCtrl),
               validator: (value) {
                 final name = value?.trim() ?? '';
-                if (name.isEmpty) return 'Vui lòng nhập tên chuyên nghiệp';
-                if (name.length > 80) return 'Tên không được quá 80 ký tự';
+                if (name.isEmpty) {
+                  return 'homeTab.professional.mode.profile.displayNameRequired'
+                      .tr();
+                }
+                if (name.length > 80) {
+                  return 'homeTab.professional.mode.profile.displayNameTooLong'
+                      .tr();
+                }
                 return null;
               },
             ),
             FTextField(
-              label: const Text('Giới thiệu'),
+              label: Text('homeTab.professional.mode.profile.bio'.tr()),
               control: FTextFieldControl.managed(controller: _bioCtrl),
               maxLines: 4,
             ),
             FTextField(
-              label: const Text('Số điện thoại liên hệ'),
+              label: Text(
+                'homeTab.professional.mode.profile.contactPhone'.tr(),
+              ),
               control: FTextFieldControl.managed(controller: _phoneCtrl),
             ),
             Text(
-              'Lịch rảnh',
+              'homeTab.professional.mode.profile.availability'.tr(),
               style: context.theme.typography.body.sm.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
             if (_schedule.isEmpty)
               Text(
-                'Chưa có khung giờ nào',
+                'homeTab.professional.mode.profile.noAvailability'.tr(),
                 style: context.theme.typography.body.sm.copyWith(
                   color: context.theme.colors.mutedForeground,
                 ),
@@ -249,10 +260,12 @@ class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
                   setState(() => _schedule.add(t));
                 }
               },
-              child: const Text('Thêm khung giờ'),
+              child: Text('homeTab.professional.mode.profile.addTimeslot'.tr()),
             ),
             FTextField(
-              label: const Text('Ghi chú lịch rảnh (tuỳ chọn)'),
+              label: Text(
+                'homeTab.professional.mode.profile.scheduleNote'.tr(),
+              ),
               control: FTextFieldControl.managed(controller: _scheduleNoteCtrl),
               maxLines: 2,
             ),
@@ -267,7 +280,7 @@ class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text('Lưu Thông Tin'),
+                  : Text('homeTab.professional.mode.profile.save'.tr()),
             ),
           ],
         ),
@@ -299,7 +312,7 @@ class _ServicesSection extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Dịch vụ của tôi',
+                  'homeTab.professional.mode.services.mine'.tr(),
                   style: context.theme.typography.body.lg.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -321,7 +334,7 @@ class _ServicesSection extends StatelessWidget {
               child: Center(child: CircularProgressIndicator()),
             ),
             error: (_, _) => Text(
-              'Không tải được danh sách dịch vụ',
+              'homeTab.professional.mode.services.loadFailed'.tr(),
               style: context.theme.typography.body.sm.copyWith(
                 color: context.theme.colors.mutedForeground,
               ),
@@ -329,8 +342,9 @@ class _ServicesSection extends StatelessWidget {
             data: (services) {
               if (services.isEmpty) {
                 return PEmptySectionPlaceholder(
-                  title: 'Chưa có dịch vụ nào',
-                  subtitle: 'Thêm một dịch vụ để học viên có thể đặt lịch.',
+                  title: 'homeTab.professional.mode.services.emptyTitle'.tr(),
+                  subtitle: 'homeTab.professional.mode.services.emptySubtitle'
+                      .tr(),
                 );
               }
               return Column(
@@ -359,8 +373,10 @@ class _ServiceCard extends ConsumerWidget {
     final colors = context.theme.colors;
     final priceLabel = service.priceAmount == null
         ? null
-        : '${formatVnd(service.priceAmount!)}₫/'
-              '${service.pricingKind == ProfessionalPricingKind.hourly ? 'giờ' : 'buổi'}';
+        : (service.pricingKind == ProfessionalPricingKind.hourly
+                  ? 'homeTab.professional.pricePerHour'
+                  : 'homeTab.professional.pricePerSession')
+              .tr(namedArgs: {'price': formatVnd(service.priceAmount!)});
 
     return FTappable(
       onPress: () => showServiceEditorSheet(
@@ -416,7 +432,9 @@ class _ServiceCard extends ConsumerWidget {
                   ),
                 if (service.sessionCount > 1)
                   Text(
-                    '${service.sessionCount} buổi',
+                    'homeTab.professional.mode.services.sessionCount'.plural(
+                      service.sessionCount,
+                    ),
                     style: context.theme.typography.body.xs.copyWith(
                       color: colors.mutedForeground,
                     ),
@@ -424,7 +442,9 @@ class _ServiceCard extends ConsumerWidget {
                 if (service.maxParticipants != null &&
                     service.maxParticipants! > 1)
                   Text(
-                    'Tối đa ${service.maxParticipants} người',
+                    'homeTab.professional.mode.services.maxParticipants'.plural(
+                      service.maxParticipants!,
+                    ),
                     style: context.theme.typography.body.xs.copyWith(
                       color: colors.mutedForeground,
                     ),
@@ -533,7 +553,7 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Không thể lưu dịch vụ'),
+          title: Text('homeTab.professional.mode.services.saveFailed'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -555,7 +575,9 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
         spacing: 16,
         children: [
           PSheetTitle(
-            label: widget.existing == null ? 'Thêm Dịch Vụ' : 'Sửa Dịch Vụ',
+            label: widget.existing == null
+                ? 'homeTab.professional.mode.services.add'.tr()
+                : 'homeTab.professional.mode.services.edit'.tr(),
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),
@@ -563,7 +585,7 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
             ),
           ),
           FSelect<Sport>.rich(
-            hint: 'Môn thể thao',
+            hint: 'homeTab.professional.mode.services.sport'.tr(),
             format: (s) => s.getLocalizedName(context),
             autoHide: true,
             control: FSelectControl.lifted(
@@ -579,12 +601,14 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
             ],
           ),
           FTextField(
-            label: const Text('Tên dịch vụ'),
-            hint: 'VD: 1-kèm-1, Lớp nhóm...',
+            label: Text('homeTab.professional.mode.services.name'.tr()),
+            hint: 'homeTab.professional.mode.services.nameHint'.tr(),
             control: FTextFieldControl.managed(controller: _typeCtrl),
           ),
           FTextField(
-            label: const Text('Mô tả (tuỳ chọn)'),
+            label: Text(
+              'homeTab.professional.mode.services.descriptionOptional'.tr(),
+            ),
             control: FTextFieldControl.managed(controller: _descCtrl),
             maxLines: 2,
           ),
@@ -593,14 +617,19 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
             children: [
               Expanded(
                 child: FTextField(
-                  label: const Text('Thời lượng (phút)'),
+                  label: Text(
+                    'homeTab.professional.mode.services.durationMinutes'.tr(),
+                  ),
                   control: FTextFieldControl.managed(controller: _durationCtrl),
                   keyboardType: TextInputType.number,
                 ),
               ),
               Expanded(
                 child: FTextField(
-                  label: const Text('Số người tối đa'),
+                  label: Text(
+                    'homeTab.professional.mode.services.maxParticipantsLabel'
+                        .tr(),
+                  ),
                   control: FTextFieldControl.managed(
                     controller: _maxParticipantsCtrl,
                   ),
@@ -610,7 +639,9 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
             ],
           ),
           FTextField(
-            label: const Text('Số buổi (1 = đặt lẻ, >1 = gói buổi)'),
+            label: Text(
+              'homeTab.professional.mode.services.sessionCountLabel'.tr(),
+            ),
             control: FTextFieldControl.managed(
               controller: _sessionCountCtrl,
               onChange: (_) => setState(() {}),
@@ -628,7 +659,7 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
                   onPress: () => setState(
                     () => _pricingKind = ProfessionalPricingKind.hourly,
                   ),
-                  child: const Text('Theo giờ'),
+                  child: Text('homeTab.professional.mode.services.hourly'.tr()),
                 ),
               ),
               Expanded(
@@ -639,7 +670,9 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
                   onPress: () => setState(
                     () => _pricingKind = ProfessionalPricingKind.perSession,
                   ),
-                  child: const Text('Theo buổi'),
+                  child: Text(
+                    'homeTab.professional.mode.services.perSession'.tr(),
+                  ),
                 ),
               ),
             ],
@@ -647,8 +680,8 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
           FTextField(
             label: Text(
               _pricingKind == ProfessionalPricingKind.hourly
-                  ? 'Giá mỗi giờ'
-                  : 'Giá mỗi buổi',
+                  ? 'homeTab.professional.mode.services.hourlyPrice'.tr()
+                  : 'homeTab.professional.mode.services.perSessionPrice'.tr(),
             ),
             control: FTextFieldControl.managed(controller: _priceCtrl),
             keyboardType: TextInputType.number,
@@ -664,7 +697,7 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
                       color: Colors.white,
                     ),
                   )
-                : const Text('Lưu'),
+                : Text('homeTab.professional.mode.services.save'.tr()),
           ),
         ],
       ),

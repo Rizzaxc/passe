@@ -233,18 +233,22 @@ class RecordChallengeResultController
   }
 }
 
-/// Maps `record_challenge_match`'s guards onto Vietnamese copy.
-String recordResultErrorMessage(Object e) {
+/// Maps `record_challenge_match` guards onto localization keys.
+String recordResultErrorKey(Object e) {
   final msg = e.toString();
-  if (msg.contains('already has a result')) return 'Trận này đã có kết quả';
-  if (msg.contains('not finished')) return 'Trận đấu chưa kết thúc';
+  if (msg.contains('already has a result')) {
+    return 'homeTab.professional.mode.result.error.alreadyRecorded';
+  }
+  if (msg.contains('not finished')) {
+    return 'homeTab.professional.mode.result.error.notFinished';
+  }
   if (msg.contains('only the booked referee')) {
-    return 'Chỉ trọng tài được thuê mới ghi được kết quả';
+    return 'homeTab.professional.mode.result.error.wrongReferee';
   }
   if (msg.contains('no referee is booked')) {
-    return 'Trận này chưa có trọng tài';
+    return 'homeTab.professional.mode.result.error.noReferee';
   }
-  return 'Không thể ghi kết quả';
+  return 'homeTab.professional.mode.result.error.generic';
 }
 
 void _invalidateAll(Ref ref, String professionalId) {
@@ -267,10 +271,7 @@ class ProBookingActionController extends _$ProBookingActionController {
     state = true;
     try {
       await supabase
-          .rpc(
-            'accept_referee_booking',
-            params: {'p_booking_id': bookingId},
-          )
+          .rpc('accept_referee_booking', params: {'p_booking_id': bookingId})
           .timeout(const Duration(seconds: 5));
       _invalidateAll(ref, professionalId);
     } finally {
@@ -300,10 +301,7 @@ class ProBookingActionController extends _$ProBookingActionController {
     state = true;
     try {
       await supabase
-          .rpc(
-            'complete_referee_booking',
-            params: {'p_booking_id': bookingId},
-          )
+          .rpc('complete_referee_booking', params: {'p_booking_id': bookingId})
           .timeout(const Duration(seconds: 5));
       _invalidateAll(ref, professionalId);
     } finally {

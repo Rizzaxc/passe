@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -30,10 +31,10 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {}
 
 /// Android foreground-display channel. iOS shows foreground banners via
 /// [FirebaseMessaging.setForegroundNotificationPresentationOptions] instead.
-const _androidChannel = AndroidNotificationChannel(
+AndroidNotificationChannel get _androidChannel => AndroidNotificationChannel(
   'passe_default',
-  'Thông báo Passe',
-  description: 'Thông báo về hoạt động, challenge và lịch tập',
+  'notification.channel.name'.tr(),
+  description: 'notification.channel.description'.tr(),
   importance: Importance.high,
 );
 
@@ -57,7 +58,8 @@ class NotificationService with WidgetsBindingObserver {
 
   bool _started = false;
 
-  static const _androidPermissionAskedKey = 'android_notification_permission_asked';
+  static const _androidPermissionAskedKey =
+      'android_notification_permission_asked';
 
   String get _platform => Platform.isIOS ? 'ios' : 'android';
 
@@ -100,9 +102,7 @@ class NotificationService with WidgetsBindingObserver {
       // Foreground messages: Android isn't auto-displayed, so draw it ourselves.
       FirebaseMessaging.onMessage.listen(_onForegroundMessage);
       // Tap on an OS-drawn banner that brought the app to the foreground.
-      FirebaseMessaging.onMessageOpenedApp.listen(
-        (m) => _routeTap(m.data),
-      );
+      FirebaseMessaging.onMessageOpenedApp.listen((m) => _routeTap(m.data));
       // Cold start: the app was launched by tapping a notification.
       final initial = await _messaging.getInitialMessage();
       if (initial != null) {
@@ -304,22 +304,22 @@ class NotificationService with WidgetsBindingObserver {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const PSheetTitle(label: 'Bật thông báo?'),
+            PSheetTitle(label: 'notification.permission.title'.tr()),
             const SizedBox(height: 12),
             Text(
-              'Cho phép thông báo để nhận thông tin về lịch hoạt động, các lời mời hoặc trao đổi với HLV?',
+              'notification.permission.rationale'.tr(),
               style: typography.body.md,
             ),
             const SizedBox(height: 24),
             FButton(
               onPress: () => Navigator.of(sheetContext).pop(true),
-              child: const Text('Cho phép'),
+              child: Text('notification.permission.allow'.tr()),
             ),
             const SizedBox(height: 8),
             FButton(
               variant: .ghost,
               onPress: () => Navigator.of(sheetContext).pop(false),
-              child: const Text('Để sau'),
+              child: Text('notification.permission.later'.tr()),
             ),
           ],
         );
@@ -346,10 +346,12 @@ class NotificationService with WidgetsBindingObserver {
   Future<void> _registerToken() async {
     final token = await _messaging.getToken();
     if (token == null) return;
-    await _supabase.rpc(
-      'register_device_token',
-      params: {'p_fcm_token': token, 'p_platform': _platform},
-    ).timeout(const Duration(seconds: 5));
+    await _supabase
+        .rpc(
+          'register_device_token',
+          params: {'p_fcm_token': token, 'p_platform': _platform},
+        )
+        .timeout(const Duration(seconds: 5));
   }
 
   /// Drop this device's token row (call on logout) so the next user of the

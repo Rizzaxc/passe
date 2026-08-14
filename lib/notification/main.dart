@@ -171,15 +171,19 @@ IconData _iconFor(NotificationKind? kind) => switch (kind) {
   null => FLucideIcons.bell,
 };
 
-/// Coarse, hand-rolled relative time — not worth pulling in a full date/time
-/// i18n dependency for one string.
-String _relativeTime(DateTime dt) {
+String _relativeTime(BuildContext context, DateTime dt) {
   final diff = DateTime.now().difference(dt);
-  if (diff.inMinutes < 1) return 'Vừa xong';
-  if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
-  if (diff.inHours < 24) return '${diff.inHours} giờ trước';
-  if (diff.inDays < 7) return '${diff.inDays} ngày trước';
-  return '${dt.day}/${dt.month}/${dt.year}';
+  if (diff.inMinutes < 1) return 'notification.time.justNow'.tr();
+  if (diff.inMinutes < 60) {
+    return 'notification.time.minutesAgo'.plural(diff.inMinutes);
+  }
+  if (diff.inHours < 24) {
+    return 'notification.time.hoursAgo'.plural(diff.inHours);
+  }
+  if (diff.inDays < 7) {
+    return 'notification.time.daysAgo'.plural(diff.inDays);
+  }
+  return DateFormat.yMd(context.locale.toLanguageTag()).format(dt);
 }
 
 class _NotificationRow extends ConsumerWidget {
@@ -369,7 +373,7 @@ class _NotificationRow extends ConsumerWidget {
                           ),
                           const SizedBox(height: 1),
                           Text(
-                            _relativeTime(item.createdAt),
+                            _relativeTime(context, item.createdAt),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: typography.body.xs.copyWith(

@@ -19,12 +19,12 @@ import 'schedule_activity_controller.dart';
 /// and fires the schedule (or, when [existing] is passed, reschedule)
 /// mutation on the lobby's `ScheduleActivityController`, which inserts
 /// (or updates) the `activity` row and posts a matching feed item.
-void showScheduleActivitySheet(
+Future<void> showScheduleActivitySheet(
   BuildContext context,
   String lobbyId, {
   UpcomingActivity? existing,
-}) {
-  showPSheet(
+}) async {
+  await showPSheet<void>(
     context: context,
     builder: (_) =>
         _ScheduleActivitySheet(lobbyId: lobbyId, existing: existing),

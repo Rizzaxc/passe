@@ -33,6 +33,80 @@ class ScheduleEvent {
   /// Completed activities belong in the lobby History tab; an activity that
   /// is still in progress remains in Planner until its actual end time.
   bool isCompletedAt(DateTime now) => !(endAt ?? startAt).isAfter(now);
+
+  DateTime get effectiveEndAt => endAt ?? startAt.add(const Duration(hours: 1));
+}
+
+/// Horizontal placement for one event in a calendar overlap group.
+class ScheduleEventLayout {
+  final ScheduleEvent event;
+  final int column;
+  final int columnCount;
+
+  const ScheduleEventLayout({
+    required this.event,
+    required this.column,
+    required this.columnCount,
+  });
+}
+
+/// Assigns overlapping events to side-by-side columns.
+///
+/// Events that only touch at an endpoint do not overlap. Every connected
+/// overlap group uses a common [ScheduleEventLayout.columnCount], which keeps
+/// column widths stable from the start to the end of that group.
+List<ScheduleEventLayout> layoutOverlappingScheduleEvents(
+  Iterable<ScheduleEvent> events,
+) {
+  final sorted = events.toList()
+    ..sort((a, b) {
+      final byStart = a.startAt.compareTo(b.startAt);
+      if (byStart != 0) return byStart;
+      final byEnd = b.effectiveEndAt.compareTo(a.effectiveEndAt);
+      return byEnd != 0 ? byEnd : a.activityId.compareTo(b.activityId);
+    });
+  final result = <ScheduleEventLayout>[];
+  var group = <ScheduleEvent>[];
+  DateTime? groupEnd;
+
+  void flushGroup() {
+    if (group.isEmpty) return;
+    final columnEnds = <DateTime>[];
+    final placements = <(ScheduleEvent, int)>[];
+
+    for (final event in group) {
+      var column = columnEnds.indexWhere((end) => !event.startAt.isBefore(end));
+      if (column == -1) {
+        column = columnEnds.length;
+        columnEnds.add(event.effectiveEndAt);
+      } else {
+        columnEnds[column] = event.effectiveEndAt;
+      }
+      placements.add((event, column));
+    }
+
+    for (final (event, column) in placements) {
+      result.add(
+        ScheduleEventLayout(
+          event: event,
+          column: column,
+          columnCount: columnEnds.length,
+        ),
+      );
+    }
+    group = <ScheduleEvent>[];
+    groupEnd = null;
+  }
+
+  for (final event in sorted) {
+    if (groupEnd != null && !event.startAt.isBefore(groupEnd!)) flushGroup();
+    group.add(event);
+    if (groupEnd == null || event.effectiveEndAt.isAfter(groupEnd!)) {
+      groupEnd = event.effectiveEndAt;
+    }
+  }
+  flushGroup();
+  return result;
 }
 
 /// The current user's activities (lobby sessions + coach bookings) for the

@@ -37,4 +37,36 @@ void main() {
       expect(eventWithoutEnd.isCompletedAt(start), isTrue);
     });
   });
+
+  group('overlapping schedule event layout', () {
+    ScheduleEvent event(String id, int startHour, int endHour) => ScheduleEvent(
+      activityId: id,
+      title: id,
+      meta: '',
+      tone: ScheduleEventTone.freeplay,
+      startAt: DateTime(2026, 8, 8, startHour),
+      endAt: DateTime(2026, 8, 8, endHour),
+    );
+
+    test('puts activities sharing a timeslot in separate columns', () {
+      final layout = layoutOverlappingScheduleEvents([
+        event('first', 18, 20),
+        event('second', 18, 20),
+      ]);
+
+      expect(layout, hasLength(2));
+      expect(layout.map((item) => item.column), [0, 1]);
+      expect(layout.map((item) => item.columnCount), [2, 2]);
+    });
+
+    test('reuses a column when one activity ends as another starts', () {
+      final layout = layoutOverlappingScheduleEvents([
+        event('first', 18, 19),
+        event('second', 19, 20),
+      ]);
+
+      expect(layout.map((item) => item.column), [0, 0]);
+      expect(layout.map((item) => item.columnCount), [1, 1]);
+    });
+  });
 }

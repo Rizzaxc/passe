@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -21,10 +22,8 @@ void showRecordResultSheet(
 }) {
   showPSheet(
     context: context,
-    builder: (_) => _RecordResultSheet(
-      professionalId: professionalId,
-      match: match,
-    ),
+    builder: (_) =>
+        _RecordResultSheet(professionalId: professionalId, match: match),
   );
 }
 
@@ -32,10 +31,7 @@ class _RecordResultSheet extends ConsumerStatefulWidget {
   final String professionalId;
   final RefereedMatch match;
 
-  const _RecordResultSheet({
-    required this.professionalId,
-    required this.match,
-  });
+  const _RecordResultSheet({required this.professionalId, required this.match});
 
   @override
   ConsumerState<_RecordResultSheet> createState() => _RecordResultSheetState();
@@ -90,11 +86,11 @@ class _RecordResultSheetState extends ConsumerState<_RecordResultSheet> {
 
   /// Parsed sets, dropping rows the referee left blank.
   List<(int, int)> get _parsedSets => [
-        for (final s in _sets)
-          if (int.tryParse(s.$1.text.trim()) != null &&
-              int.tryParse(s.$2.text.trim()) != null)
-            (int.parse(s.$1.text.trim()), int.parse(s.$2.text.trim())),
-      ];
+    for (final s in _sets)
+      if (int.tryParse(s.$1.text.trim()) != null &&
+          int.tryParse(s.$2.text.trim()) != null)
+        (int.parse(s.$1.text.trim()), int.parse(s.$2.text.trim())),
+  ];
 
   /// The result is derived from the scoreline rather than picked separately —
   /// two controls for one fact is how they end up disagreeing.
@@ -120,13 +116,18 @@ class _RecordResultSheetState extends ConsumerState<_RecordResultSheet> {
 
   Future<void> _submit() async {
     final result = _derivedResult;
-    if (result == null) return _toast('Nhập ít nhất một hiệp có tỉ số');
+    if (result == null) {
+      return _toast('homeTab.professional.mode.result.missingScore'.tr());
+    }
 
     try {
       final note = _noteController.text.trim();
       await ref
-          .read(recordChallengeResultControllerProvider(widget.professionalId)
-              .notifier)
+          .read(
+            recordChallengeResultControllerProvider(
+              widget.professionalId,
+            ).notifier,
+          )
           .record(
             challengeId: widget.match.challengeId,
             result: result,
@@ -135,19 +136,20 @@ class _RecordResultSheetState extends ConsumerState<_RecordResultSheet> {
           );
       if (!mounted) return;
       Navigator.of(context).pop();
-      _toast('Đã ghi kết quả', bad: false);
+      _toast('homeTab.professional.mode.result.saved'.tr(), bad: false);
     } catch (e, st) {
       Talker().handle(e, st, 'record challenge result failed');
       if (!mounted) return;
-      _toast(recordResultErrorMessage(e));
+      _toast(recordResultErrorKey(e).tr());
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final busy =
-        ref.watch(recordChallengeResultControllerProvider(widget.professionalId));
+    final busy = ref.watch(
+      recordChallengeResultControllerProvider(widget.professionalId),
+    );
     final match = widget.match;
     final result = _derivedResult;
 
@@ -158,7 +160,7 @@ class _RecordResultSheetState extends ConsumerState<_RecordResultSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PSheetTitle(
-            label: 'Ghi Kết Quả',
+            label: 'homeTab.professional.mode.result.title'.tr(),
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),
@@ -173,22 +175,23 @@ class _RecordResultSheetState extends ConsumerState<_RecordResultSheet> {
               Expanded(
                 child: _TeamLabel(
                   name: match.homeLobbyName,
-                  caption: 'Chủ nhà',
+                  caption: 'homeTab.professional.mode.result.home'.tr(),
                   align: TextAlign.left,
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Text(
-                  'vs',
-                  style: context.theme.typography.body.xs
-                      .copyWith(color: colors.mutedForeground),
+                  'homeTab.professional.mode.result.versus'.tr(),
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
                 ),
               ),
               Expanded(
                 child: _TeamLabel(
                   name: match.awayLobbyName,
-                  caption: 'Khách',
+                  caption: 'homeTab.professional.mode.result.away'.tr(),
                   align: TextAlign.right,
                 ),
               ),
@@ -199,8 +202,9 @@ class _RecordResultSheetState extends ConsumerState<_RecordResultSheet> {
             Text(
               formatMatchDateTime(match.activityEnd!),
               textAlign: TextAlign.center,
-              style: context.theme.typography.body.xs
-                  .copyWith(color: colors.mutedForeground),
+              style: context.theme.typography.body.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
             ),
 
           Column(
@@ -213,14 +217,17 @@ class _RecordResultSheetState extends ConsumerState<_RecordResultSheet> {
                     SizedBox(
                       width: 52,
                       child: Text(
-                        'Hiệp ${i + 1}',
-                        style: context.theme.typography.body.xs
-                            .copyWith(color: colors.mutedForeground),
+                        'homeTab.professional.mode.result.set'.tr(
+                          namedArgs: {'count': '${i + 1}'},
+                        ),
+                        style: context.theme.typography.body.xs.copyWith(
+                          color: colors.mutedForeground,
+                        ),
                       ),
                     ),
                     Expanded(
                       child: FTextField(
-                        hint: 'Chủ nhà',
+                        hint: 'homeTab.professional.mode.result.home'.tr(),
                         keyboardType: TextInputType.number,
                         control: FTextFieldControl.managed(
                           controller: _sets[i].$1,
@@ -230,7 +237,7 @@ class _RecordResultSheetState extends ConsumerState<_RecordResultSheet> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: FTextField(
-                        hint: 'Khách',
+                        hint: 'homeTab.professional.mode.result.away'.tr(),
                         keyboardType: TextInputType.number,
                         control: FTextFieldControl.managed(
                           controller: _sets[i].$2,
@@ -248,7 +255,7 @@ class _RecordResultSheetState extends ConsumerState<_RecordResultSheet> {
               FButton(
                 variant: .outline,
                 onPress: _addSet,
-                child: const Text('Thêm hiệp'),
+                child: Text('homeTab.professional.mode.result.addSet'.tr()),
               ),
             ],
           ),
@@ -263,15 +270,23 @@ class _RecordResultSheetState extends ConsumerState<_RecordResultSheet> {
             ),
             child: Row(
               children: [
-                Icon(FLucideIcons.flag, size: 16, color: colors.mutedForeground),
+                Icon(
+                  FLucideIcons.flag,
+                  size: 16,
+                  color: colors.mutedForeground,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     switch (result) {
-                      'win' => '${match.homeLobbyName} thắng',
-                      'loss' => '${match.awayLobbyName} thắng',
-                      'draw' => 'Hoà',
-                      _ => 'Nhập tỉ số để xác định kết quả',
+                      'win' => 'homeTab.professional.mode.result.winner'.tr(
+                        namedArgs: {'team': match.homeLobbyName},
+                      ),
+                      'loss' => 'homeTab.professional.mode.result.winner'.tr(
+                        namedArgs: {'team': match.awayLobbyName},
+                      ),
+                      'draw' => 'homeTab.professional.mode.result.draw'.tr(),
+                      _ => 'homeTab.professional.mode.result.enterScore'.tr(),
                     },
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -288,16 +303,17 @@ class _RecordResultSheetState extends ConsumerState<_RecordResultSheet> {
           ),
 
           FTextField(
-            label: const Text('Ghi chú (tuỳ chọn)'),
+            label: Text('homeTab.professional.mode.result.noteOptional'.tr()),
             maxLines: 2,
             control: FTextFieldControl.managed(controller: _noteController),
           ),
 
           Text(
-            'Kết quả do trọng tài ghi là kết quả cuối cùng và sẽ cập nhật '
-            'điểm MMR của cả hai đội.',
-            style: context.theme.typography.body.xs
-                .copyWith(color: colors.mutedForeground, height: 1.45),
+            'homeTab.professional.mode.result.finalNotice'.tr(),
+            style: context.theme.typography.body.xs.copyWith(
+              color: colors.mutedForeground,
+              height: 1.45,
+            ),
           ),
 
           FButton(
@@ -311,7 +327,7 @@ class _RecordResultSheetState extends ConsumerState<_RecordResultSheet> {
                       color: Colors.white,
                     ),
                   )
-                : const Text('Ghi Kết Quả'),
+                : Text('homeTab.professional.mode.result.title'.tr()),
           ),
           const SizedBox(height: 4),
         ],
@@ -345,13 +361,15 @@ class _TeamLabel extends StatelessWidget {
           textAlign: align,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.body.sm
-              .copyWith(fontWeight: FontWeight.w700),
+          style: context.theme.typography.body.sm.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
         Text(
           caption,
-          style: context.theme.typography.body.xs
-              .copyWith(color: colors.mutedForeground),
+          style: context.theme.typography.body.xs.copyWith(
+            color: colors.mutedForeground,
+          ),
         ),
       ],
     );

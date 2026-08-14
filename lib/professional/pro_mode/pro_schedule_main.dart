@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -22,7 +23,9 @@ class ProScheduleSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bookingsAsync = ref.watch(proUpcomingBookingsProvider(professionalId));
+    final bookingsAsync = ref.watch(
+      proUpcomingBookingsProvider(professionalId),
+    );
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -33,8 +36,10 @@ class ProScheduleSection extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            PEmptySectionPlaceholder(subtitle: 'Không tải được lịch'),
+          children: [
+            PEmptySectionPlaceholder(
+              subtitle: 'homeTab.professional.mode.schedule.loadFailed'.tr(),
+            ),
           ],
         ),
         data: (bookings) {
@@ -42,10 +47,11 @@ class ProScheduleSection extends ConsumerWidget {
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 40),
-              children: const [
+              children: [
                 PEmptySectionPlaceholder(
-                  title: 'Chưa có buổi nào được xác nhận',
-                  subtitle: 'Các buổi đã xác nhận sẽ hiện ở đây.',
+                  title: 'homeTab.professional.mode.schedule.emptyTitle'.tr(),
+                  subtitle: 'homeTab.professional.mode.schedule.emptySubtitle'
+                      .tr(),
                 ),
               ],
             );
@@ -84,7 +90,7 @@ class _BookingCard extends ConsumerWidget {
           context: context,
           icon: const Icon(FLucideIcons.circleX),
           variant: .destructive,
-          title: const Text('Không thể đánh dấu hoàn thành'),
+          title: Text('homeTab.professional.mode.schedule.completeFailed'.tr()),
           alignment: .bottomCenter,
         );
       }
@@ -99,7 +105,9 @@ class _BookingCard extends ConsumerWidget {
       context: context,
       icon: const Icon(FLucideIcons.swords),
       title: Text('${match.homeLobbyName} vs ${match.awayLobbyName}'),
-      description: const Text('Ghi kết quả sau khi trận kết thúc'),
+      description: Text(
+        'homeTab.professional.mode.schedule.recordAfterMatch'.tr(),
+      ),
       alignment: .bottomCenter,
     );
   }
@@ -139,7 +147,11 @@ class _BookingCard extends ConsumerWidget {
                 ),
               ),
               if (match != null)
-                Icon(FLucideIcons.swords, size: 14, color: colors.mutedForeground),
+                Icon(
+                  FLucideIcons.swords,
+                  size: 14,
+                  color: colors.mutedForeground,
+                ),
             ],
           ),
           if (booking.serviceType != null) Text(booking.serviceType!),
@@ -176,9 +188,10 @@ class _BookingCard extends ConsumerWidget {
           if (ClientFeatureFlags.challengerFlow && match != null)
             if (match.resultRecorded)
               Text(
-                'Đã ghi kết quả',
-                style: context.theme.typography.body.xs
-                    .copyWith(color: colors.mutedForeground),
+                'homeTab.professional.mode.schedule.resultRecorded'.tr(),
+                style: context.theme.typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
               )
             else if (isPastDue)
               FButton(
@@ -188,13 +201,16 @@ class _BookingCard extends ConsumerWidget {
                   professionalId: professionalId,
                   match: match,
                 ),
-                child: const Text('Ghi Kết Quả'),
+                child: Text(
+                  'homeTab.professional.mode.schedule.recordResult'.tr(),
+                ),
               )
             else
               Text(
-                'Ghi kết quả sau khi trận kết thúc',
-                style: context.theme.typography.body.xs
-                    .copyWith(color: colors.mutedForeground),
+                'homeTab.professional.mode.schedule.recordAfterMatch'.tr(),
+                style: context.theme.typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
               )
           else if (isPastDue)
             FButton(
@@ -206,7 +222,9 @@ class _BookingCard extends ConsumerWidget {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Đánh Dấu Hoàn Thành'),
+                  : Text(
+                      'homeTab.professional.mode.schedule.markComplete'.tr(),
+                    ),
             ),
         ],
       ),
@@ -219,12 +237,12 @@ class _BookingCard extends ConsumerWidget {
       onPress: match.resultRecorded
           ? null
           : () => isPastDue
-              ? showRecordResultSheet(
-                  context,
-                  professionalId: professionalId,
-                  match: match,
-                )
-              : _showMatchContext(context, match),
+                ? showRecordResultSheet(
+                    context,
+                    professionalId: professionalId,
+                    match: match,
+                  )
+                : _showMatchContext(context, match),
       child: card,
     );
   }

@@ -11,8 +11,7 @@ import 'manage_sheet.dart';
 import 'requests_sheet.dart';
 
 class HostFreeplaySection extends ConsumerWidget {
-  final bool scheduleOnly;
-  const HostFreeplaySection({this.scheduleOnly = false, super.key});
+  const HostFreeplaySection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,16 +19,12 @@ class HostFreeplaySection extends ConsumerWidget {
     return Column(
       children: [
         PSectionHeader(
-          title: scheduleOnly
-              ? 'freeplay.hostManage.schedule'.tr()
-              : 'freeplay.hostManage.openListings'.tr(),
-          suffix: scheduleOnly
-              ? null
-              : FButton.icon(
-                  variant: .ghost,
-                  onPress: () => showCreateFreeplaySheet(context, ref),
-                  child: const Icon(FLucideIcons.plus),
-                ),
+          title: 'freeplay.hostManage.openListings'.tr(),
+          suffix: FButton.icon(
+            variant: .ghost,
+            onPress: () => showCreateFreeplaySheet(context, ref),
+            child: const Icon(FLucideIcons.plus),
+          ),
         ),
         Expanded(
           child: RefreshIndicator(
@@ -62,48 +57,45 @@ class HostFreeplaySection extends ConsumerWidget {
                   itemCount: sorted.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) => GestureDetector(
-                    onLongPress: scheduleOnly
-                        ? null
-                        : () => showManageFreeplaySheet(context, sorted[index]),
+                    onLongPress: () =>
+                        showManageFreeplaySheet(context, sorted[index]),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         FreeplayCard(activity: sorted[index], compact: true),
-                        if (!scheduleOnly)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                FButton.icon(
-                                  size: .sm,
-                                  variant: .ghost,
-                                  onPress: () => showManageFreeplaySheet(
-                                    context,
-                                    sorted[index],
-                                  ),
-                                  child: const Icon(FLucideIcons.settings2),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              FButton.icon(
+                                size: .sm,
+                                variant: .ghost,
+                                onPress: () => showManageFreeplaySheet(
+                                  context,
+                                  sorted[index],
                                 ),
-                                const SizedBox(width: 4),
-                                FButton(
-                                  size: .sm,
-                                  variant: .outline,
-                                  onPress: () => showHostFreeplayRequests(
-                                    context,
-                                    sorted[index].id,
-                                  ),
-                                  child: Text(
-                                    'freeplay.hostManage.pendingRequests'.tr(
-                                      namedArgs: {
-                                        'count':
-                                            '${sorted[index].pendingCount}',
-                                      },
-                                    ),
+                                child: const Icon(FLucideIcons.settings2),
+                              ),
+                              const SizedBox(width: 4),
+                              FButton(
+                                size: .sm,
+                                variant: .outline,
+                                onPress: () => showHostFreeplayRequests(
+                                  context,
+                                  sorted[index].id,
+                                ),
+                                child: Text(
+                                  'freeplay.hostManage.pendingRequests'.tr(
+                                    namedArgs: {
+                                      'count': '${sorted[index].pendingCount}',
+                                    },
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
+                        ),
                       ],
                     ),
                   ),

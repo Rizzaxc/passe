@@ -1,13 +1,22 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:number_to_vietnamese_words/number_to_vietnamese_words.dart';
 
-const _weekdays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+const _weekdayKeys = [
+  'lobbyHub.schedule.weekdaysShort.monday',
+  'lobbyHub.schedule.weekdaysShort.tuesday',
+  'lobbyHub.schedule.weekdaysShort.wednesday',
+  'lobbyHub.schedule.weekdaysShort.thursday',
+  'lobbyHub.schedule.weekdaysShort.friday',
+  'lobbyHub.schedule.weekdaysShort.saturday',
+  'lobbyHub.schedule.weekdaysShort.sunday',
+];
 
-/// A match kickoff, Vietnamese-style: `"T7 12/9 · 18:00"`. Shared by every
+/// A localized match kickoff, e.g. `"Sat 12/9 · 18:00"`. Shared by every
 /// surface that shows a challenge's agreed time (the offer control, the
 /// challenger feed card, the challenges sheet, the referee's booking card) so
 /// they can't drift apart.
 String formatMatchDateTime(DateTime d) =>
-    '${_weekdays[d.weekday - 1]} ${d.day}/${d.month} · ${formatTimeOfDay(d)}';
+    '${_weekdayKeys[d.weekday - 1].tr()} ${d.day}/${d.month} · ${formatTimeOfDay(d)}';
 
 /// Just the clock part, zero-padded: `"18:05"`.
 String formatTimeOfDay(DateTime d) =>

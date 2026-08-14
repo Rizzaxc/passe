@@ -152,7 +152,7 @@ class ManageTab extends StatefulWidget {
   static const hostManageSections = <FTabEntry>[
     FTabEntry(child: HostFreeplaySection(), label: Icon(FLucideIcons.ticket)),
     FTabEntry(
-      child: HostFreeplaySection(scheduleOnly: true),
+      child: ScheduleSection(dataSource: ScheduleDataSource.host),
       label: Icon(FLucideIcons.calendarDays),
     ),
   ];
