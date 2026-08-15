@@ -20,6 +20,13 @@ class ProfessionalFeedItem {
   final double? priceFrom;
   final ProfessionalPricingKind? priceFromKind;
 
+  /// The linked `user` account, when this pro has self-service-registered
+  /// one (`professional.linked_user_id`) — lets the card/profile reuse that
+  /// user's real avatar (`PUserAvatar`) instead of a generic initials
+  /// circle. Null for a pro that was never linked to a user account.
+  final String? linkedUserId;
+  final String? generatedAvatar;
+
   const ProfessionalFeedItem({
     required this.id,
     required this.displayName,
@@ -35,6 +42,8 @@ class ProfessionalFeedItem {
     this.preferredLocationNames = const [],
     this.priceFrom,
     this.priceFromKind,
+    this.linkedUserId,
+    this.generatedAvatar,
   });
 
   factory ProfessionalFeedItem.fromJson(Map<String, dynamic> json) {
@@ -77,6 +86,17 @@ class ProfessionalFeedItem {
           : ProfessionalPricingKind.fromValue(
               json['price_from_kind'] as String?,
             ),
+      linkedUserId: json['linked_user_id'] as String?,
+      // RPC rows (`home_professional_data`) carry a flat `generated_avatar`
+      // column; `professionalById`'s direct table select instead embeds the
+      // linked `user` row (`user!professional_linked_user_id_fkey(details)`)
+      // — check both shapes rather than teaching every call site which one
+      // it's reading from.
+      generatedAvatar:
+          json['generated_avatar'] as String? ??
+          ((json['user'] as Map<String, dynamic>?)?['details']
+                  as Map<String, dynamic>?)?['generatedAvatar']
+              as String?,
     );
   }
 }

@@ -17,11 +17,12 @@ import 'currency/wallet_intro_screen.dart';
 import 'currency/wallet_purchase_history_screen.dart';
 import 'currency/wallet_spending_history_screen.dart';
 import 'currency/wallet_topup_screen.dart';
+import 'discover_tab/main.dart';
+import 'feed_tab/feed_controller.dart';
 import 'feed_tab/main.dart';
 import 'freeplay/detail_page.dart';
 import 'freeplay/host_page.dart';
 import 'health_tab/main.dart';
-import 'home_tab/main.dart';
 import 'main.dart';
 import 'manage_tab/lobby_section/invite_link/invite_landing_page.dart';
 import 'manage_tab/lobby_section/lobby_detail_page.dart';
@@ -86,23 +87,35 @@ GoRouter router(Ref ref) {
     onboarding.value = next;
   }, fireImmediately: true);
 
+  // Mirrors `onboarding` above: whether the signed-in user has an unread
+  // Feed post, resolved once at cold start to help pick the landing tab
+  // (see `resolveInitialTabDestination` below). Runs in parallel with the
+  // `user`/`onboarding` resolution, not after it — all three listeners fire
+  // immediately at router construction.
+  final feedUnread = ValueNotifier<AsyncValue<bool>>(const AsyncLoading());
+  ref.onDispose(feedUnread.dispose);
+  ref.listen(feedHasUnreadProvider, (_, next) {
+    feedUnread.value = next;
+  }, fireImmediately: true);
+
   // The destination a cold start actually asked for, when it isn't the
   // literal `/splash` route — e.g. `restorationScopeId: 'router'` restoring
   // iOS's last-visited route straight into `/manage/lobby`, or a future
   // deep link. `gateOnboarding()`'s `AsyncLoading` branch below detours any
   // such request through `/splash` while auth/onboarding resolve; without
-  // remembering it here, every `isSplash -> Home` fallback further down only
-  // knows "we're currently sitting on /splash" and permanently loses the
-  // real destination, always landing the user on Home instead — which is
-  // indistinguishable from "the requested screen doesn't load" to anyone
-  // hitting a cold start already deep in the app (Manage▸Lobby included).
+  // remembering it here, every `isSplash -> Discover` fallback further down
+  // only knows "we're currently sitting on /splash" and permanently loses
+  // the real destination, always landing the user on Discover instead —
+  // which is indistinguishable from "the requested screen doesn't load" to
+  // anyone hitting a cold start already deep in the app (Manage▸Lobby
+  // included).
   String? pendingDestination;
 
   final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     observers: [TalkerRouteObserver(talker)],
     restorationScopeId: 'router',
-    refreshListenable: Listenable.merge([user, onboarding]),
+    refreshListenable: Listenable.merge([user, onboarding, feedUnread]),
     initialLocation: const SplashRoute().location,
     // debugLogDiagnostics: true,
     routes: $appRoutes,
@@ -125,11 +138,31 @@ GoRouter router(Ref ref) {
           isPasswordRecoveryFlow;
 
       // Track the latest genuine (non-splash, non-auth-flow) location this
-      // pass has been asked to resolve, so a later `isSplash -> Home`
-      // fallback can send the user back to it instead of Home. Splash/auth
+      // pass has been asked to resolve, so a later `isSplash -> Discover`
+      // fallback can send the user back to it instead of Discover. Splash/auth
       // routes themselves are never "destinations" worth restoring.
       if (!isSplash && !isAuthFlow) {
         pendingDestination = state.uri.toString();
+      }
+
+      // The tab a cold start / post-onboarding transition actually lands on.
+      // A guest always gets Discover (there's nothing personal to show yet).
+      // A signed-in user gets Feed when they have something new there,
+      // otherwise Manage — Discover is deliberately *not* the signed-in
+      // default anymore. `AsyncLoading` claims `/splash` rather than
+      // guessing, same posture as `gateOnboarding`'s own loading branch
+      // below (and for the same reason: never let two fallbacks race and
+      // produce a `/splash <-> /discover` redirect loop go_router throws
+      // on). `AsyncError` fails toward Manage ("nothing known to be
+      // unread"), not Discover.
+      String resolveInitialTabDestination({required bool isGuest}) {
+        if (isGuest) return DiscoverRoute().location;
+        return switch (feedUnread.value) {
+          AsyncData(value: true) => const FeedRoute().location,
+          AsyncData(value: false) => const ManageRoute().location,
+          AsyncLoading() => const SplashRoute().location,
+          AsyncError() => const ManageRoute().location,
+        };
       }
 
       // Only reachable once `user.value` is `AsyncData` with a real identity
@@ -140,7 +173,7 @@ GoRouter router(Ref ref) {
       // guide (story/profile/coach-marks, and whether a guest declined it)
       // runs afterward as sheets/coach-marks over the real shell, so it
       // doesn't gate routing at all. See `onboarding/follow_up.dart`.
-      String? gateOnboarding() {
+      String? gateOnboarding({required bool isGuest}) {
         // `OnboardingState` re-runs `build()` (and its exposed value passes
         // back through `AsyncLoading`) on every `authControllerProvider`
         // change — e.g. a guest signing in from the Profile tab's embedded
@@ -164,21 +197,25 @@ GoRouter router(Ref ref) {
           if (!cached.coreDone) {
             return isOnboarding ? null : const OnboardingRoute().location;
           }
-          return isOnboarding ? HomeRoute().location : null;
+          return isOnboarding
+              ? resolveInitialTabDestination(isGuest: isGuest)
+              : null;
         }
 
         switch (onboarding.value) {
           case AsyncLoading():
             // Always claim `/splash` — never `null` — even when already
             // there. Returning `null` while already on `/splash` let the
-            // callers' own `isSplash -> Home` fallback fire mid-load, which
-            // then immediately bounced back to `/splash` on the next pass —
-            // a `/splash <-> /home` redirect loop go_router detects and
-            // throws on.
+            // callers' own `isSplash -> Discover` fallback fire mid-load,
+            // which then immediately bounced back to `/splash` on the next
+            // pass — a `/splash <-> /discover` redirect loop go_router
+            // detects and throws on.
             return const SplashRoute().location;
           case AsyncError():
             // Fail open — never trap the user on a broken onboarding read.
-            return isOnboarding ? HomeRoute().location : null;
+            return isOnboarding
+                ? resolveInitialTabDestination(isGuest: isGuest)
+                : null;
           case AsyncData():
             return null; // Unreachable: AsyncData always has a value.
         }
@@ -197,20 +234,24 @@ GoRouter router(Ref ref) {
         case AsyncData(value: final user):
           if (user!.isGuest) {
             if (isPasswordRecoveryFlow) return null;
-            final onboardingRedirect = gateOnboarding();
+            final onboardingRedirect = gateOnboarding(isGuest: true);
             if (onboardingRedirect != null) return onboardingRedirect;
             if (isSplash || isAuthFlow) {
-              final destination = pendingDestination ?? HomeRoute().location;
+              final destination =
+                  pendingDestination ??
+                  resolveInitialTabDestination(isGuest: true);
               pendingDestination = null;
               return destination;
             }
             return null;
           }
 
-          final onboardingRedirect = gateOnboarding();
+          final onboardingRedirect = gateOnboarding(isGuest: false);
           if (onboardingRedirect != null) return onboardingRedirect;
           if (isSplash || isAuthFlow) {
-            final destination = pendingDestination ?? HomeRoute().location;
+            final destination =
+                pendingDestination ??
+                resolveInitialTabDestination(isGuest: false);
             pendingDestination = null;
             return destination;
           }
@@ -442,10 +483,10 @@ class LobbyInvitePreviewRoute extends GoRouteData
     TypedStatefulShellBranch(routes: [TypedGoRoute<FeedRoute>(path: '/feed')]),
     TypedStatefulShellBranch(
       routes: [
-        TypedGoRoute<HomeRoute>(
-          path: '/home',
+        TypedGoRoute<DiscoverRoute>(
+          path: '/discover',
           routes: [
-            TypedGoRoute<HomeFreeplayRoute>(
+            TypedGoRoute<DiscoverFreeplayRoute>(
               path: 'freeplay',
               routes: [TypedGoRoute<FreeplayDetailRoute>(path: ':id')],
             ),
@@ -453,10 +494,10 @@ class LobbyInvitePreviewRoute extends GoRouteData
             TypedGoRoute<FreeplayChatRoute>(
               path: 'freeplay-chat/:activityId/:requestId',
             ),
-            TypedGoRoute<HomeTeammateRoute>(path: 'teammate'),
-            TypedGoRoute<HomeChallengerRoute>(path: 'challenger'),
-            TypedGoRoute<HomeProfessionalRoute>(path: 'professional'),
-            TypedGoRoute<HomePlaceRoute>(path: 'place'),
+            TypedGoRoute<DiscoverTeammateRoute>(path: 'teammate'),
+            TypedGoRoute<DiscoverChallengerRoute>(path: 'challenger'),
+            TypedGoRoute<DiscoverProfessionalRoute>(path: 'professional'),
+            TypedGoRoute<DiscoverPlaceRoute>(path: 'place'),
           ],
         ),
       ],
@@ -522,20 +563,21 @@ class FeedRoute extends GoRouteData with $FeedRoute {
 }
 
 @immutable
-class HomeRoute extends GoRouteData with $HomeRoute {
-  const HomeRoute();
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) => const HomeTab();
-}
-
-@immutable
-class HomeFreeplayRoute extends GoRouteData with $HomeFreeplayRoute {
-  const HomeFreeplayRoute();
+class DiscoverRoute extends GoRouteData with $DiscoverRoute {
+  const DiscoverRoute();
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(0);
+      const DiscoverTab();
+}
+
+@immutable
+class DiscoverFreeplayRoute extends GoRouteData with $DiscoverFreeplayRoute {
+  const DiscoverFreeplayRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      DiscoverTab.withInitialTab(0);
 }
 
 @immutable
@@ -570,41 +612,42 @@ class FreeplayChatRoute extends GoRouteData with $FreeplayChatRoute {
 }
 
 @immutable
-class HomeTeammateRoute extends GoRouteData with $HomeTeammateRoute {
+class DiscoverTeammateRoute extends GoRouteData with $DiscoverTeammateRoute {
   final bool openFilter;
 
-  const HomeTeammateRoute({this.openFilter = false});
+  const DiscoverTeammateRoute({this.openFilter = false});
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(1, openFilter: openFilter);
+      DiscoverTab.withInitialTab(1, openFilter: openFilter);
 }
 
 @immutable
-class HomeChallengerRoute extends GoRouteData with $HomeChallengerRoute {
-  const HomeChallengerRoute();
+class DiscoverChallengerRoute extends GoRouteData with $DiscoverChallengerRoute {
+  const DiscoverChallengerRoute();
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(HomeTab.challengerIndex);
+      DiscoverTab.withInitialTab(DiscoverTab.challengerIndex);
 }
 
 @immutable
-class HomeProfessionalRoute extends GoRouteData with $HomeProfessionalRoute {
-  const HomeProfessionalRoute();
+class DiscoverProfessionalRoute extends GoRouteData
+    with $DiscoverProfessionalRoute {
+  const DiscoverProfessionalRoute();
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(HomeTab.professionalIndex);
+      DiscoverTab.withInitialTab(DiscoverTab.professionalIndex);
 }
 
 @immutable
-class HomePlaceRoute extends GoRouteData with $HomePlaceRoute {
-  const HomePlaceRoute();
+class DiscoverPlaceRoute extends GoRouteData with $DiscoverPlaceRoute {
+  const DiscoverPlaceRoute();
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      HomeTab.withInitialTab(HomeTab.locationIndex);
+      DiscoverTab.withInitialTab(DiscoverTab.locationIndex);
 }
 
 @immutable

@@ -533,6 +533,154 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
   }
 }
 
+const _courseWeekdayKeys = [
+  'lobbyHub.schedule.weekdaysShort.monday',
+  'lobbyHub.schedule.weekdaysShort.tuesday',
+  'lobbyHub.schedule.weekdaysShort.wednesday',
+  'lobbyHub.schedule.weekdaysShort.thursday',
+  'lobbyHub.schedule.weekdaysShort.friday',
+  'lobbyHub.schedule.weekdaysShort.saturday',
+  'lobbyHub.schedule.weekdaysShort.sunday',
+];
+
+String _formatCourseDate(DateTime date) =>
+    '${_courseWeekdayKeys[date.weekday - 1].tr()}, '
+    '${date.day}/${date.month}/${date.year}';
+
+void _showCourseTimeError(BuildContext context) {
+  showFToast(
+    context: context,
+    icon: const Icon(FLucideIcons.circleAlert),
+    variant: .destructive,
+    title: Text('course.endAfterStart'.tr()),
+    alignment: .bottomCenter,
+  );
+}
+
+/// The same date / start / end / venue composition used by the lobby
+/// activity planner, shared by both course-session create and edit sheets.
+class _CourseWhenWhereFields extends StatelessWidget {
+  final DateTime start;
+  final DateTime end;
+  final String? locationId;
+  final VoidCallback onPickDate;
+  final VoidCallback onPickStart;
+  final VoidCallback onPickEnd;
+  final ValueChanged<String> onLocationChanged;
+  final ValueChanged<Map<String, String?>?> onFreeAddressChanged;
+
+  const _CourseWhenWhereFields({
+    required this.start,
+    required this.end,
+    required this.locationId,
+    required this.onPickDate,
+    required this.onPickStart,
+    required this.onPickEnd,
+    required this.onLocationChanged,
+    required this.onFreeAddressChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PSheetSectionLabel(label: 'course.whenWhere'.tr()),
+        const SizedBox(height: 8),
+        _CoursePickerRow(
+          icon: FLucideIcons.calendar,
+          label: 'course.date'.tr(),
+          value: _formatCourseDate(start),
+          onTap: onPickDate,
+        ),
+        const SizedBox(height: 8),
+        _CoursePickerRow(
+          icon: FLucideIcons.clock,
+          label: 'course.start'.tr(),
+          value: formatTimeOfDay(start),
+          onTap: onPickStart,
+        ),
+        const SizedBox(height: 8),
+        _CoursePickerRow(
+          icon: FLucideIcons.clock,
+          label: 'course.sessionEnd'.tr(),
+          value: formatTimeOfDay(end),
+          onTap: onPickEnd,
+        ),
+        const SizedBox(height: 8),
+        HomeGroundField(
+          value: locationId,
+          prefixIcon: FLucideIcons.mapPin,
+          onChanged: onLocationChanged,
+          onFreeAddressChanged: onFreeAddressChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class _CoursePickerRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  const _CoursePickerRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FTappable(
+      onPress: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: colors.secondaryForeground),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: context.theme.typography.body.sm.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Flexible(
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+                style: context.theme.typography.body.sm.copyWith(
+                  color: colors.secondaryForeground,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: 16,
+              color: colors.mutedForeground,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 Future<void> showProposeSessionSheet(
   BuildContext context,
   CourseDetail course,
@@ -553,10 +701,18 @@ class _ProposeSessionSheet extends ConsumerStatefulWidget {
 
 class _ProposeSessionSheetState extends ConsumerState<_ProposeSessionSheet> {
   final _note = TextEditingController();
-  DateTime? _start;
-  Duration _duration = const Duration(hours: 1);
+  late DateTime _start;
+  late DateTime _end;
   String? _locationId;
   Map<String, String?>? _freeAddress;
+
+  @override
+  void initState() {
+    super.initState();
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    _start = DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 18);
+    _end = _start.add(const Duration(hours: 1));
+  }
 
   @override
   void dispose() {
@@ -564,29 +720,69 @@ class _ProposeSessionSheetState extends ConsumerState<_ProposeSessionSheet> {
     super.dispose();
   }
 
-  Future<void> _pick() async {
+  Future<void> _pickDate() async {
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     final date = await showDatePicker(
       context: context,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
-      initialDate: now.add(const Duration(days: 1)),
+      useRootNavigator: true,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
+      initialDate: _start,
     );
     if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: const TimeOfDay(hour: 18, minute: 0),
-    );
-    if (time == null) return;
+    final duration = _end.difference(_start);
     setState(() {
       _start = DateTime(
         date.year,
         date.month,
         date.day,
+        _start.hour,
+        _start.minute,
+      );
+      _end = _start.add(duration);
+    });
+  }
+
+  Future<void> _pickStart() async {
+    final time = await showTimePicker(
+      context: context,
+      useRootNavigator: true,
+      initialTime: TimeOfDay.fromDateTime(_start),
+    );
+    if (time == null || !mounted) return;
+    final duration = _end.difference(_start);
+    setState(() {
+      _start = DateTime(
+        _start.year,
+        _start.month,
+        _start.day,
         time.hour,
         time.minute,
       );
+      if (!_end.isAfter(_start)) _end = _start.add(duration);
     });
+  }
+
+  Future<void> _pickEnd() async {
+    final time = await showTimePicker(
+      context: context,
+      useRootNavigator: true,
+      initialTime: TimeOfDay.fromDateTime(_end),
+    );
+    if (time == null || !mounted) return;
+    final end = DateTime(
+      _start.year,
+      _start.month,
+      _start.day,
+      time.hour,
+      time.minute,
+    );
+    if (!end.isAfter(_start)) {
+      _showCourseTimeError(context);
+      return;
+    }
+    setState(() => _end = end);
   }
 
   @override
@@ -604,38 +800,15 @@ class _ProposeSessionSheetState extends ConsumerState<_ProposeSessionSheet> {
                 ? 'course.scheduleSession'.tr()
                 : 'course.proposeSession'.tr(),
           ),
-          FTile(
-            title: Text('course.startTime'.tr()),
-            subtitle: Text(
-              _start == null
-                  ? 'course.pickTime'.tr()
-                  : formatMatchDateTime(_start!),
-            ),
-            onPress: _pick,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              for (final hours in const [1, 2, 3])
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: FButton(
-                    variant: _duration.inHours == hours ? .primary : .outline,
-                    size: .sm,
-                    onPress: () =>
-                        setState(() => _duration = Duration(hours: hours)),
-                    child: Text('course.hours'.plural(hours)),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          PSheetSectionLabel(label: 'course.venue'.tr()),
-          const SizedBox(height: 6),
-          HomeGroundField(
-            value: _locationId,
-            prefixIcon: FLucideIcons.mapPin,
-            onChanged: (id) => setState(() {
+          const SizedBox(height: 20),
+          _CourseWhenWhereFields(
+            start: _start,
+            end: _end,
+            locationId: _locationId,
+            onPickDate: _pickDate,
+            onPickStart: _pickStart,
+            onPickEnd: _pickEnd,
+            onLocationChanged: (id) => setState(() {
               _locationId = id.isEmpty ? null : id;
               _freeAddress = null;
             }),
@@ -662,7 +835,7 @@ class _ProposeSessionSheetState extends ConsumerState<_ProposeSessionSheet> {
           ],
           const SizedBox(height: 20),
           FButton(
-            onPress: busy || _start == null ? null : _submit,
+            onPress: busy ? null : _submit,
             child: Text('course.submit'.tr()),
           ),
         ],
@@ -671,8 +844,8 @@ class _ProposeSessionSheetState extends ConsumerState<_ProposeSessionSheet> {
   }
 
   Future<void> _submit() async {
-    final start = _start!;
-    final end = start.add(_duration);
+    final start = _start;
+    final end = _end;
 
     // A coach scheduling directly commits to the time immediately, so warn
     // about their own overlaps here too.
@@ -737,40 +910,78 @@ class _RescheduleSessionSheet extends ConsumerStatefulWidget {
 class _RescheduleSessionSheetState
     extends ConsumerState<_RescheduleSessionSheet> {
   late DateTime _start = widget.session.startTime.toLocal();
-  late Duration _duration = widget.session.endTime == null
-      ? const Duration(hours: 1)
-      : widget.session.endTime!.difference(widget.session.startTime);
+  late DateTime _end =
+      widget.session.endTime?.toLocal() ?? _start.add(const Duration(hours: 1));
   late String? _locationId = widget.session.locationId;
   Map<String, String?>? _freeAddress;
 
-  Future<void> _pick() async {
+  Future<void> _pickDate() async {
     final now = DateTime.now();
-    final initialDate = _start.isBefore(now) ? now : _start;
+    final today = DateTime(now.year, now.month, now.day);
+    final initialDate = _start.isBefore(today) ? today : _start;
     final date = await showDatePicker(
       context: context,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
+      useRootNavigator: true,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
       initialDate: initialDate,
     );
     if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_start),
-    );
-    if (time == null) return;
+    final duration = _end.difference(_start);
     setState(() {
       _start = DateTime(
         date.year,
         date.month,
         date.day,
-        time.hour,
-        time.minute,
+        _start.hour,
+        _start.minute,
       );
+      _end = _start.add(duration);
     });
   }
 
+  Future<void> _pickStart() async {
+    final time = await showTimePicker(
+      context: context,
+      useRootNavigator: true,
+      initialTime: TimeOfDay.fromDateTime(_start),
+    );
+    if (time == null || !mounted) return;
+    final duration = _end.difference(_start);
+    setState(() {
+      _start = DateTime(
+        _start.year,
+        _start.month,
+        _start.day,
+        time.hour,
+        time.minute,
+      );
+      if (!_end.isAfter(_start)) _end = _start.add(duration);
+    });
+  }
+
+  Future<void> _pickEnd() async {
+    final time = await showTimePicker(
+      context: context,
+      useRootNavigator: true,
+      initialTime: TimeOfDay.fromDateTime(_end),
+    );
+    if (time == null || !mounted) return;
+    final end = DateTime(
+      _start.year,
+      _start.month,
+      _start.day,
+      time.hour,
+      time.minute,
+    );
+    if (!end.isAfter(_start)) {
+      _showCourseTimeError(context);
+      return;
+    }
+    setState(() => _end = end);
+  }
+
   Future<void> _save() async {
-    final end = _start.add(_duration);
     try {
       final locationId = await resolveLocationId(
         pickedId: _locationId,
@@ -781,7 +992,7 @@ class _RescheduleSessionSheetState
           .reschedule(
             activityId: widget.session.activityId,
             start: _start,
-            end: end,
+            end: _end,
             locationId: locationId,
             courseId: widget.course.courseId,
           );
@@ -806,36 +1017,15 @@ class _RescheduleSessionSheetState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PSheetTitle(label: 'course.editSession'.tr()),
-          FTile(
-            title: Text('course.startTime'.tr()),
-            subtitle: Text(formatMatchDateTime(_start)),
-            onPress: _pick,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              for (final hours in const [1, 2, 3])
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: FButton(
-                    variant: _duration == Duration(hours: hours)
-                        ? .primary
-                        : .outline,
-                    size: .sm,
-                    onPress: () =>
-                        setState(() => _duration = Duration(hours: hours)),
-                    child: Text('course.hours'.plural(hours)),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          PSheetSectionLabel(label: 'course.venue'.tr()),
-          const SizedBox(height: 6),
-          HomeGroundField(
-            value: _locationId,
-            prefixIcon: FLucideIcons.mapPin,
-            onChanged: (id) => setState(() {
+          const SizedBox(height: 20),
+          _CourseWhenWhereFields(
+            start: _start,
+            end: _end,
+            locationId: _locationId,
+            onPickDate: _pickDate,
+            onPickStart: _pickStart,
+            onPickEnd: _pickEnd,
+            onLocationChanged: (id) => setState(() {
               _locationId = id.isEmpty ? null : id;
               _freeAddress = null;
             }),

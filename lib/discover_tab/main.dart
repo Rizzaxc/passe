@@ -18,18 +18,19 @@ import 'teammate_section/main.dart';
 /// Set (then immediately consumed) to switch the Discover subtab from a
 /// widget that isn't `_DiscoverView` itself — e.g. a CTA inside one subtab
 /// that wants to send the user to another (`0` freeplay, `1` teammate, then
-/// the enabled discovery sections). Do NOT navigate via the `Home*Route`s for
-/// this — those are nested routes *within* the home branch, so `.go()`ing
-/// between them from inside Home pushes a new stacked page instead of just
-/// switching the tab (the `Home*Route`s exist for deep-linking into Home
-/// *from another tab*, where crossing branches is the correct, expected nav).
-final homeSubtabRequestProvider = StateProvider<int?>((ref) => null);
+/// the enabled discovery sections). Do NOT navigate via the `Discover*Route`s
+/// for this — those are nested routes *within* the Discover branch, so
+/// `.go()`ing between them from inside Discover pushes a new stacked page
+/// instead of just switching the tab (the `Discover*Route`s exist for
+/// deep-linking into Discover *from another tab*, where crossing branches is
+/// the correct, expected nav).
+final discoverSubtabRequestProvider = StateProvider<int?>((ref) => null);
 
-/// Home ▸ Discover — four shipped subtabs sharing one filter, all scoped to
+/// Discover — four shipped subtabs sharing one filter, all scoped to
 /// the context sport. Challenger is inserted only for explicitly enabled
 /// builds. Feed (the social surface) moved out to its own main tab — see
 /// `lib/feed_tab/` — so this is back to being a single-purpose screen.
-class HomeTab extends ConsumerWidget {
+class DiscoverTab extends ConsumerWidget {
   final int initialIndex;
 
   /// Auto-opens the shared filter sheet once the teammate subtab has laid
@@ -39,10 +40,10 @@ class HomeTab extends ConsumerWidget {
   /// the teammate subtab; ignored on any other `initialIndex`.
   final bool openFilter;
 
-  const HomeTab({super.key, this.initialIndex = 0, this.openFilter = false})
+  const DiscoverTab({super.key, this.initialIndex = 0, this.openFilter = false})
     : assert(initialIndex >= 0 && initialIndex < tabCount);
 
-  static final instance = HomeTab();
+  static final instance = DiscoverTab();
 
   /// Indices after teammate shift down in default builds because Challenger
   /// is compiled as an opt-in client feature.
@@ -52,8 +53,8 @@ class HomeTab extends ConsumerWidget {
   static int get locationIndex => tabCount - 1;
 
   /// Deep-links a Discover subtab using one of the indices above.
-  factory HomeTab.withInitialTab(int initialIndex, {bool openFilter = false}) {
-    return HomeTab(initialIndex: initialIndex, openFilter: openFilter);
+  factory DiscoverTab.withInitialTab(int initialIndex, {bool openFilter = false}) {
+    return DiscoverTab(initialIndex: initialIndex, openFilter: openFilter);
   }
 
   @override
@@ -148,7 +149,7 @@ class _DiscoverViewState extends ConsumerState<_DiscoverView> {
 
   List<FTabEntry> _buildTabEntries() {
     final sections = _sections;
-    assert(sections.length == HomeTab.tabCount);
+    assert(sections.length == DiscoverTab.tabCount);
     return List.generate(sections.length, (index) {
       final section = sections[index];
       final built = _builtIndices.contains(index);
@@ -162,9 +163,9 @@ class _DiscoverViewState extends ConsumerState<_DiscoverView> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<int?>(homeSubtabRequestProvider, (_, requested) {
+    ref.listen<int?>(discoverSubtabRequestProvider, (_, requested) {
       if (requested == null) return;
-      ref.read(homeSubtabRequestProvider.notifier).state = null;
+      ref.read(discoverSubtabRequestProvider.notifier).state = null;
       if (requested != _currentIndex) _onTabChanged(requested);
     });
 

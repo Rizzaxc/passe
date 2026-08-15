@@ -58,6 +58,7 @@ class CourseSummary {
 
   final String? coachName;
   final String? coachAvatar;
+  final String? coachUserId;
   final String? professionalId;
 
   /// Player side only.
@@ -70,6 +71,13 @@ class CourseSummary {
   final int inquiringCount;
   final int pendingProposalCount;
   final int pendingReportCount;
+
+  /// Coach side only. The earliest-joined live member's username — lets the
+  /// card show *who* is asking before the course has a real [name] (an
+  /// inquiry that hasn't been turned into an enrollment offer yet).
+  final String? studentName;
+  final String? studentUserId;
+  final String? studentAvatar;
 
   final int? targetSessionCount;
   final int heldSessionCount;
@@ -93,6 +101,7 @@ class CourseSummary {
     this.name,
     this.coachName,
     this.coachAvatar,
+    this.coachUserId,
     this.professionalId,
     this.memberStatus,
     this.pendingOfferId,
@@ -101,6 +110,9 @@ class CourseSummary {
     this.inquiringCount = 0,
     this.pendingProposalCount = 0,
     this.pendingReportCount = 0,
+    this.studentName,
+    this.studentUserId,
+    this.studentAvatar,
     this.targetSessionCount,
     this.heldSessionCount = 0,
     this.nextStartTime,
@@ -138,6 +150,7 @@ class CourseSummary {
     sportId: _int(json['sport_id']),
     coachName: json['coach_name'] as String?,
     coachAvatar: json['coach_avatar'] as String?,
+    coachUserId: json['coach_user_id']?.toString(),
     professionalId: json['professional_id']?.toString(),
     memberStatus: json['member_status'] == null
         ? null
@@ -148,6 +161,9 @@ class CourseSummary {
     inquiringCount: _int(json['inquiring_count']),
     pendingProposalCount: _int(json['pending_proposal_count']),
     pendingReportCount: _int(json['pending_report_count']),
+    studentName: json['student_name'] as String?,
+    studentUserId: json['student_user_id']?.toString(),
+    studentAvatar: json['student_avatar'] as String?,
     targetSessionCount: json['target_session_count'] == null
         ? null
         : _int(json['target_session_count']),

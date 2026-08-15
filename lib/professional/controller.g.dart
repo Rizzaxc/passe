@@ -85,7 +85,7 @@ final class ProfessionalByIdProvider
   }
 }
 
-String _$professionalByIdHash() => r'08973deca1679bde4a3bf7ab61123b69d3284cdc';
+String _$professionalByIdHash() => r'a8f3187815c3d39deecf2f6fdacf4b128dd671f6';
 
 /// Fetches a single professional by id from the `professional` table.
 ///

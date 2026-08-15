@@ -8,10 +8,9 @@
 		</array>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
-		<!-- Google AdMob App ID. Google's official SAMPLE/test App ID; replace with
-	     the real iOS AdMob app id before release. Ad unit ids load from .env. -->
+		<!-- Real Google AdMob App ID. Ad unit ids load from .env. -->
 		<key>GADApplicationIdentifier</key>
-		<string>ca-app-pub-3940256099942544~1458002511</string>
+		<string>ca-app-pub-1825761942493365~7112267471</string>
 		<key>SKAdNetworkItems</key>
 		<array>
 			<dict>
@@ -65,6 +64,10 @@
 		<string>This app needs access to your health data to track your activity metrics during sports sessions.</string>
 		<key>NSHealthUpdateUsageDescription</key>
 		<string>This app needs permission to save workout data to Apple Health.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Passe needs access to your photo library so you can pick photos and videos to share on your wall and lobby feed.</string>
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>

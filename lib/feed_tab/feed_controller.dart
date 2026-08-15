@@ -72,6 +72,53 @@ class HiddenFeedPosts extends _$HiddenFeedPosts {
   }
 }
 
+/// When the signed-in user last opened the Feed tab on this device — a
+/// per-device watermark, not synced across devices (same posture as the đá
+/// balance and `HiddenFeedPosts` above). Written *only* from `FeedTab`'s
+/// `initState` (see `main.dart`) when the tab is actually opened — never
+/// from [feedHasUnread] itself, or checking "is there anything unread" would
+/// immediately erase the thing it just found.
+@Riverpod(keepAlive: true)
+class FeedLastVisitedAt extends _$FeedLastVisitedAt {
+  static const _prefKey = 'FEED_LAST_VISITED_AT';
+
+  @override
+  Future<DateTime?> build() async {
+    final userId = ref.watch(currentUserIdProvider);
+    if (userId == null) return null;
+    final stored = await UserPreferences.instance.getString(_prefKey);
+    return stored == null ? null : DateTime.tryParse(stored);
+  }
+
+  Future<void> markVisitedNow() async {
+    final now = DateTime.now().toUtc();
+    final saved = await UserPreferences.instance.setString(
+      _prefKey,
+      now.toIso8601String(),
+    );
+    if (saved) state = AsyncData(now);
+  }
+}
+
+/// Whether the caller has a wall post newer than [FeedLastVisitedAt] from
+/// someone other than themselves — drives `router.dart`'s initial-tab pick
+/// (guest -> Discover, unread Feed -> Feed, else -> Manage). Not wired to a
+/// nav-bar badge or kept live during a session; it's read once at cold start.
+@riverpod
+Future<bool> feedHasUnread(Ref ref) async {
+  final userId = ref.watch(currentUserIdProvider);
+  if (userId == null) return false;
+
+  final lastVisited = await ref.watch(feedLastVisitedAtProvider.future);
+  final result = await Supabase.instance.client
+      .rpc(
+        'wall_feed_has_unread',
+        params: {'p_since': lastVisited?.toUtc().toIso8601String()},
+      )
+      .timeout(const Duration(seconds: 5));
+  return result as bool;
+}
+
 /// Posts from the caller, their friends, their lobby mates, and any post a
 /// friend of theirs is tagged in. Visibility is resolved server-side in
 /// `wall_feed_data` — the client never assembles the audience itself.

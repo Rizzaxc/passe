@@ -153,7 +153,7 @@ class ActivityCard extends ConsumerWidget {
 
   void _bookCoach(BuildContext context, WidgetRef ref) {
     ref.read(pendingActivityBookingStateProvider.notifier).set(_activityId);
-    const HomeProfessionalRoute().go(context);
+    const DiscoverProfessionalRoute().go(context);
   }
 
   Future<void> _postLate(BuildContext context, WidgetRef ref) async {
@@ -457,9 +457,16 @@ class ActivityCard extends ConsumerWidget {
                 if (!isPast)
                   _RsvpControl(
                     value: status?.myAttendance?.value ?? '',
+                    // Two independent lock reasons: quorum already reached
+                    // (going-only, existing behavior) OR the confirmation
+                    // deadline passed while still under threshold (new —
+                    // freezes everyone; only resolvable from the
+                    // notification card, see
+                    // schema/activity_threshold_enforcement.sql).
                     locked:
-                        status?.activityConfirmed == true &&
-                        status?.myAttendance == Attendance.going,
+                        (status?.activityConfirmed == true &&
+                            status?.myAttendance == Attendance.going) ||
+                        status?.deadlineLocked == true,
                     onChange: (v) async {
                       final next = Attendance.fromValue(v);
                       if (next == null) return;
@@ -491,7 +498,11 @@ class ActivityCard extends ConsumerWidget {
                     onLockedTap: () => showFToast(
                       context: context,
                       icon: const Icon(FLucideIcons.lock),
-                      title: Text('lobbyHub.activity.rsvpLocked'.tr()),
+                      title: Text(
+                        status?.deadlineLocked == true
+                            ? 'lobbyHub.activity.rsvpLockedDeadline'.tr()
+                            : 'lobbyHub.activity.rsvpLocked'.tr(),
+                      ),
                       alignment: .bottomCenter,
                     ),
                   ),
@@ -851,7 +862,7 @@ class _ChallengeBlock extends ConsumerWidget {
     if (activityId != null) {
       ref.read(pendingActivityBookingStateProvider.notifier).set(activityId);
     }
-    const HomeProfessionalRoute().go(context);
+    const DiscoverProfessionalRoute().go(context);
   }
 
   @override

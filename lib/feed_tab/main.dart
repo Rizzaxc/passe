@@ -48,12 +48,30 @@ Future<void> _refreshFeed(BuildContext context, WidgetRef ref) async {
 /// activity feed retain the compact shared `PostCard`. Empty/error/guest
 /// states follow the same
 /// `PEmptySectionPlaceholder` + hero icon + direct CTA convention every other
-/// tab uses (see e.g. `home_tab/challenger_section/main.dart`'s `_NoLobbyState`).
-class FeedTab extends ConsumerWidget {
+/// tab uses (see e.g. `discover_tab/challenger_section/main.dart`'s `_NoLobbyState`).
+class FeedTab extends ConsumerStatefulWidget {
   const FeedTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FeedTab> createState() => _FeedTabState();
+}
+
+class _FeedTabState extends ConsumerState<FeedTab> {
+  @override
+  void initState() {
+    super.initState();
+    // "Opened the tab" is the read signal — not "scrolled through every
+    // post" — matching the achievements tab's unseen-flag posture. Marking
+    // happens here, never from the router's unread check, or computing
+    // "should I land on Feed" would immediately erase the signal it just
+    // found.
+    if (ref.read(currentUserIdProvider) != null) {
+      ref.read(feedLastVisitedAtProvider.notifier).markVisitedNow();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isGuest = ref.watch(currentUserIdProvider) == null;
 
     return FScaffold(

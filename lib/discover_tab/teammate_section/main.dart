@@ -14,10 +14,10 @@ import '../lobby_feed_card.dart';
 import 'feed_controller.dart';
 
 /// Guards [TeammateSubtab]'s auto-open-filter effect so it only ever fires
-/// once per app process — `_builtIndices` in `home_tab/main.dart` tears
+/// once per app process — `_builtIndices` in `discover_tab/main.dart` tears
 /// down and remounts this widget every time the user leaves and returns to
 /// this subtab, and `widget.openFilter` stays `true` for the whole life of
-/// the `HomeTab` instance it came from, so without this latch switching
+/// the `DiscoverTab` instance it came from, so without this latch switching
 /// tabs away and back would reopen the sheet every time.
 bool _autoFilterConsumed = false;
 

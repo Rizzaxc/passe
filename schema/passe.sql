@@ -10255,6 +10255,40 @@ COMMENT ON FUNCTION public.wall_feed_data(p_sport_id bigint, p_page_size integer
 
 
 --
+-- Name: wall_feed_has_unread(timestamp with time zone); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.wall_feed_has_unread(p_since timestamp with time zone DEFAULT NULL::timestamp with time zone) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    with me as (select auth.uid() as uid),
+    friends as (select uid from public.get_my_friend_ids() as uid),
+    lobbymates as (select uid from public.get_my_lobbymate_ids() as uid)
+    select exists (
+        select 1
+        from public.wall_post p, me
+        where p.hidden_at is null
+          and p.expires_at > now()
+          and p.author_id <> me.uid
+          and p.created_at > coalesce(p_since, 'epoch'::timestamptz)
+          and not public.fn_is_blocked(me.uid, p.author_id)
+          and (
+            p.author_id in (select uid from friends)
+            or p.author_id in (select uid from lobbymates)
+            or exists (
+                select 1 from public.wall_post_tag t
+                where t.post_id = p.id
+                  and (t.user_id = me.uid or t.user_id in (select uid from friends))
+            )
+          )
+    );
+$$;
+
+
+ALTER FUNCTION public.wall_feed_has_unread(p_since timestamp with time zone) OWNER TO postgres;
+
+--
 -- Name: withdraw_course_proposal(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -23458,6 +23492,15 @@ GRANT ALL ON FUNCTION public.vote_message_poll(p_message_id uuid, p_option_index
 REVOKE ALL ON FUNCTION public.wall_feed_data(p_sport_id bigint, p_page_size integer, p_page_number integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.wall_feed_data(p_sport_id bigint, p_page_size integer, p_page_number integer) TO authenticated;
 GRANT ALL ON FUNCTION public.wall_feed_data(p_sport_id bigint, p_page_size integer, p_page_number integer) TO service_role;
+
+
+--
+-- Name: FUNCTION wall_feed_has_unread(p_since timestamp with time zone); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.wall_feed_has_unread(p_since timestamp with time zone) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.wall_feed_has_unread(p_since timestamp with time zone) TO authenticated;
+GRANT ALL ON FUNCTION public.wall_feed_has_unread(p_since timestamp with time zone) TO service_role;
 
 
 --

@@ -5,7 +5,7 @@ Read the root [`CLAUDE.md`](../../CLAUDE.md) first. This file covers the manage 
 ## Purpose
 
 Where users run the things they belong to: their calendar, their **lobbies** (parties), and their
-coaching courses. Unlike Home (discovery), this is about entities the user is already a member of.
+coaching courses. Unlike Discover, this is about entities the user is already a member of.
 
 ## Layout
 
@@ -99,8 +99,28 @@ coaching courses. Unlike Home (discovery), this is about entities the user is al
 - **Confirmation deadline wasn't rendered anywhere** — `schedule_activity_sheet.dart` writes
   `activity.confirmation_deadline`, but no card ever displayed it back. `activity_card.dart` now
   shows a "Hạn xác nhận …" tag (next to the cost tag, same `_Tag` row) whenever
-  `upcoming.confirmationDeadline` is set. Purely informational — nothing currently freezes RSVP once
-  the deadline itself passes (that's separate from the threshold-based lock-in above).
+  `upcoming.confirmationDeadline` is set. **(2026-08 pass)** the deadline is no longer purely
+  informational — see "Deadline/kickoff threshold enforcement" below, which freezes RSVP once it
+  passes on a still-under-threshold activity.
+- **Deadline/kickoff threshold enforcement** (`schema/activity_threshold_enforcement.sql`): two
+  independent mechanisms riding the existing 1-minute `fn_cron_tick`, scoped to plain lobby
+  activities only (not challenge or course activities — see the migration header for why). (1) If
+  `confirmation_deadline` passes while still under `confirmation_threshold`, `at_risk_notified_at`
+  is stamped once, the organizer (`activity.user_id`) and every `maybe`/never-responded member are
+  notified, and **all** direct `activity_confirmation` writes freeze for everyone — including
+  already-`going` members, who can no longer back out except via the organizer cancelling. The only
+  way to change anything from there is the notification card's inline action, calling
+  `resolve_at_risk_activity_rsvp` (member: commit going/out) or `resolve_at_risk_activity_organizer`
+  (organizer/coordinator: override-confirm — permanent, same footing as reaching quorum — or
+  cancel). (2) Independently, **any** threshold-set activity (deadline or not) still under threshold
+  at `start_time` auto-cancels via the sweep — hard delete (no activity/match row persists), with a
+  feed item + push to the organizer and everyone who was `going`. Client:
+  `activity_at_risk_response_controller.dart` (the two RPC calls),
+  `activity_confirmation_status`'s new `deadline_locked` field
+  (`ActivityConfirmationStatus.deadlineLocked`) distinguishes this lock from the quorum-only one in
+  `activity_card.dart`'s `_RsvpControl`. Notification-card inline actions:
+  `lib/notification/main.dart`'s `_ActivityAtRiskActions` (mirrors the `lobbyInvite` pattern — see
+  root CLAUDE.md ▸ Notifications).
 
 ## Gotchas
 
@@ -180,7 +200,7 @@ Judgment calls made along the way, in case they need revisiting:
   feed at the same moment it vanishes everywhere else. The old `_PhotoCard` (which drew a *painted
   fake* court photo via `_CourtPhotoPainter`) is gone.
 - **"Đặt HLV / Trọng tài" (bookCoach)** navigates to the general Neutrals/professional discovery tab
-  (`HomeProfessionalRoute`) after stashing the upcoming activity id in `PendingActivityBookingState`.
+  (`DiscoverProfessionalRoute`) after stashing the upcoming activity id in `PendingActivityBookingState`.
   The next booking submitted attaches back to that activity — into `coach_booking_id` **or**
   `referee_booking_id` depending on the booked pro's **role** (never `professional_booking_id`, which
   `activity_source_exclusivity` forbids on a lobby activity). The attached pro then surfaces on the

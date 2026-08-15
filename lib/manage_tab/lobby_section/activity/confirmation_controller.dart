@@ -22,12 +22,21 @@ class ActivityConfirmationStatus {
   final Attendance? myAttendance;
   final bool activityConfirmed;
 
+  /// True once the confirmation deadline has passed while still under
+  /// threshold (`activity.at_risk_notified_at IS NOT NULL`) — freezes direct
+  /// RSVP writes for everyone, going/out included, until the organizer or a
+  /// maybe/never-responded member resolves it via the notification card (see
+  /// `resolve_at_risk_activity_rsvp` / `resolve_at_risk_activity_organizer`).
+  /// Distinct from [activityConfirmed]'s own quorum-reached lock.
+  final bool deadlineLocked;
+
   const ActivityConfirmationStatus({
     required this.confirmedCount,
     required this.maybeCount,
     required this.threshold,
     required this.myAttendance,
     required this.activityConfirmed,
+    this.deadlineLocked = false,
   });
 }
 
@@ -63,6 +72,7 @@ class ActivityConfirmationController extends _$ActivityConfirmationController {
       threshold: (row['threshold'] as num?)?.toInt(),
       myAttendance: Attendance.fromValue(row['my_attendance'] as String?),
       activityConfirmed: row['activity_confirmed'] as bool,
+      deadlineLocked: row['deadline_locked'] as bool? ?? false,
     );
   }
 
@@ -86,6 +96,7 @@ class ActivityConfirmationController extends _$ActivityConfirmationController {
       threshold: s.threshold,
       myAttendance: next,
       activityConfirmed: s.threshold == null || going >= s.threshold!,
+      deadlineLocked: s.deadlineLocked,
     );
   }
 

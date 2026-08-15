@@ -29,7 +29,7 @@ class FreeplayDetailPage extends ConsumerWidget {
           FHeaderAction.back(
             onPress: () => context.canPop()
                 ? context.pop()
-                : const HomeFreeplayRoute().go(context),
+                : const DiscoverFreeplayRoute().go(context),
           ),
         ],
       ),

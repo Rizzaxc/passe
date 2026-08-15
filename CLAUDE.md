@@ -17,7 +17,7 @@ find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
 
 - Feed: a TikTok-style, one-post-per-screen vertical feed of ephemeral photo posts from you, your
   friends and your lobby mates (cross-sport). First tab — the social/discovery entry point.
-- Home (Discover): 4 subtabs sharing one filter, all scoped to the context sport
+- Discover: 4 subtabs sharing one filter, all scoped to the context sport
     - Teammates: find people/ lobbies to play with
     - Challengers: put up your lobby for challengers or look for them
     - Neutrals: hire coaches, referees, etc for your sport
@@ -41,7 +41,7 @@ find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
 Each tab folder ships its own `CLAUDE.md` with the file map, providers, and screen-specific
 gotchas — read it before touching that screen:
 [`lib/feed_tab/CLAUDE.md`](lib/feed_tab/CLAUDE.md),
-[`lib/home_tab/CLAUDE.md`](lib/home_tab/CLAUDE.md),
+[`lib/discover_tab/CLAUDE.md`](lib/discover_tab/CLAUDE.md),
 [`lib/manage_tab/CLAUDE.md`](lib/manage_tab/CLAUDE.md),
 [`lib/health_tab/CLAUDE.md`](lib/health_tab/CLAUDE.md),
 [`lib/profile_tab/CLAUDE.md`](lib/profile_tab/CLAUDE.md).
@@ -88,7 +88,7 @@ primary glossary until a `CONTEXT.md` exists (see `docs/agents/domain.md`).
 - **đá** ("rocks") — the app's internal currency, spent to confirm activities and to split bills.
   Not yet in the DB; currently a local int in `lib/currency/`.
 - **Professional** / **Neutral** — a hireable coach or referee (`professional`, `professional_role`).
-  The Home "Neutrals" subtab surfaces them. A **coach** engagement is a *course* (see below); a
+  The Discover "Neutrals" subtab surfaces them. A **coach** engagement is a *course* (see below); a
   **referee** engagement is still a booking (`referee_booking`), and referee hiring is currently
   **iced behind `ClientFeatureFlags.refereeFlow`** along with the challenger flow it serves.
 - **Course** — the container for a coaching relationship: one coach, one fixed sport, many students,
@@ -280,10 +280,22 @@ JSON — parse with `double.tryParse`. Complex reads go through Postgres functio
   aren't a meaningful way to verify a change here, even as a smoke test. Verify changes on an
   iOS/Android device or simulator/emulator, or by reasoning through the code/`flutter analyze`
   when a device isn't available.
-- **Environment**: config is loaded from `.env` via `flutter_dotenv` (`dotenv.load()` in `main`).
-  `ENV` is one of `local | test | live`. `.env.example` documents the keys
-  (`SUPABASE_URL`, `SUPABASE_PUBLIC_KEY`, `SENTRY_DSN`, `GOOGLE_IOS_CLIENT_ID`,
-  `GOOGLE_WEB_CLIENT_ID`). Sentry no-ops on `local`; secrets live in `secrets/` (git-ignored).
+- **Environment**: client config is loaded from `.env` via `flutter_dotenv` (`dotenv.load()` in
+  `main`) and is bundled as a Flutter asset (`pubspec.yaml` `assets:`), so only genuinely
+  client-safe values belong in it — `ENV` (one of `local | test | live`), `SUPABASE_URL`, the
+  Supabase **anon** key (`SUPABASE_PUBLIC_KEY`), `SENTRY_DSN` (no-ops on `local`), Google OAuth
+  client ids, AdMob unit ids — see `.env.example`. Admin-only secrets (`SUPABASE_DB_PASSWORD`,
+  `SUPABASE_SECRET_KEY`) live in `secret/db.env` instead (git-ignored via `/secret/*`, never a
+  Flutter asset, read only by the local `rps schema` script) — never add a value to `.env` that you
+  wouldn't want extractable from a shipped `.app`/`.apk`.
+- **AdMob production inventory is incomplete — check before a real ad-monetized release.**
+  `ios/Runner/Info.plist`'s `GADApplicationIdentifier` is the real production iOS app id, but
+  `android/app/src/main/AndroidManifest.xml`'s `APPLICATION_ID` meta-data is still Google's sample
+  Android app id (`ca-app-pub-3940256099942544~3347511713`) — swap it for the real one before an
+  Android release that needs live ads. Separately, `ADMOB_BANNER_UNIT_*`/`ADMOB_INTERSTITIAL_UNIT_*`
+  are unset in `.env`, so `lib/ads/ad_config.dart` falls back to Google's test *ad unit* ids on both
+  platforms regardless of the app id — safe to ship (never risks a policy strike) but means no real
+  ad inventory serves until those are filled in.
 
 ## Architecture & Conventions
 
@@ -342,10 +354,10 @@ translations as values.
   matching `Timeslot.toJson()`. The `Timeslot.listFromJson/listToJson` static helpers are for the
   dict format `{"mon": ["night"]}` used by filter RPC functions.
 
-### Home Tab
+### Discover Tab
 
-The home (discovery) screen's structure and the full per-subtab data contracts (RPC params, return
-shapes, Dart models, actions) live in [`lib/home_tab/CLAUDE.md`](lib/home_tab/CLAUDE.md). The
+The Discover screen's structure and the full per-subtab data contracts (RPC params, return
+shapes, Dart models, actions) live in [`lib/discover_tab/CLAUDE.md`](lib/discover_tab/CLAUDE.md). The
 cross-cutting systems those subtabs feed into — befriend, challenger, currency — are documented below.
 
 ### Lobby Befriend System (`lobby_befriend_record`)
@@ -442,7 +454,7 @@ referee → the referee records the result → both lobbies' history and Elo upd
   paste-a-code from inside your own lobby), `challenges_controller.dart` + `challenges_sheet.dart`
   (incoming/outgoing list, agreed terms, referee state, surfaced from the lobby info sheet with an
   incoming badge), `challenge_offer_controller.dart` / `challenge_offer_sheet.dart` (the offer),
-  `activity/hero.dart`'s `_ChallengeBlock` (opponent context, confirm, book-referee), and the Home
+  `activity/hero.dart`'s `_ChallengeBlock` (opponent context, confirm, book-referee), and the Discover
   "Thách đấu" CTA (`challenger_section/main.dart`, now a confirm-these-terms sheet, not a bare
   fire-and-forget button). Notifications: `challenge_received`, `challenger_confirmed`,
   `challenge_declined`, `challenge_scheduled`, `challenge_lapsed`, `match_result_recorded` — see
@@ -456,6 +468,12 @@ referee → the referee records the result → both lobbies' history and Elo upd
   captain vetoes" flow was never implemented — see `lib/manage_tab/CLAUDE.md`). Members RSVP
   (going/maybe/out); the activity becomes official once enough **going** confirmations reach the
   threshold, which also fires the `activity_confirmed` push.
+- **Threshold/deadline enforcement** (`schema/activity_threshold_enforcement.sql`, plain lobby
+  activities only): if `confirmation_deadline` passes still under threshold, the organizer and every
+  `maybe`/never-responded member are notified once and RSVP freezes entirely for that activity until
+  resolved from the notification card (override-confirm, or cancel); independently, any
+  threshold-set activity still under threshold at `start_time` auto-cancels (no activity/match row
+  persists) regardless of whether a deadline was ever set. Detail: `lib/manage_tab/CLAUDE.md`.
 - **Match recording**: the free-text "Ghi kết quả" manual-entry path (`RecordMatchController` /
   `record_match_sheet.dart`) is **removed** — captains/coordinators can no longer log an ad-hoc
   practice/opponent result from the History tab. A **challenge** match's result is still recorded by
@@ -539,7 +557,9 @@ Push (raw FCM HTTP v1, iOS + Android) is **built**. Design + remaining provision
   `challenge_scheduled`, `challenge_lapsed`, `match_result_recorded`, (with courses)
   `course_message`, `course_enrollment_offer`, `course_enrollment_accepted`,
   `course_activity_proposed`, `course_activity_approved`, `course_activity_changed`,
-  `course_session_report`, `course_ended`, `course_member_removed`, (with friendship)
+  `course_session_report`, `course_ended`, `course_member_removed`, (with the threshold/deadline
+  enforcement below) `activity_at_risk_organizer`, `activity_at_risk_member`,
+  `activity_cancelled_low_turnout`, (with friendship)
   `friend_request`, `friend_accepted`, and `member_kicked` (a captain removes a member —
   `schema/lobby_member_kicked_notify.sql`; kicking is a direct client-side `DELETE` on
   `lobby_member`, same as a voluntary leave, so the emitter tells the two apart by comparing

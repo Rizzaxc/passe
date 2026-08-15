@@ -404,7 +404,7 @@ class _NoLobbyState extends ConsumerWidget {
                     context.theme.buttonStyles.primary.base,
                   ),
                   onPress: () =>
-                      ref.read(homeSubtabRequestProvider.notifier).state = 1,
+                      ref.read(discoverSubtabRequestProvider.notifier).state = 1,
                   child: Text('homeTab.challenger.noLobby.findLobby'.tr()),
                 ),
               ),

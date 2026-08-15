@@ -43,7 +43,7 @@ class _LobbyInvitePreviewPageState
     if (context.canPop()) {
       context.pop();
     } else {
-      const HomeRoute().go(context);
+      const DiscoverRoute().go(context);
     }
   }
 

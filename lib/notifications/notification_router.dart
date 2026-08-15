@@ -107,7 +107,7 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
     // A denied requester cannot open the lobby's member-only detail page.
     NotificationKind.lobbyJoinRequestDenied =>
-      const HomeTeammateRoute().location,
+      const DiscoverTeammateRoute().location,
     // Kicked — the lobby is no longer theirs to open; land on their own lobby list.
     NotificationKind.memberKicked => const ManageLobbyRoute().location,
     // A new request came in for the linked professional — their
@@ -181,6 +181,24 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
       activityId == null
           ? const ManageLobbyRoute().location
           : FreeplayDetailRoute(id: activityId).location,
+    // Deadline passed, still under threshold — the activity still exists
+    // (just frozen), so land on it in Planner. The in-app notification list
+    // resolves the organizer/member action inline on the card itself; this
+    // fallback is for OS push taps / cold starts.
+    NotificationKind.activityAtRiskOrganizer ||
+    NotificationKind.activityAtRiskMember =>
+      lobbyId == null
+          ? null
+          : LobbyDetailRoute(
+              id: lobbyId,
+              tab: 1,
+              highlightActivityId: activityId,
+            ).location,
+    // The sweep/RPC that cancels for low turnout deletes the activity row —
+    // nothing to highlight in Planner; the explanatory feed item is what a
+    // tap should land near, so just open the lobby (Feed).
+    NotificationKind.activityCancelledLowTurnout =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
   };
 }
 

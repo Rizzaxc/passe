@@ -51,5 +51,6 @@ app.*.map.json
 # Environment secrets
 .env
 
-# Secrets
+# Secrets (admin-only credentials — DB password, service-role key, signing/OAuth cert files)
 /secret/*
+!/secret/*.example

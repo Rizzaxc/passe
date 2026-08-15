@@ -332,7 +332,7 @@ class _PageDots extends StatelessWidget {
   }
 }
 
-// ─── Avatar (initials fallback; ready for a real photo) ────────
+// ─── Avatar (the linked user's real avatar; initials when unlinked) ────────
 
 class _ProAvatar extends StatelessWidget {
   final ProfessionalFeedItem item;
@@ -344,6 +344,7 @@ class _ProAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final avatarColor = item.role == ProfessionalRole.coach ? pbAmber : pbCoral;
+    final linkedUserId = item.linkedUserId;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -362,16 +363,26 @@ class _ProAvatar extends StatelessWidget {
             ],
           ),
           alignment: Alignment.center,
-          child: Text(
-            _initialsOf(item.displayName),
-            style: TextStyle(
-              fontFamily: context.theme.typography.body.xl2.fontFamily,
-              fontSize: size * 0.38,
-              fontWeight: FontWeight.w900,
-              color: pbInk,
-              height: 1,
-            ),
-          ),
+          // A pro only has initials-on-color when there's no linked `user`
+          // account to pull a real avatar from (`PUserAvatar`, the same
+          // resolver every other user-facing avatar in the app uses).
+          child: linkedUserId == null
+              ? Text(
+                  _initialsOf(item.displayName),
+                  style: TextStyle(
+                    fontFamily: context.theme.typography.body.xl2.fontFamily,
+                    fontSize: size * 0.38,
+                    fontWeight: FontWeight.w900,
+                    color: pbInk,
+                    height: 1,
+                  ),
+                )
+              : PUserAvatar(
+                  userId: linkedUserId,
+                  username: item.displayName,
+                  generatedAvatar: item.generatedAvatar,
+                  radius: size / 2,
+                ),
         ),
         if (item.isVerified)
           Positioned(

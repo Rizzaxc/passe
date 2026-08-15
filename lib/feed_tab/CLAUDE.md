@@ -47,7 +47,7 @@ longer exist.)
     via `LayoutBuilder` + `ConstrainedBox(minHeight: ...)` + `Center` inside a `SingleChildScrollView`
     (`AlwaysScrollableScrollPhysics`, so `RefreshIndicator` still works even when the content is
     shorter than the screen). This mirrors the `hero:`+title+subtitle convention every other tab's
-    empty state uses (e.g. `home_tab/challenger_section/main.dart`'s `_NoLobbyState`) — just centered
+    empty state uses (e.g. `discover_tab/challenger_section/main.dart`'s `_NoLobbyState`) — just centered
     instead of pinned to the top of a list, since here it's the *entire* tab rather than one section
     among several. Guest → "Đăng nhập" CTA (`ProfileRoute` — not `WelcomeRoute`, which the router's
     `redirect` immediately bounces a guest away from back to Home since a guest already has a
@@ -136,5 +136,5 @@ catches that up next time they post/react/sync). See the Gamification section in
 - All RPCs/queries carry the mandatory `.timeout(const Duration(seconds: 5))`.
 - `router.dart`'s `FeedRoute` (`/feed`) is its own top-level `TypedStatefulShellBranch`, positioned
   **first** so it's also the first bottom-nav item (`lib/main.dart`'s `ScaffoldWithNavBar`, icon
-  `FLucideIcons.clapperboard`). It does not nest under `/home` — don't reintroduce
-  `HomeFeedRoute`/`HomeTab.feed()`; those were removed when Feed became a standalone tab.
+  `FLucideIcons.clapperboard`). It does not nest under `/discover` — don't reintroduce
+  `DiscoverFeedRoute`/`DiscoverTab.feed()`; those were removed when Feed became a standalone tab.

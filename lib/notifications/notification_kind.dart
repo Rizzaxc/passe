@@ -40,7 +40,10 @@ enum NotificationKind {
   freeplayRequestDeclined('freeplay_request_declined'),
   freeplayRequestCancelled('freeplay_request_cancelled'),
   freeplayActivityCancelled('freeplay_activity_cancelled'),
-  freeplayChatMessage('freeplay_chat_message');
+  freeplayChatMessage('freeplay_chat_message'),
+  activityAtRiskOrganizer('activity_at_risk_organizer'),
+  activityAtRiskMember('activity_at_risk_member'),
+  activityCancelledLowTurnout('activity_cancelled_low_turnout');
 
   const NotificationKind(this.value);
 

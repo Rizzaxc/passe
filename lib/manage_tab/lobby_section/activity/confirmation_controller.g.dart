@@ -81,7 +81,7 @@ final class ActivityConfirmationControllerProvider
 }
 
 String _$activityConfirmationControllerHash() =>
-    r'e9bc7ca1dcfa31ed4484a71350a23e54c00881dd';
+    r'1e613b8723e2678efe2f78a06829c8d839d907d6';
 
 /// Activity-level + member-level RSVP for one activity row.
 ///

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passe/core/feature_flags.dart';
-import 'package:passe/home_tab/main.dart';
+import 'package:passe/discover_tab/main.dart';
 import 'package:passe/notifications/notification_kind.dart';
 import 'package:passe/notifications/notification_router.dart';
 import 'package:passe/router.dart';
@@ -48,7 +48,7 @@ void main() {
           'kind': 'lobby_join_request_denied',
           'lobby_id': 'lobby-1',
         }),
-        const HomeTeammateRoute().location,
+        const DiscoverTeammateRoute().location,
       );
     });
   });
@@ -105,8 +105,8 @@ void main() {
   });
 
   test('Discover route indices match the enabled tab count', () {
-    expect(HomeTab.locationIndex, HomeTab.tabCount - 1);
-    expect(HomeTab.professionalIndex, lessThan(HomeTab.tabCount));
-    expect(HomeTab.tabCount, ClientFeatureFlags.challengerFlow ? 5 : 4);
+    expect(DiscoverTab.locationIndex, DiscoverTab.tabCount - 1);
+    expect(DiscoverTab.professionalIndex, lessThan(DiscoverTab.tabCount));
+    expect(DiscoverTab.tabCount, ClientFeatureFlags.challengerFlow ? 5 : 4);
   });
 }

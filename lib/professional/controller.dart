@@ -16,7 +16,7 @@ part 'controller.g.dart';
 Future<ProfessionalFeedItem> professionalById(Ref ref, String id) async {
   final response = await Supabase.instance.client
       .from('professional')
-      .select()
+      .select('*, user!professional_linked_user_id_fkey(details)')
       .eq('id', id)
       .single()
       .timeout(const Duration(seconds: 5));

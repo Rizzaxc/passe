@@ -218,6 +218,123 @@ abstract class _$HiddenFeedPosts extends $AsyncNotifier<Set<String>> {
   }
 }
 
+/// When the signed-in user last opened the Feed tab on this device — a
+/// per-device watermark, not synced across devices (same posture as the đá
+/// balance and `HiddenFeedPosts` above). Written *only* from `FeedTab`'s
+/// `initState` (see `main.dart`) when the tab is actually opened — never
+/// from [feedHasUnread] itself, or checking "is there anything unread" would
+/// immediately erase the thing it just found.
+
+@ProviderFor(FeedLastVisitedAt)
+final feedLastVisitedAtProvider = FeedLastVisitedAtProvider._();
+
+/// When the signed-in user last opened the Feed tab on this device — a
+/// per-device watermark, not synced across devices (same posture as the đá
+/// balance and `HiddenFeedPosts` above). Written *only* from `FeedTab`'s
+/// `initState` (see `main.dart`) when the tab is actually opened — never
+/// from [feedHasUnread] itself, or checking "is there anything unread" would
+/// immediately erase the thing it just found.
+final class FeedLastVisitedAtProvider
+    extends $AsyncNotifierProvider<FeedLastVisitedAt, DateTime?> {
+  /// When the signed-in user last opened the Feed tab on this device — a
+  /// per-device watermark, not synced across devices (same posture as the đá
+  /// balance and `HiddenFeedPosts` above). Written *only* from `FeedTab`'s
+  /// `initState` (see `main.dart`) when the tab is actually opened — never
+  /// from [feedHasUnread] itself, or checking "is there anything unread" would
+  /// immediately erase the thing it just found.
+  FeedLastVisitedAtProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'feedLastVisitedAtProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$feedLastVisitedAtHash();
+
+  @$internal
+  @override
+  FeedLastVisitedAt create() => FeedLastVisitedAt();
+}
+
+String _$feedLastVisitedAtHash() => r'9d6095509a6d8c1fda126d650237652d820cb71d';
+
+/// When the signed-in user last opened the Feed tab on this device — a
+/// per-device watermark, not synced across devices (same posture as the đá
+/// balance and `HiddenFeedPosts` above). Written *only* from `FeedTab`'s
+/// `initState` (see `main.dart`) when the tab is actually opened — never
+/// from [feedHasUnread] itself, or checking "is there anything unread" would
+/// immediately erase the thing it just found.
+
+abstract class _$FeedLastVisitedAt extends $AsyncNotifier<DateTime?> {
+  FutureOr<DateTime?> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<DateTime?>, DateTime?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<DateTime?>, DateTime?>,
+              AsyncValue<DateTime?>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// Whether the caller has a wall post newer than [FeedLastVisitedAt] from
+/// someone other than themselves — drives `router.dart`'s initial-tab pick
+/// (guest -> Discover, unread Feed -> Feed, else -> Manage). Not wired to a
+/// nav-bar badge or kept live during a session; it's read once at cold start.
+
+@ProviderFor(feedHasUnread)
+final feedHasUnreadProvider = FeedHasUnreadProvider._();
+
+/// Whether the caller has a wall post newer than [FeedLastVisitedAt] from
+/// someone other than themselves — drives `router.dart`'s initial-tab pick
+/// (guest -> Discover, unread Feed -> Feed, else -> Manage). Not wired to a
+/// nav-bar badge or kept live during a session; it's read once at cold start.
+
+final class FeedHasUnreadProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Whether the caller has a wall post newer than [FeedLastVisitedAt] from
+  /// someone other than themselves — drives `router.dart`'s initial-tab pick
+  /// (guest -> Discover, unread Feed -> Feed, else -> Manage). Not wired to a
+  /// nav-bar badge or kept live during a session; it's read once at cold start.
+  FeedHasUnreadProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'feedHasUnreadProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$feedHasUnreadHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    return feedHasUnread(ref);
+  }
+}
+
+String _$feedHasUnreadHash() => r'f7dae7a0acf57ffb1b0a8796e8df8838617b4e96';
+
 /// Posts from the caller, their friends, their lobby mates, and any post a
 /// friend of theirs is tagged in. Visibility is resolved server-side in
 /// `wall_feed_data` — the client never assembles the audience itself.

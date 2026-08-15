@@ -44,6 +44,9 @@ enum UpdateKind {
   rescheduled('rescheduled', Icons.update_outlined),
   venueChanged('venue_changed', Icons.swap_horiz_outlined),
   cancelled('cancelled', Icons.event_busy_outlined),
+  // Organizer override-confirmed a deadline-passed activity despite being
+  // under confirmation_threshold (resolve_at_risk_activity_organizer).
+  thresholdConfirmed('threshold_confirmed', Icons.verified_outlined),
   other('other', Icons.campaign_outlined);
 
   final String db;

@@ -81,7 +81,7 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
   // neighboring tab would otherwise get fully built — and fire its own
   // RPCs (Feed/Planner both hit Supabase on build) — even though it's not
   // on screen. Rendering everything but the active + just-left index as a
-  // cheap SizedBox defeats that, matching lib/home_tab/main.dart's
+  // cheap SizedBox defeats that, matching lib/discover_tab/main.dart's
   // `_DiscoverViewState`.
   late final Set<int> _builtIndices;
   Timer? _settleTimer;

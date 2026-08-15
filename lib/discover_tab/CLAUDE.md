@@ -1,26 +1,26 @@
-# Home Tab — Discover
+# Discover Tab
 
 Read the root [`CLAUDE.md`](../../CLAUDE.md) first for project-wide conventions (build_runner,
 navigation, the `selectedSportStateProvider` context sport, forui/theme, identity rules). This file
-covers what's specific to the home screen.
+covers what's specific to the Discover screen.
 
 ## Purpose
 
-Home is the **Discover** surface: five implemented subtabs sharing one filter, all scoped to the
+Discover is a surface with five implemented subtabs sharing one filter, all scoped to the
 context sport (`selectedSportStateProvider`). Challenger is client-gated off by default, so normal
 builds show four. Each feed returns `[]` when no sport is selected.
 
 The social surface (**Feed**) is a separate, first-positioned main tab — see
 [`lib/feed_tab/CLAUDE.md`](../feed_tab/CLAUDE.md). It used to live here behind a header pill toggle;
 it moved out to its own tab (a TikTok-style vertical feed doesn't compose well as a sub-segment of
-another screen), so `HomeTab` is back to being single-purpose.
+another screen), so `DiscoverTab` is back to being single-purpose.
 
 ## Layout
 
-- `main.dart` — `HomeTab`: `FScaffold` + `_DiscoverView` (four tabs by default).
+- `main.dart` — `DiscoverTab`: `FScaffold` + `_DiscoverView` (four tabs by default).
   - Default indices are `0` freeplay, `1` teammate, `2` professional, `3` location. When Challenger
     is explicitly enabled it is inserted at `2`, shifting professional/location to `3`/`4`.
-    `HomeTab`'s named index getters keep the `Home*Route` classes independent of that shift.
+    `DiscoverTab`'s named index getters keep the `Discover*Route` classes independent of that shift.
 - Appbar suffixes: `NotificationIconButton`, `SportSelector`. (`DaAppbarButton` — the đá-balance
   pill — is hidden app-wide; the currency system is deferred/unbuilt, see root CLAUDE.md ▸ Activity
   & Currency System. The widget still exists in `lib/currency/` for when that ships.)

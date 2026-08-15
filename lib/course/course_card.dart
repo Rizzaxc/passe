@@ -36,10 +36,15 @@ class CourseCard extends StatelessWidget {
     this.coachSide = false,
   });
 
+  // Coach side: a course has no `name` until an enrollment offer is
+  // accepted, so an inquiry-only card falls back to the student's own name
+  // — otherwise every fresh inquiry rendered the exact same placeholder
+  // title (and, since the avatar's initials are derived from this string,
+  // the exact same avatar too).
   String get _title =>
       course.name ??
       (coachSide
-          ? 'course.newInquiry'.tr()
+          ? course.studentName ?? 'course.newInquiry'.tr()
           : course.coachName ?? 'course.newInquiry'.tr());
 
   Color _frameColor() {
@@ -80,6 +85,12 @@ class CourseCard extends StatelessWidget {
                     _CourseAvatar(
                       name: _title,
                       ended: course.status == CourseStatus.ended,
+                      userId: coachSide
+                          ? course.studentUserId
+                          : course.coachUserId,
+                      generatedAvatar: coachSide
+                          ? course.studentAvatar
+                          : course.coachAvatar,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -180,8 +191,15 @@ class CourseCard extends StatelessWidget {
 class _CourseAvatar extends StatelessWidget {
   final String name;
   final bool ended;
+  final String? userId;
+  final String? generatedAvatar;
 
-  const _CourseAvatar({required this.name, required this.ended});
+  const _CourseAvatar({
+    required this.name,
+    required this.ended,
+    this.userId,
+    this.generatedAvatar,
+  });
 
   String get _initials {
     final parts = name.trim().split(RegExp(r'\s+'));
@@ -193,6 +211,7 @@ class _CourseAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final id = userId;
     return Container(
       width: 58,
       height: 58,
@@ -201,14 +220,25 @@ class _CourseAvatar extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       alignment: Alignment.center,
-      child: Text(
-        _initials,
-        style: context.theme.typography.body.lg.copyWith(
-          color: ended ? context.theme.colors.mutedForeground : pbInk,
-          fontWeight: FontWeight.w900,
-          height: 1,
-        ),
-      ),
+      // Same avatar resolver as every other user-facing surface
+      // (`PUserAvatar`) — the rounded-square frame stays as this card's
+      // identity chip, with the real (circular) avatar mounted inside it,
+      // same composition as the coach profile's own avatar.
+      child: id == null
+          ? Text(
+              _initials,
+              style: context.theme.typography.body.lg.copyWith(
+                color: ended ? context.theme.colors.mutedForeground : pbInk,
+                fontWeight: FontWeight.w900,
+                height: 1,
+              ),
+            )
+          : PUserAvatar(
+              userId: id,
+              username: name,
+              generatedAvatar: generatedAvatar,
+              radius: 29,
+            ),
     );
   }
 }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../core/model/enum.dart';
+import '../core/state/selected_sport_state.dart';
 import '../router.dart';
 import '../ui/main.dart';
 import 'course_card.dart';
@@ -17,6 +19,15 @@ class CourseHubSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(myCoursesProvider);
+    // A course is bound to one sport for its whole life (`course.sport_id`),
+    // so the hub is scoped to the context sport the same way the Manage ▸
+    // Lobby list is (`lobby_controller.dart`'s `sport_id == Sport.index`
+    // filter) — without this, a course with a coach who happens to teach
+    // several sports (`professional.sports`) showed up regardless of which
+    // sport was selected, which read as "the same coach thread" bleeding
+    // across sports even though messaging that coach under a different
+    // sport correctly starts a brand new, separate course.
+    final sport = ref.watch(selectedSportStateProvider).value;
 
     ref.listen(myCoursesProvider, (_, next) {
       if (next is AsyncError && context.mounted) {
@@ -40,7 +51,7 @@ class CourseHubSection extends ConsumerWidget {
             label: 'course.findCoach'.tr(),
             child: FButton.icon(
               variant: .ghost,
-              onPress: () => const HomeProfessionalRoute().go(context),
+              onPress: () => const DiscoverProfessionalRoute().go(context),
               child: const Icon(FLucideIcons.search),
             ),
           ),
@@ -56,19 +67,25 @@ class CourseHubSection extends ConsumerWidget {
               onAction: () => ref.invalidate(myCoursesProvider),
               onRefresh: () => ref.refresh(myCoursesProvider.future),
             ),
-            data: (courses) => courses.isEmpty
-                ? _CourseListState(
-                    icon: FLucideIcons.graduationCap,
-                    message: 'course.emptyPlayer'.tr(),
-                    actionLabel: 'course.findCoach'.tr(),
-                    actionIcon: FLucideIcons.search,
-                    onAction: () => const HomeProfessionalRoute().go(context),
-                    onRefresh: () => ref.refresh(myCoursesProvider.future),
-                  )
-                : _CourseList(
-                    courses: courses,
-                    onRefresh: () => ref.refresh(myCoursesProvider.future),
-                  ),
+            data: (all) {
+              final courses = sport == null || sport == Sport.others
+                  ? const <CourseSummary>[]
+                  : all.where((c) => c.sportId == sport.index).toList();
+              return courses.isEmpty
+                  ? _CourseListState(
+                      icon: FLucideIcons.graduationCap,
+                      message: 'course.emptyPlayer'.tr(),
+                      actionLabel: 'course.findCoach'.tr(),
+                      actionIcon: FLucideIcons.search,
+                      onAction: () =>
+                          const DiscoverProfessionalRoute().go(context),
+                      onRefresh: () => ref.refresh(myCoursesProvider.future),
+                    )
+                  : _CourseList(
+                      courses: courses,
+                      onRefresh: () => ref.refresh(myCoursesProvider.future),
+                    );
+            },
           ),
         ),
       ],
@@ -86,6 +103,10 @@ class ProCoursesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(proCoursesProvider);
+    // Same context-sport scoping as the player-side hub above — a coach who
+    // teaches several sports shouldn't see a badminton student's course
+    // while soccer is selected.
+    final sport = ref.watch(selectedSportStateProvider).value;
 
     ref.listen(proCoursesProvider, (_, next) {
       if (next is AsyncError && context.mounted) {
@@ -119,7 +140,9 @@ class ProCoursesSection extends ConsumerWidget {
               onRefresh: () => ref.refresh(proCoursesProvider.future),
             ),
             data: (all) {
-              final courses = all
+              final courses = (sport == null || sport == Sport.others
+                      ? const <CourseSummary>[]
+                      : all.where((c) => c.sportId == sport.index))
                   .where(
                     (course) => endedOnly
                         ? course.status == CourseStatus.ended

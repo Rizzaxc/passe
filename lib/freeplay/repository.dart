@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../auth/auth_controller.dart';
 import '../core/model/timeslot.dart';
 import '../core/state/selected_sport_state.dart';
-import '../home_tab/filter_controller.dart';
+import '../discover_tab/filter_controller.dart';
 import 'model.dart';
 
 const _rpcTimeout = Duration(seconds: 5);

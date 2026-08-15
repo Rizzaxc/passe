@@ -86,7 +86,7 @@ class _InviteLandingPageState extends ConsumerState<InviteLandingPage> {
     if (context.canPop()) {
       context.pop();
     } else {
-      const HomeRoute().go(context);
+      const DiscoverRoute().go(context);
     }
   }
 

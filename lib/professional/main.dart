@@ -311,6 +311,7 @@ class _ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final linkedUserId = item.linkedUserId;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -329,14 +330,23 @@ class _ProfileAvatar extends StatelessWidget {
             ],
           ),
           alignment: Alignment.center,
-          child: Text(
-            _initials(item.displayName),
-            style: context.theme.typography.body.xl3.copyWith(
-              color: pbInk,
-              fontWeight: FontWeight.w900,
-              height: 1,
-            ),
-          ),
+          // Same resolver as every other user-facing avatar (`PUserAvatar`);
+          // initials-on-color only when this pro has no linked `user`.
+          child: linkedUserId == null
+              ? Text(
+                  _initials(item.displayName),
+                  style: context.theme.typography.body.xl3.copyWith(
+                    color: pbInk,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                )
+              : PUserAvatar(
+                  userId: linkedUserId,
+                  username: item.displayName,
+                  generatedAvatar: item.generatedAvatar,
+                  radius: 41,
+                ),
         ),
         if (item.isVerified)
           Positioned(

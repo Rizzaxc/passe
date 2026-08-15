@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
@@ -26,33 +27,31 @@ class _LobbyMoneySheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final balances = ref.watch(lobbyMoneyControllerProvider(lobbyId));
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        PSheetTitle(
-          label: 'payment.lobbyMoney'.tr(),
-          trailing: FButton.icon(
-            variant: .ghost,
-            onPress: () => Navigator.of(context).pop(),
-            child: const Icon(FLucideIcons.x),
+    return SingleChildScrollView(
+      primary: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PSheetTitle(
+            label: 'payment.lobbyMoney'.tr(),
+            trailing: FButton.icon(
+              variant: .ghost,
+              onPress: () => Navigator.of(context).pop(),
+              child: const Icon(FLucideIcons.x),
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'payment.moneyHint'.tr(),
-          style: context.theme.typography.body.sm.copyWith(
-            color: context.theme.colors.mutedForeground,
+          const SizedBox(height: 4),
+          Text(
+            'payment.moneyHint'.tr(),
+            style: context.theme.typography.body.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
           ),
-        ),
-        const SizedBox(height: 10),
-        _SignLegend(),
-        const SizedBox(height: 12),
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.65,
-          ),
-          child: balances.when(
+          const SizedBox(height: 10),
+          _SignLegend(),
+          const SizedBox(height: 12),
+          balances.when(
             loading: () => const SizedBox(
               height: 120,
               child: Center(child: FCircularProgress()),
@@ -60,17 +59,19 @@ class _LobbyMoneySheet extends ConsumerWidget {
             error: (_, _) => _MoneyError(lobbyId: lobbyId),
             data: (items) => items.isEmpty
                 ? _MoneyEmpty()
-                : ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: items.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (_, index) =>
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (var index = 0; index < items.length; index++) ...[
+                        if (index > 0) const SizedBox(height: 10),
                         _MoneyCard(lobbyId: lobbyId, balance: items[index]),
+                      ],
+                    ],
                   ),
           ),
-        ),
-        const SizedBox(height: 8),
-      ],
+          const SizedBox(height: 8),
+        ],
+      ),
     );
   }
 }
@@ -403,8 +404,9 @@ class _SwipeToConfirmState extends State<_SwipeToConfirm> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 58),
-                    child: Text(
+                    child: AutoSizeText(
                       widget.label,
+                      minFontSize: 8,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,

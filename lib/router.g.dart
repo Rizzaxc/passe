@@ -497,14 +497,14 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
     StatefulShellBranchData.$branch(
       routes: [
         GoRouteData.$route(
-          path: '/home',
+          path: '/discover',
           hasOverriddenOnExit: false,
-          factory: $HomeRoute._fromState,
+          factory: $DiscoverRoute._fromState,
           routes: [
             GoRouteData.$route(
               path: 'freeplay',
               hasOverriddenOnExit: false,
-              factory: $HomeFreeplayRoute._fromState,
+              factory: $DiscoverFreeplayRoute._fromState,
               routes: [
                 GoRouteData.$route(
                   path: ':id',
@@ -526,22 +526,22 @@ RouteBase get $mainRoute => StatefulShellRouteData.$route(
             GoRouteData.$route(
               path: 'teammate',
               hasOverriddenOnExit: false,
-              factory: $HomeTeammateRoute._fromState,
+              factory: $DiscoverTeammateRoute._fromState,
             ),
             GoRouteData.$route(
               path: 'challenger',
               hasOverriddenOnExit: false,
-              factory: $HomeChallengerRoute._fromState,
+              factory: $DiscoverChallengerRoute._fromState,
             ),
             GoRouteData.$route(
               path: 'professional',
               hasOverriddenOnExit: false,
-              factory: $HomeProfessionalRoute._fromState,
+              factory: $DiscoverProfessionalRoute._fromState,
             ),
             GoRouteData.$route(
               path: 'place',
               hasOverriddenOnExit: false,
-              factory: $HomePlaceRoute._fromState,
+              factory: $DiscoverPlaceRoute._fromState,
             ),
           ],
         ),
@@ -654,11 +654,11 @@ mixin $FeedRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-mixin $HomeRoute on GoRouteData {
-  static HomeRoute _fromState(GoRouterState state) => const HomeRoute();
+mixin $DiscoverRoute on GoRouteData {
+  static DiscoverRoute _fromState(GoRouterState state) => const DiscoverRoute();
 
   @override
-  String get location => GoRouteData.$location('/home');
+  String get location => GoRouteData.$location('/discover');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -674,12 +674,12 @@ mixin $HomeRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-mixin $HomeFreeplayRoute on GoRouteData {
-  static HomeFreeplayRoute _fromState(GoRouterState state) =>
-      const HomeFreeplayRoute();
+mixin $DiscoverFreeplayRoute on GoRouteData {
+  static DiscoverFreeplayRoute _fromState(GoRouterState state) =>
+      const DiscoverFreeplayRoute();
 
   @override
-  String get location => GoRouteData.$location('/home/freeplay');
+  String get location => GoRouteData.$location('/discover/freeplay');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -702,8 +702,9 @@ mixin $FreeplayDetailRoute on GoRouteData {
   FreeplayDetailRoute get _self => this as FreeplayDetailRoute;
 
   @override
-  String get location =>
-      GoRouteData.$location('/home/freeplay/${Uri.encodeComponent(_self.id)}');
+  String get location => GoRouteData.$location(
+    '/discover/freeplay/${Uri.encodeComponent(_self.id)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -727,7 +728,7 @@ mixin $FreeplayHostRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location(
-    '/home/freeplay-host/${Uri.encodeComponent(_self.id)}',
+    '/discover/freeplay-host/${Uri.encodeComponent(_self.id)}',
   );
 
   @override
@@ -754,7 +755,7 @@ mixin $FreeplayChatRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location(
-    '/home/freeplay-chat/${Uri.encodeComponent(_self.activityId)}/${Uri.encodeComponent(_self.requestId)}',
+    '/discover/freeplay-chat/${Uri.encodeComponent(_self.activityId)}/${Uri.encodeComponent(_self.requestId)}',
   );
 
   @override
@@ -771,22 +772,23 @@ mixin $FreeplayChatRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-mixin $HomeTeammateRoute on GoRouteData {
-  static HomeTeammateRoute _fromState(GoRouterState state) => HomeTeammateRoute(
-    openFilter:
-        _$convertMapValue(
-          'open-filter',
-          state.uri.queryParameters,
-          _$boolConverter,
-        ) ??
-        false,
-  );
+mixin $DiscoverTeammateRoute on GoRouteData {
+  static DiscoverTeammateRoute _fromState(GoRouterState state) =>
+      DiscoverTeammateRoute(
+        openFilter:
+            _$convertMapValue(
+              'open-filter',
+              state.uri.queryParameters,
+              _$boolConverter,
+            ) ??
+            false,
+      );
 
-  HomeTeammateRoute get _self => this as HomeTeammateRoute;
+  DiscoverTeammateRoute get _self => this as DiscoverTeammateRoute;
 
   @override
   String get location => GoRouteData.$location(
-    '/home/teammate',
+    '/discover/teammate',
     queryParams: {
       if (_self.openFilter != false) 'open-filter': _self.openFilter.toString(),
     },
@@ -806,33 +808,12 @@ mixin $HomeTeammateRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-mixin $HomeChallengerRoute on GoRouteData {
-  static HomeChallengerRoute _fromState(GoRouterState state) =>
-      const HomeChallengerRoute();
+mixin $DiscoverChallengerRoute on GoRouteData {
+  static DiscoverChallengerRoute _fromState(GoRouterState state) =>
+      const DiscoverChallengerRoute();
 
   @override
-  String get location => GoRouteData.$location('/home/challenger');
-
-  @override
-  void go(BuildContext context) => context.go(location);
-
-  @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  @override
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  @override
-  void replace(BuildContext context) => context.replace(location);
-}
-
-mixin $HomeProfessionalRoute on GoRouteData {
-  static HomeProfessionalRoute _fromState(GoRouterState state) =>
-      const HomeProfessionalRoute();
-
-  @override
-  String get location => GoRouteData.$location('/home/professional');
+  String get location => GoRouteData.$location('/discover/challenger');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -848,12 +829,33 @@ mixin $HomeProfessionalRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-mixin $HomePlaceRoute on GoRouteData {
-  static HomePlaceRoute _fromState(GoRouterState state) =>
-      const HomePlaceRoute();
+mixin $DiscoverProfessionalRoute on GoRouteData {
+  static DiscoverProfessionalRoute _fromState(GoRouterState state) =>
+      const DiscoverProfessionalRoute();
 
   @override
-  String get location => GoRouteData.$location('/home/place');
+  String get location => GoRouteData.$location('/discover/professional');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $DiscoverPlaceRoute on GoRouteData {
+  static DiscoverPlaceRoute _fromState(GoRouterState state) =>
+      const DiscoverPlaceRoute();
+
+  @override
+  String get location => GoRouteData.$location('/discover/place');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1222,4 +1224,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'c6e93ed66d977785d160f0b307e4796d8acf4cec';
+String _$routerHash() => r'1e5424c90032e56ffc44143eb630f6d504ebb568';

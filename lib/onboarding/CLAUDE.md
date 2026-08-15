@@ -13,7 +13,9 @@ Two phases:
    answers lead to the same sport pick next; the only thing the opt-in decides is whether the
    follow-up chain below runs later (accept) or is skipped entirely until they sign up (decline —
    `OnboardingStatus.guestDeclined`). `router.dart`'s `redirect` sends any user here until
-   `OnboardingState.coreDone` (the sport pick, not the opt-in), and back to `/home` once it's true.
+   `OnboardingState.coreDone` (the sport pick, not the opt-in), then on to whichever tab
+   `router.dart`'s `resolveInitialTabDestination` picks — Discover for a guest, otherwise Feed or
+   Manage depending on unread state (see `router.dart`'s own comments).
 2. **Follow-up chain** (`follow_up.dart`'s `runOnboardingFollowUps`, fired once from
    `ScaffoldWithNavBar.initState` in `lib/main.dart`) — runs as sheets/overlays over the *real*,
    already sport-scoped shell, in order:
@@ -55,9 +57,9 @@ whole guide on every launch for manual testing; off by default, opt in with
    visibly changes reads as broken. Profile and get-started sheets have no internal sub-progress, so
    they keep a plain step-in-the-4-stage-sequence number.
 7. **`get_started_sheet.dart`'s "Tìm đồng đội" tile opens straight into the filter sheet**, not a
-   bare list — `HomeTeammateRoute(openFilter: true)` → `HomeTab` → `TeammateSubtab.openFilter`
+   bare list — `DiscoverTeammateRoute(openFilter: true)` → `DiscoverTab` → `TeammateSubtab.openFilter`
    (guarded by the module-level `_autoFilterConsumed` latch in `teammate_section/main.dart` so
-   revisiting the tab later doesn't reopen it). The filter sheet itself (`home_tab/filter.dart`)
+   revisiting the tab later doesn't reopen it). The filter sheet itself (`discover_tab/filter.dart`)
    shows a **one-time** single-target `TutorialCoachMark` over its confirm button ("tinh chỉnh tiêu
    chí tìm kiếm...") the very first time anyone ever opens it (persisted `FILTER_FIELDS_COACH_SEEN`
    flag, `_FilterCoachMarkPrefs`) — not gated to the onboarding entry point, since the hint is useful

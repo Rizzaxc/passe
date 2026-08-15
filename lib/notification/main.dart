@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../manage_tab/lobby_section/activity/activity_at_risk_response_controller.dart';
 import '../manage_tab/lobby_section/lobby_invite_response_controller.dart';
 import '../notifications/notification_kind.dart';
 import '../notifications/notification_router.dart';
@@ -168,6 +169,9 @@ IconData _iconFor(NotificationKind? kind) => switch (kind) {
   NotificationKind.courseSessionReport ||
   NotificationKind.courseEnded ||
   NotificationKind.courseMemberRemoved => FLucideIcons.graduationCap,
+  NotificationKind.activityAtRiskOrganizer ||
+  NotificationKind.activityAtRiskMember => FLucideIcons.calendarClock,
+  NotificationKind.activityCancelledLowTurnout => FLucideIcons.calendarX,
   null => FLucideIcons.bell,
 };
 
@@ -260,6 +264,12 @@ class _NotificationRow extends ConsumerWidget {
     final lobbyInviteStatus = recordId == null
         ? null
         : ref.watch(lobbyInviteStatusProvider(recordId)).value;
+
+    final atRiskActivityId =
+        (item.kind == NotificationKind.activityAtRiskOrganizer ||
+            item.kind == NotificationKind.activityAtRiskMember)
+        ? item.data['target_id'] as String?
+        : null;
     final radius = BorderRadius.circular(14);
     final frameColor = item.isUnread
         ? pbBlueDeep.withValues(alpha: 0.28)
@@ -407,6 +417,16 @@ class _NotificationRow extends ConsumerWidget {
                   Align(
                     alignment: Alignment.centerRight,
                     child: _LobbyInviteActions(recordId: recordId),
+                  ),
+                ] else if (atRiskActivityId != null) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _ActivityAtRiskActions(
+                      activityId: atRiskActivityId,
+                      isOrganizer:
+                          item.kind == NotificationKind.activityAtRiskOrganizer,
+                    ),
                   ),
                 ],
               ],
@@ -664,6 +684,191 @@ class _LobbyInvitePendingButtonsState
           size: .xs,
           onPress: () => _respond(true),
           child: Text('lobby.inviteReview.accept'.tr()),
+        ),
+      ],
+    );
+  }
+}
+
+/// Inline action for an `activity_at_risk_organizer` / `activity_at_risk_member`
+/// notification — the deadline-passed "commit or cancel" prompt (see
+/// schema/activity_threshold_enforcement.sql). Watches the activity's own
+/// resolution state so the buttons disappear the moment it's resolved from
+/// any surface (this card, or the same prompt landing on another device).
+class _ActivityAtRiskActions extends ConsumerWidget {
+  final String activityId;
+  final bool isOrganizer;
+
+  const _ActivityAtRiskActions({
+    required this.activityId,
+    required this.isOrganizer,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statusAsync = ref.watch(activityAtRiskStatusProvider(activityId));
+    final colors = context.theme.colors;
+
+    return statusAsync.when(
+      loading: () => const SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (status) => switch (status) {
+        ActivityAtRiskStatus.confirmed => Text(
+          'lobbyHub.activity.atRiskResolvedConfirmed'.tr(),
+          style: context.theme.typography.body.xs.copyWith(
+            color: colors.mutedForeground,
+          ),
+        ),
+        ActivityAtRiskStatus.cancelled => Text(
+          'lobbyHub.activity.atRiskResolvedCancelled'.tr(),
+          style: context.theme.typography.body.xs.copyWith(
+            color: colors.mutedForeground,
+          ),
+        ),
+        ActivityAtRiskStatus.pending => isOrganizer
+            ? _ActivityAtRiskOrganizerButtons(activityId: activityId)
+            : _ActivityAtRiskMemberButtons(activityId: activityId),
+      },
+    );
+  }
+}
+
+/// Organizer-tier action: override-confirm (accept the low turnout) or
+/// cancel outright — `resolve_at_risk_activity_organizer`.
+class _ActivityAtRiskOrganizerButtons extends ConsumerStatefulWidget {
+  final String activityId;
+
+  const _ActivityAtRiskOrganizerButtons({required this.activityId});
+
+  @override
+  ConsumerState<_ActivityAtRiskOrganizerButtons> createState() =>
+      _ActivityAtRiskOrganizerButtonsState();
+}
+
+class _ActivityAtRiskOrganizerButtonsState
+    extends ConsumerState<_ActivityAtRiskOrganizerButtons> {
+  bool _loading = false;
+
+  Future<void> _respond(bool confirm) async {
+    setState(() => _loading = true);
+    try {
+      await ref
+          .read(activityAtRiskResponseControllerProvider.notifier)
+          .respondOrganizer(widget.activityId, confirm: confirm);
+    } catch (e, st) {
+      Talker().handle(e, st, 'activity at-risk organizer response failed');
+      if (mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: Text('errorGeneric'.tr()),
+          alignment: .bottomCenter,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 4,
+      children: [
+        FButton(
+          variant: .ghost,
+          size: .xs,
+          onPress: () => _respond(false),
+          child: Text('lobbyHub.activity.cancelAction'.tr()),
+        ),
+        FButton(
+          variant: .secondary,
+          size: .xs,
+          onPress: () => _respond(true),
+          child: Text('lobbyHub.activity.atRiskConfirmAnyway'.tr()),
+        ),
+      ],
+    );
+  }
+}
+
+/// Member-tier action for a "maybe"/never-responded lobby member: commit to
+/// going or out — `resolve_at_risk_activity_rsvp`.
+class _ActivityAtRiskMemberButtons extends ConsumerStatefulWidget {
+  final String activityId;
+
+  const _ActivityAtRiskMemberButtons({required this.activityId});
+
+  @override
+  ConsumerState<_ActivityAtRiskMemberButtons> createState() =>
+      _ActivityAtRiskMemberButtonsState();
+}
+
+class _ActivityAtRiskMemberButtonsState
+    extends ConsumerState<_ActivityAtRiskMemberButtons> {
+  bool _loading = false;
+
+  Future<void> _respond(bool going) async {
+    setState(() => _loading = true);
+    try {
+      await ref
+          .read(activityAtRiskResponseControllerProvider.notifier)
+          .respondMember(widget.activityId, going: going);
+    } catch (e, st) {
+      Talker().handle(e, st, 'activity at-risk member response failed');
+      if (mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: Text('errorGeneric'.tr()),
+          alignment: .bottomCenter,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 4,
+      children: [
+        FButton(
+          variant: .ghost,
+          size: .xs,
+          onPress: () => _respond(false),
+          child: Text('lobbyHub.activity.out'.tr()),
+        ),
+        FButton(
+          variant: .secondary,
+          size: .xs,
+          onPress: () => _respond(true),
+          child: Text('lobbyHub.activity.going'.tr()),
         ),
       ],
     );

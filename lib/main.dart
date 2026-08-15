@@ -47,7 +47,7 @@ Future<void> main() async {
   // shorter than that, so this overrides the freshness window rather than
   // trusting the server's shorter one. Must run before the first TileLayer
   // builds — NetworkTileProvider (the default for both TileLayers in
-  // home_tab/location_section/main.dart) lazily creates this same singleton
+  // discover_tab/location_section/main.dart) lazily creates this same singleton
   // on first use otherwise, with no override applied.
   BuiltInMapCachingProvider.getOrCreateInstance(
     overrideFreshAge: const Duration(days: 7),
