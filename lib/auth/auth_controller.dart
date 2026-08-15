@@ -104,7 +104,32 @@ class AuthController extends _$AuthController {
           return;
         }
         // Reload state from server; if offline/unreachable, fall back to cached data (within TTL).
-        state = const AsyncValue.loading();
+        //
+        // Only broadcast the interim loading state when we don't already
+        // have a resolved value. `tokenRefreshed` in particular fires
+        // automatically in the background every ~50min for an *already*
+        // signed-in user, completely independent of anything the user is
+        // doing — broadcasting a bare, previous-value-less loading state for
+        // it means every watcher (including `authControllerProvider.value`)
+        // sees `user == null` for someone who never actually signed out.
+        // `ProfileTab` reacts to that by swapping its whole content tree for
+        // a spinner (`userAsync.when(loading: () => ...)`), which unmounts —
+        // and, since they're auto-dispose, tears down — every profile
+        // controller mid-edit or mid-commit, silently resetting their
+        // dirty-check baselines (or, worse, throwing if a `state = ...`
+        // write in a still-running `commit()` lands on the now-disposed
+        // instance). A user who was mid-edit, or had just committed with
+        // nothing left to save, could see a stale "discard changes?" prompt
+        // on their next navigation — timed to whenever a background token
+        // refresh happened to land, which is why this surfaced as several
+        // seemingly-unrelated one-off reports rather than one reproducible
+        // repro. Skipping the broadcast when a value is already present
+        // keeps a genuine cold-start/sign-in transition's loading UI intact
+        // (state.value is null then) while making a same-identity
+        // background refresh invisible to every watcher until it resolves.
+        if (state.value == null) {
+          state = const AsyncValue.loading();
+        }
 
         state = await AsyncValue.guard(() async {
           try {
@@ -312,15 +337,21 @@ class AuthController extends _$AuthController {
         nonce: rawNonce,
       );
     } on SignInWithAppleAuthorizationException catch (e, st) {
-      // Always log: a user backing out of the native Apple sheet (swipe-dismiss,
-      // no iCloud account configured, etc.) doesn't reliably report `canceled` —
-      // iOS sometimes reports `unknown` for the same user-initiated dismissal.
-      // Treat both as "not an error worth surfacing", matching the Google branch.
+      // Always log: this is the only signal we get for a genuine failure.
       talker.handle(e, st);
-      if (e.code == AuthorizationErrorCode.canceled ||
-          e.code == AuthorizationErrorCode.unknown) {
-        return;
-      }
+      // `.canceled` is Apple's actual "user backed out" code — the only one
+      // worth swallowing silently, matching the Google branch. `.unknown` is
+      // a real catch-all for failures (network issues reaching Apple's auth
+      // servers, a misconfigured Sign-in-with-Apple capability on a
+      // particular build/provisioning profile, keychain issues) — it used to
+      // be swallowed here too on the theory that iOS sometimes reports
+      // `unknown` for a plain dismissal, but that traded away all visibility
+      // into real failures: the request never reaches Supabase (nothing to
+      // see in its logs) and the button just silently does nothing. Let it
+      // rethrow so `handleAuthAction` in auth_screen.dart surfaces the mild
+      // "thử lại" toast it already has wired up for every other failure —
+      // worst case a false positive on a rare dismissal, not a dead button.
+      if (e.code == AuthorizationErrorCode.canceled) return;
       rethrow;
     } catch (e, st) {
       talker.handle(e, st);
@@ -548,8 +579,20 @@ class AuthController extends _$AuthController {
     await signOut();
   }
 
+  /// Re-fetches the signed-in user from the server, e.g. after
+  /// [ProfileController.commit] writes new `username`/`details`.
+  ///
+  /// Deliberately does NOT set an interim `AsyncValue.loading()` first — a
+  /// bare `loading()` has no `.value`, so every watcher briefly sees
+  /// `user == null` for the *same still-signed-in* user, indistinguishable
+  /// from a real sign-out. `ProfileController.build()` treats a null user as
+  /// a guest draft and (per its own `_initialUserId` guard) re-baselines its
+  /// dirty-check baseline to that placeholder, then re-baselines *again* once
+  /// the real user reloads — leaving `hasUncommittedChanges` reporting stale
+  /// true after a commit with genuinely nothing left to discard. Going
+  /// straight from the old `AsyncData` to the new one (or an error) skips
+  /// that null window entirely.
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _loadFromServer());
   }
 

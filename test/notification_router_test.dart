@@ -109,4 +109,78 @@ void main() {
     expect(DiscoverTab.professionalIndex, lessThan(DiscoverTab.tabCount));
     expect(DiscoverTab.tabCount, ClientFeatureFlags.challengerFlow ? 5 : 4);
   });
+
+  group('push-only routes must be pushed, not go()ed', () {
+    // UserRoute and LobbyInvitePreviewRoute are declared outside MainRoute's
+    // shell tree — go()ing them tears down the whole bottom-tab shell instead
+    // of just replacing the current page. Regression coverage for the crash
+    // this caused on both the friend-request and lobby-invite notification
+    // paths (see root CLAUDE.md ▸ Navigation).
+    test('friend request opens the requester profile', () {
+      expect(
+        resolveNotificationLocation({
+          'kind': 'friend_request',
+          'user_id': 'user-1',
+        }),
+        const UserRoute(id: 'user-1').location,
+      );
+    });
+
+    test('friend accepted opens the new friend profile', () {
+      expect(
+        resolveNotificationLocation({
+          'kind': 'friend_accepted',
+          'user_id': 'user-1',
+        }),
+        const UserRoute(id: 'user-1').location,
+      );
+    });
+
+    test('pending lobby invite opens the push-only preview page', () {
+      expect(
+        resolveNotificationLocation({
+          'kind': 'lobby_invite',
+          'record_id': 'record-1',
+        }),
+        const LobbyInvitePreviewRoute(recordId: 'record-1').location,
+      );
+    });
+
+    test(
+      'lobby invite without a record id falls back to the shell-nested Lobby hub',
+      () {
+        expect(
+          resolveNotificationLocation({'kind': 'lobby_invite'}),
+          const ManageLobbyRoute().location,
+        );
+      },
+    );
+
+    test('classifies push-only vs. shell-nested locations', () {
+      expect(
+        isPushOnlyNotificationLocation(const UserRoute(id: 'user-1').location),
+        isTrue,
+      );
+      expect(
+        isPushOnlyNotificationLocation(
+          const LobbyInvitePreviewRoute(recordId: 'record-1').location,
+        ),
+        isTrue,
+      );
+      expect(
+        isPushOnlyNotificationLocation(const ManageLobbyRoute().location),
+        isFalse,
+      );
+      expect(
+        isPushOnlyNotificationLocation(
+          const LobbyDetailRoute(id: 'lobby-1').location,
+        ),
+        isFalse,
+      );
+      expect(
+        isPushOnlyNotificationLocation(const ManageScheduleRoute().location),
+        isFalse,
+      );
+    });
+  });
 }

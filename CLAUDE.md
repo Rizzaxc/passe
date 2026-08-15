@@ -306,6 +306,22 @@ JSON — parse with `double.tryParse`. Complex reads go through Postgres functio
   build_runner. Navigate with the generated `const XRoute().go(context)` / `.push(context)`. Pass
   heavy objects via the route's `$extra` field to skip a refetch (see `ProfessionalDetailRoute`,
   `LobbyDetailRoute`). `redirect` in `routerProvider` gates auth/guest/password-recovery flows.
+  **`go()` vs `push()` is not a style choice.** A handful of routes are declared top-level, outside
+  `MainRoute`'s `StatefulShellRoute` tree, and say so in their own doc comment ("push-only, never a
+  tab": `UserRoute`, `LobbyInvitePreviewRoute`, `InviteRoute`, `ProfessionalDetailRoute` today) —
+  reach these with `.push()`, never `.go()`. `go()` recomputes the whole match list; for a route
+  that isn't part of the shell's nested tree, that discards the *entire live shell* (all 4 branches
+  plus the `NavCoachKeys` GlobalKeys wired to the nav bar in `lib/main.dart`) instead of just
+  replacing the current page — go_router either throws its "duplicate GlobalKeys" assertion going
+  in, or leaves the destination as the sole Navigator entry going out, crashing on an unguarded
+  back-button pop. This shipped broken in `lib/notifications/notification_router.dart`: tapping a
+  `friend_request`/`friend_accepted` push (→ `UserRoute`) or a still-`pending` `lobby_invite` push
+  (→ `LobbyInvitePreviewRoute`) both crashed, because the OS-push handler and the in-app notification
+  center unconditionally used `go()`. Fixed by classifying the *resolved location*, not the
+  notification kind (`isPushOnlyNotificationLocation()` in that file) — one kind can resolve to
+  either a push-only or a shell-nested route depending on payload (`lobby_invite` falls back to the
+  shell-nested `ManageLobbyRoute` when `record_id` is missing). Any new push-only route reachable
+  from a notification needs the same check added there.
 - **Identity & auth**: `authControllerProvider` (`AsyncValue<PasseUser?>`) is the source of truth;
   read the id via `currentUserIdProvider`. `PasseUser.isGuest` distinguishes guests; the auth
   controller caches the user to SharedPreferences with a 24h offline TTL. See the identity rule in

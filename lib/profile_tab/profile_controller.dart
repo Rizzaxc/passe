@@ -576,7 +576,14 @@ class ProfileController extends _$ProfileController {
         ref.read(userContactControllerProvider.notifier).commit(),
       ]);
 
-      _initialState = state.copyWith(pickedAvatar: null);
+      // Clear the picked file from the live draft too, not just the
+      // baseline — otherwise `state.pickedAvatar` (still the XFile) never
+      // again equals `_initialState.pickedAvatar` (null), so
+      // `hasUncommittedChanges` reports true forever after the first avatar
+      // change+commit, prompting "discard changes?" on every later
+      // navigation away from Profile even with nothing actually pending.
+      state = state.copyWith(pickedAvatar: null);
+      _initialState = state;
 
       if (avatarUploadFailed) {
         throw const AvatarUploadFailedException();

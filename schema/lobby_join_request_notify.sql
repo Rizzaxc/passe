@@ -10,7 +10,7 @@
 
 create or replace function public.fn_emit_lobby_join_request()
     returns trigger
-    language plpgsql set search_path to ''
+    language plpgsql security definer set search_path to ''
 as $$
 declare
     v_captain_id     uuid;
@@ -67,7 +67,7 @@ create trigger lobby_join_request_notify
 
 create or replace function public.fn_emit_lobby_join_request_response()
     returns trigger
-    language plpgsql set search_path to ''
+    language plpgsql security definer set search_path to ''
 as $$
 declare
     v_lobby_name text;

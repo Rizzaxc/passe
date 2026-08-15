@@ -202,10 +202,30 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
   };
 }
 
+/// Whether [location] is a push-only route — declared outside the bottom-tab
+/// shell (see [UserRoute] / [LobbyInvitePreviewRoute]'s doc comments) — so it
+/// must be `push()`ed, not `go()`ed: `go()` recomputes the whole match list,
+/// and since these routes aren't part of the shell's nested tree, that
+/// discards the shell (and its `NavCoachKeys`) instead of just this page,
+/// crashing on the very next pop.
+///
+/// Keyed off the resolved location rather than [NotificationKind] because a
+/// single kind can resolve to either a push-only or a shell-nested route
+/// depending on the payload — `lobbyInvite` falls back to the shell-nested
+/// `ManageLobbyRoute` when `record_id` is missing, but otherwise resolves to
+/// the top-level `LobbyInvitePreviewRoute`.
+bool isPushOnlyNotificationLocation(String location) =>
+    location.startsWith('/user/') || location.startsWith('/lobby-invite/');
+
 /// Push-tap entry point: resolve and navigate. Driven by [GoRouter] directly
 /// (not a `BuildContext`) so it works from a notification tap that launched
 /// the app from a terminated state, before any widget context exists.
 void routeNotificationTap(GoRouter router, Map<String, dynamic>? data) {
   final location = resolveNotificationLocation(data);
-  if (location != null) router.go(location);
+  if (location == null) return;
+  if (isPushOnlyNotificationLocation(location)) {
+    router.push(location);
+  } else {
+    router.go(location);
+  }
 }

@@ -33,7 +33,11 @@ class UserPage extends ConsumerWidget {
       header: FHeader.nested(
         title: Text(profileAsync.value?.username ?? initialName ?? ''),
         prefixes: [
-          FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
+          FHeaderAction.back(
+            onPress: () {
+              if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+            },
+          ),
         ],
         suffixes: [
           if (!isSelf && profileAsync.value != null)

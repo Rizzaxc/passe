@@ -226,13 +226,21 @@ class _NotificationRow extends ConsumerWidget {
       ...item.data,
       'kind': item.kind?.value,
     });
-    // go(), not push(): most kinds resolve to a page nested under the bottom-
-    // tab shell (e.g. LobbyDetailRoute under /manage/lobby/:id). Pushing a
-    // full nested shell path on top of a root-level screen like this one
-    // collides with the shell's own preserved branch state (go_router throws
-    // a duplicate-GlobalKey assertion) — go() replaces the stack instead of
-    // appending to it, so it can't collide.
-    if (location != null && context.mounted) context.go(location);
+    if (location == null || !context.mounted) return;
+    // go(), not push(), for most kinds: they resolve to a page nested under
+    // the bottom-tab shell (e.g. LobbyDetailRoute under /manage/lobby/:id).
+    // Pushing a full nested shell path on top of a root-level screen like
+    // this one collides with the shell's own preserved branch state
+    // (go_router throws a duplicate-GlobalKey assertion) — go() replaces the
+    // stack instead of appending to it, so it can't collide.
+    // Push-only routes (e.g. UserRoute, LobbyInvitePreviewRoute) are the
+    // opposite: they're never part of the shell tree, so go() would discard
+    // the shell instead.
+    if (isPushOnlyNotificationLocation(location)) {
+      context.push(location);
+    } else {
+      context.go(location);
+    }
   }
 
   Future<void> _onDelete(BuildContext context, WidgetRef ref) async {

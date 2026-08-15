@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 0n3bfsWH2IJaj8tYZfzkLiPy4egqMJwmtKXXg7SSwAMUje7Lb9UPx9lbhTTMeLK
+\restrict 7BlJnFxfvqmJomhALlsqgvOrJZQtS9WsUGPR3FV0FT0AX6k8ivcYeZfjp93vUmw
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.9 (Homebrew)
@@ -720,7 +720,10 @@ CREATE TYPE public.notification_kind AS ENUM (
     'course_activity_changed',
     'course_session_report',
     'course_ended',
-    'course_member_removed'
+    'course_member_removed',
+    'activity_at_risk_organizer',
+    'activity_at_risk_member',
+    'activity_cancelled_low_turnout'
 );
 
 
@@ -1811,18 +1814,40 @@ ALTER FUNCTION public.achievement_progress(p_user_id uuid) OWNER TO postgres;
 -- Name: activity_confirmation_status(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.activity_confirmation_status(p_activity_id uuid) RETURNS TABLE(confirmed_count integer, maybe_count integer, threshold integer, my_attendance text, activity_confirmed boolean)
+CREATE FUNCTION public.activity_confirmation_status(p_activity_id uuid) RETURNS TABLE(confirmed_count integer, maybe_count integer, threshold integer, my_attendance text, activity_confirmed boolean, deadline_locked boolean)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_threshold int; v_going int; v_maybe int; v_mine text;
+DECLARE
+    v_threshold int;
+    v_going     int;
+    v_maybe     int;
+    v_mine      text;
+    v_locked    boolean;
 BEGIN
-    SELECT a.confirmation_threshold INTO v_threshold FROM public.activity a WHERE a.id = p_activity_id;
-    SELECT COUNT(*) FILTER (WHERE attendance = 'going')::int, COUNT(*) FILTER (WHERE attendance = 'maybe')::int
-        INTO v_going, v_maybe FROM public.activity_confirmation WHERE activity_id = p_activity_id;
-    SELECT attendance::text INTO v_mine FROM public.activity_confirmation WHERE activity_id = p_activity_id AND user_id = auth.uid();
-    RETURN QUERY SELECT COALESCE(v_going,0), COALESCE(v_maybe,0), v_threshold, v_mine, (v_threshold IS NULL OR COALESCE(v_going,0) >= v_threshold);
-END; $$;
+    SELECT a.confirmation_threshold, (a.at_risk_notified_at IS NOT NULL)
+        INTO v_threshold, v_locked
+        FROM public.activity a WHERE a.id = p_activity_id;
+
+    SELECT COUNT(*) FILTER (WHERE attendance = 'going')::int,
+           COUNT(*) FILTER (WHERE attendance = 'maybe')::int
+        INTO v_going, v_maybe
+        FROM public.activity_confirmation
+        WHERE activity_id = p_activity_id;
+
+    SELECT attendance::text INTO v_mine
+        FROM public.activity_confirmation
+        WHERE activity_id = p_activity_id AND user_id = auth.uid();
+
+    RETURN QUERY SELECT
+        COALESCE(v_going, 0),
+        COALESCE(v_maybe, 0),
+        v_threshold,
+        v_mine,
+        public.activity_is_confirmed(p_activity_id),
+        COALESCE(v_locked, false);
+END;
+$$;
 
 
 ALTER FUNCTION public.activity_confirmation_status(p_activity_id uuid) OWNER TO postgres;
@@ -1868,14 +1893,25 @@ CREATE FUNCTION public.activity_is_confirmed(p_activity_id uuid) RETURNS boolean
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_threshold int; v_count int;
+DECLARE
+    v_threshold int;
+    v_override  timestamptz;
+    v_count     int;
 BEGIN
-    SELECT a.confirmation_threshold INTO v_threshold FROM public.activity a WHERE a.id = p_activity_id;
+    SELECT a.confirmation_threshold, a.threshold_override_at
+        INTO v_threshold, v_override
+        FROM public.activity a WHERE a.id = p_activity_id;
     IF NOT FOUND THEN RETURN false; END IF;
+    IF v_override IS NOT NULL THEN RETURN true; END IF;
     IF v_threshold IS NULL THEN RETURN true; END IF;
-    SELECT COUNT(*) INTO v_count FROM public.activity_confirmation WHERE activity_id = p_activity_id AND attendance = 'going';
+
+    SELECT COUNT(*) INTO v_count
+        FROM public.activity_confirmation
+        WHERE activity_id = p_activity_id AND attendance = 'going';
+
     RETURN v_count >= v_threshold;
-END; $$;
+END;
+$$;
 
 
 ALTER FUNCTION public.activity_is_confirmed(p_activity_id uuid) OWNER TO postgres;
@@ -2587,7 +2623,7 @@ ALTER FUNCTION public.course_activity_conflicts(p_professional_id uuid, p_start 
 -- Name: course_detail_data(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.course_detail_data(p_course_id uuid) RETURNS TABLE(course_id uuid, conversation_id uuid, name text, description text, status text, sport_id bigint, professional_id uuid, coach_name text, coach_user_id uuid, is_coach boolean, target_session_count integer, held_session_count integer, members jsonb, sessions jsonb, reports jsonb, my_review_rating smallint)
+CREATE FUNCTION public.course_detail_data(p_course_id uuid) RETURNS TABLE(course_id uuid, conversation_id uuid, name text, description text, status text, sport_id bigint, professional_id uuid, coach_name text, coach_user_id uuid, is_coach boolean, my_member_status text, target_session_count integer, held_session_count integer, members jsonb, sessions jsonb, reports jsonb, my_review_rating smallint)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -2601,6 +2637,8 @@ BEGIN
   RETURN QUERY
   SELECT c.id, conv.id, c.name, c.description, c.status::text, c.sport_id,
          c.professional_id, p.display_name, p.linked_user_id, v_is_coach,
+         (SELECT m.status::text FROM public.course_member m
+          WHERE m.course_id = c.id AND m.user_id = v_uid AND m.left_at IS NULL),
          c.target_session_count, public.fn_course_held_sessions(c.id),
          coalesce((
            SELECT jsonb_agg(jsonb_build_object(
@@ -2613,8 +2651,20 @@ BEGIN
          coalesce((
            SELECT jsonb_agg(jsonb_build_object(
              'activity_id', a.id, 'start_time', a.start_time, 'end_time', a.end_time,
-             'location_id', a.location_id, 'venue_name', loc.name, 'note', a.note,
-             'proposal_status', a.proposal_status::text,
+             'location_id', a.location_id,
+             'venue_name', loc.name,
+             'street_address', coalesce(
+               nullif(btrim(loc.full_address), ''),
+               nullif(concat_ws(', ', nullif(btrim(loc.street_number), ''),
+                 nullif(btrim(loc.street_name), ''), nullif(btrim(loc.district), ''),
+                 nullif(btrim(loc.city), '')), '')
+             ),
+             'location_street_number', loc.street_number,
+             'location_street_name', loc.street_name,
+             'location_district', loc.district,
+             'location_city', loc.city,
+             'location_lat', loc.lat, 'location_lon', loc.lon,
+             'note', a.note, 'proposal_status', a.proposal_status::text,
              'proposed_by', a.proposed_by,
              'my_attendance', (SELECT ac.attendance::text FROM public.activity_confirmation ac
                                WHERE ac.activity_id = a.id AND ac.user_id = v_uid),
@@ -2730,14 +2780,14 @@ $$;
 ALTER FUNCTION public.create_ancillary_payment_request(p_activity_id uuid, p_total_amount numeric, p_note text, p_tagged_users uuid[]) OWNER TO postgres;
 
 --
--- Name: create_freeplay_activity(bigint, timestamp with time zone, timestamp with time zone, integer, numeric, numeric, text[], text, uuid, text, text, bigint, text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: create_freeplay_activity(bigint, timestamp with time zone, timestamp with time zone, integer, numeric, numeric, text[], text, uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text DEFAULT ''::text, p_location_id uuid DEFAULT NULL::uuid, p_venue_name text DEFAULT NULL::text, p_street_address text DEFAULT NULL::text, p_city_cluster bigint DEFAULT NULL::bigint, p_ward text DEFAULT NULL::text) RETURNS uuid
+CREATE FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text DEFAULT ''::text, p_location_id uuid DEFAULT NULL::uuid) RETURNS uuid
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid := auth.uid(); v_host uuid; v_activity uuid; v_loc_city bigint; v_loc_ward text;
+DECLARE v_uid uuid := auth.uid(); v_host uuid; v_activity uuid;
 BEGIN
   IF v_uid IS NULL THEN RAISE EXCEPTION 'authentication required'; END IF;
   SELECT id INTO v_host FROM public.freeplay_host WHERE user_id=v_uid AND status='active';
@@ -2745,59 +2795,36 @@ BEGIN
   IF p_sport_id NOT BETWEEN 1 AND 5 OR p_end_time <= p_start_time OR p_end_time <= now() THEN
     RAISE EXCEPTION 'invalid activity terms';
   END IF;
-  IF p_location_id IS NOT NULL THEN
-    SELECT city_cluster, district INTO v_loc_city, v_loc_ward FROM public.location WHERE id=p_location_id;
-    IF NOT FOUND THEN RAISE EXCEPTION 'location not found'; END IF;
-  ELSIF nullif(btrim(p_venue_name),'') IS NULL OR nullif(btrim(p_street_address),'') IS NULL
-     OR p_city_cluster IS NULL OR nullif(btrim(p_ward),'') IS NULL THEN
-    RAISE EXCEPTION 'free venue requires name, address, city and ward';
+  IF p_location_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.location WHERE id = p_location_id) THEN
+    RAISE EXCEPTION 'location not found';
   END IF;
   INSERT INTO public.activity(user_id,sport_id,start_time,end_time,location_id,freeplay_host_id)
   VALUES(v_uid,p_sport_id,p_start_time,p_end_time,p_location_id,v_host) RETURNING id INTO v_activity;
-  INSERT INTO public.freeplay_activity(activity_id,description,capacity,male_price,female_price,
-    recommended_skills,venue_name,street_address,city_cluster,ward)
-  VALUES(v_activity,coalesce(p_description,''),p_capacity,p_male_price,p_female_price,
-    p_recommended_skills,CASE WHEN p_location_id IS NULL THEN btrim(p_venue_name) END,
-    CASE WHEN p_location_id IS NULL THEN btrim(p_street_address) END,
-    coalesce(p_city_cluster,v_loc_city),CASE WHEN p_location_id IS NULL THEN p_ward ELSE v_loc_ward END);
+  INSERT INTO public.freeplay_activity(activity_id,description,capacity,male_price,female_price,recommended_skills)
+  VALUES(v_activity,coalesce(p_description,''),p_capacity,p_male_price,p_female_price,p_recommended_skills);
   RETURN v_activity;
 END
 $$;
 
 
-ALTER FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid, p_venue_name text, p_street_address text, p_city_cluster bigint, p_ward text) OWNER TO postgres;
+ALTER FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid) OWNER TO postgres;
 
 --
--- Name: create_lobby_with_location(text, integer, text, jsonb, jsonb, uuid, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: create_lobby_with_location(text, integer, text, jsonb, jsonb, uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text DEFAULT 'discoverable'::text, p_playtime jsonb DEFAULT NULL::jsonb, p_details jsonb DEFAULT NULL::jsonb, p_home_ground_id uuid DEFAULT NULL::uuid, p_location_name text DEFAULT NULL::text, p_street_number text DEFAULT NULL::text, p_street_name text DEFAULT NULL::text, p_district text DEFAULT NULL::text, p_city text DEFAULT NULL::text) RETURNS jsonb
+CREATE FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text DEFAULT 'discoverable'::text, p_playtime jsonb DEFAULT NULL::jsonb, p_details jsonb DEFAULT NULL::jsonb, p_home_ground_id uuid DEFAULT NULL::uuid) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public', 'extensions'
     AS $$
 DECLARE
     v_user_id  uuid;
-    v_loc_id   uuid;
     v_lobby_id uuid;
     v_result   jsonb;
 BEGIN
     v_user_id := auth.uid();
     IF v_user_id IS NULL THEN
         RAISE EXCEPTION 'Not authenticated';
-    END IF;
-
-    IF p_home_ground_id IS NOT NULL THEN
-        v_loc_id := p_home_ground_id;
-    ELSIF p_location_name IS NOT NULL OR p_street_name IS NOT NULL OR p_city IS NOT NULL THEN
-        INSERT INTO public.location (name, street_number, street_name, district, city)
-        VALUES (
-            NULLIF(TRIM(COALESCE(p_location_name, '')), ''),
-            NULLIF(p_street_number, '')::integer,
-            NULLIF(p_street_name,   ''),
-            NULLIF(p_district,      ''),
-            NULLIF(p_city,          '')
-        )
-        RETURNING id INTO v_loc_id;
     END IF;
 
     INSERT INTO public.lobby (name, sport_id, visibility, playtime, details, home_ground, captain_id)
@@ -2807,7 +2834,7 @@ BEGIN
         p_visibility::public.lobby_visibility,
         p_playtime,
         p_details,
-        v_loc_id,
+        p_home_ground_id,
         v_user_id
     )
     RETURNING id INTO v_lobby_id;
@@ -2825,7 +2852,56 @@ END;
 $$;
 
 
-ALTER FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text) OWNER TO postgres;
+ALTER FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid) OWNER TO postgres;
+
+--
+-- Name: create_location(text, text, text, text, text, bigint); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.create_location(p_name text, p_street_number text DEFAULT NULL::text, p_street_name text DEFAULT NULL::text, p_district text DEFAULT NULL::text, p_city text DEFAULT NULL::text, p_city_cluster bigint DEFAULT NULL::bigint) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'extensions'
+    AS $$
+DECLARE
+    v_user_id uuid;
+    v_loc_id  uuid;
+    v_result  jsonb;
+BEGIN
+    v_user_id := auth.uid();
+    IF v_user_id IS NULL THEN
+        RAISE EXCEPTION 'create_location: authentication required';
+    END IF;
+    IF NULLIF(TRIM(COALESCE(p_name, '')), '') IS NULL THEN
+        RAISE EXCEPTION 'create_location: name is required';
+    END IF;
+
+    INSERT INTO public.location (
+        name, street_number, street_name, district, city, city_cluster,
+        source, submitted_by, is_verified
+    )
+    VALUES (
+        TRIM(p_name),
+        NULLIF(p_street_number, ''),
+        NULLIF(p_street_name, ''),
+        NULLIF(p_district, ''),
+        NULLIF(p_city, ''),
+        p_city_cluster,
+        'user_submitted',
+        v_user_id,
+        false
+    )
+    RETURNING id INTO v_loc_id;
+
+    SELECT row_to_json(l)::jsonb INTO v_result
+        FROM public.location l
+        WHERE l.id = v_loc_id;
+
+    RETURN v_result;
+END;
+$$;
+
+
+ALTER FUNCTION public.create_location(p_name text, p_street_number text, p_street_name text, p_district text, p_city text, p_city_cluster bigint) OWNER TO postgres;
 
 --
 -- Name: create_message_poll(uuid, text, text[]); Type: FUNCTION; Schema: public; Owner: postgres
@@ -2964,35 +3040,62 @@ $$;
 ALTER FUNCTION public.delete_wall_post(p_post_id uuid) OWNER TO postgres;
 
 --
--- Name: edit_freeplay_listing(uuid, integer, text, text[]); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: edit_freeplay_listing(uuid, integer, text, text[], uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[]) RETURNS void
+CREATE FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid DEFAULT NULL::uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid := auth.uid(); v_current integer; v_accepted integer;
+DECLARE
+  v_uid uuid := auth.uid();
+  v_current_capacity integer;
+  v_current_location uuid;
+  v_accepted integer;
+  v_has_requests boolean;
 BEGIN
-  SELECT fa.capacity INTO v_current
+  SELECT fa.capacity,a.location_id INTO v_current_capacity,v_current_location
   FROM public.freeplay_activity fa
   JOIN public.activity a ON a.id=fa.activity_id
   JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
   WHERE a.id=p_activity_id AND h.user_id=v_uid AND fa.cancelled_at IS NULL
-  FOR UPDATE OF fa;
+  FOR UPDATE OF fa,a;
   IF NOT FOUND THEN RAISE EXCEPTION 'activity not found or not owned'; END IF;
-  SELECT count(*) INTO v_accepted FROM public.freeplay_request
+
+  SELECT count(*)::integer INTO v_accepted
+  FROM public.freeplay_request
   WHERE activity_id=p_activity_id AND status='accepted';
-  IF p_capacity<v_current OR p_capacity<v_accepted THEN
+  v_has_requests := EXISTS(
+    SELECT 1 FROM public.freeplay_request
+    WHERE activity_id=p_activity_id AND status IN ('pending','accepted'));
+
+  IF p_capacity<v_current_capacity OR p_capacity<v_accepted THEN
     RAISE EXCEPTION 'capacity can only increase';
   END IF;
-  UPDATE public.freeplay_activity SET capacity=p_capacity,
-    description=coalesce(p_description,''),recommended_skills=p_recommended_skills,
-    updated_at=now() WHERE activity_id=p_activity_id;
+  IF p_location_id IS NOT NULL
+     AND NOT EXISTS(SELECT 1 FROM public.location WHERE id=p_location_id) THEN
+    RAISE EXCEPTION 'location not found';
+  END IF;
+  IF v_has_requests
+     AND p_location_id IS DISTINCT FROM v_current_location
+     AND p_location_id IS NOT NULL THEN
+    RAISE EXCEPTION 'location cannot change after requests';
+  END IF;
+
+  IF p_location_id IS NOT NULL THEN
+    UPDATE public.activity SET location_id=p_location_id WHERE id=p_activity_id;
+  END IF;
+  UPDATE public.freeplay_activity
+  SET capacity=p_capacity,
+      description=coalesce(p_description,''),
+      recommended_skills=p_recommended_skills,
+      updated_at=now()
+  WHERE activity_id=p_activity_id;
 END
 $$;
 
 
-ALTER FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[]) OWNER TO postgres;
+ALTER FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid) OWNER TO postgres;
 
 --
 -- Name: end_course(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -3012,6 +3115,7 @@ BEGIN
   WHERE id = p_course_id AND status = 'active';
   IF NOT FOUND THEN RAISE EXCEPTION 'active course not found'; END IF;
 
+  -- Upcoming approved sessions can't survive the course.
   DELETE FROM public.activity
   WHERE course_id = p_course_id AND start_time > now();
 
@@ -3024,6 +3128,12 @@ BEGIN
       'Khoá học đã kết thúc', 'Bạn có thể đánh giá huấn luyện viên.',
       jsonb_build_object('course_id', p_course_id));
   END IF;
+
+  -- Free the one-coach-per-sport / one-live-thread partial unique indexes —
+  -- an ended course's membership is no longer "live". Mirrors leave_course's
+  -- own transition, just applied to the whole roster at once.
+  UPDATE public.course_member SET status = 'left', left_at = now()
+  WHERE course_id = p_course_id AND status IN ('inquiring','enrolled');
 END
 $$;
 
@@ -3851,6 +3961,40 @@ $$;
 ALTER FUNCTION public.fn_course_member_denormalise() OWNER TO postgres;
 
 --
+-- Name: fn_course_prompt_if_no_students(uuid, boolean); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_course_prompt_if_no_students(p_course_id uuid, p_was_enrolled boolean) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_coach uuid;
+BEGIN
+  IF NOT p_was_enrolled THEN RETURN; END IF;
+  IF EXISTS (
+    SELECT 1 FROM public.course_member m
+    WHERE m.course_id = p_course_id AND m.status = 'enrolled' AND m.left_at IS NULL
+  ) THEN RETURN; END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.course WHERE id = p_course_id AND status = 'active') THEN
+    RETURN;
+  END IF;
+
+  PERFORM public.fn_course_system_message(p_course_id, 'no_students_left');
+
+  SELECT p.linked_user_id INTO v_coach FROM public.professional p
+  JOIN public.course c ON c.professional_id = p.id WHERE c.id = p_course_id;
+  IF v_coach IS NOT NULL THEN
+    PERFORM public.fn_enqueue_notification('course_ended', ARRAY[v_coach],
+      'Khoá học không còn học viên', 'Bạn có thể mời học viên mới hoặc kết thúc khoá học.',
+      jsonb_build_object('course_id', p_course_id));
+  END IF;
+END
+$$;
+
+
+ALTER FUNCTION public.fn_course_prompt_if_no_students(p_course_id uuid, p_was_enrolled boolean) OWNER TO postgres;
+
+--
 -- Name: fn_course_review_rollup(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -3910,14 +4054,15 @@ CREATE FUNCTION public.fn_cron_tick() RETURNS void
     AS $$
 BEGIN
   PERFORM public.fn_sweep_challenges();
+  PERFORM public.fn_sweep_activity_thresholds();
   PERFORM public.fn_sweep_activity_payment_requests();
   PERFORM public.fn_sweep_freeplay();
   PERFORM public.fn_sweep_course_targets();
   PERFORM public.fn_process_reminders();
-  IF EXISTS(SELECT 1 FROM public.notification_outbox WHERE status IN ('pending','sending')) THEN
+  IF EXISTS (SELECT 1 FROM public.notification_outbox WHERE status IN ('pending','sending')) THEN
     PERFORM public.fn_invoke_send_push();
   END IF;
-END
+END;
 $$;
 
 
@@ -4050,7 +4195,7 @@ ALTER FUNCTION public.fn_emit_activity_scheduled() OWNER TO postgres;
 --
 
 CREATE FUNCTION public.fn_emit_lobby_join_request() RETURNS trigger
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 declare
@@ -4103,7 +4248,7 @@ ALTER FUNCTION public.fn_emit_lobby_join_request() OWNER TO postgres;
 --
 
 CREATE FUNCTION public.fn_emit_lobby_join_request_response() RETURNS trigger
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 declare
@@ -4335,6 +4480,23 @@ $$;
 ALTER FUNCTION public.fn_freeplay_block_cleanup() OWNER TO postgres;
 
 --
+-- Name: fn_freeplay_host_zalo(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_freeplay_host_zalo(p_host_id uuid) RETURNS text
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    SELECT uc.zalo
+    FROM public.freeplay_host h
+    JOIN public.user_contact uc ON uc.user_id = h.user_id
+    WHERE h.id = p_host_id AND h.status = 'active';
+$$;
+
+
+ALTER FUNCTION public.fn_freeplay_host_zalo(p_host_id uuid) OWNER TO postgres;
+
+--
 -- Name: fn_guard_referee_booking_review(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -4502,6 +4664,23 @@ $$;
 
 
 ALTER FUNCTION public.fn_is_enrolled_course_member(p_course_id uuid, p_uid uuid) OWNER TO postgres;
+
+--
+-- Name: fn_is_linked_professional(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_is_linked_professional(p_user_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+    select exists (
+        select 1 from public.professional p
+        where p.linked_user_id = p_user_id
+    );
+$$;
+
+
+ALTER FUNCTION public.fn_is_linked_professional(p_user_id uuid) OWNER TO postgres;
 
 --
 -- Name: fn_lobby_playtime_keys(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
@@ -4733,7 +4912,7 @@ begin
 
     if v_booking_id is not null then
         select b.booking_time_start,
-               coalesce(loc.name, b.custom_location_name),
+               loc.name,
                loc.full_address,
                case when b.agreed_rate is null then null
                     else b.agreed_rate::text || 'đ' end
@@ -5355,6 +5534,117 @@ $$;
 ALTER FUNCTION public.fn_sweep_activity_payment_requests() OWNER TO postgres;
 
 --
+-- Name: fn_sweep_activity_thresholds(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_sweep_activity_thresholds() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    r            record;
+    v_lobby_name text;
+    v_recipients uuid[];
+BEGIN
+    -- (a) Deadline passed, still under threshold, not yet notified, and not
+    -- ALSO already past kickoff (that case is handled by pass (b) below —
+    -- no point prompting for an activity that's being auto-cancelled in the
+    -- same tick, e.g. after the cron job missed a beat).
+    FOR r IN
+        SELECT a.id, a.user_id AS organizer_id, a.lobby_id
+          FROM public.activity a
+         WHERE a.lobby_id IS NOT NULL
+           AND a.challenge_id IS NULL
+           AND a.confirmation_threshold IS NOT NULL
+           AND a.confirmation_deadline IS NOT NULL
+           AND a.confirmation_deadline <= now()
+           AND a.start_time > now()
+           AND a.at_risk_notified_at IS NULL
+           AND NOT public.activity_is_confirmed(a.id)
+    LOOP
+        UPDATE public.activity SET at_risk_notified_at = now() WHERE id = r.id;
+
+        SELECT l.name INTO v_lobby_name FROM public.lobby l WHERE l.id = r.lobby_id;
+
+        PERFORM public.fn_enqueue_notification(
+            'activity_at_risk_organizer',
+            ARRAY[r.organizer_id],
+            'Buổi chơi chưa đủ người',
+            COALESCE(v_lobby_name, 'Lobby') || ' chưa đủ xác nhận trước hạn chót — xác nhận hoặc hủy',
+            jsonb_build_object('target_id', r.id::text, 'lobby_id', r.lobby_id::text));
+
+        -- "maybe" holders and never-responded members (no row at all) — NOT
+        -- "out" (already decided), NOT "going" (nothing for them to do), and
+        -- NOT the organizer (they already got their own organizer-tier
+        -- notification above — as a lobby member who never RSVP'd on their
+        -- own activity they'd otherwise also match "never-responded" here).
+        SELECT array_agg(DISTINCT lm.user_id) INTO v_recipients
+            FROM public.lobby_member lm
+            LEFT JOIN public.activity_confirmation ac
+                   ON ac.activity_id = r.id AND ac.user_id = lm.user_id
+            WHERE lm.lobby_id = r.lobby_id
+              AND lm.user_id <> r.organizer_id
+              AND (ac.attendance IS NULL OR ac.attendance = 'maybe');
+
+        IF v_recipients IS NOT NULL THEN
+            PERFORM public.fn_enqueue_notification(
+                'activity_at_risk_member',
+                v_recipients,
+                'Xác nhận tham gia?',
+                COALESCE(v_lobby_name, 'Lobby') || ' cần thêm người xác nhận trước giờ chơi',
+                jsonb_build_object('target_id', r.id::text, 'lobby_id', r.lobby_id::text));
+        END IF;
+    END LOOP;
+
+    -- (b) Kickoff passed, still unconfirmed — covers both an activity with
+    -- no deadline at all, and an at-risk activity nobody resolved in time.
+    -- Hard-delete (no activity/match record persists), but leave a feed
+    -- item + push explaining why.
+    FOR r IN
+        SELECT a.id, a.user_id AS organizer_id, a.lobby_id
+          FROM public.activity a
+         WHERE a.lobby_id IS NOT NULL
+           AND a.challenge_id IS NULL
+           AND a.confirmation_threshold IS NOT NULL
+           AND a.start_time <= now()
+           AND NOT public.activity_is_confirmed(a.id)
+    LOOP
+        SELECT l.name INTO v_lobby_name FROM public.lobby l WHERE l.id = r.lobby_id;
+
+        SELECT array_agg(DISTINCT u) INTO v_recipients
+            FROM unnest(
+                ARRAY[r.organizer_id] || COALESCE((
+                    SELECT array_agg(ac.user_id)
+                    FROM public.activity_confirmation ac
+                    WHERE ac.activity_id = r.id AND ac.attendance = 'going'
+                ), ARRAY[]::uuid[])
+            ) AS u;
+
+        DELETE FROM public.activity WHERE id = r.id;
+
+        INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+        VALUES (r.lobby_id, r.organizer_id, 'update',
+            jsonb_build_object(
+                'title', 'Đã hủy buổi chơi',
+                'kind',  'cancelled',
+                'tone',  'crimson',
+                'fields', jsonb_build_array(
+                    jsonb_build_array('Lý do', 'Không đủ người xác nhận trước giờ chơi'))));
+
+        PERFORM public.fn_enqueue_notification(
+            'activity_cancelled_low_turnout',
+            v_recipients,
+            'Buổi chơi đã bị hủy',
+            COALESCE(v_lobby_name, 'Lobby') || ' đã tự động hủy do không đủ người xác nhận',
+            jsonb_build_object('lobby_id', r.lobby_id::text));
+    END LOOP;
+END;
+$$;
+
+
+ALTER FUNCTION public.fn_sweep_activity_thresholds() OWNER TO postgres;
+
+--
 -- Name: fn_sweep_challenges(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -5818,30 +6108,56 @@ ALTER FUNCTION public.fn_wall_post_tag_guard() OWNER TO postgres;
 -- Name: freeplay_activity_detail_data(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) RETURNS TABLE(activity_id uuid, host_id uuid, host_name text, host_avatar_url text, description text, start_time timestamp with time zone, end_time timestamp with time zone, venue_name text, street_address text, capacity integer, accepted_count bigint, male_price numeric, female_price numeric, recommended_skills text[], my_request_id uuid, my_request_status text, roster jsonb)
+CREATE FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) RETURNS TABLE(activity_id uuid, host_id uuid, host_name text, host_avatar_url text, description text, start_time timestamp with time zone, end_time timestamp with time zone, location_id uuid, venue_name text, street_address text, location_street_number text, location_street_name text, location_district text, location_city text, location_lat double precision, location_lon double precision, capacity integer, accepted_count bigint, male_price numeric, female_price numeric, recommended_skills text[], my_request_id uuid, my_request_status text, roster jsonb)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE v_uid uuid:=auth.uid(); v_allowed boolean;
 BEGIN
-  SELECT EXISTS(SELECT 1 FROM public.activity a JOIN public.freeplay_activity fa ON fa.activity_id=a.id
-    JOIN public.freeplay_host h ON h.id=a.freeplay_host_id WHERE a.id=p_activity_id AND
-    (h.status='active' OR h.user_id=v_uid OR EXISTS(SELECT 1 FROM public.freeplay_request r WHERE r.activity_id=a.id AND r.user_id=v_uid)))
+  SELECT EXISTS(
+    SELECT 1 FROM public.activity a
+    JOIN public.freeplay_activity fa ON fa.activity_id=a.id
+    JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
+    WHERE a.id=p_activity_id AND (
+      h.status='active' OR h.user_id=v_uid OR EXISTS(
+        SELECT 1 FROM public.freeplay_request r
+        WHERE r.activity_id=a.id AND r.user_id=v_uid)))
   INTO v_allowed;
   IF NOT v_allowed THEN RETURN; END IF;
-  RETURN QUERY SELECT a.id,h.id,h.display_name,h.avatar_url,fa.description,a.start_time,a.end_time,
-    coalesce(loc.name,fa.venue_name),coalesce(loc.full_address,fa.street_address),fa.capacity,
-    (SELECT count(*) FROM public.freeplay_request x WHERE x.activity_id=a.id AND x.status='accepted'),
+
+  RETURN QUERY
+  SELECT a.id,h.id,h.display_name,h.avatar_url,fa.description,a.start_time,a.end_time,
+    a.location_id, coalesce(loc.name,fa.venue_name),
+    coalesce(
+      nullif(btrim(loc.full_address), ''),
+      nullif(concat_ws(', ', nullif(btrim(loc.street_number), ''),
+        nullif(btrim(loc.street_name), ''), nullif(btrim(loc.district), ''),
+        nullif(btrim(loc.city), '')), ''),
+      fa.street_address
+    ),
+    loc.street_number,loc.street_name,loc.district,loc.city,loc.lat,loc.lon,
+    fa.capacity,
+    (SELECT count(*) FROM public.freeplay_request x
+     WHERE x.activity_id=a.id AND x.status='accepted'),
     fa.male_price,fa.female_price,fa.recommended_skills,mr.id,mr.status::text,
     CASE WHEN h.user_id=v_uid OR mr.status='accepted' THEN
-      (SELECT coalesce(jsonb_agg(jsonb_build_object('id',u.id,'username',u.username,
-        'generatedAvatar',u.details->>'generatedAvatar','skill',x.skill) ORDER BY u.username),'[]'::jsonb)
+      (SELECT coalesce(jsonb_agg(jsonb_build_object(
+        'id',u.id,'username',u.username,
+        'generatedAvatar',u.details->>'generatedAvatar','skill',x.skill)
+        ORDER BY u.username),'[]'::jsonb)
        FROM public.freeplay_request x JOIN public."user" u ON u.id=x.user_id
-       WHERE x.activity_id=a.id AND x.status='accepted') ELSE '[]'::jsonb END
-  FROM public.activity a JOIN public.freeplay_activity fa ON fa.activity_id=a.id
-  JOIN public.freeplay_host h ON h.id=a.freeplay_host_id LEFT JOIN public.location loc ON loc.id=a.location_id
-  LEFT JOIN LATERAL(SELECT r.id,r.status FROM public.freeplay_request r WHERE r.activity_id=a.id AND r.user_id=v_uid
-    ORDER BY r.created_at DESC LIMIT 1) mr ON true WHERE a.id=p_activity_id;
+       WHERE x.activity_id=a.id AND x.status='accepted')
+    ELSE '[]'::jsonb END
+  FROM public.activity a
+  JOIN public.freeplay_activity fa ON fa.activity_id=a.id
+  JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
+  LEFT JOIN public.location loc ON loc.id=a.location_id
+  LEFT JOIN LATERAL(
+    SELECT r.id,r.status FROM public.freeplay_request r
+    WHERE r.activity_id=a.id AND r.user_id=v_uid
+    ORDER BY r.created_at DESC LIMIT 1
+  ) mr ON true
+  WHERE a.id=p_activity_id;
 END
 $$;
 
@@ -5937,22 +6253,33 @@ ALTER FUNCTION public.freeplay_host_data(p_history boolean) OWNER TO postgres;
 -- Name: freeplay_host_management_data(boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.freeplay_host_management_data(p_history boolean DEFAULT false) RETURNS TABLE(activity_id uuid, host_id uuid, host_name text, host_avatar_url text, description text, start_time timestamp with time zone, end_time timestamp with time zone, venue_name text, street_address text, capacity integer, accepted_count bigint, pending_count bigint, male_price numeric, female_price numeric, recommended_skills text[], intake_closed boolean, cancelled boolean)
+CREATE FUNCTION public.freeplay_host_management_data(p_history boolean DEFAULT false) RETURNS TABLE(activity_id uuid, host_id uuid, host_name text, host_avatar_url text, description text, start_time timestamp with time zone, end_time timestamp with time zone, location_id uuid, venue_name text, street_address text, location_street_number text, location_street_name text, location_district text, location_city text, location_lat double precision, location_lon double precision, capacity integer, accepted_count bigint, pending_count bigint, male_price numeric, female_price numeric, recommended_skills text[], intake_closed boolean, cancelled boolean)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
   SELECT a.id,h.id,h.display_name,h.avatar_url,fa.description,a.start_time,a.end_time,
-    coalesce(loc.name,fa.venue_name),coalesce(loc.full_address,fa.street_address),fa.capacity,
-    count(r.id) FILTER(WHERE r.status='accepted'),count(r.id) FILTER(WHERE r.status='pending'),
+    a.location_id,coalesce(loc.name,fa.venue_name),
+    coalesce(
+      nullif(btrim(loc.full_address), ''),
+      nullif(concat_ws(', ', nullif(btrim(loc.street_number), ''),
+        nullif(btrim(loc.street_name), ''), nullif(btrim(loc.district), ''),
+        nullif(btrim(loc.city), '')), ''),
+      fa.street_address
+    ),
+    loc.street_number,loc.street_name,loc.district,loc.city,loc.lat,loc.lon,
+    fa.capacity,
+    count(r.id) FILTER(WHERE r.status='accepted'),
+    count(r.id) FILTER(WHERE r.status='pending'),
     fa.male_price,fa.female_price,fa.recommended_skills,
     fa.intake_closed_at IS NOT NULL,fa.cancelled_at IS NOT NULL
-  FROM public.activity a JOIN public.freeplay_activity fa ON fa.activity_id=a.id
+  FROM public.activity a
+  JOIN public.freeplay_activity fa ON fa.activity_id=a.id
   JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
   LEFT JOIN public.location loc ON loc.id=a.location_id
   LEFT JOIN public.freeplay_request r ON r.activity_id=a.id
   WHERE h.user_id=auth.uid()
     AND (p_history=(a.end_time<=now() OR fa.cancelled_at IS NOT NULL))
-  GROUP BY a.id,fa.activity_id,h.id,loc.name,loc.full_address
+  GROUP BY a.id,fa.activity_id,h.id,loc.id
   ORDER BY CASE WHEN p_history THEN NULL ELSE a.start_time END,
     CASE WHEN p_history THEN a.end_time END DESC
 $$;
@@ -6015,7 +6342,7 @@ CREATE FUNCTION public.freeplay_my_data(p_history boolean DEFAULT false) RETURNS
   SELECT r.id,r.status::text,a.id,h.id,h.display_name,fa.description,a.start_time,a.end_time,
     coalesce(loc.name,fa.venue_name),coalesce(loc.full_address,fa.street_address),fa.capacity,
     (SELECT count(*) FROM public.freeplay_request x WHERE x.activity_id=a.id AND x.status='accepted'),
-    r.price_amount,fa.recommended_skills,coalesce(public.freeplay_chat_can_write(r.id,auth.uid()),false)
+    r.price_amount,fa.recommended_skills,false
   FROM public.freeplay_request r JOIN public.activity a ON a.id=r.activity_id
   JOIN public.freeplay_activity fa ON fa.activity_id=a.id JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
   LEFT JOIN public.location loc ON loc.id=a.location_id
@@ -6656,7 +6983,7 @@ ALTER FUNCTION public.home_freeplay_data(p_sport_id bigint, p_timeslots jsonb, p
 -- Name: home_professional_data(bigint, jsonb, integer, text[], text, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.home_professional_data(p_sport_id bigint, p_timeslots jsonb DEFAULT '{}'::jsonb, p_city integer DEFAULT NULL::integer, p_districts text[] DEFAULT NULL::text[], p_search text DEFAULT NULL::text, p_page_size integer DEFAULT 20, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, display_name text, professional_role public.professional_role, bio text, sports bigint[], experience_years integer, average_rating numeric, review_count integer, is_verified boolean, price_from numeric, price_from_kind text, timeslot_compat_score integer)
+CREATE FUNCTION public.home_professional_data(p_sport_id bigint, p_timeslots jsonb DEFAULT '{}'::jsonb, p_city integer DEFAULT NULL::integer, p_districts text[] DEFAULT NULL::text[], p_search text DEFAULT NULL::text, p_page_size integer DEFAULT 20, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, display_name text, professional_role public.professional_role, bio text, sports bigint[], experience_years integer, average_rating numeric, review_count integer, is_verified boolean, price_from numeric, price_from_kind text, timeslot_compat_score integer, linked_user_id uuid, generated_avatar text)
     LANGUAGE plpgsql STABLE
     SET search_path TO ''
     AS $$
@@ -6667,7 +6994,8 @@ BEGIN
                    p.sports, p.experience_years, p.average_rating,
                    p.review_count, p.is_verified,
                    price.price_amount, price.pricing_kind,
-                   COALESCE(ts.ts_score, 0)
+                   COALESCE(ts.ts_score, 0),
+                   p.linked_user_id, cu.details->>'generatedAvatar'
             FROM public.professional p
             CROSS JOIN LATERAL (
                 SELECT public.calculate_timeslot_compat_score(
@@ -6684,7 +7012,9 @@ BEGIN
                 ORDER BY ps.price_amount NULLS LAST, ps.created_at, ps.id
                 LIMIT 1
             ) price ON true
+            LEFT JOIN public."user" cu ON cu.id = p.linked_user_id
             WHERE p.sports @> ARRAY[p_sport_id]::bigint[]
+              AND p.linked_user_id IS DISTINCT FROM auth.uid()
               AND (
                   p.display_name ILIKE '%' || p_search || '%'
                   OR extensions.unaccent(p.display_name)
@@ -6701,7 +7031,8 @@ BEGIN
                p.sports, p.experience_years, p.average_rating,
                p.review_count, p.is_verified,
                price.price_amount, price.pricing_kind,
-               COALESCE(ts.ts_score, 0)
+               COALESCE(ts.ts_score, 0),
+               p.linked_user_id, cu.details->>'generatedAvatar'
         FROM public.professional p
         CROSS JOIN LATERAL (
             SELECT public.calculate_timeslot_compat_score(
@@ -6718,7 +7049,9 @@ BEGIN
             ORDER BY ps.price_amount NULLS LAST, ps.created_at, ps.id
             LIMIT 1
         ) price ON true
+        LEFT JOIN public."user" cu ON cu.id = p.linked_user_id
         WHERE p.sports @> ARRAY[p_sport_id]::bigint[]
+          AND p.linked_user_id IS DISTINCT FROM auth.uid()
           AND (
               p_city IS NULL
               OR p.preferred_city_cluster IS NULL
@@ -6968,8 +7301,11 @@ CREATE FUNCTION public.leave_course(p_course_id uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid := auth.uid(); v_username text;
+DECLARE v_uid uuid := auth.uid(); v_username text; v_was_enrolled boolean;
 BEGIN
+  SELECT (m.status = 'enrolled') INTO v_was_enrolled FROM public.course_member m
+  WHERE m.course_id = p_course_id AND m.user_id = v_uid AND m.left_at IS NULL;
+
   UPDATE public.course_member SET status = 'left', left_at = now()
   WHERE course_id = p_course_id AND user_id = v_uid AND left_at IS NULL;
   IF NOT FOUND THEN RAISE EXCEPTION 'membership not found'; END IF;
@@ -6981,6 +7317,8 @@ BEGIN
   SELECT u.username::text INTO v_username FROM public."user" u WHERE u.id = v_uid;
   PERFORM public.fn_course_system_message(p_course_id, 'member_left',
     jsonb_build_object('username', v_username));
+
+  PERFORM public.fn_course_prompt_if_no_students(p_course_id, coalesce(v_was_enrolled, false));
 END
 $$;
 
@@ -7598,12 +7936,13 @@ ALTER FUNCTION public.message_coach(p_professional_id uuid, p_sport_id bigint, p
 -- Name: my_courses_data(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.my_courses_data() RETURNS TABLE(course_id uuid, conversation_id uuid, name text, status text, member_status text, professional_id uuid, coach_name text, coach_avatar text, sport_id bigint, target_session_count integer, held_session_count integer, next_activity_id uuid, next_start_time timestamp with time zone, last_message_at timestamp with time zone, last_message_body text, last_message_kind text, last_message_payload jsonb, unread_count integer, pending_offer_id uuid, pending_rsvp_count integer)
+CREATE FUNCTION public.my_courses_data() RETURNS TABLE(course_id uuid, conversation_id uuid, name text, status text, member_status text, professional_id uuid, coach_name text, coach_avatar text, coach_user_id uuid, sport_id bigint, target_session_count integer, held_session_count integer, next_activity_id uuid, next_start_time timestamp with time zone, last_message_at timestamp with time zone, last_message_body text, last_message_kind text, last_message_payload jsonb, unread_count integer, pending_offer_id uuid, pending_rsvp_count integer)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
   SELECT c.id, conv.id, c.name, c.status::text, m.status::text,
          c.professional_id, p.display_name, cu.details->>'generatedAvatar',
+         p.linked_user_id,
          c.sport_id, c.target_session_count, public.fn_course_held_sessions(c.id),
          nxt.id, nxt.start_time,
          last_msg.created_at, last_msg.body, last_msg.kind::text, last_msg.payload,
@@ -7851,7 +8190,7 @@ ALTER FUNCTION public.postable_activities() OWNER TO postgres;
 -- Name: pro_courses_data(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.pro_courses_data() RETURNS TABLE(course_id uuid, conversation_id uuid, name text, status text, sport_id bigint, student_count integer, inquiring_count integer, target_session_count integer, held_session_count integer, next_activity_id uuid, next_start_time timestamp with time zone, last_message_at timestamp with time zone, last_message_body text, last_message_kind text, last_message_payload jsonb, unread_count integer, pending_proposal_count integer, pending_report_count integer)
+CREATE FUNCTION public.pro_courses_data() RETURNS TABLE(course_id uuid, conversation_id uuid, name text, status text, sport_id bigint, student_count integer, inquiring_count integer, target_session_count integer, held_session_count integer, next_activity_id uuid, next_start_time timestamp with time zone, last_message_at timestamp with time zone, last_message_body text, last_message_kind text, last_message_payload jsonb, unread_count integer, pending_proposal_count integer, pending_report_count integer, student_name text, student_user_id uuid, student_avatar text)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -7876,7 +8215,8 @@ CREATE FUNCTION public.pro_courses_data() RETURNS TABLE(course_id uuid, conversa
             AND coalesce(a.end_time, a.start_time) < now()
             AND ac.attendance = 'going'
             AND NOT EXISTS (SELECT 1 FROM public.course_session_report r
-                            WHERE r.activity_id = a.id AND r.student_id = ac.user_id))
+                            WHERE r.activity_id = a.id AND r.student_id = ac.user_id)),
+         student.username, student.user_id, student.avatar
   FROM public.course c
   JOIN public.professional p ON p.id = c.professional_id
   LEFT JOIN public.conversation conv ON conv.course_id = c.id
@@ -7891,6 +8231,15 @@ CREATE FUNCTION public.pro_courses_data() RETURNS TABLE(course_id uuid, conversa
     SELECT x.created_at, x.body, x.kind, x.payload FROM public.message x
     WHERE x.conversation_id = conv.id ORDER BY x.created_at DESC LIMIT 1
   ) last_msg ON true
+  LEFT JOIN LATERAL (
+    SELECT cu.id AS user_id, cu.username::text AS username,
+           cu.details->>'generatedAvatar' AS avatar
+    FROM public.course_member m
+    JOIN public."user" cu ON cu.id = m.user_id
+    WHERE m.course_id = c.id AND m.left_at IS NULL
+    ORDER BY m.joined_at ASC
+    LIMIT 1
+  ) student ON true
   WHERE p.linked_user_id = auth.uid()
   ORDER BY coalesce(last_msg.created_at, c.created_at) DESC;
 $$;
@@ -8294,11 +8643,14 @@ CREATE FUNCTION public.remove_course_member(p_course_id uuid, p_user_id uuid) RE
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid := auth.uid(); v_username text;
+DECLARE v_uid uuid := auth.uid(); v_username text; v_was_enrolled boolean;
 BEGIN
   IF NOT public.fn_is_course_coach(p_course_id, v_uid) THEN
     RAISE EXCEPTION 'coach access required';
   END IF;
+
+  SELECT (m.status = 'enrolled') INTO v_was_enrolled FROM public.course_member m
+  WHERE m.course_id = p_course_id AND m.user_id = p_user_id AND m.left_at IS NULL;
 
   UPDATE public.course_member SET status = 'removed', left_at = now()
   WHERE course_id = p_course_id AND user_id = p_user_id AND left_at IS NULL;
@@ -8314,6 +8666,8 @@ BEGIN
   PERFORM public.fn_enqueue_notification('course_member_removed', ARRAY[p_user_id],
     'Bạn đã rời khoá học', 'Huấn luyện viên đã kết thúc khoá học với bạn.',
     jsonb_build_object('course_id', p_course_id));
+
+  PERFORM public.fn_course_prompt_if_no_students(p_course_id, coalesce(v_was_enrolled, false));
 END
 $$;
 
@@ -8373,10 +8727,10 @@ $$;
 ALTER FUNCTION public.request_freeplay_seat(p_activity_id uuid, p_message text) OWNER TO postgres;
 
 --
--- Name: request_referee_booking(uuid, uuid, timestamp with time zone, timestamp with time zone, text, uuid, uuid[], uuid, boolean, uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: request_referee_booking(uuid, uuid, timestamp with time zone, timestamp with time zone, text, uuid, uuid[], uuid, boolean, uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text DEFAULT NULL::text, p_location_id uuid DEFAULT NULL::uuid, p_participant_user_ids uuid[] DEFAULT '{}'::uuid[], p_existing_package_id uuid DEFAULT NULL::uuid, p_create_package boolean DEFAULT false, p_activity_id uuid DEFAULT NULL::uuid, p_custom_location_name text DEFAULT NULL::text) RETURNS uuid
+CREATE FUNCTION public.request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text DEFAULT NULL::text, p_location_id uuid DEFAULT NULL::uuid, p_participant_user_ids uuid[] DEFAULT '{}'::uuid[], p_existing_package_id uuid DEFAULT NULL::uuid, p_create_package boolean DEFAULT false, p_activity_id uuid DEFAULT NULL::uuid) RETURNS uuid
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -8396,7 +8750,6 @@ DECLARE
     v_agreed_rate numeric(10, 2);
     v_package_total numeric(10, 2);
     v_package_id uuid := p_existing_package_id;
-    v_custom_location_name text := NULLIF(btrim(p_custom_location_name), '');
     v_package record;
     v_booking_id uuid;
     v_activity record;
@@ -8409,10 +8762,6 @@ BEGIN
     END IF;
     IF p_start <= now() THEN
         RAISE EXCEPTION 'request_referee_booking: start must be in the future';
-    END IF;
-    IF v_custom_location_name IS NOT NULL
-       AND char_length(v_custom_location_name) > 200 THEN
-        RAISE EXCEPTION 'request_referee_booking: custom location is too long';
     END IF;
 
     SELECT p.professional_role, p.linked_user_id, p.sports,
@@ -8441,9 +8790,6 @@ BEGIN
     IF v_min_duration IS NOT NULL
        AND p_end - p_start < make_interval(mins => v_min_duration) THEN
         RAISE EXCEPTION 'request_referee_booking: duration is below service minimum';
-    END IF;
-    IF p_location_id IS NOT NULL AND v_custom_location_name IS NOT NULL THEN
-        RAISE EXCEPTION 'request_referee_booking: choose a saved or custom location, not both';
     END IF;
     IF p_location_id IS NOT NULL AND NOT EXISTS (
         SELECT 1 FROM public.location location WHERE location.id = p_location_id
@@ -8495,11 +8841,11 @@ BEGIN
 
     INSERT INTO public.referee_booking (
         client_user_id, professional_id, service_id, location_id,
-        custom_location_name, booking_time_start, booking_time_end,
+        booking_time_start, booking_time_end,
         agreed_rate, status, client_notes
     ) VALUES (
         v_uid, p_professional_id, p_service_id, p_location_id,
-        v_custom_location_name, p_start, p_end,
+        p_start, p_end,
         v_agreed_rate, 'requested', NULLIF(btrim(p_notes), '')
     )
     RETURNING id INTO v_booking_id;
@@ -8541,7 +8887,7 @@ END;
 $$;
 
 
-ALTER FUNCTION public.request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text, p_location_id uuid, p_participant_user_ids uuid[], p_existing_package_id uuid, p_create_package boolean, p_activity_id uuid, p_custom_location_name text) OWNER TO postgres;
+ALTER FUNCTION public.request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text, p_location_id uuid, p_participant_user_ids uuid[], p_existing_package_id uuid, p_create_package boolean, p_activity_id uuid) OWNER TO postgres;
 
 --
 -- Name: reschedule_course_activity(uuid, timestamp with time zone, timestamp with time zone, uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -8580,6 +8926,132 @@ $$;
 
 
 ALTER FUNCTION public.reschedule_course_activity(p_activity_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_location_id uuid) OWNER TO postgres;
+
+--
+-- Name: resolve_at_risk_activity_organizer(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.resolve_at_risk_activity_organizer(p_activity_id uuid, p_action text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid              uuid := auth.uid();
+    v_lobby_id         uuid;
+    v_lobby_name       text;
+    v_at_risk          timestamptz;
+    v_override         timestamptz;
+    v_going_recipients uuid[];
+BEGIN
+    IF p_action NOT IN ('confirm', 'cancel') THEN
+        RAISE EXCEPTION 'resolve_at_risk_activity_organizer: invalid action %', p_action;
+    END IF;
+
+    SELECT a.lobby_id, a.at_risk_notified_at, a.threshold_override_at
+        INTO v_lobby_id, v_at_risk, v_override
+        FROM public.activity a WHERE a.id = p_activity_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'resolve_at_risk_activity_organizer: activity not found';
+    END IF;
+    IF v_at_risk IS NULL OR v_override IS NOT NULL THEN
+        RAISE EXCEPTION 'resolve_at_risk_activity_organizer: activity is not awaiting resolution';
+    END IF;
+    IF NOT public.lobby_can_manage(v_lobby_id, v_uid) THEN
+        RAISE EXCEPTION 'resolve_at_risk_activity_organizer: caller cannot manage this lobby';
+    END IF;
+
+    SELECT name INTO v_lobby_name FROM public.lobby WHERE id = v_lobby_id;
+
+    IF p_action = 'confirm' THEN
+        UPDATE public.activity SET threshold_override_at = now() WHERE id = p_activity_id;
+
+        INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+        VALUES (v_lobby_id, v_uid, 'update',
+            jsonb_build_object(
+                'title', 'Đã xác nhận dù chưa đủ người',
+                'kind',  'threshold_confirmed',
+                'tone',  'blue',
+                'fields', jsonb_build_array()));
+    ELSE
+        SELECT array_agg(DISTINCT ac.user_id) INTO v_going_recipients
+            FROM public.activity_confirmation ac
+            WHERE ac.activity_id = p_activity_id AND ac.attendance = 'going';
+
+        DELETE FROM public.activity WHERE id = p_activity_id;
+
+        INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+        VALUES (v_lobby_id, v_uid, 'update',
+            jsonb_build_object(
+                'title', 'Đã hủy buổi chơi',
+                'kind',  'cancelled',
+                'tone',  'crimson',
+                'fields', jsonb_build_array()));
+
+        IF v_going_recipients IS NOT NULL THEN
+            PERFORM public.fn_enqueue_notification(
+                'activity_cancelled_low_turnout',
+                v_going_recipients,
+                'Buổi chơi đã bị hủy',
+                COALESCE(v_lobby_name, 'Lobby') || ' đã hủy buổi chơi do không đủ người xác nhận',
+                jsonb_build_object('lobby_id', v_lobby_id::text));
+        END IF;
+    END IF;
+END;
+$$;
+
+
+ALTER FUNCTION public.resolve_at_risk_activity_organizer(p_activity_id uuid, p_action text) OWNER TO postgres;
+
+--
+-- Name: resolve_at_risk_activity_rsvp(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.resolve_at_risk_activity_rsvp(p_activity_id uuid, p_attendance text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid      uuid := auth.uid();
+    v_lobby_id uuid;
+    v_at_risk  timestamptz;
+    v_override timestamptz;
+    v_current  text;
+BEGIN
+    IF p_attendance NOT IN ('going', 'out') THEN
+        RAISE EXCEPTION 'resolve_at_risk_activity_rsvp: invalid attendance %', p_attendance;
+    END IF;
+
+    SELECT a.lobby_id, a.at_risk_notified_at, a.threshold_override_at
+        INTO v_lobby_id, v_at_risk, v_override
+        FROM public.activity a WHERE a.id = p_activity_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'resolve_at_risk_activity_rsvp: activity not found';
+    END IF;
+    IF v_at_risk IS NULL OR v_override IS NOT NULL THEN
+        RAISE EXCEPTION 'resolve_at_risk_activity_rsvp: activity is not awaiting resolution';
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM public.lobby_member lm
+        WHERE lm.lobby_id = v_lobby_id AND lm.user_id = v_uid
+    ) THEN
+        RAISE EXCEPTION 'resolve_at_risk_activity_rsvp: caller is not a lobby member';
+    END IF;
+
+    SELECT attendance::text INTO v_current
+        FROM public.activity_confirmation
+        WHERE activity_id = p_activity_id AND user_id = v_uid;
+    IF v_current = 'out' THEN
+        RAISE EXCEPTION 'resolve_at_risk_activity_rsvp: already opted out';
+    END IF;
+
+    INSERT INTO public.activity_confirmation (activity_id, user_id, attendance)
+    VALUES (p_activity_id, v_uid, p_attendance::public.activity_attendance)
+    ON CONFLICT (activity_id, user_id) DO UPDATE SET attendance = excluded.attendance;
+END;
+$$;
+
+
+ALTER FUNCTION public.resolve_at_risk_activity_rsvp(p_activity_id uuid, p_attendance text) OWNER TO postgres;
 
 --
 -- Name: respond_challenge(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
@@ -8929,7 +9401,7 @@ ALTER FUNCTION public.revoke_lobby_invite_link(p_lobby_id uuid) OWNER TO postgre
 -- Name: search_locations(text, character varying[], bigint); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.search_locations(search_term text, p_districts character varying[] DEFAULT NULL::character varying[], p_city_cluster bigint DEFAULT NULL::bigint) RETURNS TABLE(id uuid, name text, full_address text, street_number integer, street_name text, district text, city text, lat double precision, lon double precision, tags text[], city_cluster bigint)
+CREATE FUNCTION public.search_locations(search_term text, p_districts character varying[] DEFAULT NULL::character varying[], p_city_cluster bigint DEFAULT NULL::bigint) RETURNS TABLE(id uuid, name text, full_address text, street_number text, street_name text, district text, city text, lat double precision, lon double precision, tags text[], city_cluster bigint)
     LANGUAGE plpgsql STABLE
     SET search_path TO ''
     AS $$
@@ -8957,6 +9429,12 @@ BEGIN
                     OR extensions.word_similarity(LOWER(search_term), LOWER(l.name)) > 0.3
                     OR extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(l.full_address))) > 0.3
                     OR extensions.word_similarity(LOWER(search_term), LOWER(l.full_address)) > 0.3
+                )
+            )
+            OR (
+                char_length(search_term) >= 2 AND (
+                    extensions.unaccent(LOWER(l.name)) LIKE '%' || extensions.unaccent(LOWER(search_term)) || '%'
+                    OR extensions.unaccent(LOWER(COALESCE(l.full_address, ''))) LIKE '%' || extensions.unaccent(LOWER(search_term)) || '%'
                 )
             )
             OR (p_districts IS NOT NULL AND cardinality(p_districts) > 0 AND l.district = ANY(p_districts))
@@ -9042,6 +9520,31 @@ $$;
 
 
 ALTER FUNCTION public.search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]) OWNER TO postgres;
+
+--
+-- Name: seeded_sport_id(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.seeded_sport_id(p_user_id uuid) RETURNS bigint
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT sport_id FROM (
+    SELECT 1 AS sport_id FROM public.soccer_profile WHERE user_id = p_user_id AND elo_seed IS NOT NULL
+    UNION ALL
+    SELECT 2 FROM public.basketball_profile WHERE user_id = p_user_id AND elo_seed IS NOT NULL
+    UNION ALL
+    SELECT 3 FROM public.badminton_profile WHERE user_id = p_user_id AND elo_seed IS NOT NULL
+    UNION ALL
+    SELECT 4 FROM public.tennis_profile WHERE user_id = p_user_id AND elo_seed IS NOT NULL
+    UNION ALL
+    SELECT 5 FROM public.pickleball_profile WHERE user_id = p_user_id AND elo_seed IS NOT NULL
+  ) seeded
+  LIMIT 1;
+$$;
+
+
+ALTER FUNCTION public.seeded_sport_id(p_user_id uuid) OWNER TO postgres;
 
 --
 -- Name: send_challenge(uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
@@ -13021,6 +13524,8 @@ CREATE TABLE public.activity (
     proposed_by uuid,
     proposal_status public.activity_proposal_status,
     note text,
+    at_risk_notified_at timestamp with time zone,
+    threshold_override_at timestamp with time zone,
     CONSTRAINT activity_confirmation_deadline_validity CHECK (((confirmation_deadline IS NULL) OR (confirmation_deadline < start_time))),
     CONSTRAINT activity_confirmation_threshold_validity CHECK (((confirmation_threshold IS NULL) OR (confirmation_threshold > 0))),
     CONSTRAINT activity_cost_validity CHECK ((((cost_type IS NULL) = (cost_amount IS NULL)) AND ((cost_amount IS NULL) OR (cost_amount > (0)::numeric)))),
@@ -13081,6 +13586,20 @@ COMMENT ON COLUMN public.activity.manager_confirmed_at IS 'A challenge activity 
 --
 
 COMMENT ON COLUMN public.activity.cost_amount IS 'Informational cost, settled post-session by the payment-request feature — not a deposit or a charge at scheduling time.';
+
+
+--
+-- Name: COLUMN activity.at_risk_notified_at; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.activity.at_risk_notified_at IS 'Set once by fn_sweep_activity_thresholds when confirmation_deadline passes while still under confirmation_threshold. Doubles as the once-only notify flag and the sticky post-deadline RLS freeze on activity_confirmation (see the policies below).';
+
+
+--
+-- Name: COLUMN activity.threshold_override_at; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.activity.threshold_override_at IS 'Set by resolve_at_risk_activity_organizer(''confirm''). Once set, activity_is_confirmed() treats the activity as permanently confirmed regardless of going count — same footing as naturally reaching quorum.';
 
 
 --
@@ -13425,6 +13944,13 @@ CREATE TABLE public.freeplay_host (
 
 
 ALTER TABLE public.freeplay_host OWNER TO postgres;
+
+--
+-- Name: COLUMN freeplay_host.display_name; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.freeplay_host.display_name IS 'Public Host name, independent from the linked user account username.';
+
 
 --
 -- Name: freeplay_request; Type: TABLE; Schema: public; Owner: postgres
@@ -13817,14 +14343,18 @@ CREATE TABLE public.location (
     external_id text,
     name text NOT NULL,
     full_address text,
-    street_number integer,
+    street_number text,
     street_name text,
     district text,
     city text,
     lat double precision,
     lon double precision,
     tags text[] DEFAULT '{}'::text[] NOT NULL,
-    city_cluster bigint
+    city_cluster bigint,
+    source text DEFAULT 'directory'::text NOT NULL,
+    submitted_by uuid,
+    is_verified boolean DEFAULT true NOT NULL,
+    CONSTRAINT location_source_check CHECK ((source = ANY (ARRAY['directory'::text, 'user_submitted'::text])))
 );
 
 
@@ -13968,12 +14498,20 @@ CREATE TABLE public.professional (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     preferred_city_cluster bigint,
     preferred_districts text[],
+    CONSTRAINT professional_display_name_check CHECK (((char_length(btrim(display_name)) >= 1) AND (char_length(btrim(display_name)) <= 80))),
     CONSTRAINT professional_experience_years_check CHECK ((experience_years >= 0)),
     CONSTRAINT professional_sports_check CHECK ((array_length(sports, 1) > 0))
 );
 
 
 ALTER TABLE public.professional OWNER TO postgres;
+
+--
+-- Name: COLUMN professional.display_name; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.professional.display_name IS 'Public professional name, independent from the linked user account username.';
+
 
 --
 -- Name: professional_preferred_location; Type: TABLE; Schema: public; Owner: postgres
@@ -14065,21 +14603,12 @@ CREATE TABLE public.referee_booking (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     reminder_sent_at timestamp with time zone,
     package_id uuid,
-    custom_location_name text,
     CONSTRAINT booking_times_validity CHECK ((booking_time_end > booking_time_start)),
-    CONSTRAINT professional_booking_agreed_rate_check CHECK ((agreed_rate >= (0)::numeric)),
-    CONSTRAINT professional_booking_custom_location_name_check CHECK (((custom_location_name IS NULL) OR ((char_length(btrim(custom_location_name)) >= 1) AND (char_length(btrim(custom_location_name)) <= 200))))
+    CONSTRAINT professional_booking_agreed_rate_check CHECK ((agreed_rate >= (0)::numeric))
 );
 
 
 ALTER TABLE public.referee_booking OWNER TO postgres;
-
---
--- Name: COLUMN referee_booking.custom_location_name; Type: COMMENT; Schema: public; Owner: postgres
---
-
-COMMENT ON COLUMN public.referee_booking.custom_location_name IS 'Client-suggested booking-scoped venue when no canonical location row is selected.';
-
 
 --
 -- Name: referee_booking_additional_users; Type: TABLE; Schema: public; Owner: postgres
@@ -14731,6 +15260,46 @@ CREATE TABLE realtime.messages_2026_08_16 (
 ALTER TABLE realtime.messages_2026_08_16 OWNER TO supabase_realtime_admin;
 
 --
+-- Name: messages_2026_08_17; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+CREATE TABLE realtime.messages_2026_08_17 (
+    topic text NOT NULL,
+    extension text NOT NULL,
+    payload jsonb,
+    event text,
+    private boolean DEFAULT false,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    inserted_at timestamp without time zone DEFAULT now() NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
+);
+
+
+ALTER TABLE realtime.messages_2026_08_17 OWNER TO supabase_realtime_admin;
+
+--
+-- Name: messages_2026_08_18; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+CREATE TABLE realtime.messages_2026_08_18 (
+    topic text NOT NULL,
+    extension text NOT NULL,
+    payload jsonb,
+    event text,
+    private boolean DEFAULT false,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    inserted_at timestamp without time zone DEFAULT now() NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
+);
+
+
+ALTER TABLE realtime.messages_2026_08_18 OWNER TO supabase_realtime_admin;
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: realtime; Owner: supabase_admin
 --
 
@@ -14998,6 +15567,20 @@ ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_15
 --
 
 ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_16 FOR VALUES FROM ('2026-08-16 00:00:00') TO ('2026-08-17 00:00:00');
+
+
+--
+-- Name: messages_2026_08_17; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_17 FOR VALUES FROM ('2026-08-17 00:00:00') TO ('2026-08-18 00:00:00');
+
+
+--
+-- Name: messages_2026_08_18; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_18 FOR VALUES FROM ('2026-08-18 00:00:00') TO ('2026-08-19 00:00:00');
 
 
 --
@@ -16052,6 +16635,22 @@ ALTER TABLE ONLY realtime.messages_2026_08_15
 
 ALTER TABLE ONLY realtime.messages_2026_08_16
     ADD CONSTRAINT messages_2026_08_16_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_08_17 messages_2026_08_17_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+ALTER TABLE ONLY realtime.messages_2026_08_17
+    ADD CONSTRAINT messages_2026_08_17_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_08_18 messages_2026_08_18_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+ALTER TABLE ONLY realtime.messages_2026_08_18
+    ADD CONSTRAINT messages_2026_08_18_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
@@ -17372,6 +17971,20 @@ CREATE INDEX messages_2026_08_16_inserted_at_topic_idx ON realtime.messages_2026
 
 
 --
+-- Name: messages_2026_08_17_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+CREATE INDEX messages_2026_08_17_inserted_at_topic_idx ON realtime.messages_2026_08_17 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_08_18_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+CREATE INDEX messages_2026_08_18_inserted_at_topic_idx ON realtime.messages_2026_08_18 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
 -- Name: subscription_subscription_id_entity_filters_action_filter_selec; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
 --
 
@@ -17502,6 +18115,34 @@ ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.
 --
 
 ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_16_pkey;
+
+
+--
+-- Name: messages_2026_08_17_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_17_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_08_17_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_17_pkey;
+
+
+--
+-- Name: messages_2026_08_18_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_18_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_08_18_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_18_pkey;
 
 
 --
@@ -18658,6 +19299,14 @@ ALTER TABLE ONLY public.location
 
 
 --
+-- Name: location location_submitted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.location
+    ADD CONSTRAINT location_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES public."user"(id);
+
+
+--
 -- Name: message message_conversation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -19478,13 +20127,6 @@ CREATE POLICY "Freeplay Activity is RPC only" ON public.freeplay_activity AS RES
 
 
 --
--- Name: freeplay_host Freeplay Host is RPC only; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Freeplay Host is RPC only" ON public.freeplay_host AS RESTRICTIVE USING (false) WITH CHECK (false);
-
-
---
 -- Name: freeplay_request Freeplay Request is RPC only; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -19492,10 +20134,24 @@ CREATE POLICY "Freeplay Request is RPC only" ON public.freeplay_request AS RESTR
 
 
 --
--- Name: user_contact Friends, public, and freeplay hosts contacts are readable; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_contact Friends, public, freeplay hosts, and pros contacts are readable; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Friends, public, and freeplay hosts contacts are readable" ON public.user_contact FOR SELECT TO authenticated USING ((zalo_public OR (user_id IN ( SELECT public.get_my_friend_ids() AS get_my_friend_ids)) OR public.fn_is_active_freeplay_host(user_id)));
+CREATE POLICY "Friends, public, freeplay hosts, and pros contacts are readable" ON public.user_contact FOR SELECT TO authenticated USING ((zalo_public OR (user_id IN ( SELECT public.get_my_friend_ids() AS get_my_friend_ids)) OR public.fn_is_active_freeplay_host(user_id) OR public.fn_is_linked_professional(user_id)));
+
+
+--
+-- Name: freeplay_host Hosts can read their own display name; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Hosts can read their own display name" ON public.freeplay_host FOR SELECT TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id));
+
+
+--
+-- Name: freeplay_host Hosts can update their own display name; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Hosts can update their own display name" ON public.freeplay_host FOR UPDATE TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
 
 
 --
@@ -19591,7 +20247,9 @@ CREATE POLICY "Members can cast a vote in their lobby's polls" ON public.lobby_f
 -- Name: activity_confirmation Members can change their own attendance; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Members can change their own attendance" ON public.activity_confirmation FOR UPDATE TO authenticated USING (((user_id = ( SELECT auth.uid() AS uid)) AND (NOT ((attendance = 'going'::public.activity_attendance) AND public.activity_is_confirmed(activity_id))))) WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1
+CREATE POLICY "Members can change their own attendance" ON public.activity_confirmation FOR UPDATE TO authenticated USING (((user_id = ( SELECT auth.uid() AS uid)) AND (NOT ((attendance = 'going'::public.activity_attendance) AND public.activity_is_confirmed(activity_id))) AND (NOT (EXISTS ( SELECT 1
+   FROM public.activity a
+  WHERE ((a.id = activity_confirmation.activity_id) AND (a.at_risk_notified_at IS NOT NULL))))))) WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1
    FROM public.activity a
   WHERE ((a.id = activity_confirmation.activity_id) AND (a.lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)))))));
 
@@ -19602,7 +20260,7 @@ CREATE POLICY "Members can change their own attendance" ON public.activity_confi
 
 CREATE POLICY "Members can confirm their own attendance" ON public.activity_confirmation FOR INSERT TO authenticated WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1
    FROM public.activity a
-  WHERE ((a.id = activity_confirmation.activity_id) AND (a.lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)))))));
+  WHERE ((a.id = activity_confirmation.activity_id) AND (a.lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)) AND (a.at_risk_notified_at IS NULL))))));
 
 
 --
@@ -19641,7 +20299,9 @@ CREATE POLICY "Members can read poll votes in their lobby" ON public.lobby_feed_
 -- Name: activity_confirmation Members can retract their own confirmation; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Members can retract their own confirmation" ON public.activity_confirmation FOR DELETE TO authenticated USING (((user_id = ( SELECT auth.uid() AS uid)) AND (NOT ((attendance = 'going'::public.activity_attendance) AND public.activity_is_confirmed(activity_id)))));
+CREATE POLICY "Members can retract their own confirmation" ON public.activity_confirmation FOR DELETE TO authenticated USING (((user_id = ( SELECT auth.uid() AS uid)) AND (NOT ((attendance = 'going'::public.activity_attendance) AND public.activity_is_confirmed(activity_id))) AND (NOT (EXISTS ( SELECT 1
+   FROM public.activity a
+  WHERE ((a.id = activity_confirmation.activity_id) AND (a.at_risk_notified_at IS NOT NULL)))))));
 
 
 --
@@ -21918,21 +22578,32 @@ GRANT ALL ON FUNCTION public.create_ancillary_payment_request(p_activity_id uuid
 
 
 --
--- Name: FUNCTION create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid, p_venue_name text, p_street_address text, p_city_cluster bigint, p_ward text); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
-REVOKE ALL ON FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid, p_venue_name text, p_street_address text, p_city_cluster bigint, p_ward text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid, p_venue_name text, p_street_address text, p_city_cluster bigint, p_ward text) TO authenticated;
-GRANT ALL ON FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid, p_venue_name text, p_street_address text, p_city_cluster bigint, p_ward text) TO service_role;
+REVOKE ALL ON FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid) TO service_role;
 
 
 --
--- Name: FUNCTION create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
-GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text) TO anon;
-GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text) TO authenticated;
-GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid, p_location_name text, p_street_number text, p_street_name text, p_district text, p_city text) TO service_role;
+GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION create_location(p_name text, p_street_number text, p_street_name text, p_district text, p_city text, p_city_cluster bigint); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.create_location(p_name text, p_street_number text, p_street_name text, p_district text, p_city text, p_city_cluster bigint) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_location(p_name text, p_street_number text, p_street_name text, p_district text, p_city text, p_city_cluster bigint) TO anon;
+GRANT ALL ON FUNCTION public.create_location(p_name text, p_street_number text, p_street_name text, p_district text, p_city text, p_city_cluster bigint) TO authenticated;
+GRANT ALL ON FUNCTION public.create_location(p_name text, p_street_number text, p_street_name text, p_district text, p_city text, p_city_cluster bigint) TO service_role;
 
 
 --
@@ -21972,12 +22643,12 @@ GRANT ALL ON FUNCTION public.delete_wall_post(p_post_id uuid) TO service_role;
 
 
 --
--- Name: FUNCTION edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[]); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
-REVOKE ALL ON FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[]) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[]) TO authenticated;
-GRANT ALL ON FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[]) TO service_role;
+REVOKE ALL ON FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid) TO service_role;
 
 
 --
@@ -22161,6 +22832,14 @@ GRANT ALL ON FUNCTION public.fn_course_member_denormalise() TO service_role;
 
 
 --
+-- Name: FUNCTION fn_course_prompt_if_no_students(p_course_id uuid, p_was_enrolled boolean); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_course_prompt_if_no_students(p_course_id uuid, p_was_enrolled boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_course_prompt_if_no_students(p_course_id uuid, p_was_enrolled boolean) TO service_role;
+
+
+--
 -- Name: FUNCTION fn_course_review_rollup(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -22272,6 +22951,15 @@ GRANT ALL ON FUNCTION public.fn_freeplay_block_cleanup() TO service_role;
 
 
 --
+-- Name: FUNCTION fn_freeplay_host_zalo(p_host_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.fn_freeplay_host_zalo(p_host_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.fn_freeplay_host_zalo(p_host_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.fn_freeplay_host_zalo(p_host_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION fn_guard_referee_booking_review(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -22336,6 +23024,15 @@ GRANT ALL ON FUNCTION public.fn_is_course_member(p_course_id uuid, p_uid uuid) T
 
 REVOKE ALL ON FUNCTION public.fn_is_enrolled_course_member(p_course_id uuid, p_uid uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.fn_is_enrolled_course_member(p_course_id uuid, p_uid uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION fn_is_linked_professional(p_user_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.fn_is_linked_professional(p_user_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.fn_is_linked_professional(p_user_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.fn_is_linked_professional(p_user_id uuid) TO service_role;
 
 
 --
@@ -22504,6 +23201,14 @@ GRANT ALL ON FUNCTION public.fn_sweep_activity_payment_requests() TO service_rol
 
 
 --
+-- Name: FUNCTION fn_sweep_activity_thresholds(); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_sweep_activity_thresholds() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_sweep_activity_thresholds() TO service_role;
+
+
+--
 -- Name: FUNCTION fn_sweep_challenges(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -22611,9 +23316,9 @@ GRANT ALL ON FUNCTION public.fn_wall_post_tag_guard() TO service_role;
 --
 
 REVOKE ALL ON FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) TO anon;
 GRANT ALL ON FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) TO service_role;
-GRANT ALL ON FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) TO anon;
 
 
 --
@@ -22812,7 +23517,6 @@ GRANT ALL ON FUNCTION public.home_freeplay_data(p_sport_id bigint, p_timeslots j
 --
 
 REVOKE ALL ON FUNCTION public.home_professional_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts text[], p_search text, p_page_size integer, p_page_number integer) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.home_professional_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts text[], p_search text, p_page_size integer, p_page_number integer) TO anon;
 GRANT ALL ON FUNCTION public.home_professional_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts text[], p_search text, p_page_size integer, p_page_number integer) TO authenticated;
 GRANT ALL ON FUNCTION public.home_professional_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts text[], p_search text, p_page_size integer, p_page_number integer) TO service_role;
 
@@ -23141,12 +23845,13 @@ GRANT ALL ON FUNCTION public.request_freeplay_seat(p_activity_id uuid, p_message
 
 
 --
--- Name: FUNCTION request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text, p_location_id uuid, p_participant_user_ids uuid[], p_existing_package_id uuid, p_create_package boolean, p_activity_id uuid, p_custom_location_name text); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text, p_location_id uuid, p_participant_user_ids uuid[], p_existing_package_id uuid, p_create_package boolean, p_activity_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
-REVOKE ALL ON FUNCTION public.request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text, p_location_id uuid, p_participant_user_ids uuid[], p_existing_package_id uuid, p_create_package boolean, p_activity_id uuid, p_custom_location_name text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text, p_location_id uuid, p_participant_user_ids uuid[], p_existing_package_id uuid, p_create_package boolean, p_activity_id uuid, p_custom_location_name text) TO authenticated;
-GRANT ALL ON FUNCTION public.request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text, p_location_id uuid, p_participant_user_ids uuid[], p_existing_package_id uuid, p_create_package boolean, p_activity_id uuid, p_custom_location_name text) TO service_role;
+REVOKE ALL ON FUNCTION public.request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text, p_location_id uuid, p_participant_user_ids uuid[], p_existing_package_id uuid, p_create_package boolean, p_activity_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text, p_location_id uuid, p_participant_user_ids uuid[], p_existing_package_id uuid, p_create_package boolean, p_activity_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text, p_location_id uuid, p_participant_user_ids uuid[], p_existing_package_id uuid, p_create_package boolean, p_activity_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.request_referee_booking(p_professional_id uuid, p_service_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_notes text, p_location_id uuid, p_participant_user_ids uuid[], p_existing_package_id uuid, p_create_package boolean, p_activity_id uuid) TO service_role;
 
 
 --
@@ -23156,6 +23861,24 @@ GRANT ALL ON FUNCTION public.request_referee_booking(p_professional_id uuid, p_s
 REVOKE ALL ON FUNCTION public.reschedule_course_activity(p_activity_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_location_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.reschedule_course_activity(p_activity_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_location_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.reschedule_course_activity(p_activity_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_location_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION resolve_at_risk_activity_organizer(p_activity_id uuid, p_action text); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.resolve_at_risk_activity_organizer(p_activity_id uuid, p_action text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.resolve_at_risk_activity_organizer(p_activity_id uuid, p_action text) TO authenticated;
+GRANT ALL ON FUNCTION public.resolve_at_risk_activity_organizer(p_activity_id uuid, p_action text) TO service_role;
+
+
+--
+-- Name: FUNCTION resolve_at_risk_activity_rsvp(p_activity_id uuid, p_attendance text); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.resolve_at_risk_activity_rsvp(p_activity_id uuid, p_attendance text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.resolve_at_risk_activity_rsvp(p_activity_id uuid, p_attendance text) TO authenticated;
+GRANT ALL ON FUNCTION public.resolve_at_risk_activity_rsvp(p_activity_id uuid, p_attendance text) TO service_role;
 
 
 --
@@ -23237,6 +23960,15 @@ GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_l
 GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]) TO anon;
 GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]) TO authenticated;
 GRANT ALL ON FUNCTION public.search_networks_unaccent(search_term text, result_limit integer, filter_cities bigint[], filter_categories text[]) TO service_role;
+
+
+--
+-- Name: FUNCTION seeded_sport_id(p_user_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.seeded_sport_id(p_user_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.seeded_sport_id(p_user_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.seeded_sport_id(p_user_id uuid) TO service_role;
 
 
 --
@@ -24147,6 +24879,27 @@ GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.fr
 
 
 --
+-- Name: COLUMN freeplay_host.id; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT(id) ON TABLE public.freeplay_host TO authenticated;
+
+
+--
+-- Name: COLUMN freeplay_host.user_id; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT(user_id) ON TABLE public.freeplay_host TO authenticated;
+
+
+--
+-- Name: COLUMN freeplay_host.display_name; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT(display_name),UPDATE(display_name) ON TABLE public.freeplay_host TO authenticated;
+
+
+--
 -- Name: TABLE freeplay_request; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -24359,6 +25112,13 @@ GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.pi
 GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE ON TABLE public.professional TO anon;
 GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE ON TABLE public.professional TO authenticated;
 GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.professional TO service_role;
+
+
+--
+-- Name: COLUMN professional.display_name; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT UPDATE(display_name) ON TABLE public.professional TO authenticated;
 
 
 --
@@ -24726,6 +25486,22 @@ GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.
 
 GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_16 TO postgres;
 GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_16 TO dashboard_user;
+
+
+--
+-- Name: TABLE messages_2026_08_17; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_17 TO postgres;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_17 TO dashboard_user;
+
+
+--
+-- Name: TABLE messages_2026_08_18; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_18 TO postgres;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_18 TO dashboard_user;
 
 
 --
@@ -25180,5 +25956,5 @@ ALTER EVENT TRIGGER pgrst_drop_watch OWNER TO supabase_admin;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 0n3bfsWH2IJaj8tYZfzkLiPy4egqMJwmtKXXg7SSwAMUje7Lb9UPx9lbhTTMeLK
+\unrestrict 7BlJnFxfvqmJomhALlsqgvOrJZQtS9WsUGPR3FV0FT0AX6k8ivcYeZfjp93vUmw
 
