@@ -38,6 +38,20 @@ class UsernameTakenException implements Exception {
   String toString() => 'UsernameTakenException: username + tag_number combination is already taken';
 }
 
+enum AccountDeletionBlockReason { captain, host }
+
+/// Thrown by [AuthController.deleteAccount] when `request_account_deletion()`
+/// rejects the request because the caller still captains a lobby or runs an
+/// active freeplay-host profile — both require the user to resolve them
+/// first (transfer captaincy / close the host profile), rather than the RPC
+/// silently doing it for them. See schema/account_deletion.sql.
+class AccountDeletionBlockedException implements Exception {
+  final AccountDeletionBlockReason reason;
+  const AccountDeletionBlockedException(this.reason);
+  @override
+  String toString() => 'AccountDeletionBlockedException: $reason';
+}
+
 @riverpod
 class AuthController extends _$AuthController {
   final supabase = Supabase.instance.client;
@@ -499,6 +513,39 @@ class AuthController extends _$AuthController {
     }
 
     await refresh();
+  }
+
+  /// Deletes the signed-in user's account: `request_account_deletion()`
+  /// removes their public-schema data server-side and queues the privileged
+  /// `auth.users` deletion (see schema/account_deletion.sql), then this
+  /// signs the session out immediately so the app doesn't keep using a
+  /// session whose profile is already gone.
+  ///
+  /// Throws [AccountDeletionBlockedException] if the RPC reports the user
+  /// still captains a lobby or runs an active freeplay-host profile — both
+  /// need to be resolved by the user first.
+  Future<void> deleteAccount() async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) throw Exception('Not authenticated');
+
+    try {
+      await supabase.rpc('request_account_deletion').timeout(const Duration(seconds: 5));
+    } on PostgrestException catch (e, st) {
+      talker.handle(e, st);
+      if (e.message.contains('Captain cannot leave lobby')) {
+        throw const AccountDeletionBlockedException(
+          AccountDeletionBlockReason.captain,
+        );
+      }
+      if (e.message.contains('active freeplay host')) {
+        throw const AccountDeletionBlockedException(
+          AccountDeletionBlockReason.host,
+        );
+      }
+      rethrow;
+    }
+
+    await signOut();
   }
 
   Future<void> refresh() async {

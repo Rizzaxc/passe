@@ -31,6 +31,7 @@ import '../ui/main.dart';
 import 'age_group_selection_screen.dart';
 import 'change_password_screen.dart';
 import 'change_username_screen.dart';
+import 'delete_account_sheet.dart';
 import 'edit_zalo_sheet.dart';
 import 'guest_profile_view.dart';
 import 'industry_selection_screen.dart';
@@ -584,6 +585,20 @@ class ProfileTab extends ConsumerWidget {
           ),
           details: Icon(
             FLucideIcons.logOut,
+            color: context.theme.colors.destructive,
+          ),
+        ),
+        FTile(
+          style: .delta(
+            backgroundColor: .delta([.all(context.theme.colors.destructive)]),
+          ),
+          onPress: () => showDeleteAccountSheet(context),
+          title: Text(
+            'profile.deleteAccount'.tr(),
+            style: TextStyle(color: context.theme.colors.destructive),
+          ),
+          details: Icon(
+            FLucideIcons.trash2,
             color: context.theme.colors.destructive,
           ),
         ),
