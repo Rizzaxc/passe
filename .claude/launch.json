@@ -6,6 +6,12 @@
       "runtimeExecutable": "flutter",
       "runtimeArgs": ["run", "-d", "chrome", "--web-port", "8765"],
       "port": 8765
+    },
+    {
+      "name": "passe-website",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd website && npm run dev"],
+      "port": 4321
     }
   ]
 }

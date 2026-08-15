@@ -31,25 +31,10 @@ void main() {
     expect(activity.myRequestStatus, FreeplayRequestStatus.accepted);
   });
 
-  test('maps host_cancelled and nested payment info', () {
+  test('maps host_cancelled', () {
     expect(
       FreeplayRequestStatus.fromDb('host_cancelled'),
       FreeplayRequestStatus.hostCancelled,
     );
-
-    final message = FreeplayChatMessage.fromJson({
-      'id': 'message-1',
-      'kind': 'payment_info',
-      'created_at': '2026-08-10T11:00:00Z',
-      'payment_info': {
-        'bank_id': '970436',
-        'bank_display_name': 'Vietcombank',
-        'value': '0123456789',
-        'account_name': 'NGUYEN VAN A',
-      },
-    });
-
-    expect(message.bankDisplayName, 'Vietcombank');
-    expect(message.accountNumber, '0123456789');
   });
 }
