@@ -23,7 +23,9 @@ class _EditZaloSheet extends ConsumerStatefulWidget {
 }
 
 class _EditZaloSheetState extends ConsumerState<_EditZaloSheet> {
-  late final _controller = TextEditingController(text: widget.contact.zalo ?? '');
+  late final _controller = TextEditingController(
+    text: widget.contact.zalo ?? '',
+  );
   late bool _public = widget.contact.zaloPublic;
 
   @override
@@ -36,7 +38,7 @@ class _EditZaloSheetState extends ConsumerState<_EditZaloSheet> {
     final value = _controller.text.trim();
     ref
         .read(userContactControllerProvider.notifier)
-        .updateDraft(
+        .save(
           UserContact(zalo: value.isEmpty ? null : value, zaloPublic: _public),
         );
     Navigator.of(context).pop();

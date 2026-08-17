@@ -31,7 +31,6 @@ import '../ui/main.dart';
 import 'age_group_selection_screen.dart';
 import 'change_password_screen.dart';
 import 'change_username_screen.dart';
-import 'delete_account_sheet.dart';
 import 'edit_zalo_sheet.dart';
 import 'guest_profile_view.dart';
 import 'industry_selection_screen.dart';
@@ -41,8 +40,8 @@ import 'payment_info_controller.dart';
 import 'payment_info_selection_screen.dart';
 import 'playtime_selection_screen.dart';
 import 'profile_controller.dart';
-import 'sport_profile/sport_profile_controller.dart';
 import 'sport_profile/sport_profile_screen.dart';
+import 'terms_privacy_sheet.dart';
 import 'user_contact_controller.dart';
 
 class _HostProfileView extends ConsumerStatefulWidget {
@@ -210,7 +209,10 @@ class _HostProfileViewState extends ConsumerState<_HostProfileView> {
           children: [
             FTile(
               suffix: myContact.zaloPublic
-                  ? Icon(FLucideIcons.globe, color: context.theme.colors.primary)
+                  ? Icon(
+                      FLucideIcons.globe,
+                      color: context.theme.colors.primary,
+                    )
                   : null,
               title: const SizedBox(
                 width: 32,
@@ -359,43 +361,6 @@ class ProfileTab extends ConsumerWidget {
                   // Section 4: Sport-Specific Info
                   _buildSportInfoSection(context, ref),
                   const SizedBox(height: 24),
-
-                  // Commit Button
-                  FButton(
-                    onPress: () async {
-                      try {
-                        final sport = ref
-                            .read(selectedSportStateProvider)
-                            .asData
-                            ?.value;
-                        await Future.wait([
-                          ref.read(profileControllerProvider.notifier).commit(),
-                          if (sport != null && sport != Sport.others)
-                            commitSportProfile(ref, sport),
-                        ]);
-                      } on AvatarUploadFailedException {
-                        if (!context.mounted) return;
-                        showFToast(
-                          context: context,
-                          icon: const Icon(FLucideIcons.circleX),
-                          variant: .destructive,
-                          title: Text('profile.uploadFailed'.tr()),
-                          alignment: .bottomCenter,
-                        );
-                      } catch (e) {
-                        if (!context.mounted) return;
-                        showFToast(
-                          context: context,
-                          icon: const Icon(FLucideIcons.circleX),
-                          variant: .destructive,
-                          title: Text('error'.tr()),
-                          description: Text('errorGeneric'.tr()),
-                          alignment: .bottomCenter,
-                        );
-                      }
-                    },
-                    child: Text('profile.commit'.tr()),
-                  ),
                 ],
               ),
             ),
@@ -450,7 +415,7 @@ class ProfileTab extends ConsumerWidget {
 
       ref
           .read(profileControllerProvider.notifier)
-          .setPickedAvatar(XFile(cropped.path));
+          .pickAvatar(XFile(cropped.path));
     } catch (e) {
       if (!context.mounted) return;
       showFToast(
@@ -542,7 +507,16 @@ class ProfileTab extends ConsumerWidget {
     user,
   ) {
     return FTileGroup(
-      label: Text('profile.accountInfo'.tr()),
+      label: Row(
+        children: [
+          Expanded(child: Text('profile.accountInfo'.tr())),
+          FButton.icon(
+            variant: .ghost,
+            onPress: () => showTermsPrivacySheet(context),
+            child: const Icon(FLucideIcons.shieldCheck),
+          ),
+        ],
+      ),
       children: [
         FTile(
           onPress: () => Navigator.of(context).push(
@@ -585,20 +559,6 @@ class ProfileTab extends ConsumerWidget {
           ),
           details: Icon(
             FLucideIcons.logOut,
-            color: context.theme.colors.destructive,
-          ),
-        ),
-        FTile(
-          style: .delta(
-            backgroundColor: .delta([.all(context.theme.colors.destructive)]),
-          ),
-          onPress: () => showDeleteAccountSheet(context),
-          title: Text(
-            'profile.deleteAccount'.tr(),
-            style: TextStyle(color: context.theme.colors.destructive),
-          ),
-          details: Icon(
-            FLucideIcons.trash2,
             color: context.theme.colors.destructive,
           ),
         ),
@@ -669,10 +629,7 @@ class ProfileTab extends ConsumerWidget {
             final nextGender = currentGender == Gender.male
                 ? Gender.female
                 : Gender.male;
-            final updatedDetails = details.copyWith(gender: nextGender);
-            ref
-                .read(profileControllerProvider.notifier)
-                .updateDraft(details: updatedDetails);
+            ref.read(profileControllerProvider.notifier).setGender(nextGender);
           },
         ),
         FTile(

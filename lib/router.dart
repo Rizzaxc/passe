@@ -677,6 +677,12 @@ class LobbyDetailRoute extends GoRouteData with $LobbyDetailRoute {
   /// destination still verifies manage permission before opening the sheet.
   final bool? openActivityPlanner;
 
+  /// One-shot intent from a `lobby_join_request` notification tap — opens the
+  /// request-management sheet directly instead of leaving the captain to find
+  /// the info sheet's "Manage Requests" row themselves. Destination still
+  /// verifies manage permission before opening.
+  final bool? openJoinRequests;
+
   const LobbyDetailRoute({
     required this.id,
     this.$extra,
@@ -684,6 +690,7 @@ class LobbyDetailRoute extends GoRouteData with $LobbyDetailRoute {
     this.highlightActivityId,
     this.highlightChallengeId,
     this.openActivityPlanner,
+    this.openJoinRequests,
   });
 
   @override
@@ -695,6 +702,7 @@ class LobbyDetailRoute extends GoRouteData with $LobbyDetailRoute {
         highlightActivityId: highlightActivityId,
         highlightChallengeId: highlightChallengeId,
         openActivityPlanner: openActivityPlanner ?? false,
+        openJoinRequests: openJoinRequests ?? false,
       );
 }
 

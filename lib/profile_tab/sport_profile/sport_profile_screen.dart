@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../core/model/enum.dart';
 import '../../core/state/selected_sport_state.dart';
+import '../../ui/main.dart';
 import 'badminton.dart' show BadmintonProfileWidget;
 import 'basketball.dart' show BasketballProfileWidget;
 import 'pickleball.dart' show PickleballProfileWidget;
@@ -19,58 +20,41 @@ class SportProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sportAsync = ref.watch(selectedSportStateProvider);
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text('profile.sportProfile'.tr(args: [
-          sportAsync.maybeWhen(
-            data: (s) => s.getLocalizedName(context),
-            orElse: () => '',
+    return PFlushOnPop(
+      onFlush: () {
+        final sport = sportAsync.asData?.value;
+        if (sport != null) flushSportProfile(ref, sport);
+      },
+      child: FScaffold(
+        header: FHeader.nested(
+          title: Text(
+            'profile.sportProfile'.tr(
+              args: [
+                sportAsync.maybeWhen(
+                  data: (s) => s.getLocalizedName(context),
+                  orElse: () => '',
+                ),
+              ],
+            ),
           ),
-        ])),
-        prefixes: [
-          FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
-        ],
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            sportAsync.when(
-              data: (sport) => switch (sport) {
-                Sport.soccer => const SoccerProfileWidget(),
-                Sport.basketball => const BasketballProfileWidget(),
-                Sport.badminton => const BadmintonProfileWidget(),
-                Sport.tennis => const TennisProfileWidget(),
-                Sport.pickleball => const PickleballProfileWidget(),
-                Sport.others => const SizedBox.shrink(),
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
-            ),
-            const SizedBox(height: 24),
-            FButton(
-              onPress: () async {
-                final sport = sportAsync.asData?.value;
-                if (sport == null) return;
-                try {
-                  await commitSportProfile(ref, sport);
-                  if (context.mounted) Navigator.of(context).pop();
-                } catch (e) {
-                  if (!context.mounted) return;
-                  showFToast(
-                    context: context,
-                    icon: const Icon(FLucideIcons.circleX),
-                    variant: .destructive,
-                    title: Text('error'.tr()),
-                    description: Text('errorGeneric'.tr()),
-                    alignment: .bottomCenter,
-                  );
-                }
-              },
-              child: Text('profile.commit'.tr()),
-            ),
+          prefixes: [
+            FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
           ],
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: sportAsync.when(
+            data: (sport) => switch (sport) {
+              Sport.soccer => const SoccerProfileWidget(),
+              Sport.basketball => const BasketballProfileWidget(),
+              Sport.badminton => const BadmintonProfileWidget(),
+              Sport.tennis => const TennisProfileWidget(),
+              Sport.pickleball => const PickleballProfileWidget(),
+              Sport.others => const SizedBox.shrink(),
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+          ),
         ),
       ),
     );

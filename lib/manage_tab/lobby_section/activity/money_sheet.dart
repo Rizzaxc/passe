@@ -7,6 +7,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../core/format.dart';
 import '../../../../core/payment/pay_recipient.dart';
+import '../../../../router.dart';
 import '../../../../ui/main.dart';
 import 'money_controller.dart';
 
@@ -203,23 +204,37 @@ class _MoneyCardState extends ConsumerState<_MoneyCard> {
         children: [
           Row(
             children: [
-              PUserAvatar(
-                userId: balance.userId,
-                username: balance.username,
-                generatedAvatar: balance.generatedAvatar,
-                radius: 15,
-              ),
-              const SizedBox(width: 9),
               Expanded(
-                child: Text(
-                  balance.username,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.theme.typography.body.sm.copyWith(
-                    fontWeight: FontWeight.w700,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => UserRoute(
+                    id: balance.userId,
+                    $extra: balance.username,
+                  ).push(context),
+                  child: Row(
+                    children: [
+                      PUserAvatar(
+                        userId: balance.userId,
+                        username: balance.username,
+                        generatedAvatar: balance.generatedAvatar,
+                        radius: 15,
+                      ),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(
+                          balance.username,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.theme.typography.body.sm.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
+              const SizedBox(width: 6),
               Text(
                 _signedVnd(balance.signedTotal),
                 style: TextStyle(

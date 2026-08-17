@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../router.dart';
 import '../ui/main.dart';
 import 'compose_controller.dart';
 
@@ -90,6 +91,13 @@ class _TagPickerSheetState extends ConsumerState<_TagPickerSheet> {
                         username: c.username,
                         generatedAvatar: c.generatedAvatar,
                         radius: 16,
+                        // Own tap target nested inside the tile's
+                        // selection-tap area — wins the gesture arena, so the
+                        // avatar opens the profile while the rest of the
+                        // tile still toggles the tag selection.
+                        onTap: () =>
+                            UserRoute(id: c.userId, $extra: c.username)
+                                .push(context),
                       ),
                       title: Text(
                         c.username,

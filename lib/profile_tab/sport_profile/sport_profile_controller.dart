@@ -6,135 +6,66 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../auth/auth_controller.dart';
 import '../../core/model/enum.dart';
 import '../../core/model/sport_profile.dart';
-import '../../core/state/selected_sport_state.dart';
+import '../write_failure_support.dart';
 
 part 'sport_profile_controller.g.dart';
 
-@riverpod
-bool sportProfileHasUncommittedChanges(Ref ref) {
-  final sport = ref.watch(selectedSportStateProvider).asData?.value;
-  return switch (sport) {
-    Sport.soccer =>
-      ref.watch(soccerProfileControllerProvider).profile !=
-          ref.read(soccerProfileControllerProvider.notifier).initialProfile,
-    Sport.basketball =>
-      ref.watch(basketballProfileControllerProvider).profile !=
-          ref.read(basketballProfileControllerProvider.notifier).initialProfile,
-    Sport.badminton =>
-      ref.watch(badmintonProfileControllerProvider).profile !=
-          ref.read(badmintonProfileControllerProvider.notifier).initialProfile,
-    Sport.tennis =>
-      ref.watch(tennisProfileControllerProvider).profile !=
-          ref.read(tennisProfileControllerProvider.notifier).initialProfile,
-    Sport.pickleball =>
-      ref.watch(pickleballProfileControllerProvider).profile !=
-          ref.read(pickleballProfileControllerProvider.notifier).initialProfile,
-    _ => false,
-  };
-}
-
-void discardSportProfileChanges(WidgetRef ref, Sport sport) {
-  switch (sport) {
-    case Sport.soccer:
-      ref.read(soccerProfileControllerProvider.notifier).discardChanges();
-    case Sport.basketball:
-      ref.read(basketballProfileControllerProvider.notifier).discardChanges();
-    case Sport.badminton:
-      ref.read(badmintonProfileControllerProvider.notifier).discardChanges();
-    case Sport.tennis:
-      ref.read(tennisProfileControllerProvider.notifier).discardChanges();
-    case Sport.pickleball:
-      ref.read(pickleballProfileControllerProvider.notifier).discardChanges();
-    case Sport.others:
-      break;
-  }
-}
-
 /// Shared dispatch used by both [SportProfileScreen] and the onboarding
-/// profile step so there's one place that knows how to commit/read a sport's
-/// profile instead of a private switch duplicated per call site.
-Future<void> commitSportProfile(WidgetRef ref, Sport sport) => switch (sport) {
-  Sport.soccer => ref.read(soccerProfileControllerProvider.notifier).commit(),
+/// profile step so there's one place that knows how to flush/read a sport's
+/// profile instead of a private switch duplicated per call site. Called from
+/// a `PFlushOnPop` handler (or onboarding's sheet-close), not a button press.
+Future<void> flushSportProfile(WidgetRef ref, Sport sport) => switch (sport) {
+  Sport.soccer => ref.read(soccerProfileControllerProvider.notifier).flush(),
   Sport.basketball =>
-    ref.read(basketballProfileControllerProvider.notifier).commit(),
+    ref.read(basketballProfileControllerProvider.notifier).flush(),
   Sport.badminton =>
-    ref.read(badmintonProfileControllerProvider.notifier).commit(),
-  Sport.tennis => ref.read(tennisProfileControllerProvider.notifier).commit(),
+    ref.read(badmintonProfileControllerProvider.notifier).flush(),
+  Sport.tennis => ref.read(tennisProfileControllerProvider.notifier).flush(),
   Sport.pickleball =>
-    ref.read(pickleballProfileControllerProvider.notifier).commit(),
+    ref.read(pickleballProfileControllerProvider.notifier).flush(),
   Sport.others => Future.value(),
 };
 
-/// Current `elo_seed` value + whether it's locked (already committed) for
-/// [sport]. Locking is permanent once set — see `EloSeedField`.
-({EloSeed? seed, bool locked}) readSportEloSeed(WidgetRef ref, Sport sport) =>
-    switch (sport) {
-      Sport.soccer => (
-        seed: ref.watch(soccerProfileControllerProvider).profile.eloSeed,
-        locked: ref.watch(soccerProfileControllerProvider).eloSeedLocked,
-      ),
-      Sport.basketball => (
-        seed: ref.watch(basketballProfileControllerProvider).profile.eloSeed,
-        locked: ref.watch(basketballProfileControllerProvider).eloSeedLocked,
-      ),
-      Sport.badminton => (
-        seed: ref.watch(badmintonProfileControllerProvider).profile.eloSeed,
-        locked: ref.watch(badmintonProfileControllerProvider).eloSeedLocked,
-      ),
-      Sport.tennis => (
-        seed: ref.watch(tennisProfileControllerProvider).profile.eloSeed,
-        locked: ref.watch(tennisProfileControllerProvider).eloSeedLocked,
-      ),
-      Sport.pickleball => (
-        seed: ref.watch(pickleballProfileControllerProvider).profile.eloSeed,
-        locked: ref.watch(pickleballProfileControllerProvider).eloSeedLocked,
-      ),
-      Sport.others => (seed: null, locked: false),
-    };
+/// Current `elo_seed` value for [sport]. Self-declared and freely editable —
+/// the DB only ever uses the *first* value it sees to seed `user_rating`
+/// (`fn_seed_initial_elo`), it never blocks a later change.
+EloSeed? readSportEloSeed(WidgetRef ref, Sport sport) => switch (sport) {
+  Sport.soccer => ref.watch(soccerProfileControllerProvider).eloSeed,
+  Sport.basketball => ref.watch(basketballProfileControllerProvider).eloSeed,
+  Sport.badminton => ref.watch(badmintonProfileControllerProvider).eloSeed,
+  Sport.tennis => ref.watch(tennisProfileControllerProvider).eloSeed,
+  Sport.pickleball => ref.watch(pickleballProfileControllerProvider).eloSeed,
+  Sport.others => null,
+};
 
 /// Sets only the draft `elo_seed` for [sport], leaving its other fields
-/// untouched. Does not persist — call [commitSportProfile] to write it.
+/// untouched. Does not persist — call [flushSportProfile] to write it.
 void setSportEloSeed(WidgetRef ref, Sport sport, EloSeed seed) {
   switch (sport) {
     case Sport.soccer:
       final notifier = ref.read(soccerProfileControllerProvider.notifier);
       notifier.updateDraft(
-        ref
-            .read(soccerProfileControllerProvider)
-            .profile
-            .copyWith(eloSeed: seed),
+        ref.read(soccerProfileControllerProvider).copyWith(eloSeed: seed),
       );
     case Sport.basketball:
       final notifier = ref.read(basketballProfileControllerProvider.notifier);
       notifier.updateDraft(
-        ref
-            .read(basketballProfileControllerProvider)
-            .profile
-            .copyWith(eloSeed: seed),
+        ref.read(basketballProfileControllerProvider).copyWith(eloSeed: seed),
       );
     case Sport.badminton:
       final notifier = ref.read(badmintonProfileControllerProvider.notifier);
       notifier.updateDraft(
-        ref
-            .read(badmintonProfileControllerProvider)
-            .profile
-            .copyWith(eloSeed: seed),
+        ref.read(badmintonProfileControllerProvider).copyWith(eloSeed: seed),
       );
     case Sport.tennis:
       final notifier = ref.read(tennisProfileControllerProvider.notifier);
       notifier.updateDraft(
-        ref
-            .read(tennisProfileControllerProvider)
-            .profile
-            .copyWith(eloSeed: seed),
+        ref.read(tennisProfileControllerProvider).copyWith(eloSeed: seed),
       );
     case Sport.pickleball:
       final notifier = ref.read(pickleballProfileControllerProvider.notifier);
       notifier.updateDraft(
-        ref
-            .read(pickleballProfileControllerProvider)
-            .profile
-            .copyWith(eloSeed: seed),
+        ref.read(pickleballProfileControllerProvider).copyWith(eloSeed: seed),
       );
     case Sport.others:
       break;
@@ -143,19 +74,17 @@ void setSportEloSeed(WidgetRef ref, Sport sport, EloSeed seed) {
 
 // ─── Soccer ───────────────────────────────────────────────────────────────────
 
-typedef SoccerProfileState = ({SoccerProfile profile, bool eloSeedLocked});
-
 @riverpod
 class SoccerProfileController extends _$SoccerProfileController {
   final _supabase = Supabase.instance.client;
   final _talker = Talker();
-  SoccerProfile initialProfile = const SoccerProfile();
+  late final _failures = WriteFailureHandler(ref);
 
   @override
-  SoccerProfileState build() {
+  SoccerProfile build() {
     final user = ref.watch(authControllerProvider).value;
     if (user?.id != null) _fetch(user!.id!);
-    return (profile: const SoccerProfile(), eloSeedLocked: false);
+    return const SoccerProfile();
   }
 
   Future<void> _fetch(String userId) async {
@@ -166,71 +95,48 @@ class SoccerProfileController extends _$SoccerProfileController {
           .eq('user_id', userId)
           .maybeSingle()
           .timeout(const Duration(seconds: 5));
-      if (response != null) {
-        final profile = SoccerProfile.fromJson(response);
-        if (ref.mounted) {
-          initialProfile = profile;
-          state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
-        }
+      if (response != null && ref.mounted) {
+        state = SoccerProfile.fromJson(response);
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error fetching soccer profile');
     }
   }
 
-  void updateDraft(SoccerProfile profile) =>
-      state = (profile: profile, eloSeedLocked: state.eloSeedLocked);
+  void updateDraft(SoccerProfile profile) => state = profile;
 
-  void reset() => ref.invalidateSelf();
-  void discardChanges() =>
-      state = (profile: initialProfile, eloSeedLocked: state.eloSeedLocked);
-
-  Future<void> commit() async {
+  Future<void> flush() async {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
-    final draft = state.profile;
     try {
       await _supabase
           .from('soccer_profile')
-          .upsert({'user_id': user!.id!, ...draft.toJson()})
+          .upsert({'user_id': user!.id!, ...state.toJson()})
           .timeout(const Duration(seconds: 5));
-      // `commit()` runs alongside `ProfileController.commit()` via
-      // `Future.wait` on the profile screen's commit button, whose `finally`
-      // refreshes `authControllerProvider` — which this controller watches.
-      // That refresh can dispose/rebuild this controller before this upsert's
-      // await returns, so the state write below must be `ref.mounted`-gated
-      // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
-      // after disposed" on the stale instance.
-      if (!ref.mounted) return;
-      initialProfile = draft;
-      if (draft.eloSeed != null) {
-        state = (profile: draft, eloSeedLocked: true);
-      }
     } catch (e, st) {
-      _talker.handle(e, st, 'Error committing soccer profile');
-      rethrow;
+      _failures.handle(
+        e,
+        st,
+        logMessage: 'Error flushing soccer profile',
+        resync: () => ref.invalidateSelf(),
+      );
     }
   }
 }
 
 // ─── Basketball ───────────────────────────────────────────────────────────────
 
-typedef BasketballProfileState = ({
-  BasketballProfile profile,
-  bool eloSeedLocked,
-});
-
 @riverpod
 class BasketballProfileController extends _$BasketballProfileController {
   final _supabase = Supabase.instance.client;
   final _talker = Talker();
-  BasketballProfile initialProfile = const BasketballProfile();
+  late final _failures = WriteFailureHandler(ref);
 
   @override
-  BasketballProfileState build() {
+  BasketballProfile build() {
     final user = ref.watch(authControllerProvider).value;
     if (user?.id != null) _fetch(user!.id!);
-    return (profile: const BasketballProfile(), eloSeedLocked: false);
+    return const BasketballProfile();
   }
 
   Future<void> _fetch(String userId) async {
@@ -241,71 +147,48 @@ class BasketballProfileController extends _$BasketballProfileController {
           .eq('user_id', userId)
           .maybeSingle()
           .timeout(const Duration(seconds: 5));
-      if (response != null) {
-        final profile = BasketballProfile.fromJson(response);
-        if (ref.mounted) {
-          initialProfile = profile;
-          state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
-        }
+      if (response != null && ref.mounted) {
+        state = BasketballProfile.fromJson(response);
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error fetching basketball profile');
     }
   }
 
-  void updateDraft(BasketballProfile profile) =>
-      state = (profile: profile, eloSeedLocked: state.eloSeedLocked);
+  void updateDraft(BasketballProfile profile) => state = profile;
 
-  void reset() => ref.invalidateSelf();
-  void discardChanges() =>
-      state = (profile: initialProfile, eloSeedLocked: state.eloSeedLocked);
-
-  Future<void> commit() async {
+  Future<void> flush() async {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
-    final draft = state.profile;
     try {
       await _supabase
           .from('basketball_profile')
-          .upsert({'user_id': user!.id!, ...draft.toJson()})
+          .upsert({'user_id': user!.id!, ...state.toJson()})
           .timeout(const Duration(seconds: 5));
-      // `commit()` runs alongside `ProfileController.commit()` via
-      // `Future.wait` on the profile screen's commit button, whose `finally`
-      // refreshes `authControllerProvider` — which this controller watches.
-      // That refresh can dispose/rebuild this controller before this upsert's
-      // await returns, so the state write below must be `ref.mounted`-gated
-      // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
-      // after disposed" on the stale instance.
-      if (!ref.mounted) return;
-      initialProfile = draft;
-      if (draft.eloSeed != null) {
-        state = (profile: draft, eloSeedLocked: true);
-      }
     } catch (e, st) {
-      _talker.handle(e, st, 'Error committing basketball profile');
-      rethrow;
+      _failures.handle(
+        e,
+        st,
+        logMessage: 'Error flushing basketball profile',
+        resync: () => ref.invalidateSelf(),
+      );
     }
   }
 }
 
 // ─── Badminton ────────────────────────────────────────────────────────────────
 
-typedef BadmintonProfileState = ({
-  BadmintonProfile profile,
-  bool eloSeedLocked,
-});
-
 @riverpod
 class BadmintonProfileController extends _$BadmintonProfileController {
   final _supabase = Supabase.instance.client;
   final _talker = Talker();
-  BadmintonProfile initialProfile = const BadmintonProfile();
+  late final _failures = WriteFailureHandler(ref);
 
   @override
-  BadmintonProfileState build() {
+  BadmintonProfile build() {
     final user = ref.watch(authControllerProvider).value;
     if (user?.id != null) _fetch(user!.id!);
-    return (profile: const BadmintonProfile(), eloSeedLocked: false);
+    return const BadmintonProfile();
   }
 
   Future<void> _fetch(String userId) async {
@@ -316,68 +199,48 @@ class BadmintonProfileController extends _$BadmintonProfileController {
           .eq('user_id', userId)
           .maybeSingle()
           .timeout(const Duration(seconds: 5));
-      if (response != null) {
-        final profile = BadmintonProfile.fromJson(response);
-        if (ref.mounted) {
-          initialProfile = profile;
-          state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
-        }
+      if (response != null && ref.mounted) {
+        state = BadmintonProfile.fromJson(response);
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error fetching badminton profile');
     }
   }
 
-  void updateDraft(BadmintonProfile profile) =>
-      state = (profile: profile, eloSeedLocked: state.eloSeedLocked);
+  void updateDraft(BadmintonProfile profile) => state = profile;
 
-  void reset() => ref.invalidateSelf();
-  void discardChanges() =>
-      state = (profile: initialProfile, eloSeedLocked: state.eloSeedLocked);
-
-  Future<void> commit() async {
+  Future<void> flush() async {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
-    final draft = state.profile;
     try {
       await _supabase
           .from('badminton_profile')
-          .upsert({'user_id': user!.id!, ...draft.toJson()})
+          .upsert({'user_id': user!.id!, ...state.toJson()})
           .timeout(const Duration(seconds: 5));
-      // `commit()` runs alongside `ProfileController.commit()` via
-      // `Future.wait` on the profile screen's commit button, whose `finally`
-      // refreshes `authControllerProvider` — which this controller watches.
-      // That refresh can dispose/rebuild this controller before this upsert's
-      // await returns, so the state write below must be `ref.mounted`-gated
-      // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
-      // after disposed" on the stale instance.
-      if (!ref.mounted) return;
-      initialProfile = draft;
-      if (draft.eloSeed != null) {
-        state = (profile: draft, eloSeedLocked: true);
-      }
     } catch (e, st) {
-      _talker.handle(e, st, 'Error committing badminton profile');
-      rethrow;
+      _failures.handle(
+        e,
+        st,
+        logMessage: 'Error flushing badminton profile',
+        resync: () => ref.invalidateSelf(),
+      );
     }
   }
 }
 
 // ─── Tennis ───────────────────────────────────────────────────────────────────
 
-typedef TennisProfileState = ({TennisProfile profile, bool eloSeedLocked});
-
 @riverpod
 class TennisProfileController extends _$TennisProfileController {
   final _supabase = Supabase.instance.client;
   final _talker = Talker();
-  TennisProfile initialProfile = const TennisProfile();
+  late final _failures = WriteFailureHandler(ref);
 
   @override
-  TennisProfileState build() {
+  TennisProfile build() {
     final user = ref.watch(authControllerProvider).value;
     if (user?.id != null) _fetch(user!.id!);
-    return (profile: const TennisProfile(), eloSeedLocked: false);
+    return const TennisProfile();
   }
 
   Future<void> _fetch(String userId) async {
@@ -388,71 +251,48 @@ class TennisProfileController extends _$TennisProfileController {
           .eq('user_id', userId)
           .maybeSingle()
           .timeout(const Duration(seconds: 5));
-      if (response != null) {
-        final profile = TennisProfile.fromJson(response);
-        if (ref.mounted) {
-          initialProfile = profile;
-          state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
-        }
+      if (response != null && ref.mounted) {
+        state = TennisProfile.fromJson(response);
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error fetching tennis profile');
     }
   }
 
-  void updateDraft(TennisProfile profile) =>
-      state = (profile: profile, eloSeedLocked: state.eloSeedLocked);
+  void updateDraft(TennisProfile profile) => state = profile;
 
-  void reset() => ref.invalidateSelf();
-  void discardChanges() =>
-      state = (profile: initialProfile, eloSeedLocked: state.eloSeedLocked);
-
-  Future<void> commit() async {
+  Future<void> flush() async {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
-    final draft = state.profile;
     try {
       await _supabase
           .from('tennis_profile')
-          .upsert({'user_id': user!.id!, ...draft.toJson()})
+          .upsert({'user_id': user!.id!, ...state.toJson()})
           .timeout(const Duration(seconds: 5));
-      // `commit()` runs alongside `ProfileController.commit()` via
-      // `Future.wait` on the profile screen's commit button, whose `finally`
-      // refreshes `authControllerProvider` — which this controller watches.
-      // That refresh can dispose/rebuild this controller before this upsert's
-      // await returns, so the state write below must be `ref.mounted`-gated
-      // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
-      // after disposed" on the stale instance.
-      if (!ref.mounted) return;
-      initialProfile = draft;
-      if (draft.eloSeed != null) {
-        state = (profile: draft, eloSeedLocked: true);
-      }
     } catch (e, st) {
-      _talker.handle(e, st, 'Error committing tennis profile');
-      rethrow;
+      _failures.handle(
+        e,
+        st,
+        logMessage: 'Error flushing tennis profile',
+        resync: () => ref.invalidateSelf(),
+      );
     }
   }
 }
 
 // ─── Pickleball ───────────────────────────────────────────────────────────────
 
-typedef PickleballProfileState = ({
-  PickleballProfile profile,
-  bool eloSeedLocked,
-});
-
 @riverpod
 class PickleballProfileController extends _$PickleballProfileController {
   final _supabase = Supabase.instance.client;
   final _talker = Talker();
-  PickleballProfile initialProfile = const PickleballProfile();
+  late final _failures = WriteFailureHandler(ref);
 
   @override
-  PickleballProfileState build() {
+  PickleballProfile build() {
     final user = ref.watch(authControllerProvider).value;
     if (user?.id != null) _fetch(user!.id!);
-    return (profile: const PickleballProfile(), eloSeedLocked: false);
+    return const PickleballProfile();
   }
 
   Future<void> _fetch(String userId) async {
@@ -463,49 +303,31 @@ class PickleballProfileController extends _$PickleballProfileController {
           .eq('user_id', userId)
           .maybeSingle()
           .timeout(const Duration(seconds: 5));
-      if (response != null) {
-        final profile = PickleballProfile.fromJson(response);
-        if (ref.mounted) {
-          initialProfile = profile;
-          state = (profile: profile, eloSeedLocked: profile.eloSeed != null);
-        }
+      if (response != null && ref.mounted) {
+        state = PickleballProfile.fromJson(response);
       }
     } catch (e, st) {
       _talker.handle(e, st, 'Error fetching pickleball profile');
     }
   }
 
-  void updateDraft(PickleballProfile profile) =>
-      state = (profile: profile, eloSeedLocked: state.eloSeedLocked);
+  void updateDraft(PickleballProfile profile) => state = profile;
 
-  void reset() => ref.invalidateSelf();
-  void discardChanges() =>
-      state = (profile: initialProfile, eloSeedLocked: state.eloSeedLocked);
-
-  Future<void> commit() async {
+  Future<void> flush() async {
     final user = ref.read(authControllerProvider).value;
     if (user?.id == null) return;
-    final draft = state.profile;
     try {
       await _supabase
           .from('pickleball_profile')
-          .upsert({'user_id': user!.id!, ...draft.toJson()})
+          .upsert({'user_id': user!.id!, ...state.toJson()})
           .timeout(const Duration(seconds: 5));
-      // `commit()` runs alongside `ProfileController.commit()` via
-      // `Future.wait` on the profile screen's commit button, whose `finally`
-      // refreshes `authControllerProvider` — which this controller watches.
-      // That refresh can dispose/rebuild this controller before this upsert's
-      // await returns, so the state write below must be `ref.mounted`-gated
-      // (matching `_fetch`'s existing guard) or it throws "Cannot use Ref
-      // after disposed" on the stale instance.
-      if (!ref.mounted) return;
-      initialProfile = draft;
-      if (draft.eloSeed != null) {
-        state = (profile: draft, eloSeedLocked: true);
-      }
     } catch (e, st) {
-      _talker.handle(e, st, 'Error committing pickleball profile');
-      rethrow;
+      _failures.handle(
+        e,
+        st,
+        logMessage: 'Error flushing pickleball profile',
+        resync: () => ref.invalidateSelf(),
+      );
     }
   }
 }

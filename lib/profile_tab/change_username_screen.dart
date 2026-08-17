@@ -65,8 +65,7 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tag =
-        ref.watch(authControllerProvider).value?.tagNumber ?? '0000';
+    final tag = ref.watch(authControllerProvider).value?.tagNumber ?? '0000';
 
     return FScaffold(
       resizeToAvoidBottomInset: false,
@@ -77,7 +76,12 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
         ],
       ),
       child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          16 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
         child: Form(
           key: _formKey,
           child: Column(
@@ -91,8 +95,10 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
                   controller: _usernameController,
                 ),
                 suffixBuilder: (context, _, _) => Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   child: Text(
                     '#$tag',
                     style: context.theme.typography.body.sm.copyWith(
@@ -116,8 +122,10 @@ class _ChangeUsernameScreenState extends ConsumerState<ChangeUsernameScreen> {
                 maxLength: 16,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 suffixBuilder: (context, _, _) => Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   child: Text(
                     '#$tag',
                     style: context.theme.typography.body.sm.copyWith(

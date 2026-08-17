@@ -8,8 +8,6 @@ class SportEmptyPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PCard(
-      subtitle: Text('profile.sportFeatureExplanation'.tr()),
-    );
+    return PCard(subtitle: Text('profile.sportFeatureExplanation'.tr()));
   }
 }

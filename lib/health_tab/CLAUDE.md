@@ -174,6 +174,16 @@ renders. (Previously undocumented — added in the 2026-07 audit pass.)
 - **HR zones are a 3-zone LT model** (easy/moderate/hard by `lt1_bpm`/`lt2_bpm`). Defaults estimate
   LT1≈80% / LT2≈88% of an age-bucket max HR; `HrThresholds.estimated` drives the "estimated" tag in
   the recap sheet until the user declares real thresholds on `user_health_link`.
+- **Zone time excludes long *stationary* pauses, not just low HR.** `_calculateHrZones`
+  (`health_data_service.dart`) cross-checks every below-LT1 stretch against step data from the same
+  window before treating it as a break — duration alone can't tell "sitting on the bench" apart
+  from "still playing, just very fit / a genuinely light session" (both look like sustained low HR).
+  If there's corroborating movement (`_movementStepsPerMinuteFloor`), the whole stretch counts as
+  easy no matter how long; if the player is stationary, only the first `_pauseGraceSeconds` (90s)
+  count and the rest is excluded from every zone entirely. Social sports (badminton, basketball,
+  soccer…) aren't endurance sports — a water break or side-change shouldn't read as several minutes
+  of low-intensity play and drag `effort_score` (and the zone seconds that feed `session_load`/
+  Vitality's load component) down the way it would for continuous steady-state cardio.
 - `saveActivityMetrics` strips null keys before upsert so the DB keeps its `id`/`recorded_at`
   defaults; the dismissal tombstone reuses the same `(user_id, activity_id)` unique constraint.
 - Backend writes keep the `.timeout(const Duration(seconds: 5))`.

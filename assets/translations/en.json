@@ -464,7 +464,9 @@
     },
     "joinRequests": {
       "title": "Join Requests",
-      "empty": "No pending join requests."
+      "empty": "No pending join requests.",
+      "accepted": "Accepted",
+      "declined": "Declined"
     },
     "invites": {
       "title": "Invites",
@@ -693,7 +695,11 @@
     "passwordResetSuccess": "Password reset successfully",
     "resetFailed": "Reset Failed",
     "otpInvalidOrExpired": "Invalid or expired code",
-    "resetEmailFailed": "Could not send the reset code"
+    "resetEmailFailed": "Could not send the reset code",
+    "legalPrefix": "By continuing, you agree to our ",
+    "termsOfService": "Terms of Service",
+    "legalMiddle": " and ",
+    "privacyNotice": "Privacy Notice"
   },
   "nav": {
     "home": "Home",
@@ -807,6 +813,8 @@
     "usernameInvalidChars": "Username can only contain letters and numbers",
     "usernameTaken": "This username is already taken",
     "confirmLogout": "Confirm Logout?",
+    "termsPrivacyTitle": "Terms & Privacy",
+    "confirmDeleteAccountHold": "Hold to delete account",
     "deleteAccount": "Delete account",
     "deleteAccountTitle": "Permanently delete account",
     "deleteAccountWarning": "This cannot be undone. Your profile, posts, messages, match history, and lobby memberships will be permanently deleted.",
@@ -824,10 +832,6 @@
     "cropAvatar": "Adjust Photo",
     "uploadFailed": "Failed to upload photo",
     "networkMaxReached": "Maximum 5 networks. Remove one first.",
-    "discardChangesTitle": "Discard changes?",
-    "discardChangesBody": "Your profile changes have not been saved.",
-    "discardChangesStay": "Keep editing",
-    "discardChangesLeave": "Discard",
     "paymentInfo": "Payment Info",
     "paymentInfoExplanation": "Add banks or e-wallets you can receive money on. This is shown to your friends and lobby mates so they can pay you outside the app — Passe does not process any payments.",
     "paymentInfoEmpty": "No payment info added yet. Add a bank or e-wallet so friends and lobby mates can pay you.",
@@ -1251,7 +1255,7 @@
     },
     "trend": {
       "period": "Last 90 days",
-      "insufficient": "Not enough data to chart yet."
+      "insufficient": "Not enough data yet"
     },
     "detected": {
       "title": "Detected workouts",
@@ -1344,9 +1348,7 @@
         "good": "Play consistently and perform above the average level.",
         "advanced": "Play competitively and want evenly matched opponents."
       },
-      "skillLockWarning": "Your starting skill level can only be set once and can't be changed after saving.",
-      "save": "Save & continue",
-      "saveError": "Couldn't save your profile. You can try again from the Profile tab."
+      "done": "OK"
     },
     "guest": {
       "title": "Want a quick look at how Passe works?",

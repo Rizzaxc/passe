@@ -4,13 +4,14 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../router.dart';
 import '../../ui/sheet.dart';
 import '../../ui/user_avatar.dart';
 import 'join_requests_controller.dart';
 import 'members/controller.dart';
 
-void showJoinRequestsSheet(BuildContext context, String lobbyId) {
-  showPSheet(
+Future<void> showJoinRequestsSheet(BuildContext context, String lobbyId) {
+  return showPSheet(
     context: context,
     builder: (_) => _JoinRequestsSheet(lobbyId: lobbyId),
   );
@@ -136,35 +137,46 @@ class _RequestRowState extends ConsumerState<_RequestRow> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          PUserAvatar(
-            userId: r.initiatorUserId,
-            username: r.username,
-            generatedAvatar: r.generatedAvatar,
-            radius: 18,
-          ),
-          const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  r.username,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: colors.foreground,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => UserRoute(id: r.initiatorUserId).push(context),
+              child: Row(
+                children: [
+                  PUserAvatar(
+                    userId: r.initiatorUserId,
+                    username: r.username,
+                    generatedAvatar: r.generatedAvatar,
+                    radius: 18,
                   ),
-                ),
-                Text(
-                  '#${r.tagNumber}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colors.mutedForeground,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          r.username,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: colors.foreground,
+                          ),
+                        ),
+                        Text(
+                          '#${r.tagNumber}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.mutedForeground,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
+          const SizedBox(width: 8),
           if (_loading)
             const SizedBox(
               width: 20,

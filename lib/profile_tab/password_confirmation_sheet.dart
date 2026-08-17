@@ -14,7 +14,10 @@ import 'change_password_screen.dart';
 /// one (Google/Apple-only accounts), by setting one up on the spot.
 ///
 /// Resolves `false` if the user backs out at any point.
-Future<bool> requirePasswordConfirmation(BuildContext context, WidgetRef ref) async {
+Future<bool> requirePasswordConfirmation(
+  BuildContext context,
+  WidgetRef ref,
+) async {
   final authNotifier = ref.read(authControllerProvider.notifier);
 
   if (!authNotifier.hasPasswordCredential()) {
@@ -40,7 +43,8 @@ class _ConfirmPasswordSheet extends ConsumerStatefulWidget {
   const _ConfirmPasswordSheet();
 
   @override
-  ConsumerState<_ConfirmPasswordSheet> createState() => _ConfirmPasswordSheetState();
+  ConsumerState<_ConfirmPasswordSheet> createState() =>
+      _ConfirmPasswordSheetState();
 }
 
 class _ConfirmPasswordSheetState extends ConsumerState<_ConfirmPasswordSheet> {
@@ -75,7 +79,11 @@ class _ConfirmPasswordSheetState extends ConsumerState<_ConfirmPasswordSheet> {
         icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
         title: Text('error'.tr()),
-        description: Text(e is AuthException ? 'payment.incorrectPassword'.tr() : 'errorGeneric'.tr()),
+        description: Text(
+          e is AuthException
+              ? 'payment.incorrectPassword'.tr()
+              : 'errorGeneric'.tr(),
+        ),
         alignment: .bottomCenter,
       );
     } finally {
@@ -111,7 +119,9 @@ class _ConfirmPasswordSheetState extends ConsumerState<_ConfirmPasswordSheet> {
             FTextFormField.password(
               label: Text('auth.passwordLabel'.tr()),
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              control: FTextFieldControl.managed(controller: _passwordController),
+              control: FTextFieldControl.managed(
+                controller: _passwordController,
+              ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'auth.passwordEmpty'.tr();
@@ -126,7 +136,10 @@ class _ConfirmPasswordSheetState extends ConsumerState<_ConfirmPasswordSheet> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : Text('payment.confirmPasswordAction'.tr()),
             ),

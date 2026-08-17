@@ -264,6 +264,19 @@ class _TrendChartCard extends StatelessWidget {
       if (v != null) spots.add(FlSpot(i.toDouble(), v));
     }
 
+    // The chart always renders — an empty axis reads worse than a flag. With
+    // fewer than 2 real points there's nothing to draw a real trend from, so
+    // fall back to a flat, muted, dashed line (at the one known value, or 0)
+    // and surface a "not enough data" chip instead of blanking the card.
+    final reliable = spots.length >= 2;
+    final maxX = (days.length - 1).clamp(1, double.infinity).toDouble();
+    final displaySpots = reliable
+        ? spots
+        : [
+            FlSpot(0, spots.isNotEmpty ? spots.first.y : 0),
+            FlSpot(maxX, spots.isNotEmpty ? spots.first.y : 0),
+          ];
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -293,43 +306,86 @@ class _TrendChartCard extends StatelessWidget {
           ),
           SizedBox(
             height: 140,
-            child: spots.length < 2
-                ? Center(
-                    child: Text(
-                      'health.trend.insufficient'.tr(),
-                      style: context.theme.typography.body.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                  )
-                : LineChart(
-                    LineChartData(
-                      gridData: const FlGridData(show: false),
-                      titlesData: const FlTitlesData(show: false),
-                      borderData: FlBorderData(show: false),
-                      lineTouchData: const LineTouchData(enabled: false),
-                      minX: 0,
-                      maxX: (days.length - 1).toDouble(),
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: spots,
-                          isCurved: true,
-                          color: colors.primary,
-                          barWidth: 2,
-                          dotData: const FlDotData(show: false),
-                          belowBarData: BarAreaData(
-                            show: true,
-                            color: colors.primary.withValues(alpha: 0.1),
-                          ),
+            child: Stack(
+              children: [
+                LineChart(
+                  LineChartData(
+                    gridData: const FlGridData(show: false),
+                    titlesData: const FlTitlesData(show: false),
+                    borderData: FlBorderData(show: false),
+                    lineTouchData: const LineTouchData(enabled: false),
+                    minX: 0,
+                    maxX: maxX,
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: displaySpots,
+                        isCurved: reliable,
+                        color: reliable ? colors.primary : colors.border,
+                        barWidth: 2,
+                        dashArray: reliable ? null : [6, 4],
+                        dotData: const FlDotData(show: false),
+                        belowBarData: BarAreaData(
+                          show: reliable,
+                          color: colors.primary.withValues(alpha: 0.1),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (!reliable)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: _UnreliableDataChip(
+                      label: 'health.trend.insufficient'.tr(),
                     ),
                   ),
+              ],
+            ),
           ),
           Text(
             'health.trend.period'.tr(),
             style: context.theme.typography.body.xs.copyWith(
               color: colors.mutedForeground,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Flags a fallback flat/dashed trend line as not a real reading, rather
+/// than blanking the chart entirely — an empty state never looks good, but
+/// a fabricated-looking line without a flag would be misleading.
+class _UnreliableDataChip extends StatelessWidget {
+  final String label;
+  const _UnreliableDataChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: colors.secondary,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 4,
+        children: [
+          Icon(
+            FLucideIcons.triangleAlert,
+            size: 11,
+            color: colors.mutedForeground,
+          ),
+          Text(
+            label,
+            style: context.theme.typography.body.xs.copyWith(
+              color: colors.mutedForeground,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

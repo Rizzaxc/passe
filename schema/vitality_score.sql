@@ -124,6 +124,7 @@ DECLARE
   v_eligible_from      date;
   v_has_prior_load     boolean;
   v_recompute_from     date;
+  v_has_any_session    boolean;
 
   -- Stored for observability / a future trend notification — no longer the
   -- driver of the load component (see below).
@@ -304,7 +305,18 @@ BEGIN
     v_weight_sum := v_weight_sum + 0.15;
   END IF;
 
-  IF (v_today - v_eligible_from) < 14 THEN
+  -- _vitality_scale floors an input of exactly 0 to scores[1] (20, the
+  -- "casual" tier), not 0/null — correct for someone genuinely-but-rarely
+  -- active, wrong for someone who has never captured a single real session.
+  -- The 14-day gate above only checks account age, so a long-time account's
+  -- very first sync (zero data) would otherwise ship that floor value as a
+  -- real-looking score. Require at least one real capture before scoring.
+  SELECT EXISTS(
+    SELECT 1 FROM public.activity_health_metrics m
+    WHERE m.user_id = p_user_id AND NOT m.dismissed
+  ) INTO v_has_any_session;
+
+  IF (v_today - v_eligible_from) < 14 OR NOT v_has_any_session THEN
     v_score := NULL;
   ELSE
     v_score := LEAST(100, (v_score_sum / v_weight_sum) + v_streak_bonus);

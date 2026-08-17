@@ -11,9 +11,8 @@ part of 'user_contact_controller.dart';
 /// The signed-in user's own contact info (`user_contact`: `zalo` + `zalo_public`), kept
 /// out of the broadly-readable `user.details` jsonb so its visibility (owner, friends,
 /// anyone if `zalo_public`, or a freeplay host is always public) is enforced by
-/// `user_contact`'s RLS, not client code. Draft/commit like `NetworkController` /
-/// `IndustryController` — edited locally by [updateDraft] (from `edit_zalo_sheet.dart`),
-/// only persisted when [commit] runs as part of `ProfileController.commit()`.
+/// `user_contact`'s RLS, not client code. [save] writes immediately — called from
+/// `edit_zalo_sheet.dart`'s "Done" button.
 
 @ProviderFor(UserContactController)
 final userContactControllerProvider = UserContactControllerProvider._();
@@ -21,17 +20,15 @@ final userContactControllerProvider = UserContactControllerProvider._();
 /// The signed-in user's own contact info (`user_contact`: `zalo` + `zalo_public`), kept
 /// out of the broadly-readable `user.details` jsonb so its visibility (owner, friends,
 /// anyone if `zalo_public`, or a freeplay host is always public) is enforced by
-/// `user_contact`'s RLS, not client code. Draft/commit like `NetworkController` /
-/// `IndustryController` — edited locally by [updateDraft] (from `edit_zalo_sheet.dart`),
-/// only persisted when [commit] runs as part of `ProfileController.commit()`.
+/// `user_contact`'s RLS, not client code. [save] writes immediately — called from
+/// `edit_zalo_sheet.dart`'s "Done" button.
 final class UserContactControllerProvider
     extends $AsyncNotifierProvider<UserContactController, UserContact> {
   /// The signed-in user's own contact info (`user_contact`: `zalo` + `zalo_public`), kept
   /// out of the broadly-readable `user.details` jsonb so its visibility (owner, friends,
   /// anyone if `zalo_public`, or a freeplay host is always public) is enforced by
-  /// `user_contact`'s RLS, not client code. Draft/commit like `NetworkController` /
-  /// `IndustryController` — edited locally by [updateDraft] (from `edit_zalo_sheet.dart`),
-  /// only persisted when [commit] runs as part of `ProfileController.commit()`.
+  /// `user_contact`'s RLS, not client code. [save] writes immediately — called from
+  /// `edit_zalo_sheet.dart`'s "Done" button.
   UserContactControllerProvider._()
     : super(
         from: null,
@@ -52,14 +49,13 @@ final class UserContactControllerProvider
 }
 
 String _$userContactControllerHash() =>
-    r'5ac4950f6d3ca5c52250329c6f042c64d689b71a';
+    r'2b41419dd7d91291cba307415fd422dc8f207926';
 
 /// The signed-in user's own contact info (`user_contact`: `zalo` + `zalo_public`), kept
 /// out of the broadly-readable `user.details` jsonb so its visibility (owner, friends,
 /// anyone if `zalo_public`, or a freeplay host is always public) is enforced by
-/// `user_contact`'s RLS, not client code. Draft/commit like `NetworkController` /
-/// `IndustryController` — edited locally by [updateDraft] (from `edit_zalo_sheet.dart`),
-/// only persisted when [commit] runs as part of `ProfileController.commit()`.
+/// `user_contact`'s RLS, not client code. [save] writes immediately — called from
+/// `edit_zalo_sheet.dart`'s "Done" button.
 
 abstract class _$UserContactController extends $AsyncNotifier<UserContact> {
   FutureOr<UserContact> build();

@@ -31,7 +31,9 @@ Future<void> showProfileSheet(BuildContext context, WidgetRef ref) async {
 /// Condensed, skippable profile fields — just the highest-signal
 /// matchmaking inputs (gender, age group, playtime, sport skill), reusing
 /// [ProfileController] and the sport-specific controllers rather than a
-/// full wizard through every profile field.
+/// full wizard through every profile field. Every field writes through
+/// immediately (this sheet has no subroute to buffer-and-flush-on-pop), so
+/// the closing button is just "done asking," not "save."
 class ProfileStep extends ConsumerWidget {
   const ProfileStep({super.key});
 
@@ -42,38 +44,13 @@ class ProfileStep extends ConsumerWidget {
     final details = profileState.details;
     final sport =
         ref.watch(selectedSportStateProvider).asData?.value ?? Sport.others;
-    final eloSeed = sport == Sport.others
-        ? (seed: null, locked: false)
-        : readSportEloSeed(ref, sport);
+    final eloSeed = sport == Sport.others ? null : readSportEloSeed(ref, sport);
 
     final genderIcon = details.gender == null
         ? null
-        : (details.gender == Gender.male ? FLucideIcons.mars : FLucideIcons.venus);
-
-    Future<void> save() async {
-      try {
-        await Future.wait([
-          ref.read(profileControllerProvider.notifier).commit(),
-          // Only write the sport profile if the user actually chose a skill
-          // level — elo_seed locks permanently once committed, so an empty
-          // pick should never trip that lock.
-          if (eloSeed.seed != null && sport != Sport.others)
-            commitSportProfile(ref, sport),
-        ]);
-      } catch (e) {
-        if (context.mounted) {
-          showFToast(
-            context: context,
-            icon: const Icon(FLucideIcons.circleX),
-            variant: .destructive,
-            title: Text('onboarding.profile.saveError'.tr()),
-            alignment: .bottomCenter,
-          );
-        }
-      }
-      // A failed write must never trap someone on this sheet.
-      if (context.mounted) Navigator.of(context).pop();
-    }
+        : (details.gender == Gender.male
+              ? FLucideIcons.mars
+              : FLucideIcons.venus);
 
     return SingleChildScrollView(
       child: Column(
@@ -86,8 +63,9 @@ class ProfileStep extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             'onboarding.profile.body'.tr(),
-            style: context.theme.typography.body.sm
-                .copyWith(color: colors.mutedForeground),
+            style: context.theme.typography.body.sm.copyWith(
+              color: colors.mutedForeground,
+            ),
           ),
           const SizedBox(height: 20),
           FTileGroup(
@@ -106,11 +84,10 @@ class ProfileStep extends ConsumerWidget {
                   ),
                 ),
                 onPress: () {
-                  final next =
-                      details.gender == Gender.male ? Gender.female : Gender.male;
-                  ref
-                      .read(profileControllerProvider.notifier)
-                      .updateDraft(details: details.copyWith(gender: next));
+                  final next = details.gender == Gender.male
+                      ? Gender.female
+                      : Gender.male;
+                  ref.read(profileControllerProvider.notifier).setGender(next);
                 },
               ),
             ],
@@ -122,8 +99,8 @@ class ProfileStep extends ConsumerWidget {
               initial: details.ageGroup,
               onChange: (selected) => ref
                   .read(profileControllerProvider.notifier)
-                  .updateDraft(
-                    details: details.copyWith(ageGroup: selected.firstOrNull),
+                  .updateDetailsAndFlush(
+                    details.copyWith(ageGroup: selected.firstOrNull),
                   ),
             ),
             children: <FSelectTile<AgeGroup>>[
@@ -148,15 +125,14 @@ class ProfileStep extends ConsumerWidget {
           _PlaytimeField(details: details),
           if (sport != Sport.others) ...[
             const SizedBox(height: 12),
-            // Skill level locks permanently after the first save (see
-            // EloSeedField), so — unlike every other field on this sheet —
-            // it's worth explaining rather than just picking quickly. Each
-            // level gets its own line instead of leaving the pick to the
-            // bare enum label.
+            // Each level gets its own explanatory line instead of leaving
+            // the pick to the bare enum label.
             Text(
               'onboarding.profile.skillIntro'.tr(),
-              style: context.theme.typography.body.sm
-                  .copyWith(color: colors.mutedForeground, height: 1.4),
+              style: context.theme.typography.body.sm.copyWith(
+                color: colors.mutedForeground,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 8),
             for (final seed in EloSeed.values)
@@ -173,36 +149,34 @@ class ProfileStep extends ConsumerWidget {
                         ),
                       ),
                       TextSpan(
-                        text: 'onboarding.profile.skillLevels.${seed.name}'.tr(),
+                        text: 'onboarding.profile.skillLevels.${seed.name}'
+                            .tr(),
                       ),
                     ],
                   ),
-                  style: context.theme.typography.body.sm
-                      .copyWith(color: colors.mutedForeground),
+                  style: context.theme.typography.body.sm.copyWith(
+                    color: colors.mutedForeground,
+                  ),
                 ),
               ),
             const SizedBox(height: 8),
             EloSeedField(
-              value: eloSeed.seed,
-              locked: eloSeed.locked,
+              value: eloSeed,
               onChanged: (seed) {
                 if (seed != null) setSportEloSeed(ref, sport, seed);
               },
             ),
-            const SizedBox(height: 6),
-            Text(
-              'onboarding.profile.skillLockWarning'.tr(),
-              style: context.theme.typography.body.sm
-                  .copyWith(color: colors.mutedForeground),
-            ),
           ],
           const SizedBox(height: 24),
+          // Every field above already wrote through on its own interaction —
+          // there's nothing left to persist here, so both buttons just close
+          // the sheet (`showProfileSheet` advances onboarding either way).
           PDualButton(
             firstVariant: .outline,
             onFirstPressed: () => Navigator.of(context).pop(),
-            onSecondPressed: save,
+            onSecondPressed: () => Navigator.of(context).pop(),
             firstChild: Text('onboarding.skip'.tr()),
-            secondChild: Text('onboarding.profile.save'.tr()),
+            secondChild: Text('onboarding.profile.done'.tr()),
           ),
         ],
       ),
@@ -235,7 +209,7 @@ class _PlaytimeField extends ConsumerWidget {
                 final updated = [...timeslots]..remove(timeslot);
                 ref
                     .read(profileControllerProvider.notifier)
-                    .updateDraft(details: details.copyWith(playtime: updated));
+                    .updateDetailsAndFlush(details.copyWith(playtime: updated));
               },
               child: Icon(
                 FLucideIcons.trash,
@@ -253,7 +227,7 @@ class _PlaytimeField extends ConsumerWidget {
                 final updated = [...timeslots, timeslot];
                 ref
                     .read(profileControllerProvider.notifier)
-                    .updateDraft(details: details.copyWith(playtime: updated));
+                    .updateDetailsAndFlush(details.copyWith(playtime: updated));
               }
             },
           ),

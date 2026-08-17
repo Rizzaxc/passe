@@ -10,6 +10,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../core/format.dart';
 import '../../../feed_tab/compose_controller.dart';
+import '../../../router.dart';
 import '../../../ui/main.dart';
 import 'feed_controller.dart';
 
@@ -183,6 +184,13 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
                         username: c.username,
                         generatedAvatar: c.generatedAvatar,
                         radius: 16,
+                        // Own tap target nested inside the tile's
+                        // selection-tap area — wins the gesture arena, so the
+                        // avatar opens the profile while the rest of the
+                        // tile still toggles the split selection.
+                        onTap: () =>
+                            UserRoute(id: c.userId, $extra: c.username)
+                                .push(context),
                       ),
                       title: Text(
                         c.username,

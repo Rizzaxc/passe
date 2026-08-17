@@ -8,6 +8,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
 import '../core/icon/main.dart';
+import '../core/legal_links.dart';
 import '../router.dart';
 import 'auth_controller.dart';
 
@@ -72,6 +73,8 @@ class AuthContent extends ConsumerWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+              const LegalNotice(),
             ],
           ),
         ),
@@ -335,5 +338,44 @@ class SocialAuthSection extends ConsumerWidget {
       ],
     );
     return result;
+  }
+}
+
+/// "By continuing, you agree to our Terms of Service and Privacy Notice." —
+/// each clause is its own tappable [Text] rather than a single [Text.rich]
+/// with [TapGestureRecognizer]s, so nothing needs manual recognizer disposal
+/// and the sentence wraps cleanly (via [Wrap]) on a narrow device instead of
+/// clipping.
+class LegalNotice extends StatelessWidget {
+  const LegalNotice({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final style = context.theme.typography.body.xs.copyWith(
+      color: colors.mutedForeground,
+    );
+    final linkStyle = style.copyWith(
+      color: colors.primary,
+      decoration: TextDecoration.underline,
+    );
+
+    Widget link(String label, Future<void> Function(BuildContext) onTap) =>
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => onTap(context),
+          child: Text(label, style: linkStyle),
+        );
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      children: [
+        Text('auth.legalPrefix'.tr(), style: style),
+        link('auth.termsOfService'.tr(), openTermsOfService),
+        Text('auth.legalMiddle'.tr(), style: style),
+        link('auth.privacyNotice'.tr(), openPrivacyNotice),
+        Text('.', style: style),
+      ],
+    );
   }
 }

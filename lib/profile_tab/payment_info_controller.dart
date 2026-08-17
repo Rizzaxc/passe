@@ -27,15 +27,17 @@ class PaymentInfoController extends _$PaymentInfoController {
     required String accountNumber,
     String? accountName,
   }) async {
-    await Supabase.instance.client.rpc(
-      'add_payment_info',
-      params: {
-        'p_bank_id': bank.bin,
-        'p_bank_display_name': bank.shortName,
-        'p_value': accountNumber,
-        'p_account_name': accountName,
-      },
-    ).timeout(const Duration(seconds: 5));
+    await Supabase.instance.client
+        .rpc(
+          'add_payment_info',
+          params: {
+            'p_bank_id': bank.bin,
+            'p_bank_display_name': bank.shortName,
+            'p_value': accountNumber,
+            'p_account_name': accountName,
+          },
+        )
+        .timeout(const Duration(seconds: 5));
 
     ref.invalidateSelf();
   }

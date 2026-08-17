@@ -580,18 +580,15 @@ class AuthController extends _$AuthController {
   }
 
   /// Re-fetches the signed-in user from the server, e.g. after
-  /// [ProfileController.commit] writes new `username`/`details`.
+  /// [ProfileController.flushDetails] writes new `username`/`details`.
   ///
   /// Deliberately does NOT set an interim `AsyncValue.loading()` first — a
   /// bare `loading()` has no `.value`, so every watcher briefly sees
   /// `user == null` for the *same still-signed-in* user, indistinguishable
   /// from a real sign-out. `ProfileController.build()` treats a null user as
-  /// a guest draft and (per its own `_initialUserId` guard) re-baselines its
-  /// dirty-check baseline to that placeholder, then re-baselines *again* once
-  /// the real user reloads — leaving `hasUncommittedChanges` reporting stale
-  /// true after a commit with genuinely nothing left to discard. Going
-  /// straight from the old `AsyncData` to the new one (or an error) skips
-  /// that null window entirely.
+  /// a guest draft, so that flicker would otherwise show a guest placeholder
+  /// mid-refresh. Going straight from the old `AsyncData` to the new one (or
+  /// an error) skips that null window entirely.
   Future<void> refresh() async {
     state = await AsyncValue.guard(() => _loadFromServer());
   }

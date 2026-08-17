@@ -99,9 +99,13 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
       recordId == null
           ? const ManageLobbyRoute().location
           : LobbyInvitePreviewRoute(recordId: recordId).location,
-    // The captain handles incoming requests from the lobby's info sheet.
+    // Land straight on the request-management sheet — this used to only open
+    // the lobby's Feed tab, leaving the captain to find the info sheet's
+    // "Manage Requests" row themselves (two extra taps).
     NotificationKind.lobbyJoinRequest =>
-      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+      lobbyId == null
+          ? null
+          : LobbyDetailRoute(id: lobbyId, openJoinRequests: true).location,
     // Once approved, the requester is a member and can open the lobby.
     NotificationKind.lobbyJoinRequestApproved =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,

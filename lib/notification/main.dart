@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
@@ -8,6 +9,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../manage_tab/lobby_section/activity/activity_at_risk_response_controller.dart';
+import '../manage_tab/lobby_section/join_requests_controller.dart';
 import '../manage_tab/lobby_section/lobby_invite_response_controller.dart';
 import '../notifications/notification_kind.dart';
 import '../notifications/notification_router.dart';
@@ -266,12 +268,15 @@ class _NotificationRow extends ConsumerWidget {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
 
-    final recordId = item.kind == NotificationKind.lobbyInvite
+    final recordId =
+        item.kind == NotificationKind.lobbyInvite ||
+            item.kind == NotificationKind.lobbyJoinRequest
         ? item.data['record_id'] as String?
         : null;
-    final lobbyInviteStatus = recordId == null
-        ? null
-        : ref.watch(lobbyInviteStatusProvider(recordId)).value;
+    final lobbyInviteStatus =
+        item.kind == NotificationKind.lobbyInvite && recordId != null
+        ? ref.watch(lobbyInviteStatusProvider(recordId)).value
+        : null;
 
     final atRiskActivityId =
         (item.kind == NotificationKind.activityAtRiskOrganizer ||
@@ -337,7 +342,7 @@ class _NotificationRow extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
-                                child: Text(
+                                child: AutoSizeText(
                                   item.title,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
@@ -364,7 +369,7 @@ class _NotificationRow extends ConsumerWidget {
                               ],
                             ],
                           ),
-                          Text.rich(
+                          AutoSizeText.rich(
                             TextSpan(
                               children: _notificationBodySpans(
                                 item,
@@ -390,7 +395,7 @@ class _NotificationRow extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 1),
-                          Text(
+                          AutoSizeText(
                             _relativeTime(context, item.createdAt),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -424,7 +429,12 @@ class _NotificationRow extends ConsumerWidget {
                   const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: _LobbyInviteActions(recordId: recordId),
+                    child: item.kind == NotificationKind.lobbyJoinRequest
+                        ? _JoinRequestActions(
+                            recordId: recordId,
+                            lobbyId: item.data['lobby_id'] as String?,
+                          )
+                        : _LobbyInviteActions(recordId: recordId),
                   ),
                 ] else if (atRiskActivityId != null) ...[
                   const SizedBox(height: 10),
@@ -619,8 +629,10 @@ class _LobbyInviteActions extends ConsumerWidget {
           size: 18,
           color: colors.primary,
         ),
-        'declined' => Text(
+        'declined' => AutoSizeText(
           'lobby.invites.declined'.tr(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: context.theme.typography.body.xs.copyWith(
             color: colors.mutedForeground,
           ),
@@ -685,13 +697,141 @@ class _LobbyInvitePendingButtonsState
           variant: .ghost,
           size: .xs,
           onPress: () => _respond(false),
-          child: Text('lobby.inviteReview.reject'.tr()),
+          child: AutoSizeText(
+            'lobby.inviteReview.reject'.tr(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         FButton(
           variant: .secondary,
           size: .xs,
           onPress: () => _respond(true),
-          child: Text('lobby.inviteReview.accept'.tr()),
+          child: AutoSizeText(
+            'lobby.inviteReview.accept'.tr(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Inline Accept/Reject for a `lobby_join_request` notification (a captain
+/// being told someone wants to join their lobby), or a small resolved hint
+/// once acted on. Mirrors [_LobbyInviteActions].
+class _JoinRequestActions extends ConsumerWidget {
+  final String recordId;
+  final String? lobbyId;
+
+  const _JoinRequestActions({required this.recordId, this.lobbyId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statusAsync = ref.watch(joinRequestStatusProvider(recordId));
+    final colors = context.theme.colors;
+
+    return statusAsync.when(
+      loading: () => const SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (status) => switch (status) {
+        'accepted' => AutoSizeText(
+          'lobby.joinRequests.accepted'.tr(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.theme.typography.body.xs.copyWith(
+            color: colors.mutedForeground,
+          ),
+        ),
+        'declined' => AutoSizeText(
+          'lobby.joinRequests.declined'.tr(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.theme.typography.body.xs.copyWith(
+            color: colors.mutedForeground,
+          ),
+        ),
+        _ => _JoinRequestPendingButtons(recordId: recordId, lobbyId: lobbyId),
+      },
+    );
+  }
+}
+
+class _JoinRequestPendingButtons extends ConsumerStatefulWidget {
+  final String recordId;
+  final String? lobbyId;
+
+  const _JoinRequestPendingButtons({required this.recordId, this.lobbyId});
+
+  @override
+  ConsumerState<_JoinRequestPendingButtons> createState() =>
+      _JoinRequestPendingButtonsState();
+}
+
+class _JoinRequestPendingButtonsState
+    extends ConsumerState<_JoinRequestPendingButtons> {
+  bool _loading = false;
+
+  Future<void> _respond(bool accept) async {
+    setState(() => _loading = true);
+    try {
+      await ref
+          .read(joinRequestResponseControllerProvider.notifier)
+          .respond(widget.recordId, accept: accept, lobbyId: widget.lobbyId);
+    } catch (e, st) {
+      Talker().handle(e, st, 'join request response failed');
+      if (mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: Text('errorGeneric'.tr()),
+          alignment: .bottomCenter,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 4,
+      children: [
+        FButton(
+          variant: .ghost,
+          size: .xs,
+          onPress: () => _respond(false),
+          child: AutoSizeText(
+            'lobby.inviteReview.reject'.tr(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        FButton(
+          variant: .secondary,
+          size: .xs,
+          onPress: () => _respond(true),
+          child: AutoSizeText(
+            'lobby.inviteReview.accept'.tr(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -725,14 +865,18 @@ class _ActivityAtRiskActions extends ConsumerWidget {
       ),
       error: (_, _) => const SizedBox.shrink(),
       data: (status) => switch (status) {
-        ActivityAtRiskStatus.confirmed => Text(
+        ActivityAtRiskStatus.confirmed => AutoSizeText(
           'lobbyHub.activity.atRiskResolvedConfirmed'.tr(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: context.theme.typography.body.xs.copyWith(
             color: colors.mutedForeground,
           ),
         ),
-        ActivityAtRiskStatus.cancelled => Text(
+        ActivityAtRiskStatus.cancelled => AutoSizeText(
           'lobbyHub.activity.atRiskResolvedCancelled'.tr(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: context.theme.typography.body.xs.copyWith(
             color: colors.mutedForeground,
           ),
@@ -801,13 +945,21 @@ class _ActivityAtRiskOrganizerButtonsState
           variant: .ghost,
           size: .xs,
           onPress: () => _respond(false),
-          child: Text('lobbyHub.activity.cancelAction'.tr()),
+          child: AutoSizeText(
+            'lobbyHub.activity.cancelAction'.tr(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         FButton(
           variant: .secondary,
           size: .xs,
           onPress: () => _respond(true),
-          child: Text('lobbyHub.activity.atRiskConfirmAnyway'.tr()),
+          child: AutoSizeText(
+            'lobbyHub.activity.atRiskConfirmAnyway'.tr(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -870,13 +1022,21 @@ class _ActivityAtRiskMemberButtonsState
           variant: .ghost,
           size: .xs,
           onPress: () => _respond(false),
-          child: Text('lobbyHub.activity.out'.tr()),
+          child: AutoSizeText(
+            'lobbyHub.activity.out'.tr(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         FButton(
           variant: .secondary,
           size: .xs,
           onPress: () => _respond(true),
-          child: Text('lobbyHub.activity.going'.tr()),
+          child: AutoSizeText(
+            'lobbyHub.activity.going'.tr(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );

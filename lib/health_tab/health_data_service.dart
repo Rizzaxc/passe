@@ -131,7 +131,7 @@ class HealthDataService extends _$HealthDataService {
           : null;
 
       // 3-zone time-in-zone (full resolution).
-      final zones = _calculateHrZones(heartRateData, thresholds);
+      final zones = _calculateHrZones(heartRateData, stepsData, thresholds);
       final easy = zones['easy']!;
       final moderate = zones['moderate']!;
       final hard = zones['hard']!;
@@ -431,34 +431,100 @@ class HealthDataService extends _$HealthDataService {
     return null;
   }
 
+  /// A continuous below-LT1 stretch with no corroborating movement this long
+  /// or shorter still counts as "easy" (normal recovery between rallies/
+  /// points in a stop-start sport). A *stationary* stretch beyond it is a
+  /// genuine break (water/side-change/injury) and is excluded from every
+  /// zone rather than counted as low effort — social sports aren't endurance
+  /// sports, and long pauses shouldn't drag the effort score down the way
+  /// they would for a continuous steady-state workout. See
+  /// [_calculateHrZones] for why duration alone isn't enough to detect this.
+  static const _pauseGraceSeconds = 90;
+
+  /// Steps/minute below which a below-LT1 stretch is treated as stationary
+  /// (a real break) rather than genuine light-intensity play. A handful of
+  /// stray steps (shifting weight, fidgeting) shouldn't count as "moving".
+  static const _movementStepsPerMinuteFloor = 20;
+
   /// Time (seconds) in each of the 3 LT zones, summed at full sample resolution.
   /// easy = HR < LT1, moderate = LT1..LT2, hard = > LT2.
+  ///
+  /// A sustained below-LT1 stretch isn't necessarily a break — it might be an
+  /// incredibly fit player, or a genuinely light session, where HR just never
+  /// climbs. Duration alone can't tell "still playing, low effort" apart from
+  /// "sitting on the bench", so each below-LT1 run is cross-checked against
+  /// step data from the same window: if there's corroborating movement, the
+  /// whole run counts as easy; if the player is stationary, only the first
+  /// [_pauseGraceSeconds] count and the rest is excluded as a pause.
   Map<String, int> _calculateHrZones(
     List<HealthDataPoint> hrData,
+    List<HealthDataPoint> stepsData,
     HrThresholds t,
   ) {
     final zones = {'easy': 0, 'moderate': 0, 'hard': 0};
-    for (var i = 0; i < hrData.length; i++) {
+    var i = 0;
+    while (i < hrData.length) {
       final value = _extractNumericValue(hrData[i]);
-      if (value == null) continue;
-
-      final key = value > t.lt2
-          ? 'hard'
-          : (value >= t.lt1 ? 'moderate' : 'easy');
-
-      var duration = 1;
-      if (i < hrData.length - 1) {
-        duration = hrData[i + 1].dateFrom
-            .difference(hrData[i].dateFrom)
-            .inSeconds
-            .clamp(1, 60);
+      if (value == null) {
+        i++;
+        continue;
       }
-      zones[key] = zones[key]! + duration;
+      final duration = _sampleDurationSeconds(hrData, i);
+
+      if (value >= t.lt1) {
+        final key = value > t.lt2 ? 'hard' : 'moderate';
+        zones[key] = zones[key]! + duration;
+        i++;
+        continue;
+      }
+
+      // Extend the run while HR stays below LT1.
+      final runStart = hrData[i].dateFrom;
+      var runDuration = duration;
+      var j = i + 1;
+      while (j < hrData.length) {
+        final v = _extractNumericValue(hrData[j]);
+        if (v == null || v >= t.lt1) break;
+        runDuration += _sampleDurationSeconds(hrData, j);
+        j++;
+      }
+      final runEnd = j < hrData.length
+          ? hrData[j].dateFrom
+          : runStart.add(Duration(seconds: runDuration));
+
+      final moving = _hasMovement(stepsData, runStart, runEnd);
+      zones['easy'] = zones['easy']! +
+          (moving ? runDuration : runDuration.clamp(0, _pauseGraceSeconds));
+      i = j;
     }
     return zones;
   }
 
-  /// 0–100 from the intensity-weighted time distribution (easy=1/mod=2/hard=3).
+  int _sampleDurationSeconds(List<HealthDataPoint> hrData, int i) {
+    if (i >= hrData.length - 1) return 1;
+    return hrData[i + 1].dateFrom
+        .difference(hrData[i].dateFrom)
+        .inSeconds
+        .clamp(1, 60);
+  }
+
+  /// Whether step data shows meaningful movement overlapping [start, end).
+  bool _hasMovement(
+    List<HealthDataPoint> stepsData,
+    DateTime start,
+    DateTime end,
+  ) {
+    final minutes = end.difference(start).inSeconds / 60.0;
+    if (minutes <= 0) return false;
+    final steps = stepsData
+        .where((p) => p.dateFrom.isBefore(end) && p.dateTo.isAfter(start))
+        .fold<double>(0, (sum, p) => sum + (_extractNumericValue(p) ?? 0));
+    return steps / minutes >= _movementStepsPerMinuteFloor;
+  }
+
+  /// 0–100 from the intensity-weighted time distribution (easy=1/mod=2/hard=3)
+  /// over pause-excluded zone time (see [_calculateHrZones]), so extended
+  /// breaks don't count as low-effort minutes.
   double? _effortScore({
     required int easy,
     required int moderate,

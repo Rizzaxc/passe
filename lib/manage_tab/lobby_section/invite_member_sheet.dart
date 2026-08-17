@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../auth/auth_controller.dart';
+import '../../router.dart';
 import '../../social/friendship_controller.dart';
 import '../../ui/main.dart';
 import 'invite_link/invite_link_card.dart';
@@ -397,6 +398,12 @@ class _FriendShortlistCard extends StatelessWidget {
               username: friend.username,
               generatedAvatar: friend.generatedAvatar,
               radius: 24,
+              // Own tap target nested inside the card's invite-tap area —
+              // wins the gesture arena over the card's GestureDetector, so
+              // the avatar opens the profile while the rest of the card
+              // still triggers the invite (see root CLAUDE.md's user-row rule).
+              onTap: () => UserRoute(id: friend.userId, $extra: friend.username)
+                  .push(context),
             ),
             const SizedBox(height: 6),
             Text(
@@ -434,33 +441,45 @@ class _UserRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          PUserAvatar(
-            userId: user.id,
-            username: user.username,
-            generatedAvatar: user.generatedAvatar,
-            radius: 16,
-          ),
-          const SizedBox(width: 10),
           Expanded(
-            child: Text.rich(
-              TextSpan(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () =>
+                  UserRoute(id: user.id, $extra: user.username).push(context),
+              child: Row(
                 children: [
-                  TextSpan(
-                    text: user.username,
-                    style: context.theme.typography.body.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                  PUserAvatar(
+                    userId: user.id,
+                    username: user.username,
+                    generatedAvatar: user.generatedAvatar,
+                    radius: 16,
                   ),
-                  TextSpan(
-                    text: ' #${user.tagNumber}',
-                    style: context.theme.typography.body.xs.copyWith(
-                      color: colors.mutedForeground,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: user.username,
+                            style: context.theme.typography.body.sm.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' #${user.tagNumber}',
+                            style: context.theme.typography.body.xs.copyWith(
+                              color: colors.mutedForeground,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
+          const SizedBox(width: 8),
           FButton.icon(
             size: .sm,
             onPress: busy ? null : onInvite,

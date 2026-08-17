@@ -44,7 +44,7 @@ final class HealthDataServiceProvider
   }
 }
 
-String _$healthDataServiceHash() => r'92a0b20925af9f671e00b367081e59a3a2c533a1';
+String _$healthDataServiceHash() => r'fed0763befd3b165757bbb6cc8fafbbb931ed141';
 
 /// Service for reading health data and syncing to backend.
 

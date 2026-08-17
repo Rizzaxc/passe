@@ -304,8 +304,10 @@ class ActivityCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Date + time
-                Text(
+                AutoSizeText(
                   _dateLabel(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
@@ -315,8 +317,10 @@ class ActivityCard extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
+                AutoSizeText(
                   _timeLabel(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -337,7 +341,7 @@ class ActivityCard extends ConsumerWidget {
                       const SizedBox(width: 6),
                       Flexible(
                         flex: 2,
-                        child: Text(
+                        child: AutoSizeText(
                           upcoming.locationName!,
                           style: TextStyle(
                             fontSize: 13,
@@ -349,8 +353,10 @@ class ActivityCard extends ConsumerWidget {
                         ),
                       ),
                       if (upcoming.locationDistrict != null) ...[
-                        Text(
+                        AutoSizeText(
                           ' · ',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: colors.mutedForeground.withValues(
                               alpha: 0.5,
@@ -358,13 +364,14 @@ class ActivityCard extends ConsumerWidget {
                           ),
                         ),
                         Flexible(
-                          child: Text(
+                          child: AutoSizeText(
                             upcoming.locationDistrict!,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                               color: colors.mutedForeground,
                             ),
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -404,8 +411,10 @@ class ActivityCard extends ConsumerWidget {
                   ),
                   if (costWordsLabel != null) ...[
                     const SizedBox(height: 5),
-                    Text(
+                    AutoSizeText(
                       costWordsLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: context.theme.typography.body.xs.copyWith(
                         color: colors.mutedForeground,
                       ),
@@ -691,8 +700,10 @@ class _ActivityFeedLogState extends ConsumerState<_ActivityFeedLog> {
                   color: colors.mutedForeground,
                 ),
                 const SizedBox(width: 6),
-                Text(
+                AutoSizeText(
                   'lobbyHub.activity.log'.tr(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -751,8 +762,10 @@ class _ActivityFeedLogBody extends ConsumerWidget {
       ),
       error: (_, _) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(
+        child: AutoSizeText(
           'lobbyHub.activity.logFailed'.tr(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(fontSize: 11.5, color: colors.mutedForeground),
         ),
       ),
@@ -767,8 +780,10 @@ class _ActivityFeedLogBody extends ConsumerWidget {
         if (scoped.isEmpty && settlementMessage == null) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
+            child: AutoSizeText(
               'lobbyHub.activity.logEmpty'.tr(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 11.5,
                 fontStyle: FontStyle.italic,
@@ -783,8 +798,10 @@ class _ActivityFeedLogBody extends ConsumerWidget {
             if (settlementMessage != null)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
+                child: AutoSizeText(
                   settlementMessage,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 11.5,
                     color: colors.mutedForeground,
@@ -892,7 +909,7 @@ class _ChallengeBlock extends ConsumerWidget {
               // Opponent names are user-supplied and unbounded — this whole
               // group has to be able to shrink before the MMR chip does.
               Expanded(
-                child: Text.rich(
+                child: AutoSizeText.rich(
                   TextSpan(
                     children: [
                       TextSpan(
@@ -913,8 +930,10 @@ class _ChallengeBlock extends ConsumerWidget {
               ),
               if (challenge.opponentMmr != null) ...[
                 const SizedBox(width: 6),
-                Text(
+                AutoSizeText(
                   '${challenge.opponentMmr} MMR',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -936,7 +955,7 @@ class _ChallengeBlock extends ConsumerWidget {
                     onPress: (busy || confirmed)
                         ? null
                         : () => _confirm(context, ref),
-                    child: Text(
+                    child: AutoSizeText(
                       confirmed
                           ? 'lobbyHub.activity.waitingOpponent'.tr()
                           : 'lobbyHub.activity.confirmMatch'.tr(),
@@ -952,7 +971,7 @@ class _ChallengeBlock extends ConsumerWidget {
                       size: .sm,
                       variant: .outline,
                       onPress: () => _bookReferee(context, ref),
-                      child: Text(
+                      child: AutoSizeText(
                         'lobbyHub.activity.bookReferee'.tr(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -964,8 +983,10 @@ class _ChallengeBlock extends ConsumerWidget {
           ],
           if (locked && upcoming.referee == null) ...[
             const SizedBox(height: 6),
-            Text(
+            AutoSizeText(
               'lobbyHub.activity.unratedWarning'.tr(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 11, color: colors.mutedForeground),
             ),
           ],
@@ -1035,6 +1056,7 @@ class _RsvpAvatar extends StatelessWidget {
         username: username,
         generatedAvatar: generatedAvatar,
         radius: 11,
+        onTap: () => UserRoute(id: userId, $extra: username).push(context),
       ),
     );
   }
@@ -1070,8 +1092,10 @@ class _ConfirmationSummary extends StatelessWidget {
           size: 14,
           color: color,
         ),
-        Text(
+        AutoSizeText(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
@@ -1107,8 +1131,10 @@ class _RsvpControl extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 3),
-          child: Text(
+          child: AutoSizeText(
             'lobbyHub.schedule.attendance'.tr(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: context.theme.typography.body.xs.copyWith(
               color: colors.secondaryForeground,
               fontWeight: FontWeight.w700,
@@ -1288,8 +1314,10 @@ class _QuickAction extends StatelessWidget {
           children: [
             Icon(icon, size: 13, color: colors.mutedForeground),
             const SizedBox(width: 5),
-            Text(
+            AutoSizeText(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
@@ -1362,8 +1390,10 @@ class _AttachedProRow extends StatelessWidget {
           children: [
             Icon(icon, size: 15, color: colors.secondaryForeground),
             const SizedBox(width: 8),
-            Text(
+            AutoSizeText(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -1377,7 +1407,7 @@ class _AttachedProRow extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Flexible(
-                    child: Text(
+                    child: AutoSizeText(
                       pro.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1406,8 +1436,10 @@ class _AttachedProRow extends StatelessWidget {
                 color: statusBg,
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: Text(
+              child: AutoSizeText(
                 statusLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w700,
@@ -1465,7 +1497,7 @@ class _Tag extends StatelessWidget {
             const SizedBox(width: 3),
           ],
           Flexible(
-            child: Text(
+            child: AutoSizeText(
               text,
               style: TextStyle(
                 fontSize: 11,

@@ -9,30 +9,10 @@ import '../core/model/enum.dart';
 import '../core/model/network.dart';
 import '../core/model/user_avatar.dart';
 import '../core/model/user_details.dart';
-import 'user_contact_controller.dart';
+import 'write_failure_support.dart';
 
 part 'profile_controller.freezed.dart';
 part 'profile_controller.g.dart';
-
-@riverpod
-bool profileHasUncommittedChanges(Ref ref) {
-  ref.watch(profileControllerProvider);
-  ref.watch(networkControllerProvider);
-  ref.watch(industryControllerProvider);
-  ref.watch(userContactControllerProvider);
-  return ref.read(profileControllerProvider.notifier).hasUncommittedChanges ||
-      ref.read(networkControllerProvider.notifier).hasUncommittedChanges ||
-      ref.read(industryControllerProvider.notifier).hasUncommittedChanges ||
-      ref.read(userContactControllerProvider.notifier).hasUncommittedChanges;
-}
-
-class AvatarUploadFailedException implements Exception {
-  const AvatarUploadFailedException();
-
-  @override
-  String toString() =>
-      'AvatarUploadFailedException: failed to upload avatar to storage';
-}
 
 @freezed
 abstract class ProfileState with _$ProfileState {
@@ -133,7 +113,7 @@ class NetworkSearchController extends _$NetworkSearchController {
 @riverpod
 class NetworkController extends _$NetworkController {
   final supabase = Supabase.instance.client;
-  List<Network>? _initialNetworks;
+  late final _failures = WriteFailureHandler(ref);
 
   @override
   List<Network> build() {
@@ -170,7 +150,6 @@ class NetworkController extends _$NetworkController {
       }).toList();
 
       state = networks;
-      _initialNetworks ??= List.unmodifiable(networks);
     } catch (e, st) {
       Talker().handle(e, st, 'Error fetching user networks');
     }
@@ -205,28 +184,14 @@ class NetworkController extends _$NetworkController {
     state = state.where((network) => network.id != networkId).toList();
   }
 
-  bool get hasUncommittedChanges {
-    final initial = _initialNetworks;
-    if (initial == null || initial.length != state.length) {
-      return initial != null;
-    }
-    return state.any((network) => !initial.contains(network));
-  }
-
-  void discardChanges() {
-    final initial = _initialNetworks;
-    if (initial != null) state = [...initial];
-  }
-
   void updateAll(List<Network> networks) {
     state = networks;
   }
 
-  void reset() {
-    ref.invalidateSelf();
-  }
-
-  Future<void> commit() async {
+  /// Persists the current selection as a delete-all + reinsert-all — cheap
+  /// here since this only runs once per visit to the network subroute (on
+  /// pop), not per toggle.
+  Future<void> flush() async {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
@@ -252,10 +217,13 @@ class NetworkController extends _$NetworkController {
             )
             .timeout(const Duration(seconds: 5));
       }
-      _initialNetworks = List.unmodifiable(state);
     } catch (e, st) {
-      Talker().handle(e, st, 'Error committing user networks');
-      rethrow;
+      _failures.handle(
+        e,
+        st,
+        logMessage: 'Error flushing user networks',
+        resync: () => ref.invalidateSelf(),
+      );
     }
   }
 }
@@ -263,7 +231,7 @@ class NetworkController extends _$NetworkController {
 @riverpod
 class IndustryController extends _$IndustryController {
   final supabase = Supabase.instance.client;
-  List<Industry>? _initialIndustries;
+  late final _failures = WriteFailureHandler(ref);
 
   @override
   List<Industry> build() {
@@ -289,7 +257,6 @@ class IndustryController extends _$IndustryController {
       }).toList();
 
       state = industries;
-      _initialIndustries ??= List.unmodifiable(industries);
     } catch (e, st) {
       Talker().handle(e, st, 'Error fetching user industries');
     }
@@ -313,24 +280,10 @@ class IndustryController extends _$IndustryController {
     state = industries;
   }
 
-  bool get hasUncommittedChanges {
-    final initial = _initialIndustries;
-    if (initial == null || initial.length != state.length) {
-      return initial != null;
-    }
-    return state.any((industry) => !initial.contains(industry));
-  }
-
-  void discardChanges() {
-    final initial = _initialIndustries;
-    if (initial != null) state = [...initial];
-  }
-
-  void reset() {
-    ref.invalidateSelf();
-  }
-
-  Future<void> commit() async {
+  /// Persists the current selection as a delete-all + reinsert-all — cheap
+  /// here since this only runs once per visit to the industry subroute (on
+  /// pop), not per toggle.
+  Future<void> flush() async {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
@@ -355,10 +308,13 @@ class IndustryController extends _$IndustryController {
             )
             .timeout(const Duration(seconds: 5));
       }
-      _initialIndustries = List.unmodifiable(state);
     } catch (e, st) {
-      Talker().handle(e, st, 'Error committing user industries');
-      rethrow;
+      _failures.handle(
+        e,
+        st,
+        logMessage: 'Error flushing user industries',
+        resync: () => ref.invalidateSelf(),
+      );
     }
   }
 }
@@ -366,10 +322,7 @@ class IndustryController extends _$IndustryController {
 @riverpod
 class ProfileController extends _$ProfileController {
   final supabase = Supabase.instance.client;
-  final talker = Talker();
-  ProfileState? _initialState;
-  String? _initialUserId;
-  bool _hasInitialUser = false;
+  late final _failures = WriteFailureHandler(ref);
 
   @override
   ProfileState build() {
@@ -383,56 +336,24 @@ class ProfileController extends _$ProfileController {
     var details = user?.details ?? const UserDetails();
 
     if (details.avatar == null) {
-      // A fixed seed, not a timestamp: this branch also fires transiently
-      // while `authControllerProvider` is between AsyncLoading and AsyncData
-      // (every sign-in briefly passes through this), and `ProfileTab` shows
-      // a spinner rather than this controller's state during that gap, so a
-      // stable placeholder here is never actually seen by a real guest — it
-      // only needs to stay *identical* across repeated rebuilds. A
-      // per-rebuild-unique seed made `hasUncommittedChanges` (below) read
-      // true for a user who never touched anything: the `_initialUserId`
-      // guard only re-baselines `_initialState` when `user?.id` *changes*,
-      // so two consecutive null-user rebuilds (both `id == null`) each got a
-      // fresh random seed while only the first one was captured as the
-      // baseline.
+      // A fixed seed, not a timestamp, so the placeholder avatar doesn't
+      // visibly change on every rebuild.
       final seed = username == 'Guest' ? 'guest' : '${username}_$tagNumber';
       details = details.copyWith(avatar: GeneratedAvatar(seed));
     }
 
-    final initial = ProfileState(
+    return ProfileState(
       username: username,
       details: details,
       networks: networks,
       industries: industries,
     );
-    // This controller can first build while auth is loading, which produces a
-    // temporary Guest draft. Replace that baseline when the resolved identity
-    // changes; otherwise merely landing on Profile immediately after login is
-    // incorrectly treated as an edit to the Guest draft.
-    if (!_hasInitialUser || _initialUserId != user?.id) {
-      _initialState = initial;
-      _initialUserId = user?.id;
-      _hasInitialUser = true;
-    }
-    return initial;
   }
 
-  bool get hasUncommittedChanges {
-    final initial = _initialState;
-    if (initial == null) return false;
-    return state.username != initial.username ||
-        state.details != initial.details ||
-        state.pickedAvatar != initial.pickedAvatar;
-  }
-
-  void discardChanges() {
-    final initial = _initialState;
-    if (initial != null) state = initial;
-    ref.read(networkControllerProvider.notifier).discardChanges();
-    ref.read(industryControllerProvider.notifier).discardChanges();
-    ref.read(userContactControllerProvider.notifier).discardChanges();
-  }
-
+  /// Mutates the in-memory state only — used while a pushed subroute (age
+  /// group / location / playtime) is open and editing `details` a field at a
+  /// time. Call [flushDetails] to persist, typically from that subroute's
+  /// pop handler.
   void updateDraft({
     String? username,
     UserDetails? details,
@@ -452,155 +373,132 @@ class ProfileController extends _$ProfileController {
     );
   }
 
-  void randomizeAvatar() {
-    final user = ref.read(authControllerProvider).value;
-    final tagNumber = user?.tagNumber ?? '0000';
-    final seed = '${DateTime.now().microsecondsSinceEpoch}_$tagNumber';
-    updateDraft(
-      details: state.details.copyWith(avatar: GeneratedAvatar(seed)),
-      clearPickedAvatar: true,
-    );
-  }
-
-  void removeAvatar() {
-    final user = ref.read(authControllerProvider).value;
-    final tagNumber = user?.tagNumber ?? '0000';
-    final seed = '${DateTime.now().microsecondsSinceEpoch}_$tagNumber';
-    updateDraft(
-      details: state.details.copyWith(avatar: GeneratedAvatar(seed)),
-      clearPickedAvatar: true,
-    );
-  }
-
-  /// Stores an already-picked-and-cropped avatar as the draft pick. Picking
-  /// and cropping happen in the UI layer (`profile_tab/main.dart`) since the
-  /// native crop screen needs a `BuildContext` for theming.
-  void setPickedAvatar(XFile file) {
-    updateDraft(
-      details: state.details.copyWith(avatar: const PhotoAvatar()),
-      pickedAvatar: file,
-    );
-  }
-
-  void resetDraft() {
-    ref.read(networkControllerProvider.notifier).reset();
-    ref.read(industryControllerProvider.notifier).reset();
-    ref.read(userContactControllerProvider.notifier).reset();
-
-    final user = ref.read(authControllerProvider).value;
-    state = ProfileState(
-      username: user?.username ?? 'Guest',
-      details: user?.details ?? const UserDetails(),
-      networks: ref.read(networkControllerProvider),
-      industries: ref.read(industryControllerProvider),
-    );
-  }
-
-  Future<void> commit() async {
+  /// Persists the current username + details to `user`. Safe to call
+  /// whether or not anything actually changed — a no-op write is harmless —
+  /// which is what lets subroutes flush unconditionally on pop instead of
+  /// tracking dirty state.
+  Future<void> flushDetails() async {
     final user = ref.read(authControllerProvider).value;
     if (user == null || user.id == null) return;
 
-    var updatedDetails = state.details;
-    var avatarUploadFailed = false;
-
     try {
-      // 1. Handle Avatar storage operations
-      final oldAvatar = user.details?.avatar;
-      final newAvatar = state.details.avatar;
-
-      // If we previously had a custom photo and now we have a generated
-      // one, remove the custom photo from the bucket.
-      if (oldAvatar is PhotoAvatar && newAvatar is GeneratedAvatar) {
-        try {
-          final path = '${user.id}.jpg';
-          await supabase.storage
-              .from('user_avatar')
-              .remove([path])
-              .timeout(const Duration(seconds: 5));
-        } catch (e, st) {
-          talker.handle(e, st, 'Failed to remove avatar from storage');
-        }
-      }
-
-      // If there's a picked avatar, upload it
-      if (state.pickedAvatar != null) {
-        try {
-          final bytes = await state.pickedAvatar!.readAsBytes();
-          final path = '${user.id}.jpg';
-
-          await supabase.storage
-              .from('user_avatar')
-              .uploadBinary(
-                path,
-                bytes,
-                fileOptions: const FileOptions(
-                  upsert: true,
-                  contentType: 'image/jpeg',
-                ),
-              )
-              .timeout(const Duration(seconds: 5));
-        } catch (e, st) {
-          talker.handle(e, st, 'Failed to upload avatar to storage');
-          // Fall back to a generated avatar so `avatar` isn't left as
-          // `PhotoAvatar` with nothing actually uploaded, then surface the
-          // failure to the user via AvatarUploadFailedException once the
-          // rest of the commit succeeds below.
-          avatarUploadFailed = true;
-          final tagNumber = user.tagNumber;
-          final seed =
-              'fallback_${DateTime.now().millisecondsSinceEpoch}_$tagNumber';
-          updatedDetails = updatedDetails.copyWith(
-            avatar: GeneratedAvatar(seed),
-          );
-        }
-      }
-
-      await Future.wait([
-        // 2. Update user basic info & details json
-        supabase
-            .from('user')
-            .update({
-              'username': state.username,
-              'details': updatedDetails.toJson(),
-            })
-            .eq('id', user.id!)
-            .timeout(const Duration(seconds: 5)),
-
-        // 3. Sync networks (user_network table)
-        ref.read(networkControllerProvider.notifier).commit(),
-
-        // 4. Sync industries (user_industry table)
-        ref.read(industryControllerProvider.notifier).commit(),
-
-        // 5. Sync contact info (user_contact table)
-        ref.read(userContactControllerProvider.notifier).commit(),
-      ]);
-
-      // Clear the picked file from the live draft too, not just the
-      // baseline — otherwise `state.pickedAvatar` (still the XFile) never
-      // again equals `_initialState.pickedAvatar` (null), so
-      // `hasUncommittedChanges` reports true forever after the first avatar
-      // change+commit, prompting "discard changes?" on every later
-      // navigation away from Profile even with nothing actually pending.
-      state = state.copyWith(pickedAvatar: null);
-      _initialState = state;
-
-      if (avatarUploadFailed) {
-        throw const AvatarUploadFailedException();
-      }
-    } on PostgrestException catch (e, st) {
-      talker.handle(e, st, state.details.toString());
-      rethrow;
-    } on AvatarUploadFailedException {
-      rethrow;
+      await supabase
+          .from('user')
+          .update({
+            'username': state.username,
+            'details': state.details.toJson(),
+          })
+          .eq('id', user.id!)
+          .timeout(const Duration(seconds: 5));
     } catch (e, st) {
-      talker.handle(e, st);
-      rethrow;
+      _failures.handle(
+        e,
+        st,
+        logMessage: state.details.toString(),
+        resync: () => ref.invalidate(authControllerProvider),
+      );
     } finally {
       if (ref.mounted) {
         await ref.read(authControllerProvider.notifier).refresh();
       }
     }
+  }
+
+  /// Convenience for callers that always want an immediate write — no
+  /// subroute buffering — e.g. onboarding's single-sheet flow, or an
+  /// in-place field on the main tab like gender.
+  Future<void> updateDetailsAndFlush(UserDetails details) async {
+    updateDraft(details: details);
+    await flushDetails();
+  }
+
+  Future<void> setGender(Gender gender) =>
+      updateDetailsAndFlush(state.details.copyWith(gender: gender));
+
+  Future<void> randomizeAvatar() async {
+    final user = ref.read(authControllerProvider).value;
+    final tagNumber = user?.tagNumber ?? '0000';
+    final seed = '${DateTime.now().microsecondsSinceEpoch}_$tagNumber';
+    await _setAvatar(GeneratedAvatar(seed));
+  }
+
+  Future<void> removeAvatar() async {
+    final user = ref.read(authControllerProvider).value;
+    final tagNumber = user?.tagNumber ?? '0000';
+    final seed = '${DateTime.now().microsecondsSinceEpoch}_$tagNumber';
+    await _setAvatar(GeneratedAvatar(seed));
+  }
+
+  Future<void> _setAvatar(UserAvatar avatar) async {
+    final oldAvatar = state.details.avatar;
+    updateDraft(
+      details: state.details.copyWith(avatar: avatar),
+      clearPickedAvatar: true,
+    );
+
+    // Swapping away from a custom photo to a generated one: clean up the
+    // now-orphaned storage object.
+    if (oldAvatar is PhotoAvatar && avatar is GeneratedAvatar) {
+      final userId = ref.read(authControllerProvider).value?.id;
+      if (userId != null) {
+        try {
+          await supabase.storage
+              .from('user_avatar')
+              .remove(['$userId.jpg'])
+              .timeout(const Duration(seconds: 5));
+        } catch (e, st) {
+          Talker().handle(e, st, 'Failed to remove avatar from storage');
+        }
+      }
+    }
+
+    await flushDetails();
+  }
+
+  /// Uploads an already-picked-and-cropped avatar (picking and cropping
+  /// happen in the UI layer — `profile_tab/main.dart` — since the native
+  /// crop screen needs a `BuildContext` for theming) and persists
+  /// `details.avatar`. On upload failure, falls back to a generated seed;
+  /// the failure itself surfaces via [WriteFailureHandler].
+  Future<void> pickAvatar(XFile file) async {
+    updateDraft(
+      details: state.details.copyWith(avatar: const PhotoAvatar()),
+      pickedAvatar: file,
+    );
+
+    final user = ref.read(authControllerProvider).value;
+    if (user == null || user.id == null) return;
+
+    try {
+      final bytes = await file.readAsBytes();
+      final path = '${user.id}.jpg';
+      await supabase.storage
+          .from('user_avatar')
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(
+              upsert: true,
+              contentType: 'image/jpeg',
+            ),
+          )
+          .timeout(const Duration(seconds: 5));
+    } catch (e, st) {
+      final seed =
+          'fallback_${DateTime.now().millisecondsSinceEpoch}_${user.tagNumber}';
+      updateDraft(
+        details: state.details.copyWith(avatar: GeneratedAvatar(seed)),
+      );
+      _failures.handle(
+        e,
+        st,
+        logMessage: 'Failed to upload avatar to storage',
+        resync: () => ref.invalidate(authControllerProvider),
+      );
+    }
+
+    state = state.copyWith(pickedAvatar: null);
+    await flushDetails();
   }
 
   void resetPlaytime() {

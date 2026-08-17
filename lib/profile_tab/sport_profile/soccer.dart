@@ -17,8 +17,7 @@ class SoccerProfileWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(soccerProfileControllerProvider);
-    final profile = state.profile;
+    final profile = ref.watch(soccerProfileControllerProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -64,7 +63,6 @@ class SoccerProfileWidget extends ConsumerWidget {
         ),
         EloSeedField(
           value: profile.eloSeed,
-          locked: state.eloSeedLocked,
           onChanged: (s) {
             if (s != null) _update(ref, profile.copyWith(eloSeed: s));
           },

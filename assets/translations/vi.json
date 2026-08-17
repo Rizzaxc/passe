@@ -466,7 +466,9 @@
     },
     "joinRequests": {
       "title": "Xin gia nhập",
-      "empty": "Không có ai đang xin vào."
+      "empty": "Không có ai đang xin vào.",
+      "accepted": "Đã chấp nhận",
+      "declined": "Đã từ chối"
     },
     "invites": {
       "title": "Lời mời",
@@ -693,7 +695,11 @@
     "passwordResetSuccess": "Đặt lại mật khẩu thành công",
     "resetFailed": "Đặt lại thất bại",
     "otpInvalidOrExpired": "Mã không hợp lệ hoặc đã hết hạn",
-    "resetEmailFailed": "Không thể gửi mã đặt lại"
+    "resetEmailFailed": "Không thể gửi mã đặt lại",
+    "legalPrefix": "Bằng việc tiếp tục, bạn đồng ý với ",
+    "termsOfService": "Điều khoản dịch vụ",
+    "legalMiddle": " và ",
+    "privacyNotice": "Chính sách bảo mật"
   },
   "nav": {
     "home": "Trang chủ",
@@ -807,6 +813,8 @@
     "usernameInvalidChars": "Username chỉ được chứa chữ cái và số",
     "usernameTaken": "Username này đã được sử dụng",
     "confirmLogout": "Bấm giữ để đăng xuất",
+    "termsPrivacyTitle": "Điều khoản & Quyền riêng tư",
+    "confirmDeleteAccountHold": "Bấm giữ để xoá tài khoản",
     "deleteAccount": "Xoá tài khoản",
     "deleteAccountTitle": "Xoá tài khoản vĩnh viễn",
     "deleteAccountWarning": "Hành động này không thể hoàn tác. Hồ sơ, bài đăng, tin nhắn, lịch sử trận đấu và mọi thành viên lobby của bạn sẽ bị xoá vĩnh viễn.",
@@ -824,10 +832,6 @@
     "cropAvatar": "Chỉnh ảnh",
     "uploadFailed": "Tải ảnh thất bại",
     "networkMaxReached": "Tối đa 5 tổ chức. Hãy xoá bớt 1 trước.",
-    "discardChangesTitle": "Bỏ thay đổi?",
-    "discardChangesBody": "Các thay đổi Profile của bạn chưa được lưu.",
-    "discardChangesStay": "Quay lại",
-    "discardChangesLeave": "Bỏ thay đổi",
     "paymentInfo": "Thông tin thanh toán",
     "paymentInfoExplanation": "Thêm ngân hàng hoặc ví điện tử để nhận tiền. Thông tin này chỉ hiển thị cho bạn bè và thành viên cùng lobby để họ chuyển khoản cho bạn ngoài ứng dụng — Passe không xử lý bất kỳ giao dịch thanh toán nào.",
     "paymentInfoEmpty": "Chưa có thông tin thanh toán nào. Thêm ngân hàng hoặc ví điện tử để bạn bè và thành viên lobby có thể chuyển khoản cho bạn.",
@@ -1247,7 +1251,7 @@
     },
     "trend": {
       "period": "90 ngày qua",
-      "insufficient": "Chưa đủ dữ liệu để vẽ biểu đồ."
+      "insufficient": "Chưa đủ dữ liệu"
     },
     "detected": {
       "title": "Buổi tập được phát hiện",
@@ -1340,9 +1344,7 @@
         "good": "Chơi thường xuyên, thể hiện tốt hơn mức trung bình.",
         "advanced": "Thi đấu nghiêm túc, muốn gặp đối thủ ngang tầm."
       },
-      "skillLockWarning": "Trình độ ban đầu chỉ đặt được một lần và không thể đổi sau khi lưu.",
-      "save": "Lưu & tiếp tục",
-      "saveError": "Không lưu được hồ sơ. Bạn có thể thử lại ở tab Hồ sơ."
+      "done": "OK"
     },
     "guest": {
       "title": "Xem hướng dẫn các tính năng của app?",

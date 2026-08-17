@@ -1,4 +1,5 @@
 // Chat-style trigger bar + action picker overlay
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
@@ -121,7 +122,7 @@ class ChatTriggerBar extends ConsumerWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(
+                      child: AutoSizeText(
                         isLeader
                             ? 'lobbyHub.actions.leaderPrompt'.tr()
                             : 'lobbyHub.actions.prompt'.tr(),

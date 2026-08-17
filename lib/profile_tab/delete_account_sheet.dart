@@ -8,10 +8,7 @@ import '../auth/auth_controller.dart';
 import '../ui/main.dart';
 
 void showDeleteAccountSheet(BuildContext context) {
-  showPSheet(
-    context: context,
-    builder: (_) => const _DeleteAccountSheet(),
-  );
+  showPSheet(context: context, builder: (_) => const _DeleteAccountSheet());
 }
 
 class _DeleteAccountSheet extends ConsumerStatefulWidget {
@@ -51,7 +48,8 @@ class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
     } on AccountDeletionBlockedException catch (e) {
       if (!mounted) return;
       final key = switch (e.reason) {
-        AccountDeletionBlockReason.captain => 'profile.deleteAccountBlockedCaptain',
+        AccountDeletionBlockReason.captain =>
+          'profile.deleteAccountBlockedCaptain',
         AccountDeletionBlockReason.host => 'profile.deleteAccountBlockedHost',
       };
       showFToast(

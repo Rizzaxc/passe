@@ -101,3 +101,183 @@ abstract class _$JoinRequestsController
     return element.handleCreate(ref, () => build(_$args));
   }
 }
+
+/// Cheap status-only read for the notification card's inline Accept/Reject —
+/// avoids pulling the full pending-request list just to know whether this
+/// one record still needs a decision. Mirrors `lobbyInviteStatus`.
+
+@ProviderFor(joinRequestStatus)
+final joinRequestStatusProvider = JoinRequestStatusFamily._();
+
+/// Cheap status-only read for the notification card's inline Accept/Reject —
+/// avoids pulling the full pending-request list just to know whether this
+/// one record still needs a decision. Mirrors `lobbyInviteStatus`.
+
+final class JoinRequestStatusProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  /// Cheap status-only read for the notification card's inline Accept/Reject —
+  /// avoids pulling the full pending-request list just to know whether this
+  /// one record still needs a decision. Mirrors `lobbyInviteStatus`.
+  JoinRequestStatusProvider._({
+    required JoinRequestStatusFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'joinRequestStatusProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$joinRequestStatusHash();
+
+  @override
+  String toString() {
+    return r'joinRequestStatusProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    final argument = this.argument as String;
+    return joinRequestStatus(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is JoinRequestStatusProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$joinRequestStatusHash() => r'74249e6e1a22cd6aba71224c3c57a0b8ae412217';
+
+/// Cheap status-only read for the notification card's inline Accept/Reject —
+/// avoids pulling the full pending-request list just to know whether this
+/// one record still needs a decision. Mirrors `lobbyInviteStatus`.
+
+final class JoinRequestStatusFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<String?>, String> {
+  JoinRequestStatusFamily._()
+    : super(
+        retry: null,
+        name: r'joinRequestStatusProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Cheap status-only read for the notification card's inline Accept/Reject —
+  /// avoids pulling the full pending-request list just to know whether this
+  /// one record still needs a decision. Mirrors `lobbyInviteStatus`.
+
+  JoinRequestStatusProvider call(String recordId) =>
+      JoinRequestStatusProvider._(argument: recordId, from: this);
+
+  @override
+  String toString() => r'joinRequestStatusProvider';
+}
+
+/// Accept/decline a lobby join request. Shared by the notification card's
+/// inline buttons and [JoinRequestsController] (the "Manage Requests" sheet).
+///
+/// `keepAlive: true` — nothing ever watches this controller's (trivial void)
+/// state, only its `.notifier` for `respond()`, so a plain autoDispose
+/// provider gets disposed the instant the `ref.read` call returns (no
+/// listeners) — then `respond()`'s own `ref.invalidate(...)` throws after its
+/// `await` gap because its own `ref` is already dead. Mirrors
+/// `LobbyInviteResponseController`.
+
+@ProviderFor(JoinRequestResponseController)
+final joinRequestResponseControllerProvider =
+    JoinRequestResponseControllerProvider._();
+
+/// Accept/decline a lobby join request. Shared by the notification card's
+/// inline buttons and [JoinRequestsController] (the "Manage Requests" sheet).
+///
+/// `keepAlive: true` — nothing ever watches this controller's (trivial void)
+/// state, only its `.notifier` for `respond()`, so a plain autoDispose
+/// provider gets disposed the instant the `ref.read` call returns (no
+/// listeners) — then `respond()`'s own `ref.invalidate(...)` throws after its
+/// `await` gap because its own `ref` is already dead. Mirrors
+/// `LobbyInviteResponseController`.
+final class JoinRequestResponseControllerProvider
+    extends $NotifierProvider<JoinRequestResponseController, void> {
+  /// Accept/decline a lobby join request. Shared by the notification card's
+  /// inline buttons and [JoinRequestsController] (the "Manage Requests" sheet).
+  ///
+  /// `keepAlive: true` — nothing ever watches this controller's (trivial void)
+  /// state, only its `.notifier` for `respond()`, so a plain autoDispose
+  /// provider gets disposed the instant the `ref.read` call returns (no
+  /// listeners) — then `respond()`'s own `ref.invalidate(...)` throws after its
+  /// `await` gap because its own `ref` is already dead. Mirrors
+  /// `LobbyInviteResponseController`.
+  JoinRequestResponseControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'joinRequestResponseControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$joinRequestResponseControllerHash();
+
+  @$internal
+  @override
+  JoinRequestResponseController create() => JoinRequestResponseController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(void value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<void>(value),
+    );
+  }
+}
+
+String _$joinRequestResponseControllerHash() =>
+    r'48f46174c680e8732796ac909990018c5abfccc2';
+
+/// Accept/decline a lobby join request. Shared by the notification card's
+/// inline buttons and [JoinRequestsController] (the "Manage Requests" sheet).
+///
+/// `keepAlive: true` — nothing ever watches this controller's (trivial void)
+/// state, only its `.notifier` for `respond()`, so a plain autoDispose
+/// provider gets disposed the instant the `ref.read` call returns (no
+/// listeners) — then `respond()`'s own `ref.invalidate(...)` throws after its
+/// `await` gap because its own `ref` is already dead. Mirrors
+/// `LobbyInviteResponseController`.
+
+abstract class _$JoinRequestResponseController extends $Notifier<void> {
+  void build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<void, void>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<void, void>,
+              void,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}

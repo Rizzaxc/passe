@@ -9,6 +9,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../auth/auth_controller.dart';
 import '../../core/feature_flags.dart';
 import '../../core/model/lobby.dart';
+import '../../router.dart';
 import '../../ui/dialog.dart';
 import '../../ui/sheet.dart';
 import '../../ui/user_avatar.dart';
@@ -873,52 +874,68 @@ class _MemberRow extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          PUserAvatar(
-            userId: member.userId,
-            username: member.username,
-            generatedAvatar: member.generatedAvatar,
-            radius: 18,
-          ),
-          const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      member.username,
-                      style: const TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF09090B),
-                      ),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () =>
+                  UserRoute(id: member.userId, $extra: member.username)
+                      .push(context),
+              child: Row(
+                children: [
+                  PUserAvatar(
+                    userId: member.userId,
+                    username: member.username,
+                    generatedAvatar: member.generatedAvatar,
+                    radius: 18,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              member.username,
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF09090B),
+                              ),
+                            ),
+                            if (_isMemberTheCaptain) ...[
+                              const SizedBox(width: 4),
+                              Icon(
+                                FLucideIcons.crown,
+                                size: 11,
+                                color: colors.mutedForeground,
+                              ),
+                            ] else if (isCoordinator) ...[
+                              const SizedBox(width: 4),
+                              Icon(
+                                FLucideIcons.shield,
+                                size: 11,
+                                color: colors.mutedForeground,
+                              ),
+                            ],
+                          ],
+                        ),
+                        Text(
+                          '#${member.tagNumber}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.mutedForeground,
+                          ),
+                        ),
+                      ],
                     ),
-                    if (_isMemberTheCaptain) ...[
-                      const SizedBox(width: 4),
-                      Icon(
-                        FLucideIcons.crown,
-                        size: 11,
-                        color: colors.mutedForeground,
-                      ),
-                    ] else if (isCoordinator) ...[
-                      const SizedBox(width: 4),
-                      Icon(
-                        FLucideIcons.shield,
-                        size: 11,
-                        color: colors.mutedForeground,
-                      ),
-                    ],
-                  ],
-                ),
-                Text(
-                  '#${member.tagNumber}',
-                  style: TextStyle(fontSize: 11, color: colors.mutedForeground),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
-          if (canManageRow)
+          if (canManageRow) ...[
+            const SizedBox(width: 8),
             GestureDetector(
               onTap: () => _showMemberMenu(context, ref),
               child: Container(
@@ -937,6 +954,7 @@ class _MemberRow extends ConsumerWidget {
                 ),
               ),
             ),
+          ],
         ],
       ),
     );

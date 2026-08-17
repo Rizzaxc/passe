@@ -9,6 +9,7 @@ import '../auth/auth_controller.dart';
 import '../core/format.dart';
 import '../core/location_repository.dart';
 import '../manage_tab/lobby_section/feed/home_ground_selector.dart';
+import '../router.dart';
 import '../ui/main.dart';
 import 'course_controller.dart';
 import 'model.dart';
@@ -125,6 +126,9 @@ class _CourseInfoSheet extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               subtitle: Text('course.status.${member.status.name}'.tr()),
+              onPress: () =>
+                  UserRoute(id: member.userId, $extra: member.username)
+                      .push(context),
               suffix: course.isCoach
                   ? FButton.icon(
                       variant: .ghost,
@@ -439,6 +443,14 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
                             username: _searchResults![i].username,
                             generatedAvatar: _searchResults![i].generatedAvatar,
                             radius: 16,
+                            // Own tap target nested inside the tile's
+                            // selection-tap area — wins the gesture arena, so
+                            // the avatar opens the profile while the rest of
+                            // the tile still selects for enrollment.
+                            onTap: () => UserRoute(
+                              id: _searchResults![i].userId,
+                              $extra: _searchResults![i].username,
+                            ).push(context),
                           ),
                           title: Text(
                             _searchResults![i].tagNumber == null

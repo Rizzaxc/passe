@@ -975,6 +975,11 @@ mixin $LobbyDetailRoute on GoRouteData {
       state.uri.queryParameters,
       _$boolConverter,
     ),
+    openJoinRequests: _$convertMapValue(
+      'open-join-requests',
+      state.uri.queryParameters,
+      _$boolConverter,
+    ),
     $extra: state.extra as String?,
   );
 
@@ -991,6 +996,8 @@ mixin $LobbyDetailRoute on GoRouteData {
         'highlight-challenge-id': _self.highlightChallengeId,
       if (_self.openActivityPlanner != null)
         'open-activity-planner': _self.openActivityPlanner!.toString(),
+      if (_self.openJoinRequests != null)
+        'open-join-requests': _self.openJoinRequests!.toString(),
     },
   );
 

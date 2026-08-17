@@ -13,6 +13,7 @@ import '../../../core/format.dart';
 import '../../../core/model/wall_post.dart';
 import '../../../core/payment/pay_recipient.dart';
 import '../../../feed_tab/post_card.dart';
+import '../../../router.dart';
 import 'feed_controller.dart';
 
 // ─── Color tokens ──────────────────────────────────────────────
@@ -620,7 +621,8 @@ class _AuthorRow extends StatelessWidget {
     final isLeader =
         authorId != null && captainId != null && authorId == captainId;
 
-    return Row(
+    final identity = Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         if (authorId != null)
           PUserAvatar(
@@ -677,6 +679,19 @@ class _AuthorRow extends StatelessWidget {
             ),
           ),
         ],
+      ],
+    );
+
+    return Row(
+      children: [
+        authorId == null
+            ? identity
+            : GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () =>
+                    UserRoute(id: authorId, $extra: name).push(context),
+                child: identity,
+              ),
         const Spacer(),
         Text(
           time,
@@ -1431,24 +1446,39 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
                             padding: const EdgeInsets.only(bottom: 6),
                             child: Row(
                               children: [
-                                PUserAvatar(
-                                  userId: payee.userId,
-                                  username: payee.username,
-                                  generatedAvatar: payee.generatedAvatar,
-                                  radius: 11,
-                                ),
-                                const SizedBox(width: 7),
                                 Expanded(
-                                  child: Text(
-                                    payee.username,
-                                    style: const TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w600,
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () => UserRoute(
+                                      id: payee.userId,
+                                      $extra: payee.username,
+                                    ).push(context),
+                                    child: Row(
+                                      children: [
+                                        PUserAvatar(
+                                          userId: payee.userId,
+                                          username: payee.username,
+                                          generatedAvatar:
+                                              payee.generatedAvatar,
+                                          radius: 11,
+                                        ),
+                                        const SizedBox(width: 7),
+                                        Expanded(
+                                          child: Text(
+                                            payee.username,
+                                            style: const TextStyle(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
+                                const SizedBox(width: 6),
                                 Flexible(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,

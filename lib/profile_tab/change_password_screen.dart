@@ -69,14 +69,22 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       resizeToAvoidBottomInset: false,
       header: FHeader.nested(
         title: Text(
-          (widget.isInitialSetup ? 'profile.setPassword' : 'profile.changePassword').tr(),
+          (widget.isInitialSetup
+                  ? 'profile.setPassword'
+                  : 'profile.changePassword')
+              .tr(),
         ),
         prefixes: [
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],
       ),
       child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          16 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
         child: Form(
           key: _formKey,
           child: Column(
@@ -131,7 +139,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Text(
-                        (widget.isInitialSetup ? 'profile.setPassword' : 'profile.changePassword')
+                        (widget.isInitialSetup
+                                ? 'profile.setPassword'
+                                : 'profile.changePassword')
                             .tr(),
                       ),
               ),

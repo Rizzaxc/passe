@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'members/controller.dart';
+
 part 'join_requests_controller.g.dart';
 
 class JoinRequest {
@@ -63,5 +65,54 @@ class JoinRequestsController extends _$JoinRequestsController {
         .eq('id', recordId)
         .timeout(const Duration(seconds: 5));
     ref.invalidateSelf();
+  }
+}
+
+/// Cheap status-only read for the notification card's inline Accept/Reject —
+/// avoids pulling the full pending-request list just to know whether this
+/// one record still needs a decision. Mirrors `lobbyInviteStatus`.
+@riverpod
+Future<String?> joinRequestStatus(Ref ref, String recordId) async {
+  final row = await Supabase.instance.client
+      .from('lobby_befriend_record')
+      .select('status')
+      .eq('id', recordId)
+      .maybeSingle()
+      .timeout(const Duration(seconds: 5));
+  return row?['status'] as String?;
+}
+
+/// Accept/decline a lobby join request. Shared by the notification card's
+/// inline buttons and [JoinRequestsController] (the "Manage Requests" sheet).
+///
+/// `keepAlive: true` — nothing ever watches this controller's (trivial void)
+/// state, only its `.notifier` for `respond()`, so a plain autoDispose
+/// provider gets disposed the instant the `ref.read` call returns (no
+/// listeners) — then `respond()`'s own `ref.invalidate(...)` throws after its
+/// `await` gap because its own `ref` is already dead. Mirrors
+/// `LobbyInviteResponseController`.
+@Riverpod(keepAlive: true)
+class JoinRequestResponseController extends _$JoinRequestResponseController {
+  final supabase = Supabase.instance.client;
+
+  @override
+  void build() {}
+
+  Future<void> respond(
+    String recordId, {
+    required bool accept,
+    String? lobbyId,
+  }) async {
+    await supabase
+        .from('lobby_befriend_record')
+        .update({'status': accept ? 'accepted' : 'declined'})
+        .eq('id', recordId)
+        .timeout(const Duration(seconds: 5));
+    ref.invalidate(joinRequestStatusProvider(recordId));
+    if (lobbyId != null) {
+      ref.invalidate(joinRequestsControllerProvider(lobbyId));
+      // Membership itself is added server-side by the accept trigger.
+      if (accept) ref.invalidate(lobbyMembersControllerProvider(lobbyId));
+    }
   }
 }

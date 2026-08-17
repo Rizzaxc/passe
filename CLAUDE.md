@@ -259,6 +259,14 @@ JSON — parse with `double.tryParse`. Complex reads go through Postgres functio
 - Use SharedPreferences to persist important app states
 - Use Vietnamese for UI/ messages but do not translate jargon
 - Every Supabase RPC call and async data-load function must have a `.timeout(const Duration(seconds: 5))` — no exceptions
+- **Any UI surface that mentions a user (an avatar, username, or name) and already has that user's id in scope must
+  let the user tap through to `UserRoute(id: ...).push(context)`** (push-only — never `.go()`, see `UserRoute`'s doc
+  comment in `lib/router.dart`). This applies whether the row is the primary content (a friend list, a member roster)
+  or incidental (a request card, a notification, a post's tagged users) — if the id is already there, wire the tap.
+  `PUserAvatar` (`lib/ui/user_avatar.dart`) takes an `onTap` directly; wrap the avatar + name/tag text together (not
+  just the avatar) in a single tappable region (e.g. `GestureDetector(behavior: HitTestBehavior.opaque, ...)`) rather
+  than making only the avatar respond. Don't wire this where the id *isn't* already fetched — that's a new query to
+  add deliberately, not this rule's scope.
 
 - Whenever editing table user->details json schema, provide the migration script
 - Use snake_case and singular form for table names and columns

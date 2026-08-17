@@ -56,6 +56,14 @@ class _TimeslotPickerState extends State<TimeslotPicker> {
     _dayChunkIndex = widget.initialTimeslot != null
         ? DayChunk.values.indexOf(widget.initialTimeslot!.dayChunk)
         : 3; // default to Evening
+    // The wheels start pre-selected at the defaults above, but onChanged only
+    // ever fires from a wheel's own onChange callback — so confirming without
+    // touching either wheel left the caller's selection as null. Report the
+    // default once, after the first frame (not synchronously here) so we
+    // don't risk calling an ancestor's setState mid-build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _notifyChange();
+    });
   }
 
   void _notifyChange() {

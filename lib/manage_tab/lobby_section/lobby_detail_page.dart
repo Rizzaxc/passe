@@ -12,6 +12,7 @@ import '../../ui/lobby_avatar.dart';
 import 'activity/main.dart';
 import 'activity/planner_tab.dart';
 import 'history/view.dart';
+import 'join_requests_sheet.dart';
 import 'lobby_detail_controller.dart';
 import 'lobby_hub_tour.dart';
 import 'lobby_info_sheet.dart';
@@ -38,6 +39,11 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
   /// signed-in member's permission resolves to captain/coordinator.
   final bool openActivityPlanner;
 
+  /// Opens the join-requests sheet on landing, provided the signed-in
+  /// member's permission resolves to captain/coordinator — set from a
+  /// `lobby_join_request` notification tap.
+  final bool openJoinRequests;
+
   const LobbyDetailPage({
     super.key,
     required this.lobbyId,
@@ -46,6 +52,7 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
     this.highlightActivityId,
     this.highlightChallengeId,
     this.openActivityPlanner = false,
+    this.openJoinRequests = false,
   }) : assert(initialIndex >= 0 && initialIndex <= 2);
 
   /// Deep-links a specific tab (and, for Planner, a specific activity or
@@ -57,6 +64,7 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
     String? highlightActivityId,
     String? highlightChallengeId,
     bool openActivityPlanner = false,
+    bool openJoinRequests = false,
   }) {
     return LobbyDetailPage(
       lobbyId: lobbyId,
@@ -65,6 +73,7 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
       highlightActivityId: highlightActivityId,
       highlightChallengeId: highlightChallengeId,
       openActivityPlanner: openActivityPlanner,
+      openJoinRequests: openJoinRequests,
     );
   }
 
@@ -87,6 +96,8 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
   Timer? _settleTimer;
   bool _didOpenActivityPlanner = false;
   bool _activityPlannerSheetOpen = false;
+  bool _didOpenJoinRequests = false;
+  bool _joinRequestsSheetOpen = false;
   bool _didAttemptTour = false;
 
   @override
@@ -141,9 +152,33 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
     });
   }
 
+  void _maybeOpenJoinRequestsSheet(bool canManage) {
+    if (!widget.openJoinRequests || !canManage || _didOpenJoinRequests) {
+      return;
+    }
+    _didOpenJoinRequests = true;
+    _joinRequestsSheetOpen = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        _joinRequestsSheetOpen = false;
+        return;
+      }
+      unawaited(() async {
+        await showJoinRequestsSheet(context, widget.lobbyId);
+        if (!mounted) return;
+        _joinRequestsSheetOpen = false;
+        _maybeScheduleTour(
+          ref.read(currentUserIdProvider),
+          ref.read(onboardingStateProvider).value?.getStartedDone ?? false,
+        );
+      }());
+    });
+  }
+
   void _maybeScheduleTour(String? userId, bool onboardingDone) {
     if (_didAttemptTour ||
         _activityPlannerSheetOpen ||
+        _joinRequestsSheetOpen ||
         userId == null ||
         !onboardingDone) {
       return;
@@ -182,6 +217,7 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
         ref.watch(myLobbyPermissionProvider(widget.lobbyId)).value?.canManage ??
         false;
     _maybeOpenActivityPlanner(canManage);
+    _maybeOpenJoinRequestsSheet(canManage);
     _maybeScheduleTour(userId, onboardingDone);
 
     final sections = <FTabEntry>[

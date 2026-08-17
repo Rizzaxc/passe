@@ -9,55 +9,11 @@ part of 'sport_profile_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(sportProfileHasUncommittedChanges)
-final sportProfileHasUncommittedChangesProvider =
-    SportProfileHasUncommittedChangesProvider._();
-
-final class SportProfileHasUncommittedChangesProvider
-    extends $FunctionalProvider<bool, bool, bool>
-    with $Provider<bool> {
-  SportProfileHasUncommittedChangesProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'sportProfileHasUncommittedChangesProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() =>
-      _$sportProfileHasUncommittedChangesHash();
-
-  @$internal
-  @override
-  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  bool create(Ref ref) {
-    return sportProfileHasUncommittedChanges(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(bool value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<bool>(value),
-    );
-  }
-}
-
-String _$sportProfileHasUncommittedChangesHash() =>
-    r'67b2a9fdd3f493d11120ef60d126b8f3cbd52ca7';
-
 @ProviderFor(SoccerProfileController)
 final soccerProfileControllerProvider = SoccerProfileControllerProvider._();
 
 final class SoccerProfileControllerProvider
-    extends $NotifierProvider<SoccerProfileController, SoccerProfileState> {
+    extends $NotifierProvider<SoccerProfileController, SoccerProfile> {
   SoccerProfileControllerProvider._()
     : super(
         from: null,
@@ -77,28 +33,28 @@ final class SoccerProfileControllerProvider
   SoccerProfileController create() => SoccerProfileController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(SoccerProfileState value) {
+  Override overrideWithValue(SoccerProfile value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<SoccerProfileState>(value),
+      providerOverride: $SyncValueProvider<SoccerProfile>(value),
     );
   }
 }
 
 String _$soccerProfileControllerHash() =>
-    r'd6f123f500c285cd9f91384e7457aa647516bdf5';
+    r'0f4704cdadee3a8a61ddc1e674a4d1845fc12c45';
 
-abstract class _$SoccerProfileController extends $Notifier<SoccerProfileState> {
-  SoccerProfileState build();
+abstract class _$SoccerProfileController extends $Notifier<SoccerProfile> {
+  SoccerProfile build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<SoccerProfileState, SoccerProfileState>;
+    final ref = this.ref as $Ref<SoccerProfile, SoccerProfile>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<SoccerProfileState, SoccerProfileState>,
-              SoccerProfileState,
+              AnyNotifier<SoccerProfile, SoccerProfile>,
+              SoccerProfile,
               Object?,
               Object?
             >;
@@ -111,8 +67,7 @@ final basketballProfileControllerProvider =
     BasketballProfileControllerProvider._();
 
 final class BasketballProfileControllerProvider
-    extends
-        $NotifierProvider<BasketballProfileController, BasketballProfileState> {
+    extends $NotifierProvider<BasketballProfileController, BasketballProfile> {
   BasketballProfileControllerProvider._()
     : super(
         from: null,
@@ -132,30 +87,29 @@ final class BasketballProfileControllerProvider
   BasketballProfileController create() => BasketballProfileController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(BasketballProfileState value) {
+  Override overrideWithValue(BasketballProfile value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<BasketballProfileState>(value),
+      providerOverride: $SyncValueProvider<BasketballProfile>(value),
     );
   }
 }
 
 String _$basketballProfileControllerHash() =>
-    r'6bf973666f1dbb18c91c4f2b1568d7f1fb7e1d7c';
+    r'a6ef81d485c41e51e54358ba01c610509339f918';
 
 abstract class _$BasketballProfileController
-    extends $Notifier<BasketballProfileState> {
-  BasketballProfileState build();
+    extends $Notifier<BasketballProfile> {
+  BasketballProfile build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref =
-        this.ref as $Ref<BasketballProfileState, BasketballProfileState>;
+    final ref = this.ref as $Ref<BasketballProfile, BasketballProfile>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<BasketballProfileState, BasketballProfileState>,
-              BasketballProfileState,
+              AnyNotifier<BasketballProfile, BasketballProfile>,
+              BasketballProfile,
               Object?,
               Object?
             >;
@@ -168,8 +122,7 @@ final badmintonProfileControllerProvider =
     BadmintonProfileControllerProvider._();
 
 final class BadmintonProfileControllerProvider
-    extends
-        $NotifierProvider<BadmintonProfileController, BadmintonProfileState> {
+    extends $NotifierProvider<BadmintonProfileController, BadmintonProfile> {
   BadmintonProfileControllerProvider._()
     : super(
         from: null,
@@ -189,29 +142,29 @@ final class BadmintonProfileControllerProvider
   BadmintonProfileController create() => BadmintonProfileController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(BadmintonProfileState value) {
+  Override overrideWithValue(BadmintonProfile value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<BadmintonProfileState>(value),
+      providerOverride: $SyncValueProvider<BadmintonProfile>(value),
     );
   }
 }
 
 String _$badmintonProfileControllerHash() =>
-    r'5da0911e52b05c93a690d7eaf520c009c6875f31';
+    r'2516d3bd2183342bd0075ff2d1114903f898fee2';
 
 abstract class _$BadmintonProfileController
-    extends $Notifier<BadmintonProfileState> {
-  BadmintonProfileState build();
+    extends $Notifier<BadmintonProfile> {
+  BadmintonProfile build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<BadmintonProfileState, BadmintonProfileState>;
+    final ref = this.ref as $Ref<BadmintonProfile, BadmintonProfile>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<BadmintonProfileState, BadmintonProfileState>,
-              BadmintonProfileState,
+              AnyNotifier<BadmintonProfile, BadmintonProfile>,
+              BadmintonProfile,
               Object?,
               Object?
             >;
@@ -223,7 +176,7 @@ abstract class _$BadmintonProfileController
 final tennisProfileControllerProvider = TennisProfileControllerProvider._();
 
 final class TennisProfileControllerProvider
-    extends $NotifierProvider<TennisProfileController, TennisProfileState> {
+    extends $NotifierProvider<TennisProfileController, TennisProfile> {
   TennisProfileControllerProvider._()
     : super(
         from: null,
@@ -243,28 +196,28 @@ final class TennisProfileControllerProvider
   TennisProfileController create() => TennisProfileController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(TennisProfileState value) {
+  Override overrideWithValue(TennisProfile value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<TennisProfileState>(value),
+      providerOverride: $SyncValueProvider<TennisProfile>(value),
     );
   }
 }
 
 String _$tennisProfileControllerHash() =>
-    r'682d07d66b8817da7644fc47f4f895d6969750ec';
+    r'd9640832a995826666411f671bea534ff2d1e35b';
 
-abstract class _$TennisProfileController extends $Notifier<TennisProfileState> {
-  TennisProfileState build();
+abstract class _$TennisProfileController extends $Notifier<TennisProfile> {
+  TennisProfile build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<TennisProfileState, TennisProfileState>;
+    final ref = this.ref as $Ref<TennisProfile, TennisProfile>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<TennisProfileState, TennisProfileState>,
-              TennisProfileState,
+              AnyNotifier<TennisProfile, TennisProfile>,
+              TennisProfile,
               Object?,
               Object?
             >;
@@ -277,8 +230,7 @@ final pickleballProfileControllerProvider =
     PickleballProfileControllerProvider._();
 
 final class PickleballProfileControllerProvider
-    extends
-        $NotifierProvider<PickleballProfileController, PickleballProfileState> {
+    extends $NotifierProvider<PickleballProfileController, PickleballProfile> {
   PickleballProfileControllerProvider._()
     : super(
         from: null,
@@ -298,30 +250,29 @@ final class PickleballProfileControllerProvider
   PickleballProfileController create() => PickleballProfileController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(PickleballProfileState value) {
+  Override overrideWithValue(PickleballProfile value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<PickleballProfileState>(value),
+      providerOverride: $SyncValueProvider<PickleballProfile>(value),
     );
   }
 }
 
 String _$pickleballProfileControllerHash() =>
-    r'c56534158ad5f66e58997b353ae2070313fd9a0d';
+    r'170f5d4c345a96fe945fb8ac47683a799b0f6405';
 
 abstract class _$PickleballProfileController
-    extends $Notifier<PickleballProfileState> {
-  PickleballProfileState build();
+    extends $Notifier<PickleballProfile> {
+  PickleballProfile build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref =
-        this.ref as $Ref<PickleballProfileState, PickleballProfileState>;
+    final ref = this.ref as $Ref<PickleballProfile, PickleballProfile>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<PickleballProfileState, PickleballProfileState>,
-              PickleballProfileState,
+              AnyNotifier<PickleballProfile, PickleballProfile>,
+              PickleballProfile,
               Object?,
               Object?
             >;

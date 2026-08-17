@@ -17,8 +17,7 @@ class PickleballProfileWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(pickleballProfileControllerProvider);
-    final profile = state.profile;
+    final profile = ref.watch(pickleballProfileControllerProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -57,15 +56,11 @@ class PickleballProfileWidget extends ConsumerWidget {
           ),
           children: [
             for (final d in RacketDiscipline.values)
-              FSelectItem(
-                title: Text(d.getLocalizedName(context)),
-                value: d,
-              ),
+              FSelectItem(title: Text(d.getLocalizedName(context)), value: d),
           ],
         ),
         EloSeedField(
           value: profile.eloSeed,
-          locked: state.eloSeedLocked,
           onChanged: (s) {
             if (s != null) _update(ref, profile.copyWith(eloSeed: s));
           },

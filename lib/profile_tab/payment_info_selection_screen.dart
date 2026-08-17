@@ -113,13 +113,20 @@ class PaymentInfoSelectionScreen extends ConsumerWidget {
                     prefix: const Icon(FLucideIcons.smartphone),
                     title: Text('payment.preferredBank'.tr()),
                     subtitle: Text(
-                      ref.watch(preferredSendingBankStateProvider).value?.shortName ??
+                      ref
+                              .watch(preferredSendingBankStateProvider)
+                              .value
+                              ?.shortName ??
                           'payment.preferredBankNotSet'.tr(),
                     ),
                     onPress: () async {
-                      final chosen = await showPreferredSendingBankPicker(context);
+                      final chosen = await showPreferredSendingBankPicker(
+                        context,
+                      );
                       if (chosen != null) {
-                        ref.read(preferredSendingBankStateProvider.notifier).set(chosen);
+                        ref
+                            .read(preferredSendingBankStateProvider.notifier)
+                            .set(chosen);
                       }
                     },
                   ),
@@ -133,7 +140,10 @@ class PaymentInfoSelectionScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showAddPaymentInfoSheet(BuildContext context, WidgetRef ref) async {
+  Future<void> _showAddPaymentInfoSheet(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final confirmed = await requirePasswordConfirmation(context, ref);
     if (!confirmed || !context.mounted) return;
 
@@ -148,7 +158,9 @@ class PaymentInfoSelectionScreen extends ConsumerWidget {
       prefix: const Icon(FLucideIcons.landmark),
       title: Text(entry.bankDisplayName),
       subtitle: Text(
-        entry.accountName != null ? '${entry.value} • ${entry.accountName}' : entry.value,
+        entry.accountName != null
+            ? '${entry.value} • ${entry.accountName}'
+            : entry.value,
       ),
       suffix: Row(
         mainAxisSize: MainAxisSize.min,
@@ -182,7 +194,9 @@ class PaymentInfoSelectionScreen extends ConsumerWidget {
                     ),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(true),
-                      child: Text('profile.paymentInfoDeleteConfirmAction'.tr()),
+                      child: Text(
+                        'profile.paymentInfoDeleteConfirmAction'.tr(),
+                      ),
                     ),
                   ],
                 ),
@@ -190,7 +204,9 @@ class PaymentInfoSelectionScreen extends ConsumerWidget {
               if (confirmed != true) return;
 
               try {
-                await ref.read(paymentInfoControllerProvider.notifier).delete(entry);
+                await ref
+                    .read(paymentInfoControllerProvider.notifier)
+                    .delete(entry);
               } catch (e) {
                 if (!context.mounted) return;
                 showFToast(
@@ -220,10 +236,13 @@ class _AddPaymentInfoSheet extends ConsumerStatefulWidget {
   const _AddPaymentInfoSheet();
 
   @override
-  ConsumerState<_AddPaymentInfoSheet> createState() => _AddPaymentInfoSheetState();
+  ConsumerState<_AddPaymentInfoSheet> createState() =>
+      _AddPaymentInfoSheetState();
 }
 
-final _kVietqrBankItems = {for (final bank in kVietqrBanks) bank.shortName: bank};
+final _kVietqrBankItems = {
+  for (final bank in kVietqrBanks) bank.shortName: bank,
+};
 
 class _AddPaymentInfoSheetState extends ConsumerState<_AddPaymentInfoSheet> {
   final _accountNumberController = TextEditingController();
@@ -256,7 +275,9 @@ class _AddPaymentInfoSheetState extends ConsumerState<_AddPaymentInfoSheet> {
 
     setState(() => _saving = true);
     try {
-      await ref.read(paymentInfoControllerProvider.notifier).add(
+      await ref
+          .read(paymentInfoControllerProvider.notifier)
+          .add(
             bank: bank,
             accountNumber: accountNumber,
             accountName: _accountNameController.text.trim().isEmpty
@@ -311,21 +332,31 @@ class _AddPaymentInfoSheetState extends ConsumerState<_AddPaymentInfoSheet> {
           FTextField(
             hint: 'payment.accountNumber'.tr(),
             keyboardType: TextInputType.text,
-            control: FTextFieldControl.managed(controller: _accountNumberController),
+            control: FTextFieldControl.managed(
+              controller: _accountNumberController,
+            ),
           ),
           FTextField(
             hint: 'payment.accountHolderName'.tr(),
-            control: FTextFieldControl.managed(controller: _accountNameController),
+            control: FTextFieldControl.managed(
+              controller: _accountNameController,
+            ),
           ),
           FButton(
-            onPress: (_selectedBank == null || _accountNumberController.text.trim().isEmpty || _saving)
+            onPress:
+                (_selectedBank == null ||
+                    _accountNumberController.text.trim().isEmpty ||
+                    _saving)
                 ? null
                 : _submit,
             child: _saving
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : Text('profile.commit'.tr()),
           ),
