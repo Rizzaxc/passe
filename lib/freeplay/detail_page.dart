@@ -4,9 +4,11 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../auth/auth_controller.dart';
 import '../auth/guest_prompt.dart';
 import '../core/icon/main.dart';
 import '../core/map_directions.dart';
+import '../core/model/enum.dart';
 import '../core/zalo_link.dart';
 import '../router.dart';
 import '../ui/main.dart';
@@ -190,6 +192,11 @@ class _BodyState extends ConsumerState<_Body> {
     final hostZalo = !isHost
         ? ref.watch(freeplayHostZaloProvider(a.hostId)).value
         : null;
+    // Unset defaults to male, matching request_freeplay_seat's own
+    // `coalesce(details->>'gender','male')` fallback server-side, so the
+    // highlighted price always matches what a request would actually charge.
+    final myGender =
+        ref.watch(authControllerProvider).value?.details?.gender ?? Gender.male;
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(freeplayDetailProvider(a.id));
@@ -289,16 +296,7 @@ class _BodyState extends ConsumerState<_Body> {
                         ),
                 ),
                 Divider(height: 1, color: context.theme.colors.border),
-                _Line(
-                  icon: FLucideIcons.badgeDollarSign,
-                  title: 'freeplay.prices'.tr(
-                    namedArgs: {
-                      'male': _formatVnd(context, a.malePrice),
-                      'female': _formatVnd(context, a.femalePrice),
-                    },
-                  ),
-                  subtitle: 'freeplay.payHostDirectly'.tr(),
-                ),
+                _PriceLine(activity: a, myGender: myGender),
                 Divider(height: 1, color: context.theme.colors.border),
                 _Line(
                   icon: FLucideIcons.gauge,
@@ -426,6 +424,99 @@ String _formatVnd(BuildContext context, num amount) =>
       name: 'VND',
       decimalDigits: 0,
     ).format(amount);
+
+/// Both prices always show — a player picking a spot for a friend of the
+/// other gender still needs to see it — but the one matching the viewer's
+/// own gender is visually called out so they don't have to cross-reference
+/// their own profile to know which number is theirs.
+class _PriceLine extends StatelessWidget {
+  final FreeplayActivity activity;
+  final Gender myGender;
+
+  const _PriceLine({required this.activity, required this.myGender});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            FLucideIcons.badgeDollarSign,
+            size: 18,
+            color: colors.mutedForeground,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    _PriceChip(
+                      label: 'freeplay.malePrice'.tr(
+                        namedArgs: {
+                          'amount': _formatVnd(context, activity.malePrice),
+                        },
+                      ),
+                      highlighted: myGender == Gender.male,
+                    ),
+                    _PriceChip(
+                      label: 'freeplay.femalePrice'.tr(
+                        namedArgs: {
+                          'amount': _formatVnd(context, activity.femalePrice),
+                        },
+                      ),
+                      highlighted: myGender == Gender.female,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'freeplay.payHostDirectly'.tr(),
+                  style: context.theme.typography.body.sm.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PriceChip extends StatelessWidget {
+  final String label;
+  final bool highlighted;
+
+  const _PriceChip({required this.label, required this.highlighted});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: highlighted
+          ? pbAmber.withValues(alpha: 0.22)
+          : context.theme.colors.secondary,
+      borderRadius: BorderRadius.circular(7),
+    ),
+    child: Text(
+      label,
+      style: context.theme.typography.body.sm.copyWith(
+        fontWeight: highlighted ? FontWeight.w800 : FontWeight.w500,
+        color: highlighted
+            ? context.theme.colors.foreground
+            : context.theme.colors.mutedForeground,
+      ),
+    ),
+  );
+}
 
 class _Line extends StatelessWidget {
   final IconData icon;

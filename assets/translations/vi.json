@@ -200,6 +200,7 @@
       "services": "Dịch vụ",
       "noServices": "Chưa có dịch vụ nào được công khai.",
       "servicesLoadFailed": "Không tải được danh sách dịch vụ.",
+      "servicesCoachHint": "Chỉ là mức giá tham khảo — hãy nhắn tin cho huấn luyện viên để thống nhất buổi tập và gói học.",
       "pricePerHour": "{price}₫/giờ",
       "pricePerSession": "{price}₫/buổi",
       "minimumDuration": "Từ {minutes} phút",
@@ -1438,7 +1439,6 @@
     "seatsLeft": "Còn {count} chỗ",
     "malePrice": "{amount} nam",
     "femalePrice": "{amount} nữ",
-    "prices": "{male} nam · {female} nữ",
     "payHostDirectly": "Thanh toán trực tiếp với Host",
     "skillMismatch": "Trình độ của bạn khác mức Host đề xuất",
     "selfAssessedSkill": "Trình độ tự đánh giá",
@@ -1524,6 +1524,7 @@
       "completeForm": "Hãy điền đủ thông tin buổi chơi",
       "futureTime": "Thời gian buổi chơi phải ở tương lai",
       "createFailed": "Không tạo được buổi chơi",
+      "cancelFailed": "Không huỷ được buổi chơi",
       "time": "Thời gian",
       "venue": "Sân",
       "savedVenue": "Sân đã lưu",
@@ -1550,7 +1551,8 @@
       "requestsTitle": "Yêu cầu tham gia",
       "requestsLoadFailed": "Không tải được yêu cầu",
       "noRequests": "Chưa có yêu cầu",
-      "sessionFull": "Buổi chơi đã đủ chỗ"
+      "sessionFull": "Buổi chơi đã đủ chỗ",
+      "respondFailed": "Không thể phản hồi yêu cầu này"
     }
   },
   "feed": {
@@ -1693,6 +1695,12 @@
       "other": "{} người tham gia"
     },
     "offerPending": "Có lời mời",
+    "offerReceivedTitle": "Lời mời tham gia khoá học",
+    "acceptOffer": "Chấp nhận",
+    "declineOffer": "Từ chối",
+    "declineOfferTitle": "Từ chối lời mời này?",
+    "declineOfferBody": "Huấn luyện viên sẽ cần gửi lời mời mới nếu bạn đổi ý.",
+    "waitingForCoach": "Đang chờ {coach} chấp nhận bạn làm học viên",
     "rsvpPending": {
       "other": "{} buổi chưa trả lời"
     },
@@ -1765,6 +1773,14 @@
     "clashProceed": "Vẫn tiếp tục",
     "emptyCoachHistory": "Chưa có khoá học nào kết thúc",
     "pickSportFirst": "Hãy chọn môn thể thao trước",
-    "messageCoachIntro": "Hãy gửi tin nhắn đầu tiên cho {coach}. Không có gì được lưu lại cho đến khi bạn nhấn gửi."
+    "messageCoachIntro": "Hãy gửi tin nhắn đầu tiên cho {coach}. Không có gì được lưu lại cho đến khi bạn nhấn gửi. Học phí, gói học và lịch tập sẽ được thống nhất trực tiếp với {coach}, không chọn sẵn từ danh sách.",
+    "offerNameRequired": "Nhập tên khoá học",
+    "reportBodyRequired": "Viết nhận xét trước đã",
+    "cancelSessionTitle": "Huỷ buổi tập này?",
+    "cancelSessionBody": "Buổi tập sẽ bị xoá với tất cả mọi người, kèm theo nhận xét bạn đã viết cho buổi đó. Không thể hoàn tác.",
+    "sessionActions": "Tuỳ chọn buổi tập",
+    "reviewStar": "{star} sao",
+    "coachSportMismatch": "Huấn luyện viên này không dạy {sport}",
+    "startInPast": "Chọn thời gian trong tương lai"
   }
 }

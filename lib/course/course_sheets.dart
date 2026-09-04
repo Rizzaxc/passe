@@ -16,7 +16,7 @@ import 'model.dart';
 
 /// Yes/no confirmation, in the shape the rest of the app uses
 /// (`showFDialog` + `PConfirmDialog`).
-Future<bool> _confirm(
+Future<bool> confirmCourseAction(
   BuildContext context, {
   required String title,
   required String body,
@@ -66,7 +66,7 @@ Future<bool> confirmCourseClash(
   );
   if (!clashes || !context.mounted) return true;
 
-  return _confirm(
+  return confirmCourseAction(
     context,
     title: 'course.clashTitle'.tr(),
     body: 'course.clashBody'.tr(),
@@ -94,7 +94,18 @@ class _CourseInfoSheet extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          PSheetTitle(label: course.name ?? 'course.title'.tr()),
+          PSheetTitle(
+            label:
+                course.name ??
+                // Same "who's actually asking" fallback as the detail page
+                // header and the hub list card — otherwise every in-flight
+                // inquiry, coach or student, showed this sheet titled just
+                // "Course".
+                (course.isCoach
+                    ? course.members.firstOrNull?.username
+                    : course.coachName) ??
+                'course.newInquiry'.tr(),
+          ),
           if (course.description != null) ...[
             Text(course.description!, style: context.theme.typography.body.sm),
             const SizedBox(height: 16),
@@ -126,14 +137,15 @@ class _CourseInfoSheet extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               subtitle: Text('course.status.${member.status.name}'.tr()),
-              onPress: () =>
-                  UserRoute(id: member.userId, $extra: member.username)
-                      .push(context),
+              onPress: () => UserRoute(
+                id: member.userId,
+                $extra: member.username,
+              ).push(context),
               suffix: course.isCoach
                   ? FButton.icon(
                       variant: .ghost,
                       onPress: () async {
-                        final confirmed = await _confirm(
+                        final confirmed = await confirmCourseAction(
                           context,
                           title: 'course.removeMemberTitle'.tr(),
                           body: 'course.removeMemberBody'.tr(),
@@ -162,7 +174,7 @@ class _CourseInfoSheet extends ConsumerWidget {
             FButton(
               variant: .destructive,
               onPress: () async {
-                final confirmed = await _confirm(
+                final confirmed = await confirmCourseAction(
                   context,
                   title: 'course.endTitle'.tr(),
                   body: 'course.endBody'.tr(),
@@ -180,7 +192,7 @@ class _CourseInfoSheet extends ConsumerWidget {
             FButton(
               variant: .destructive,
               onPress: () async {
-                final confirmed = await _confirm(
+                final confirmed = await confirmCourseAction(
                   context,
                   title: 'course.leaveTitle'.tr(),
                   body: 'course.leaveBody'.tr(),
@@ -400,11 +412,7 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
                   variant: .outline,
                   onPress: _searching ? null : _runSearch,
                   child: _searching
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                      ? const FCircularProgress()
                       : Text('course.enrollUser.search'.tr()),
                 ),
               ],
@@ -508,10 +516,26 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 20),
+          // The name is validated on tap, not in the `onPress` guard. Nothing
+          // listens to `_name`, so gating the button on `_name.text` left it
+          // permanently disabled on exactly the course that needs it most: an
+          // inquiry course has `course.name == null`, so the field seeds empty,
+          // typing never rebuilds, and the coach could not send the offer at
+          // all. Same shape as `message_coach_sheet.dart`'s send button.
           FButton(
-            onPress: busy || _userId == null || _name.text.trim().isEmpty
+            onPress: busy || _userId == null
                 ? null
                 : () async {
+                    if (_name.text.trim().isEmpty) {
+                      showFToast(
+                        context: context,
+                        icon: const Icon(FLucideIcons.circleAlert),
+                        variant: .destructive,
+                        title: Text('course.offerNameRequired'.tr()),
+                        alignment: .bottomCenter,
+                      );
+                      return;
+                    }
                     try {
                       await ref
                           .read(courseActionControllerProvider.notifier)
@@ -527,7 +551,8 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
                             ),
                           );
                       if (context.mounted) Navigator.pop(context);
-                    } catch (_) {
+                    } catch (e, st) {
+                      Talker().handle(e, st, 'Send enrollment offer failed');
                       if (context.mounted) {
                         showFToast(
                           context: context,
@@ -887,7 +912,8 @@ class _ProposeSessionSheetState extends ConsumerState<_ProposeSessionSheet> {
             note: _note.text.trim().isEmpty ? null : _note.text,
           );
       if (mounted) Navigator.pop(context);
-    } catch (_) {
+    } catch (e, st) {
+      Talker().handle(e, st, 'Propose course session failed');
       if (mounted) {
         showFToast(
           context: context,
@@ -994,6 +1020,32 @@ class _RescheduleSessionSheetState
   }
 
   Future<void> _save() async {
+    // The date picker's `firstDate` is today, so today-at-an-earlier-hour is
+    // reachable — and `reschedule_course_activity` refuses a start in the past.
+    // Catch it here so the coach sees why, not a generic failure toast.
+    if (!_start.isAfter(DateTime.now())) {
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleAlert),
+        variant: .destructive,
+        title: Text('course.startInPast'.tr()),
+        alignment: .bottomCenter,
+      );
+      return;
+    }
+
+    // Rescheduling is the coach committing to a *new* time, so it deserves the
+    // same overlap warning as scheduling and approving do — this was the one
+    // of the three paths that silently skipped it.
+    final proceed = await confirmCourseClash(
+      context,
+      ref: ref,
+      professionalId: widget.course.professionalId,
+      start: _start,
+      end: _end,
+    );
+    if (!proceed || !mounted) return;
+
     try {
       final locationId = await resolveLocationId(
         pickedId: _locationId,
@@ -1009,7 +1061,8 @@ class _RescheduleSessionSheetState
             courseId: widget.course.courseId,
           );
       if (mounted) Navigator.pop(context);
-    } catch (_) {
+    } catch (e, st) {
+      Talker().handle(e, st, 'Reschedule course session failed');
       if (mounted) {
         showFToast(
           context: context,
@@ -1064,6 +1117,17 @@ class _RescheduleSessionSheetState
             onPress: busy
                 ? null
                 : () async {
+                    // Hard-deletes the activity and cascades away any session
+                    // reports written for it — confirm it like every other
+                    // destructive course action in this file.
+                    final confirmed = await confirmCourseAction(
+                      context,
+                      title: 'course.cancelSessionTitle'.tr(),
+                      body: 'course.cancelSessionBody'.tr(),
+                      confirmLabel: 'course.cancelSession'.tr(),
+                      destructive: true,
+                    );
+                    if (!confirmed || !context.mounted) return;
                     try {
                       await ref
                           .read(courseActionControllerProvider.notifier)
@@ -1072,7 +1136,8 @@ class _RescheduleSessionSheetState
                             courseId: widget.course.courseId,
                           );
                       if (context.mounted) Navigator.pop(context);
-                    } catch (_) {
+                    } catch (e, st) {
+                      Talker().handle(e, st, 'Cancel course session failed');
                       if (context.mounted) {
                         showFToast(
                           context: context,
@@ -1167,10 +1232,23 @@ class _SessionReportSheetState extends ConsumerState<_SessionReportSheet> {
             ),
           ),
           const SizedBox(height: 20),
+          // Same reason as the enrollment sheet: nothing listens to `_body`, so
+          // gating on its text made the button order-dependent (pick student
+          // then type = stuck disabled, because only the pick rebuilds).
           FButton(
-            onPress: busy || _studentId == null || _body.text.trim().isEmpty
+            onPress: busy || _studentId == null
                 ? null
                 : () async {
+                    if (_body.text.trim().isEmpty) {
+                      showFToast(
+                        context: context,
+                        icon: const Icon(FLucideIcons.circleAlert),
+                        variant: .destructive,
+                        title: Text('course.reportBodyRequired'.tr()),
+                        alignment: .bottomCenter,
+                      );
+                      return;
+                    }
                     try {
                       await ref
                           .read(courseActionControllerProvider.notifier)
@@ -1181,7 +1259,8 @@ class _SessionReportSheetState extends ConsumerState<_SessionReportSheet> {
                             courseId: widget.course.courseId,
                           );
                       if (context.mounted) Navigator.pop(context);
-                    } catch (_) {
+                    } catch (e, st) {
+                      Talker().handle(e, st, 'Submit session report failed');
                       if (context.mounted) {
                         showFToast(
                           context: context,
@@ -1237,11 +1316,22 @@ class _CourseReviewSheetState extends ConsumerState<_CourseReviewSheet> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               for (var star = 1; star <= 5; star++)
-                IconButton(
-                  onPressed: () => setState(() => _rating = star),
-                  icon: Icon(
-                    star <= _rating ? FLucideIcons.star : FLucideIcons.starOff,
-                    color: context.theme.colors.primary,
+                Semantics(
+                  button: true,
+                  selected: star <= _rating,
+                  label: 'course.reviewStar'.tr(namedArgs: {'star': '$star'}),
+                  child: FButton.icon(
+                    variant: .ghost,
+                    onPress: () => setState(() => _rating = star),
+                    // `starOff` is a *slashed* star — it reads as "rating
+                    // disabled", not "empty star". A muted filled star is the
+                    // treatment the rest of the app uses.
+                    child: Icon(
+                      FLucideIcons.star,
+                      color: star <= _rating
+                          ? pbAmber
+                          : context.theme.colors.mutedForeground,
+                    ),
                   ),
                 ),
             ],
@@ -1275,7 +1365,8 @@ class _CourseReviewSheetState extends ConsumerState<_CourseReviewSheet> {
                                 : _comment.text,
                           );
                       if (context.mounted) Navigator.pop(context);
-                    } catch (_) {
+                    } catch (e, st) {
+                      Talker().handle(e, st, 'Submit course review failed');
                       if (context.mounted) {
                         showFToast(
                           context: context,

@@ -3,15 +3,49 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/format.dart';
 import '../core/map_directions.dart';
 import '../messaging/conversation_view.dart';
+import '../router.dart';
 import '../ui/main.dart';
 import 'course_controller.dart';
 import 'course_sheets.dart';
 import 'model.dart';
+
+/// The other party's identity, for the header/title and the identity strip.
+/// A student always has one coach ([CourseDetail.coachName]/[coachUserId]);
+/// a coach may have several students, so before the course has a real
+/// [CourseDetail.name] this falls back to whoever is earliest in the (already
+/// live-members-only) roster — same "who's actually asking" logic
+/// `course_card.dart`'s hub-list fallback uses.
+class _CourseParty {
+  final String? userId;
+  final String name;
+  final String? generatedAvatar;
+
+  const _CourseParty({required this.name, this.userId, this.generatedAvatar});
+}
+
+_CourseParty _otherParty(CourseDetail course) {
+  if (!course.isCoach) {
+    return _CourseParty(
+      userId: course.coachUserId,
+      name: course.coachName ?? 'course.newInquiry'.tr(),
+    );
+  }
+  final member = course.members.firstOrNull;
+  return _CourseParty(
+    userId: member?.userId,
+    name: member?.username ?? 'course.newInquiry'.tr(),
+    generatedAvatar: member?.generatedAvatar,
+  );
+}
+
+String _courseDisplayName(CourseDetail course) =>
+    course.name ?? _otherParty(course).name;
 
 /// One course: **Feed** (the shared thread + pending proposals), **Planner**
 /// (approved upcoming sessions + RSVP) and **History** (finished sessions and
@@ -35,19 +69,20 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
   Widget build(BuildContext context) {
     final async = ref.watch(courseDetailProvider(widget.id));
 
+    final course = async.value;
     return FScaffold(
       header: FHeader.nested(
         title: Text(
-          async.value?.name ?? 'course.title'.tr(),
+          course == null ? 'course.title'.tr() : _courseDisplayName(course),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         prefixes: [FHeaderAction.back(onPress: () => context.pop())],
         suffixes: [
-          if (async.value != null)
+          if (course != null)
             FHeaderAction(
               icon: const Icon(FLucideIcons.info),
-              onPress: () => showCourseInfoSheet(context, async.value!),
+              onPress: () => showCourseInfoSheet(context, course),
             ),
         ],
       ),
@@ -60,30 +95,232 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
       child: async.when(
         loading: () => const Center(child: FCircularProgress()),
         error: (_, _) => Center(child: Text('course.loadFailed'.tr())),
-        data: (course) => FTabs(
-          expands: true,
-          contentPhysics: const NeverScrollableScrollPhysics(),
-          control: FTabControl.lifted(
-            index: _tab,
-            onChange: (i) => setState(() => _tab = i),
-          ),
+        data: (course) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            FTabEntry(
-              label: Text('course.tab.feed'.tr()),
-              child: _FeedTab(course: course),
-            ),
-            FTabEntry(
-              label: Text('course.tab.planner'.tr()),
-              child: _PlannerTab(course: course),
-            ),
-            FTabEntry(
-              label: Text('course.tab.history'.tr()),
-              child: _HistoryTab(course: course),
+            // Only the header text distinguished one coach's course from
+            // another before this — juggling several looked identical past
+            // the title. This strip is the persistent visual anchor, visible
+            // on every tab, not just glimpsed in a chat bubble.
+            _CourseIdentityBar(course: course),
+            if (course.pendingOfferId != null)
+              _PendingOfferCard(course: course),
+            Expanded(
+              child: FTabs(
+                expands: true,
+                contentPhysics: const NeverScrollableScrollPhysics(),
+                control: FTabControl.lifted(
+                  index: _tab,
+                  onChange: (i) => setState(() => _tab = i),
+                ),
+                children: [
+                  FTabEntry(
+                    label: Text('course.tab.feed'.tr()),
+                    child: _FeedTab(course: course),
+                  ),
+                  FTabEntry(
+                    label: Text('course.tab.planner'.tr()),
+                    child: _PlannerTab(course: course),
+                  ),
+                  FTabEntry(
+                    label: Text('course.tab.history'.tr()),
+                    child: _HistoryTab(course: course),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+class _CourseIdentityBar extends StatelessWidget {
+  final CourseDetail course;
+
+  const _CourseIdentityBar({required this.course});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final party = _otherParty(course);
+    final content = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Row(
+        children: [
+          if (party.userId case final id?)
+            PUserAvatar(
+              userId: id,
+              username: party.name,
+              generatedAvatar: party.generatedAvatar,
+              radius: 16,
+            )
+          else
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: colors.muted,
+              child: Icon(
+                FLucideIcons.user,
+                size: 16,
+                color: colors.mutedForeground,
+              ),
+            ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              party.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.theme.typography.body.sm.copyWith(
+                fontWeight: FontWeight.w700,
+                color: colors.foreground,
+              ),
+            ),
+          ),
+          if (course.isCoach)
+            Text(
+              'course.status.${(course.members.firstOrNull?.status ?? CourseMemberStatus.inquiring).name}'
+                  .tr(),
+              style: context.theme.typography.body.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+        ],
+      ),
+    );
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: colors.border)),
+      ),
+      child: party.userId == null
+          ? content
+          : FTappable(
+              onPress: () => UserRoute(
+                id: party.userId!,
+                $extra: party.name,
+              ).push(context),
+              child: content,
+            ),
+    );
+  }
+}
+
+/// Everything a student needs to decide, right where they land after the
+/// `course_enrollment_offer` push routes them here — there was previously no
+/// way to accept an offer anywhere in the app.
+class _PendingOfferCard extends ConsumerWidget {
+  final CourseDetail course;
+
+  const _PendingOfferCard({required this.course});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final busy = ref.watch(courseActionControllerProvider);
+    final offerId = course.pendingOfferId;
+    if (offerId == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: 0.08),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 6,
+        children: [
+          Text(
+            'course.offerReceivedTitle'.tr(),
+            style: context.theme.typography.body.sm.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(
+            course.offerName ?? '',
+            style: context.theme.typography.body.md.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (course.offerDescription?.trim().isNotEmpty == true)
+            Text(
+              course.offerDescription!,
+              style: context.theme.typography.body.sm.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+          if (course.offerTargetSessionCount != null)
+            Text(
+              'course.sessionProgress'.tr(
+                namedArgs: {
+                  'held': '0',
+                  'target': '${course.offerTargetSessionCount}',
+                },
+              ),
+              style: context.theme.typography.body.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+          const SizedBox(height: 4),
+          Row(
+            spacing: 8,
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: .outline,
+                  onPress: busy ? null : () => _respond(context, ref, false),
+                  child: Text('course.declineOffer'.tr()),
+                ),
+              ),
+              Expanded(
+                child: FButton(
+                  onPress: busy ? null : () => _respond(context, ref, true),
+                  child: Text('course.acceptOffer'.tr()),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _respond(
+    BuildContext context,
+    WidgetRef ref,
+    bool accept,
+  ) async {
+    if (!accept) {
+      final confirmed = await confirmCourseAction(
+        context,
+        title: 'course.declineOfferTitle'.tr(),
+        body: 'course.declineOfferBody'.tr(),
+        confirmLabel: 'course.declineOffer'.tr(),
+        destructive: true,
+      );
+      if (!confirmed || !context.mounted) return;
+    }
+    try {
+      await ref
+          .read(courseActionControllerProvider.notifier)
+          .respondToOffer(
+            course.pendingOfferId!,
+            accept,
+            courseId: course.courseId,
+          );
+    } catch (e, st) {
+      Talker().handle(e, st, 'Respond to enrollment offer failed');
+      if (context.mounted) {
+        showFToast(
+          context: context,
+          variant: .destructive,
+          title: Text('course.actionFailed'.tr()),
+        );
+      }
+    }
   }
 }
 
@@ -158,32 +395,36 @@ class _EnrollInquirerChip extends StatelessWidget {
     final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: GestureDetector(
-        onTap: () =>
-            showEnrollmentOfferSheet(context, course, allowSearch: false),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: colors.primary,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                FLucideIcons.userPlus,
-                size: 14,
-                color: colors.primaryForeground,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'course.enrollChip'.tr(),
-                style: context.theme.typography.body.sm.copyWith(
-                  fontWeight: FontWeight.w700,
+      child: Semantics(
+        button: true,
+        label: 'course.enrollChip'.tr(),
+        child: FTappable(
+          onPress: () =>
+              showEnrollmentOfferSheet(context, course, allowSearch: false),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: colors.primary,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  FLucideIcons.userPlus,
+                  size: 14,
                   color: colors.primaryForeground,
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                Text(
+                  'course.enrollChip'.tr(),
+                  style: context.theme.typography.body.sm.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colors.primaryForeground,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -389,6 +630,23 @@ class _PlannerEmptyState extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
+            // An inquiring student with no pending offer has course access
+            // but nothing to do here yet, and previously nothing said why —
+            // this tab just looked permanently empty/broken to them.
+            if (!canPropose &&
+                !course.isCoach &&
+                course.pendingOfferId == null) ...[
+              const SizedBox(height: 6),
+              Text(
+                'course.waitingForCoach'.tr(
+                  namedArgs: {'coach': course.coachName ?? ''},
+                ),
+                textAlign: TextAlign.center,
+                style: context.theme.typography.body.sm.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+            ],
             if (canPropose) ...[
               const SizedBox(height: 12),
               FButton(
@@ -546,7 +804,7 @@ class _SessionCard extends ConsumerWidget {
                     alignment: Alignment.centerRight,
                     child: Semantics(
                       button: true,
-                      label: 'course.cancelSession'.tr(),
+                      label: 'course.sessionActions'.tr(),
                       child: FButton.icon(
                         variant: .outline,
                         size: .sm,
@@ -571,8 +829,12 @@ class _SessionCard extends ConsumerWidget {
   }
 }
 
+// Same ad-hoc pair the lobby activity card uses
+// (`manage_tab/lobby_section/activity/activity_card.dart`), so a course
+// session and a lobby session read as the same kind of object. The green half
+// is the brand token; only the crimson and the tint are local.
 const _courseCrimson = Color(0xFFDC143C);
-const _courseGreen = Color(0xFF959D54);
+const _courseGreen = pbGreen;
 const _courseGreenTint = Color(0xFFEEF2E4);
 
 bool _hasCourseSessionDirections(CourseSession session) =>

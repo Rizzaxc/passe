@@ -162,7 +162,10 @@ class _Body extends ConsumerWidget {
                         accent: item.role == ProfessionalRole.coach
                             ? pbAmber
                             : pbCoral,
-                        child: _ServicesContent(servicesAsync: servicesAsync),
+                        child: _ServicesContent(
+                          servicesAsync: servicesAsync,
+                          isCoach: item.role == ProfessionalRole.coach,
+                        ),
                       ),
                       const SizedBox(height: 18),
                       _ProfileSection(
@@ -576,8 +579,9 @@ class _ProfileSection extends StatelessWidget {
 
 class _ServicesContent extends StatelessWidget {
   final AsyncValue<List<ProfessionalServiceOption>> servicesAsync;
+  final bool isCoach;
 
-  const _ServicesContent({required this.servicesAsync});
+  const _ServicesContent({required this.servicesAsync, this.isCoach = false});
 
   @override
   Widget build(BuildContext context) => servicesAsync.when(
@@ -603,6 +607,21 @@ class _ServicesContent extends StatelessWidget {
         spacing: 10,
         children: [
           for (final service in services) _PublicServiceCard(service: service),
+          // A coach's cards here are informational only — there's no "pick
+          // this one" tap target, on purpose (coaching has no packages or
+          // payment flow, see root CLAUDE.md ▸ Coaching Courses). Without
+          // this line the bordered, priced cards read as selectable and
+          // testers went looking for a button that isn't there.
+          if (isCoach)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                'homeTab.professional.servicesCoachHint'.tr(),
+                style: context.theme.typography.body.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
+                ),
+              ),
+            ),
         ],
       );
     },
@@ -929,6 +948,24 @@ Future<void> _messageCoach(
       context: context,
       icon: const Icon(FLucideIcons.circleAlert),
       title: Text('course.pickSportFirst'.tr()),
+      alignment: .bottomCenter,
+    );
+    return;
+  }
+
+  // `message_coach` rejects a sport the coach isn't listed for. Catch it here
+  // so the user gets "this coach doesn't teach <sport>" rather than the generic
+  // failure toast — the context sport is orthogonal to what this coach offers,
+  // so landing here is ordinary, not an error.
+  if (!item.sports.contains(sport.index)) {
+    showFToast(
+      context: context,
+      icon: const Icon(FLucideIcons.circleAlert),
+      title: Text(
+        'course.coachSportMismatch'.tr(
+          namedArgs: {'sport': 'sport.${sport.name}'.tr()},
+        ),
+      ),
       alignment: .bottomCenter,
     );
     return;

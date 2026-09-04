@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 7BlJnFxfvqmJomhALlsqgvOrJZQtS9WsUGPR3FV0FT0AX6k8ivcYeZfjp93vUmw
+\restrict 1iDqwwGG85nrSPYjA0RYqZTAqXM3KOwmd1ZpF0Gpra5EOm0Xxa2YItJrFewZAM7
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.9 (Homebrew)
@@ -947,6 +947,7 @@ COMMENT ON FUNCTION auth.uid() IS 'Deprecated. Use auth.jwt() -> ''sub'' instead
 
 CREATE FUNCTION extensions.grant_pg_cron_access() RETURNS event_trigger
     LANGUAGE plpgsql
+    SET search_path TO ''
     AS $$
 BEGIN
   IF EXISTS (
@@ -973,6 +974,7 @@ BEGIN
     grant all privileges on all tables in schema cron to postgres with grant option;
     revoke all on table cron.job from postgres;
     grant select on table cron.job to postgres with grant option;
+    revoke trigger on cron.job_run_details from postgres;
   END IF;
 END;
 $$;
@@ -993,55 +995,46 @@ COMMENT ON FUNCTION extensions.grant_pg_cron_access() IS 'Grants access to pg_cr
 
 CREATE FUNCTION extensions.grant_pg_graphql_access() RETURNS event_trigger
     LANGUAGE plpgsql
+    SET search_path TO ''
     AS $_$
-DECLARE
-    func_is_graphql_resolve bool;
-BEGIN
-    func_is_graphql_resolve = (
-        SELECT n.proname = 'resolve'
-        FROM pg_event_trigger_ddl_commands() AS ev
-        LEFT JOIN pg_catalog.pg_proc AS n
-        ON ev.objid = n.oid
-    );
+begin
+    if not exists (
+        select 1
+        from pg_catalog.pg_event_trigger_ddl_commands() ev
+        join pg_catalog.pg_extension e on ev.objid = e.oid
+        where e.extname = 'pg_graphql'
+    ) then
+        return;
+    end if;
 
-    IF func_is_graphql_resolve
-    THEN
-        -- Update public wrapper to pass all arguments through to the pg_graphql resolve func
-        DROP FUNCTION IF EXISTS graphql_public.graphql;
-        create or replace function graphql_public.graphql(
-            "operationName" text default null,
-            query text default null,
-            variables jsonb default null,
-            extensions jsonb default null
-        )
-            returns jsonb
-            language sql
-        as $$
-            select graphql.resolve(
-                query := query,
-                variables := coalesce(variables, '{}'),
-                "operationName" := "operationName",
-                extensions := extensions
-            );
-        $$;
+    drop function if exists graphql_public.graphql;
+    create or replace function graphql_public.graphql(
+        "operationName" text default null,
+        query text default null,
+        variables jsonb default null,
+        extensions jsonb default null
+    )
+        returns jsonb
+        language sql
+        set search_path to ''
+    as $$
+        select graphql.resolve(
+            query := query,
+            variables := coalesce(variables, '{}'),
+            "operationName" := "operationName",
+            extensions := extensions
+        );
+    $$;
 
-        -- This hook executes when `graphql.resolve` is created. That is not necessarily the last
-        -- function in the extension so we need to grant permissions on existing entities AND
-        -- update default permissions to any others that are created after `graphql.resolve`
-        grant usage on schema graphql to postgres, anon, authenticated, service_role;
-        grant select on all tables in schema graphql to postgres, anon, authenticated, service_role;
-        grant execute on all functions in schema graphql to postgres, anon, authenticated, service_role;
-        grant all on all sequences in schema graphql to postgres, anon, authenticated, service_role;
-        alter default privileges in schema graphql grant all on tables to postgres, anon, authenticated, service_role;
-        alter default privileges in schema graphql grant all on functions to postgres, anon, authenticated, service_role;
-        alter default privileges in schema graphql grant all on sequences to postgres, anon, authenticated, service_role;
+    -- Attach the wrapper to the extension so DROP EXTENSION cascades to it,
+    -- which in turn triggers set_graphql_placeholder to reinstall the "not enabled" stub.
+    alter extension pg_graphql add function graphql_public.graphql(text, text, jsonb, jsonb);
 
-        -- Allow postgres role to allow granting usage on graphql and graphql_public schemas to custom roles
-        grant usage on schema graphql_public to postgres with grant option;
-        grant usage on schema graphql to postgres with grant option;
-    END IF;
-
-END;
+    grant usage on schema graphql to postgres, anon, authenticated, service_role;
+    grant execute on function graphql.resolve to postgres, anon, authenticated, service_role;
+    grant usage on schema graphql to postgres with grant option;
+    grant usage on schema graphql_public to postgres with grant option;
+end;
 $_$;
 
 
@@ -1060,6 +1053,7 @@ COMMENT ON FUNCTION extensions.grant_pg_graphql_access() IS 'Grants access to pg
 
 CREATE FUNCTION extensions.grant_pg_net_access() RETURNS event_trigger
     LANGUAGE plpgsql
+    SET search_path TO ''
     AS $$
 BEGIN
   IF EXISTS (
@@ -1086,7 +1080,7 @@ BEGIN
       WHERE extname = 'pg_net'
       -- all versions in use on existing projects as of 2025-02-20
       -- version 0.12.0 onwards don't need these applied
-      AND extversion IN ('0.2', '0.6', '0.7', '0.7.1', '0.8', '0.10.0', '0.11.0')
+      AND extversion IN ('0.2', '0.6', '0.7', '0.7.1', '0.8.0', '0.10.0', '0.11.0')
     ) THEN
       ALTER function net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY DEFINER;
       ALTER function net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY DEFINER;
@@ -1157,6 +1151,7 @@ ALTER FUNCTION extensions.nanoid(size integer, alphabet text) OWNER TO postgres;
 
 CREATE FUNCTION extensions.pgrst_ddl_watch() RETURNS event_trigger
     LANGUAGE plpgsql
+    SET search_path TO ''
     AS $$
 DECLARE
   cmd record;
@@ -1192,6 +1187,7 @@ ALTER FUNCTION extensions.pgrst_ddl_watch() OWNER TO supabase_admin;
 
 CREATE FUNCTION extensions.pgrst_drop_watch() RETURNS event_trigger
     LANGUAGE plpgsql
+    SET search_path TO ''
     AS $$
 DECLARE
   obj record;
@@ -1225,6 +1221,7 @@ ALTER FUNCTION extensions.pgrst_drop_watch() OWNER TO supabase_admin;
 
 CREATE FUNCTION extensions.set_graphql_placeholder() RETURNS event_trigger
     LANGUAGE plpgsql
+    SET search_path TO ''
     AS $_$
     DECLARE
     graphql_is_dropped bool;
@@ -1245,6 +1242,7 @@ CREATE FUNCTION extensions.set_graphql_placeholder() RETURNS event_trigger
         )
             returns jsonb
             language plpgsql
+            set search_path to ''
         as $$
             DECLARE
                 server_version float;
@@ -2613,7 +2611,20 @@ CREATE FUNCTION public.course_activity_conflicts(p_professional_id uuid, p_start
   WHERE c.professional_id = p_professional_id
     AND a.proposal_status = 'approved'
     AND a.start_time < p_end
-    AND coalesce(a.end_time, a.start_time) > p_start;
+    AND coalesce(a.end_time, a.start_time) > p_start
+    AND p_end > p_start
+    AND p_end - p_start <= interval '31 days'
+    AND (
+      EXISTS (
+        SELECT 1 FROM public.professional pr
+        WHERE pr.id = p_professional_id AND pr.linked_user_id = auth.uid()
+      )
+      OR EXISTS (
+        SELECT 1 FROM public.course_member cm
+        WHERE cm.professional_id = p_professional_id
+          AND cm.user_id = auth.uid() AND cm.left_at IS NULL
+      )
+    );
 $$;
 
 
@@ -3231,7 +3242,10 @@ DECLARE
   v_eligible_from      date;
   v_has_prior_load     boolean;
   v_recompute_from     date;
+  v_has_any_session    boolean;
 
+  -- Stored for observability / a future trend notification — no longer the
+  -- driver of the load component (see below).
   v_ctl_today          real;
   v_ctl_28ago          real;
   v_atl_today          real;
@@ -3269,6 +3283,9 @@ BEGIN
     INTO v_eligible_from
     FROM public."user" u WHERE u.id = p_user_id;
 
+  -- Step 1: upsert vitality_daily_load. First-ever sync backfills the whole
+  -- eligible window (needed so later EWMA lookbacks past 7 days aren't
+  -- silently zero-filled); later syncs only touch the trailing week.
   v_has_prior_load := EXISTS(
     SELECT 1 FROM public.vitality_daily_load WHERE user_id = p_user_id
   );
@@ -3294,15 +3311,22 @@ BEGIN
         session_count = EXCLUDED.session_count,
         computed_at   = now();
 
+  -- Rest days in the recompute window with no activity row at all still need
+  -- an explicit zero row so the EWMA series doesn't skip them.
   INSERT INTO public.vitality_daily_load (user_id, date, session_load, session_count, computed_at)
   SELECT p_user_id, gs.d::date, 0, 0, now()
   FROM generate_series(v_recompute_from, v_today, interval '1 day') AS gs(d)
   ON CONFLICT (user_id, date) DO NOTHING;
 
+  -- Step 2: CTL/ATL — stored for observability / a future trend notification.
   v_ctl_today := public._vitality_ewma(p_user_id, v_today, 42);
   v_ctl_28ago := public._vitality_ewma(p_user_id, v_today - 28, 42);
   v_atl_today := public._vitality_ewma(p_user_id, v_today, 7);
 
+  -- Component A: consistency — absolute session frequency over the trailing
+  -- 28 days, mapped to a tier. Absolute (not vs. the user's own history) so
+  -- a casual once-or-twice-a-week player reads as genuinely "casual" rather
+  -- than capping out at 100 just for matching their own steady pace.
   SELECT COUNT(*) INTO v_sessions_28d
     FROM public.activity_health_metrics m
     JOIN public.activity a ON a.id = m.activity_id
@@ -3316,6 +3340,10 @@ BEGIN
     ARRAY[20, 45, 55, 65, 75, 85, 92]
   );
 
+  -- Component B: training load — absolute weekly session_load (3-zone TRIMP)
+  -- over the trailing 28 days, mapped to a tier. High weekly load (frequent,
+  -- hard sessions) is what actually separates a casual player from someone
+  -- semi-professionally committed.
   SELECT COALESCE(SUM(public._activity_metric_value(m, 'session_load')), 0) INTO v_load_28d
     FROM public.activity_health_metrics m
     JOIN public.activity a ON a.id = m.activity_id
@@ -3329,6 +3357,9 @@ BEGIN
     ARRAY[20, 38, 55, 68, 80, 92]
   );
 
+  -- Component C: recovery — 7d resting HR mean vs. 56d baseline, normalized
+  -- by the user's own stddev. Self-relative (RHR has no universal "good"
+  -- absolute value across individuals). NULL if no RHR data at all.
   SELECT AVG(resting_heart_rate) INTO v_rhr_7d
     FROM public.daily_health_summary
     WHERE user_id = p_user_id AND date BETWEEN v_today - 6 AND v_today
@@ -3346,6 +3377,8 @@ BEGIN
     v_recovery := LEAST(100, GREATEST(0, 50 + v_rhr_z * 25));
   END IF;
 
+  -- Component D: active volume — absolute weekly active calories over the
+  -- trailing 28 days, mapped to a tier. NULL if no calorie data at all.
   SELECT SUM(active_calories) INTO v_cal_28d
     FROM public.daily_health_summary
     WHERE user_id = p_user_id AND date BETWEEN v_today - 27 AND v_today;
@@ -3361,6 +3394,8 @@ BEGIN
     );
   END IF;
 
+  -- Streak bonus: +3 flat if the last 4+ consecutive ISO weeks each had a
+  -- session.
   v_streak_weeks := 0;
   FOR i IN 0..7 LOOP
     EXIT WHEN NOT EXISTS(
@@ -3374,6 +3409,7 @@ BEGIN
   END LOOP;
   v_streak_bonus := CASE WHEN v_streak_weeks >= 4 THEN 3 ELSE 0 END;
 
+  -- Combine with weight-renormalization across whichever components have data.
   v_score_sum := v_consistency * 0.40;
   v_weight_sum := 0.40;
   v_score_sum := v_score_sum + v_load * 0.30;
@@ -3387,7 +3423,18 @@ BEGIN
     v_weight_sum := v_weight_sum + 0.15;
   END IF;
 
-  IF (v_today - v_eligible_from) < 14 THEN
+  -- _vitality_scale floors an input of exactly 0 to scores[1] (20, the
+  -- "casual" tier), not 0/null — correct for someone genuinely-but-rarely
+  -- active, wrong for someone who has never captured a single real session.
+  -- The 14-day gate above only checks account age, so a long-time account's
+  -- very first sync (zero data) would otherwise ship that floor value as a
+  -- real-looking score. Require at least one real capture before scoring.
+  SELECT EXISTS(
+    SELECT 1 FROM public.activity_health_metrics m
+    WHERE m.user_id = p_user_id AND NOT m.dismissed
+  ) INTO v_has_any_session;
+
+  IF (v_today - v_eligible_from) < 14 OR NOT v_has_any_session THEN
     v_score := NULL;
   ELSE
     v_score := LEAST(100, (v_score_sum / v_weight_sum) + v_streak_bonus);
@@ -3508,6 +3555,32 @@ $$;
 
 
 ALTER FUNCTION public.fn_activity_attachment_role_check() OWNER TO postgres;
+
+--
+-- Name: fn_activity_course_write_guard(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_activity_course_write_guard() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+  IF NEW.course_id IS NULL
+     AND (TG_OP = 'INSERT' OR OLD.course_id IS NULL) THEN
+    RETURN NEW;
+  END IF;
+
+  IF current_user IN ('authenticated', 'anon') THEN
+    RAISE EXCEPTION
+      'course activities are managed through the course RPCs, not direct writes';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.fn_activity_course_write_guard() OWNER TO postgres;
 
 --
 -- Name: fn_apply_match_rating(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -3670,7 +3743,7 @@ CREATE FUNCTION public.fn_can_access_course_activity(p_activity_id uuid, p_uid u
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
-  SELECT EXISTS (
+  SELECT p_uid IS NOT DISTINCT FROM auth.uid() AND EXISTS (
     SELECT 1 FROM public.activity a
     WHERE a.id = p_activity_id AND a.course_id IS NOT NULL
       AND (
@@ -3691,7 +3764,7 @@ CREATE FUNCTION public.fn_can_receive_conversation_topic(p_topic text, p_uid uui
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
-  SELECT EXISTS (
+  SELECT p_uid IS NOT DISTINCT FROM auth.uid() AND EXISTS (
     SELECT 1 FROM public.conversation_member cm
     WHERE cm.user_id = p_uid
       AND cm.left_at IS NULL
@@ -3797,8 +3870,12 @@ BEGIN
   END IF;
 
   RETURN EXISTS (
-    SELECT 1 FROM public.course c
-    WHERE c.id = v_course AND c.status = 'active'
+    SELECT 1
+    FROM public.course c
+    JOIN public.professional p ON p.id = c.professional_id
+    WHERE c.id = v_course
+      AND c.status = 'active'
+      AND (p.linked_user_id IS NULL OR NOT public.fn_is_blocked(p_uid, p.linked_user_id))
   );
 END
 $$;
@@ -7892,13 +7969,18 @@ CREATE FUNCTION public.message_coach(p_professional_id uuid, p_sport_id bigint, 
     SET search_path TO ''
     AS $$
 DECLARE v_uid uuid := auth.uid(); v_course uuid; v_coach uuid; v_conversation uuid;
+        v_sports bigint[];
 BEGIN
   IF v_uid IS NULL THEN RAISE EXCEPTION 'authentication required'; END IF;
 
-  SELECT p.linked_user_id INTO v_coach FROM public.professional p
+  SELECT p.linked_user_id, p.sports INTO v_coach, v_sports
+  FROM public.professional p
   WHERE p.id = p_professional_id AND p.professional_role = 'coach';
   IF NOT FOUND THEN RAISE EXCEPTION 'coach not found'; END IF;
   IF v_coach = v_uid THEN RAISE EXCEPTION 'cannot coach yourself'; END IF;
+  IF NOT (v_sports @> ARRAY[p_sport_id]) THEN
+    RAISE EXCEPTION 'coach does not teach this sport';
+  END IF;
   IF v_coach IS NOT NULL AND public.fn_is_blocked(v_uid, v_coach) THEN
     RAISE EXCEPTION 'not allowed';
   END IF;
@@ -8906,6 +8988,7 @@ BEGIN
     RAISE EXCEPTION 'coach access required';
   END IF;
   IF p_end IS NOT NULL AND p_end <= p_start THEN RAISE EXCEPTION 'invalid time range'; END IF;
+  IF p_start <= now() THEN RAISE EXCEPTION 'cannot schedule in the past'; END IF;
 
   UPDATE public.activity
   SET start_time = p_start, end_time = p_end,
@@ -9236,6 +9319,7 @@ BEGIN
   FROM public.course_enrollment_offer o
   JOIN public.course c ON c.id = o.course_id
   WHERE o.id = p_offer_id AND o.user_id = v_uid AND o.status = 'pending'
+    AND c.status = 'active'
   FOR UPDATE OF o;
   IF NOT FOUND THEN RAISE EXCEPTION 'pending offer not found'; END IF;
 
@@ -9646,6 +9730,15 @@ BEGIN
     RAISE EXCEPTION 'course is not active';
   END IF;
   IF nullif(btrim(p_name),'') IS NULL THEN RAISE EXCEPTION 'name required'; END IF;
+
+  IF p_user_id IS NULL THEN RAISE EXCEPTION 'no target user'; END IF;
+  IF p_user_id = v_uid THEN RAISE EXCEPTION 'cannot enroll yourself'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM public."user" u WHERE u.id = p_user_id) THEN
+    RAISE EXCEPTION 'user not found';
+  END IF;
+  IF public.fn_is_blocked(v_uid, p_user_id) THEN
+    RAISE EXCEPTION 'not allowed';
+  END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM public.course_member m
@@ -10162,7 +10255,7 @@ ALTER FUNCTION public.submit_session_report(p_activity_id uuid, p_student_id uui
 
 CREATE FUNCTION public.taggable_users(p_activity_id uuid) RETURNS TABLE(user_id uuid, username text, tag_number text, details jsonb, attended boolean)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
+    SET search_path TO ''
     AS $$
 DECLARE
     v_uid uuid := auth.uid();
@@ -12256,6 +12349,9 @@ DECLARE
     v_limit INT;
     v_prefix TEXT;
     v_prefix_lower TEXT;
+    v_prefix_len INT;
+    v_prefix_start INT;
+    v_combined_levels INT;
     v_is_asc BOOLEAN;
     v_order_by TEXT;
     v_sort_order TEXT;
@@ -12276,6 +12372,9 @@ BEGIN
     v_limit := LEAST(coalesce(limits, 100), 1500);
     v_prefix := coalesce(prefix, '') || coalesce(search, '');
     v_prefix_lower := lower(v_prefix);
+    v_prefix_len := length(coalesce(prefix, ''));
+    v_prefix_start := coalesce(array_length(string_to_array(coalesce(prefix, ''), v_delimiter), 1), 1);
+    v_combined_levels := coalesce(array_length(string_to_array(v_prefix, v_delimiter), 1), 1);
     v_is_asc := lower(coalesce(sortorder, 'asc')) = 'asc';
     v_file_batch_size := LEAST(GREATEST(v_limit * 2, 100), 1000);
 
@@ -12291,17 +12390,17 @@ BEGIN
     v_sort_order := CASE WHEN v_is_asc THEN 'asc' ELSE 'desc' END;
 
     -- ========================================================================
-    -- NON-NAME SORTING: Use path_tokens approach (unchanged)
+    -- NON-NAME SORTING: Use path_tokens approach
     -- ========================================================================
     IF v_order_by != 'name' THEN
         RETURN QUERY EXECUTE format(
             $sql$
             WITH folders AS (
-                SELECT path_tokens[$1] AS folder
+                SELECT array_to_string(path_tokens[$1:$2], '/') AS folder
                 FROM storage.objects
-                WHERE objects.name ILIKE $2 || '%%'
-                  AND bucket_id = $3
-                  AND array_length(objects.path_tokens, 1) <> $1
+                WHERE objects.name ILIKE $3 || '%%'
+                  AND bucket_id = $4
+                  AND array_length(objects.path_tokens, 1) <> $2
                 GROUP BY folder
                 ORDER BY folder %s
             )
@@ -12312,16 +12411,16 @@ BEGIN
                    NULL::timestamptz AS last_accessed_at,
                    NULL::jsonb AS metadata FROM folders)
             UNION ALL
-            (SELECT path_tokens[$1] AS "name",
+            (SELECT array_to_string(path_tokens[$1:$2], '/') AS "name",
                    id, updated_at, created_at, last_accessed_at, metadata
              FROM storage.objects
-             WHERE objects.name ILIKE $2 || '%%'
-               AND bucket_id = $3
-               AND array_length(objects.path_tokens, 1) = $1
+             WHERE objects.name ILIKE $3 || '%%'
+               AND bucket_id = $4
+               AND array_length(objects.path_tokens, 1) = $2
              ORDER BY %I %s)
-            LIMIT $4 OFFSET $5
+            LIMIT $5 OFFSET $6
             $sql$, v_sort_order, v_order_by, v_sort_order
-        ) USING levels, v_prefix, bucketname, v_limit, offsets;
+        ) USING v_prefix_start, v_combined_levels, v_prefix, bucketname, v_limit, offsets;
         RETURN;
     END IF;
 
@@ -12431,7 +12530,7 @@ BEGIN
             IF v_skipped < offsets THEN
                 v_skipped := v_skipped + 1;
             ELSE
-                name := split_part(rtrim(storage.get_common_prefix(v_peek_name, v_prefix, v_delimiter), v_delimiter), v_delimiter, levels);
+                name := substring(rtrim(storage.get_common_prefix(v_peek_name, v_prefix, v_delimiter), v_delimiter) from v_prefix_len + 1);
                 id := NULL;
                 updated_at := NULL;
                 created_at := NULL;
@@ -12468,7 +12567,7 @@ BEGIN
                     v_skipped := v_skipped + 1;
                 ELSE
                     -- Emit file
-                    name := split_part(v_current.name, v_delimiter, levels);
+                    name := substring(v_current.name from v_prefix_len + 1);
                     id := v_current.id;
                     updated_at := v_current.updated_at;
                     created_at := v_current.created_at;
@@ -12506,10 +12605,26 @@ DECLARE
     v_cursor_op text;
     v_query text;
     v_prefix text;
+    v_sort_order text;
+    v_sort_column text;
 BEGIN
     v_prefix := coalesce(p_prefix, '');
 
-    IF p_sort_order = 'asc' THEN
+    -- Defense-in-depth: this function is independently reachable and must
+    -- not trust p_sort_order/p_sort_column to already be validated by a
+    -- caller. Normalize to the same strict allow-list storage.search_v2
+    -- uses before interpolating anything into dynamic SQL below.
+    v_sort_order := lower(coalesce(p_sort_order, 'asc'));
+    IF v_sort_order NOT IN ('asc', 'desc') THEN
+        v_sort_order := 'asc';
+    END IF;
+
+    v_sort_column := lower(coalesce(p_sort_column, 'updated_at'));
+    IF v_sort_column NOT IN ('updated_at', 'created_at') THEN
+        v_sort_column := 'updated_at';
+    END IF;
+
+    IF v_sort_order = 'asc' THEN
         v_cursor_op := '>';
     ELSE
         v_cursor_op := '<';
@@ -12589,11 +12704,11 @@ BEGIN
             name COLLATE "C" %s
         LIMIT $4
     $sql$,
-        p_sort_column,
+        v_sort_column,
         v_cursor_op,
-        p_sort_column,
-        p_sort_order,
-        p_sort_order
+        v_sort_column,
+        v_sort_order,
+        v_sort_order
     );
 
     RETURN QUERY EXECUTE v_query
@@ -15360,7 +15475,11 @@ CREATE TABLE storage.buckets (
     file_size_limit bigint,
     allowed_mime_types text[],
     owner_id text,
-    type storage.buckettype DEFAULT 'STANDARD'::storage.buckettype NOT NULL
+    type storage.buckettype DEFAULT 'STANDARD'::storage.buckettype NOT NULL,
+    versioning_status text DEFAULT 'DISABLED'::text NOT NULL,
+    CONSTRAINT buckets_versioning_dark_check CHECK ((versioning_status = 'DISABLED'::text)),
+    CONSTRAINT buckets_versioning_standard_only_check CHECK (((type = 'STANDARD'::storage.buckettype) OR (versioning_status = 'DISABLED'::text))),
+    CONSTRAINT buckets_versioning_status_check CHECK ((versioning_status = ANY (ARRAY['DISABLED'::text, 'ENABLED'::text, 'SUSPENDED'::text])))
 );
 
 
@@ -15434,7 +15553,10 @@ CREATE TABLE storage.objects (
     path_tokens text[] GENERATED ALWAYS AS (string_to_array(name, '/'::text)) STORED,
     version text,
     owner_id text,
-    user_metadata jsonb
+    user_metadata jsonb,
+    archived_at timestamp with time zone,
+    is_delete_marker boolean DEFAULT false NOT NULL,
+    is_versioned boolean DEFAULT false NOT NULL
 );
 
 
@@ -18187,6 +18309,13 @@ CREATE TRIGGER activity_confirmed_emit AFTER INSERT OR UPDATE ON public.activity
 
 
 --
+-- Name: activity activity_course_write_guard; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER activity_course_write_guard BEFORE INSERT OR UPDATE ON public.activity FOR EACH ROW EXECUTE FUNCTION public.fn_activity_course_write_guard();
+
+
+--
 -- Name: activity activity_scheduled_emit; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -18400,7 +18529,7 @@ CREATE TRIGGER trg_broadcast_message AFTER INSERT ON public.message FOR EACH ROW
 -- Name: course_member trg_course_member_denormalise; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER trg_course_member_denormalise BEFORE INSERT ON public.course_member FOR EACH ROW EXECUTE FUNCTION public.fn_course_member_denormalise();
+CREATE TRIGGER trg_course_member_denormalise BEFORE INSERT OR UPDATE OF course_id ON public.course_member FOR EACH ROW EXECUTE FUNCTION public.fn_course_member_denormalise();
 
 
 --
@@ -20338,14 +20467,14 @@ CREATE POLICY "Owner can manage their contact info" ON public.user_contact TO au
 -- Name: activity Owner or lobby manager can delete activities; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Owner or lobby manager can delete activities" ON public.activity FOR DELETE TO authenticated USING (((user_id = auth.uid()) OR ((lobby_id IS NOT NULL) AND public.lobby_can_manage(lobby_id))));
+CREATE POLICY "Owner or lobby manager can delete activities" ON public.activity FOR DELETE TO authenticated USING (((course_id IS NULL) AND ((user_id = ( SELECT auth.uid() AS uid)) OR ((lobby_id IS NOT NULL) AND public.lobby_can_manage(lobby_id)))));
 
 
 --
 -- Name: activity Owner or lobby manager can update activities; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Owner or lobby manager can update activities" ON public.activity FOR UPDATE TO authenticated USING (((user_id = auth.uid()) OR ((lobby_id IS NOT NULL) AND public.lobby_can_manage(lobby_id)))) WITH CHECK (((user_id = auth.uid()) OR ((lobby_id IS NOT NULL) AND public.lobby_can_manage(lobby_id))));
+CREATE POLICY "Owner or lobby manager can update activities" ON public.activity FOR UPDATE TO authenticated USING (((course_id IS NULL) AND ((user_id = ( SELECT auth.uid() AS uid)) OR ((lobby_id IS NOT NULL) AND public.lobby_can_manage(lobby_id))))) WITH CHECK (((course_id IS NULL) AND ((user_id = ( SELECT auth.uid() AS uid)) OR ((lobby_id IS NOT NULL) AND public.lobby_can_manage(lobby_id)))));
 
 
 --
@@ -20417,7 +20546,7 @@ CREATE POLICY "Users can create befriend records with restrictions" ON public.lo
 -- Name: activity Users can create their own activities; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Users can create their own activities" ON public.activity FOR INSERT TO authenticated WITH CHECK ((user_id = auth.uid()));
+CREATE POLICY "Users can create their own activities" ON public.activity FOR INSERT TO authenticated WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND (course_id IS NULL)));
 
 
 --
@@ -22705,6 +22834,15 @@ GRANT ALL ON FUNCTION public.fn_activity_attachment_role_check() TO service_role
 
 
 --
+-- Name: FUNCTION fn_activity_course_write_guard(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.fn_activity_course_write_guard() TO anon;
+GRANT ALL ON FUNCTION public.fn_activity_course_write_guard() TO authenticated;
+GRANT ALL ON FUNCTION public.fn_activity_course_write_guard() TO service_role;
+
+
+--
 -- Name: FUNCTION fn_apply_match_rating(p_match_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -24733,7 +24871,6 @@ GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.ac
 -- Name: TABLE activity; Type: ACL; Schema: public; Owner: postgres
 --
 
-GRANT ALL ON TABLE public.activity TO anon;
 GRANT ALL ON TABLE public.activity TO authenticated;
 GRANT ALL ON TABLE public.activity TO service_role;
 
@@ -24742,7 +24879,6 @@ GRANT ALL ON TABLE public.activity TO service_role;
 -- Name: TABLE activity_confirmation; Type: ACL; Schema: public; Owner: postgres
 --
 
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.activity_confirmation TO anon;
 GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.activity_confirmation TO authenticated;
 GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.activity_confirmation TO service_role;
 
@@ -25956,5 +26092,5 @@ ALTER EVENT TRIGGER pgrst_drop_watch OWNER TO supabase_admin;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7BlJnFxfvqmJomhALlsqgvOrJZQtS9WsUGPR3FV0FT0AX6k8ivcYeZfjp93vUmw
+\unrestrict 1iDqwwGG85nrSPYjA0RYqZTAqXM3KOwmd1ZpF0Gpra5EOm0Xxa2YItJrFewZAM7
 

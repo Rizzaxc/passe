@@ -314,6 +314,14 @@ class CourseDetail {
   final List<SessionReport> reports;
   final int? myReviewRating;
 
+  /// The viewer's own pending enrollment offer, if any (student side only —
+  /// null for the coach and for anyone without one waiting). This is what
+  /// promotes an `inquiring` member to `enrolled` on accept.
+  final String? pendingOfferId;
+  final String? offerName;
+  final String? offerDescription;
+  final int? offerTargetSessionCount;
+
   const CourseDetail({
     required this.courseId,
     required this.status,
@@ -332,6 +340,10 @@ class CourseDetail {
     this.sessions = const [],
     this.reports = const [],
     this.myReviewRating,
+    this.pendingOfferId,
+    this.offerName,
+    this.offerDescription,
+    this.offerTargetSessionCount,
   });
 
   /// Whether the viewer may act on the course — propose/schedule sessions,
@@ -389,5 +401,11 @@ class CourseDetail {
     myReviewRating: json['my_review_rating'] == null
         ? null
         : int.tryParse(json['my_review_rating'].toString()),
+    pendingOfferId: json['pending_offer_id']?.toString(),
+    offerName: json['offer_name'] as String?,
+    offerDescription: json['offer_description'] as String?,
+    offerTargetSessionCount: json['offer_target_session_count'] == null
+        ? null
+        : int.tryParse(json['offer_target_session_count'].toString()),
   );
 }

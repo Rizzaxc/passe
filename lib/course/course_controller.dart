@@ -120,6 +120,11 @@ class CourseActionController extends _$CourseActionController {
       final result = await action();
       ref.invalidate(myCoursesProvider);
       ref.invalidate(proCoursesProvider);
+      // Also the "do I already have a thread with this coach?" fast path.
+      // Without it, `leave`/`endCourse` left a cached course id behind and the
+      // coach profile's "Nhắn tin" would route straight back into the course
+      // the user had just left, for as long as that provider stayed alive.
+      ref.invalidate(courseWithCoachProvider);
       if (courseId != null) ref.invalidate(courseDetailProvider(courseId));
       return result;
     } finally {

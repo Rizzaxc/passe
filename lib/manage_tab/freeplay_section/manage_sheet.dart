@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../core/location_repository.dart';
 import '../../freeplay/model.dart';
@@ -207,6 +208,15 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
                     _refresh();
                     if (!context.mounted) return;
                     Navigator.pop(context);
+                  } catch (e, st) {
+                    Talker().handle(e, st, 'Set freeplay intake failed');
+                    if (context.mounted) {
+                      showFToast(
+                        context: context,
+                        variant: .destructive,
+                        title: Text('freeplay.hostManage.updateFailed'.tr()),
+                      );
+                    }
                   } finally {
                     if (mounted) setState(() => _busy = false);
                   }
@@ -257,6 +267,15 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
                     _refresh();
                     if (!context.mounted) return;
                     Navigator.pop(context);
+                  } catch (e, st) {
+                    Talker().handle(e, st, 'Cancel freeplay activity failed');
+                    if (context.mounted) {
+                      showFToast(
+                        context: context,
+                        variant: .destructive,
+                        title: Text('freeplay.hostManage.cancelFailed'.tr()),
+                      );
+                    }
                   } finally {
                     if (mounted) setState(() => _busy = false);
                   }

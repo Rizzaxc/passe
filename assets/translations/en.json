@@ -201,6 +201,7 @@
       "services": "Services",
       "noServices": "No services have been published yet.",
       "servicesLoadFailed": "Couldn't load services.",
+      "servicesCoachHint": "Rates only — message the coach to arrange sessions and packages.",
       "pricePerHour": "{price}₫/hour",
       "pricePerSession": "{price}₫/session",
       "minimumDuration": "From {minutes} min",
@@ -1442,7 +1443,6 @@
     "seatsLeft": "{count} spots left",
     "malePrice": "{amount} male",
     "femalePrice": "{amount} female",
-    "prices": "{male} male · {female} female",
     "payHostDirectly": "Pay the Host directly",
     "skillMismatch": "Your level differs from the Host's recommendation",
     "selfAssessedSkill": "Self-assessed level",
@@ -1528,6 +1528,7 @@
       "completeForm": "Please complete all session information",
       "futureTime": "Session time must be in the future",
       "createFailed": "Unable to create session",
+      "cancelFailed": "Unable to cancel session",
       "time": "Time",
       "venue": "Venue",
       "savedVenue": "Saved venue",
@@ -1554,7 +1555,8 @@
       "requestsTitle": "Join requests",
       "requestsLoadFailed": "Unable to load requests",
       "noRequests": "No requests yet",
-      "sessionFull": "This session is full"
+      "sessionFull": "This session is full",
+      "respondFailed": "Unable to respond to this request"
     }
   },
   "feed": {
@@ -1697,6 +1699,12 @@
       "other": "{} going"
     },
     "offerPending": "Offer waiting",
+    "offerReceivedTitle": "Enrollment offer",
+    "acceptOffer": "Accept",
+    "declineOffer": "Decline",
+    "declineOfferTitle": "Decline this offer?",
+    "declineOfferBody": "The coach will need to send a new offer if you change your mind.",
+    "waitingForCoach": "Waiting for {coach} to accept you as a student",
     "rsvpPending": {
       "other": "{} sessions need an RSVP"
     },
@@ -1769,6 +1777,14 @@
     "clashProceed": "Schedule anyway",
     "emptyCoachHistory": "No finished courses yet",
     "pickSportFirst": "Pick a sport first",
-    "messageCoachIntro": "Send your first message to {coach}. Nothing is saved until you hit send."
+    "messageCoachIntro": "Send your first message to {coach}. Nothing is saved until you hit send. Rates, packages and scheduling are worked out directly with {coach}, not picked from a list.",
+    "offerNameRequired": "Enter a course name",
+    "reportBodyRequired": "Write the report first",
+    "cancelSessionTitle": "Cancel this session?",
+    "cancelSessionBody": "The session is removed for everyone, and any report you wrote for it goes with it. This cannot be undone.",
+    "sessionActions": "Session options",
+    "reviewStar": "{star} stars",
+    "coachSportMismatch": "This coach does not teach {sport}",
+    "startInPast": "Pick a time in the future"
   }
 }

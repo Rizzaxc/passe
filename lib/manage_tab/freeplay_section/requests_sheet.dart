@@ -2,6 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../freeplay/chat_sheet.dart';
 import '../../freeplay/model.dart';
@@ -17,13 +19,53 @@ Future<void> showHostFreeplayRequests(
   builder: (_) => _Requests(activityId: activityId),
 );
 
-class _Requests extends ConsumerWidget {
+class _Requests extends ConsumerStatefulWidget {
   final String activityId;
   const _Requests({required this.activityId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final requests = ref.watch(freeplayRequestsProvider(activityId));
+  ConsumerState<_Requests> createState() => _RequestsState();
+}
+
+class _RequestsState extends ConsumerState<_Requests> {
+  // Per-request, not a single sheet-wide flag — responding to one request
+  // shouldn't freeze the buttons on every other row in the list.
+  final _busyIds = <String>{};
+
+  Future<void> _respond(FreeplayRequestItem request, bool accept) async {
+    setState(() => _busyIds.add(request.id));
+    try {
+      await ref.read(freeplayRepositoryProvider).respond(request.id, accept);
+      ref.invalidate(freeplayRequestsProvider(widget.activityId));
+      if (accept) ref.invalidate(hostFreeplayProvider(false));
+    } catch (e, st) {
+      Talker().handle(e, st, 'Respond to freeplay request failed');
+      if (mounted) {
+        // "Full" is the one failure worth naming specifically — the host
+        // just watched the roster fill from another request accepted a beat
+        // earlier. Everything else (activity ended, network hiccup) gets the
+        // generic message rather than a misleading "session is full".
+        final full =
+            e is PostgrestException && e.message.contains('activity is full');
+        showFToast(
+          context: context,
+          variant: .destructive,
+          title: Text(
+            (full
+                    ? 'freeplay.hostManage.sessionFull'
+                    : 'freeplay.hostManage.respondFailed')
+                .tr(),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busyIds.remove(request.id));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final requests = ref.watch(freeplayRequestsProvider(widget.activityId));
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * .78,
       child: Column(
@@ -51,6 +93,7 @@ class _Requests extends ConsumerWidget {
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final request = items[index];
+                        final busy = _busyIds.contains(request.id);
                         return FTile(
                           prefix: const Icon(FLucideIcons.userRound),
                           title: Text(
@@ -69,45 +112,17 @@ class _Requests extends ConsumerWidget {
                                     FButton.icon(
                                       variant: .outline,
                                       size: .sm,
-                                      onPress: () async {
-                                        await ref
-                                            .read(freeplayRepositoryProvider)
-                                            .respond(request.id, false);
-                                        ref.invalidate(
-                                          freeplayRequestsProvider(activityId),
-                                        );
-                                      },
+                                      onPress: busy
+                                          ? null
+                                          : () => _respond(request, false),
                                       child: const Icon(FLucideIcons.x),
                                     ),
                                     const SizedBox(width: 6),
                                     FButton.icon(
                                       size: .sm,
-                                      onPress: () async {
-                                        try {
-                                          await ref
-                                              .read(freeplayRepositoryProvider)
-                                              .respond(request.id, true);
-                                          ref.invalidate(
-                                            freeplayRequestsProvider(
-                                              activityId,
-                                            ),
-                                          );
-                                          ref.invalidate(
-                                            hostFreeplayProvider(false),
-                                          );
-                                        } catch (_) {
-                                          if (context.mounted) {
-                                            showFToast(
-                                              context: context,
-                                              variant: .destructive,
-                                              title: Text(
-                                                'freeplay.hostManage.sessionFull'
-                                                    .tr(),
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      },
+                                      onPress: busy
+                                          ? null
+                                          : () => _respond(request, true),
                                       child: const Icon(FLucideIcons.check),
                                     ),
                                   ],
