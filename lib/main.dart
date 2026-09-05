@@ -56,8 +56,11 @@ Future<void> main() async {
   assert(env == envLocal || env == envTest || env == envLive);
 
   final supabaseURL = dotenv.env['SUPABASE_URL']!;
-  final supabaseAnonKey = dotenv.env['SUPABASE_PUBLIC_KEY']!;
-  await Supabase.initialize(url: supabaseURL, anonKey: supabaseAnonKey);
+  final supabasePublishableKey = dotenv.env['SUPABASE_PUBLIC_KEY']!;
+  await Supabase.initialize(
+    url: supabaseURL,
+    publishableKey: supabasePublishableKey,
+  );
 
   // Firebase + FCM. The background handler must be registered before runApp;
   // it is a no-op (the OS renders the notification block) but FCM requires it.
@@ -92,6 +95,7 @@ Future<void> main() async {
       // which keeps local dev's build/hot-reload errors out of the issue feed.
       options.dsn = env == envLocal ? '' : sentryDSN;
       options.tracesSampleRate = sampleRates[env];
+      // ignore: experimental_member_use
       options.profilesSampleRate = 1.0;
       options.environment = env;
     },

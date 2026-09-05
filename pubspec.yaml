@@ -67,6 +67,7 @@ dependencies:
   freezed_annotation: ^3.1.0
   talker_riverpod_logger: ^5.1.5
   talker_flutter: ^5.1.5
+  talker: ^5.1.5
   forui: ^0.25.0
   riverpod: ^3.3.2
   hooks: ^1.0.0
