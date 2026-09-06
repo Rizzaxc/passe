@@ -19,13 +19,34 @@ HealthDataType get hrvDataType => Platform.isIOS
     ? HealthDataType.HEART_RATE_VARIABILITY_SDNN
     : HealthDataType.HEART_RATE_VARIABILITY_RMSSD;
 
+/// Platform-native distance types. HealthKit exposes distance per movement
+/// category, while Health Connect exposes one aggregate delta record.
+List<HealthDataType> healthDistanceDataTypes({bool? isIOS}) =>
+    (isIOS ?? Platform.isIOS)
+    ? const [
+        HealthDataType.DISTANCE_WALKING_RUNNING,
+        HealthDataType.DISTANCE_CYCLING,
+        HealthDataType.DISTANCE_SWIMMING,
+      ]
+    : const [HealthDataType.DISTANCE_DELTA];
+
+/// Record used alongside active energy to derive whole-day calories.
+///
+/// `health` 13.2.1 advertises TOTAL_CALORIES_BURNED on iOS, but its native
+/// HealthKit map does not contain that key. Query basal energy instead and add
+/// it to active energy in [HealthDataService.readDailyHealthSummary].
+HealthDataType healthAdditionalEnergyDataType({bool? isIOS}) =>
+    (isIOS ?? Platform.isIOS)
+    ? HealthDataType.BASAL_ENERGY_BURNED
+    : HealthDataType.TOTAL_CALORIES_BURNED;
+
 /// Health data types we request permission for
 List<HealthDataType> get _healthDataTypes => <HealthDataType>[
   // Activity
   HealthDataType.STEPS,
-  HealthDataType.DISTANCE_DELTA,
+  ...healthDistanceDataTypes(),
   HealthDataType.ACTIVE_ENERGY_BURNED,
-  HealthDataType.TOTAL_CALORIES_BURNED,
+  healthAdditionalEnergyDataType(),
 
   // Heart rate
   HealthDataType.HEART_RATE,

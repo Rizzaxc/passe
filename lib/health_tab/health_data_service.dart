@@ -76,7 +76,7 @@ class HealthDataService extends _$HealthDataService {
           endTime: endTime,
         ),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.DISTANCE_DELTA],
+          types: healthDistanceDataTypes(),
           startTime: startTime,
           endTime: endTime,
         ),
@@ -223,7 +223,7 @@ class HealthDataService extends _$HealthDataService {
           endTime: endOfDay,
         ),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.DISTANCE_DELTA],
+          types: healthDistanceDataTypes(),
           startTime: startOfDay,
           endTime: endOfDay,
         ),
@@ -233,7 +233,7 @@ class HealthDataService extends _$HealthDataService {
           endTime: endOfDay,
         ),
         _health.getHealthDataFromTypes(
-          types: [HealthDataType.TOTAL_CALORIES_BURNED],
+          types: [healthAdditionalEnergyDataType()],
           startTime: startOfDay,
           endTime: endOfDay,
         ),
@@ -257,7 +257,10 @@ class HealthDataService extends _$HealthDataService {
       final steps = _sumNumericValues(results[0])?.round();
       final distance = _sumNumericValues(results[1]);
       final activeCalories = _sumNumericValues(results[2]);
-      final totalCalories = _sumNumericValues(results[3]);
+      final additionalCalories = _sumNumericValues(results[3]);
+      final totalCalories = Platform.isIOS
+          ? _sumNullable(activeCalories, additionalCalories)
+          : additionalCalories;
 
       final restingHrValues = _extractNumericValues(results[4]);
       final restingHr = restingHrValues.isNotEmpty
@@ -414,6 +417,11 @@ class HealthDataService extends _$HealthDataService {
     );
   }
 
+  double? _sumNullable(double? a, double? b) {
+    if (a == null && b == null) return null;
+    return (a ?? 0) + (b ?? 0);
+  }
+
   List<double> _extractNumericValues(List<HealthDataPoint> data) =>
       data.map(_extractNumericValue).whereType<double>().toList();
 
@@ -493,7 +501,8 @@ class HealthDataService extends _$HealthDataService {
           : runStart.add(Duration(seconds: runDuration));
 
       final moving = _hasMovement(stepsData, runStart, runEnd);
-      zones['easy'] = zones['easy']! +
+      zones['easy'] =
+          zones['easy']! +
           (moving ? runDuration : runDuration.clamp(0, _pauseGraceSeconds));
       i = j;
     }

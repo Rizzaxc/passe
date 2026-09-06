@@ -171,6 +171,12 @@ renders. (Previously undocumented — added in the 2026-07 audit pass.)
   `hrvSdnnMs`/`hrvRmssdMs` field (only one is ever populated per platform) on
   `ActivityHealthMetrics`/`DailyHealthSummary`/`ActivityHealthRow`. UI reads that want a
   platform-agnostic value should coalesce both (see `HealthMetric.hrv.value()`).
+- **Distance and total energy are platform-split too.** Health Connect exposes
+  `DISTANCE_DELTA` and `TOTAL_CALORIES_BURNED`; HealthKit exposes distance as walking/running,
+  cycling, and swimming records, and whole-day energy is derived by adding active + basal energy.
+  Keep permission requests and reads routed through `healthDistanceDataTypes()` /
+  `healthAdditionalEnergyDataType()`. Requesting Android's `DISTANCE_DELTA` on iOS makes the
+  `health` package throw and causes the whole activity capture to return no metrics.
 - **HR zones are a 3-zone LT model** (easy/moderate/hard by `lt1_bpm`/`lt2_bpm`). Defaults estimate
   LT1≈80% / LT2≈88% of an age-bucket max HR; `HrThresholds.estimated` drives the "estimated" tag in
   the recap sheet until the user declares real thresholds on `user_health_link`.
