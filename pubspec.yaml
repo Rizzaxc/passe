@@ -3,7 +3,7 @@ description: "Next gen casual sport social network & matchmaking"
 
 publish_to: 'none'
 
-version: 0.0.1+5
+version: 0.0.1+6
 
 environment:
   sdk: ^3.10.0
