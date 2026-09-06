@@ -55,12 +55,17 @@ user grants health permissions, every subtab is replaced by the "not linked" CTA
 UI reads the Supabase rollup tables; a sync step fills them from the device. Two passes in
 `syncNow()`: (1) **daily summaries** — first run backfills 90 days, then today + the gap since
 `user_health_link.last_sync_at`; (2) **activity capture** — `health_capture_candidates` returns the
-user's confirmed/proposed activities + coach bookings (past `end_time`, no existing metrics row);
-confirmed ones with wearable **evidence** (a `WORKOUT` record = high, or ≥10 min sustained HR in
-zone = medium) are auto-captured. Unconfirmed-but-detected candidates surface in the
-`activity_data` **"Detected workouts"** section: *attach* (health-only — writes metrics, never
-touches attendance/đá) or *dismiss* (writes a `dismissed=true` tombstone so it isn't re-prompted).
-Capture is sport-agnostic; only the recap-list display filters by the context sport.
+user's confirmed/proposed activities + coach bookings (past `end_time`, no existing metrics row).
+Every **confirmed** candidate is captured unconditionally — a committed activity always gets a
+best-effort report once the device can be queried, whatever the numbers turn out to be;
+`HealthEvidence` is not consulted for these. Unconfirmed-but-detected candidates (the user has some
+relationship to the activity — e.g. a lobby/freeplay membership — but never RSVP'd) are different:
+there's no commitment to anchor "did something happen" on, so those still need wearable **evidence**
+(a `WORKOUT` record = high, or ≥10 min of measured HR-zone time at any intensity = medium) before
+they're worth surfacing at all, in the `activity_data` **"Detected workouts"** section: *attach*
+(health-only — writes metrics, never touches attendance/đá) or *dismiss* (writes a `dismissed=true`
+tombstone so it isn't re-prompted). Capture is sport-agnostic; only the recap-list display filters by
+the context sport.
 
 ## Link-status flow
 
@@ -192,6 +197,17 @@ renders. (Previously undocumented — added in the 2026-07 audit pass.)
   Vitality's load component) down the way it would for continuous steady-state cardio.
 - `saveActivityMetrics` strips null keys before upsert so the DB keeps its `id`/`recorded_at`
   defaults; the dismissal tombstone reuses the same `(user_id, activity_id)` unique constraint.
+- Device metrics are read independently through `_readHealthData`: one denied, unavailable, or
+  slow optional datatype must not discard valid workout/HR data. A completely failed daily read
+  aborts the pass before `last_sync_at` advances, and failures are logged through Talker/Sentry.
+- Medium evidence is ten minutes of measured HR-zone time at any intensity (easy included); high
+  evidence is an overlapping Workout record. Workout reads include a 15-minute start lead-in to
+  accommodate someone starting their Watch before the scheduled activity, then filter to overlap.
+  **This threshold only gates the unconfirmed "Detected workouts" surfacing**
+  (`health_data_controller.dart`'s `detectedWorkouts` provider) — a confirmed/committed activity is
+  captured by `_captureActivities` (`health_sync_service.dart`) regardless of `HealthEvidence`, since
+  the user already told the app something happened there; evidence only answers "did something
+  happen" for activities that were never explicitly confirmed.
 - Backend writes keep the `.timeout(const Duration(seconds: 5))`.
 - `schema/health_3zone.sql` is the migration (applied). It was hand-patched into `schema/passe.sql`
   (CLI couldn't `pg_dump` here) — re-dump properly when you next can.

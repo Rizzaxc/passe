@@ -34,7 +34,7 @@ List<HealthDataType> healthDistanceDataTypes({bool? isIOS}) =>
 ///
 /// `health` 13.2.1 advertises TOTAL_CALORIES_BURNED on iOS, but its native
 /// HealthKit map does not contain that key. Query basal energy instead and add
-/// it to active energy in [HealthDataService.readDailyHealthSummary].
+/// it to active energy when building a daily summary.
 HealthDataType healthAdditionalEnergyDataType({bool? isIOS}) =>
     (isIOS ?? Platform.isIOS)
     ? HealthDataType.BASAL_ENERGY_BURNED
@@ -197,7 +197,7 @@ class HealthController extends _$HealthController {
           .upsert({
             'user_id': userId,
             'platform': platform.dbValue,
-            'linked_at': DateTime.now().toIso8601String(),
+            'linked_at': DateTime.now().toUtc().toIso8601String(),
           })
           .timeout(const Duration(seconds: 5));
 
@@ -268,7 +268,7 @@ class HealthController extends _$HealthController {
 
       await _supabase
           .from('user_health_link')
-          .update({'last_sync_at': DateTime.now().toIso8601String()})
+          .update({'last_sync_at': DateTime.now().toUtc().toIso8601String()})
           .eq('user_id', userId)
           .timeout(const Duration(seconds: 5));
     } catch (e) {

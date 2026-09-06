@@ -148,23 +148,34 @@ class HealthSyncController extends _$HealthSyncController {
         userId: userId,
         date: day,
       );
-      if (summary != null) {
-        await _service.saveDailySummary(summary);
-        count++;
+      if (summary == null) {
+        // Do not move last_sync_at past a day that failed to read. Otherwise
+        // the missing device data is silently skipped on every future pass.
+        throw StateError('Unable to read health summary for $day');
       }
+      await _service.saveDailySummary(summary);
+      count++;
     }
 
     if (!ref.mounted) return count;
     await _supabase
         .from('user_health_link')
-        .update({'last_sync_at': today.toIso8601String()})
+        .update({'last_sync_at': today.toUtc().toIso8601String()})
         .eq('user_id', userId)
         .timeout(const Duration(seconds: 5));
     return count;
   }
 
-  /// Auto-capture confirmed candidates with wearable evidence. Unconfirmed ones
-  /// are left for the "Detected workouts" UI (see [detectedWorkoutsProvider]).
+  /// Auto-capture every confirmed candidate the device can be queried for. A
+  /// committed activity always gets a best-effort report, however sparse —
+  /// `HealthEvidence` is not consulted here; it only gates whether an
+  /// *unconfirmed* candidate is worth surfacing at all (see
+  /// [detectedWorkoutsProvider]), since there the user never RSVP'd and we
+  /// have nothing else to anchor "did something happen" on. A confirmed
+  /// activity already answers that question — we just report what the
+  /// device saw for its window. `result == null` still means the device
+  /// reads themselves failed (or the activity has no end time yet), which is
+  /// the only case worth skipping and retrying on a later sync.
   Future<int> _captureActivities(String userId, HrThresholds thresholds) async {
     final windowStart = DateTime.now().subtract(
       const Duration(days: healthBackfillDays),
@@ -172,7 +183,7 @@ class HealthSyncController extends _$HealthSyncController {
     final rows = await _supabase
         .rpc(
           'health_capture_candidates',
-          params: {'p_window_start': windowStart.toIso8601String()},
+          params: {'p_window_start': windowStart.toUtc().toIso8601String()},
         )
         .timeout(const Duration(seconds: 5));
 
@@ -191,7 +202,7 @@ class HealthSyncController extends _$HealthSyncController {
         activity: activity,
         thresholds: thresholds,
       );
-      if (result == null || result.evidence == HealthEvidence.none) continue;
+      if (result == null) continue;
       await _service.saveActivityMetrics(result.metrics);
       await _service.saveHrCurve(
         activityId: activity.id!,

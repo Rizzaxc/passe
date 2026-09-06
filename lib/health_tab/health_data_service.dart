@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:health/health.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/model/activity.dart';
 import 'health_controller.dart';
@@ -32,6 +33,23 @@ class HrThresholds {
 /// How strongly the wearable suggests exercise actually happened in a window.
 enum HealthEvidence { none, medium, high }
 
+/// Resolve wearable evidence without biasing against legitimate low-intensity
+/// sessions. An explicit overlapping workout is strongest; otherwise ten
+/// minutes of measured HR-zone time is enough to associate a confirmed
+/// activity with its device data.
+HealthEvidence healthEvidenceFor({
+  required bool hasWorkout,
+  required int easySeconds,
+  required int moderateSeconds,
+  required int hardSeconds,
+}) {
+  if (hasWorkout) return HealthEvidence.high;
+  if ((easySeconds + moderateSeconds + hardSeconds) >= 600) {
+    return HealthEvidence.medium;
+  }
+  return HealthEvidence.none;
+}
+
 /// Outcome of reading a single activity's window from the device.
 class ActivityCaptureResult {
   final ActivityHealthMetrics metrics;
@@ -45,11 +63,21 @@ class ActivityCaptureResult {
   });
 }
 
+class _HealthRead {
+  final List<HealthDataPoint> data;
+  final bool succeeded;
+
+  const _HealthRead(this.data, {required this.succeeded});
+}
+
 /// Service for reading health data and syncing to backend.
 @riverpod
 class HealthDataService extends _$HealthDataService {
+  static const _workoutStartTolerance = Duration(minutes: 15);
+
   final _health = Health();
   final _supabase = Supabase.instance.client;
+  final _talker = Talker();
 
   @override
   void build() {
@@ -70,50 +98,68 @@ class HealthDataService extends _$HealthDataService {
 
     try {
       final results = await Future.wait([
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'activity steps',
           types: [HealthDataType.STEPS],
           startTime: startTime,
           endTime: endTime,
         ),
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'activity distance',
           types: healthDistanceDataTypes(),
           startTime: startTime,
           endTime: endTime,
         ),
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'activity energy',
           types: [HealthDataType.ACTIVE_ENERGY_BURNED],
           startTime: startTime,
           endTime: endTime,
         ),
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'activity heart rate',
           types: [HealthDataType.HEART_RATE],
           startTime: startTime,
           endTime: endTime,
         ),
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'activity HRV',
           types: [hrvDataType],
           startTime: startTime,
           endTime: endTime,
         ),
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'activity weight',
           types: [HealthDataType.WEIGHT],
           startTime: startTime.subtract(const Duration(days: 7)),
           endTime: endTime,
         ),
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'activity workout',
           types: [HealthDataType.WORKOUT],
-          startTime: startTime,
+          // HealthKit's query uses strict start-date matching. Read a small
+          // lead-in so a Watch workout started just before the scheduled
+          // activity is still returned, then filter to real overlap below.
+          startTime: startTime.subtract(_workoutStartTolerance),
           endTime: endTime,
         ),
       ]);
 
-      final stepsData = results[0];
-      final distanceData = results[1];
-      final caloriesData = results[2];
-      final heartRateData = results[3];
-      final hrvData = results[4];
-      final weightData = results[5];
-      final workoutData = results[6];
+      if (results.every((read) => !read.succeeded)) return null;
+
+      final stepsData = results[0].data;
+      final distanceData = results[1].data;
+      final caloriesData = results[2].data;
+      final heartRateData = results[3].data;
+      final hrvData = results[4].data;
+      final weightData = results[5].data;
+      final workoutData = results[6].data
+          .where(
+            (point) =>
+                point.dateFrom.isBefore(endTime) &&
+                point.dateTo.isAfter(startTime),
+          )
+          .toList();
 
       final steps = _sumNumericValues(stepsData);
       final distance = _sumNumericValues(distanceData);
@@ -166,15 +212,14 @@ class HealthDataService extends _$HealthDataService {
       // Workout type label (from the first overlapping workout, if any).
       final workoutType = _workoutType(workoutData);
 
-      // Evidence: an explicit workout = high; ≥10 min in moderate+hard = medium.
-      final HealthEvidence evidence;
-      if (workoutData.isNotEmpty) {
-        evidence = HealthEvidence.high;
-      } else if ((moderate + hard) >= 600) {
-        evidence = HealthEvidence.medium;
-      } else {
-        evidence = HealthEvidence.none;
-      }
+      // Evidence: explicit overlapping workout = high; ≥10 min of measured
+      // zone time at any intensity = medium.
+      final evidence = healthEvidenceFor(
+        hasWorkout: workoutData.isNotEmpty,
+        easySeconds: easy,
+        moderateSeconds: moderate,
+        hardSeconds: hard,
+      );
 
       final metrics = ActivityHealthMetrics(
         userId: activity.userId,
@@ -194,7 +239,7 @@ class HealthDataService extends _$HealthDataService {
         effortScore: effortScore,
         weightKg: weight,
         workoutType: workoutType,
-        recordedAt: DateTime.now(),
+        recordedAt: DateTime.now().toUtc(),
       );
 
       return ActivityCaptureResult(
@@ -202,7 +247,8 @@ class HealthDataService extends _$HealthDataService {
         curve: _downsampleHrToMinutes(heartRateData),
         evidence: evidence,
       );
-    } catch (e) {
+    } catch (e, st) {
+      _talker.handle(e, st, 'Failed to aggregate activity health data');
       return null;
     }
   }
@@ -217,62 +263,71 @@ class HealthDataService extends _$HealthDataService {
 
     try {
       final results = await Future.wait([
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'daily steps',
           types: [HealthDataType.STEPS],
           startTime: startOfDay,
           endTime: endOfDay,
         ),
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'daily distance',
           types: healthDistanceDataTypes(),
           startTime: startOfDay,
           endTime: endOfDay,
         ),
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'daily active energy',
           types: [HealthDataType.ACTIVE_ENERGY_BURNED],
           startTime: startOfDay,
           endTime: endOfDay,
         ),
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'daily additional energy',
           types: [healthAdditionalEnergyDataType()],
           startTime: startOfDay,
           endTime: endOfDay,
         ),
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'daily resting heart rate',
           types: [HealthDataType.RESTING_HEART_RATE],
           startTime: startOfDay,
           endTime: endOfDay,
         ),
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'daily HRV',
           types: [hrvDataType],
           startTime: startOfDay,
           endTime: endOfDay,
         ),
-        _health.getHealthDataFromTypes(
+        _readHealthData(
+          label: 'daily weight',
           types: [HealthDataType.WEIGHT],
           startTime: startOfDay,
           endTime: endOfDay,
         ),
       ]);
 
-      final steps = _sumNumericValues(results[0])?.round();
-      final distance = _sumNumericValues(results[1]);
-      final activeCalories = _sumNumericValues(results[2]);
-      final additionalCalories = _sumNumericValues(results[3]);
+      if (results.every((read) => !read.succeeded)) return null;
+
+      final steps = _sumNumericValues(results[0].data)?.round();
+      final distance = _sumNumericValues(results[1].data);
+      final activeCalories = _sumNumericValues(results[2].data);
+      final additionalCalories = _sumNumericValues(results[3].data);
       final totalCalories = Platform.isIOS
           ? _sumNullable(activeCalories, additionalCalories)
           : additionalCalories;
 
-      final restingHrValues = _extractNumericValues(results[4]);
+      final restingHrValues = _extractNumericValues(results[4].data);
       final restingHr = restingHrValues.isNotEmpty
           ? restingHrValues.reduce((a, b) => a < b ? a : b).round()
           : null;
 
-      final hrvValues = _extractNumericValues(results[5]);
+      final hrvValues = _extractNumericValues(results[5].data);
       final hrv = hrvValues.isNotEmpty
           ? hrvValues.reduce((a, b) => a + b) / hrvValues.length
           : null;
 
-      final weightData = results[6];
+      final weightData = results[6].data;
       final weight = weightData.isNotEmpty
           ? _extractNumericValue(weightData.last)
           : null;
@@ -288,9 +343,10 @@ class HealthDataService extends _$HealthDataService {
         hrvSdnnMs: Platform.isIOS ? hrv : null,
         hrvRmssdMs: Platform.isIOS ? null : hrv,
         weightKg: weight,
-        syncedAt: DateTime.now(),
+        syncedAt: DateTime.now().toUtc(),
       );
-    } catch (e) {
+    } catch (e, st) {
+      _talker.handle(e, st, 'Failed to aggregate daily health summary');
       return null;
     }
   }
@@ -304,11 +360,13 @@ class HealthDataService extends _$HealthDataService {
     required DateTime endTime,
   }) async {
     try {
-      final heartRateData = await _health.getHealthDataFromTypes(
+      final read = await _readHealthData(
+        label: 'activity heart-rate samples',
         types: [HealthDataType.HEART_RATE],
         startTime: startTime,
         endTime: endTime,
       );
+      final heartRateData = read.data;
 
       return heartRateData
           .map(
@@ -320,7 +378,8 @@ class HealthDataService extends _$HealthDataService {
           )
           .where((s) => s.bpm > 0)
           .toList();
-    } catch (e) {
+    } catch (e, st) {
+      _talker.handle(e, st, 'Failed to build activity heart-rate samples');
       return [];
     }
   }
@@ -408,6 +467,29 @@ class HealthDataService extends _$HealthDataService {
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
+
+  /// Keep optional HealthKit/Health Connect datatypes independent: one denied
+  /// or unsupported metric must not discard valid workout and heart-rate data.
+  Future<_HealthRead> _readHealthData({
+    required String label,
+    required List<HealthDataType> types,
+    required DateTime startTime,
+    required DateTime endTime,
+  }) async {
+    try {
+      final data = await _health
+          .getHealthDataFromTypes(
+            types: types,
+            startTime: startTime,
+            endTime: endTime,
+          )
+          .timeout(const Duration(seconds: 5));
+      return _HealthRead(data, succeeded: true);
+    } catch (e, st) {
+      _talker.handle(e, st, 'Failed to read $label');
+      return const _HealthRead([], succeeded: false);
+    }
+  }
 
   double? _sumNumericValues(List<HealthDataPoint> data) {
     if (data.isEmpty) return null;
