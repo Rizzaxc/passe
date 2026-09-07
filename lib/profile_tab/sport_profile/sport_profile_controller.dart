@@ -1,11 +1,10 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
-
 import '../../auth/auth_controller.dart';
 import '../../core/model/enum.dart';
 import '../../core/model/sport_profile.dart';
+import '../../logger/talker.dart';
 import '../write_failure_support.dart';
 
 part 'sport_profile_controller.g.dart';
@@ -77,7 +76,6 @@ void setSportEloSeed(WidgetRef ref, Sport sport, EloSeed seed) {
 @riverpod
 class SoccerProfileController extends _$SoccerProfileController {
   final _supabase = Supabase.instance.client;
-  final _talker = Talker();
   late final _failures = WriteFailureHandler(ref);
 
   @override
@@ -99,7 +97,7 @@ class SoccerProfileController extends _$SoccerProfileController {
         state = SoccerProfile.fromJson(response);
       }
     } catch (e, st) {
-      _talker.handle(e, st, 'Error fetching soccer profile');
+      talker.handle(e, st, 'Error fetching soccer profile');
     }
   }
 
@@ -129,7 +127,6 @@ class SoccerProfileController extends _$SoccerProfileController {
 @riverpod
 class BasketballProfileController extends _$BasketballProfileController {
   final _supabase = Supabase.instance.client;
-  final _talker = Talker();
   late final _failures = WriteFailureHandler(ref);
 
   @override
@@ -151,7 +148,7 @@ class BasketballProfileController extends _$BasketballProfileController {
         state = BasketballProfile.fromJson(response);
       }
     } catch (e, st) {
-      _talker.handle(e, st, 'Error fetching basketball profile');
+      talker.handle(e, st, 'Error fetching basketball profile');
     }
   }
 
@@ -181,7 +178,6 @@ class BasketballProfileController extends _$BasketballProfileController {
 @riverpod
 class BadmintonProfileController extends _$BadmintonProfileController {
   final _supabase = Supabase.instance.client;
-  final _talker = Talker();
   late final _failures = WriteFailureHandler(ref);
 
   @override
@@ -203,7 +199,7 @@ class BadmintonProfileController extends _$BadmintonProfileController {
         state = BadmintonProfile.fromJson(response);
       }
     } catch (e, st) {
-      _talker.handle(e, st, 'Error fetching badminton profile');
+      talker.handle(e, st, 'Error fetching badminton profile');
     }
   }
 
@@ -233,7 +229,6 @@ class BadmintonProfileController extends _$BadmintonProfileController {
 @riverpod
 class TennisProfileController extends _$TennisProfileController {
   final _supabase = Supabase.instance.client;
-  final _talker = Talker();
   late final _failures = WriteFailureHandler(ref);
 
   @override
@@ -255,7 +250,7 @@ class TennisProfileController extends _$TennisProfileController {
         state = TennisProfile.fromJson(response);
       }
     } catch (e, st) {
-      _talker.handle(e, st, 'Error fetching tennis profile');
+      talker.handle(e, st, 'Error fetching tennis profile');
     }
   }
 
@@ -285,7 +280,6 @@ class TennisProfileController extends _$TennisProfileController {
 @riverpod
 class PickleballProfileController extends _$PickleballProfileController {
   final _supabase = Supabase.instance.client;
-  final _talker = Talker();
   late final _failures = WriteFailureHandler(ref);
 
   @override
@@ -307,7 +301,7 @@ class PickleballProfileController extends _$PickleballProfileController {
         state = PickleballProfile.fromJson(response);
       }
     } catch (e, st) {
-      _talker.handle(e, st, 'Error fetching pickleball profile');
+      talker.handle(e, st, 'Error fetching pickleball profile');
     }
   }
 

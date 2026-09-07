@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../auth/auth_controller.dart';
+import '../../../logger/talker.dart';
 import '../../../ui/sheet.dart';
 import '../members/controller.dart';
 import 'feed_controller.dart';
@@ -119,7 +119,7 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
         alignment: .bottomCenter,
       );
     } catch (e, st) {
-      Talker().handle(e, st, 'Create poll failed');
+      talker.handle(e, st, 'Create poll failed');
       if (mounted) {
         showFToast(
           context: context,

@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../core/model/lobby.dart';
+import '../../logger/talker.dart';
 import '../../notifications/notification_service.dart';
 import '../../router.dart';
 import '../../ui/main.dart';
@@ -74,7 +74,7 @@ class _LobbyInvitePreviewPageState
         $extra: preview.lobbyName,
       ).go(context);
     } catch (e, st) {
-      Talker().handle(e, st, 'lobby invite accept failed');
+      talker.handle(e, st, 'lobby invite accept failed');
       _showError();
       if (mounted) setState(() => _accepting = false);
     }
@@ -89,7 +89,7 @@ class _LobbyInvitePreviewPageState
       // No navigation — respond() invalidates lobbyInvitePreviewProvider, so
       // this page just rebuilds straight into its own declined state below.
     } catch (e, st) {
-      Talker().handle(e, st, 'lobby invite reject failed');
+      talker.handle(e, st, 'lobby invite reject failed');
       _showError();
     } finally {
       if (mounted) setState(() => _rejecting = false);

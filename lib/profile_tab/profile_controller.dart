@@ -2,13 +2,13 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/model/enum.dart';
 import '../core/model/network.dart';
 import '../core/model/user_avatar.dart';
 import '../core/model/user_details.dart';
+import '../logger/talker.dart';
 import 'write_failure_support.dart';
 
 part 'profile_controller.freezed.dart';
@@ -151,7 +151,7 @@ class NetworkController extends _$NetworkController {
 
       state = networks;
     } catch (e, st) {
-      Talker().handle(e, st, 'Error fetching user networks');
+      talker.handle(e, st, 'Error fetching user networks');
     }
   }
 
@@ -258,7 +258,7 @@ class IndustryController extends _$IndustryController {
 
       state = industries;
     } catch (e, st) {
-      Talker().handle(e, st, 'Error fetching user industries');
+      talker.handle(e, st, 'Error fetching user industries');
     }
   }
 
@@ -447,7 +447,7 @@ class ProfileController extends _$ProfileController {
               .remove(['$userId.jpg'])
               .timeout(const Duration(seconds: 5));
         } catch (e, st) {
-          Talker().handle(e, st, 'Failed to remove avatar from storage');
+          talker.handle(e, st, 'Failed to remove avatar from storage');
         }
       }
     }

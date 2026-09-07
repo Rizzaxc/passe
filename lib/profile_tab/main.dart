@@ -8,7 +8,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/icon/main.dart';
@@ -23,6 +22,7 @@ import '../core/state/selected_sport_state.dart';
 import '../freeplay/host_profile_controller.dart';
 import '../freeplay/model.dart';
 import '../freeplay/repository.dart';
+import '../logger/talker.dart';
 import '../professional/controller.dart';
 import '../professional/pro_mode/service_editor_main.dart';
 import '../social/friends_screen.dart';
@@ -87,7 +87,7 @@ class _HostProfileViewState extends ConsumerState<_HostProfileView> {
           .read(hostProfileEditControllerProvider(widget.host.id).notifier)
           .commit(displayName: _displayNameController.text.trim());
     } catch (e, st) {
-      Talker().handle(e, st, 'Host profile save failed');
+      talker.handle(e, st, 'Host profile save failed');
       if (mounted) {
         showFToast(
           context: context,

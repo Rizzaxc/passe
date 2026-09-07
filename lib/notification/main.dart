@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
+import '../logger/talker.dart';
 import '../manage_tab/lobby_section/activity/activity_at_risk_response_controller.dart';
 import '../manage_tab/lobby_section/join_requests_controller.dart';
 import '../manage_tab/lobby_section/lobby_invite_response_controller.dart';
@@ -251,7 +251,7 @@ class _NotificationRow extends ConsumerWidget {
           .read(notificationCenterControllerProvider.notifier)
           .delete(item.id);
     } catch (e, st) {
-      Talker().handle(e, st, 'notification deletion failed');
+      talker.handle(e, st, 'notification deletion failed');
       if (!context.mounted) return;
       showFToast(
         context: context,
@@ -664,7 +664,7 @@ class _LobbyInvitePendingButtonsState
           .read(lobbyInviteResponseControllerProvider.notifier)
           .respond(widget.recordId, accept: accept);
     } catch (e, st) {
-      Talker().handle(e, st, 'lobby invite response failed');
+      talker.handle(e, st, 'lobby invite response failed');
       if (mounted) {
         showFToast(
           context: context,
@@ -784,7 +784,7 @@ class _JoinRequestPendingButtonsState
           .read(joinRequestResponseControllerProvider.notifier)
           .respond(widget.recordId, accept: accept, lobbyId: widget.lobbyId);
     } catch (e, st) {
-      Talker().handle(e, st, 'join request response failed');
+      talker.handle(e, st, 'join request response failed');
       if (mounted) {
         showFToast(
           context: context,
@@ -912,7 +912,7 @@ class _ActivityAtRiskOrganizerButtonsState
           .read(activityAtRiskResponseControllerProvider.notifier)
           .respondOrganizer(widget.activityId, confirm: confirm);
     } catch (e, st) {
-      Talker().handle(e, st, 'activity at-risk organizer response failed');
+      talker.handle(e, st, 'activity at-risk organizer response failed');
       if (mounted) {
         showFToast(
           context: context,
@@ -989,7 +989,7 @@ class _ActivityAtRiskMemberButtonsState
           .read(activityAtRiskResponseControllerProvider.notifier)
           .respondMember(widget.activityId, going: going);
     } catch (e, st) {
-      Talker().handle(e, st, 'activity at-risk member response failed');
+      talker.handle(e, st, 'activity at-risk member response failed');
       if (mounted) {
         showFToast(
           context: context,

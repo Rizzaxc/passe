@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/feature_flags.dart';
@@ -16,6 +15,7 @@ import '../core/state/selected_sport_state.dart';
 import '../core/zalo_link.dart';
 import '../course/course_controller.dart';
 import '../course/message_coach_sheet.dart';
+import '../logger/talker.dart';
 import '../router.dart';
 import '../ui/main.dart';
 import 'booking_controller.dart';
@@ -997,7 +997,7 @@ Future<void> _messageCoach(
       coachName: item.displayName,
     );
   } catch (e, st) {
-    Talker().handle(e, st, 'Message coach failed');
+    talker.handle(e, st, 'Message coach failed');
     if (context.mounted) {
       showFToast(
         context: context,

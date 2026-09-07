@@ -21,7 +21,7 @@ import 'package:talker_riverpod_logger/talker_riverpod_logger_settings.dart';
 import 'ads/ad_service.dart';
 import 'firebase_options.dart';
 import 'health_tab/health_sync_service.dart';
-import 'logger/observer.dart';
+import 'logger/talker.dart';
 import 'notifications/notification_service.dart';
 import 'onboarding/coach_marks.dart';
 import 'onboarding/follow_up.dart';
@@ -76,8 +76,10 @@ Future<void> main() async {
     envLive: 0.1,
   };
 
-  final talker = Talker(
-    observer: PasseTalkerObserver(),
+  // Configures the app's single shared `talker` instance
+  // (lib/logger/talker.dart) in place — every call site logs through that
+  // same instance, so it must not be replaced/shadowed here.
+  talker.configure(
     logger: TalkerLogger(
       settings: TalkerLoggerSettings(
         level: env == envLocal ? LogLevel.debug : LogLevel.verbose,

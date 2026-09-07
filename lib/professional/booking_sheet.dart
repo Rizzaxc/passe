@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/format.dart';
 import '../core/location_repository.dart';
 import '../core/model/enum.dart';
 import '../core/model/professional_feed_item.dart';
+import '../logger/talker.dart';
 import '../ui/sheet.dart';
 import 'booking_controller.dart';
 import 'booking_location_field.dart';
@@ -170,7 +170,7 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
             activityId: activityId,
           );
     } catch (e, st) {
-      Talker().handle(e, st, 'Professional booking failed');
+      talker.handle(e, st, 'Professional booking failed');
       if (mounted) {
         showFToast(
           context: context,

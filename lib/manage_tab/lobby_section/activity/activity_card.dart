@@ -7,7 +7,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../auth/auth_controller.dart';
 import '../../../../auth/guest_prompt.dart';
@@ -19,6 +18,7 @@ import '../../../../ui/dialog.dart';
 import '../../../../ui/theme.dart';
 import '../../../../ui/user_avatar.dart';
 import '../../../core/map_directions.dart';
+import '../../../logger/talker.dart';
 import '../../../professional/pending_activity_booking_state.dart';
 import '../../../router.dart';
 import '../challenges_controller.dart';
@@ -171,7 +171,7 @@ class ActivityCard extends ConsumerWidget {
         );
       }
     } catch (e, st) {
-      Talker().handle(e, st, 'Post personal action failed');
+      talker.handle(e, st, 'Post personal action failed');
       if (context.mounted) {
         showFToast(
           context: context,
@@ -222,7 +222,7 @@ class ActivityCard extends ConsumerWidget {
           .read(scheduleActivityControllerProvider(lobbyId).notifier)
           .cancel(_activityId);
     } catch (e, st) {
-      Talker().handle(e, st, 'Cancel activity failed');
+      talker.handle(e, st, 'Cancel activity failed');
       if (context.mounted) {
         showFToast(
           context: context,
@@ -493,7 +493,7 @@ class ActivityCard extends ConsumerWidget {
                         // card's last load and the tap, and the DB's RLS (see
                         // schema/activity_confirmation_lock_after_confirmed.sql)
                         // rejected locking-in-a-"going"-member's change.
-                        Talker().handle(e, st, 'setAttendance failed');
+                        talker.handle(e, st, 'setAttendance failed');
                         if (!context.mounted) return;
                         showFToast(
                           context: context,
@@ -862,7 +862,7 @@ class _ChallengeBlock extends ConsumerWidget {
           .read(confirmChallengeActivityControllerProvider(lobbyId).notifier)
           .confirm(activityId);
     } catch (e, st) {
-      Talker().handle(e, st, 'confirm challenge activity failed');
+      talker.handle(e, st, 'confirm challenge activity failed');
       if (!context.mounted) return;
       showFToast(
         context: context,

@@ -4,11 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../auth/auth_controller.dart';
 import '../../core/feature_flags.dart';
 import '../../core/model/lobby.dart';
+import '../../logger/talker.dart';
 import '../../router.dart';
 import '../../ui/dialog.dart';
 import '../../ui/sheet.dart';
@@ -96,7 +96,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
       sheetNav.pop(); // close the info sheet
       router.pop(); // exit the detail page → back to the lobby list
     } catch (e, st) {
-      Talker().handle(e, st, 'Leaving lobby failed');
+      talker.handle(e, st, 'Leaving lobby failed');
       if (!mounted) return;
       showFToast(
         context: context,
@@ -155,7 +155,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
       sheetNav.pop();
       router.pop();
     } catch (e, st) {
-      Talker().handle(e, st, logMsg);
+      talker.handle(e, st, logMsg);
       if (!mounted) return;
       showFToast(
         context: context,
@@ -260,7 +260,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
         alignment: .bottomCenter,
       );
     } catch (e, st) {
-      Talker().handle(e, st, 'Transfer captaincy failed');
+      talker.handle(e, st, 'Transfer captaincy failed');
       if (!mounted) return;
       showFToast(
         context: context,
@@ -801,7 +801,7 @@ class _MemberRow extends ConsumerWidget {
         alignment: .bottomCenter,
       );
     } catch (e, st) {
-      Talker().handle(e, st, 'Set member role failed');
+      talker.handle(e, st, 'Set member role failed');
       if (context.mounted) {
         showFToast(
           context: context,
@@ -840,7 +840,7 @@ class _MemberRow extends ConsumerWidget {
                     .read(lobbyMembersControllerProvider(lobbyId).notifier)
                     .kick(lobbyId, member.userId);
               } catch (e, st) {
-                Talker().handle(e, st, 'Kick member failed');
+                talker.handle(e, st, 'Kick member failed');
                 if (context.mounted) {
                   showFToast(
                     context: context,

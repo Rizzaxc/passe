@@ -2,11 +2,11 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../core/location_repository.dart';
 import '../../freeplay/model.dart';
 import '../../freeplay/repository.dart';
+import '../../logger/talker.dart';
 import '../../ui/main.dart';
 import '../lobby_section/feed/home_ground_selector.dart';
 
@@ -209,7 +209,7 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
                     if (!context.mounted) return;
                     Navigator.pop(context);
                   } catch (e, st) {
-                    Talker().handle(e, st, 'Set freeplay intake failed');
+                    talker.handle(e, st, 'Set freeplay intake failed');
                     if (context.mounted) {
                       showFToast(
                         context: context,
@@ -268,7 +268,7 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
                     if (!context.mounted) return;
                     Navigator.pop(context);
                   } catch (e, st) {
-                    Talker().handle(e, st, 'Cancel freeplay activity failed');
+                    talker.handle(e, st, 'Cancel freeplay activity failed');
                     if (context.mounted) {
                       showFToast(
                         context: context,

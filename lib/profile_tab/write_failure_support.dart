@@ -5,8 +5,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
+import '../logger/talker.dart';
 import '../router.dart';
 
 /// True for connectivity-shaped failures (offline, DNS, our own 5s
@@ -32,7 +32,6 @@ class WriteFailureHandler {
 
   final Ref _ref;
   final Duration debounce;
-  final _talker = Talker();
   Timer? _pending;
 
   void handle(
@@ -41,7 +40,7 @@ class WriteFailureHandler {
     required String logMessage,
     required VoidCallback resync,
   }) {
-    _talker.handle(error, stackTrace, logMessage);
+    talker.handle(error, stackTrace, logMessage);
     if (isNetworkError(error)) return;
 
     _pending?.cancel();

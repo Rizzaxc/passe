@@ -9,11 +9,11 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/model/passe_user.dart';
 import '../core/model/user_details.dart';
 import '../core/user_preferences.dart';
+import '../logger/talker.dart';
 
 part 'auth_controller.g.dart';
 
@@ -55,7 +55,6 @@ class AccountDeletionBlockedException implements Exception {
 @riverpod
 class AuthController extends _$AuthController {
   final supabase = Supabase.instance.client;
-  final talker = Talker();
 
   static const _stateKey = 'USER_DATA';
 

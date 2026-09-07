@@ -2,9 +2,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../core/format.dart';
+import '../../logger/talker.dart';
 import '../../ui/sheet.dart';
 import 'challenges_controller.dart';
 
@@ -131,7 +131,7 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow> {
     try {
       await action();
     } catch (e, st) {
-      Talker().handle(e, st, 'challenge response failed');
+      talker.handle(e, st, 'challenge response failed');
       if (!mounted) return;
       showFToast(
         context: context,

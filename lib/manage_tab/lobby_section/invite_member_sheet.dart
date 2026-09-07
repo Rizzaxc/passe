@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../auth/auth_controller.dart';
+import '../../logger/talker.dart';
 import '../../router.dart';
 import '../../social/friendship_controller.dart';
 import '../../ui/main.dart';
@@ -92,7 +92,7 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
         }).toList();
       });
     } catch (e, st) {
-      Talker().handle(e, st, 'User search failed');
+      talker.handle(e, st, 'User search failed');
       if (!mounted) return;
       showFToast(
         context: context,
@@ -133,7 +133,7 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
         alignment: .bottomCenter,
       );
     } catch (e, st) {
-      Talker().handle(e, st, 'Invite user failed');
+      talker.handle(e, st, 'Invite user failed');
       if (!mounted) return;
       final msg = e.toString();
       if (msg.contains('already a member')) {

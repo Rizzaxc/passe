@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
+import '../logger/talker.dart';
 import '../ui/main.dart';
 import 'feed_controller.dart';
 
@@ -63,7 +63,7 @@ class _ReportPostSheetState extends ConsumerState<_ReportPostSheet> {
         alignment: .bottomCenter,
       );
     } catch (e, st) {
-      Talker().handle(e, st, 'Report post failed');
+      talker.handle(e, st, 'Report post failed');
       if (!mounted) return;
       // A second report from the same person trips the (post_id, reporter_id)
       // primary key — that's "already reported", not a failure.

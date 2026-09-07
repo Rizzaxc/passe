@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
+import '../logger/talker.dart';
 import 'ad_config.dart';
 
 /// A self-contained, anchored banner ad.
@@ -36,7 +36,7 @@ class _PBannerAdState extends State<PBannerAd> {
         },
         onAdFailedToLoad: (ad, error) {
           ad.dispose();
-          Talker().handle(error, StackTrace.current, 'Banner load failed');
+          talker.handle(error, StackTrace.current, 'Banner load failed');
         },
       ),
     )..load();

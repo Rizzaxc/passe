@@ -23,6 +23,7 @@ import 'feed_tab/main.dart';
 import 'freeplay/detail_page.dart';
 import 'freeplay/host_page.dart';
 import 'health_tab/main.dart';
+import 'logger/talker.dart';
 import 'main.dart';
 import 'manage_tab/lobby_section/invite_link/invite_landing_page.dart';
 import 'manage_tab/lobby_section/lobby_detail_page.dart';
@@ -46,8 +47,6 @@ final supabase = Supabase.instance.client;
 
 @riverpod
 GoRouter router(Ref ref) {
-  final talker = Talker();
-
   final user = ValueNotifier<AsyncValue<PasseUser?>>(const AsyncLoading());
   ref.onDispose(user.dispose);
 

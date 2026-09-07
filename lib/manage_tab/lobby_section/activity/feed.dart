@@ -4,7 +4,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../ui/theme.dart';
 import '../../../../ui/user_avatar.dart';
@@ -13,6 +12,7 @@ import '../../../core/format.dart';
 import '../../../core/model/wall_post.dart';
 import '../../../core/payment/pay_recipient.dart';
 import '../../../feed_tab/post_card.dart';
+import '../../../logger/talker.dart';
 import '../../../router.dart';
 import 'feed_controller.dart';
 
@@ -1031,7 +1031,7 @@ class _PollCardState extends ConsumerState<_PollCard> {
           .read(lobbyFeedControllerProvider(widget.lobbyId).notifier)
           .vote(widget.item.id, index);
     } catch (e, st) {
-      Talker().handle(e, st, 'Poll vote failed');
+      talker.handle(e, st, 'Poll vote failed');
       if (mounted) {
         showFToast(
           context: context,
@@ -1294,7 +1294,7 @@ class _PaymentRequestCardState extends ConsumerState<_PaymentRequestCard> {
           .read(lobbyFeedControllerProvider(widget.lobbyId).notifier)
           .markPaymentRequestPaid(widget.item.id);
     } catch (e, st) {
-      Talker().handle(e, st, 'Mark payment request paid failed');
+      talker.handle(e, st, 'Mark payment request paid failed');
       if (mounted) {
         showFToast(
           context: context,

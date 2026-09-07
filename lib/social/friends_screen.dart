@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../logger/talker.dart';
 import '../router.dart';
 import '../ui/main.dart';
 import 'friendship_controller.dart';
@@ -113,7 +113,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         }).toList();
       });
     } catch (e, st) {
-      Talker().handle(e, st, 'Friend search failed');
+      talker.handle(e, st, 'Friend search failed');
       if (!mounted) return;
       showFToast(
         context: context,
@@ -292,7 +292,7 @@ class _RequestRowState extends ConsumerState<_RequestRow> {
           .read(friendshipControllerProvider.notifier)
           .respond(widget.friend.friendshipId, accept: accept);
     } catch (e, st) {
-      Talker().handle(e, st, 'Respond to friend request failed');
+      talker.handle(e, st, 'Respond to friend request failed');
       if (!mounted) return;
       showFToast(
         context: context,

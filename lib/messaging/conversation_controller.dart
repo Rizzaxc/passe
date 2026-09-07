@@ -3,14 +3,13 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
+import '../logger/talker.dart';
 import 'model.dart';
 
 part 'conversation_controller.g.dart';
 
 const _rpcTimeout = Duration(seconds: 5);
-final _talker = Talker();
 
 /// Live view of one conversation (`schema/messaging.sql` + `messaging_realtime.sql`).
 ///
@@ -99,7 +98,7 @@ class ConversationController extends _$ConversationController {
             if (status == RealtimeSubscribeStatus.subscribed) {
               unawaited(_backfill());
             } else if (error != null) {
-              _talker.handle(error);
+              talker.handle(error);
             }
           });
   }
@@ -136,7 +135,7 @@ class ConversationController extends _$ConversationController {
     } catch (e, st) {
       // A failed backfill must not blank a thread the user is reading; the
       // next rejoin, resume or pull-to-refresh tries again.
-      _talker.handle(e, st);
+      talker.handle(e, st);
     } finally {
       _backfilling = false;
     }

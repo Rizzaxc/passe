@@ -1,11 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/model/enum.dart';
 import '../core/model/network.dart';
 import '../core/model/sport_profile.dart';
 import '../core/model/user_contact.dart';
+import '../logger/talker.dart';
 
 part 'user_profile_detail_controller.g.dart';
 
@@ -142,7 +142,7 @@ Future<UserProfileDetail> userProfileDetail(
       sportProfile: results[3],
     );
   } catch (e, st) {
-    Talker().handle(e, st, 'Error fetching user profile detail');
+    talker.handle(e, st, 'Error fetching user profile detail');
     rethrow;
   }
 }

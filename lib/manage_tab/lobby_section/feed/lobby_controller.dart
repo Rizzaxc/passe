@@ -2,7 +2,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../auth/auth_controller.dart';
 import '../../../core/location_repository.dart';
@@ -11,6 +10,7 @@ import '../../../core/model/lobby.dart';
 import '../../../core/model/location.dart';
 import '../../../core/model/timeslot.dart';
 import '../../../core/state/selected_sport_state.dart';
+import '../../../logger/talker.dart';
 
 part 'lobby_controller.freezed.dart';
 part 'lobby_controller.g.dart';
@@ -65,7 +65,6 @@ class LobbyListItem {
 @riverpod
 class UserLobbiesController extends _$UserLobbiesController {
   final supabase = Supabase.instance.client;
-  final talker = Talker();
 
   @override
   Future<List<LobbyListItem>> build() async {
@@ -240,7 +239,6 @@ class UserLobbiesController extends _$UserLobbiesController {
 @riverpod
 class LobbyFormController extends _$LobbyFormController {
   final supabase = Supabase.instance.client;
-  final talker = Talker();
 
   String? _lobbyId;
 

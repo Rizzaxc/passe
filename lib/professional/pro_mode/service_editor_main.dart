@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../core/format.dart';
 import '../../core/icon/main.dart';
@@ -11,6 +10,7 @@ import '../../core/model/timeslot.dart';
 import '../../core/model/user_contact.dart';
 import '../../core/state/pro_mode_state.dart';
 import '../../core/timeslot_picker.dart';
+import '../../logger/talker.dart';
 import '../../profile_tab/edit_zalo_sheet.dart';
 import '../../profile_tab/user_contact_controller.dart';
 import '../../ui/main.dart';
@@ -151,7 +151,7 @@ class _ProfileFieldsSectionState extends ConsumerState<_ProfileFieldsSection> {
             scheduleNote: _scheduleNoteCtrl.text.trim(),
           );
     } catch (e, st) {
-      Talker().handle(e, st, 'Pro profile save failed');
+      talker.handle(e, st, 'Pro profile save failed');
       if (mounted) {
         showFToast(
           context: context,
@@ -583,7 +583,7 @@ class _ServiceEditorSheetState extends ConsumerState<_ServiceEditorSheet> {
             pricingKind: _pricingKind,
           );
     } catch (e, st) {
-      Talker().handle(e, st, 'Service upsert failed');
+      talker.handle(e, st, 'Service upsert failed');
       if (mounted) {
         showFToast(
           context: context,

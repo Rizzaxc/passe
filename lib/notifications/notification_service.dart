@@ -10,10 +10,10 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/user_preferences.dart';
+import '../logger/talker.dart';
 import '../notification/notification_center_controller.dart';
 import '../notification/notification_unread_count_controller.dart';
 import '../router.dart';
@@ -51,7 +51,6 @@ class NotificationService with WidgetsBindingObserver {
   NotificationService(this._ref);
 
   final Ref _ref;
-  final _talker = Talker();
   final _messaging = FirebaseMessaging.instance;
   final _local = FlutterLocalNotificationsPlugin();
   SupabaseClient get _supabase => Supabase.instance.client;
@@ -138,7 +137,7 @@ class NotificationService with WidgetsBindingObserver {
       WidgetsBinding.instance.addObserver(this);
       _ref.onDispose(() => WidgetsBinding.instance.removeObserver(this));
     } catch (e, st) {
-      _talker.handle(e, st, 'notification init failed');
+      talker.handle(e, st, 'notification init failed');
     }
   }
 
@@ -221,7 +220,7 @@ class NotificationService with WidgetsBindingObserver {
     try {
       routeNotificationTap(_ref.read(routerProvider), data);
     } catch (e, st) {
-      _talker.handle(e, st, 'notification routing failed');
+      talker.handle(e, st, 'notification routing failed');
     }
     // Acting on a push directly (banner/cold-start tap) should clear its
     // unread state too, not just tapping it inside the notification center.
@@ -240,7 +239,7 @@ class NotificationService with WidgetsBindingObserver {
       _ref.invalidate(notificationUnreadCountProvider);
       _ref.invalidate(notificationCenterControllerProvider);
     } catch (e, st) {
-      _talker.handle(e, st, 'mark notification read from tap failed');
+      talker.handle(e, st, 'mark notification read from tap failed');
     }
   }
 
@@ -339,7 +338,7 @@ class NotificationService with WidgetsBindingObserver {
       if (!granted) return;
       await _registerToken();
     } catch (e, st) {
-      _talker.handle(e, st, 'token register failed');
+      talker.handle(e, st, 'token register failed');
     }
   }
 
@@ -366,7 +365,7 @@ class NotificationService with WidgetsBindingObserver {
           .eq('fcm_token', token)
           .timeout(const Duration(seconds: 5));
     } catch (e, st) {
-      _talker.handle(e, st, 'token unregister failed');
+      talker.handle(e, st, 'token unregister failed');
     }
   }
 }

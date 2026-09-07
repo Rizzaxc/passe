@@ -1,9 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../health_tab/achievements_section/achievements_controller.dart';
 import '../health_tab/achievements_section/model/achievement_celebration.dart';
+import '../logger/talker.dart';
 
 /// Re-runs the `evaluate_achievements` RPC and, if anything unlocked, stashes
 /// the celebration payload + lights the unseen dot — the achievements subtab
@@ -42,7 +42,7 @@ Future<AchievementCelebration?> evaluateAchievements(
     }
     return celebration;
   } catch (e, st) {
-    Talker().handle(e, st, 'Achievement evaluation failed');
+    talker.handle(e, st, 'Achievement evaluation failed');
     return null;
   }
 }

@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../core/format.dart';
 import '../../core/model/location.dart';
+import '../../logger/talker.dart';
 import '../../ui/main.dart';
 import 'challenge_offer_controller.dart';
 
@@ -235,7 +235,7 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
       Navigator.of(context).pop();
       _toast('lobbyHub.challenge.published'.tr(), bad: false);
     } catch (e, st) {
-      Talker().handle(e, st, 'publish challenge offer failed');
+      talker.handle(e, st, 'publish challenge offer failed');
       if (!mounted) return;
       _toast(challengeOfferErrorMessage(e));
     } finally {
@@ -252,7 +252,7 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (e, st) {
-      Talker().handle(e, st, 'withdraw challenge offer failed');
+      talker.handle(e, st, 'withdraw challenge offer failed');
       if (!mounted) return;
       _toast(challengeOfferErrorMessage(e));
     } finally {

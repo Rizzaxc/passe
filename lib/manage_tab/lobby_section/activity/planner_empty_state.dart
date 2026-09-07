@@ -4,10 +4,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../core/feature_flags.dart';
 import '../../../../ui/button_styles.dart';
+import '../../../logger/talker.dart';
 import '../challenge_offer_sheet.dart';
 import '../schedule_activity_sheet.dart';
 import 'feed_controller.dart';
@@ -31,7 +31,7 @@ class PlannerEmptyState extends ConsumerWidget {
           .read(lobbyFeedControllerProvider(lobbyId).notifier)
           .postPersonalAction('remind_captain');
     } catch (e, st) {
-      Talker().handle(e, st, 'Remind captain failed');
+      talker.handle(e, st, 'Remind captain failed');
       if (context.mounted) {
         showFToast(
           context: context,

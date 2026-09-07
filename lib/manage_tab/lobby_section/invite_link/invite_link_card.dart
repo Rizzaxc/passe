@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../logger/talker.dart';
 import 'invite_link_controller.dart';
 
 String buildInviteLinkUrl(String code) =>
@@ -37,7 +37,7 @@ class _InviteLinkCardState extends ConsumerState<InviteLinkCard> {
     try {
       await action();
     } catch (e, st) {
-      Talker().handle(e, st, 'invite link action failed');
+      talker.handle(e, st, 'invite link action failed');
       if (!mounted) return;
       showFToast(
         context: context,

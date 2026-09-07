@@ -2,10 +2,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../core/feature_flags.dart';
 import '../../core/format.dart';
+import '../../logger/talker.dart';
 import '../../ui/main.dart';
 import 'pro_bookings_controller.dart';
 import 'record_result_sheet.dart';
@@ -84,7 +84,7 @@ class _BookingCard extends ConsumerWidget {
           .read(proBookingActionControllerProvider(professionalId).notifier)
           .markComplete(booking.id);
     } catch (e, st) {
-      Talker().handle(e, st, 'Mark complete failed');
+      talker.handle(e, st, 'Mark complete failed');
       if (context.mounted) {
         showFToast(
           context: context,

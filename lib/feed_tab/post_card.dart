@@ -3,11 +3,11 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 import 'package:video_player/video_player.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/model/wall_post.dart';
+import '../logger/talker.dart';
 import '../router.dart';
 import '../ui/main.dart';
 import 'feed_controller.dart';
@@ -229,7 +229,7 @@ class _Header extends ConsumerWidget {
                       .read(wallFeedControllerProvider.notifier)
                       .deletePost(post.id);
                 } catch (e, st) {
-                  Talker().handle(e, st, 'Delete post failed');
+                  talker.handle(e, st, 'Delete post failed');
                   if (!context.mounted) return;
                   showFToast(
                     context: context,
@@ -272,7 +272,7 @@ class _Header extends ConsumerWidget {
                     alignment: .bottomCenter,
                   );
                 } catch (e, st) {
-                  Talker().handle(e, st, 'Hide Feed post failed');
+                  talker.handle(e, st, 'Hide Feed post failed');
                   if (!toastContext.mounted) return;
                   showFToast(
                     context: toastContext,

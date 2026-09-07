@@ -3,12 +3,12 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../core/format.dart';
 import '../../../../core/payment/pay_recipient.dart';
 import '../../../../router.dart';
 import '../../../../ui/main.dart';
+import '../../../logger/talker.dart';
 import 'money_controller.dart';
 
 Future<void> showLobbyMoneySheet(
@@ -170,7 +170,7 @@ class _MoneyCardState extends ConsumerState<_MoneyCard> {
         );
       }
     } catch (error, stackTrace) {
-      Talker().handle(error, stackTrace, 'Settle lobby money failed');
+      talker.handle(error, stackTrace, 'Settle lobby money failed');
       if (mounted) {
         showFToast(
           context: context,

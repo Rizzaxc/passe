@@ -2,10 +2,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/model/wall_post.dart';
+import '../logger/talker.dart';
 import 'feed_controller.dart';
 
 /// The reaction palette. Fixed and small on purpose: a closed set needs no
@@ -29,7 +29,7 @@ class ReactionBar extends ConsumerWidget {
       try {
         await ref.read(wallFeedControllerProvider.notifier).react(post.id, emoji);
       } catch (e, st) {
-        Talker().handle(e, st, 'React failed');
+        talker.handle(e, st, 'React failed');
         if (!context.mounted) return;
         showFToast(
           context: context,

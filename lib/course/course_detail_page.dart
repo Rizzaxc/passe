@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/format.dart';
 import '../core/map_directions.dart';
+import '../logger/talker.dart';
 import '../messaging/conversation_view.dart';
 import '../router.dart';
 import '../ui/main.dart';
@@ -312,7 +312,7 @@ class _PendingOfferCard extends ConsumerWidget {
             courseId: course.courseId,
           );
     } catch (e, st) {
-      Talker().handle(e, st, 'Respond to enrollment offer failed');
+      talker.handle(e, st, 'Respond to enrollment offer failed');
       if (context.mounted) {
         showFToast(
           context: context,

@@ -2,9 +2,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../logger/talker.dart';
 import '../notifications/notification_service.dart';
 import '../ui/main.dart';
 import 'block_report_sheet.dart';
@@ -181,7 +181,7 @@ class _FriendCtaState extends ConsumerState<_FriendCta> {
       await action();
       ref.invalidate(userProfileProvider(widget.profile.userId));
     } catch (e, st) {
-      Talker().handle(e, st, 'Friendship action failed');
+      talker.handle(e, st, 'Friendship action failed');
       if (!mounted) return;
       showFToast(
         context: context,

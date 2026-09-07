@@ -2,8 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../logger/talker.dart';
 import '../../router.dart';
 import '../../ui/sheet.dart';
 import '../../ui/user_avatar.dart';
@@ -114,7 +114,7 @@ class _RequestRowState extends ConsumerState<_RequestRow> {
     try {
       await action();
     } catch (e, st) {
-      Talker().handle(e, st, 'join request action failed');
+      talker.handle(e, st, 'join request action failed');
       if (!mounted) return;
       showFToast(
         context: context,

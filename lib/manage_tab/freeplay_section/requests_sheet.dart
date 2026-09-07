@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../freeplay/chat_sheet.dart';
 import '../../freeplay/model.dart';
 import '../../freeplay/repository.dart';
+import '../../logger/talker.dart';
 import '../../ui/main.dart';
 
 Future<void> showHostFreeplayRequests(
@@ -39,7 +39,7 @@ class _RequestsState extends ConsumerState<_Requests> {
       ref.invalidate(freeplayRequestsProvider(widget.activityId));
       if (accept) ref.invalidate(hostFreeplayProvider(false));
     } catch (e, st) {
-      Talker().handle(e, st, 'Respond to freeplay request failed');
+      talker.handle(e, st, 'Respond to freeplay request failed');
       if (mounted) {
         // "Full" is the one failure worth naming specifically — the host
         // just watched the roster fill from another request accepted a beat

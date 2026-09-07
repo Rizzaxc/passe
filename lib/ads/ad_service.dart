@@ -1,12 +1,10 @@
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
+import '../logger/talker.dart';
 import 'ad_config.dart';
 
 part 'ad_service.g.dart';
-
-final _talker = Talker();
 
 /// One-shot SDK init. Called after the first frame (see `main.dart`) so a
 /// slow native init (disk I/O / GMA config fetch, well-documented as a
@@ -22,7 +20,7 @@ Future<void> initMobileAds() async {
   try {
     await MobileAds.instance.initialize();
   } catch (e, st) {
-    _talker.handle(e, st, 'AdMob init failed');
+    talker.handle(e, st, 'AdMob init failed');
   }
 }
 
@@ -64,7 +62,7 @@ class InterstitialController extends _$InterstitialController {
               _load(); // queue the next one
             },
             onAdFailedToShowFullScreenContent: (ad, error) {
-              _talker.handle(error, StackTrace.current, 'Interstitial show failed');
+              talker.handle(error, StackTrace.current, 'Interstitial show failed');
               ad.dispose();
               _ad = null;
               _load();
@@ -74,7 +72,7 @@ class InterstitialController extends _$InterstitialController {
         onAdFailedToLoad: (error) {
           _loading = false;
           _ad = null;
-          _talker.handle(error, StackTrace.current, 'Interstitial load failed');
+          talker.handle(error, StackTrace.current, 'Interstitial load failed');
         },
       ),
     );

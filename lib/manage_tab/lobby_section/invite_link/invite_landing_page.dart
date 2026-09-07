@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../auth/guest_prompt.dart';
 import '../../../core/model/enum.dart';
+import '../../../logger/talker.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
 import 'invite_landing_controller.dart';
@@ -68,7 +68,7 @@ class _InviteLandingPageState extends ConsumerState<InviteLandingPage> {
         alignment: .bottomCenter,
       );
     } catch (e, st) {
-      Talker().handle(e, st, 'invite redeem failed');
+      talker.handle(e, st, 'invite redeem failed');
       if (!mounted) return;
       showFToast(
         context: context,

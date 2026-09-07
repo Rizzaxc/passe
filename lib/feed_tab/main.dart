@@ -2,10 +2,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/model/wall_post.dart';
+import '../logger/talker.dart';
 import '../router.dart';
 import '../social/friends_screen.dart';
 import '../ui/main.dart';
@@ -26,7 +26,7 @@ Future<void> _refreshFeed(BuildContext context, WidgetRef ref) async {
     // dismiss. The provider still retains the error state for initial-load
     // handling; an in-place refresh surfaces it here without dropping the
     // stale posts that remain useful to the user.
-    Talker().handle(e, st, 'Refresh wall feed failed');
+    talker.handle(e, st, 'Refresh wall feed failed');
     if (!context.mounted) return;
     showFToast(
       context: context,
@@ -155,7 +155,7 @@ class _FeedBody extends ConsumerWidget {
       try {
         await ref.read(wallFeedControllerProvider.notifier).loadMore();
       } catch (e, st) {
-        Talker().handle(e, st, 'Load more wall posts failed');
+        talker.handle(e, st, 'Load more wall posts failed');
         if (!context.mounted) return;
         showFToast(
           context: context,
@@ -233,7 +233,7 @@ class _FeedBody extends ConsumerWidget {
             try {
               await ref.read(hiddenFeedPostsProvider.notifier).clear();
             } catch (e, st) {
-              Talker().handle(e, st, 'Restore hidden Feed posts failed');
+              talker.handle(e, st, 'Restore hidden Feed posts failed');
               if (!context.mounted) return;
               showFToast(
                 context: context,

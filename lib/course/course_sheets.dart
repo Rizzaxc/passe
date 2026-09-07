@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/format.dart';
 import '../core/location_repository.dart';
+import '../logger/talker.dart';
 import '../manage_tab/lobby_section/feed/home_ground_selector.dart';
 import '../router.dart';
 import '../ui/main.dart';
@@ -348,7 +348,7 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
             .toList();
       });
     } catch (e, st) {
-      Talker().handle(e, st, 'Course user search failed');
+      talker.handle(e, st, 'Course user search failed');
       if (!mounted) return;
       showFToast(
         context: context,
@@ -552,7 +552,7 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
                           );
                       if (context.mounted) Navigator.pop(context);
                     } catch (e, st) {
-                      Talker().handle(e, st, 'Send enrollment offer failed');
+                      talker.handle(e, st, 'Send enrollment offer failed');
                       if (context.mounted) {
                         showFToast(
                           context: context,
@@ -913,7 +913,7 @@ class _ProposeSessionSheetState extends ConsumerState<_ProposeSessionSheet> {
           );
       if (mounted) Navigator.pop(context);
     } catch (e, st) {
-      Talker().handle(e, st, 'Propose course session failed');
+      talker.handle(e, st, 'Propose course session failed');
       if (mounted) {
         showFToast(
           context: context,
@@ -1062,7 +1062,7 @@ class _RescheduleSessionSheetState
           );
       if (mounted) Navigator.pop(context);
     } catch (e, st) {
-      Talker().handle(e, st, 'Reschedule course session failed');
+      talker.handle(e, st, 'Reschedule course session failed');
       if (mounted) {
         showFToast(
           context: context,
@@ -1137,7 +1137,7 @@ class _RescheduleSessionSheetState
                           );
                       if (context.mounted) Navigator.pop(context);
                     } catch (e, st) {
-                      Talker().handle(e, st, 'Cancel course session failed');
+                      talker.handle(e, st, 'Cancel course session failed');
                       if (context.mounted) {
                         showFToast(
                           context: context,
@@ -1260,7 +1260,7 @@ class _SessionReportSheetState extends ConsumerState<_SessionReportSheet> {
                           );
                       if (context.mounted) Navigator.pop(context);
                     } catch (e, st) {
-                      Talker().handle(e, st, 'Submit session report failed');
+                      talker.handle(e, st, 'Submit session report failed');
                       if (context.mounted) {
                         showFToast(
                           context: context,
@@ -1366,7 +1366,7 @@ class _CourseReviewSheetState extends ConsumerState<_CourseReviewSheet> {
                           );
                       if (context.mounted) Navigator.pop(context);
                     } catch (e, st) {
-                      Talker().handle(e, st, 'Submit course review failed');
+                      talker.handle(e, st, 'Submit course review failed');
                       if (context.mounted) {
                         showFToast(
                           context: context,

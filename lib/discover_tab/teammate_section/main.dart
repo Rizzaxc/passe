@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../auth/guest_prompt.dart';
 import '../../core/model/lobby_feed_item.dart';
+import '../../logger/talker.dart';
 import '../../notifications/notification_service.dart';
 import '../../ui/main.dart';
 import '../filter.dart';
@@ -93,7 +93,7 @@ class _JoinButton extends ConsumerWidget {
   const _JoinButton({required this.lobbyId, required this.alreadyRequested});
 
   void _onError(BuildContext context, Object e, StackTrace st, String log) {
-    Talker().handle(e, st, log);
+    talker.handle(e, st, log);
     showFToast(
       context: context,
       icon: const Icon(FLucideIcons.circleX),
