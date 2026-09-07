@@ -197,9 +197,26 @@ renders. (Previously undocumented — added in the 2026-07 audit pass.)
   Vitality's load component) down the way it would for continuous steady-state cardio.
 - `saveActivityMetrics` strips null keys before upsert so the DB keeps its `id`/`recorded_at`
   defaults; the dismissal tombstone reuses the same `(user_id, activity_id)` unique constraint.
+- **Raw HR samples can be physiologically impossible — filter before aggregating, not after.**
+  `activity_health_metrics` has a `heart_rate_validity` CHECK (`avg`/`max`/`min_heart_rate` each
+  NULL or 30–250 bpm) and `daily_health_summary` has `resting_hr_validity` (NULL or 30–150);
+  `activity_hr_sample.bpm` is `NOT NULL` with the same 30–250 CHECK. A single spurious near-zero
+  or implausibly-high Watch sample (a known sensor artifact, especially right as a session starts
+  or on poor skin contact) reaching `min`/`max_heart_rate` or a curve bucket trips these and the
+  **whole upsert is rejected** — this shipped broken once auto-capture stopped being evidence-gated
+  (the gate had accidentally been shielding this: a short/borderline session with a bad sample
+  rarely earned enough zone time to reach `saveActivityMetrics` at all, so the CHECK never fired).
+  `HealthDataService._validHeartRate()` drops out-of-range points from the raw `HealthDataPoint`
+  list immediately after reading, before it feeds avg/max/min, `_calculateHrZones`, the downsampled
+  curve, or resting HR — call it (with `max: 150` for resting HR) anywhere raw HR samples are about
+  to be aggregated or written.
 - Device metrics are read independently through `_readHealthData`: one denied, unavailable, or
-  slow optional datatype must not discard valid workout/HR data. A completely failed daily read
-  aborts the pass before `last_sync_at` advances, and failures are logged through Talker/Sentry.
+  slow optional datatype must not discard valid workout/HR data (15s timeout per datatype — an
+  on-device query, not a network round trip, so it gets more slack than the project's usual 5s
+  convention). A completely failed daily read **stops** the daily-summary backfill at that day
+  (not thrown/aborted) so it's retried on the next sync instead of being permanently skipped, but
+  does **not** abort `syncNow()` as a whole — activity capture is a separate pass and must still run
+  even when one day's summary couldn't be read. Failures are logged through Talker/Sentry.
 - Medium evidence is ten minutes of measured HR-zone time at any intensity (easy included); high
   evidence is an overlapping Workout record. Workout reads include a 15-minute start lead-in to
   accommodate someone starting their Watch before the scheduled activity, then filter to overlap.

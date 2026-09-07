@@ -1,10 +1,10 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/achievement_evaluator.dart';
 import '../core/model/activity.dart';
+import '../logger/talker.dart';
 import 'achievements_section/model/achievement_celebration.dart';
 import 'health_controller.dart';
 import 'health_data_controller.dart';
@@ -38,7 +38,6 @@ class HealthSyncResult {
 @riverpod
 class HealthSyncController extends _$HealthSyncController {
   final _supabase = Supabase.instance.client;
-  final _talker = Talker();
 
   @override
   HealthSyncPhase build() => HealthSyncPhase.idle;
@@ -108,7 +107,7 @@ class HealthSyncController extends _$HealthSyncController {
         leveledUp: celebration?.leveledUp ?? false,
       );
     } catch (e, st) {
-      _talker.handle(e, st, 'Health sync failed');
+      talker.handle(e, st, 'Health sync failed');
       rethrow;
     } finally {
       if (ref.mounted) state = HealthSyncPhase.idle;
@@ -116,7 +115,10 @@ class HealthSyncController extends _$HealthSyncController {
   }
 
   /// Backfill daily summaries: first run = [healthBackfillDays]; thereafter
-  /// today + the gap since `last_sync_at`. Idempotent upserts.
+  /// today + the gap since `last_sync_at`. Idempotent upserts. Stops at the
+  /// first day that fails to read (rather than throwing) so a single slow
+  /// or denied day doesn't abort the rest of `syncNow()` — notably activity
+  /// capture, a separate pass that must still run.
   Future<int> _syncDailySummaries(String userId) async {
     DateTime? lastSync;
     final linkRow = await _supabase
@@ -138,6 +140,13 @@ class HealthSyncController extends _$HealthSyncController {
           ).subtract(const Duration(days: healthBackfillDays));
 
     var count = 0;
+    // The last day we actually persisted — advancing last_sync_at only this
+    // far (not to `today`) means a day that failed to read gets retried on
+    // the next sync instead of being silently skipped forever. A failure
+    // stops the backfill rather than aborting the whole sync: activity
+    // capture (a separate concern) must still run even if one day's summary
+    // couldn't be read.
+    DateTime? lastSyncedDay = lastSync;
     for (
       var day = firstDay;
       !day.isAfter(DateTime(today.year, today.month, today.day));
@@ -148,21 +157,28 @@ class HealthSyncController extends _$HealthSyncController {
         userId: userId,
         date: day,
       );
-      if (summary == null) {
-        // Do not move last_sync_at past a day that failed to read. Otherwise
-        // the missing device data is silently skipped on every future pass.
-        throw StateError('Unable to read health summary for $day');
+      if (summary == null) break;
+      // A save failure (e.g. a value a DB CHECK constraint rejects) stops
+      // the backfill exactly like a read failure — retry this day next
+      // time rather than letting it abort the whole sync.
+      try {
+        await _service.saveDailySummary(summary);
+      } catch (e, st) {
+        talker.handle(e, st, 'Failed to save daily summary for $day');
+        break;
       }
-      await _service.saveDailySummary(summary);
       count++;
+      lastSyncedDay = day;
     }
 
     if (!ref.mounted) return count;
-    await _supabase
-        .from('user_health_link')
-        .update({'last_sync_at': today.toUtc().toIso8601String()})
-        .eq('user_id', userId)
-        .timeout(const Duration(seconds: 5));
+    if (lastSyncedDay != null) {
+      await _supabase
+          .from('user_health_link')
+          .update({'last_sync_at': lastSyncedDay.toUtc().toIso8601String()})
+          .eq('user_id', userId)
+          .timeout(const Duration(seconds: 5));
+    }
     return count;
   }
 
@@ -191,24 +207,32 @@ class HealthSyncController extends _$HealthSyncController {
     for (final r in rows as List) {
       if (r['confirmed'] != true) continue;
       if (!ref.mounted) return captured;
-      final activity = Activity(
-        userId: userId,
-        id: r['activity_id'] as String,
-        sportId: (r['sport_id'] as num).toInt(),
-        startTime: DateTime.parse(r['start_time'] as String),
-        endTime: DateTime.parse(r['end_time'] as String),
-      );
-      final result = await _service.readActivityHealthData(
-        activity: activity,
-        thresholds: thresholds,
-      );
-      if (result == null) continue;
-      await _service.saveActivityMetrics(result.metrics);
-      await _service.saveHrCurve(
-        activityId: activity.id!,
-        points: result.curve,
-      );
-      captured++;
+      final activityId = r['activity_id'] as String;
+      // One bad candidate (a malformed row, a DB constraint rejecting a
+      // write) must not abort the rest of the batch — or the sync as a
+      // whole, since this loop runs after the daily-summary pass.
+      try {
+        final activity = Activity(
+          userId: userId,
+          id: activityId,
+          sportId: (r['sport_id'] as num).toInt(),
+          startTime: DateTime.parse(r['start_time'] as String),
+          endTime: DateTime.parse(r['end_time'] as String),
+        );
+        final result = await _service.readActivityHealthData(
+          activity: activity,
+          thresholds: thresholds,
+        );
+        if (result == null) continue;
+        await _service.saveActivityMetrics(result.metrics);
+        await _service.saveHrCurve(
+          activityId: activity.id!,
+          points: result.curve,
+        );
+        captured++;
+      } catch (e, st) {
+        talker.handle(e, st, 'Failed to capture activity $activityId');
+      }
     }
     return captured;
   }
@@ -229,7 +253,7 @@ class HealthSyncController extends _$HealthSyncController {
           .rpc('evaluate_vitality_score', params: {'p_user_id': userId})
           .timeout(const Duration(seconds: 5));
     } catch (e, st) {
-      _talker.handle(e, st, 'Vitality score evaluation failed');
+      talker.handle(e, st, 'Vitality score evaluation failed');
     }
   }
 

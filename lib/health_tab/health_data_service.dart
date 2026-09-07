@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:health/health.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/model/activity.dart';
+import '../logger/talker.dart';
 import 'health_controller.dart';
 import 'model/activity_health_metrics.dart';
 import 'model/daily_health_summary.dart';
@@ -77,7 +77,6 @@ class HealthDataService extends _$HealthDataService {
 
   final _health = Health();
   final _supabase = Supabase.instance.client;
-  final _talker = Talker();
 
   @override
   void build() {
@@ -150,7 +149,7 @@ class HealthDataService extends _$HealthDataService {
       final stepsData = results[0].data;
       final distanceData = results[1].data;
       final caloriesData = results[2].data;
-      final heartRateData = results[3].data;
+      final heartRateData = _validHeartRate(results[3].data);
       final hrvData = results[4].data;
       final weightData = results[5].data;
       final workoutData = results[6].data
@@ -248,7 +247,7 @@ class HealthDataService extends _$HealthDataService {
         evidence: evidence,
       );
     } catch (e, st) {
-      _talker.handle(e, st, 'Failed to aggregate activity health data');
+      talker.handle(e, st, 'Failed to aggregate activity health data');
       return null;
     }
   }
@@ -317,7 +316,9 @@ class HealthDataService extends _$HealthDataService {
           ? _sumNullable(activeCalories, additionalCalories)
           : additionalCalories;
 
-      final restingHrValues = _extractNumericValues(results[4].data);
+      final restingHrValues = _extractNumericValues(
+        _validHeartRate(results[4].data, max: 150),
+      );
       final restingHr = restingHrValues.isNotEmpty
           ? restingHrValues.reduce((a, b) => a < b ? a : b).round()
           : null;
@@ -346,7 +347,7 @@ class HealthDataService extends _$HealthDataService {
         syncedAt: DateTime.now().toUtc(),
       );
     } catch (e, st) {
-      _talker.handle(e, st, 'Failed to aggregate daily health summary');
+      talker.handle(e, st, 'Failed to aggregate daily health summary');
       return null;
     }
   }
@@ -379,7 +380,7 @@ class HealthDataService extends _$HealthDataService {
           .where((s) => s.bpm > 0)
           .toList();
     } catch (e, st) {
-      _talker.handle(e, st, 'Failed to build activity heart-rate samples');
+      talker.handle(e, st, 'Failed to build activity heart-rate samples');
       return [];
     }
   }
@@ -470,6 +471,11 @@ class HealthDataService extends _$HealthDataService {
 
   /// Keep optional HealthKit/Health Connect datatypes independent: one denied
   /// or unsupported metric must not discard valid workout and heart-rate data.
+  ///
+  /// The timeout here is longer than the project's usual 5s network-call
+  /// convention (see root CLAUDE.md) — this is an on-device query, not a
+  /// round trip, and a day with a lot of accumulated HR/step samples can
+  /// legitimately take a few seconds under HealthKit/Health Connect load.
   Future<_HealthRead> _readHealthData({
     required String label,
     required List<HealthDataType> types,
@@ -483,13 +489,29 @@ class HealthDataService extends _$HealthDataService {
             startTime: startTime,
             endTime: endTime,
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 15));
       return _HealthRead(data, succeeded: true);
     } catch (e, st) {
-      _talker.handle(e, st, 'Failed to read $label');
+      talker.handle(e, st, 'Failed to read $label');
       return const _HealthRead([], succeeded: false);
     }
   }
+
+  /// Drop physiologically-impossible HR samples (a stray near-zero or
+  /// implausibly high reading — a known real-world sensor artifact, e.g.
+  /// right as a session starts or on poor skin contact) before they can
+  /// corrupt avg/max/min or violate the DB's `heart_rate_validity` /
+  /// `resting_hr_validity` CHECK constraints and reject the whole upsert.
+  /// Bounds match those constraints: 30–250 for activity HR (the default),
+  /// 30–150 for resting HR.
+  List<HealthDataPoint> _validHeartRate(
+    List<HealthDataPoint> data, {
+    int min = 30,
+    int max = 250,
+  }) => data.where((p) {
+    final v = _extractNumericValue(p);
+    return v != null && v >= min && v <= max;
+  }).toList();
 
   double? _sumNumericValues(List<HealthDataPoint> data) {
     if (data.isEmpty) return null;
