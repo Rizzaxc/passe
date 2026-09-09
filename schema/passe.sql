@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 1iDqwwGG85nrSPYjA0RYqZTAqXM3KOwmd1ZpF0Gpra5EOm0Xxa2YItJrFewZAM7
+\restrict P88kQ1QnorRACnE8J3eIPtluLIxZqPtn57PKhugOH63AMs0wJVyhnxNLA0x91EY
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.9 (Homebrew)
@@ -1016,7 +1016,6 @@ begin
     )
         returns jsonb
         language sql
-        set search_path to ''
     as $$
         select graphql.resolve(
             query := query,
@@ -2328,27 +2327,11 @@ CREATE FUNCTION public.cancel_freeplay_activity(p_activity_id uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid:=auth.uid(); v_user_ids uuid[]; v_request record;
 BEGIN
-  IF NOT EXISTS(SELECT 1 FROM public.activity a JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
-    WHERE a.id=p_activity_id AND h.user_id=v_uid) THEN RAISE EXCEPTION 'activity not found or not owned'; END IF;
-  UPDATE public.freeplay_activity SET cancelled_at=coalesce(cancelled_at,now()),intake_closed_at=coalesce(intake_closed_at,now()),updated_at=now()
-  WHERE activity_id=p_activity_id;
-  UPDATE public.freeplay_request SET status='host_cancelled',resolved_at=now(),updated_at=now()
-  WHERE activity_id=p_activity_id AND status IN ('pending','accepted');
-  DELETE FROM public.activity_confirmation WHERE activity_id=p_activity_id;
-
-  FOR v_request IN SELECT id FROM public.freeplay_request WHERE activity_id=p_activity_id
-  LOOP
-    INSERT INTO public.message(conversation_id,kind,body)
-    VALUES(public.fn_ensure_freeplay_conversation(v_request.id),'system','activity_cancelled');
-  END LOOP;
-
-  SELECT array_agg(DISTINCT user_id) INTO v_user_ids FROM public.freeplay_request WHERE activity_id=p_activity_id;
-  IF cardinality(v_user_ids)>0 THEN
-    PERFORM public.fn_enqueue_notification('freeplay_activity_cancelled',v_user_ids,'Buổi Xé vé đã huỷ',
-      'Host đã huỷ buổi chơi.',jsonb_build_object('activity_id',p_activity_id));
+  IF NOT public.fn_freeplay_can_manage(p_activity_id, auth.uid()) THEN
+    RAISE EXCEPTION 'activity not found or not owned';
   END IF;
+  PERFORM public.fn_cancel_freeplay_listing(p_activity_id);
 END
 $$;
 
@@ -2363,10 +2346,10 @@ CREATE FUNCTION public.cancel_freeplay_request(p_request_id uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid:=auth.uid(); v_row record; v_conversation uuid;
+DECLARE v_uid uuid:=auth.uid(); v_row record; v_conversation uuid; v_owners uuid[];
 BEGIN
-  SELECT r.*,a.end_time,h.user_id host_user_id INTO v_row FROM public.freeplay_request r
-  JOIN public.activity a ON a.id=r.activity_id JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
+  SELECT r.*, a.end_time INTO v_row FROM public.freeplay_request r
+  JOIN public.activity a ON a.id=r.activity_id
   WHERE r.id=p_request_id AND r.user_id=v_uid FOR UPDATE OF r;
   IF NOT FOUND OR v_row.status NOT IN ('pending','accepted') OR v_row.end_time<=now() THEN
     RAISE EXCEPTION 'active request not found';
@@ -2376,8 +2359,12 @@ BEGIN
   v_conversation := public.fn_ensure_freeplay_conversation(p_request_id);
   INSERT INTO public.message(conversation_id,kind,body)
   VALUES(v_conversation,'system','request_cancelled');
-  PERFORM public.fn_enqueue_notification('freeplay_request_cancelled',ARRAY[v_row.host_user_id],
-    'Người chơi đã huỷ','Một người chơi đã huỷ yêu cầu Xé vé.',jsonb_build_object('activity_id',v_row.activity_id,'request_id',p_request_id));
+  v_owners := coalesce(public.fn_freeplay_owner_user_ids(v_row.activity_id), '{}'::uuid[]);
+  IF cardinality(v_owners) > 0 THEN
+    PERFORM public.fn_enqueue_notification('freeplay_request_cancelled', v_owners,
+      'Người chơi đã huỷ','Một người chơi đã huỷ yêu cầu Xé vé.',
+      jsonb_build_object('activity_id',v_row.activity_id,'request_id',p_request_id));
+  END IF;
 END
 $$;
 
@@ -2634,7 +2621,7 @@ ALTER FUNCTION public.course_activity_conflicts(p_professional_id uuid, p_start 
 -- Name: course_detail_data(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.course_detail_data(p_course_id uuid) RETURNS TABLE(course_id uuid, conversation_id uuid, name text, description text, status text, sport_id bigint, professional_id uuid, coach_name text, coach_user_id uuid, is_coach boolean, my_member_status text, target_session_count integer, held_session_count integer, members jsonb, sessions jsonb, reports jsonb, my_review_rating smallint)
+CREATE FUNCTION public.course_detail_data(p_course_id uuid) RETURNS TABLE(course_id uuid, conversation_id uuid, name text, description text, status text, sport_id bigint, professional_id uuid, coach_name text, coach_user_id uuid, is_coach boolean, my_member_status text, target_session_count integer, held_session_count integer, members jsonb, sessions jsonb, reports jsonb, my_review_rating smallint, pending_offer_id uuid, offer_name text, offer_description text, offer_target_session_count integer)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -2662,20 +2649,8 @@ BEGIN
          coalesce((
            SELECT jsonb_agg(jsonb_build_object(
              'activity_id', a.id, 'start_time', a.start_time, 'end_time', a.end_time,
-             'location_id', a.location_id,
-             'venue_name', loc.name,
-             'street_address', coalesce(
-               nullif(btrim(loc.full_address), ''),
-               nullif(concat_ws(', ', nullif(btrim(loc.street_number), ''),
-                 nullif(btrim(loc.street_name), ''), nullif(btrim(loc.district), ''),
-                 nullif(btrim(loc.city), '')), '')
-             ),
-             'location_street_number', loc.street_number,
-             'location_street_name', loc.street_name,
-             'location_district', loc.district,
-             'location_city', loc.city,
-             'location_lat', loc.lat, 'location_lon', loc.lon,
-             'note', a.note, 'proposal_status', a.proposal_status::text,
+             'location_id', a.location_id, 'venue_name', loc.name, 'note', a.note,
+             'proposal_status', a.proposal_status::text,
              'proposed_by', a.proposed_by,
              'my_attendance', (SELECT ac.attendance::text FROM public.activity_confirmation ac
                                WHERE ac.activity_id = a.id AND ac.user_id = v_uid),
@@ -2695,10 +2670,17 @@ BEGIN
            WHERE r.course_id = c.id
              AND (v_is_coach OR r.student_id = v_uid)), '[]'::jsonb),
          (SELECT rv.rating FROM public.course_review rv
-          WHERE rv.course_id = c.id AND rv.student_id = v_uid)
+          WHERE rv.course_id = c.id AND rv.student_id = v_uid),
+         offer.id, offer.name, offer.description, offer.target_session_count
   FROM public.course c
   JOIN public.professional p ON p.id = c.professional_id
   LEFT JOIN public.conversation conv ON conv.course_id = c.id
+  LEFT JOIN LATERAL (
+    SELECT o.id, o.name, o.description, o.target_session_count
+    FROM public.course_enrollment_offer o
+    WHERE o.course_id = c.id AND o.user_id = v_uid AND o.status = 'pending'
+    ORDER BY o.created_at DESC LIMIT 1
+  ) offer ON NOT v_is_coach
   WHERE c.id = p_course_id;
 END
 $$;
@@ -2821,10 +2803,10 @@ $$;
 ALTER FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid) OWNER TO postgres;
 
 --
--- Name: create_lobby_with_location(text, integer, text, jsonb, jsonb, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: create_lobby_with_location(text, integer, text, jsonb, jsonb, uuid[], text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text DEFAULT 'discoverable'::text, p_playtime jsonb DEFAULT NULL::jsonb, p_details jsonb DEFAULT NULL::jsonb, p_home_ground_id uuid DEFAULT NULL::uuid) RETURNS jsonb
+CREATE FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text DEFAULT 'discoverable'::text, p_playtime jsonb DEFAULT NULL::jsonb, p_details jsonb DEFAULT NULL::jsonb, p_home_ground_ids uuid[] DEFAULT NULL::uuid[], p_description text DEFAULT NULL::text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public', 'extensions'
     AS $$
@@ -2837,33 +2819,32 @@ BEGIN
     IF v_user_id IS NULL THEN
         RAISE EXCEPTION 'Not authenticated';
     END IF;
+    IF p_home_ground_ids IS NOT NULL AND cardinality(p_home_ground_ids) > 5 THEN
+        RAISE EXCEPTION 'create_lobby_with_location: at most 5 homegrounds allowed';
+    END IF;
 
-    INSERT INTO public.lobby (name, sport_id, visibility, playtime, details, home_ground, captain_id)
+    INSERT INTO public.lobby (name, sport_id, visibility, playtime, details, captain_id, description)
     VALUES (
-        p_name,
-        p_sport_id,
-        p_visibility::public.lobby_visibility,
-        p_playtime,
-        p_details,
-        p_home_ground_id,
-        v_user_id
+        p_name, p_sport_id, p_visibility::public.lobby_visibility,
+        p_playtime, p_details, v_user_id,
+        NULLIF(p_description, '')
     )
     RETURNING id INTO v_lobby_id;
 
-    -- Captain → lobby_member is handled by the lobby_add_captain_as_member
-    -- AFTER INSERT trigger.
+    IF p_home_ground_ids IS NOT NULL AND cardinality(p_home_ground_ids) > 0 THEN
+        INSERT INTO public.lobby_homeground (lobby_id, location_id, is_primary)
+        SELECT v_lobby_id, loc_id, (ord = 1)
+          FROM unnest(p_home_ground_ids) WITH ORDINALITY AS t(loc_id, ord)
+        ON CONFLICT (lobby_id, location_id) DO NOTHING;
+    END IF;
 
-    SELECT row_to_json(l)::jsonb
-        INTO v_result
-        FROM public.lobby l
-        WHERE l.id = v_lobby_id;
-
+    SELECT row_to_json(l)::jsonb INTO v_result FROM public.lobby l WHERE l.id = v_lobby_id;
     RETURN v_result;
 END;
 $$;
 
 
-ALTER FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid) OWNER TO postgres;
+ALTER FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_ids uuid[], p_description text) OWNER TO postgres;
 
 --
 -- Name: create_location(text, text, text, text, text, bigint); Type: FUNCTION; Schema: public; Owner: postgres
@@ -3051,62 +3032,66 @@ $$;
 ALTER FUNCTION public.delete_wall_post(p_post_id uuid) OWNER TO postgres;
 
 --
--- Name: edit_freeplay_listing(uuid, integer, text, text[], uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: edit_freeplay_listing(uuid, integer, text, text[], uuid, numeric, numeric); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid DEFAULT NULL::uuid) RETURNS void
+CREATE FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid DEFAULT NULL::uuid, p_male_price numeric DEFAULT NULL::numeric, p_female_price numeric DEFAULT NULL::numeric) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE
-  v_uid uuid := auth.uid();
-  v_current_capacity integer;
-  v_current_location uuid;
-  v_accepted integer;
-  v_has_requests boolean;
+DECLARE v_uid uuid := auth.uid(); v_current_capacity integer; v_current_location uuid;
+        v_lobby uuid; v_accepted integer; v_has_requests boolean;
 BEGIN
-  SELECT fa.capacity,a.location_id INTO v_current_capacity,v_current_location
-  FROM public.freeplay_activity fa
-  JOIN public.activity a ON a.id=fa.activity_id
-  JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
-  WHERE a.id=p_activity_id AND h.user_id=v_uid AND fa.cancelled_at IS NULL
-  FOR UPDATE OF fa,a;
+  IF NOT public.fn_freeplay_can_manage(p_activity_id, v_uid) THEN
+    RAISE EXCEPTION 'activity not found or not owned';
+  END IF;
+  SELECT fa.capacity, a.location_id, a.lobby_id
+  INTO v_current_capacity, v_current_location, v_lobby
+  FROM public.freeplay_activity fa JOIN public.activity a ON a.id = fa.activity_id
+  WHERE a.id = p_activity_id AND fa.cancelled_at IS NULL FOR UPDATE OF fa, a;
   IF NOT FOUND THEN RAISE EXCEPTION 'activity not found or not owned'; END IF;
 
   SELECT count(*)::integer INTO v_accepted
-  FROM public.freeplay_request
-  WHERE activity_id=p_activity_id AND status='accepted';
-  v_has_requests := EXISTS(
-    SELECT 1 FROM public.freeplay_request
+  FROM public.freeplay_request WHERE activity_id=p_activity_id AND status='accepted';
+  v_has_requests := EXISTS(SELECT 1 FROM public.freeplay_request
     WHERE activity_id=p_activity_id AND status IN ('pending','accepted'));
 
-  IF p_capacity<v_current_capacity OR p_capacity<v_accepted THEN
+  IF p_capacity < v_current_capacity OR p_capacity < v_accepted THEN
     RAISE EXCEPTION 'capacity can only increase';
+  END IF;
+  IF (p_male_price IS NOT NULL OR p_female_price IS NOT NULL) AND v_has_requests THEN
+    RAISE EXCEPTION 'price cannot change after requests';
+  END IF;
+  -- A lobby listing's venue is the lobby activity's venue; it moves through the
+  -- scheduling flow, never through the listing editor.
+  IF v_lobby IS NOT NULL AND p_location_id IS DISTINCT FROM v_current_location
+     AND p_location_id IS NOT NULL THEN
+    RAISE EXCEPTION 'a lobby listing follows the activity venue';
   END IF;
   IF p_location_id IS NOT NULL
      AND NOT EXISTS(SELECT 1 FROM public.location WHERE id=p_location_id) THEN
     RAISE EXCEPTION 'location not found';
   END IF;
-  IF v_has_requests
-     AND p_location_id IS DISTINCT FROM v_current_location
+  IF v_has_requests AND p_location_id IS DISTINCT FROM v_current_location
      AND p_location_id IS NOT NULL THEN
     RAISE EXCEPTION 'location cannot change after requests';
   END IF;
 
-  IF p_location_id IS NOT NULL THEN
+  IF p_location_id IS NOT NULL AND v_lobby IS NULL THEN
     UPDATE public.activity SET location_id=p_location_id WHERE id=p_activity_id;
   END IF;
   UPDATE public.freeplay_activity
-  SET capacity=p_capacity,
-      description=coalesce(p_description,''),
+  SET capacity=p_capacity, description=coalesce(p_description,''),
       recommended_skills=p_recommended_skills,
+      male_price=coalesce(p_male_price, male_price),
+      female_price=coalesce(p_female_price, female_price),
       updated_at=now()
   WHERE activity_id=p_activity_id;
 END
 $$;
 
 
-ALTER FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid) OWNER TO postgres;
+ALTER FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid, p_male_price numeric, p_female_price numeric) OWNER TO postgres;
 
 --
 -- Name: end_course(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -3515,6 +3500,61 @@ $$;
 ALTER FUNCTION public.expire_past_activities() OWNER TO postgres;
 
 --
+-- Name: expose_lobby_activity_freeplay(uuid, integer, numeric, numeric, text[], text, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.expose_lobby_activity_freeplay(p_activity_id uuid, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text DEFAULT ''::text, p_location_id uuid DEFAULT NULL::uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_uid uuid := auth.uid(); v_a record; v_loc uuid;
+BEGIN
+  IF v_uid IS NULL THEN RAISE EXCEPTION 'authentication required'; END IF;
+
+  SELECT a.id, a.lobby_id, a.location_id
+  INTO v_a
+  FROM public.activity a JOIN public.lobby l ON l.id = a.lobby_id
+  WHERE a.id = p_activity_id FOR UPDATE OF a;
+  IF NOT FOUND THEN RAISE EXCEPTION 'lobby activity not found'; END IF;
+
+  IF NOT public.lobby_can_manage(v_a.lobby_id, v_uid) THEN
+    RAISE EXCEPTION 'caller is not authorized to manage this lobby';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.freeplay_activity WHERE activity_id = p_activity_id) THEN
+    RAISE EXCEPTION 'activity is already exposed';
+  END IF;
+
+  -- Venue materialisation. A lobby activity may carry no `location_id` at all
+  -- and lean on the lobby's primary home ground, but `home_freeplay_data`
+  -- filters on a concrete city cluster it resolves through
+  -- `activity.location_id` — so pin one now rather than teach the feed a
+  -- second fallback. `p_location_id` is the last resort for a lobby with no
+  -- home ground either.
+  v_loc := coalesce(v_a.location_id, public.lobby_primary_homeground_id(v_a.lobby_id), p_location_id);
+  IF v_loc IS NULL THEN
+    RAISE EXCEPTION 'a listing needs a venue: set one on the activity or pick one here';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.location WHERE id = v_loc) THEN
+    RAISE EXCEPTION 'location not found';
+  END IF;
+  IF v_a.location_id IS DISTINCT FROM v_loc THEN
+    UPDATE public.activity SET location_id = v_loc WHERE id = p_activity_id;
+  END IF;
+
+  -- Every free-venue column stays NULL, which is the shape
+  -- `freeplay_free_venue_complete` expects (and what live Host rows look like)
+  -- — the address is read off `location` at query time.
+  INSERT INTO public.freeplay_activity(activity_id, description, capacity, male_price,
+    female_price, recommended_skills)
+  VALUES (p_activity_id, coalesce(p_description,''), p_capacity, p_male_price,
+    p_female_price, p_recommended_skills);
+END
+$$;
+
+
+ALTER FUNCTION public.expose_lobby_activity_freeplay(p_activity_id uuid, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid) OWNER TO postgres;
+
+--
 -- Name: find_course_with_coach(uuid, bigint); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -3581,6 +3621,50 @@ $$;
 
 
 ALTER FUNCTION public.fn_activity_course_write_guard() OWNER TO postgres;
+
+--
+-- Name: fn_activity_freeplay_cancel_cascade(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_activity_freeplay_cancel_cascade() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.freeplay_activity fa WHERE fa.activity_id = OLD.id) THEN
+    PERFORM public.fn_cancel_freeplay_listing(OLD.id);
+  END IF;
+  RETURN OLD;
+END
+$$;
+
+
+ALTER FUNCTION public.fn_activity_freeplay_cancel_cascade() OWNER TO postgres;
+
+--
+-- Name: fn_activity_freeplay_lock(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_activity_freeplay_lock() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  IF (NEW.start_time, NEW.end_time, NEW.location_id)
+     IS DISTINCT FROM (OLD.start_time, OLD.end_time, OLD.location_id)
+     AND EXISTS (SELECT 1 FROM public.freeplay_activity fa
+                 WHERE fa.activity_id = OLD.id AND fa.cancelled_at IS NULL)
+     AND EXISTS (SELECT 1 FROM public.freeplay_request r
+                 WHERE r.activity_id = OLD.id AND r.status IN ('pending','accepted'))
+  THEN
+    RAISE EXCEPTION 'activity_freeplay_locked: withdraw the Xé vé listing before changing time or venue';
+  END IF;
+  RETURN NEW;
+END
+$$;
+
+
+ALTER FUNCTION public.fn_activity_freeplay_lock() OWNER TO postgres;
 
 --
 -- Name: fn_apply_match_rating(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -3882,6 +3966,50 @@ $$;
 
 
 ALTER FUNCTION public.fn_can_write_conversation(p_conversation_id uuid, p_uid uuid) OWNER TO postgres;
+
+--
+-- Name: fn_cancel_freeplay_listing(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_cancel_freeplay_listing(p_activity_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_user_ids uuid[]; v_request record;
+BEGIN
+  UPDATE public.freeplay_activity
+  SET cancelled_at = coalesce(cancelled_at, now()),
+      intake_closed_at = coalesce(intake_closed_at, now()), updated_at = now()
+  WHERE activity_id = p_activity_id;
+
+  UPDATE public.freeplay_request SET status='host_cancelled', resolved_at=now(), updated_at=now()
+  WHERE activity_id = p_activity_id AND status IN ('pending','accepted');
+
+  -- Scoped to freeplay guests. The unscoped DELETE this replaces would wipe the
+  -- lobby members' own RSVPs on a lobby-owned listing.
+  DELETE FROM public.activity_confirmation ac
+  WHERE ac.activity_id = p_activity_id
+    AND EXISTS (SELECT 1 FROM public.freeplay_request r
+                WHERE r.activity_id = p_activity_id AND r.user_id = ac.user_id);
+
+  FOR v_request IN SELECT id FROM public.freeplay_request WHERE activity_id = p_activity_id
+  LOOP
+    INSERT INTO public.message(conversation_id, kind, body)
+    VALUES (public.fn_ensure_freeplay_conversation(v_request.id), 'system', 'activity_cancelled');
+  END LOOP;
+
+  SELECT array_agg(DISTINCT user_id) INTO v_user_ids
+  FROM public.freeplay_request WHERE activity_id = p_activity_id;
+  IF cardinality(v_user_ids) > 0 THEN
+    PERFORM public.fn_enqueue_notification('freeplay_activity_cancelled', v_user_ids,
+      'Buổi Xé vé đã huỷ', 'Buổi chơi đã bị huỷ.',
+      jsonb_build_object('activity_id', p_activity_id));
+  END IF;
+END
+$$;
+
+
+ALTER FUNCTION public.fn_cancel_freeplay_listing(p_activity_id uuid) OWNER TO postgres;
 
 --
 -- Name: notification_outbox; Type: TABLE; Schema: public; Owner: postgres
@@ -4474,19 +4602,17 @@ CREATE FUNCTION public.fn_ensure_freeplay_conversation(p_request_id uuid) RETURN
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_id uuid; v_requester uuid; v_host uuid; v_created timestamptz;
+DECLARE v_id uuid; v_requester uuid; v_activity uuid; v_created timestamptz;
 BEGIN
-  SELECT c.id INTO v_id FROM public.conversation c
-  WHERE c.freeplay_request_id = p_request_id;
+  SELECT c.id INTO v_id FROM public.conversation c WHERE c.freeplay_request_id = p_request_id;
   IF v_id IS NOT NULL THEN RETURN v_id; END IF;
 
-  SELECT r.user_id, h.user_id, r.created_at INTO v_requester, v_host, v_created
-  FROM public.freeplay_request r
-  JOIN public.activity a ON a.id = r.activity_id
-  JOIN public.freeplay_host h ON h.id = a.freeplay_host_id
-  WHERE r.id = p_request_id;
+  SELECT r.user_id, r.activity_id, r.created_at INTO v_requester, v_activity, v_created
+  FROM public.freeplay_request r WHERE r.id = p_request_id;
   IF v_requester IS NULL THEN RAISE EXCEPTION 'freeplay request not found'; END IF;
 
+  -- conversation_one_per_freeplay_request is a PARTIAL unique index, so the
+  -- predicate has to be restated or ON CONFLICT inference fails.
   INSERT INTO public.conversation(kind, freeplay_request_id)
   VALUES ('freeplay', p_request_id)
   ON CONFLICT (freeplay_request_id) WHERE freeplay_request_id IS NOT NULL
@@ -4494,13 +4620,14 @@ BEGIN
   RETURNING id INTO v_id;
 
   IF v_id IS NULL THEN
-    SELECT c.id INTO v_id FROM public.conversation c
-    WHERE c.freeplay_request_id = p_request_id;
+    SELECT c.id INTO v_id FROM public.conversation c WHERE c.freeplay_request_id = p_request_id;
     RETURN v_id;
   END IF;
 
   INSERT INTO public.conversation_member(conversation_id, user_id, joined_at)
-  VALUES (v_id, v_requester, v_created), (v_id, v_host, v_created)
+  SELECT v_id, u, v_created
+  FROM unnest(ARRAY[v_requester] ||
+              coalesce(public.fn_freeplay_owner_user_ids(v_activity),'{}'::uuid[])) u
   ON CONFLICT DO NOTHING;
 
   RETURN v_id;
@@ -4534,6 +4661,41 @@ $$;
 ALTER FUNCTION public.fn_fill_payment_request_recipient() OWNER TO postgres;
 
 --
+-- Name: fn_freeplay_activity_owner_guard(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_freeplay_activity_owner_guard() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_a record;
+BEGIN
+  SELECT a.lobby_id, a.freeplay_host_id, a.challenge_id, a.course_id, a.start_time
+  INTO v_a FROM public.activity a WHERE a.id = NEW.activity_id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'activity not found'; END IF;
+  IF num_nonnulls(v_a.lobby_id, v_a.freeplay_host_id) <> 1 THEN
+    RAISE EXCEPTION 'a freeplay listing needs exactly one owner (a Host or a lobby)';
+  END IF;
+  IF v_a.lobby_id IS NOT NULL THEN
+    IF v_a.challenge_id IS NOT NULL OR v_a.course_id IS NOT NULL THEN
+      RAISE EXCEPTION 'challenge and course activities cannot be exposed';
+    END IF;
+    IF v_a.start_time <= now() THEN
+      RAISE EXCEPTION 'only an upcoming activity can be exposed';
+    END IF;
+    IF EXISTS (SELECT 1 FROM public.lobby l
+               WHERE l.id = v_a.lobby_id AND l.visibility = 'private') THEN
+      RAISE EXCEPTION 'a private lobby cannot expose activities';
+    END IF;
+  END IF;
+  RETURN NEW;
+END
+$$;
+
+
+ALTER FUNCTION public.fn_freeplay_activity_owner_guard() OWNER TO postgres;
+
+--
 -- Name: fn_freeplay_block_cleanup(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -4543,18 +4705,42 @@ CREATE FUNCTION public.fn_freeplay_block_cleanup() RETURNS trigger
     AS $$
 BEGIN
   UPDATE public.freeplay_request r SET status='blocked',resolved_at=now(),updated_at=now()
-  FROM public.activity a JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
-  WHERE r.activity_id=a.id AND r.status IN ('pending','accepted')
-    AND ((r.user_id=NEW.blocker_id AND h.user_id=NEW.blocked_id) OR (r.user_id=NEW.blocked_id AND h.user_id=NEW.blocker_id));
-  DELETE FROM public.activity_confirmation ac USING public.activity a,public.freeplay_host h
+  WHERE r.status IN ('pending','accepted')
+    AND ((r.user_id=NEW.blocker_id
+          AND NEW.blocked_id = ANY(coalesce(public.fn_freeplay_owner_user_ids(r.activity_id),'{}'::uuid[])))
+      OR (r.user_id=NEW.blocked_id
+          AND NEW.blocker_id = ANY(coalesce(public.fn_freeplay_owner_user_ids(r.activity_id),'{}'::uuid[]))));
+  -- Host listings only: a lobby listing never wrote a confirmation row.
+  DELETE FROM public.activity_confirmation ac USING public.activity a, public.freeplay_host h
   WHERE ac.activity_id=a.id AND h.id=a.freeplay_host_id
-    AND ((ac.user_id=NEW.blocker_id AND h.user_id=NEW.blocked_id) OR (ac.user_id=NEW.blocked_id AND h.user_id=NEW.blocker_id));
+    AND ((ac.user_id=NEW.blocker_id AND h.user_id=NEW.blocked_id)
+      OR (ac.user_id=NEW.blocked_id AND h.user_id=NEW.blocker_id));
   RETURN NEW;
 END
 $$;
 
 
 ALTER FUNCTION public.fn_freeplay_block_cleanup() OWNER TO postgres;
+
+--
+-- Name: fn_freeplay_can_manage(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_freeplay_can_manage(p_activity_id uuid, p_uid uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT p_uid IS NOT NULL AND EXISTS (
+    SELECT 1 FROM public.activity a
+    LEFT JOIN public.freeplay_host h ON h.id = a.freeplay_host_id
+    WHERE a.id = p_activity_id
+      AND (h.user_id = p_uid
+        OR (a.lobby_id IS NOT NULL AND public.lobby_can_manage(a.lobby_id, p_uid)))
+  )
+$$;
+
+
+ALTER FUNCTION public.fn_freeplay_can_manage(p_activity_id uuid, p_uid uuid) OWNER TO postgres;
 
 --
 -- Name: fn_freeplay_host_zalo(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -4572,6 +4758,31 @@ $$;
 
 
 ALTER FUNCTION public.fn_freeplay_host_zalo(p_host_id uuid) OWNER TO postgres;
+
+--
+-- Name: fn_freeplay_owner_user_ids(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_freeplay_owner_user_ids(p_activity_id uuid) RETURNS uuid[]
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT CASE
+    WHEN a.freeplay_host_id IS NOT NULL THEN
+      (SELECT array_agg(h.user_id) FROM public.freeplay_host h WHERE h.id = a.freeplay_host_id)
+    WHEN a.lobby_id IS NOT NULL THEN
+      (SELECT array_agg(DISTINCT s.uid) FROM (
+         SELECT l.captain_id AS uid FROM public.lobby l WHERE l.id = a.lobby_id
+         UNION
+         SELECT lm.user_id FROM public.lobby_member lm
+          WHERE lm.lobby_id = a.lobby_id AND lm.role = 'coordinator'
+       ) s WHERE s.uid IS NOT NULL)
+  END
+  FROM public.activity a WHERE a.id = p_activity_id
+$$;
+
+
+ALTER FUNCTION public.fn_freeplay_owner_user_ids(p_activity_id uuid) OWNER TO postgres;
 
 --
 -- Name: fn_guard_referee_booking_review(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -4760,6 +4971,24 @@ $$;
 ALTER FUNCTION public.fn_is_linked_professional(p_user_id uuid) OWNER TO postgres;
 
 --
+-- Name: fn_lobby_has_live_freeplay(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_lobby_has_live_freeplay(p_lobby_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.freeplay_activity fa
+    JOIN public.activity a ON a.id = fa.activity_id
+    WHERE a.lobby_id = p_lobby_id AND fa.cancelled_at IS NULL AND a.end_time > now()
+  )
+$$;
+
+
+ALTER FUNCTION public.fn_lobby_has_live_freeplay(p_lobby_id uuid) OWNER TO postgres;
+
+--
 -- Name: fn_lobby_playtime_keys(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -4788,6 +5017,26 @@ $$;
 
 
 ALTER FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) OWNER TO postgres;
+
+--
+-- Name: fn_lobby_private_freeplay_guard(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_lobby_private_freeplay_guard() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  IF NEW.visibility = 'private' AND OLD.visibility IS DISTINCT FROM 'private'
+     AND public.fn_lobby_has_live_freeplay(OLD.id) THEN
+    RAISE EXCEPTION 'lobby_private_blocked_by_freeplay: withdraw the Xé vé listings first';
+  END IF;
+  RETURN NEW;
+END
+$$;
+
+
+ALTER FUNCTION public.fn_lobby_private_freeplay_guard() OWNER TO postgres;
 
 --
 -- Name: fn_lobby_recompute_rated_matches(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -6000,6 +6249,32 @@ COMMENT ON FUNCTION public.fn_sweep_recurring_activities() IS 'Materialises the 
 
 
 --
+-- Name: fn_sync_freeplay_conversation_members(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_sync_freeplay_conversation_members(p_request_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_conv uuid; v_created timestamptz; v_activity uuid;
+BEGIN
+  SELECT c.id, r.created_at, r.activity_id INTO v_conv, v_created, v_activity
+  FROM public.freeplay_request r
+  LEFT JOIN public.conversation c ON c.freeplay_request_id = r.id
+  WHERE r.id = p_request_id;
+  IF v_conv IS NULL THEN RETURN; END IF;
+
+  INSERT INTO public.conversation_member(conversation_id, user_id, joined_at)
+  SELECT v_conv, o, v_created
+  FROM unnest(coalesce(public.fn_freeplay_owner_user_ids(v_activity),'{}'::uuid[])) o
+  ON CONFLICT DO NOTHING;
+END
+$$;
+
+
+ALTER FUNCTION public.fn_sync_freeplay_conversation_members(p_request_id uuid) OWNER TO postgres;
+
+--
 -- Name: fn_touch_user_contact(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -6185,7 +6460,7 @@ ALTER FUNCTION public.fn_wall_post_tag_guard() OWNER TO postgres;
 -- Name: freeplay_activity_detail_data(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) RETURNS TABLE(activity_id uuid, host_id uuid, host_name text, host_avatar_url text, description text, start_time timestamp with time zone, end_time timestamp with time zone, location_id uuid, venue_name text, street_address text, location_street_number text, location_street_name text, location_district text, location_city text, location_lat double precision, location_lon double precision, capacity integer, accepted_count bigint, male_price numeric, female_price numeric, recommended_skills text[], my_request_id uuid, my_request_status text, roster jsonb)
+CREATE FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) RETURNS TABLE(activity_id uuid, host_id uuid, host_name text, host_avatar_url text, owner_kind text, description text, start_time timestamp with time zone, end_time timestamp with time zone, location_id uuid, venue_name text, street_address text, location_street_number text, location_street_name text, location_district text, location_city text, location_lat double precision, location_lon double precision, capacity integer, accepted_count bigint, male_price numeric, female_price numeric, recommended_skills text[], my_request_id uuid, my_request_status text, roster jsonb)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -6194,16 +6469,22 @@ BEGIN
   SELECT EXISTS(
     SELECT 1 FROM public.activity a
     JOIN public.freeplay_activity fa ON fa.activity_id=a.id
-    JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
+    LEFT JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
+    LEFT JOIN public.lobby l ON l.id=a.lobby_id
     WHERE a.id=p_activity_id AND (
-      h.status='active' OR h.user_id=v_uid OR EXISTS(
-        SELECT 1 FROM public.freeplay_request r
-        WHERE r.activity_id=a.id AND r.user_id=v_uid)))
+      h.status='active'
+      OR (a.lobby_id IS NOT NULL AND l.visibility <> 'private')
+      OR public.fn_freeplay_can_manage(a.id, v_uid)
+      OR EXISTS(SELECT 1 FROM public.freeplay_request r
+                WHERE r.activity_id=a.id AND r.user_id=v_uid)))
   INTO v_allowed;
   IF NOT v_allowed THEN RETURN; END IF;
 
   RETURN QUERY
-  SELECT a.id,h.id,h.display_name,h.avatar_url,fa.description,a.start_time,a.end_time,
+  SELECT a.id, coalesce(a.freeplay_host_id, a.lobby_id),
+    coalesce(h.display_name, l.name::text), h.avatar_url,
+    CASE WHEN a.freeplay_host_id IS NOT NULL THEN 'host' ELSE 'lobby' END,
+    fa.description,a.start_time,a.end_time,
     a.location_id, coalesce(loc.name,fa.venue_name),
     coalesce(
       nullif(btrim(loc.full_address), ''),
@@ -6217,7 +6498,7 @@ BEGIN
     (SELECT count(*) FROM public.freeplay_request x
      WHERE x.activity_id=a.id AND x.status='accepted'),
     fa.male_price,fa.female_price,fa.recommended_skills,mr.id,mr.status::text,
-    CASE WHEN h.user_id=v_uid OR mr.status='accepted' THEN
+    CASE WHEN public.fn_freeplay_can_manage(a.id, v_uid) OR mr.status='accepted' THEN
       (SELECT coalesce(jsonb_agg(jsonb_build_object(
         'id',u.id,'username',u.username,
         'generatedAvatar',u.details->>'generatedAvatar','skill',x.skill)
@@ -6227,7 +6508,8 @@ BEGIN
     ELSE '[]'::jsonb END
   FROM public.activity a
   JOIN public.freeplay_activity fa ON fa.activity_id=a.id
-  JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
+  LEFT JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
+  LEFT JOIN public.lobby l ON l.id=a.lobby_id
   LEFT JOIN public.location loc ON loc.id=a.location_id
   LEFT JOIN LATERAL(
     SELECT r.id,r.status FROM public.freeplay_request r
@@ -6249,10 +6531,12 @@ CREATE FUNCTION public.freeplay_activity_requests(p_activity_id uuid) RETURNS TA
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
-  SELECT r.id,r.user_id,u.username,u.details->>'generatedAvatar',r.status::text,r.gender,r.skill,r.price_amount,r.created_at
+  SELECT r.id,r.user_id,u.username,u.details->>'generatedAvatar',r.status::text,r.gender,r.skill,
+    r.price_amount,r.created_at
   FROM public.freeplay_request r JOIN public."user" u ON u.id=r.user_id
-  JOIN public.activity a ON a.id=r.activity_id JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
-  WHERE r.activity_id=p_activity_id AND h.user_id=auth.uid() ORDER BY r.created_at
+  WHERE r.activity_id=p_activity_id
+    AND public.fn_freeplay_can_manage(p_activity_id, auth.uid())
+  ORDER BY r.created_at
 $$;
 
 
@@ -6266,14 +6550,17 @@ CREATE FUNCTION public.freeplay_chat_counterpart_data(p_request_id uuid) RETURNS
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid:=auth.uid();
+DECLARE v_uid uuid:=auth.uid(); v_counterpart uuid; v_found boolean;
 BEGIN
-  RETURN QUERY
-  SELECT CASE WHEN r.user_id=v_uid THEN h.user_id ELSE r.user_id END
+  SELECT CASE WHEN r.user_id=v_uid THEN h.user_id ELSE r.user_id END, true
+  INTO v_counterpart, v_found
   FROM public.freeplay_request r
   JOIN public.activity a ON a.id=r.activity_id
-  JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
-  WHERE r.id=p_request_id AND (r.user_id=v_uid OR h.user_id=v_uid);
+  LEFT JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
+  WHERE r.id=p_request_id
+    AND (r.user_id=v_uid OR public.fn_freeplay_can_manage(r.activity_id, v_uid));
+  IF NOT coalesce(v_found,false) OR v_counterpart IS NULL THEN RETURN; END IF;
+  RETURN QUERY SELECT v_counterpart;
 END
 $$;
 
@@ -6288,16 +6575,16 @@ CREATE FUNCTION public.freeplay_conversation_id(p_request_id uuid) RETURNS uuid
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid := auth.uid(); v_id uuid;
+DECLARE v_uid uuid := auth.uid(); v_id uuid; v_activity uuid;
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM public.freeplay_request r
-    JOIN public.activity a ON a.id = r.activity_id
-    JOIN public.freeplay_host h ON h.id = a.freeplay_host_id
-    WHERE r.id = p_request_id AND (r.user_id = v_uid OR h.user_id = v_uid)
-  ) THEN RAISE EXCEPTION 'chat not found'; END IF;
+  SELECT r.activity_id INTO v_activity FROM public.freeplay_request r
+  WHERE r.id = p_request_id AND (r.user_id = v_uid
+    OR public.fn_freeplay_can_manage(r.activity_id, v_uid));
+  IF v_activity IS NULL THEN RAISE EXCEPTION 'chat not found'; END IF;
 
   v_id := public.fn_ensure_freeplay_conversation(p_request_id);
+  -- Lazy sync so a manager promoted after the request still gets the thread.
+  PERFORM public.fn_sync_freeplay_conversation_members(p_request_id);
   RETURN v_id;
 END
 $$;
@@ -6412,16 +6699,23 @@ ALTER FUNCTION public.freeplay_host_profile_data(p_host_id uuid) OWNER TO postgr
 -- Name: freeplay_my_data(boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.freeplay_my_data(p_history boolean DEFAULT false) RETURNS TABLE(request_id uuid, request_status text, activity_id uuid, host_id uuid, host_name text, description text, start_time timestamp with time zone, end_time timestamp with time zone, venue_name text, street_address text, capacity integer, accepted_count bigint, price_amount numeric, recommended_skills text[], can_write boolean)
+CREATE FUNCTION public.freeplay_my_data(p_history boolean DEFAULT false) RETURNS TABLE(request_id uuid, request_status text, activity_id uuid, host_id uuid, host_name text, owner_kind text, description text, start_time timestamp with time zone, end_time timestamp with time zone, venue_name text, street_address text, capacity integer, accepted_count bigint, price_amount numeric, recommended_skills text[], can_write boolean)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
-  SELECT r.id,r.status::text,a.id,h.id,h.display_name,fa.description,a.start_time,a.end_time,
+  SELECT r.id,r.status::text,a.id,
+    coalesce(a.freeplay_host_id, a.lobby_id),
+    coalesce(h.display_name, l.name::text),
+    CASE WHEN a.freeplay_host_id IS NOT NULL THEN 'host' ELSE 'lobby' END,
+    fa.description,a.start_time,a.end_time,
     coalesce(loc.name,fa.venue_name),coalesce(loc.full_address,fa.street_address),fa.capacity,
     (SELECT count(*) FROM public.freeplay_request x WHERE x.activity_id=a.id AND x.status='accepted'),
     r.price_amount,fa.recommended_skills,false
-  FROM public.freeplay_request r JOIN public.activity a ON a.id=r.activity_id
-  JOIN public.freeplay_activity fa ON fa.activity_id=a.id JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
+  FROM public.freeplay_request r
+  JOIN public.activity a ON a.id=r.activity_id
+  JOIN public.freeplay_activity fa ON fa.activity_id=a.id
+  LEFT JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
+  LEFT JOIN public.lobby l ON l.id=a.lobby_id
   LEFT JOIN public.location loc ON loc.id=a.location_id
   WHERE r.user_id=auth.uid() AND CASE WHEN p_history THEN
     (a.end_time<=now() OR r.status NOT IN ('pending','accepted'))
@@ -6542,7 +6836,7 @@ BEGIN
 
     SELECT bfr.status, bfr.target_lobby_id,
            l.name AS lobby_name, l.details AS lobby_details, l.visibility,
-           l.sport_id, l.captain_id, l.home_ground, l.playtime, l.mmr,
+           l.sport_id, l.captain_id, l.playtime, l.mmr,
            cap.username AS captain_username,
            ini.username AS inviter_username
       INTO v_rec
@@ -6601,7 +6895,7 @@ BEGIN
         v_result := v_result || jsonb_build_object(
             'home_ground_name', (
                 SELECT loc.name FROM public.location loc
-                 WHERE loc.id = v_rec.home_ground
+                 WHERE loc.id = public.lobby_primary_homeground_id(v_rec.target_lobby_id)
             ),
             'playtime', v_rec.playtime,
             'mmr', v_rec.mmr,
@@ -6672,6 +6966,118 @@ $$;
 
 
 ALTER FUNCTION public.get_lobby_invite_preview(p_code text) OWNER TO postgres;
+
+--
+-- Name: get_lobby_public_preview(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_lobby_public_preview(p_lobby_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_lobby       record;
+    v_members     integer;
+    v_gender      jsonb;
+    v_age         jsonb;
+    v_networks    jsonb;
+    v_industries  jsonb;
+    v_homegrounds jsonb;
+BEGIN
+    SELECT l.id, l.name, l.sport_id, l.description, l.playtime,
+           l.mmr, l.rated_match_count,
+           loc.name AS homeground_name, loc.lat, loc.lon
+      INTO v_lobby
+      FROM public.lobby l
+      LEFT JOIN public.lobby_homeground plhg ON plhg.lobby_id = l.id AND plhg.is_primary
+      LEFT JOIN public.location loc ON loc.id = plhg.location_id
+     WHERE l.id = p_lobby_id
+       AND l.visibility <> 'private';
+
+    IF v_lobby IS NULL THEN
+        RETURN jsonb_build_object('valid', false, 'reason', 'not_found');
+    END IF;
+
+    SELECT count(*) INTO v_members
+      FROM public.lobby_member
+     WHERE lobby_id = p_lobby_id;
+
+    SELECT jsonb_build_object(
+        'male',    count(*) FILTER (WHERE u.details->>'gender' = 'male'),
+        'female',  count(*) FILTER (WHERE u.details->>'gender' = 'female'),
+        'unknown', count(*) FILTER (WHERE u.details->>'gender' IS NULL)
+    ) INTO v_gender
+      FROM public.lobby_member lm
+      JOIN public."user" u ON u.id = lm.user_id
+     WHERE lm.lobby_id = p_lobby_id;
+
+    SELECT coalesce(jsonb_object_agg(age_group, cnt), '{}'::jsonb) INTO v_age
+      FROM (
+          SELECT coalesce(u.details->>'ageGroup', 'unknown') AS age_group, count(*) AS cnt
+            FROM public.lobby_member lm
+            JOIN public."user" u ON u.id = lm.user_id
+           WHERE lm.lobby_id = p_lobby_id
+           GROUP BY 1
+      ) t;
+
+    SELECT coalesce(jsonb_agg(jsonb_build_object(
+               'id', network_id, 'name', name, 'category', category, 'count', cnt
+           ) ORDER BY cnt DESC), '[]'::jsonb) INTO v_networks
+      FROM (
+          SELECT n.id AS network_id, n.name, n.category, count(*) AS cnt
+            FROM public.lobby_member lm
+            JOIN public.user_network un ON un.user_id = lm.user_id
+            JOIN public.network n ON n.id = un.network_id
+           WHERE lm.lobby_id = p_lobby_id
+           GROUP BY n.id, n.name, n.category
+           ORDER BY cnt DESC
+           LIMIT 5
+      ) t;
+
+    SELECT coalesce(jsonb_agg(jsonb_build_object(
+               'industry_id', industry_id, 'count', cnt
+           ) ORDER BY cnt DESC), '[]'::jsonb) INTO v_industries
+      FROM (
+          SELECT ui.industry_id, count(*) AS cnt
+            FROM public.lobby_member lm
+            JOIN public.user_industry ui ON ui.user_id = lm.user_id
+           WHERE lm.lobby_id = p_lobby_id
+           GROUP BY ui.industry_id
+           ORDER BY cnt DESC
+           LIMIT 5
+      ) t;
+
+    SELECT coalesce(jsonb_agg(jsonb_build_object(
+               'id', gloc.id, 'name', gloc.name, 'lat', gloc.lat, 'lon', gloc.lon
+           ) ORDER BY gh.is_primary DESC, gh.created_at), '[]'::jsonb) INTO v_homegrounds
+      FROM public.lobby_homeground gh
+      JOIN public.location gloc ON gloc.id = gh.location_id
+     WHERE gh.lobby_id = p_lobby_id;
+
+    RETURN jsonb_build_object(
+        'valid', true,
+        'id', v_lobby.id,
+        'name', v_lobby.name,
+        'sport_id', v_lobby.sport_id,
+        'description', v_lobby.description,
+        'member_count', v_members,
+        'playtime', v_lobby.playtime,
+        'homeground_name', v_lobby.homeground_name,
+        'homeground_lat', v_lobby.lat,
+        'homeground_lon', v_lobby.lon,
+        'homegrounds', v_homegrounds,
+        'mmr', v_lobby.mmr,
+        'rated_match_count', v_lobby.rated_match_count,
+        'gender_breakdown', v_gender,
+        'age_group_breakdown', v_age,
+        'top_networks', v_networks,
+        'top_industries', v_industries
+    );
+END;
+$$;
+
+
+ALTER FUNCTION public.get_lobby_public_preview(p_lobby_id uuid) OWNER TO postgres;
 
 --
 -- Name: get_my_friend_ids(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -6796,13 +7202,17 @@ BEGIN
     CASE WHEN a.course_id IS NOT NULL THEN 'professional'
       WHEN a.freeplay_host_id IS NOT NULL THEN 'freeplay'
       WHEN a.lobby_id IS NOT NULL THEN 'lobby' ELSE 'self' END,
-    EXISTS(SELECT 1 FROM public.activity_confirmation ac
-           WHERE ac.activity_id = a.id AND ac.user_id = v_uid)
+    (EXISTS(SELECT 1 FROM public.activity_confirmation ac
+            WHERE ac.activity_id = a.id AND ac.user_id = v_uid)
+     OR EXISTS(SELECT 1 FROM public.freeplay_request r
+               WHERE r.activity_id = a.id AND r.user_id = v_uid AND r.status = 'accepted'))
   FROM public.activity a
   WHERE a.end_time IS NOT NULL AND a.end_time < now() AND a.end_time >= p_window_start
     AND (a.user_id = v_uid
       OR EXISTS(SELECT 1 FROM public.activity_confirmation ac
-                WHERE ac.activity_id = a.id AND ac.user_id = v_uid))
+                WHERE ac.activity_id = a.id AND ac.user_id = v_uid)
+      OR EXISTS(SELECT 1 FROM public.freeplay_request r
+                WHERE r.activity_id = a.id AND r.user_id = v_uid AND r.status = 'accepted'))
     AND NOT EXISTS(SELECT 1 FROM public.activity_health_metrics m
                    WHERE m.activity_id = a.id AND m.user_id = v_uid)
   ORDER BY a.end_time DESC;
@@ -6816,7 +7226,7 @@ ALTER FUNCTION public.health_capture_candidates(p_window_start timestamp with ti
 -- Name: home_challenger_lobby_data(uuid, bigint, integer, character varying[], text, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_search text DEFAULT NULL::text, p_mmr_window integer DEFAULT 200, p_page_size integer DEFAULT 10, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, name text, homeground_name text, playtime jsonb, details jsonb, visibility public.lobby_visibility, member_count integer, lobby_mmr integer, favorability text, profile_compat_score numeric, match_factors text[], offer_time timestamp with time zone, offer_location_name text, offer_cost numeric, rated_match_count integer)
+CREATE FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_search text DEFAULT NULL::text, p_mmr_window integer DEFAULT 200, p_page_size integer DEFAULT 10, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, name text, homeground_name text, playtime jsonb, details jsonb, description text, visibility public.lobby_visibility, member_count integer, lobby_mmr integer, favorability text, profile_compat_score numeric, match_factors text[], offer_time timestamp with time zone, offer_location_name text, offer_cost numeric, rated_match_count integer)
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
@@ -6838,7 +7248,7 @@ BEGIN
            loc.lat, loc.lon
       INTO v_mmr, v_net, v_active, v_ind, v_pt, v_lat, v_lon
       FROM public.lobby l
-      LEFT JOIN public.location loc ON l.home_ground = loc.id
+      LEFT JOIN public.location loc ON loc.id = public.lobby_primary_homeground_id(l.id)
      WHERE l.id = p_context_lobby_id;
     v_mmr := COALESCE(v_mmr, 1000);
 
@@ -6847,7 +7257,7 @@ BEGIN
         RETURN QUERY
         WITH candidate AS (
             SELECT
-                l.id, l.name, hloc.name AS homeground_name, l.playtime, l.details, l.visibility,
+                l.id, l.name, hloc.name AS homeground_name, l.playtime, l.details, l.description, l.visibility,
                 l.member_count, l.mmr AS cand_mmr,
                 l.network_ids, l.active_network_ids, l.industry_ids, l.playtime_keys,
                 l.challenge_offer_time, l.challenge_offer_cost, l.rated_match_count,
@@ -6855,7 +7265,7 @@ BEGIN
                 oloc.district, oloc.lat, oloc.lon
             FROM public.lobby l
             JOIN public.location oloc ON oloc.id = l.challenge_offer_location
-            LEFT JOIN public.location hloc ON hloc.id = l.home_ground
+            LEFT JOIN public.location hloc ON hloc.id = public.lobby_primary_homeground_id(l.id)
             WHERE l.sport_id = p_sport_id AND l.open_to_challengers AND l.visibility <> 'private'
               AND l.challenge_offer_time > now()
               AND l.id <> p_context_lobby_id
@@ -6890,7 +7300,7 @@ BEGIN
             FROM candidate c
         )
         SELECT
-            s.id, s.name::text, s.homeground_name::text, s.playtime, s.details, s.visibility,
+            s.id, s.name::text, s.homeground_name::text, s.playtime, s.details, s.description, s.visibility,
             s.member_count, s.cand_mmr AS lobby_mmr,
             CASE WHEN s.away_expected > 0.55 THEN 'favored'
                  WHEN s.away_expected < 0.45 THEN 'underdog'
@@ -6940,7 +7350,7 @@ BEGIN
     RETURN QUERY
     WITH candidate AS (
         SELECT
-            l.id, l.name, hloc.name AS homeground_name, l.playtime, l.details, l.visibility,
+            l.id, l.name, hloc.name AS homeground_name, l.playtime, l.details, l.description, l.visibility,
             l.member_count, l.mmr AS cand_mmr,
             l.network_ids, l.active_network_ids, l.industry_ids, l.playtime_keys,
             l.challenge_offer_time, l.challenge_offer_cost, l.rated_match_count,
@@ -6948,7 +7358,7 @@ BEGIN
             oloc.district, oloc.lat, oloc.lon
         FROM public.lobby l
         JOIN public.location oloc ON oloc.id = l.challenge_offer_location
-        LEFT JOIN public.location hloc ON hloc.id = l.home_ground
+        LEFT JOIN public.location hloc ON hloc.id = public.lobby_primary_homeground_id(l.id)
         WHERE l.sport_id = p_sport_id AND l.open_to_challengers AND l.visibility <> 'private'
           AND l.challenge_offer_time > now()
           AND oloc.city_cluster = p_city AND l.id <> p_context_lobby_id
@@ -6959,12 +7369,12 @@ BEGIN
         SELECT
             c.*,
             1.0 / (1.0 + power(10.0, ((c.cand_mmr + c_home_adv - v_mmr)::numeric / 400.0))) AS away_expected,
-            (c.network_ids && v_net) AS f_network,
+            (c.network_ids && v_net)            AS f_network,
             ((SELECT count(*) FROM (SELECT unnest(c.playtime_keys) INTERSECT SELECT unnest(v_pt)) x) > 0) AS f_playtime,
             ((c.district = ANY(p_districts))
                 OR (v_lat IS NOT NULL AND c.lat IS NOT NULL
                     AND abs(c.lat - v_lat) + abs(c.lon - v_lon) < 0.1)) AS f_location,
-            (c.industry_ids && v_ind) AS f_industry,
+            (c.industry_ids && v_ind)           AS f_industry,
             (
                 (CASE WHEN c.network_ids && v_net THEN 3 ELSE 0 END)
               + (CASE WHEN c.active_network_ids && v_active THEN 2 ELSE 0 END)
@@ -6979,7 +7389,7 @@ BEGIN
         FROM candidate c
     )
     SELECT
-        s.id, s.name::text, s.homeground_name::text, s.playtime, s.details, s.visibility,
+        s.id, s.name::text, s.homeground_name::text, s.playtime, s.details, s.description, s.visibility,
         s.member_count, s.cand_mmr AS lobby_mmr,
         CASE WHEN s.away_expected > 0.55 THEN 'favored'
              WHEN s.away_expected < 0.45 THEN 'underdog'
@@ -7009,15 +7419,18 @@ ALTER FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid, p_spor
 -- Name: home_freeplay_data(bigint, jsonb, integer, character varying[], text, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.home_freeplay_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_search text DEFAULT ''::text, p_page_size integer DEFAULT 20, p_page_number integer DEFAULT 1) RETURNS TABLE(activity_id uuid, host_id uuid, host_name text, host_avatar_url text, description text, start_time timestamp with time zone, end_time timestamp with time zone, location_id uuid, venue_name text, street_address text, city_cluster bigint, ward text, capacity integer, accepted_count bigint, male_price numeric, female_price numeric, recommended_skills text[], my_skill text, my_request_id uuid, my_request_status text)
+CREATE FUNCTION public.home_freeplay_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_search text DEFAULT ''::text, p_page_size integer DEFAULT 20, p_page_number integer DEFAULT 1) RETURNS TABLE(activity_id uuid, host_id uuid, host_name text, host_avatar_url text, owner_kind text, description text, start_time timestamp with time zone, end_time timestamp with time zone, location_id uuid, venue_name text, street_address text, city_cluster bigint, ward text, capacity integer, accepted_count bigint, male_price numeric, female_price numeric, recommended_skills text[], my_skill text, my_request_id uuid, my_request_status text)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
   WITH candidate AS (
-    SELECT a.id, a.freeplay_host_id, a.start_time, a.end_time, a.location_id,
+    SELECT a.id, a.start_time, a.end_time, a.location_id,
       a.created_at AS activity_created_at,
-      fa.description, fa.capacity, fa.male_price, fa.female_price,
-      fa.recommended_skills, h.display_name, h.avatar_url,
+      CASE WHEN a.freeplay_host_id IS NOT NULL THEN 'host' ELSE 'lobby' END AS owner_kind,
+      coalesce(a.freeplay_host_id, a.lobby_id) AS owner_id,
+      coalesce(h.display_name, l.name::text) AS owner_name,
+      h.avatar_url,
+      fa.description, fa.capacity, fa.male_price, fa.female_price, fa.recommended_skills,
       coalesce(loc.name,fa.venue_name) resolved_venue,
       coalesce(loc.full_address,fa.street_address) resolved_address,
       coalesce(loc.city_cluster,fa.city_cluster) resolved_city,
@@ -7029,24 +7442,32 @@ CREATE FUNCTION public.home_freeplay_data(p_sport_id bigint, p_timeslots jsonb, 
       CASE WHEN extract(hour FROM a.start_time AT TIME ZONE 'Asia/Ho_Chi_Minh')<9 THEN 'early'
         WHEN extract(hour FROM a.start_time AT TIME ZONE 'Asia/Ho_Chi_Minh')<14 THEN 'midday'
         WHEN extract(hour FROM a.start_time AT TIME ZONE 'Asia/Ho_Chi_Minh')<18 THEN 'noon' ELSE 'night' END slot_chunk
-    FROM public.activity a JOIN public.freeplay_activity fa ON fa.activity_id=a.id
-    JOIN public.freeplay_host h ON h.id=a.freeplay_host_id AND h.status='active'
+    FROM public.activity a
+    JOIN public.freeplay_activity fa ON fa.activity_id=a.id
+    LEFT JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
+    LEFT JOIN public.lobby l ON l.id=a.lobby_id
     LEFT JOIN public.location loc ON loc.id=a.location_id
     WHERE a.sport_id=p_sport_id AND a.end_time>now() AND a.start_time<=now()+interval '7 days'
       AND fa.cancelled_at IS NULL AND fa.intake_closed_at IS NULL
       AND coalesce(loc.city_cluster,fa.city_cluster)=p_city
-      AND (auth.uid() IS NULL OR NOT public.fn_is_blocked(auth.uid(),h.user_id))
+      AND (a.freeplay_host_id IS NULL OR h.status='active')
+      AND (a.lobby_id IS NULL OR l.visibility <> 'private')
+      AND (auth.uid() IS NULL OR NOT EXISTS(
+            SELECT 1 FROM unnest(coalesce(public.fn_freeplay_owner_user_ids(a.id),'{}'::uuid[])) o
+            WHERE public.fn_is_blocked(auth.uid(), o)))
   )
-  SELECT c.id,c.freeplay_host_id,c.display_name,c.avatar_url,c.description,c.start_time,c.end_time,c.location_id,
-    c.resolved_venue,c.resolved_address,c.resolved_city,c.resolved_ward,c.capacity,c.accepted,
-    c.male_price,c.female_price,c.recommended_skills,public.freeplay_user_skill(auth.uid(),p_sport_id),
-    mr.id,mr.status::text
+  SELECT c.id,c.owner_id,c.owner_name,c.avatar_url,c.owner_kind,c.description,c.start_time,c.end_time,
+    c.location_id,c.resolved_venue,c.resolved_address,c.resolved_city,c.resolved_ward,c.capacity,
+    c.accepted,c.male_price,c.female_price,c.recommended_skills,
+    public.freeplay_user_skill(auth.uid(),p_sport_id),mr.id,mr.status::text
   FROM candidate c
-  LEFT JOIN LATERAL (SELECT r.id,r.status FROM public.freeplay_request r WHERE r.activity_id=c.id AND r.user_id=auth.uid()
+  LEFT JOIN LATERAL (SELECT r.id,r.status FROM public.freeplay_request r
+    WHERE r.activity_id=c.id AND r.user_id=auth.uid()
     ORDER BY r.created_at DESC LIMIT 1) mr ON true
   WHERE c.accepted<c.capacity
     AND (coalesce(cardinality(p_districts),0)=0 OR c.resolved_ward=ANY(p_districts))
-    AND (coalesce(p_search,'')='' OR public.immutable_unaccent(c.display_name||' '||c.resolved_venue||' '||coalesce(c.resolved_address,''))
+    AND (coalesce(p_search,'')='' OR public.immutable_unaccent(
+        coalesce(c.owner_name,'')||' '||coalesce(c.resolved_venue,'')||' '||coalesce(c.resolved_address,''))
       ILIKE '%'||public.immutable_unaccent(p_search)||'%')
     AND (p_timeslots='{}'::jsonb OR coalesce((p_timeslots->c.slot_day) ? c.slot_chunk,false))
   ORDER BY c.start_time,c.activity_created_at
@@ -7159,7 +7580,7 @@ ALTER FUNCTION public.home_professional_data(p_sport_id bigint, p_timeslots json
 -- Name: home_teammate_lobby_data(bigint, jsonb, integer, character varying[], text, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_search text DEFAULT NULL::text, p_page_size integer DEFAULT 10, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, name text, homeground_name text, playtime jsonb, details jsonb, visibility public.lobby_visibility, member_count integer, timeslot_compat_score integer, profile_compat_score numeric, match_factors text[], already_requested boolean)
+CREATE FUNCTION public.home_teammate_lobby_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_search text DEFAULT NULL::text, p_page_size integer DEFAULT 10, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, name text, homeground_name text, playtime jsonb, details jsonb, description text, visibility public.lobby_visibility, member_count integer, timeslot_compat_score integer, profile_compat_score numeric, match_factors text[], already_requested boolean)
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
@@ -7176,6 +7597,7 @@ BEGIN
                 loc.name::text AS homeground_name,
                 l.playtime,
                 l.details,
+                l.description,
                 l.visibility,
                 l.member_count,
                 ts.ts_score AS timeslot_compat_score,
@@ -7193,8 +7615,8 @@ BEGIN
                 ) AS already_requested
             FROM
                 public.lobby l
-                    LEFT JOIN
-                public.location loc ON l.home_ground = loc.id
+                    LEFT JOIN public.lobby_homeground plhg ON plhg.lobby_id = l.id AND plhg.is_primary
+                    LEFT JOIN public.location loc ON loc.id = plhg.location_id
                     CROSS JOIN LATERAL (
                     SELECT public.calculate_timeslot_compat_score(p_timeslots, public.fn_playtime_to_dict(l.playtime)) AS ts_score
                     ) ts
@@ -7225,11 +7647,12 @@ BEGIN
         RETURN;
     END IF;
 
-    -- ── Non-search mode: existing logic, unchanged ──
+    -- ── Non-search mode: matches p_city/p_districts against ANY of the
+    -- lobby's homegrounds now (a lobby with none still passes through,
+    -- same as before) ──
     IF p_timeslots <> '{}'::jsonb THEN
         SELECT count(*) INTO v_cnt
         FROM public.lobby l
-        LEFT JOIN public.location loc ON l.home_ground = loc.id
         CROSS JOIN LATERAL (
             SELECT public.calculate_timeslot_compat_score(
                        p_timeslots, public.fn_playtime_to_dict(l.playtime)
@@ -7237,9 +7660,17 @@ BEGIN
         ) ts
         WHERE l.sport_id = p_sport_id
           AND l.visibility != 'private'
-          AND (loc.city_cluster = p_city OR loc.id IS NULL)
           AND l.id NOT IN (SELECT public.get_my_lobby_ids())
-          AND (p_districts IS NULL OR cardinality(p_districts) = 0 OR loc.district = ANY(p_districts))
+          AND (
+                NOT EXISTS (SELECT 1 FROM public.lobby_homeground gh WHERE gh.lobby_id = l.id)
+                OR EXISTS (
+                    SELECT 1 FROM public.lobby_homeground gh
+                    JOIN public.location gloc ON gloc.id = gh.location_id
+                    WHERE gh.lobby_id = l.id
+                      AND gloc.city_cluster = p_city
+                      AND (p_districts IS NULL OR cardinality(p_districts) = 0 OR gloc.district = ANY(p_districts))
+                )
+              )
           AND ts.ts_score >= v_ts_floor
           AND NOT EXISTS (
                 SELECT 1 FROM public.lobby_befriend_record r
@@ -7253,7 +7684,6 @@ BEGIN
             v_ts_floor := 2;
             SELECT count(*) INTO v_cnt
             FROM public.lobby l
-            LEFT JOIN public.location loc ON l.home_ground = loc.id
             CROSS JOIN LATERAL (
                 SELECT public.calculate_timeslot_compat_score(
                            p_timeslots, public.fn_playtime_to_dict(l.playtime)
@@ -7261,9 +7691,17 @@ BEGIN
             ) ts
             WHERE l.sport_id = p_sport_id
               AND l.visibility != 'private'
-              AND (loc.city_cluster = p_city OR loc.id IS NULL)
               AND l.id NOT IN (SELECT public.get_my_lobby_ids())
-              AND (p_districts IS NULL OR cardinality(p_districts) = 0 OR loc.district = ANY(p_districts))
+              AND (
+                    NOT EXISTS (SELECT 1 FROM public.lobby_homeground gh WHERE gh.lobby_id = l.id)
+                    OR EXISTS (
+                        SELECT 1 FROM public.lobby_homeground gh
+                        JOIN public.location gloc ON gloc.id = gh.location_id
+                        WHERE gh.lobby_id = l.id
+                          AND gloc.city_cluster = p_city
+                          AND (p_districts IS NULL OR cardinality(p_districts) = 0 OR gloc.district = ANY(p_districts))
+                    )
+                  )
               AND ts.ts_score >= v_ts_floor
               AND NOT EXISTS (
                     SELECT 1 FROM public.lobby_befriend_record r
@@ -7286,6 +7724,7 @@ BEGIN
             loc.name::text AS homeground_name,
             l.playtime,
             l.details,
+            l.description,
             l.visibility,
             l.member_count,
             ts.ts_score AS timeslot_compat_score,
@@ -7303,8 +7742,8 @@ BEGIN
             ) AS already_requested
         FROM
             public.lobby l
-                LEFT JOIN
-            public.location loc ON l.home_ground = loc.id
+                LEFT JOIN public.lobby_homeground plhg ON plhg.lobby_id = l.id AND plhg.is_primary
+                LEFT JOIN public.location loc ON loc.id = plhg.location_id
                 CROSS JOIN LATERAL (
                 SELECT public.calculate_timeslot_compat_score(p_timeslots, public.fn_playtime_to_dict(l.playtime)) AS ts_score
                 ) ts
@@ -7314,9 +7753,17 @@ BEGIN
         WHERE
             l.sport_id = p_sport_id
           AND l.visibility != 'private'
-          AND (loc.city_cluster = p_city OR loc.id IS NULL)
           AND l.id NOT IN (SELECT public.get_my_lobby_ids())
-          AND (p_districts IS NULL OR cardinality(p_districts) = 0 OR loc.district = ANY(p_districts))
+          AND (
+                NOT EXISTS (SELECT 1 FROM public.lobby_homeground gh WHERE gh.lobby_id = l.id)
+                OR EXISTS (
+                    SELECT 1 FROM public.lobby_homeground gh
+                    JOIN public.location gloc ON gloc.id = gh.location_id
+                    WHERE gh.lobby_id = l.id
+                      AND gloc.city_cluster = p_city
+                      AND (p_districts IS NULL OR cardinality(p_districts) = 0 OR gloc.district = ANY(p_districts))
+                )
+              )
           AND (p_timeslots = '{}'::jsonb OR ts.ts_score >= v_ts_floor)
           AND NOT EXISTS (
                 SELECT 1 FROM public.lobby_befriend_record r
@@ -7901,6 +8348,20 @@ $$;
 ALTER FUNCTION public.lobby_money_data(p_lobby_id uuid) OWNER TO postgres;
 
 --
+-- Name: lobby_primary_homeground_id(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.lobby_primary_homeground_id(p_lobby_id uuid) RETURNS uuid
+    LANGUAGE sql STABLE
+    SET search_path TO 'public'
+    AS $$
+  SELECT location_id FROM public.lobby_homeground WHERE lobby_id = p_lobby_id AND is_primary LIMIT 1;
+$$;
+
+
+ALTER FUNCTION public.lobby_primary_homeground_id(p_lobby_id uuid) OWNER TO postgres;
+
+--
 -- Name: mark_conversation_read(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -8098,7 +8559,7 @@ BEGIN
            COALESCE(loc.name, '')::text, 'sport'::text, a.recurrence_day_of_week
     FROM public.activity a
     JOIN public.lobby l ON l.id = a.lobby_id
-    LEFT JOIN public.location loc ON loc.id = COALESCE(a.location_id, l.home_ground)
+    LEFT JOIN public.location loc ON loc.id = COALESCE(a.location_id, public.lobby_primary_homeground_id(l.id))
     WHERE (p_sport_id IS NULL OR a.sport_id = p_sport_id)
       AND a.lobby_id IN (SELECT lobby_id FROM public.lobby_member WHERE user_id = v_uid)
       AND a.start_time >= p_from AND a.start_time <= p_to
@@ -8106,13 +8567,14 @@ BEGIN
     UNION ALL
 
     SELECT a.id, a.start_time, a.end_time,
-           coalesce(h.display_name, 'Xé vé')::text,
+           coalesce(h.display_name, l.name::text, 'Xé vé')::text,
            COALESCE(loc.name, fa.venue_name, '')::text, 'freeplay'::text,
            a.recurrence_day_of_week
     FROM public.activity a
     JOIN public.freeplay_activity fa ON fa.activity_id = a.id
     LEFT JOIN public.freeplay_host h ON h.id = a.freeplay_host_id
-    LEFT JOIN public.location loc ON loc.id = a.location_id
+    LEFT JOIN public.lobby l ON l.id = a.lobby_id
+    LEFT JOIN public.location loc ON loc.id = COALESCE(a.location_id, public.lobby_primary_homeground_id(l.id))
     WHERE (p_sport_id IS NULL OR a.sport_id = p_sport_id)
       AND a.start_time >= p_from AND a.start_time <= p_to
       AND EXISTS (SELECT 1 FROM public.freeplay_request r
@@ -8272,7 +8734,7 @@ ALTER FUNCTION public.postable_activities() OWNER TO postgres;
 -- Name: pro_courses_data(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.pro_courses_data() RETURNS TABLE(course_id uuid, conversation_id uuid, name text, status text, sport_id bigint, student_count integer, inquiring_count integer, target_session_count integer, held_session_count integer, next_activity_id uuid, next_start_time timestamp with time zone, last_message_at timestamp with time zone, last_message_body text, last_message_kind text, last_message_payload jsonb, unread_count integer, pending_proposal_count integer, pending_report_count integer, student_name text, student_user_id uuid, student_avatar text)
+CREATE FUNCTION public.pro_courses_data() RETURNS TABLE(course_id uuid, conversation_id uuid, name text, status text, sport_id bigint, student_count integer, inquiring_count integer, student_name text, student_user_id uuid, student_avatar text, target_session_count integer, held_session_count integer, next_activity_id uuid, next_start_time timestamp with time zone, last_message_at timestamp with time zone, last_message_body text, last_message_kind text, last_message_payload jsonb, unread_count integer, pending_proposal_count integer, pending_report_count integer)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -8281,6 +8743,7 @@ CREATE FUNCTION public.pro_courses_data() RETURNS TABLE(course_id uuid, conversa
           WHERE m.course_id = c.id AND m.status = 'enrolled'),
          (SELECT count(*)::integer FROM public.course_member m
           WHERE m.course_id = c.id AND m.status = 'inquiring'),
+         earliest.username, earliest.user_id, earliest.generated_avatar,
          c.target_session_count, public.fn_course_held_sessions(c.id),
          nxt.id, nxt.start_time,
          last_msg.created_at, last_msg.body, last_msg.kind::text, last_msg.payload,
@@ -8297,8 +8760,7 @@ CREATE FUNCTION public.pro_courses_data() RETURNS TABLE(course_id uuid, conversa
             AND coalesce(a.end_time, a.start_time) < now()
             AND ac.attendance = 'going'
             AND NOT EXISTS (SELECT 1 FROM public.course_session_report r
-                            WHERE r.activity_id = a.id AND r.student_id = ac.user_id)),
-         student.username, student.user_id, student.avatar
+                            WHERE r.activity_id = a.id AND r.student_id = ac.user_id))
   FROM public.course c
   JOIN public.professional p ON p.id = c.professional_id
   LEFT JOIN public.conversation conv ON conv.course_id = c.id
@@ -8314,14 +8776,12 @@ CREATE FUNCTION public.pro_courses_data() RETURNS TABLE(course_id uuid, conversa
     WHERE x.conversation_id = conv.id ORDER BY x.created_at DESC LIMIT 1
   ) last_msg ON true
   LEFT JOIN LATERAL (
-    SELECT cu.id AS user_id, cu.username::text AS username,
-           cu.details->>'generatedAvatar' AS avatar
+    SELECT u.username::text, m.user_id, u.details->>'generatedAvatar' AS generated_avatar
     FROM public.course_member m
-    JOIN public."user" cu ON cu.id = m.user_id
+    JOIN public."user" u ON u.id = m.user_id
     WHERE m.course_id = c.id AND m.left_at IS NULL
-    ORDER BY m.joined_at ASC
-    LIMIT 1
-  ) student ON true
+    ORDER BY m.joined_at LIMIT 1
+  ) earliest ON true
   WHERE p.linked_user_id = auth.uid()
   ORDER BY coalesce(last_msg.created_at, c.created_at) DESC;
 $$;
@@ -8765,18 +9225,36 @@ CREATE FUNCTION public.request_freeplay_seat(p_activity_id uuid, p_message text 
     SET search_path TO ''
     AS $$
 DECLARE v_uid uuid:=auth.uid(); v_row record; v_gender text; v_skill text; v_id uuid;
-        v_count integer; v_conversation uuid;
+        v_count integer; v_conversation uuid; v_owners uuid[];
 BEGIN
   IF v_uid IS NULL THEN RAISE EXCEPTION 'authentication required'; END IF;
-  SELECT a.sport_id,a.end_time,fa.capacity,fa.male_price,fa.female_price,fa.intake_closed_at,fa.cancelled_at,
-    h.user_id host_user_id INTO v_row
-  FROM public.activity a JOIN public.freeplay_activity fa ON fa.activity_id=a.id
-  JOIN public.freeplay_host h ON h.id=a.freeplay_host_id AND h.status='active'
+  SELECT a.sport_id, a.end_time, a.lobby_id, fa.capacity, fa.male_price, fa.female_price,
+    fa.intake_closed_at, fa.cancelled_at,
+    (a.freeplay_host_id IS NULL OR h.status='active') AS host_ok,
+    (a.lobby_id IS NULL OR l.visibility <> 'private') AS lobby_ok
+  INTO v_row
+  FROM public.activity a
+  JOIN public.freeplay_activity fa ON fa.activity_id=a.id
+  LEFT JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
+  LEFT JOIN public.lobby l ON l.id=a.lobby_id
   WHERE a.id=p_activity_id FOR UPDATE OF fa;
-  IF NOT FOUND OR v_row.cancelled_at IS NOT NULL OR v_row.end_time<=now() OR v_row.intake_closed_at IS NOT NULL THEN
+  IF NOT FOUND OR v_row.cancelled_at IS NOT NULL OR v_row.end_time<=now()
+     OR v_row.intake_closed_at IS NOT NULL OR NOT v_row.host_ok OR NOT v_row.lobby_ok THEN
     RAISE EXCEPTION 'activity is not accepting requests';
   END IF;
-  IF v_uid=v_row.host_user_id OR public.fn_is_blocked(v_uid,v_row.host_user_id) THEN RAISE EXCEPTION 'request not allowed'; END IF;
+
+  v_owners := coalesce(public.fn_freeplay_owner_user_ids(p_activity_id), '{}'::uuid[]);
+  IF v_uid = ANY(v_owners) THEN RAISE EXCEPTION 'request not allowed'; END IF;
+  IF EXISTS(SELECT 1 FROM unnest(v_owners) o WHERE public.fn_is_blocked(v_uid, o)) THEN
+    RAISE EXCEPTION 'request not allowed';
+  END IF;
+  -- A member of the lobby is already an attendee: they RSVP, they don't buy a seat.
+  IF v_row.lobby_id IS NOT NULL AND EXISTS(
+       SELECT 1 FROM public.lobby_member m
+       WHERE m.lobby_id=v_row.lobby_id AND m.user_id=v_uid) THEN
+    RAISE EXCEPTION 'lobby members join by RSVP, not by seat request';
+  END IF;
+
   IF EXISTS(SELECT 1 FROM public.freeplay_request WHERE activity_id=p_activity_id AND user_id=v_uid AND status='declined') THEN
     RAISE EXCEPTION 'declined request is terminal';
   END IF;
@@ -8785,6 +9263,7 @@ BEGIN
   END IF;
   SELECT count(*) INTO v_count FROM public.freeplay_request WHERE activity_id=p_activity_id AND status='accepted';
   IF v_count>=v_row.capacity THEN RAISE EXCEPTION 'activity is full'; END IF;
+
   SELECT coalesce(details->>'gender','male') INTO v_gender FROM public."user" WHERE id=v_uid;
   IF v_gender NOT IN ('male','female') THEN v_gender:='male'; END IF;
   v_skill:=public.freeplay_user_skill(v_uid,v_row.sport_id);
@@ -8798,9 +9277,11 @@ BEGIN
     VALUES(v_conversation,v_uid,'text',btrim(p_message));
   END IF;
 
-  PERFORM public.fn_enqueue_notification('freeplay_request_received',ARRAY[v_row.host_user_id],
-    'Yêu cầu Xé vé mới','Có người muốn tham gia buổi chơi của bạn.',
-    jsonb_build_object('activity_id',p_activity_id,'request_id',v_id));
+  IF cardinality(v_owners) > 0 THEN
+    PERFORM public.fn_enqueue_notification('freeplay_request_received', v_owners,
+      'Yêu cầu Xé vé mới','Có người muốn tham gia buổi chơi của bạn.',
+      jsonb_build_object('activity_id',p_activity_id,'request_id',v_id));
+  END IF;
   RETURN v_id;
 END
 $$;
@@ -9376,30 +9857,44 @@ CREATE FUNCTION public.respond_freeplay_request(p_request_id uuid, p_accept bool
     AS $$
 DECLARE v_uid uuid:=auth.uid(); v_row record; v_count integer; v_conversation uuid;
 BEGIN
-  SELECT r.*,fa.capacity,a.end_time,h.user_id host_user_id INTO v_row
-  FROM public.freeplay_request r JOIN public.freeplay_activity fa ON fa.activity_id=r.activity_id
-  JOIN public.activity a ON a.id=r.activity_id JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
-  WHERE r.id=p_request_id AND h.user_id=v_uid FOR UPDATE OF r,fa;
-  IF NOT FOUND OR v_row.status<>'pending' THEN RAISE EXCEPTION 'pending request not found'; END IF;
+  SELECT r.*, fa.capacity, a.end_time, a.lobby_id INTO v_row
+  FROM public.freeplay_request r
+  JOIN public.freeplay_activity fa ON fa.activity_id=r.activity_id
+  JOIN public.activity a ON a.id=r.activity_id
+  WHERE r.id=p_request_id FOR UPDATE OF r,fa;
+  IF NOT FOUND OR NOT public.fn_freeplay_can_manage(v_row.activity_id, v_uid) THEN
+    RAISE EXCEPTION 'pending request not found';
+  END IF;
+  IF v_row.status<>'pending' THEN RAISE EXCEPTION 'pending request not found'; END IF;
   IF v_row.end_time<=now() THEN RAISE EXCEPTION 'activity ended'; END IF;
+
   v_conversation := public.fn_ensure_freeplay_conversation(p_request_id);
+  PERFORM public.fn_sync_freeplay_conversation_members(p_request_id);
+
   IF p_accept THEN
     SELECT count(*) INTO v_count FROM public.freeplay_request WHERE activity_id=v_row.activity_id AND status='accepted';
     IF v_count>=v_row.capacity THEN RAISE EXCEPTION 'activity is full'; END IF;
     UPDATE public.freeplay_request SET status='accepted',resolved_at=now(),updated_at=now() WHERE id=p_request_id;
-    INSERT INTO public.activity_confirmation(activity_id,user_id,attendance)
-    VALUES(v_row.activity_id,v_row.user_id,'going') ON CONFLICT(activity_id,user_id)
-    DO UPDATE SET attendance='going',confirmed_at=now();
+    -- Lobby listings deliberately create NO confirmation row: that row is the
+    -- lobby's own commitment quorum and bill-split basis, and an outside guest
+    -- must not move either. Their seat lives in `freeplay_request`.
+    IF v_row.lobby_id IS NULL THEN
+      INSERT INTO public.activity_confirmation(activity_id,user_id,attendance)
+      VALUES(v_row.activity_id,v_row.user_id,'going') ON CONFLICT(activity_id,user_id)
+      DO UPDATE SET attendance='going',confirmed_at=now();
+    END IF;
     INSERT INTO public.message(conversation_id,kind,body)
     VALUES(v_conversation,'system','request_accepted');
     PERFORM public.fn_enqueue_notification('freeplay_request_accepted',ARRAY[v_row.user_id],
-      'Đã nhận chỗ Xé vé','Host đã duyệt yêu cầu của bạn.',jsonb_build_object('activity_id',v_row.activity_id,'request_id',p_request_id));
+      'Đã nhận chỗ Xé vé','Yêu cầu của bạn đã được duyệt.',
+      jsonb_build_object('activity_id',v_row.activity_id,'request_id',p_request_id));
   ELSE
     UPDATE public.freeplay_request SET status='declined',resolved_at=now(),updated_at=now() WHERE id=p_request_id;
     INSERT INTO public.message(conversation_id,kind,body)
     VALUES(v_conversation,'system','request_declined');
     PERFORM public.fn_enqueue_notification('freeplay_request_declined',ARRAY[v_row.user_id],
-      'Yêu cầu Xé vé bị từ chối','Host đã từ chối yêu cầu của bạn.',jsonb_build_object('activity_id',v_row.activity_id,'request_id',p_request_id));
+      'Yêu cầu Xé vé bị từ chối','Yêu cầu của bạn đã bị từ chối.',
+      jsonb_build_object('activity_id',v_row.activity_id,'request_id',p_request_id));
   END IF;
 END
 $$;
@@ -9888,14 +10383,19 @@ CREATE FUNCTION public.set_freeplay_intake(p_activity_id uuid, p_closed boolean)
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid:=auth.uid(); v_start timestamptz;
+DECLARE v_start timestamptz;
 BEGIN
-  SELECT a.start_time INTO v_start FROM public.activity a JOIN public.freeplay_host h ON h.id=a.freeplay_host_id
-  WHERE a.id=p_activity_id AND h.user_id=v_uid;
+  IF NOT public.fn_freeplay_can_manage(p_activity_id, auth.uid()) THEN
+    RAISE EXCEPTION 'activity not found or not owned';
+  END IF;
+  SELECT a.start_time INTO v_start
+  FROM public.activity a JOIN public.freeplay_activity fa ON fa.activity_id = a.id
+  WHERE a.id = p_activity_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'activity not found or not owned'; END IF;
-  IF NOT p_closed AND now()>=v_start THEN RAISE EXCEPTION 'cannot reopen after activity starts'; END IF;
-  UPDATE public.freeplay_activity SET intake_closed_at=CASE WHEN p_closed THEN now() END,updated_at=now()
-  WHERE activity_id=p_activity_id AND cancelled_at IS NULL;
+  IF NOT p_closed AND now() >= v_start THEN RAISE EXCEPTION 'cannot reopen after activity starts'; END IF;
+  UPDATE public.freeplay_activity SET intake_closed_at = CASE WHEN p_closed THEN now() END,
+    updated_at = now()
+  WHERE activity_id = p_activity_id AND cancelled_at IS NULL;
 END
 $$;
 
@@ -10539,7 +11039,8 @@ CREATE FUNCTION public.update_freeplay_activity(p_activity_id uuid, p_start_time
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid := auth.uid(); v_row record; v_has_requests boolean; v_loc_city bigint; v_loc_ward text;
+DECLARE v_uid uuid := auth.uid(); v_row record; v_has_requests boolean;
+        v_loc_city bigint; v_loc_ward text;
 BEGIN
   SELECT a.*, fa.capacity, fa.male_price, fa.female_price, fa.cancelled_at
   INTO v_row FROM public.activity a JOIN public.freeplay_activity fa ON fa.activity_id=a.id
@@ -10568,7 +11069,8 @@ BEGIN
     male_price=p_male_price,female_price=p_female_price,recommended_skills=p_recommended_skills,
     venue_name=CASE WHEN p_location_id IS NULL THEN btrim(p_venue_name) END,
     street_address=CASE WHEN p_location_id IS NULL THEN btrim(p_street_address) END,
-    city_cluster=coalesce(p_city_cluster,v_loc_city),ward=CASE WHEN p_location_id IS NULL THEN p_ward ELSE v_loc_ward END,
+    city_cluster=CASE WHEN p_location_id IS NULL THEN p_city_cluster END,
+    ward=CASE WHEN p_location_id IS NULL THEN btrim(p_ward) END,
     updated_at=now() WHERE activity_id=p_activity_id;
 END
 $$;
@@ -10577,18 +11079,19 @@ $$;
 ALTER FUNCTION public.update_freeplay_activity(p_activity_id uuid, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid, p_venue_name text, p_street_address text, p_city_cluster bigint, p_ward text) OWNER TO postgres;
 
 --
--- Name: update_lobby(uuid, text, text, jsonb, jsonb, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: update_lobby(uuid, text, text, jsonb, jsonb, uuid[], text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb DEFAULT NULL::jsonb, p_details jsonb DEFAULT NULL::jsonb, p_home_ground_id uuid DEFAULT NULL::uuid) RETURNS void
+CREATE FUNCTION public.update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb DEFAULT NULL::jsonb, p_details jsonb DEFAULT NULL::jsonb, p_home_ground_ids uuid[] DEFAULT NULL::uuid[], p_description text DEFAULT NULL::text) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM public.lobby WHERE id = p_lobby_id AND captain_id = auth.uid()
-    ) THEN
-        RAISE EXCEPTION 'update_lobby: caller is not the lobby captain';
+    IF NOT public.lobby_can_manage(p_lobby_id, auth.uid()) THEN
+        RAISE EXCEPTION 'update_lobby: caller is not authorized to manage this lobby';
+    END IF;
+    IF p_home_ground_ids IS NOT NULL AND cardinality(p_home_ground_ids) > 5 THEN
+        RAISE EXCEPTION 'update_lobby: at most 5 homegrounds allowed';
     END IF;
 
     UPDATE public.lobby
@@ -10596,13 +11099,21 @@ BEGIN
         visibility  = p_visibility::public.lobby_visibility,
         playtime    = p_playtime,
         details     = p_details,
-        home_ground = p_home_ground_id
+        description = NULLIF(p_description, '')
     WHERE id = p_lobby_id;
+
+    DELETE FROM public.lobby_homeground WHERE lobby_id = p_lobby_id;
+    IF p_home_ground_ids IS NOT NULL AND cardinality(p_home_ground_ids) > 0 THEN
+        INSERT INTO public.lobby_homeground (lobby_id, location_id, is_primary)
+        SELECT p_lobby_id, loc_id, (ord = 1)
+          FROM unnest(p_home_ground_ids) WITH ORDINALITY AS t(loc_id, ord)
+        ON CONFLICT (lobby_id, location_id) DO NOTHING;
+    END IF;
 END;
 $$;
 
 
-ALTER FUNCTION public.update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid) OWNER TO postgres;
+ALTER FUNCTION public.update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_ids uuid[], p_description text) OWNER TO postgres;
 
 --
 -- Name: user_level_summary(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -14153,7 +14664,6 @@ CREATE TABLE public.lobby (
     sport_id bigint NOT NULL,
     playtime jsonb,
     details jsonb,
-    home_ground uuid,
     visibility public.lobby_visibility DEFAULT 'discoverable'::public.lobby_visibility,
     open_to_challengers boolean DEFAULT false NOT NULL,
     mmr integer DEFAULT 1000 NOT NULL,
@@ -14166,7 +14676,9 @@ CREATE TABLE public.lobby (
     challenge_offer_location uuid,
     challenge_offer_cost numeric(10,2),
     rated_match_count integer DEFAULT 0 NOT NULL,
-    CONSTRAINT lobby_challenge_offer_complete CHECK (((NOT open_to_challengers) OR ((challenge_offer_time IS NOT NULL) AND (challenge_offer_location IS NOT NULL) AND (challenge_offer_cost IS NOT NULL))))
+    description text,
+    CONSTRAINT lobby_challenge_offer_complete CHECK (((NOT open_to_challengers) OR ((challenge_offer_time IS NOT NULL) AND (challenge_offer_location IS NOT NULL) AND (challenge_offer_cost IS NOT NULL)))),
+    CONSTRAINT lobby_description_length CHECK (((description IS NULL) OR (char_length(description) <= 3000)))
 );
 
 
@@ -14285,6 +14797,20 @@ ALTER TABLE public.lobby_feed_poll_vote OWNER TO postgres;
 
 COMMENT ON TABLE public.lobby_feed_poll_vote IS 'Member votes against a feed-item poll. option_index points into the payload.options array of the parent lobby_feed_item.';
 
+
+--
+-- Name: lobby_homeground; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.lobby_homeground (
+    lobby_id uuid NOT NULL,
+    location_id uuid NOT NULL,
+    is_primary boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.lobby_homeground OWNER TO postgres;
 
 --
 -- Name: lobby_invite_link; Type: TABLE; Schema: public; Owner: postgres
@@ -15267,7 +15793,8 @@ CREATE TABLE realtime.messages (
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    binary_payload bytea
+    binary_payload bytea,
+    skip_broadcast boolean DEFAULT false NOT NULL
 )
 PARTITION BY RANGE (inserted_at);
 
@@ -15275,10 +15802,10 @@ PARTITION BY RANGE (inserted_at);
 ALTER TABLE realtime.messages OWNER TO supabase_realtime_admin;
 
 --
--- Name: messages_2026_08_12; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_06; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-CREATE TABLE realtime.messages_2026_08_12 (
+CREATE TABLE realtime.messages_2026_09_06 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -15288,17 +15815,18 @@ CREATE TABLE realtime.messages_2026_08_12 (
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     binary_payload bytea,
+    skip_broadcast boolean DEFAULT false NOT NULL,
     CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
-ALTER TABLE realtime.messages_2026_08_12 OWNER TO supabase_realtime_admin;
+ALTER TABLE realtime.messages_2026_09_06 OWNER TO supabase_realtime_admin;
 
 --
--- Name: messages_2026_08_13; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_07; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-CREATE TABLE realtime.messages_2026_08_13 (
+CREATE TABLE realtime.messages_2026_09_07 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -15308,17 +15836,18 @@ CREATE TABLE realtime.messages_2026_08_13 (
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     binary_payload bytea,
+    skip_broadcast boolean DEFAULT false NOT NULL,
     CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
-ALTER TABLE realtime.messages_2026_08_13 OWNER TO supabase_realtime_admin;
+ALTER TABLE realtime.messages_2026_09_07 OWNER TO supabase_realtime_admin;
 
 --
--- Name: messages_2026_08_14; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_08; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-CREATE TABLE realtime.messages_2026_08_14 (
+CREATE TABLE realtime.messages_2026_09_08 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -15328,17 +15857,18 @@ CREATE TABLE realtime.messages_2026_08_14 (
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     binary_payload bytea,
+    skip_broadcast boolean DEFAULT false NOT NULL,
     CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
-ALTER TABLE realtime.messages_2026_08_14 OWNER TO supabase_realtime_admin;
+ALTER TABLE realtime.messages_2026_09_08 OWNER TO supabase_realtime_admin;
 
 --
--- Name: messages_2026_08_15; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_09; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-CREATE TABLE realtime.messages_2026_08_15 (
+CREATE TABLE realtime.messages_2026_09_09 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -15348,17 +15878,18 @@ CREATE TABLE realtime.messages_2026_08_15 (
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     binary_payload bytea,
+    skip_broadcast boolean DEFAULT false NOT NULL,
     CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
-ALTER TABLE realtime.messages_2026_08_15 OWNER TO supabase_realtime_admin;
+ALTER TABLE realtime.messages_2026_09_09 OWNER TO supabase_realtime_admin;
 
 --
--- Name: messages_2026_08_16; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_10; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-CREATE TABLE realtime.messages_2026_08_16 (
+CREATE TABLE realtime.messages_2026_09_10 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -15368,51 +15899,12 @@ CREATE TABLE realtime.messages_2026_08_16 (
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     binary_payload bytea,
+    skip_broadcast boolean DEFAULT false NOT NULL,
     CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
-ALTER TABLE realtime.messages_2026_08_16 OWNER TO supabase_realtime_admin;
-
---
--- Name: messages_2026_08_17; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
---
-
-CREATE TABLE realtime.messages_2026_08_17 (
-    topic text NOT NULL,
-    extension text NOT NULL,
-    payload jsonb,
-    event text,
-    private boolean DEFAULT false,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL,
-    inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    binary_payload bytea,
-    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
-);
-
-
-ALTER TABLE realtime.messages_2026_08_17 OWNER TO supabase_realtime_admin;
-
---
--- Name: messages_2026_08_18; Type: TABLE; Schema: realtime; Owner: supabase_realtime_admin
---
-
-CREATE TABLE realtime.messages_2026_08_18 (
-    topic text NOT NULL,
-    extension text NOT NULL,
-    payload jsonb,
-    event text,
-    private boolean DEFAULT false,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL,
-    inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    binary_payload bytea,
-    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
-);
-
-
-ALTER TABLE realtime.messages_2026_08_18 OWNER TO supabase_realtime_admin;
+ALTER TABLE realtime.messages_2026_09_10 OWNER TO supabase_realtime_admin;
 
 --
 -- Name: schema_migrations; Type: TABLE; Schema: realtime; Owner: supabase_admin
@@ -15657,52 +16149,38 @@ CREATE TABLE supabase_migrations.seed_files (
 ALTER TABLE supabase_migrations.seed_files OWNER TO postgres;
 
 --
--- Name: messages_2026_08_12; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_06; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_12 FOR VALUES FROM ('2026-08-12 00:00:00') TO ('2026-08-13 00:00:00');
-
-
---
--- Name: messages_2026_08_13; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_13 FOR VALUES FROM ('2026-08-13 00:00:00') TO ('2026-08-14 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_09_06 FOR VALUES FROM ('2026-09-06 00:00:00') TO ('2026-09-07 00:00:00');
 
 
 --
--- Name: messages_2026_08_14; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_07; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_14 FOR VALUES FROM ('2026-08-14 00:00:00') TO ('2026-08-15 00:00:00');
-
-
---
--- Name: messages_2026_08_15; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_15 FOR VALUES FROM ('2026-08-15 00:00:00') TO ('2026-08-16 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_09_07 FOR VALUES FROM ('2026-09-07 00:00:00') TO ('2026-09-08 00:00:00');
 
 
 --
--- Name: messages_2026_08_16; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_08; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_16 FOR VALUES FROM ('2026-08-16 00:00:00') TO ('2026-08-17 00:00:00');
-
-
---
--- Name: messages_2026_08_17; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_17 FOR VALUES FROM ('2026-08-17 00:00:00') TO ('2026-08-18 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_09_08 FOR VALUES FROM ('2026-09-08 00:00:00') TO ('2026-09-09 00:00:00');
 
 
 --
--- Name: messages_2026_08_18; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_09; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_18 FOR VALUES FROM ('2026-08-18 00:00:00') TO ('2026-08-19 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_09_09 FOR VALUES FROM ('2026-09-09 00:00:00') TO ('2026-09-10 00:00:00');
+
+
+--
+-- Name: messages_2026_09_10; Type: TABLE ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_09_10 FOR VALUES FROM ('2026-09-10 00:00:00') TO ('2026-09-11 00:00:00');
 
 
 --
@@ -16256,6 +16734,14 @@ ALTER TABLE ONLY public.lobby_feed_poll_vote
 
 
 --
+-- Name: lobby_homeground lobby_homeground_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_homeground
+    ADD CONSTRAINT lobby_homeground_pkey PRIMARY KEY (lobby_id, location_id);
+
+
+--
 -- Name: lobby_invite_link lobby_invite_link_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -16720,59 +17206,43 @@ ALTER TABLE ONLY realtime.messages
 
 
 --
--- Name: messages_2026_08_12 messages_2026_08_12_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_06 messages_2026_09_06_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER TABLE ONLY realtime.messages_2026_08_12
-    ADD CONSTRAINT messages_2026_08_12_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_08_13 messages_2026_08_13_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
---
-
-ALTER TABLE ONLY realtime.messages_2026_08_13
-    ADD CONSTRAINT messages_2026_08_13_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_09_06
+    ADD CONSTRAINT messages_2026_09_06_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_08_14 messages_2026_08_14_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_07 messages_2026_09_07_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER TABLE ONLY realtime.messages_2026_08_14
-    ADD CONSTRAINT messages_2026_08_14_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_08_15 messages_2026_08_15_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
---
-
-ALTER TABLE ONLY realtime.messages_2026_08_15
-    ADD CONSTRAINT messages_2026_08_15_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_09_07
+    ADD CONSTRAINT messages_2026_09_07_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_08_16 messages_2026_08_16_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_08 messages_2026_09_08_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER TABLE ONLY realtime.messages_2026_08_16
-    ADD CONSTRAINT messages_2026_08_16_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_08_17 messages_2026_08_17_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
---
-
-ALTER TABLE ONLY realtime.messages_2026_08_17
-    ADD CONSTRAINT messages_2026_08_17_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_09_08
+    ADD CONSTRAINT messages_2026_09_08_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_08_18 messages_2026_08_18_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_09 messages_2026_09_09_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER TABLE ONLY realtime.messages_2026_08_18
-    ADD CONSTRAINT messages_2026_08_18_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_09_09
+    ADD CONSTRAINT messages_2026_09_09_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_09_10 messages_2026_09_10_pkey; Type: CONSTRAINT; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+ALTER TABLE ONLY realtime.messages_2026_09_10
+    ADD CONSTRAINT messages_2026_09_10_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
@@ -17610,10 +18080,10 @@ CREATE INDEX idx_lobby_captain_id ON public.lobby USING btree (captain_id);
 
 
 --
--- Name: idx_lobby_home_ground; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_lobby_homeground_location; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX idx_lobby_home_ground ON public.lobby USING btree (home_ground);
+CREATE INDEX idx_lobby_homeground_location ON public.lobby_homeground USING btree (location_id);
 
 
 --
@@ -17824,6 +18294,13 @@ CREATE UNIQUE INDEX lobby_feed_item_one_late_per_activity_idx ON public.lobby_fe
 --
 
 CREATE UNIQUE INDEX lobby_feed_item_one_note_per_activity_idx ON public.lobby_feed_item USING btree (activity_id, author_id) WHERE ((kind = 'personal'::public.lobby_feed_item_kind) AND ((payload ->> 'action_kind'::text) = 'note'::text));
+
+
+--
+-- Name: lobby_homeground_one_primary_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX lobby_homeground_one_primary_idx ON public.lobby_homeground USING btree (lobby_id) WHERE is_primary;
 
 
 --
@@ -18058,52 +18535,38 @@ CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING bt
 
 
 --
--- Name: messages_2026_08_12_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_06_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-CREATE INDEX messages_2026_08_12_inserted_at_topic_idx ON realtime.messages_2026_08_12 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_08_13_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
---
-
-CREATE INDEX messages_2026_08_13_inserted_at_topic_idx ON realtime.messages_2026_08_13 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_09_06_inserted_at_topic_idx ON realtime.messages_2026_09_06 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_08_14_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_07_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-CREATE INDEX messages_2026_08_14_inserted_at_topic_idx ON realtime.messages_2026_08_14 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_08_15_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
---
-
-CREATE INDEX messages_2026_08_15_inserted_at_topic_idx ON realtime.messages_2026_08_15 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_09_07_inserted_at_topic_idx ON realtime.messages_2026_09_07 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_08_16_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_08_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-CREATE INDEX messages_2026_08_16_inserted_at_topic_idx ON realtime.messages_2026_08_16 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_08_17_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
---
-
-CREATE INDEX messages_2026_08_17_inserted_at_topic_idx ON realtime.messages_2026_08_17 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_09_08_inserted_at_topic_idx ON realtime.messages_2026_09_08 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_08_18_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_09_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-CREATE INDEX messages_2026_08_18_inserted_at_topic_idx ON realtime.messages_2026_08_18 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_09_09_inserted_at_topic_idx ON realtime.messages_2026_09_09 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_09_10_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+CREATE INDEX messages_2026_09_10_inserted_at_topic_idx ON realtime.messages_2026_09_10 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
@@ -18156,10 +18619,31 @@ CREATE INDEX idx_objects_bucket_id_name_lower ON storage.objects USING btree (bu
 
 
 --
+-- Name: idx_objects_current_version; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
+--
+
+CREATE UNIQUE INDEX idx_objects_current_version ON storage.objects USING btree (bucket_id, name COLLATE "C") WHERE (archived_at IS NULL);
+
+
+--
+-- Name: idx_objects_null_version; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
+--
+
+CREATE UNIQUE INDEX idx_objects_null_version ON storage.objects USING btree (bucket_id, name COLLATE "C") WHERE (NOT is_versioned);
+
+
+--
 -- Name: name_prefix_search; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
 --
 
 CREATE INDEX name_prefix_search ON storage.objects USING btree (name text_pattern_ops);
+
+
+--
+-- Name: objects_bucket_id_name_version_key; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
+--
+
+CREATE UNIQUE INDEX objects_bucket_id_name_version_key ON storage.objects USING btree (bucket_id, name COLLATE "C", version) NULLS NOT DISTINCT;
 
 
 --
@@ -18170,101 +18654,73 @@ CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes 
 
 
 --
--- Name: messages_2026_08_12_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_06_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_12_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_12_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_12_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_09_06_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_08_13_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_06_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_13_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_13_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_13_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_09_06_pkey;
 
 
 --
--- Name: messages_2026_08_14_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_07_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_14_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_14_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_14_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_09_07_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_08_15_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_07_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_15_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_15_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_15_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_09_07_pkey;
 
 
 --
--- Name: messages_2026_08_16_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_08_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_16_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_16_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_16_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_09_08_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_08_17_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_08_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_17_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_17_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_17_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_09_08_pkey;
 
 
 --
--- Name: messages_2026_08_18_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_09_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_18_inserted_at_topic_idx;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_09_09_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_08_18_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: messages_2026_09_09_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_18_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_09_09_pkey;
+
+
+--
+-- Name: messages_2026_09_10_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_09_10_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_09_10_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_09_10_pkey;
 
 
 --
@@ -18316,6 +18772,20 @@ CREATE TRIGGER activity_course_write_guard BEFORE INSERT OR UPDATE ON public.act
 
 
 --
+-- Name: activity activity_freeplay_cancel_cascade; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER activity_freeplay_cancel_cascade BEFORE DELETE ON public.activity FOR EACH ROW EXECUTE FUNCTION public.fn_activity_freeplay_cancel_cascade();
+
+
+--
+-- Name: activity activity_freeplay_lock; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER activity_freeplay_lock BEFORE UPDATE ON public.activity FOR EACH ROW EXECUTE FUNCTION public.fn_activity_freeplay_lock();
+
+
+--
 -- Name: activity activity_scheduled_emit; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -18348,6 +18818,13 @@ CREATE TRIGGER basketball_elo_seed AFTER INSERT OR UPDATE OF elo_seed ON public.
 --
 
 CREATE TRIGGER fill_payment_request_recipient BEFORE INSERT OR UPDATE OF feed_item_id, user_id ON public.lobby_payment_request_payee FOR EACH ROW EXECUTE FUNCTION public.fn_fill_payment_request_recipient();
+
+
+--
+-- Name: freeplay_activity freeplay_activity_owner_guard; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER freeplay_activity_owner_guard BEFORE INSERT ON public.freeplay_activity FOR EACH ROW EXECUTE FUNCTION public.fn_freeplay_activity_owner_guard();
 
 
 --
@@ -18460,6 +18937,13 @@ CREATE TRIGGER lobby_member_recompute_stats AFTER INSERT OR DELETE OR UPDATE ON 
 --
 
 CREATE TRIGGER lobby_playtime_keys_biu BEFORE INSERT OR UPDATE OF playtime ON public.lobby FOR EACH ROW EXECUTE FUNCTION public.trg_lobby_playtime_keys();
+
+
+--
+-- Name: lobby lobby_private_freeplay_guard; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER lobby_private_freeplay_guard BEFORE UPDATE ON public.lobby FOR EACH ROW EXECUTE FUNCTION public.fn_lobby_private_freeplay_guard();
 
 
 --
@@ -19260,11 +19744,19 @@ ALTER TABLE ONLY public.lobby_feed_poll_vote
 
 
 --
--- Name: lobby lobby_home_ground_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lobby_homeground lobby_homeground_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.lobby
-    ADD CONSTRAINT lobby_home_ground_fkey FOREIGN KEY (home_ground) REFERENCES public.location(id);
+ALTER TABLE ONLY public.lobby_homeground
+    ADD CONSTRAINT lobby_homeground_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_homeground lobby_homeground_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_homeground
+    ADD CONSTRAINT lobby_homeground_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.location(id);
 
 
 --
@@ -20170,6 +20662,13 @@ CREATE POLICY "Enable read access for all users" ON public.lobby FOR SELECT USIN
 
 
 --
+-- Name: lobby_homeground Enable read access for all users; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Enable read access for all users" ON public.lobby_homeground FOR SELECT USING (true);
+
+
+--
 -- Name: location Enable read access for all users; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -20318,6 +20817,27 @@ CREATE POLICY "Linked professionals can view their bookings" ON public.referee_b
 --
 
 CREATE POLICY "Linked users can update their own professional details" ON public.professional FOR UPDATE TO authenticated USING ((( SELECT auth.uid() AS uid) = linked_user_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = linked_user_id));
+
+
+--
+-- Name: lobby_homeground Lobby manager can add homegrounds; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Lobby manager can add homegrounds" ON public.lobby_homeground FOR INSERT TO authenticated WITH CHECK (public.lobby_can_manage(lobby_id, ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: lobby_homeground Lobby manager can remove homegrounds; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Lobby manager can remove homegrounds" ON public.lobby_homeground FOR DELETE TO authenticated USING (public.lobby_can_manage(lobby_id, ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: lobby_homeground Lobby manager can update homegrounds; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Lobby manager can update homegrounds" ON public.lobby_homeground FOR UPDATE TO authenticated USING (public.lobby_can_manage(lobby_id, ( SELECT auth.uid() AS uid))) WITH CHECK (public.lobby_can_manage(lobby_id, ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -20975,6 +21495,12 @@ ALTER TABLE public.lobby_feed_item_reaction ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.lobby_feed_poll_vote ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lobby_homeground; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.lobby_homeground ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: lobby_invite_link; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -22717,12 +23243,12 @@ GRANT ALL ON FUNCTION public.create_freeplay_activity(p_sport_id bigint, p_start
 
 
 --
--- Name: FUNCTION create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_ids uuid[], p_description text); Type: ACL; Schema: public; Owner: postgres
 --
 
-GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid) TO anon;
-GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid) TO service_role;
+GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_ids uuid[], p_description text) TO anon;
+GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_ids uuid[], p_description text) TO authenticated;
+GRANT ALL ON FUNCTION public.create_lobby_with_location(p_name text, p_sport_id integer, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_ids uuid[], p_description text) TO service_role;
 
 
 --
@@ -22772,12 +23298,12 @@ GRANT ALL ON FUNCTION public.delete_wall_post(p_post_id uuid) TO service_role;
 
 
 --
--- Name: FUNCTION edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid, p_male_price numeric, p_female_price numeric); Type: ACL; Schema: public; Owner: postgres
 --
 
-REVOKE ALL ON FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid, p_male_price numeric, p_female_price numeric) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid, p_male_price numeric, p_female_price numeric) TO authenticated;
+GRANT ALL ON FUNCTION public.edit_freeplay_listing(p_activity_id uuid, p_capacity integer, p_description text, p_recommended_skills text[], p_location_id uuid, p_male_price numeric, p_female_price numeric) TO service_role;
 
 
 --
@@ -22817,6 +23343,15 @@ GRANT ALL ON FUNCTION public.expire_past_activities() TO service_role;
 
 
 --
+-- Name: FUNCTION expose_lobby_activity_freeplay(p_activity_id uuid, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.expose_lobby_activity_freeplay(p_activity_id uuid, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.expose_lobby_activity_freeplay(p_activity_id uuid, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.expose_lobby_activity_freeplay(p_activity_id uuid, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION find_course_with_coach(p_professional_id uuid, p_sport_id bigint); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -22840,6 +23375,24 @@ GRANT ALL ON FUNCTION public.fn_activity_attachment_role_check() TO service_role
 GRANT ALL ON FUNCTION public.fn_activity_course_write_guard() TO anon;
 GRANT ALL ON FUNCTION public.fn_activity_course_write_guard() TO authenticated;
 GRANT ALL ON FUNCTION public.fn_activity_course_write_guard() TO service_role;
+
+
+--
+-- Name: FUNCTION fn_activity_freeplay_cancel_cascade(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.fn_activity_freeplay_cancel_cascade() TO anon;
+GRANT ALL ON FUNCTION public.fn_activity_freeplay_cancel_cascade() TO authenticated;
+GRANT ALL ON FUNCTION public.fn_activity_freeplay_cancel_cascade() TO service_role;
+
+
+--
+-- Name: FUNCTION fn_activity_freeplay_lock(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.fn_activity_freeplay_lock() TO anon;
+GRANT ALL ON FUNCTION public.fn_activity_freeplay_lock() TO authenticated;
+GRANT ALL ON FUNCTION public.fn_activity_freeplay_lock() TO service_role;
 
 
 --
@@ -22908,6 +23461,14 @@ GRANT ALL ON FUNCTION public.fn_can_see_wall_post(p_post_id uuid) TO service_rol
 
 REVOKE ALL ON FUNCTION public.fn_can_write_conversation(p_conversation_id uuid, p_uid uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.fn_can_write_conversation(p_conversation_id uuid, p_uid uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION fn_cancel_freeplay_listing(p_activity_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_cancel_freeplay_listing(p_activity_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_cancel_freeplay_listing(p_activity_id uuid) TO service_role;
 
 
 --
@@ -23081,11 +23642,28 @@ GRANT ALL ON FUNCTION public.fn_fill_payment_request_recipient() TO service_role
 
 
 --
+-- Name: FUNCTION fn_freeplay_activity_owner_guard(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.fn_freeplay_activity_owner_guard() TO anon;
+GRANT ALL ON FUNCTION public.fn_freeplay_activity_owner_guard() TO authenticated;
+GRANT ALL ON FUNCTION public.fn_freeplay_activity_owner_guard() TO service_role;
+
+
+--
 -- Name: FUNCTION fn_freeplay_block_cleanup(); Type: ACL; Schema: public; Owner: postgres
 --
 
 REVOKE ALL ON FUNCTION public.fn_freeplay_block_cleanup() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.fn_freeplay_block_cleanup() TO service_role;
+
+
+--
+-- Name: FUNCTION fn_freeplay_can_manage(p_activity_id uuid, p_uid uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_freeplay_can_manage(p_activity_id uuid, p_uid uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_freeplay_can_manage(p_activity_id uuid, p_uid uuid) TO service_role;
 
 
 --
@@ -23095,6 +23673,14 @@ GRANT ALL ON FUNCTION public.fn_freeplay_block_cleanup() TO service_role;
 GRANT ALL ON FUNCTION public.fn_freeplay_host_zalo(p_host_id uuid) TO anon;
 GRANT ALL ON FUNCTION public.fn_freeplay_host_zalo(p_host_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.fn_freeplay_host_zalo(p_host_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION fn_freeplay_owner_user_ids(p_activity_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_freeplay_owner_user_ids(p_activity_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_freeplay_owner_user_ids(p_activity_id uuid) TO service_role;
 
 
 --
@@ -23174,12 +23760,30 @@ GRANT ALL ON FUNCTION public.fn_is_linked_professional(p_user_id uuid) TO servic
 
 
 --
+-- Name: FUNCTION fn_lobby_has_live_freeplay(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_lobby_has_live_freeplay(p_lobby_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_lobby_has_live_freeplay(p_lobby_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.fn_lobby_has_live_freeplay(p_lobby_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION fn_lobby_playtime_keys(p_playtime jsonb); Type: ACL; Schema: public; Owner: postgres
 --
 
 GRANT ALL ON FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) TO anon;
 GRANT ALL ON FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.fn_lobby_playtime_keys(p_playtime jsonb) TO service_role;
+
+
+--
+-- Name: FUNCTION fn_lobby_private_freeplay_guard(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.fn_lobby_private_freeplay_guard() TO anon;
+GRANT ALL ON FUNCTION public.fn_lobby_private_freeplay_guard() TO authenticated;
+GRANT ALL ON FUNCTION public.fn_lobby_private_freeplay_guard() TO service_role;
 
 
 --
@@ -23388,6 +23992,14 @@ GRANT ALL ON FUNCTION public.fn_sweep_recurring_activities() TO service_role;
 
 
 --
+-- Name: FUNCTION fn_sync_freeplay_conversation_members(p_request_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_sync_freeplay_conversation_members(p_request_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_sync_freeplay_conversation_members(p_request_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION fn_touch_user_contact(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -23454,7 +24066,6 @@ GRANT ALL ON FUNCTION public.fn_wall_post_tag_guard() TO service_role;
 --
 
 REVOKE ALL ON FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) TO anon;
 GRANT ALL ON FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.freeplay_activity_detail_data(p_activity_id uuid) TO service_role;
 
@@ -23578,6 +24189,15 @@ GRANT ALL ON FUNCTION public.get_lobby_invite_preview(p_code text) TO service_ro
 
 
 --
+-- Name: FUNCTION get_lobby_public_preview(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.get_lobby_public_preview(p_lobby_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.get_lobby_public_preview(p_lobby_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.get_lobby_public_preview(p_lobby_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION get_my_friend_ids(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -23645,9 +24265,9 @@ GRANT ALL ON FUNCTION public.home_challenger_lobby_data(p_context_lobby_id uuid,
 --
 
 REVOKE ALL ON FUNCTION public.home_freeplay_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_search text, p_page_size integer, p_page_number integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.home_freeplay_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_search text, p_page_size integer, p_page_number integer) TO anon;
 GRANT ALL ON FUNCTION public.home_freeplay_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_search text, p_page_size integer, p_page_number integer) TO authenticated;
 GRANT ALL ON FUNCTION public.home_freeplay_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_search text, p_page_size integer, p_page_number integer) TO service_role;
-GRANT ALL ON FUNCTION public.home_freeplay_data(p_sport_id bigint, p_timeslots jsonb, p_city integer, p_districts character varying[], p_search text, p_page_size integer, p_page_number integer) TO anon;
 
 
 --
@@ -23791,6 +24411,15 @@ GRANT ALL ON FUNCTION public.lobby_member_prevent_captain_leave() TO service_rol
 REVOKE ALL ON FUNCTION public.lobby_money_data(p_lobby_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.lobby_money_data(p_lobby_id uuid) TO service_role;
 GRANT ALL ON FUNCTION public.lobby_money_data(p_lobby_id uuid) TO authenticated;
+
+
+--
+-- Name: FUNCTION lobby_primary_homeground_id(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.lobby_primary_homeground_id(p_lobby_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.lobby_primary_homeground_id(p_lobby_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.lobby_primary_homeground_id(p_lobby_id uuid) TO service_role;
 
 
 --
@@ -24302,12 +24931,12 @@ GRANT ALL ON FUNCTION public.update_freeplay_activity(p_activity_id uuid, p_star
 
 
 --
--- Name: FUNCTION update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_ids uuid[], p_description text); Type: ACL; Schema: public; Owner: postgres
 --
 
-GRANT ALL ON FUNCTION public.update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid) TO anon;
-GRANT ALL ON FUNCTION public.update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_id uuid) TO service_role;
+GRANT ALL ON FUNCTION public.update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_ids uuid[], p_description text) TO anon;
+GRANT ALL ON FUNCTION public.update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_ids uuid[], p_description text) TO authenticated;
+GRANT ALL ON FUNCTION public.update_lobby(p_lobby_id uuid, p_name text, p_visibility text, p_playtime jsonb, p_details jsonb, p_home_ground_ids uuid[], p_description text) TO service_role;
 
 
 --
@@ -25124,6 +25753,15 @@ GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lo
 
 
 --
+-- Name: TABLE lobby_homeground; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_homeground TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_homeground TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_homeground TO service_role;
+
+
+--
 -- Name: TABLE lobby_invite_link; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -25585,59 +26223,43 @@ GRANT SELECT,INSERT,UPDATE ON TABLE realtime.messages TO service_role;
 
 
 --
--- Name: TABLE messages_2026_08_12; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: TABLE messages_2026_09_06; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_12 TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_12 TO dashboard_user;
-
-
---
--- Name: TABLE messages_2026_08_13; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_13 TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_13 TO dashboard_user;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_09_06 TO postgres;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_09_06 TO dashboard_user;
 
 
 --
--- Name: TABLE messages_2026_08_14; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: TABLE messages_2026_09_07; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_14 TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_14 TO dashboard_user;
-
-
---
--- Name: TABLE messages_2026_08_15; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_15 TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_15 TO dashboard_user;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_09_07 TO postgres;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_09_07 TO dashboard_user;
 
 
 --
--- Name: TABLE messages_2026_08_16; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: TABLE messages_2026_09_08; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_16 TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_16 TO dashboard_user;
-
-
---
--- Name: TABLE messages_2026_08_17; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_17 TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_17 TO dashboard_user;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_09_08 TO postgres;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_09_08 TO dashboard_user;
 
 
 --
--- Name: TABLE messages_2026_08_18; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
+-- Name: TABLE messages_2026_09_09; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
 --
 
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_18 TO postgres;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_08_18 TO dashboard_user;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_09_09 TO postgres;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_09_09 TO dashboard_user;
+
+
+--
+-- Name: TABLE messages_2026_09_10; Type: ACL; Schema: realtime; Owner: supabase_realtime_admin
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_09_10 TO postgres;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE realtime.messages_2026_09_10 TO dashboard_user;
 
 
 --
@@ -26092,5 +26714,5 @@ ALTER EVENT TRIGGER pgrst_drop_watch OWNER TO supabase_admin;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 1iDqwwGG85nrSPYjA0RYqZTAqXM3KOwmd1ZpF0Gpra5EOm0Xxa2YItJrFewZAM7
+\unrestrict P88kQ1QnorRACnE8J3eIPtluLIxZqPtn57PKhugOH63AMs0wJVyhnxNLA0x91EY
 

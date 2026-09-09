@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LobbyFormState {
 
- Lobby get lobby; bool get isSaving; Map<String, String?>? get freeAddress; XFile? get pickedAvatar;
+ Lobby get lobby; bool get isSaving; List<LobbyHomeground> get homeGrounds; XFile? get pickedAvatar;
 /// Create a copy of LobbyFormState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $LobbyFormStateCopyWith<LobbyFormState> get copyWith => _$LobbyFormStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other.freeAddress, freeAddress)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other.homeGrounds, homeGrounds)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(freeAddress),pickedAvatar);
+int get hashCode => Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(homeGrounds),pickedAvatar);
 
 @override
 String toString() {
-  return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, freeAddress: $freeAddress, pickedAvatar: $pickedAvatar)';
+  return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, homeGrounds: $homeGrounds, pickedAvatar: $pickedAvatar)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $LobbyFormStateCopyWith<$Res>  {
   factory $LobbyFormStateCopyWith(LobbyFormState value, $Res Function(LobbyFormState) _then) = _$LobbyFormStateCopyWithImpl;
 @useResult
 $Res call({
- Lobby lobby, bool isSaving, Map<String, String?>? freeAddress, XFile? pickedAvatar
+ Lobby lobby, bool isSaving, List<LobbyHomeground> homeGrounds, XFile? pickedAvatar
 });
 
 
@@ -62,12 +62,12 @@ class _$LobbyFormStateCopyWithImpl<$Res>
 
 /// Create a copy of LobbyFormState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? lobby = null,Object? isSaving = null,Object? freeAddress = freezed,Object? pickedAvatar = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? lobby = null,Object? isSaving = null,Object? homeGrounds = null,Object? pickedAvatar = freezed,}) {
   return _then(_self.copyWith(
 lobby: null == lobby ? _self.lobby : lobby // ignore: cast_nullable_to_non_nullable
 as Lobby,isSaving: null == isSaving ? _self.isSaving : isSaving // ignore: cast_nullable_to_non_nullable
-as bool,freeAddress: freezed == freeAddress ? _self.freeAddress : freeAddress // ignore: cast_nullable_to_non_nullable
-as Map<String, String?>?,pickedAvatar: freezed == pickedAvatar ? _self.pickedAvatar : pickedAvatar // ignore: cast_nullable_to_non_nullable
+as bool,homeGrounds: null == homeGrounds ? _self.homeGrounds : homeGrounds // ignore: cast_nullable_to_non_nullable
+as List<LobbyHomeground>,pickedAvatar: freezed == pickedAvatar ? _self.pickedAvatar : pickedAvatar // ignore: cast_nullable_to_non_nullable
 as XFile?,
   ));
 }
@@ -162,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Lobby lobby,  bool isSaving,  Map<String, String?>? freeAddress,  XFile? pickedAvatar)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Lobby lobby,  bool isSaving,  List<LobbyHomeground> homeGrounds,  XFile? pickedAvatar)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LobbyFormState() when $default != null:
-return $default(_that.lobby,_that.isSaving,_that.freeAddress,_that.pickedAvatar);case _:
+return $default(_that.lobby,_that.isSaving,_that.homeGrounds,_that.pickedAvatar);case _:
   return orElse();
 
 }
@@ -183,10 +183,10 @@ return $default(_that.lobby,_that.isSaving,_that.freeAddress,_that.pickedAvatar)
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Lobby lobby,  bool isSaving,  Map<String, String?>? freeAddress,  XFile? pickedAvatar)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Lobby lobby,  bool isSaving,  List<LobbyHomeground> homeGrounds,  XFile? pickedAvatar)  $default,) {final _that = this;
 switch (_that) {
 case _LobbyFormState():
-return $default(_that.lobby,_that.isSaving,_that.freeAddress,_that.pickedAvatar);case _:
+return $default(_that.lobby,_that.isSaving,_that.homeGrounds,_that.pickedAvatar);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +203,10 @@ return $default(_that.lobby,_that.isSaving,_that.freeAddress,_that.pickedAvatar)
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Lobby lobby,  bool isSaving,  Map<String, String?>? freeAddress,  XFile? pickedAvatar)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Lobby lobby,  bool isSaving,  List<LobbyHomeground> homeGrounds,  XFile? pickedAvatar)?  $default,) {final _that = this;
 switch (_that) {
 case _LobbyFormState() when $default != null:
-return $default(_that.lobby,_that.isSaving,_that.freeAddress,_that.pickedAvatar);case _:
+return $default(_that.lobby,_that.isSaving,_that.homeGrounds,_that.pickedAvatar);case _:
   return null;
 
 }
@@ -218,18 +218,16 @@ return $default(_that.lobby,_that.isSaving,_that.freeAddress,_that.pickedAvatar)
 
 
 class _LobbyFormState implements LobbyFormState {
-  const _LobbyFormState({required this.lobby, this.isSaving = false, final  Map<String, String?>? freeAddress, this.pickedAvatar}): _freeAddress = freeAddress;
+  const _LobbyFormState({required this.lobby, this.isSaving = false, final  List<LobbyHomeground> homeGrounds = const <LobbyHomeground>[], this.pickedAvatar}): _homeGrounds = homeGrounds;
   
 
 @override final  Lobby lobby;
 @override@JsonKey() final  bool isSaving;
- final  Map<String, String?>? _freeAddress;
-@override Map<String, String?>? get freeAddress {
-  final value = _freeAddress;
-  if (value == null) return null;
-  if (_freeAddress is EqualUnmodifiableMapView) return _freeAddress;
+ final  List<LobbyHomeground> _homeGrounds;
+@override@JsonKey() List<LobbyHomeground> get homeGrounds {
+  if (_homeGrounds is EqualUnmodifiableListView) return _homeGrounds;
   // ignore: implicit_dynamic_type
-  return EqualUnmodifiableMapView(value);
+  return EqualUnmodifiableListView(_homeGrounds);
 }
 
 @override final  XFile? pickedAvatar;
@@ -244,16 +242,16 @@ _$LobbyFormStateCopyWith<_LobbyFormState> get copyWith => __$LobbyFormStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other._freeAddress, _freeAddress)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other._homeGrounds, _homeGrounds)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(_freeAddress),pickedAvatar);
+int get hashCode => Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(_homeGrounds),pickedAvatar);
 
 @override
 String toString() {
-  return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, freeAddress: $freeAddress, pickedAvatar: $pickedAvatar)';
+  return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, homeGrounds: $homeGrounds, pickedAvatar: $pickedAvatar)';
 }
 
 
@@ -264,7 +262,7 @@ abstract mixin class _$LobbyFormStateCopyWith<$Res> implements $LobbyFormStateCo
   factory _$LobbyFormStateCopyWith(_LobbyFormState value, $Res Function(_LobbyFormState) _then) = __$LobbyFormStateCopyWithImpl;
 @override @useResult
 $Res call({
- Lobby lobby, bool isSaving, Map<String, String?>? freeAddress, XFile? pickedAvatar
+ Lobby lobby, bool isSaving, List<LobbyHomeground> homeGrounds, XFile? pickedAvatar
 });
 
 
@@ -281,12 +279,12 @@ class __$LobbyFormStateCopyWithImpl<$Res>
 
 /// Create a copy of LobbyFormState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? lobby = null,Object? isSaving = null,Object? freeAddress = freezed,Object? pickedAvatar = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? lobby = null,Object? isSaving = null,Object? homeGrounds = null,Object? pickedAvatar = freezed,}) {
   return _then(_LobbyFormState(
 lobby: null == lobby ? _self.lobby : lobby // ignore: cast_nullable_to_non_nullable
 as Lobby,isSaving: null == isSaving ? _self.isSaving : isSaving // ignore: cast_nullable_to_non_nullable
-as bool,freeAddress: freezed == freeAddress ? _self._freeAddress : freeAddress // ignore: cast_nullable_to_non_nullable
-as Map<String, String?>?,pickedAvatar: freezed == pickedAvatar ? _self.pickedAvatar : pickedAvatar // ignore: cast_nullable_to_non_nullable
+as bool,homeGrounds: null == homeGrounds ? _self._homeGrounds : homeGrounds // ignore: cast_nullable_to_non_nullable
+as List<LobbyHomeground>,pickedAvatar: freezed == pickedAvatar ? _self.pickedAvatar : pickedAvatar // ignore: cast_nullable_to_non_nullable
 as XFile?,
   ));
 }

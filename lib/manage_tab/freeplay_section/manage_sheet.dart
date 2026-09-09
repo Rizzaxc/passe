@@ -39,8 +39,13 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
   Map<String, String?>? _freeAddress;
   bool _busy = false;
 
+  /// A lobby listing's venue is the lobby activity's venue — it moves through
+  /// the scheduling flow, never through the listing editor (the server refuses
+  /// it too). Host listings keep the old rule: editable until someone asks.
   bool get _canEditLocation =>
-      widget.activity.acceptedCount == 0 && widget.activity.pendingCount == 0;
+      !widget.activity.isLobbyOwned &&
+      widget.activity.acceptedCount == 0 &&
+      widget.activity.pendingCount == 0;
 
   @override
   void dispose() {
@@ -238,10 +243,16 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
                         PConfirmDialog(
                           animation: animation,
                           title: Text(
-                            'freeplay.hostManage.cancelConfirmTitle'.tr(),
+                            (widget.activity.isLobbyOwned
+                                    ? 'lobbyHub.freeplayExpose.withdrawTitle'
+                                    : 'freeplay.hostManage.cancelConfirmTitle')
+                                .tr(),
                           ),
                           body: Text(
-                            'freeplay.hostManage.cancelConfirmBody'.tr(),
+                            (widget.activity.isLobbyOwned
+                                    ? 'lobbyHub.freeplayExpose.withdrawBody'
+                                    : 'freeplay.hostManage.cancelConfirmBody')
+                                .tr(),
                           ),
                           actions: [
                             FButton(
@@ -253,7 +264,12 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
                             FButton(
                               variant: .destructive,
                               onPress: () => Navigator.pop(dialogContext, true),
-                              child: Text('freeplay.hostManage.cancel'.tr()),
+                              child: Text(
+                                (widget.activity.isLobbyOwned
+                                        ? 'lobbyHub.freeplayExpose.withdraw'
+                                        : 'freeplay.hostManage.cancel')
+                                    .tr(),
+                              ),
                             ),
                           ],
                         ),
@@ -280,7 +296,12 @@ class _ManageFreeplayState extends ConsumerState<_ManageFreeplay> {
                     if (mounted) setState(() => _busy = false);
                   }
                 },
-          child: Text('freeplay.hostManage.cancel'.tr()),
+          child: Text(
+            (widget.activity.isLobbyOwned
+                    ? 'lobbyHub.freeplayExpose.withdraw'
+                    : 'freeplay.hostManage.cancel')
+                .tr(),
+          ),
         ),
       ],
     ),

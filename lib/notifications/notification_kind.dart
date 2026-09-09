@@ -11,6 +11,12 @@ enum NotificationKind {
   challengeScheduled('challenge_scheduled'),
   challengeLapsed('challenge_lapsed'),
   matchResultRecorded('match_result_recorded'),
+  // Friendly (referee-free) challenge mode — see schema/friendly_challenge.sql.
+  challengeReadyForHome('challenge_ready_for_home'),
+  challengeOfferExpired('challenge_offer_expired'),
+  matchResultPending('match_result_pending'),
+  noShowClaimed('no_show_claimed'),
+  matchDisputed('match_disputed'),
   lobbyInvite('lobby_invite'),
   lobbyJoinRequest('lobby_join_request'),
   lobbyJoinRequestApproved('lobby_join_request_approved'),
@@ -50,15 +56,6 @@ enum NotificationKind {
   /// The DB / wire value (matches `data.kind` on every push).
   final String value;
 
-  static const challengerFlowValues = <String>[
-    'challenger_confirmed',
-    'challenge_received',
-    'challenge_declined',
-    'challenge_scheduled',
-    'challenge_lapsed',
-    'match_result_recorded',
-  ];
-
   /// Referee-hiring pushes, gated by the same define as the challenger flow.
   bool get isRefereeFlow => switch (this) {
     professionalBookingRequested ||
@@ -77,16 +74,6 @@ enum NotificationKind {
     courseSessionReport ||
     courseEnded ||
     courseMemberRemoved => true,
-    _ => false,
-  };
-
-  bool get isChallengerFlow => switch (this) {
-    challengerConfirmed ||
-    challengeReceived ||
-    challengeDeclined ||
-    challengeScheduled ||
-    challengeLapsed ||
-    matchResultRecorded => true,
     _ => false,
   };
 

@@ -4,10 +4,11 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/location_repository.dart';
 import '../../../core/model/enum.dart';
+import '../../../core/model/lobby_homeground.dart';
 import '../../../core/model/location.dart';
-import '../../../ui/district_select.dart';
-import '../../../ui/search_field.dart';
+import '../../../ui/main.dart';
 import 'lobby_controller.dart';
 
 /// Typeahead + manual-entry field for selecting a named PoI, merged into one
@@ -383,6 +384,197 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
                 ),
               ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+/// A lobby's own list of homegrounds — up to [maxCount], the first being
+/// primary. Unlike [HomeGroundField] (a generic single-location picker reused
+/// well beyond lobbies), this widget is lobby-specific: it renders the
+/// already-picked venues as removable tiles and adds new ones through
+/// [HomeGroundField] in a small sheet, since resolving a free-text entry into
+/// a real `location_id` needs the same [resolveLocationId] round-trip the
+/// rest of the lobby form already does at commit time.
+class HomeGroundListField extends StatelessWidget {
+  static const maxCount = 5;
+
+  final List<LobbyHomeground> value;
+  final ValueChanged<List<LobbyHomeground>> onChanged;
+  final String? lobbyId;
+
+  const HomeGroundListField({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.lobbyId,
+  });
+
+  Future<void> _add(BuildContext context) async {
+    final added = await showPSheet<LobbyHomeground>(
+      context: context,
+      builder: (_) => _AddHomeGroundSheet(lobbyId: lobbyId),
+    );
+    if (added == null) return;
+    if (value.any((h) => h.id == added.id)) return;
+    onChanged([...value, added]);
+  }
+
+  void _remove(String id) {
+    onChanged(value.where((h) => h.id != id).toList());
+  }
+
+  void _makePrimary(String id) {
+    final picked = value.firstWhere((h) => h.id == id);
+    onChanged([picked, ...value.where((h) => h.id != id)]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fieldStyle = context.theme.textFieldStyles.md;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 8,
+      children: [
+        Padding(
+          padding: fieldStyle.labelPadding,
+          child: DefaultTextStyle.merge(
+            style: fieldStyle.labelTextStyle.resolve({}),
+            child: Text(
+              'createLobby.homeGrounds'.tr(),
+              style: context.theme.typography.body.sm.copyWith(
+                fontWeight: .bold,
+              ),
+            ),
+          ),
+        ),
+        Text(
+          'createLobby.homeGroundsDescription'.tr(),
+          style: context.theme.typography.body.xs.copyWith(
+            color: context.theme.colors.mutedForeground,
+          ),
+        ),
+        if (value.isNotEmpty)
+          FTileGroup(
+            children: [
+              for (final (i, h) in value.indexed)
+                FTile(
+                  prefix: GestureDetector(
+                    onTap: i == 0 ? null : () => _makePrimary(h.id),
+                    child: Icon(
+                      i == 0 ? FLucideIcons.star : FLucideIcons.starOff,
+                      size: 16,
+                      color: i == 0
+                          ? context.theme.colors.primary
+                          : context.theme.colors.mutedForeground,
+                    ),
+                  ),
+                  title: Text(h.name, maxLines: 1, overflow: .ellipsis),
+                  subtitle: i == 0
+                      ? Text('createLobby.homeGroundPrimary'.tr())
+                      : null,
+                  suffix: GestureDetector(
+                    onTap: () => _remove(h.id),
+                    child: const Icon(FLucideIcons.x, size: 16),
+                  ),
+                ),
+            ],
+          ),
+        if (value.length < maxCount)
+          SizedBox(
+            width: double.infinity,
+            child: FButton(
+              variant: .outline,
+              onPress: () => _add(context),
+              child: Text('createLobby.homeGroundAdd'.tr()),
+            ),
+          )
+        else
+          Text(
+            'createLobby.homeGroundMaxReached'.tr(),
+            style: context.theme.typography.body.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _AddHomeGroundSheet extends StatefulWidget {
+  final String? lobbyId;
+
+  const _AddHomeGroundSheet({this.lobbyId});
+
+  @override
+  State<_AddHomeGroundSheet> createState() => _AddHomeGroundSheetState();
+}
+
+class _AddHomeGroundSheetState extends State<_AddHomeGroundSheet> {
+  String? _pickedId;
+  Map<String, String?>? _freeAddress;
+  bool _resolving = false;
+
+  Future<void> _confirm() async {
+    setState(() => _resolving = true);
+    try {
+      final id = await resolveLocationId(
+        pickedId: _pickedId,
+        freeAddress: _freeAddress,
+      );
+      if (id == null) {
+        setState(() => _resolving = false);
+        return;
+      }
+      final row = await Supabase.instance.client
+          .from('location')
+          .select('name')
+          .eq('id', id)
+          .single()
+          .timeout(const Duration(seconds: 5));
+      if (!mounted) return;
+      Navigator.of(context).pop(
+        LobbyHomeground(
+          id: id,
+          name: row['name'] as String? ?? '',
+          isPrimary: false,
+        ),
+      );
+    } catch (_) {
+      if (mounted) setState(() => _resolving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 16,
+      children: [
+        HomeGroundField(
+          value: _pickedId,
+          lobbyId: widget.lobbyId,
+          onChanged: (v) => setState(() {
+            _pickedId = v.isEmpty ? null : v;
+            _freeAddress = null;
+          }),
+          onFreeAddressChanged: (addr) => setState(() {
+            _freeAddress = addr;
+            if (addr != null) _pickedId = null;
+          }),
+        ),
+        FButton(
+          onPress: _resolving ? null : _confirm,
+          child: _resolving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text('createLobby.homeGroundAddConfirm'.tr()),
         ),
       ],
     );

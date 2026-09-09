@@ -9,10 +9,12 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/model/enum.dart';
 import '../../../core/model/lobby.dart';
+import '../../../core/model/lobby_homeground.dart';
 import '../../../core/model/timeslot.dart';
 import '../../../core/timeslot_picker.dart';
 import '../../../notifications/notification_service.dart';
 import '../../../ui/main.dart';
+import '../activity/freeplay_expose_controller.dart';
 import 'home_ground_selector.dart';
 import 'lobby_controller.dart';
 
@@ -21,19 +23,29 @@ Future<Lobby?> showLobbyFormSheet({
   required WidgetRef ref,
   String? lobbyId,
   Lobby? existingLobby,
+  List<LobbyHomeground> existingHomeGrounds = const [],
 }) {
   return showPSheet<Lobby>(
     context: context,
-    builder: (_) =>
-        LobbyFormSheet(lobbyId: lobbyId, existingLobby: existingLobby),
+    builder: (_) => LobbyFormSheet(
+      lobbyId: lobbyId,
+      existingLobby: existingLobby,
+      existingHomeGrounds: existingHomeGrounds,
+    ),
   );
 }
 
 class LobbyFormSheet extends ConsumerStatefulWidget {
   final String? lobbyId;
   final Lobby? existingLobby;
+  final List<LobbyHomeground> existingHomeGrounds;
 
-  const LobbyFormSheet({super.key, this.lobbyId, this.existingLobby});
+  const LobbyFormSheet({
+    super.key,
+    this.lobbyId,
+    this.existingLobby,
+    this.existingHomeGrounds = const [],
+  });
 
   @override
   ConsumerState<LobbyFormSheet> createState() => _LobbyFormSheetState();
@@ -42,6 +54,7 @@ class LobbyFormSheet extends ConsumerStatefulWidget {
 class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
   final _formKey = GlobalKey<FormState>(debugLabel: 'lobby_form');
   late final TextEditingController _nameController;
+  late final TextEditingController _descriptionController;
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -50,12 +63,18 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
     _nameController = TextEditingController(
       text: widget.existingLobby?.name ?? '',
     );
+    _descriptionController = TextEditingController(
+      text: widget.existingLobby?.description ?? '',
+    );
     if (widget.existingLobby != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ref
               .read(lobbyFormControllerProvider(widget.lobbyId).notifier)
-              .initFromLobby(widget.existingLobby!);
+              .initFromLobby(
+                widget.existingLobby!,
+                homeGrounds: widget.existingHomeGrounds,
+              );
         }
       });
     }
@@ -64,6 +83,7 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
   @override
   void dispose() {
     _nameController.dispose();
+    _descriptionController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -154,7 +174,26 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
               ),
               description: (v) => 'lobby.visibility.${v.name}Description'.tr(),
               onChange: (v) {
-                if (v != null) notifier.updateDraft(visibility: v);
+                if (v == null) return;
+                // Mirrors fn_lobby_private_freeplay_guard: a lobby that is
+                // advertising seats can't hide itself out from under the
+                // people who already asked for one.
+                if (v == LobbyVisibility.private &&
+                    widget.lobbyId != null &&
+                    (ref
+                            .watch(lobbyHasLiveFreeplayProvider(widget.lobbyId!))
+                            .value ??
+                        false)) {
+                  showFToast(
+                    context: context,
+                    icon: const Icon(FLucideIcons.circleAlert),
+                    variant: .destructive,
+                    title: Text('lobby.visibility.blockedByFreeplay'.tr()),
+                    alignment: .bottomCenter,
+                  );
+                  return;
+                }
+                notifier.updateDraft(visibility: v);
               },
             ),
 
@@ -173,11 +212,28 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
               deselectable: true,
             ),
 
-            // Home Ground
-            HomeGroundField(
-              value: lobby.homeGround,
-              onChanged: (v) => notifier.updateDraft(homeGround: v),
-              onFreeAddressChanged: notifier.updateFreeAddress,
+            // Home Grounds
+            HomeGroundListField(
+              value: formState.homeGrounds,
+              lobbyId: widget.lobbyId,
+              onChanged: notifier.updateHomeGrounds,
+            ),
+
+            // Description
+            FTextFormField(
+              label: Text('lobby.description'.tr()),
+              hint: 'lobby.descriptionHint'.tr(),
+              maxLines: 5,
+              maxLength: 3000,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              control: FTextFieldControl.managed(
+                controller: _descriptionController,
+                onChange: (value) =>
+                    notifier.updateDraft(description: value.text),
+              ),
+              validator: (value) => (value != null && value.length > 3000)
+                  ? 'lobby.descriptionTooLong'.tr()
+                  : null,
             ),
 
             // Playtime
@@ -249,12 +305,19 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
       );
     } catch (e) {
       if (!context.mounted) return;
+      final blockedByFreeplay = e.toString().contains(
+        'lobby_private_blocked_by_freeplay',
+      );
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.circleX),
         variant: .destructive,
-        title: Text('lobby.saveFailed'.tr()),
-        description: Text('errorGeneric'.tr()),
+        title: Text(
+          blockedByFreeplay
+              ? 'lobby.visibility.blockedByFreeplay'.tr()
+              : 'lobby.saveFailed'.tr(),
+        ),
+        description: blockedByFreeplay ? null : Text('errorGeneric'.tr()),
         alignment: .bottomCenter,
       );
     }

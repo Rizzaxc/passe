@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/model/challenge.dart';
 import '../activity/upcoming_controller.dart';
 import 'match.dart';
 
@@ -77,7 +78,9 @@ class LobbyMatchHistoryController extends _$LobbyMatchHistoryController {
       when: (row['duration_label'] as String?) ?? _formatTime(playedAt),
       opponent: row['opponent_name'] as String?,
       opponentTag: row['opponent_tag'] as String,
-      result: _parseResult(row['result'] as String),
+      result:
+          LobbyMatchResult.fromDb(row['result'] as String?) ??
+          LobbyMatchResult.practice,
       sets: sets,
       mvp: row['mvp_username'] as String?,
       venue: row['venue_label'] as String,
@@ -87,6 +90,8 @@ class LobbyMatchHistoryController extends _$LobbyMatchHistoryController {
       note: row['note'] as String?,
       refereeBookingId: row['referee_booking_id'] as String?,
       refereeName: row['referee_name'] as String?,
+      opponentLobbyId: row['opponent_lobby_id'] as String?,
+      resultSource: MatchResultSource.fromDb(row['result_source'] as String?),
       activityId: row['activity_id'] as String?,
       occurredAt: playedAt,
     );
@@ -101,14 +106,6 @@ class LobbyMatchHistoryController extends _$LobbyMatchHistoryController {
     if (!completedAt.isBefore(DateTime.now())) return null;
     return PastLobbyActivity(activity);
   }
-
-  LobbyMatchResult _parseResult(String db) => switch (db) {
-    'win' => LobbyMatchResult.win,
-    'loss' => LobbyMatchResult.loss,
-    'draw' => LobbyMatchResult.draw,
-    'practice' => LobbyMatchResult.practice,
-    _ => throw StateError('Unknown lobby_match_result: $db'),
-  };
 
   static List<String> get _weekdayShort => [
     'lobbyHub.schedule.weekdaysShort.monday'.tr(),

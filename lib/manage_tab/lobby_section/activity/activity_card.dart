@@ -18,16 +18,27 @@ import '../../../../ui/dialog.dart';
 import '../../../../ui/theme.dart';
 import '../../../../ui/user_avatar.dart';
 import '../../../core/map_directions.dart';
+import '../../../core/model/challenge.dart';
+import '../../../discover_tab/lobby_public_preview_sheet.dart';
+import '../../../freeplay/model.dart';
+import '../../../freeplay/repository.dart';
 import '../../../logger/talker.dart';
 import '../../../professional/pending_activity_booking_state.dart';
 import '../../../router.dart';
+import '../../freeplay_section/manage_sheet.dart';
+import '../../freeplay_section/requests_sheet.dart';
+import '../challenge/friendly_challenge_controller.dart';
+import '../challenge/report_result_sheet.dart';
 import '../challenges_controller.dart';
 import '../invite_member_sheet.dart';
+import '../lobby_detail_controller.dart';
 import '../schedule_activity_controller.dart';
 import '../schedule_activity_sheet.dart';
 import 'confirmation_controller.dart';
 import 'feed.dart';
 import 'feed_controller.dart';
+import 'freeplay_expose_controller.dart';
+import 'freeplay_expose_sheet.dart';
 import 'note_sheet.dart';
 import 'payment_request_sheet.dart';
 import 'upcoming_controller.dart';
@@ -433,6 +444,27 @@ class ActivityCard extends ConsumerWidget {
                     challenge: upcoming.challenge!,
                     isLeader: isLeader,
                   ),
+                ],
+                // Friendly (referee-free) lobby-vs-lobby fixture. Unlike the
+                // refereed block above this also renders when `isPast`: the
+                // result window opens at the final whistle, which is exactly
+                // when the card has moved over to History.
+                if (upcoming.activity.id != null)
+                  _FriendlyChallengeBlock(
+                    lobbyId: lobbyId,
+                    activityId: upcoming.activity.id!,
+                    isPast: isPast,
+                    startTime: upcoming.nextStart,
+                    endTime: upcoming.nextEnd,
+                  ),
+                // Spare seats offered to people outside the lobby. Manage-tier
+                // only, and never on a challenge fixture — you can't sell a
+                // seat into a team-vs-team match.
+                if (!isPast &&
+                    isLeader &&
+                    upcoming.challenge == null) ...[
+                  const SizedBox(height: 10),
+                  _FreeplayBlock(lobbyId: lobbyId, upcoming: upcoming),
                 ],
                 // The hired referee, when there is one. A coach is never
                 // attached to a lobby session any more — coaching is a course.
@@ -1509,6 +1541,386 @@ class _Tag extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+// ─── Freeplay exposure ─────────────────────────────────────────
+// A non-private lobby can offer its spare seats on the Discover ▸ Kèo feed.
+// The listing is owned by the lobby (the activity keeps `lobby_id`, there is no
+// `freeplay_host` row), and an accepted guest deliberately gets NO
+// `activity_confirmation` row — the seat count below is therefore independent
+// of the RSVP strip above it, not a second view of the same number.
+class _FreeplayBlock extends ConsumerWidget {
+  final String lobbyId;
+  final UpcomingActivity upcoming;
+
+  const _FreeplayBlock({required this.lobbyId, required this.upcoming});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final activityId = upcoming.activity.id ?? '';
+    final exposure = ref.watch(lobbyExposureContextProvider(lobbyId)).value;
+    final listing = ref.watch(freeplayDetailProvider(activityId)).value;
+
+    if (listing == null || listing.cancelled) {
+      // Nothing advertised. Private lobbies never get the offer — the whole
+      // point is that strangers can find the seat.
+      if (exposure == null || !exposure.canExpose) return const SizedBox.shrink();
+      return FButton(
+        variant: .outline,
+        prefix: const Icon(FLucideIcons.ticket, size: 16),
+        onPress: () => showFreeplayExposeSheet(
+          context,
+          lobbyId: lobbyId,
+          upcoming: upcoming,
+        ),
+        child: Text('lobbyHub.freeplayExpose.cta'.tr()),
+      );
+    }
+
+    final pending = ref.watch(freeplayRequestsProvider(activityId)).value
+        ?.where((request) => request.status == FreeplayRequestStatus.pending)
+        .length ??
+        0;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _amberTint,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(FLucideIcons.ticket, size: 16, color: _amber),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'lobbyHub.freeplayExpose.seatsFilled'.tr(
+                    namedArgs: {
+                      'filled': listing.acceptedCount.toString(),
+                      'total': listing.capacity.toString(),
+                    },
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.theme.typography.body.sm.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: _amber,
+                  ),
+                ),
+              ),
+              if (listing.intakeClosed)
+                Text(
+                  'lobbyHub.freeplayExpose.intakeClosed'.tr(),
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            spacing: 8,
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: .outline,
+                  onPress: () => showHostFreeplayRequests(context, activityId),
+                  child: Text(
+                    pending > 0
+                        ? 'lobbyHub.freeplayExpose.requestsWithCount'.tr(
+                            namedArgs: {'count': pending.toString()},
+                          )
+                        : 'lobbyHub.freeplayExpose.requests'.tr(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: FButton(
+                  variant: .outline,
+                  onPress: () => showManageFreeplaySheet(context, listing),
+                  child: Text(
+                    'lobbyHub.freeplayExpose.manage'.tr(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+/// The friendly-challenge strip on an activity card.
+///
+/// Resolves its own manage permission rather than trusting the card's
+/// [ActivityCard.isLeader]: History constructs cards with `isLeader: false`
+/// for everyone, and the report window only opens once a fixture is in the
+/// past — so a manager would never be offered the one action that matters.
+class _FriendlyChallengeBlock extends ConsumerWidget {
+  final String lobbyId;
+  final String activityId;
+  final bool isPast;
+  final DateTime startTime;
+  final DateTime? endTime;
+
+  const _FriendlyChallengeBlock({
+    required this.lobbyId,
+    required this.activityId,
+    required this.isPast,
+    required this.startTime,
+    this.endTime,
+  });
+
+  /// Mirrors `claim_no_show`'s window: opens 30 minutes after kick-off,
+  /// because late is not absent, and closes at the final whistle, after which
+  /// the result sheet is the right instrument. The RPC re-checks both.
+  bool get _noShowWindowOpen {
+    final now = DateTime.now();
+    final end = endTime ?? startTime.add(const Duration(minutes: 90));
+    return now.isAfter(startTime.add(const Duration(minutes: 30))) &&
+        now.isBefore(end);
+  }
+
+  Future<void> _act(
+    BuildContext context,
+    WidgetRef ref,
+    Future<void> Function() run,
+  ) async {
+    try {
+      await run();
+    } catch (e, st) {
+      talker.handle(e, st, 'friendly challenge action failed');
+      if (!context.mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: Text(friendlyChallengeActionErrorMessage(e)),
+        alignment: .bottomCenter,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final list = ref.watch(friendlyChallengesControllerProvider(lobbyId)).value;
+    if (list == null) return const SizedBox.shrink();
+
+    FriendlyChallenge? challenge;
+    for (final c in list) {
+      if (c.activityId == activityId) {
+        challenge = c;
+        break;
+      }
+    }
+    if (challenge == null) return const SizedBox.shrink();
+
+    final c = challenge;
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    final canManage =
+        ref.watch(myLobbyPermissionProvider(lobbyId)).value?.canManage ?? false;
+
+    final terms = <String>[
+      c.ruleset.getLocalizedName(context, param: c.rulesetParam),
+      ?c.handicapSide.getLocalizedLabel(
+        context,
+        weAreHome: c.weAreHome,
+        amount: c.handicapAmount,
+      ),
+      if (c.costSplit != ChallengeCostSplit.none)
+        c.costSplit.getLocalizedLabel(context, weAreHome: c.weAreHome),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: colors.secondary.withValues(alpha: 0.35),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 6,
+          children: [
+            Row(
+              spacing: 6,
+              children: [
+                Icon(FLucideIcons.swords, size: 14, color: colors.primary),
+                Text(
+                  (c.weAreHome
+                          ? 'challenge.block.homeSide'
+                          : 'challenge.block.awaySide')
+                      .tr(),
+                  style: typography.body.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                ),
+                // The opponent id is already in scope, so make it reachable.
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () =>
+                        showLobbyPublicPreviewSheet(context, c.otherLobbyId),
+                    child: Text(
+                      c.otherLobbyName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: typography.body.sm.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            Text(
+              c.status.getLocalizedLabel(context, weAreHome: c.weAreHome),
+              style: typography.body.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+
+            if (terms.isNotEmpty)
+              Text(
+                terms.join(' · '),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+
+            // What we filed, phrased from our own side — `myReport` is already
+            // flipped into this lobby's frame by the RPC.
+            if (c.iHaveReported)
+              Text(
+                'challenge.block.filed'.tr(
+                  namedArgs: {
+                    'outcome':
+                        c.myOutcome?.getLocalizedName(context) ?? '—',
+                  },
+                ),
+                style: typography.body.xs.copyWith(color: colors.primary),
+              ),
+
+            // Withdrawing is only possible before the handshake completes —
+            // after that a fixture exists on both sides and pulling out is a
+            // no-show, not a cancellation.
+            if (canManage &&
+                (c.status == FriendlyChallengeStatus.requested ||
+                    c.status == FriendlyChallengeStatus.pendingHome) &&
+                !c.weAreHome)
+              FButton(
+                size: .sm,
+                variant: .secondary,
+                onPress: () => _act(
+                  context,
+                  ref,
+                  () => ref
+                      .read(
+                        friendlyChallengeActionsControllerProvider(
+                          lobbyId,
+                        ).notifier,
+                      )
+                      .cancel(c.id),
+                ),
+                child: Text('challenge.cancel.cta'.tr()),
+              ),
+
+            // The live no-show claim. Deliberately available to BOTH sides:
+            // if only the home team could file, a home no-show would be
+            // unreportable by the only people who noticed it.
+            if (canManage &&
+                c.status == FriendlyChallengeStatus.scheduled &&
+                _noShowWindowOpen)
+              FButton(
+                size: .sm,
+                variant: .secondary,
+                onPress: () => _act(
+                  context,
+                  ref,
+                  () => ref
+                      .read(
+                        friendlyChallengeActionsControllerProvider(
+                          lobbyId,
+                        ).notifier,
+                      )
+                      .claimNoShow(c.id),
+                ),
+                child: Text('challenge.noShow.claimCta'.tr()),
+              ),
+
+            if (c.status == FriendlyChallengeStatus.noShowClaimed) ...[
+              Text(
+                c.noShowClaimedBy == lobbyId
+                    ? 'challenge.noShow.waitingOnThem'.tr()
+                    : 'challenge.noShow.accused'.tr(),
+                style: typography.body.xs.copyWith(color: colors.destructive),
+              ),
+              // Only the accused can answer, and only for ten minutes — the
+              // sweep settles it as a walkover otherwise.
+              if (canManage && c.noShowClaimedBy != lobbyId)
+                FButton(
+                  size: .sm,
+                  variant: .destructive,
+                  onPress: () => _act(
+                    context,
+                    ref,
+                    () => ref
+                        .read(
+                          friendlyChallengeActionsControllerProvider(
+                            lobbyId,
+                          ).notifier,
+                        )
+                        .counterNoShow(c.id),
+                  ),
+                  child: Text('challenge.noShow.counterCta'.tr()),
+                ),
+            ],
+
+            if (isPast && c.isReportable && canManage)
+              FButton(
+                size: .sm,
+                variant: c.iHaveReported ? .secondary : .primary,
+                onPress: () => showReportResultSheet(
+                  context,
+                  lobbyId: lobbyId,
+                  challenge: c,
+                ),
+                child: Text(
+                  (c.iHaveReported
+                          ? 'challenge.block.reportCtaAgain'
+                          : 'challenge.block.reportCta')
+                      .tr(),
+                ),
+              )
+            else if (isPast && c.isReportable && !canManage)
+              Text(
+                'challenge.block.reportManagerOnly'.tr(),
+                style: typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

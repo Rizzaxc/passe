@@ -64,6 +64,8 @@ abstract class LobbyDetails with _$LobbyDetails {
 
 @freezed
 abstract class Lobby with _$Lobby {
+  const Lobby._();
+
   const factory Lobby({
     String? id,
     @JsonKey(name: 'captain_id') String? captainId,
@@ -73,11 +75,20 @@ abstract class Lobby with _$Lobby {
     required Sport sport,
     List<Timeslot>? playtime,
     LobbyDetails? details,
-    @JsonKey(name: 'home_ground') String? homeGround,
+    String? description,
+    // Ordered ids into `lobby_homeground` — the first element is primary.
+    // Populated by a separate embed wherever a full `Lobby` is fetched (the
+    // `lobby` table itself no longer carries a homeground column).
+    @JsonKey(name: 'home_ground_ids')
+    @Default(<String>[])
+    List<String> homeGroundIds,
     @Default(LobbyVisibility.discoverable) LobbyVisibility visibility,
   }) = _Lobby;
 
   factory Lobby.fromJson(Map<String, dynamic> json) => _$LobbyFromJson(json);
+
+  String? get primaryHomeGround =>
+      homeGroundIds.isEmpty ? null : homeGroundIds.first;
 }
 
 Sport _sportFromJson(dynamic value) => Sport.values[value as int];

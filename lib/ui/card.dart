@@ -36,11 +36,17 @@ class PMatchBoard extends StatelessWidget {
   final BorderRadius borderRadius;
   final Color backgroundColor;
 
+  /// Set false to drop the faint court-line/circle overlay — content that's
+  /// text-dense (small labels, several inline tags) reads as cluttered with
+  /// it drawn behind, since the lines and text compete at similar weight.
+  final bool showCourtLines;
+
   const PMatchBoard({
     required this.child,
     this.padding = const EdgeInsets.all(14),
     this.borderRadius = const BorderRadius.all(Radius.circular(14)),
     this.backgroundColor = const Color(0xFF173B92),
+    this.showCourtLines = true,
     super.key,
   });
 
@@ -50,7 +56,7 @@ class PMatchBoard extends StatelessWidget {
     child: ColoredBox(
       color: backgroundColor,
       child: CustomPaint(
-        painter: const _CourtLinePainter(),
+        painter: showCourtLines ? const _CourtLinePainter() : null,
         child: Padding(padding: padding, child: child),
       ),
     ),

@@ -219,6 +219,8 @@ class FreeplayRepository {
     required String description,
     required List<String> skills,
     String? locationId,
+    double? malePrice,
+    double? femalePrice,
   }) => _client
       .rpc(
         'edit_freeplay_listing',
@@ -227,6 +229,36 @@ class FreeplayRepository {
           'p_capacity': capacity,
           'p_description': description,
           'p_recommended_skills': skills,
+          'p_location_id': locationId,
+          'p_male_price': malePrice,
+          'p_female_price': femalePrice,
+        },
+      )
+      .timeout(_rpcTimeout);
+
+  /// Puts a lobby's already-scheduled activity up for freeplay.
+  ///
+  /// The activity keeps its `lobby_id` — there is no host row. The server pins
+  /// `location_id` to the activity's own venue, else the lobby's home ground;
+  /// [locationId] is only consulted when the lobby has neither.
+  Future<void> exposeLobbyActivity(
+    String activityId, {
+    required int capacity,
+    required double malePrice,
+    required double femalePrice,
+    required List<String> skills,
+    String description = '',
+    String? locationId,
+  }) => _client
+      .rpc(
+        'expose_lobby_activity_freeplay',
+        params: {
+          'p_activity_id': activityId,
+          'p_capacity': capacity,
+          'p_male_price': malePrice,
+          'p_female_price': femalePrice,
+          'p_recommended_skills': skills,
+          'p_description': description,
           'p_location_id': locationId,
         },
       )

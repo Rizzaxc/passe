@@ -14,6 +14,8 @@ import '../../../core/payment/pay_recipient.dart';
 import '../../../feed_tab/post_card.dart';
 import '../../../logger/talker.dart';
 import '../../../router.dart';
+import '../challenge/challenger_chooser_sheet.dart';
+import '../lobby_detail_controller.dart';
 import 'feed_controller.dart';
 
 // ─── Color tokens ──────────────────────────────────────────────
@@ -48,6 +50,16 @@ enum UpdateKind {
   // Organizer override-confirmed a deadline-passed activity despite being
   // under confirmation_threshold (resolve_at_risk_activity_organizer).
   thresholdConfirmed('threshold_confirmed', Icons.verified_outlined),
+  // A friendly challenger cleared its OWN RSVP threshold, so the handshake is
+  // now this lobby's to answer (fn_friendly_challenge_quorum). Posted to the
+  // home lobby only — the second surface behind the `challenge_ready_for_home`
+  // push, so a dismissed notification doesn't lose the request.
+  challengeReady('challenge_ready', Icons.how_to_reg_outlined),
+  // The mirror of the above, on the CHALLENGER's feed: their own members just
+  // pushed the fixture over its threshold and the ball is now in the other
+  // lobby's court. Purely informational — there is nothing for them to do but
+  // wait, which is exactly what it says.
+  challengeAwaitingHome('challenge_awaiting_home', Icons.hourglass_empty),
   other('other', Icons.campaign_outlined);
 
   final String db;
@@ -202,6 +214,7 @@ sealed class FeedItem {
                 (f) => ((f as List)[0] as String, f[1] as String),
               )
               .toList(),
+          challengeId: payload['challenge_id'] as String?,
         );
 
       case 'personal':
@@ -355,6 +368,12 @@ final class UpdateItem extends FeedItem {
   final UpdateKind kind;
   final FeedTone tone;
   final List<(String, String)> fields;
+
+  /// Set on `challenge_ready`, which is the one update the reader can act on
+  /// directly — the card opens the challenger chooser rather than making a
+  /// manager go and find the info sheet's badged row.
+  final String? challengeId;
+
   const UpdateItem({
     required this.author,
     required this.authorId,
@@ -364,6 +383,7 @@ final class UpdateItem extends FeedItem {
     required this.kind,
     required this.tone,
     required this.fields,
+    this.challengeId,
   });
 }
 
@@ -543,7 +563,11 @@ class FeedItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (item) {
       final DayDivItem d => _DayDivider(item: d),
-      final UpdateItem u => _UpdateCard(item: u, captainId: captainId),
+      final UpdateItem u => _UpdateCard(
+        item: u,
+        captainId: captainId,
+        lobbyId: lobbyId,
+      ),
       final PersonalItem p => _PersonalCard(item: p, captainId: captainId),
       final SystemItem s => _SystemEvent(item: s),
       final PollItem po => _PollCard(
@@ -836,16 +860,32 @@ class _PersonalCard extends StatelessWidget {
 
 // ─── Captain update card ───────────────────────────────────────
 
-class _UpdateCard extends StatelessWidget {
+class _UpdateCard extends ConsumerWidget {
   final UpdateItem item;
   final String? captainId;
-  const _UpdateCard({required this.item, required this.captainId});
+  final String lobbyId;
+  const _UpdateCard({
+    required this.item,
+    required this.captainId,
+    required this.lobbyId,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final fgColor = item.tone.fg;
     final bgColor = item.tone.bg;
+
+    // Update cards are otherwise a read-only log. This one kind is a pending
+    // DECISION, and routing a manager from "someone is waiting on us" through
+    // the info sheet to find a badged row is three taps to do the obvious
+    // thing. Gated on manage permission so a plain member sees the record
+    // without a control they'd only be refused at.
+    final canAct =
+        item.kind == UpdateKind.challengeReady &&
+        item.challengeId != null &&
+        (ref.watch(myLobbyPermissionProvider(lobbyId)).value?.canManage ??
+            false);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
@@ -863,87 +903,111 @@ class _UpdateCard extends StatelessWidget {
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.only(left: 35),
-            child: Container(
-              decoration: BoxDecoration(
-                color: colors.card,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: colors.border),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 6,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: canAct
+                  ? () => showChallengerChooserSheet(context, lobbyId)
+                  : null,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: colors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
                     ),
-                    color: bgColor,
-                    child: Row(
-                      children: [
-                        Icon(item.kind.icon, size: 13, color: fgColor),
-                        const SizedBox(width: 6),
-                        Text(
-                          item.title.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: fgColor,
-                            letterSpacing: 0.7,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        for (final (label, value) in item.fields)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 5),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
-                              children: [
-                                SizedBox(
-                                  width: 64,
-                                  child: Text(
-                                    label.toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w500,
-                                      color: colors.mutedForeground,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    value,
-                                    style: const TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF09090B),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      color: bgColor,
+                      child: Row(
+                        children: [
+                          Icon(item.kind.icon, size: 13, color: fgColor),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              item.title.toUpperCase(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: fgColor,
+                                letterSpacing: 0.7,
+                              ),
                             ),
                           ),
-                      ],
+                          // Without this the card looks like every other
+                          // read-only update and nobody would think to tap it.
+                          if (canAct) ...[
+                            Text(
+                              'challenge.feed.reviewCta'.tr().toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: fgColor,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            Icon(Icons.chevron_right, size: 15, color: fgColor),
+                          ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (final (label, value) in item.fields)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 5),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  SizedBox(
+                                    width: 64,
+                                    child: Text(
+                                      label.toUpperCase(),
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w500,
+                                        color: colors.mutedForeground,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      value,
+                                      style: const TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF09090B),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

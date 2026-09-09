@@ -26,6 +26,14 @@ coaching courses. Unlike Discover, this is about entities the user is already a 
   reuses the player calendar's timeline/card views and routes each card to the freeplay detail page.
   Hosted activities are bucketed independently, so simultaneous sessions render side by side rather
   than one hiding another.
+- `freeplay_section/` — the listing-owner UI (`create_sheet`, `manage_sheet`, `requests_sheet`,
+  `schedule_controller`), originally Host-only. **Both owner kinds share `manage_sheet` and `requests_sheet`**: their RPCs
+  are owner-agnostic now, so a lobby manager reaches the same sheets from the activity card. They
+  branch on `FreeplayActivity.isLobbyOwned` only where the two genuinely differ (a lobby listing's
+  venue is the activity's venue and is not editable here; "Huỷ buổi" becomes "Gỡ vé", which cancels
+  the listing and leaves the lobby's session alone).
+- `lobby_section/freeplay_section/main.dart` is unrelated to either: it is the *player's* own seat
+  requests, surfaced inside the lobby hub.
 - `lobby_section/` — the bulk of this tab:
   - `feed/main.dart` — `LobbySubtab`: the list of the user's lobbies (`userLobbiesControllerProvider`)
     — a direct `lobby` query filtered by the **context sport** (`sport_id == Sport.index`) and an
@@ -35,10 +43,13 @@ coaching courses. Unlike Discover, this is about entities the user is already a 
   - `lobby_detail_page.dart` + `lobby_detail_controller.dart` — the pushed `LobbyDetailRoute`
     (`/manage/lobby/:id`). Loads one `lobby` row joined to `location(name)`.
   - `members/` — roster management (`lobby_member` table).
-  - `activity/` — captain schedules, members confirm/react; `feed`, `upcoming_controller`, `hero`,
-    `trigger_bar`, `confirmation_controller`, `poll_sheet`. The activity feed is the `lobby_feed_data`
-    RPC (keyed `p_lobby_id`); confirmation state comes from `activity` / `activity_confirmation` tables
-    and the `activity_confirmation_status` RPC.
+  - `activity/` — captain schedules, members confirm/react; `feed`, `upcoming_controller`,
+    `activity_card` (the per-activity card; the old single pinned `hero.dart` is gone — a lobby can
+    have several activities), `planner_tab`, `trigger_bar`, `confirmation_controller`, `poll_sheet`.
+    The activity feed is the `lobby_feed_data` RPC (keyed `p_lobby_id`); confirmation state comes
+    from `activity` / `activity_confirmation` tables and the `activity_confirmation_status` RPC.
+    `freeplay_expose_sheet.dart` + `freeplay_expose_controller.dart` back `activity_card.dart`'s
+    `_FreeplayBlock` — see "Freeplay exposure" below.
   - `history/` — past matches (`lobby_match_history_data` RPC, now both-sided — see root CLAUDE.md ▸
     Challenger System), `match.dart` / `view.dart`.
   - `challenge_offer_sheet.dart` / `challenge_offer_controller.dart` — the "Nhận Thách Đấu" opt-in
@@ -83,6 +94,32 @@ coaching courses. Unlike Discover, this is about entities the user is already a 
   `_RsvpControl` mirrors this client-side (`locked` prop, padlock icon on the active pill) to avoid a
   round-trip just to show a rejection. Members who are `maybe`/`out`/unresponsive are unaffected and
   can still RSVP (including flipping to `going`) after confirmation.
+- **Freeplay exposure** (`schema/lobby_freeplay_exposure.sql`): a captain or coordinator of a
+  **non-private** lobby can offer an activity's spare seats on the Discover ▸ Kèo feed. The
+  entry point is `activity_card.dart`'s `_FreeplayBlock` (manage-tier, never on a challenge
+  fixture — you can't sell a seat into a team-vs-team match), modelled on `ChallengeOfferControl`.
+  Four things about it are load-bearing:
+  - **The lobby owns the listing directly.** `activity_source_exclusivity` is untouched: the
+    activity keeps `lobby_id` and `freeplay_host_id` stays NULL. There is no phantom `freeplay_host`
+    row. Every freeplay RPC LEFT JOINs both and resolves identity as
+    `coalesce(h.display_name, l.name)`; authorization is `fn_freeplay_can_manage()` (the host user,
+    OR `lobby_can_manage()`), not `h.user_id = auth.uid()`.
+  - **An accepted guest gets NO `activity_confirmation` row.** That row is the lobby's confirmation
+    quorum (`activity_is_confirmed`, `fn_emit_activity_confirmed`, `fn_sweep_activity_thresholds`),
+    the basis of `lobby_payment_requests` bill splits, and `wall_post`'s taggable-attendee proof —
+    an outsider must move none of them. Guests live only in `freeplay_request`; their schedule and
+    health-capture candidacy already read from there. Capacity on a lobby listing therefore means
+    *seats for outsiders*, counted independently of member RSVPs.
+  - **The listing freezes the activity.** Once any seat is requested, a trigger
+    (`fn_activity_freeplay_lock`) refuses changes to `start_time`/`end_time`/`location_id` — the same
+    invariant `update_freeplay_activity` states for Hosts. A manager who wants their time back
+    withdraws the listing first. `BEFORE DELETE` on `activity`
+    (`fn_activity_freeplay_cancel_cascade`) runs the cancel path before the FK cascade, so the
+    under-turnout auto-cancel can't erase paid seats silently.
+  - **A lobby with a live listing cannot go private** (`fn_lobby_private_freeplay_guard`, raising
+    `lobby_private_blocked_by_freeplay`) — hiding would strand outsiders who already hold a seat.
+    `lobby_form_sheet.dart` mirrors this on the visibility segment via `lobbyHasLiveFreeplayProvider`
+    and also translates the server error, so it degrades rather than racing.
 - **`LobbyFeedController` mutations called from outside the Feed subtab need `ref.keepAlive()`.**
   The Feed tab (`LobbyFeedTab` in `activity/main.dart`) and the Planner tab (activity cards) are
   separate subtabs now — only one is mounted at a time — but Planner-side actions
@@ -135,6 +172,10 @@ coaching courses. Unlike Discover, this is about entities the user is already a 
 - Navigate to detail with `LobbyDetailRoute(id: lobby.id!, $extra: lobby.name).go(context)` — passing
   the name via `$extra` lets the page show a title before the row loads.
 - All RPCs/queries keep the `.timeout(const Duration(seconds: 5))`.
+- **Freeplay guests are invisible to every existing `activity` read.** They hold no
+  `activity_confirmation` row and are not in `lobby_member`, so any surface that should show them
+  has to union `freeplay_request` on purpose. Conversely, don't assume a confirmation row means
+  "lobby member" — for Host-owned listings it still doesn't.
 - **`activity` RLS is owner-scoped, not member-scoped** — `schema/activity_member_visibility.sql` adds
   a lobby-member SELECT policy on top of the pre-existing owner-only SELECT/UPDATE/DELETE. If you add
   a new direct `.from('activity')` read, make sure it's a lobby member doing the reading, not just the

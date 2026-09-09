@@ -50,19 +50,24 @@ class ChallengeOfferController extends _$ChallengeOfferController {
   Future<ChallengeOffer> build(String lobbyId) async {
     final row = await Supabase.instance.client
         .from('lobby')
-        // `lobby` has two FKs into `location` (home_ground and the offer
-        // venue), so both embeds have to name their constraint explicitly.
         .select(
           'open_to_challengers, challenge_offer_time, challenge_offer_cost, '
-          'challenge_offer_location, home_ground, '
+          'challenge_offer_location, '
           'offer_venue:location!lobby_challenge_offer_location_fkey(name), '
-          'homeground:location!lobby_home_ground_fkey(name)',
+          'lobby_homeground(is_primary, location(id, name))',
         )
         .eq('id', lobbyId)
         .maybeSingle()
         .timeout(const Duration(seconds: 5));
 
     if (row == null) return ChallengeOffer.closed;
+
+    final ghRows = (row['lobby_homeground'] as List?) ?? [];
+    final primary = ghRows.cast<Map>().firstWhere(
+      (g) => g['is_primary'] == true,
+      orElse: () => const {},
+    );
+    final primaryLoc = primary['location'] as Map<String, dynamic>?;
 
     final time = row['challenge_offer_time'] as String?;
     return ChallengeOffer(
@@ -75,9 +80,8 @@ class ChallengeOfferController extends _$ChallengeOfferController {
       costPerTeam: double.tryParse(
         row['challenge_offer_cost']?.toString() ?? '',
       ),
-      homegroundId: row['home_ground'] as String?,
-      homegroundName:
-          (row['homeground'] as Map<String, dynamic>?)?['name'] as String?,
+      homegroundId: primaryLoc?['id'] as String?,
+      homegroundName: primaryLoc?['name'] as String?,
     );
   }
 

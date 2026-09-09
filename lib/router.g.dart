@@ -980,6 +980,11 @@ mixin $LobbyDetailRoute on GoRouteData {
       state.uri.queryParameters,
       _$boolConverter,
     ),
+    openChallengers: _$convertMapValue(
+      'open-challengers',
+      state.uri.queryParameters,
+      _$boolConverter,
+    ),
     $extra: state.extra as String?,
   );
 
@@ -998,6 +1003,8 @@ mixin $LobbyDetailRoute on GoRouteData {
         'open-activity-planner': _self.openActivityPlanner!.toString(),
       if (_self.openJoinRequests != null)
         'open-join-requests': _self.openJoinRequests!.toString(),
+      if (_self.openChallengers != null)
+        'open-challengers': _self.openChallengers!.toString(),
     },
   );
 
@@ -1231,4 +1238,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'1e5424c90032e56ffc44143eb630f6d504ebb568';
+String _$routerHash() => r'c6957f1998a5316a9ed74d9985c8a9770cc2fdd9';

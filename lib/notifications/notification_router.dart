@@ -1,6 +1,5 @@
 import 'package:go_router/go_router.dart';
 
-import '../core/feature_flags.dart';
 import '../router.dart';
 import 'notification_kind.dart';
 
@@ -16,7 +15,6 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
   if (data == null) return null;
   final kind = NotificationKind.fromValue(data['kind'] as String?);
   if (kind == null) return null;
-  if (!ClientFeatureFlags.challengerFlow && kind.isChallengerFlow) return null;
 
   final lobbyId = data['lobby_id'] as String?;
   final recordId = data['record_id'] as String?;
@@ -91,6 +89,36 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
     // A played/recorded result is History's domain, not Planner's (Planner
     // is future/ongoing-only).
     NotificationKind.matchResultRecorded =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId, tab: 2).location,
+    // ── Friendly (referee-free) challenge mode ──────────────────────────────
+    // A challenger's members hit their own threshold and the handshake is now
+    // home's to answer. Open the chooser outright: at this point home has no
+    // activity for the fixture yet (one is only created on accept), so there
+    // is nothing on the Planner to highlight, and landing on the Feed would
+    // leave the accept/decline three taps away behind the info sheet.
+    NotificationKind.challengeReadyForHome =>
+      lobbyId == null
+          ? null
+          : LobbyDetailRoute(id: lobbyId, openChallengers: true).location,
+    // Nobody bit before the advert closed. The offer form is reachable from
+    // the lobby info sheet on Feed; the push's action is "đăng lại tuần sau".
+    NotificationKind.challengeOfferExpired =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
+    // Both of these are answered on the fixture itself, in Planner: the result
+    // sheet hangs off the activity card, and so does the 10-minute counter to
+    // a no-show claim.
+    NotificationKind.matchResultPending ||
+    NotificationKind.noShowClaimed =>
+      lobbyId == null
+          ? null
+          : LobbyDetailRoute(
+              id: lobbyId,
+              tab: 1,
+              highlightChallengeId: challengeId,
+            ).location,
+    // A dispute is settled and rated — nothing left to act on, but the match
+    // row explains itself in History, which is the point of landing there.
+    NotificationKind.matchDisputed =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId, tab: 2).location,
     // Lobby invite — the preview/accept page for this specific invite. Used
     // for OS push taps / cold starts, which (unlike the in-app notification

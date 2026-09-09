@@ -4,16 +4,24 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../core/format.dart';
-import '../../core/model/lobby_feed_item.dart';
+import '../../core/model/challenge.dart';
 import '../../logger/talker.dart';
 import '../../router.dart';
 import '../../ui/main.dart';
 import '../filter.dart';
-import '../lobby_feed_card.dart';
+import '../lobby_public_preview_sheet.dart';
 import '../main.dart';
+import 'confirm_challenge_sheet.dart';
 import 'feed_controller.dart';
-import 'send_challenge_controller.dart';
+import 'friendly_offer_feed_controller.dart';
 
+/// Discover ▸ Thách đấu, friendly mode.
+///
+/// The unit of this feed is an advertised FIXTURE, not a lobby: a club can have
+/// three dates open and a challenger is choosing between dates as much as
+/// between opponents. Sending is not a bare "challenge" button either — it
+/// commits the challenger's own members first, so the confirm sheet is where
+/// they set the bar their side has to clear.
 class ChallengerSubtab extends ConsumerWidget {
   const ChallengerSubtab({super.key});
 
@@ -21,7 +29,7 @@ class ChallengerSubtab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final contextOptions = ref.watch(contextLobbyOptionsProvider);
     final hasNoLobby = contextOptions.value?.isEmpty ?? false;
-    final feed = ref.watch(challengerFeedProvider);
+    final feed = ref.watch(friendlyOfferFeedProvider);
 
     return Column(
       children: [
@@ -36,53 +44,41 @@ class ChallengerSubtab extends ConsumerWidget {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
-                ref.invalidate(challengerFeedProvider);
-                await ref.read(challengerFeedProvider.future);
+                ref.invalidate(friendlyOfferFeedProvider);
+                await ref.read(friendlyOfferFeedProvider.future);
               },
               child: feed.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (_, _) => ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    PEmptySectionPlaceholder(
-                      hero: Icon(
-                        FLucideIcons.searchX,
-                        size: 64,
-                        color: context.theme.colors.mutedForeground,
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (e, st) {
+                  talker.handle(e, st, 'friendly offer feed failed');
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      PEmptySectionPlaceholder(
+                        subtitle: 'errorGeneric'.tr(),
                       ),
-                      title: 'homeTab.empty.title'.tr(),
-                      subtitle: 'homeTab.empty.message'.tr(),
-                    ),
+                    ],
+                  );
+                },
+                data: (offers) => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  children: [
+                    if (offers.isEmpty)
+                      PEmptySectionPlaceholder(
+                        hero: Icon(
+                          FLucideIcons.swords,
+                          size: 64,
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                        title: 'challenge.feed.emptyTitle'.tr(),
+                        subtitle: 'challenge.feed.emptySubtitle'.tr(),
+                      )
+                    else
+                      for (final o in offers) _OfferCard(offer: o),
                   ],
                 ),
-                data: (items) => items.isEmpty
-                    ? ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          PEmptySectionPlaceholder(
-                            hero: Icon(
-                              FLucideIcons.searchX,
-                              size: 64,
-                              color: context.theme.colors.mutedForeground,
-                            ),
-                            title: 'homeTab.empty.title'.tr(),
-                            subtitle: 'homeTab.empty.message'.tr(),
-                          ),
-                        ],
-                      )
-                    : ListView.separated(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        itemCount: items.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final item = items[index];
-                          return LobbyFeedCard(
-                            item: item,
-                            action: _ChallengeButton(item: item),
-                          );
-                        },
-                      ),
               ),
             ),
           ),
@@ -91,229 +87,205 @@ class ChallengerSubtab extends ConsumerWidget {
   }
 }
 
-/// The per-card "Thách đấu" CTA. Opens a confirmation sheet for the terms the
-/// home lobby published, then sends the challenge from the user's effective
-/// context lobby (the "challenging as" pick).
-///
-/// It deliberately does not collect a time or venue: the home team set those in
-/// its offer and `send_challenge` snapshots them. All the challenger adds is an
-/// optional note.
-class _ChallengeButton extends ConsumerStatefulWidget {
-  final LobbyFeedItem item;
-
-  const _ChallengeButton({required this.item});
+class _OfferCard extends ConsumerWidget {
+  final FriendlyOffer offer;
+  const _OfferCard({required this.offer});
 
   @override
-  ConsumerState<_ChallengeButton> createState() => _ChallengeButtonState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
 
-class _ChallengeButtonState extends ConsumerState<_ChallengeButton> {
-  bool _sent = false;
+    final terms = <String>[
+      offer.ruleset.getLocalizedName(context, param: offer.rulesetParam),
+      // The viewer of this feed is always the prospective AWAY side.
+      ?offer.handicapSide.getLocalizedLabel(
+        context,
+        weAreHome: false,
+        amount: offer.handicapAmount,
+      ),
+      if (offer.costSplit != ChallengeCostSplit.none)
+        offer.costSplit.getLocalizedLabel(context, weAreHome: false),
+    ];
 
-  Future<void> _open() async {
-    final ctx = await ref.read(contextLobbyProvider.future);
-    if (ctx == null || !mounted) return;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: PCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 8,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () =>
+                        showLobbyPublicPreviewSheet(context, offer.lobbyId),
+                    child: Row(
+                      spacing: 6,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            offer.lobbyName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: typography.body.md.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          FLucideIcons.chevronRight,
+                          size: 14,
+                          color: colors.mutedForeground,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                _FavorabilityChip(value: offer.favorability),
+              ],
+            ),
 
-    final sent = await showPSheet<bool>(
-      context: context,
-      builder: (_) => _ConfirmChallengeSheet(
-        item: widget.item,
-        contextLobbyId: ctx.id,
-        contextLobbyName: ctx.name,
+            // Strength and trustworthiness sit together: without a referee,
+            // who you're agreeing to meet matters as much as how good they are.
+            Row(
+              spacing: 10,
+              children: [
+                _Meta(
+                  icon: FLucideIcons.trendingUp,
+                  label: offer.lobbyMmr == null
+                      ? '—'
+                      : offer.hasProvisionalMmr
+                      ? 'challenge.chooser.mmrProvisional'.tr(
+                          namedArgs: {'mmr': '${offer.lobbyMmr}'},
+                        )
+                      : '${offer.lobbyMmr}',
+                ),
+                _Meta(
+                  icon: FLucideIcons.shieldCheck,
+                  label: 'challenge.chooser.trust'.tr(
+                    namedArgs: {'score': '${offer.trustScore ?? 40}'},
+                  ),
+                  tone: offer.isLowTrust ? colors.destructive : null,
+                ),
+                _Meta(
+                  icon: FLucideIcons.users,
+                  label: '${offer.memberCount}',
+                ),
+              ],
+            ),
+
+            Row(
+              spacing: 6,
+              children: [
+                Icon(
+                  FLucideIcons.calendar,
+                  size: 14,
+                  color: colors.mutedForeground,
+                ),
+                Expanded(
+                  child: Text(
+                    [
+                      formatMatchDateTime(offer.kickoff),
+                      if ((offer.locationName ?? '').isNotEmpty)
+                        offer.locationName!,
+                    ].join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: typography.body.sm.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            Text(
+              terms.join(' · '),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: typography.body.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+
+            FButton(
+              size: .sm,
+              onPress: offer.alreadyChallenged
+                  ? null
+                  : () => showConfirmFriendlyChallengeSheet(context, offer),
+              child: Text(
+                offer.alreadyChallenged
+                    ? 'challenge.send.alreadySent'.tr()
+                    : 'challenge.send.cta'.tr(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
-    if (sent == true && mounted) setState(() => _sent = true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FButton(
-      size: .sm,
-      style: FButtonStyleExtension.accentBlueStyle(
-        context.theme.buttonStyles.primary.base,
-      ),
-      onPress: _sent ? null : _open,
-      child: Text(_sent
-          ? 'homeTab.challenger.sent'.tr()
-          : 'homeTab.challenger.challenge'.tr()),
-    );
   }
 }
 
-/// "You're accepting these terms" — the challenger's half of the handshake.
-class _ConfirmChallengeSheet extends ConsumerStatefulWidget {
-  final LobbyFeedItem item;
-  final String contextLobbyId;
-  final String contextLobbyName;
-
-  const _ConfirmChallengeSheet({
-    required this.item,
-    required this.contextLobbyId,
-    required this.contextLobbyName,
-  });
-
-  @override
-  ConsumerState<_ConfirmChallengeSheet> createState() =>
-      _ConfirmChallengeSheetState();
-}
-
-class _ConfirmChallengeSheetState
-    extends ConsumerState<_ConfirmChallengeSheet> {
-  final _noteController = TextEditingController();
-  bool _busy = false;
-
-  @override
-  void dispose() {
-    _noteController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _send() async {
-    setState(() => _busy = true);
-    try {
-      final note = _noteController.text.trim();
-      await ref
-          .read(sendChallengeControllerProvider(widget.contextLobbyId).notifier)
-          .send(
-            targetLobbyId: widget.item.id,
-            note: note.isEmpty ? null : note,
-          );
-      if (!mounted) return;
-      Navigator.of(context).pop(true);
-      showFToast(
-        context: context,
-        icon: const Icon(FLucideIcons.flag),
-        title: Text('homeTab.challenger.sent'.tr()),
-        alignment: .bottomCenter,
-      );
-    } catch (e, st) {
-      talker.handle(e, st, 'challenge failed');
-      if (!mounted) return;
-      showFToast(
-        context: context,
-        icon: const Icon(FLucideIcons.circleX),
-        variant: .destructive,
-        title: Text(challengeErrorMessage(e)),
-        alignment: .bottomCenter,
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
+class _FavorabilityChip extends StatelessWidget {
+  final String value;
+  const _FavorabilityChip({required this.value});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final item = widget.item;
+    final tone = switch (value) {
+      'harder' => colors.destructive,
+      'easier' => colors.primary,
+      _ => colors.mutedForeground,
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: tone.withValues(alpha: 0.12),
+      ),
+      child: Text(
+        'challenge.feed.favorability.$value'.tr(),
+        style: context.theme.typography.body.xs.copyWith(
+          color: tone,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
 
-    Widget term(IconData icon, String label, String value) => Row(
-          children: [
-            Icon(icon, size: 16, color: colors.mutedForeground),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: context.theme.typography.body.sm
-                    .copyWith(fontWeight: FontWeight.w600),
-              ),
-            ),
-            Flexible(
-              child: Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.right,
-                style: context.theme.typography.body.sm.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.secondaryForeground,
-                ),
-              ),
-            ),
-          ],
-        );
+class _Meta extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color? tone;
+  const _Meta({required this.icon, required this.label, this.tone});
 
-    return SingleChildScrollView(
-      primary: false,
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+  @override
+  Widget build(BuildContext context) {
+    final color = tone ?? context.theme.colors.mutedForeground;
+    return Flexible(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 4,
         children: [
-          PSheetTitle(
-            label: 'homeTab.challenger.confirmTitle'.tr(),
-            trailing: FButton.icon(
-              variant: .ghost,
-              onPress: () => Navigator.of(context).pop(),
-              child: const Icon(FLucideIcons.x),
+          Icon(icon, size: 14, color: color),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.theme.typography.body.sm.copyWith(color: color),
             ),
           ),
-
-          Text(
-            'homeTab.challenger.confirmBody'.tr(
-              args: [widget.contextLobbyName, item.name],
-            ),
-            style: context.theme.typography.body.xs
-                .copyWith(color: colors.mutedForeground, height: 1.45),
-          ),
-
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: colors.card,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colors.border),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 10,
-              children: [
-                if (item.offerTime != null)
-                  term(FLucideIcons.calendar, 'homeTab.challenger.kickoff'.tr(),
-                      formatMatchDateTime(item.offerTime!)),
-                if (item.offerLocationName != null)
-                  term(FLucideIcons.mapPin, 'homeTab.challenger.venue'.tr(),
-                      item.offerLocationName!),
-                if (item.offerCost != null)
-                  term(FLucideIcons.wallet, 'homeTab.challenger.cost'.tr(),
-                      '${formatVnd(item.offerCost!)}đ'),
-              ],
-            ),
-          ),
-
-          Text(
-            'homeTab.challenger.refNote'.tr(),
-            style: context.theme.typography.body.xs
-                .copyWith(color: colors.mutedForeground, height: 1.45),
-          ),
-
-          FTextField(
-            label: Text('homeTab.challenger.note'.tr()),
-            hint: 'homeTab.challenger.noteHint'.tr(),
-            maxLines: 3,
-            control: FTextFieldControl.managed(controller: _noteController),
-          ),
-
-          FButton(
-            onPress: _busy ? null : _send,
-            child: _busy
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text('homeTab.challenger.confirmCta'.tr()),
-          ),
-          const SizedBox(height: 4),
         ],
       ),
     );
   }
 }
-
-/// "Challenging as" dropdown under the section title — lets the user pick
-/// which of their lobbies (for the current sport) they're challenging as.
 class _ContextLobbyPicker extends ConsumerWidget {
   const _ContextLobbyPicker();
 

@@ -8,11 +8,16 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../auth/auth_controller.dart';
 import '../../core/feature_flags.dart';
 import '../../core/model/lobby.dart';
+import '../../core/model/lobby_homeground.dart';
 import '../../logger/talker.dart';
 import '../../router.dart';
 import '../../ui/dialog.dart';
 import '../../ui/sheet.dart';
 import '../../ui/user_avatar.dart';
+import 'challenge/challenger_chooser_controller.dart';
+import 'challenge/challenger_chooser_sheet.dart';
+import 'challenge/friendly_offer_controller.dart';
+import 'challenge/friendly_offer_sheet.dart';
 import 'challenge_offer_sheet.dart';
 import 'challenges_controller.dart';
 import 'challenges_sheet.dart';
@@ -225,12 +230,29 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
     return count.toString();
   }
 
-  Future<void> _editLobby(BuildContext context, Lobby lobby) async {
+  String? _offerBadge(WidgetRef ref, String lobbyId) {
+    final board = ref.watch(friendlyOfferControllerProvider(lobbyId)).value;
+    if (board == null || board.open.isEmpty) return null;
+    return '${board.open.length}/${ChallengeOfferBoard.maxSlots}';
+  }
+
+  String? _friendlyChallengerBadge(WidgetRef ref, String lobbyId) {
+    final count = ref.watch(pendingChallengerCountProvider(lobbyId)).value;
+    if (count == null || count == 0) return null;
+    return count.toString();
+  }
+
+  Future<void> _editLobby(
+    BuildContext context,
+    Lobby lobby,
+    List<LobbyHomeground> homeGrounds,
+  ) async {
     final updated = await showLobbyFormSheet(
       context: context,
       ref: ref,
       lobbyId: widget.lobbyId,
       existingLobby: lobby,
+      existingHomeGrounds: homeGrounds,
     );
     if (updated != null && mounted) {
       ref.invalidate(lobbyDetailControllerProvider(widget.lobbyId));
@@ -277,6 +299,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
   Widget build(BuildContext context) {
     final infoAsync = ref.watch(lobbyDetailControllerProvider(widget.lobbyId));
     final lobby = infoAsync.value?.lobby ?? widget.info.lobby;
+    final homeGrounds = infoAsync.value?.homeGrounds ?? widget.info.homeGrounds;
     final currentUserId = ref.watch(authControllerProvider).value?.id;
     final isCaptain = currentUserId != null && lobby.captainId == currentUserId;
     final colors = context.theme.colors;
@@ -451,7 +474,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                 ],
 
                 // Location
-                if (widget.info.homeGroundName != null) ...[
+                if (homeGrounds.isNotEmpty) ...[
                   const SizedBox(height: 10),
                   Row(
                     children: [
@@ -463,7 +486,15 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
-                          widget.info.homeGroundName!,
+                          homeGrounds.length > 1
+                              ? 'lobby.homeGroundWithExtra'.tr(
+                                  namedArgs: {
+                                    'name': homeGrounds.first.name,
+                                    'count': (homeGrounds.length - 1)
+                                        .toString(),
+                                  },
+                                )
+                              : homeGrounds.first.name,
                           style: context.theme.typography.body.sm.copyWith(
                             color: colors.mutedForeground,
                           ),
@@ -472,6 +503,20 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                         ),
                       ),
                     ],
+                  ),
+                ],
+
+                // Description — full text, no truncation (this is the
+                // owner's own management view, not the Discover card).
+                if (lobby.description != null &&
+                    lobby.description!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    lobby.description!,
+                    style: context.theme.typography.body.sm.copyWith(
+                      color: colors.foreground,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ],
@@ -577,11 +622,15 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (isCaptain) ...[
+                    // Edit is manage-tier now that update_lobby accepts a
+                    // coordinator caller too (see schema/lobby_description.sql)
+                    // — the UI gate has to match the RPC-level permission or a
+                    // coordinator would have access with no way to reach it.
+                    if (canManage) ...[
                       _SettingsRow(
                         icon: FLucideIcons.pencil,
                         label: 'lobby.edit'.tr(),
-                        onTap: () => _editLobby(context, lobby),
+                        onTap: () => _editLobby(context, lobby, homeGrounds),
                       ),
                       Divider(
                         height: 1,
@@ -604,9 +653,39 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                         indent: 50,
                         color: colors.border.withValues(alpha: 0.5),
                       ),
+                      // The three fixtures this lobby advertises. Not behind
+                      // `challengerFlow` — that flag now gates only the
+                      // refereed variant's extras.
+                      _SettingsRow(
+                        icon: FLucideIcons.megaphone,
+                        label: 'challenge.offer.settingsRow'.tr(),
+                        badge: _offerBadge(ref, widget.lobbyId),
+                        onTap: () =>
+                            showFriendlyOfferSheet(context, widget.lobbyId),
+                      ),
+                      Divider(
+                        height: 1,
+                        indent: 50,
+                        color: colors.border.withValues(alpha: 0.5),
+                      ),
+                      // Friendly mode's handshake lands here: challengers
+                      // that have already committed their own players and are
+                      // waiting on our answer.
+                      _SettingsRow(
+                        icon: FLucideIcons.swords,
+                        label: 'challenge.chooser.settingsRow'.tr(),
+                        badge: _friendlyChallengerBadge(ref, widget.lobbyId),
+                        onTap: () =>
+                            showChallengerChooserSheet(context, widget.lobbyId),
+                      ),
+                      Divider(
+                        height: 1,
+                        indent: 50,
+                        color: colors.border.withValues(alpha: 0.5),
+                      ),
                       if (ClientFeatureFlags.challengerFlow) ...[
                         _SettingsRow(
-                          icon: FLucideIcons.swords,
+                          icon: FLucideIcons.handshake,
                           label: 'lobby.challenges.title'.tr(),
                           badge: _challengeBadge(ref, widget.lobbyId),
                           onTap: () =>
@@ -877,9 +956,10 @@ class _MemberRow extends ConsumerWidget {
           Expanded(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () =>
-                  UserRoute(id: member.userId, $extra: member.username)
-                      .push(context),
+              onTap: () => UserRoute(
+                id: member.userId,
+                $extra: member.username,
+              ).push(context),
               child: Row(
                 children: [
                   PUserAvatar(

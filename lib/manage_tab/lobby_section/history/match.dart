@@ -1,3 +1,4 @@
+import '../../../core/model/challenge.dart';
 import '../activity/upcoming_controller.dart';
 
 /// A chronological entry in a lobby's History tab. Matches and completed
@@ -34,6 +35,13 @@ class LobbyMatch extends LobbyHistoryEntry {
   final String? refereeBookingId;
   final String? refereeName;
 
+  /// The opponent lobby, needed to vouch for them after the final whistle.
+  final String? opponentLobbyId;
+
+  /// Why this result stands. Drives the explanatory line under the card, so a
+  /// rating drop from a dispute or a walkover is never unexplained.
+  final MatchResultSource? resultSource;
+
   /// The underlying activity when this match came from a challenge. Used to
   /// avoid rendering the same completed session twice in the unified timeline.
   final String? activityId;
@@ -55,6 +63,8 @@ class LobbyMatch extends LobbyHistoryEntry {
     this.note,
     this.refereeBookingId,
     this.refereeName,
+    this.opponentLobbyId,
+    this.resultSource,
     this.activityId,
     required this.occurredAt,
   });
@@ -64,6 +74,16 @@ class LobbyMatch extends LobbyHistoryEntry {
   bool get isDraw => result == LobbyMatchResult.draw;
   @override
   bool get isPractice => result == LobbyMatchResult.practice;
+
+  /// Nobody's win: the two lobbies filed conflicting blind reports and both
+  /// took a loss. Reads as itself from either side, so it is never flipped.
+  bool get isDisputed => result == LobbyMatchResult.disputed;
+
+  /// The 24h window in which players who turned out may vouch for the
+  /// opponent. Mirrors `recommend_lobby`'s own guard, which is the authority.
+  bool get canVouch =>
+      opponentLobbyId != null &&
+      DateTime.now().difference(occurredAt) < const Duration(hours: 24);
 
   /// A challenge is any match against an opponent lobby. A *scored* one
   /// (win/loss/draw) always carries a referee booking — the DB enforces
@@ -105,8 +125,6 @@ class LobbyHistory {
   List<LobbyMatch> get matches =>
       entries.whereType<LobbyMatch>().toList(growable: false);
 }
-
-enum LobbyMatchResult { win, loss, draw, practice }
 
 /// Win / loss / draw / total / win-rate roll-up across a match list.
 class LobbyMatchStats {

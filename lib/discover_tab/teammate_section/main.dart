@@ -167,7 +167,10 @@ class _JoinButton extends ConsumerWidget {
           }
         }
       },
-      child: Text('homeTab.teammate.join'.tr()),
+      child: Text(
+        'homeTab.teammate.join'.tr(),
+        style: const TextStyle(fontWeight: FontWeight.w800),
+      ),
     );
   }
 }

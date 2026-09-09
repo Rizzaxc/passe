@@ -6,6 +6,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../activity/activity_card.dart';
 import '../activity/feed_controller.dart';
+import '../challenge/recommendation_controller.dart';
+import '../challenge/recommendation_sheet.dart';
 import 'match.dart';
 import 'match_history_controller.dart';
 
@@ -718,6 +720,48 @@ class _HistoryCard extends StatelessWidget {
                     ),
                   ),
                 ],
+
+                // Why this result stands, when it is not self-evident. A
+                // dispute or a walkover must never read as an unexplained
+                // rating drop.
+                if (match.resultSource?.needsExplaining ?? false) ...[
+                  const SizedBox(height: 9),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        match.isDisputed
+                            ? FLucideIcons.triangleAlert
+                            : FLucideIcons.info,
+                        size: 11,
+                        color: match.isDisputed
+                            ? colors.destructive
+                            : colors.mutedForeground,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          match.resultSource!.getLocalizedExplanation(context)!,
+                          style: TextStyle(
+                            fontSize: 11,
+                            height: 1.4,
+                            color: match.isDisputed
+                                ? colors.destructive
+                                : colors.mutedForeground,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
+                // Vouching closes 24 hours after the match row is written, so
+                // the control simply stops existing rather than appearing and
+                // then refusing.
+                if (match.canVouch) ...[
+                  const SizedBox(height: 10),
+                  _VouchButton(match: match),
+                ],
               ],
             ),
           ),
@@ -848,4 +892,41 @@ Color _memberColor(String name) {
     Color(0xFF8B5CF6),
   ];
   return palette[name.hashCode.abs() % palette.length];
+}
+
+/// Post-match verdict entry point.
+///
+/// Labels itself from the verdict already cast, so a player who has voted sees
+/// what they said rather than an invitation to say it again.
+class _VouchButton extends ConsumerWidget {
+  final LobbyMatch match;
+
+  const _VouchButton({required this.match});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final existing = ref.watch(myRecommendationProvider(match.id)).value;
+
+    return FButton(
+      size: .sm,
+      variant: existing == null ? .secondary : .ghost,
+      prefix: Icon(
+        existing == null ? FLucideIcons.thumbsUp : FLucideIcons.check,
+        size: 14,
+      ),
+      onPress: () => showRecommendationSheet(
+        context,
+        matchId: match.id,
+        subjectLobbyId: match.opponentLobbyId!,
+        subjectLobbyName: match.opponent ?? match.opponentTag,
+      ),
+      child: Text(
+        existing == null
+            ? 'challenge.verdictSheet.cta'.tr()
+            : 'challenge.verdictSheet.ctaDone'.tr(
+                namedArgs: {'verdict': existing.getLocalizedName(context)},
+              ),
+      ),
+    );
+  }
 }

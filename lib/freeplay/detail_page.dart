@@ -10,6 +10,7 @@ import '../core/icon/main.dart';
 import '../core/map_directions.dart';
 import '../core/model/enum.dart';
 import '../core/zalo_link.dart';
+import '../discover_tab/lobby_public_preview_sheet.dart';
 import '../router.dart';
 import '../ui/main.dart';
 import 'card.dart';
@@ -230,7 +231,12 @@ class _BodyState extends ConsumerState<_Body> {
           ],
           const SizedBox(height: 12),
           FTappable(
-            onPress: () => FreeplayHostRoute(id: a.hostId).push(context),
+            // A lobby listing's owner is the lobby itself: the public preview
+            // sheet is its counterpart to the Host page, and already refuses
+            // private lobbies — the same rule that gates exposing at all.
+            onPress: () => a.isLobbyOwned
+                ? showLobbyPublicPreviewSheet(context, a.hostId)
+                : FreeplayHostRoute(id: a.hostId).push(context),
             child: PCard(
               child: Row(
                 children: [
@@ -241,7 +247,12 @@ class _BodyState extends ConsumerState<_Body> {
                         ? null
                         : NetworkImage(a.hostAvatarUrl!),
                     child: a.hostAvatarUrl == null
-                        ? const Icon(FLucideIcons.ticket, size: 20)
+                        ? Icon(
+                            a.isLobbyOwned
+                                ? FLucideIcons.users
+                                : FLucideIcons.ticket,
+                            size: 20,
+                          )
                         : null,
                   ),
                   const SizedBox(width: 12),
@@ -258,7 +269,10 @@ class _BodyState extends ConsumerState<_Body> {
                           ),
                         ),
                         Text(
-                          'freeplay.verifiedHost'.tr(),
+                          (a.isLobbyOwned
+                                  ? 'freeplay.lobbyOwner'
+                                  : 'freeplay.verifiedHost')
+                              .tr(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: context.theme.typography.body.sm.copyWith(

@@ -682,6 +682,11 @@ class LobbyDetailRoute extends GoRouteData with $LobbyDetailRoute {
   /// verifies manage permission before opening.
   final bool? openJoinRequests;
 
+  /// One-shot intent from a `challenge_ready_for_home` notification tap —
+  /// opens the challenger chooser directly. Destination still verifies manage
+  /// permission before opening.
+  final bool? openChallengers;
+
   const LobbyDetailRoute({
     required this.id,
     this.$extra,
@@ -690,6 +695,7 @@ class LobbyDetailRoute extends GoRouteData with $LobbyDetailRoute {
     this.highlightChallengeId,
     this.openActivityPlanner,
     this.openJoinRequests,
+    this.openChallengers,
   });
 
   @override
@@ -702,6 +708,7 @@ class LobbyDetailRoute extends GoRouteData with $LobbyDetailRoute {
         highlightChallengeId: highlightChallengeId,
         openActivityPlanner: openActivityPlanner ?? false,
         openJoinRequests: openJoinRequests ?? false,
+        openChallengers: openChallengers ?? false,
       );
 }
 

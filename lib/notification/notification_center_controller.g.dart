@@ -54,7 +54,7 @@ final class NotificationCenterControllerProvider
 }
 
 String _$notificationCenterControllerHash() =>
-    r'76df44b9c36be56b172a4a7304c24c41c8f8e315';
+    r'276cd5eb8aa8d9019167dc74ea4f999434cde4da';
 
 /// The notification centre's list — a read-only history of past
 /// `notification_outbox` rows for the current user, most recent first.

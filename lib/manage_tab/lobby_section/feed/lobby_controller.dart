@@ -4,9 +4,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../auth/auth_controller.dart';
-import '../../../core/location_repository.dart';
 import '../../../core/model/enum.dart';
 import '../../../core/model/lobby.dart';
+import '../../../core/model/lobby_homeground.dart';
 import '../../../core/model/location.dart';
 import '../../../core/model/timeslot.dart';
 import '../../../core/state/selected_sport_state.dart';
@@ -26,8 +26,9 @@ abstract class LobbyFormState with _$LobbyFormState {
   const factory LobbyFormState({
     required Lobby lobby,
     @Default(false) bool isSaving,
-    // non-null when the user is entering a custom address (free-text mode)
-    Map<String, String?>? freeAddress,
+    // Ordered, first = primary. Names are carried here (not just ids) so the
+    // list UI can render tiles without a lookup round-trip.
+    @Default(<LobbyHomeground>[]) List<LobbyHomeground> homeGrounds,
     // a not-yet-uploaded avatar pick; uploaded to the `lobby_avatar` bucket
     // on commit (see LobbyFormController.commit).
     XFile? pickedAvatar,
@@ -78,18 +79,10 @@ class UserLobbiesController extends _$UserLobbiesController {
     // pg_cron schedule ('expire_past_activities' job) — it must NOT run as a
     // mutation on this read path.
 
-    // `lobby` has two FKs to `location` (`home_ground` and
-    // `challenge_offer_location`, the latter added for the Challenger
-    // System's offer terms), so an unqualified `location(...)` embed is
-    // ambiguous — PostgREST rejects it with a 300/PGRST201 ("more than one
-    // relationship was found"), which silently broke this whole query (and
-    // therefore the entire Manage▸Lobby list) the moment that column
-    // shipped. Pin the FK explicitly to keep resolving the homeground, not
-    // the challenge-offer venue.
     final lobbyRows = await supabase
         .from('lobby')
         .select(
-          'id, name, searchable_id, sport_id, captain_id, home_ground, details, mmr, location!lobby_home_ground_fkey(name), lobby_member!inner(user_id, role)',
+          'id, name, searchable_id, sport_id, captain_id, details, mmr, lobby_homeground(is_primary, location(name)), lobby_member!inner(user_id, role)',
         )
         .eq('sport_id', sport.index)
         .eq('lobby_member.user_id', user.id!)
@@ -100,7 +93,7 @@ class UserLobbiesController extends _$UserLobbiesController {
     final lobbies = (lobbyRows as List).map((row) {
       final data = Map<String, dynamic>.from(row as Map)
         ..remove('lobby_member')
-        ..remove('location');
+        ..remove('lobby_homeground');
       return Lobby.fromJson(data);
     }).toList();
 
@@ -112,11 +105,13 @@ class UserLobbiesController extends _$UserLobbiesController {
     for (final row in lobbyRows as List) {
       final id = (row as Map)['id'] as String?;
       if (id == null) continue;
-      final loc = row['location'];
-      if (loc is Map) {
-        final locName = loc['name'] as String?;
-        if (locName != null) homeGroundNames[id] = locName;
-      }
+      final ghRows = (row['lobby_homeground'] as List?) ?? [];
+      final primary = ghRows.cast<Map>().firstWhere(
+        (g) => g['is_primary'] == true,
+        orElse: () => const {},
+      );
+      final locName = (primary['location'] as Map?)?['name'] as String?;
+      if (locName != null) homeGroundNames[id] = locName;
       mmrMap[id] = (row['mmr'] as num?)?.toInt() ?? 1000;
 
       // `!inner` still embeds as a list; the eq() filter above guarantees
@@ -257,9 +252,9 @@ class LobbyFormController extends _$LobbyFormController {
     );
   }
 
-  void initFromLobby(Lobby lobby) {
+  void initFromLobby(Lobby lobby, {List<LobbyHomeground> homeGrounds = const []}) {
     _originalHasAvatar = lobby.details?.hasAvatar ?? false;
-    state = LobbyFormState(lobby: lobby);
+    state = LobbyFormState(lobby: lobby, homeGrounds: homeGrounds);
   }
 
   Future<void> pickAvatar() async {
@@ -279,8 +274,8 @@ class LobbyFormController extends _$LobbyFormController {
     updateDetails(hasAvatar: false);
   }
 
-  void updateFreeAddress(Map<String, String?>? addr) {
-    state = state.copyWith(freeAddress: addr);
+  void updateHomeGrounds(List<LobbyHomeground> homeGrounds) {
+    state = state.copyWith(homeGrounds: homeGrounds);
   }
 
   void updateDraft({
@@ -289,7 +284,7 @@ class LobbyFormController extends _$LobbyFormController {
     LobbyVisibility? visibility,
     List<Timeslot>? playtime,
     LobbyDetails? details,
-    String? homeGround,
+    String? description,
   }) {
     if (playtime != null) {
       while (playtime.length > 3) {
@@ -303,9 +298,10 @@ class LobbyFormController extends _$LobbyFormController {
         visibility: visibility ?? state.lobby.visibility,
         playtime: playtime ?? state.lobby.playtime,
         details: details ?? state.lobby.details,
-        homeGround: homeGround != null
-            ? (homeGround.isEmpty ? null : homeGround)
-            : state.lobby.homeGround,
+        // Preserve an explicit empty string (the user cleared the field) —
+        // description isn't tied to a separate free-text/picked-id mode, so
+        // there's no distinct "unset" representation to normalize toward.
+        description: description ?? state.lobby.description,
       ),
     );
   }
@@ -404,14 +400,11 @@ class LobbyFormController extends _$LobbyFormController {
           'p_visibility': state.lobby.visibility.name,
           'p_playtime': state.lobby.playtime?.map((t) => t.toJson()).toList(),
           if (details != null) 'p_details': details.toJson(),
+          'p_description': state.lobby.description,
+          // update_lobby replaces the whole set — always send it, even
+          // empty, so removing the last homeground actually clears it.
+          'p_home_ground_ids': [for (final h in state.homeGrounds) h.id],
         };
-        final locationId = await resolveLocationId(
-          pickedId: state.lobby.homeGround,
-          freeAddress: state.freeAddress,
-        );
-        if (locationId != null) {
-          params['p_home_ground_id'] = locationId;
-        }
         await supabase
             .rpc('update_lobby', params: params)
             .timeout(const Duration(seconds: 5));
@@ -434,15 +427,12 @@ class LobbyFormController extends _$LobbyFormController {
             'p_playtime': state.lobby.playtime!.map((t) => t.toJson()).toList(),
           if (state.lobby.details != null)
             'p_details': state.lobby.details!.toJson(),
+          if (state.lobby.description != null &&
+              state.lobby.description!.isNotEmpty)
+            'p_description': state.lobby.description,
+          if (state.homeGrounds.isNotEmpty)
+            'p_home_ground_ids': [for (final h in state.homeGrounds) h.id],
         };
-
-        final locationId = await resolveLocationId(
-          pickedId: state.lobby.homeGround,
-          freeAddress: state.freeAddress,
-        );
-        if (locationId != null) {
-          params['p_home_ground_id'] = locationId;
-        }
 
         final response = await supabase
             .rpc('create_lobby_with_location', params: params)
@@ -468,8 +458,16 @@ class LobbyFormController extends _$LobbyFormController {
                         ?.map((t) => t.toJson())
                         .toList(),
                     'p_details': details.toJson(),
-                    if (createdLobby.homeGround != null)
-                      'p_home_ground_id': createdLobby.homeGround,
+                    // update_lobby always overwrites both description and
+                    // the homeground set (no COALESCE) — must carry the
+                    // just-created values forward here (from local form
+                    // state, since create_lobby_with_location's response
+                    // doesn't echo homegrounds back) or this avatar-only
+                    // follow-up call would wipe them.
+                    'p_home_ground_ids': [
+                      for (final h in state.homeGrounds) h.id,
+                    ],
+                    'p_description': createdLobby.description,
                   },
                 )
                 .timeout(const Duration(seconds: 5));

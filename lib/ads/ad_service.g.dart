@@ -63,7 +63,7 @@ final class InterstitialControllerProvider
 }
 
 String _$interstitialControllerHash() =>
-    r'a362121a5c60d1660a2b07bc812c3b792b7d04cc';
+    r'1edb81601b196eb8ca18ac1e59397879aeef06bc';
 
 /// Preloads and serves interstitials.
 ///

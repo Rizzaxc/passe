@@ -390,18 +390,30 @@
     "nameRequired": "Lobby name is required",
     "nameTooShort": "Name must be at least 3 characters",
     "ageGroup": "Age Group",
+    "description": "Description",
+    "descriptionHint": "Tell people what your lobby is about...",
+    "descriptionTooLong": "Description must be 3000 characters or fewer",
     "saveButton": "Save",
     "saveFailed": "Failed to save lobby",
     "avatarPickFailed": "Failed to pick a photo",
     "emptyTitle": "No lobbies yet",
     "emptyMessage": "Create a lobby to start playing with others",
+    "homeGroundWithExtra": "{name} +{count} more",
+    "preview": {
+      "notFound": "This lobby is no longer available",
+      "gender": "Gender · {declared}/{total} declared",
+      "ageGroup": "Age groups",
+      "networks": "Top networks",
+      "industries": "Top industries"
+    },
     "visibility": {
       "private": "Private",
       "privateDescription": "Invite only",
       "discoverable": "Discoverable",
       "discoverableDescription": "Searchable by ID",
       "public": "Public",
-      "publicDescription": "Open to everyone"
+      "publicDescription": "Open to everyone",
+      "blockedByFreeplay": "This lobby is advertising freeplay seats — withdraw the listing before making it private."
     },
     "detail": {
       "members": "Members",
@@ -561,6 +573,8 @@
     "private": "Private",
     "privateDescription": "Only people with the link can join",
     "homeGround": "Home Ground",
+    "homeGrounds": "Home Grounds",
+    "homeGroundsDescription": "Members will use these as the default meeting points for activities. The starred one is primary — tap another to make it primary instead",
     "homeGroundDescription": "Members will use this as the default meeting point for activities. Search for it, or just fill in the details below yourself if it's not listed",
     "homeGroundHint": "Search by venue name...",
     "homeGroundFreeHint": "Enter venue name or address...",
@@ -568,6 +582,10 @@
     "homeGroundFreeTextMode": "Enter manually",
     "homeGroundSearchMode": "Search venues",
     "homeGroundSearchPrompt": "Type to search for a venue",
+    "homeGroundPrimary": "Primary",
+    "homeGroundAdd": "Add a home ground",
+    "homeGroundAddConfirm": "Add",
+    "homeGroundMaxReached": "Up to 5 home grounds",
     "streetNumber": "St. number",
     "streetName": "Street name",
     "district": "District",
@@ -1120,6 +1138,28 @@
       "history": "Drop-in History",
       "loadFailed": "Unable to load history",
       "noHistory": "No history yet"
+    },
+    "freeplayExpose": {
+      "title": "Open spare seats",
+      "blurb": "List this session's spare seats on freeplay so people outside the lobby can ask to join. The time and venue stay as scheduled.",
+      "cta": "Open seats to outsiders",
+      "venue": "Venue",
+      "noVenue": "No venue yet",
+      "capacity": "Seats offered",
+      "capacityHint": "Outsiders only — members still RSVP as usual.",
+      "description": "Description",
+      "lockNotice": "Once someone has asked for a seat, the session's time and venue are locked until you withdraw the listing.",
+      "submit": "Publish listing",
+      "invalid": "Enter a valid seat count, price and skill level",
+      "failed": "Could not open the seats",
+      "seatsFilled": "Freeplay: {filled}/{total} seats",
+      "intakeClosed": "Closed",
+      "requests": "Requests",
+      "requestsWithCount": "Requests ({count})",
+      "manage": "Manage listing",
+      "withdraw": "Withdraw listing",
+      "withdrawTitle": "Withdraw from freeplay?",
+      "withdrawBody": "The lobby's own session stays as it is. Every outside request and accepted seat is cancelled."
     }
   },
   "payment": {
@@ -1557,7 +1597,8 @@
       "noRequests": "No requests yet",
       "sessionFull": "This session is full",
       "respondFailed": "Unable to respond to this request"
-    }
+    },
+    "lobbyOwner": "Open lobby seat"
   },
   "feed": {
     "compose": "New post",
@@ -1786,5 +1827,282 @@
     "reviewStar": "{star} stars",
     "coachSportMismatch": "This coach does not teach {sport}",
     "startInPast": "Pick a time in the future"
+  },
+  "challenge": {
+    "party": {
+      "us": "our team",
+      "them": "their team",
+      "loser": "the losing side",
+      "both": "both teams",
+      "nobody": "nobody"
+    },
+    "cost": {
+      "none": "No pitch fee",
+      "paidBy": "{party} pays for the pitch",
+      "neutral": {
+        "none": "No pitch fee",
+        "splitEven": "Split the pitch fee evenly",
+        "loserPays": "Loser pays for the pitch",
+        "homePays": "Home pays for the pitch",
+        "awayPays": "Away pays for the pitch"
+      }
+    },
+    "bounty": {
+      "none": "No stake",
+      "perGoalDiff": "Stake per goal difference",
+      "fixedPerTeam": "Fixed stake per team"
+    },
+    "ruleset": {
+      "standard": "Standard rules",
+      "bestOfSets": "Best of sets",
+      "kingOfTheHill": "King of the hill",
+      "teamTie": "Team tie",
+      "custom": "Custom rules",
+      "withParam": {
+        "bestOfSets": "Best of {n} sets",
+        "teamTie": "{n}-rubber team tie"
+      },
+      "description": {
+        "standard": "Played under the sport's normal rules.",
+        "bestOfSets": "First to win the majority of sets. The only format with a set-by-set score.",
+        "kingOfTheHill": "A run of short games; the winner stays on. Whoever holds the court longer wins.",
+        "teamTie": "Several separate singles/doubles rubbers; the aggregate decides it.",
+        "custom": "The two lobbies agree their own format. Spell it out in the note."
+      }
+    },
+    "handicap": {
+      "spotted": "{party} spotted {amount}"
+    },
+    "result": {
+      "win": "Won",
+      "loss": "Lost",
+      "draw": "Drew",
+      "practice": "Friendly",
+      "disputed": "Disputed"
+    },
+    "resultSource": {
+      "referee": "Recorded by the referee",
+      "agreed": "Both lobbies agreed",
+      "oneSided": "Only one lobby reported — their result stands",
+      "forfeit": "Walkover — the side that showed up takes half the usual MMR",
+      "mutualConcession": "Both lobbies conceded — recorded as a draw",
+      "disputed": "The two reports conflicted — both lobbies take a loss"
+    },
+    "outcome": {
+      "weWon": "We won",
+      "weLost": "We lost",
+      "draw": "It was a draw",
+      "theyDidNotShow": "They never turned up",
+      "weDidNotShow": "We never turned up"
+    },
+    "status": {
+      "away": {
+        "requested": "Gathering players",
+        "pendingHome": "Waiting on the home team",
+        "scheduled": "Locked in",
+        "noShowClaimed": "No-show claimed",
+        "awaitingReports": "Awaiting results",
+        "played": "Played",
+        "disputed": "Result disputed",
+        "declined": "Declined",
+        "lapsed": "Fell through",
+        "cancelled": "Cancelled",
+        "accepted": "Accepted"
+      },
+      "home": {
+        "requested": "They're gathering players",
+        "pendingHome": "Waiting on you",
+        "scheduled": "Locked in",
+        "noShowClaimed": "No-show claimed",
+        "awaitingReports": "Awaiting results",
+        "played": "Played",
+        "disputed": "Result disputed",
+        "declined": "You declined",
+        "lapsed": "Fell through",
+        "cancelled": "Cancelled",
+        "accepted": "Accepted"
+      }
+    },
+    "verdict": {
+      "friendly": "Friendly",
+      "fairplay": "Fair play",
+      "unfriendly": "Unfriendly",
+      "dirty": "Dirty play",
+      "smurfing": "Smurfing",
+      "description": {
+        "friendly": "Good company, easy to deal with, would play again.",
+        "fairplay": "Played by the rules and reported the result honestly.",
+        "unfriendly": "Poor attitude during or after the match.",
+        "dirty": "Rough or deliberately foul play.",
+        "smurfing": "Far stronger than their MMR suggests."
+      }
+    },
+    "chooser": {
+      "title": "Pick an opponent",
+      "explainerOne": "This lobby has its players confirmed and is waiting on you.",
+      "explainerMany": "{count} lobbies have their players confirmed and are waiting on you. Accepting one automatically declines the rest.",
+      "emptyTitle": "Nobody ready yet",
+      "emptySubtitle": "A challenger only appears here once they've confirmed enough of their own players.",
+      "trust": "Trust {score}",
+      "turnout": "{going}/{threshold} confirmed",
+      "mmrProvisional": "{mmr} (provisional)",
+      "accept": "Accept",
+      "decline": "Decline",
+      "errorAlreadyAnswered": "This challenge has already been answered.",
+      "errorManagerOnly": "Only the captain or a coordinator can answer.",
+      "errorGeneric": "Couldn't answer the challenge.",
+      "settingsRow": "Challenges"
+    },
+    "report": {
+      "title": "Report the result",
+      "context": "vs {opponent} · {when}",
+      "agreeFirstTitle": "Agree it on the pitch first",
+      "agreeFirstBody": "Settle the result with the other team before you file. If neither side is sure, both choosing a draw is a perfectly valid answer.",
+      "outcomeLabel": "Result",
+      "setsLabel": "Set scores",
+      "addSet": "Add a set",
+      "setUs": "Us",
+      "setThem": "Them",
+      "noteLabel": "Note",
+      "noteHint": "Optional",
+      "consequenceTitle": "Getting it wrong costs both teams",
+      "consequenceBody": "If the two lobbies report different results, both are recorded as a loss and both lose trust.",
+      "blindOpponentDone": "They've filed. You still won't see their answer until you've filed yours.",
+      "blindOpponentWaiting": "They file separately. Neither side sees the other's answer until both are in.",
+      "submit": "File result",
+      "submitAgain": "Update result",
+      "errorTooEarly": "The match hasn't finished yet.",
+      "errorClosed": "This match is no longer open for reporting.",
+      "errorManagerOnly": "Only the captain or a coordinator can report.",
+      "errorGeneric": "Couldn't file the result.",
+      "outcome": {
+        "awaiting_opponent": "Filed. Waiting on the other team.",
+        "agreed": "Both lobbies agree. MMR applied.",
+        "mutual_concession": "Both lobbies conceded — recorded as a draw.",
+        "no_match": "Both lobbies reported not turning up. Not counted.",
+        "disputed": "The reports conflict. Both lobbies take a loss."
+      }
+    },
+    "block": {
+      "homeSide": "Home",
+      "awaySide": "Away",
+      "filed": "You reported: {outcome}",
+      "reportCta": "Report the result",
+      "reportCtaAgain": "Change your report",
+      "reportManagerOnly": "The captain or a coordinator will report this result."
+    },
+    "feed": {
+      "reviewCta": "Review",
+      "emptyTitle": "No offers yet",
+      "emptySubtitle": "No lobby nearby has posted a fixture. Try widening the filter, or post one yourself.",
+      "favorability": {
+        "harder": "Tougher",
+        "even": "Even",
+        "easier": "Easier"
+      }
+    },
+    "offer": {
+      "title": "Challenge offers",
+      "settingsRow": "Post an offer",
+      "explainer": "You can advertise up to 3 fixtures at once. Other teams see them under Thách đấu.",
+      "emptySlot": "Post offer {slot}",
+      "closesAt": "Closes: {when}",
+      "withdraw": "Withdraw",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "challengerCount": "{count} waiting",
+      "withdrawTitle": "Withdraw this offer?",
+      "withdrawBody": "It will stop appearing in Discover.",
+      "withdrawBodyWithChallengers": "{count} lobbies are on this fixture. Withdrawing cancels their challenges too.",
+      "formTitleNew": "Post an offer",
+      "formTitleEdit": "Edit offer",
+      "editWarning": "{count} lobbies are on this fixture. Saving changes cancels their challenges.",
+      "whenWhere": "When & where",
+      "kickoff": "Kick-off",
+      "closes": "Closes to challengers",
+      "closesHint": "Defaults to 24 hours before kick-off, so you still have time to find someone else.",
+      "format": "Format",
+      "paramSets": "Number of sets",
+      "paramRubbers": "Number of rubbers",
+      "handicap": "Handicap",
+      "handicapNone": "No handicap",
+      "handicapHint": "A handicap lets two mismatched teams play a game that still means something.",
+      "handicapAmount": "Handicap size",
+      "money": "Cost & stake",
+      "venueCost": "Pitch fee (VND)",
+      "bountyAmount": "Stake (VND)",
+      "moneyHint": "The app never moves money. These are terms the two teams settle between themselves.",
+      "terms": "Extra notes",
+      "termsHint": "Optional",
+      "termsHintRequired": "Required for custom rules",
+      "publish": "Post offer",
+      "published": "Offer posted",
+      "errorManagerOnly": "Only the captain or a coordinator can post.",
+      "errorPastKickoff": "Kick-off must be in the future.",
+      "errorExpiryOrder": "The offer must close before kick-off.",
+      "errorExpiryPast": "That closing time has already passed.",
+      "errorSlot": "A lobby has three offer slots.",
+      "errorVenue": "Pick a venue first.",
+      "errorPickKickoff": "Pick a kick-off time first.",
+      "errorRulesetParam": "Enter a valid number for this format.",
+      "errorCustomNote": "Custom rules need to be spelled out in the notes.",
+      "errorHandicapAmount": "Enter a valid handicap.",
+      "errorBountyAmount": "Enter a valid stake.",
+      "errorGeneric": "Couldn't post the offer."
+    },
+    "send": {
+      "title": "Confirm challenge",
+      "cta": "Challenge",
+      "alreadySent": "Challenge sent",
+      "termsLabel": "The home team's terms",
+      "sent": "Sent. Now your side confirms.",
+      "thresholdLabel": "How many of your players are needed",
+      "confirm": "Send challenge",
+      "thresholdExplainer": "This number is yours alone — only you know what a session actually turns out.",
+      "thresholdValue": "{n} of {total}",
+      "noteLabel": "Message the home team",
+      "noteHint": "Optional",
+      "whatHappensNext": "The fixture appears in your lobby's planner straight away. Once {n} players confirm, the challenge is sent to the home team.",
+      "errorClosed": "This offer is no longer open.",
+      "errorExpired": "This offer has closed.",
+      "errorSport": "The two lobbies play different sports.",
+      "errorDuplicate": "You've already challenged this fixture.",
+      "errorSelf": "You can't challenge your own lobby.",
+      "errorThresholdTooBig": "That's more players than your lobby has.",
+      "errorThresholdTooSmall": "At least 1 player is needed.",
+      "errorManagerOnly": "Only the captain or a coordinator can send this.",
+      "errorGeneric": "Couldn't send the challenge."
+    },
+    "verdictSheet": {
+      "title": "Rate {lobby}",
+      "cta": "Rate the opponent",
+      "ctaDone": "You said: {verdict}",
+      "explainer": "Only players who confirmed for this match can vouch, and only within 24 hours.",
+      "positive": "Recommend",
+      "negative": "Report",
+      "saved": "Verdict saved",
+      "changeable": "You can change your verdict within 24 hours.",
+      "errorClosed": "The window to vouch has closed.",
+      "errorNotPlayer": "Only players who confirmed for this match can vouch.",
+      "errorOwnLobby": "You can't vouch for your own lobby.",
+      "errorGeneric": "Couldn't save your verdict."
+    },
+    "noShow": {
+      "claimCta": "Report a no-show",
+      "counterCta": "Respond: we're here",
+      "waitingOnThem": "No-show reported. They have 10 minutes to respond.",
+      "accused": "They've reported your lobby as absent. You have 10 minutes to respond.",
+      "errorTooEarly": "Too early — give them 30 minutes after kick-off.",
+      "errorEnded": "The match has ended — report the result instead.",
+      "errorAlready": "You've already reported this.",
+      "errorWindowClosed": "The window to respond has closed.",
+      "errorNoClaim": "There's no report to respond to.",
+      "errorManagerOnly": "Only the captain or a coordinator can do this.",
+      "errorGeneric": "Couldn't complete that."
+    },
+    "cancel": {
+      "cta": "Withdraw challenge",
+      "errorTooLate": "The match is locked in; it can't be withdrawn now."
+    }
   }
 }

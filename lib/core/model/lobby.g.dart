@@ -39,7 +39,12 @@ _Lobby _$LobbyFromJson(Map json) => _Lobby(
       : LobbyDetails.fromJson(
           Map<String, dynamic>.from(json['details'] as Map),
         ),
-  homeGround: json['home_ground'] as String?,
+  description: json['description'] as String?,
+  homeGroundIds:
+      (json['home_ground_ids'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>[],
   visibility:
       $enumDecodeNullable(_$LobbyVisibilityEnumMap, json['visibility']) ??
       LobbyVisibility.discoverable,
@@ -53,7 +58,8 @@ Map<String, dynamic> _$LobbyToJson(_Lobby instance) => <String, dynamic>{
   'sport_id': _sportToJson(instance.sport),
   'playtime': ?instance.playtime?.map((e) => e.toJson()).toList(),
   'details': ?instance.details?.toJson(),
-  'home_ground': ?instance.homeGround,
+  'description': ?instance.description,
+  'home_ground_ids': instance.homeGroundIds,
   'visibility': _$LobbyVisibilityEnumMap[instance.visibility]!,
 };
 

@@ -11,6 +11,7 @@ import '../../router.dart';
 import '../../ui/lobby_avatar.dart';
 import 'activity/main.dart';
 import 'activity/planner_tab.dart';
+import 'challenge/challenger_chooser_sheet.dart';
 import 'history/view.dart';
 import 'join_requests_sheet.dart';
 import 'lobby_detail_controller.dart';
@@ -44,6 +45,14 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
   /// `lobby_join_request` notification tap.
   final bool openJoinRequests;
 
+  /// Opens the friendly-challenger chooser on landing, provided the signed-in
+  /// member's permission resolves to captain/coordinator — set from a
+  /// `challenge_ready_for_home` notification tap. Without it that push lands
+  /// on the Feed with the actual accept/decline three taps away behind the
+  /// info sheet, which is the same dead-end `openJoinRequests` was added to
+  /// fix for join requests.
+  final bool openChallengers;
+
   const LobbyDetailPage({
     super.key,
     required this.lobbyId,
@@ -53,6 +62,7 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
     this.highlightChallengeId,
     this.openActivityPlanner = false,
     this.openJoinRequests = false,
+    this.openChallengers = false,
   }) : assert(initialIndex >= 0 && initialIndex <= 2);
 
   /// Deep-links a specific tab (and, for Planner, a specific activity or
@@ -65,6 +75,7 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
     String? highlightChallengeId,
     bool openActivityPlanner = false,
     bool openJoinRequests = false,
+    bool openChallengers = false,
   }) {
     return LobbyDetailPage(
       lobbyId: lobbyId,
@@ -74,6 +85,7 @@ class LobbyDetailPage extends ConsumerStatefulWidget {
       highlightChallengeId: highlightChallengeId,
       openActivityPlanner: openActivityPlanner,
       openJoinRequests: openJoinRequests,
+      openChallengers: openChallengers,
     );
   }
 
@@ -98,6 +110,8 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
   bool _activityPlannerSheetOpen = false;
   bool _didOpenJoinRequests = false;
   bool _joinRequestsSheetOpen = false;
+  bool _didOpenChallengers = false;
+  bool _challengersSheetOpen = false;
   bool _didAttemptTour = false;
 
   @override
@@ -175,10 +189,34 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
     });
   }
 
+  void _maybeOpenChallengersSheet(bool canManage) {
+    if (!widget.openChallengers || !canManage || _didOpenChallengers) {
+      return;
+    }
+    _didOpenChallengers = true;
+    _challengersSheetOpen = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        _challengersSheetOpen = false;
+        return;
+      }
+      unawaited(() async {
+        await showChallengerChooserSheet(context, widget.lobbyId);
+        if (!mounted) return;
+        _challengersSheetOpen = false;
+        _maybeScheduleTour(
+          ref.read(currentUserIdProvider),
+          ref.read(onboardingStateProvider).value?.getStartedDone ?? false,
+        );
+      }());
+    });
+  }
+
   void _maybeScheduleTour(String? userId, bool onboardingDone) {
     if (_didAttemptTour ||
         _activityPlannerSheetOpen ||
         _joinRequestsSheetOpen ||
+        _challengersSheetOpen ||
         userId == null ||
         !onboardingDone) {
       return;
@@ -218,6 +256,7 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
         false;
     _maybeOpenActivityPlanner(canManage);
     _maybeOpenJoinRequestsSheet(canManage);
+    _maybeOpenChallengersSheet(canManage);
     _maybeScheduleTour(userId, onboardingDone);
 
     final sections = <FTabEntry>[

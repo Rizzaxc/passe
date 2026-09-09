@@ -392,18 +392,30 @@
     "nameRequired": "Tên lobby là bắt buộc",
     "nameTooShort": "Tên phải có ít nhất 3 ký tự",
     "ageGroup": "Nhóm Tuổi",
+    "description": "Mô tả",
+    "descriptionHint": "Chia sẻ về lobby của bạn...",
+    "descriptionTooLong": "Mô tả tối đa 3000 ký tự",
     "saveButton": "Lưu",
     "saveFailed": "Lưu lobby thất bại",
     "avatarPickFailed": "Không thể chọn ảnh",
     "emptyTitle": "Chưa có lobby nào",
     "emptyMessage": "Tạo lobby để bắt đầu chơi cùng người khác",
+    "homeGroundWithExtra": "{name} +{count} sân khác",
+    "preview": {
+      "notFound": "Lobby này không còn tồn tại",
+      "ageGroup": "Nhóm tuổi thành viên",
+      "gender": "Giới tính · {declared}/{total} đã khai báo",
+      "networks": "Mạng lưới nổi bật",
+      "industries": "Ngành nghề nổi bật"
+    },
     "visibility": {
       "private": "Nội Bộ",
       "privateDescription": "Không hiện trên search hay matchmaking. Người ngoài cần phải được mời",
       "discoverable": "Mặc Định",
       "discoverableDescription": "Hiện trên search và matchmaking. Người ngoài có thể xin gia nhập",
       "public": "Công Khai",
-      "publicDescription": "Thông tin lobby và thành viên được công khai"
+      "publicDescription": "Thông tin lobby và thành viên được công khai",
+      "blockedByFreeplay": "Lobby đang mở kèo — hãy gỡ kèo trước khi chuyển sang riêng tư."
     },
     "detail": {
       "members": "Thành Viên",
@@ -563,12 +575,18 @@
     "private": "Nội Bộ",
     "privateDescription": "Không hiện trên search hay matchmaking. Cần phải được mời",
     "homeGround": "Sân Nhà",
+    "homeGrounds": "Sân Nhà",
+    "homeGroundsDescription": "Các thành viên sẽ dùng đây làm điểm hẹn mặc định khi có buổi chơi. Sân có gắn sao là sân chính — chạm vào sân khác để đặt làm sân chính",
     "homeGroundDescription": "Đây sẽ là điểm hẹn mặc định để các thành viên tìm đến khi có buổi chơi. Tìm sân của bạn, hoặc nhập trực tiếp thông tin bên dưới nếu chưa có trong danh sách",
     "homeGroundHint": "Tìm theo tên địa điểm/ địa chỉ...",
     "homeGroundFreeHint": "Nhập trực tiếp tên địa điểm/ địa chỉ...",
     "homeGroundDismissSuggestions": "Không đúng địa điểm? Bỏ qua gợi ý",
     "homeGroundFreeTextMode": "Nhập thủ công",
     "homeGroundSearchMode": "Tìm kiếm địa điểm",
+    "homeGroundPrimary": "Sân chính",
+    "homeGroundAdd": "Thêm sân nhà",
+    "homeGroundAddConfirm": "Thêm",
+    "homeGroundMaxReached": "Tối đa 5 sân nhà",
     "streetNumber": "Số nhà",
     "streetName": "Tên đường",
     "district": "Quận/Huyện",
@@ -1111,11 +1129,33 @@
       "winRate": "tỷ lệ thắng"
     },
     "freeplay": {
-      "yourRequests": "Xé vé",
+      "yourRequests": "Kèo",
       "empty": "Các yêu cầu và buổi đã nhận sẽ xuất hiện ở đây.",
-      "history": "Lịch sử Xé vé",
+      "history": "Lịch sử kèo",
       "loadFailed": "Không tải được lịch sử",
       "noHistory": "Chưa có lịch sử"
+    },
+    "freeplayExpose": {
+      "title": "Mở chỗ trống",
+      "blurb": "Đăng những chỗ còn trống của buổi chơi này lên Kèo để người ngoài lobby xin vào. Giờ và sân giữ nguyên theo buổi chơi.",
+      "cta": "Mở chỗ trống cho người ngoài",
+      "venue": "Sân",
+      "noVenue": "Chưa có sân",
+      "capacity": "Số chỗ mở",
+      "capacityHint": "Chỉ tính người ngoài lobby — thành viên vẫn RSVP như thường.",
+      "description": "Mô tả",
+      "lockNotice": "Khi đã có người xin chỗ, buổi chơi không đổi được giờ và sân cho tới khi bạn gỡ kèo.",
+      "submit": "Đăng kèo",
+      "invalid": "Hãy điền số chỗ, giá và trình độ hợp lệ",
+      "failed": "Không mở được chỗ trống",
+      "seatsFilled": "Kèo: {filled}/{total} chỗ",
+      "intakeClosed": "Đã đóng",
+      "requests": "Yêu cầu",
+      "requestsWithCount": "Yêu cầu ({count})",
+      "manage": "Quản lý kèo",
+      "withdraw": "Gỡ kèo",
+      "withdrawTitle": "Gỡ kèo?",
+      "withdrawBody": "Buổi chơi của lobby vẫn giữ nguyên. Mọi yêu cầu và chỗ đã nhận của người ngoài sẽ bị huỷ."
     }
   },
   "payment": {
@@ -1424,7 +1464,7 @@
     "wallTaggedEmpty": "Chưa được gắn thẻ trong bài nào"
   },
   "freeplay": {
-    "title": "Xé vé",
+    "title": "Kèo",
     "discoveryEmptyTitle": "Chưa có buổi phù hợp",
     "discoveryEmptySubtitle": "Thử đổi khung giờ hoặc khu vực để xem thêm buổi chơi.",
     "activityDetails": "Chi tiết buổi chơi",
@@ -1484,9 +1524,9 @@
       "loadFailed": "Không tải được Host",
       "notFound": "Không tìm thấy Host",
       "completedCount": "{count} buổi đã hoàn thành",
-      "openListings": "Vé đang mở",
-      "openLoadFailed": "Không tải được vé đang mở",
-      "noOpenListings": "Host chưa có vé đang mở."
+      "openListings": "Kèo đang mở",
+      "openLoadFailed": "Không tải được kèo đang mở",
+      "noOpenListings": "Host chưa có kèo đang mở."
     },
     "hostMode": {
       "title": "Chế Độ Host",
@@ -1514,13 +1554,13 @@
       "messageHint": "Nhắn tin…"
     },
     "hostManage": {
-      "schedule": "Lịch Xé vé",
-      "openListings": "Vé đang đăng",
+      "schedule": "Lịch kèo",
+      "openListings": "Kèo đang đăng",
       "scheduleLoadFailed": "Không tải được lịch Host",
       "emptyTitle": "Chưa có buổi chơi",
-      "emptySubtitle": "Đăng một vé để bắt đầu nhận người chơi.",
+      "emptySubtitle": "Đăng một kèo để bắt đầu nhận người chơi.",
       "pendingRequests": "Yêu cầu {count}",
-      "createTitle": "Đăng vé mới",
+      "createTitle": "Đăng kèo mới",
       "completeForm": "Hãy điền đủ thông tin buổi chơi",
       "futureTime": "Thời gian buổi chơi phải ở tương lai",
       "createFailed": "Không tạo được buổi chơi",
@@ -1536,11 +1576,11 @@
       "recommendedSkill": "Trình độ đề xuất",
       "description": "Mô tả",
       "publishing": "Đang đăng…",
-      "publish": "Đăng vé",
-      "manageTitle": "Quản lý vé",
+      "publish": "Đăng kèo",
+      "manageTitle": "Quản lý kèo",
       "locationLocked": "Không thể đổi sân sau khi đã có người xin chỗ.",
       "capacityCanOnlyIncrease": "Số chỗ chỉ có thể tăng",
-      "updateFailed": "Không cập nhật được vé",
+      "updateFailed": "Không cập nhật được kèo",
       "saveChanges": "Lưu thay đổi",
       "openIntake": "Mở nhận yêu cầu",
       "closeIntake": "Đóng nhận yêu cầu",
@@ -1553,7 +1593,8 @@
       "noRequests": "Chưa có yêu cầu",
       "sessionFull": "Buổi chơi đã đủ chỗ",
       "respondFailed": "Không thể phản hồi yêu cầu này"
-    }
+    },
+    "lobbyOwner": "Lobby mở chỗ"
   },
   "feed": {
     "compose": "Đăng bài",
@@ -1782,5 +1823,282 @@
     "reviewStar": "{star} sao",
     "coachSportMismatch": "Huấn luyện viên này không dạy {sport}",
     "startInPast": "Chọn thời gian trong tương lai"
+  },
+  "challenge": {
+    "party": {
+      "us": "đội mình",
+      "them": "đội bạn",
+      "loser": "bên thua",
+      "both": "cả hai đội",
+      "nobody": "không ai"
+    },
+    "cost": {
+      "none": "Không có phí sân",
+      "paidBy": "{party} trả tiền sân",
+      "neutral": {
+        "none": "Không có phí sân",
+        "splitEven": "Chia đôi tiền sân",
+        "loserPays": "Bên thua trả sân",
+        "homePays": "Chủ nhà trả sân",
+        "awayPays": "Đội khách trả sân"
+      }
+    },
+    "bounty": {
+      "none": "Không cược",
+      "perGoalDiff": "Cược theo bàn cách biệt",
+      "fixedPerTeam": "Cược cố định mỗi đội"
+    },
+    "ruleset": {
+      "standard": "Luật thường",
+      "bestOfSets": "Đấu nhiều ván",
+      "kingOfTheHill": "Đội thắng giữ sân",
+      "teamTie": "Đối kháng nhiều trận",
+      "custom": "Luật riêng",
+      "withParam": {
+        "bestOfSets": "Best of {n} ván",
+        "teamTie": "Đối kháng {n} trận"
+      },
+      "description": {
+        "standard": "Đá theo luật thông thường của môn này.",
+        "bestOfSets": "Đội nào thắng trước quá bán số ván thì thắng. Đây là thể thức duy nhất có tỉ số từng ván.",
+        "kingOfTheHill": "Đá nhiều ván ngắn, đội thắng ở lại sân. Đội giữ sân lâu hơn là đội thắng.",
+        "teamTie": "Chia thành nhiều trận đơn/đôi riêng, tổng kết quả quyết định đội thắng.",
+        "custom": "Hai đội tự thỏa thuận thể thức. Ghi rõ ở phần ghi chú."
+      }
+    },
+    "handicap": {
+      "spotted": "{party} được chấp {amount}"
+    },
+    "result": {
+      "win": "Thắng",
+      "loss": "Thua",
+      "draw": "Hòa",
+      "practice": "Giao hữu",
+      "disputed": "Tranh chấp"
+    },
+    "resultSource": {
+      "referee": "Trọng tài ghi nhận",
+      "agreed": "Hai đội cùng xác nhận",
+      "oneSided": "Chỉ một đội khai — kết quả đó được ghi nhận",
+      "forfeit": "Xử thắng do đối phương không đến — đội thắng chỉ nhận nửa điểm MMR",
+      "mutualConcession": "Cả hai đội đều nhận thua — tính hòa",
+      "disputed": "Hai đội khai khác nhau — cả hai đội bị tính thua"
+    },
+    "outcome": {
+      "weWon": "Đội mình thắng",
+      "weLost": "Đội mình thua",
+      "draw": "Hai đội hòa",
+      "theyDidNotShow": "Đội bạn không đến",
+      "weDidNotShow": "Đội mình không đến"
+    },
+    "status": {
+      "away": {
+        "requested": "Đang gom quân",
+        "pendingHome": "Chờ chủ nhà duyệt",
+        "scheduled": "Đã chốt kèo",
+        "noShowClaimed": "Có báo vắng mặt",
+        "awaitingReports": "Chờ khai kết quả",
+        "played": "Đã đấu",
+        "disputed": "Tranh chấp kết quả",
+        "declined": "Bị từ chối",
+        "lapsed": "Không thành",
+        "cancelled": "Đã hủy",
+        "accepted": "Đã nhận"
+      },
+      "home": {
+        "requested": "Đối thủ đang gom quân",
+        "pendingHome": "Chờ bạn duyệt",
+        "scheduled": "Đã chốt kèo",
+        "noShowClaimed": "Có báo vắng mặt",
+        "awaitingReports": "Chờ khai kết quả",
+        "played": "Đã đấu",
+        "disputed": "Tranh chấp kết quả",
+        "declined": "Bạn đã từ chối",
+        "lapsed": "Không thành",
+        "cancelled": "Đã hủy",
+        "accepted": "Đã nhận"
+      }
+    },
+    "verdict": {
+      "friendly": "Thân thiện",
+      "fairplay": "Fair play",
+      "unfriendly": "Thiếu thiện chí",
+      "dirty": "Chơi xấu",
+      "smurfing": "Smurf",
+      "description": {
+        "friendly": "Vui vẻ, dễ chịu, hẹn gặp lại.",
+        "fairplay": "Chơi đúng luật, trung thực khi khai kết quả.",
+        "unfriendly": "Thái độ khó chịu trong và sau trận.",
+        "dirty": "Chơi thô bạo hoặc cố tình phạm luật.",
+        "smurfing": "Trình độ thật cao hơn hẳn điểm MMR đang hiển thị."
+      }
+    },
+    "chooser": {
+      "title": "Chọn đối thủ",
+      "explainerOne": "Đội này đã đủ quân và đang chờ bạn trả lời.",
+      "explainerMany": "{count} đội đã đủ quân và đang chờ bạn. Nhận lời một đội sẽ tự động từ chối các đội còn lại.",
+      "emptyTitle": "Chưa có đội nào sẵn sàng",
+      "emptySubtitle": "Đội thách đấu chỉ hiện ở đây sau khi họ gom đủ quân bên phía họ.",
+      "trust": "Uy tín {score}",
+      "turnout": "{going}/{threshold} người đã xác nhận",
+      "mmrProvisional": "{mmr} (tạm tính)",
+      "accept": "Nhận lời",
+      "decline": "Từ chối",
+      "errorAlreadyAnswered": "Lời thách đấu này đã được trả lời rồi.",
+      "errorManagerOnly": "Chỉ đội trưởng hoặc điều phối viên mới trả lời được.",
+      "errorGeneric": "Không trả lời được lời thách đấu.",
+      "settingsRow": "Lời thách đấu"
+    },
+    "report": {
+      "title": "Khai kết quả",
+      "context": "Gặp {opponent} · {when}",
+      "agreeFirstTitle": "Thống nhất tại sân trước",
+      "agreeFirstBody": "Hai đội nên chốt kết quả với nhau ngay tại sân rồi mới khai. Nếu không bên nào chắc chắn, cùng chọn hòa là hoàn toàn hợp lệ.",
+      "outcomeLabel": "Kết quả",
+      "setsLabel": "Tỉ số từng ván",
+      "addSet": "Thêm ván",
+      "setUs": "Đội mình",
+      "setThem": "Đội bạn",
+      "noteLabel": "Ghi chú",
+      "noteHint": "Không bắt buộc",
+      "consequenceTitle": "Khai sai tốn cả hai đội",
+      "consequenceBody": "Nếu hai đội khai kết quả khác nhau, cả hai đều bị tính thua MMR và mất điểm uy tín.",
+      "blindOpponentDone": "Đối thủ đã khai. Bạn vẫn không thấy kết quả của họ cho đến khi bạn khai xong.",
+      "blindOpponentWaiting": "Đối thủ khai riêng. Hai bên không thấy kết quả của nhau cho đến khi cả hai cùng khai.",
+      "submit": "Khai kết quả",
+      "submitAgain": "Cập nhật kết quả",
+      "errorTooEarly": "Trận đấu chưa kết thúc.",
+      "errorClosed": "Trận này không còn nhận khai kết quả.",
+      "errorManagerOnly": "Chỉ đội trưởng hoặc điều phối viên mới khai được.",
+      "errorGeneric": "Không khai được kết quả.",
+      "outcome": {
+        "awaiting_opponent": "Đã ghi nhận. Đang chờ đối thủ khai.",
+        "agreed": "Hai đội khớp kết quả. Đã tính MMR.",
+        "mutual_concession": "Cả hai đội đều nhận thua — tính hòa.",
+        "no_match": "Cả hai đội đều báo không có mặt. Trận không được tính.",
+        "disputed": "Hai đội khai khác nhau. Cả hai đội bị tính thua."
+      }
+    },
+    "block": {
+      "homeSide": "Chủ nhà",
+      "awaySide": "Đội khách",
+      "filed": "Bạn đã khai: {outcome}",
+      "reportCta": "Khai kết quả",
+      "reportCtaAgain": "Sửa kết quả đã khai",
+      "reportManagerOnly": "Đội trưởng hoặc điều phối viên sẽ khai kết quả trận này."
+    },
+    "feed": {
+      "reviewCta": "Duyệt",
+      "emptyTitle": "Chưa có lời mời nào",
+      "emptySubtitle": "Chưa đội nào trong khu vực đăng trận. Thử đổi bộ lọc, hoặc tự đăng lời mời.",
+      "favorability": {
+        "harder": "Khó",
+        "even": "Ngang tài",
+        "easier": "Dễ"
+      }
+    },
+    "offer": {
+      "title": "Lời mời thách đấu",
+      "settingsRow": "Đăng lời mời",
+      "explainer": "Bạn có thể đăng tối đa 3 trận cùng lúc. Đội khác sẽ thấy ở mục Thách đấu.",
+      "emptySlot": "Đăng lời mời {slot}",
+      "closesAt": "Đóng nhận lời: {when}",
+      "withdraw": "Gỡ",
+      "edit": "Sửa",
+      "cancel": "Huỷ",
+      "challengerCount": "{count} đội",
+      "withdrawTitle": "Gỡ lời mời?",
+      "withdrawBody": "Lời mời sẽ không còn hiển thị ở mục Thách đấu.",
+      "withdrawBodyWithChallengers": "{count} đội đang chờ trận này. Gỡ lời mời sẽ huỷ luôn lời thách đấu của họ.",
+      "formTitleNew": "Đăng lời mời",
+      "formTitleEdit": "Sửa lời mời",
+      "editWarning": "{count} đội đang chờ trận này. Lưu thay đổi sẽ huỷ lời thách đấu của họ.",
+      "whenWhere": "Thời gian & địa điểm",
+      "kickoff": "Giờ đấu",
+      "closes": "Đóng nhận lời",
+      "closesHint": "Mặc định là 24 tiếng trước giờ đấu, để bạn còn kịp tìm đội khác nếu không ai nhận.",
+      "format": "Thể thức",
+      "paramSets": "Số ván",
+      "paramRubbers": "Số trận",
+      "handicap": "Chấp",
+      "handicapNone": "Không chấp",
+      "handicapHint": "Chấp giúp hai đội chênh lệch trình độ vẫn đá được với nhau.",
+      "handicapAmount": "Chấp bao nhiêu",
+      "money": "Chi phí & cược",
+      "venueCost": "Tiền sân (VNĐ)",
+      "bountyAmount": "Mức cược (VNĐ)",
+      "moneyHint": "App không thu tiền. Đây là thỏa thuận giữa hai đội, tự thanh toán với nhau.",
+      "terms": "Ghi chú thêm",
+      "termsHint": "Không bắt buộc",
+      "termsHintRequired": "Bắt buộc với luật riêng",
+      "publish": "Đăng lời mời",
+      "published": "Đã đăng lời mời",
+      "errorManagerOnly": "Chỉ đội trưởng hoặc điều phối viên mới đăng được.",
+      "errorPastKickoff": "Giờ đấu phải ở tương lai.",
+      "errorExpiryOrder": "Thời điểm đóng nhận lời phải trước giờ đấu.",
+      "errorExpiryPast": "Thời điểm đóng nhận lời đã qua.",
+      "errorSlot": "Mỗi đội chỉ có 3 chỗ đăng lời mời.",
+      "errorVenue": "Chọn sân đã.",
+      "errorPickKickoff": "Chọn giờ đấu đã.",
+      "errorRulesetParam": "Nhập số hợp lệ cho thể thức này.",
+      "errorCustomNote": "Luật riêng cần ghi rõ ở phần ghi chú.",
+      "errorHandicapAmount": "Nhập mức chấp hợp lệ.",
+      "errorBountyAmount": "Nhập mức cược hợp lệ.",
+      "errorGeneric": "Không đăng được lời mời."
+    },
+    "send": {
+      "title": "Xác nhận thách đấu",
+      "cta": "Thách đấu",
+      "alreadySent": "Đã gửi lời thách đấu",
+      "termsLabel": "Điều kiện của đội chủ nhà",
+      "sent": "Đã gửi. Giờ chờ đội mình xác nhận.",
+      "thresholdLabel": "Cần bao nhiêu người của đội mình",
+      "confirm": "Gửi lời thách đấu",
+      "thresholdExplainer": "Đây là con số của riêng đội bạn — chỉ bạn biết một buổi thường gom được bao nhiêu người.",
+      "thresholdValue": "{n}/{total} người",
+      "noteLabel": "Nhắn đội chủ nhà",
+      "noteHint": "Không bắt buộc",
+      "whatHappensNext": "Trận sẽ hiện trong lịch của đội bạn ngay. Khi đủ {n} người xác nhận, lời thách đấu mới được gửi sang đội chủ nhà.",
+      "errorClosed": "Lời mời này không còn mở.",
+      "errorExpired": "Lời mời đã hết hạn.",
+      "errorSport": "Hai đội khác môn thể thao.",
+      "errorDuplicate": "Bạn đã thách đấu trận này rồi.",
+      "errorSelf": "Không thể tự thách đấu đội mình.",
+      "errorThresholdTooBig": "Số người cần lớn hơn quân số đội bạn.",
+      "errorThresholdTooSmall": "Cần ít nhất 1 người.",
+      "errorManagerOnly": "Chỉ đội trưởng hoặc điều phối viên mới gửi được.",
+      "errorGeneric": "Không gửi được lời thách đấu."
+    },
+    "verdictSheet": {
+      "title": "Đánh giá {lobby}",
+      "cta": "Đánh giá đối thủ",
+      "ctaDone": "Đã đánh giá: {verdict}",
+      "explainer": "Chỉ người đã xác nhận đá trận này mới đánh giá được, và chỉ trong 24 tiếng.",
+      "positive": "Giới thiệu",
+      "negative": "Phàn nàn",
+      "saved": "Đã ghi nhận đánh giá",
+      "changeable": "Bạn có thể đổi đánh giá trong 24 tiếng.",
+      "errorClosed": "Đã hết hạn đánh giá trận này.",
+      "errorNotPlayer": "Chỉ người đã xác nhận đá trận này mới đánh giá được.",
+      "errorOwnLobby": "Không thể tự đánh giá đội mình.",
+      "errorGeneric": "Không lưu được đánh giá."
+    },
+    "noShow": {
+      "claimCta": "Báo đối thủ không đến",
+      "counterCta": "Phản hồi: đội mình có mặt",
+      "waitingOnThem": "Đã báo đối thủ vắng mặt. Chờ họ phản hồi trong 10 phút.",
+      "accused": "Đối thủ báo đội mình không có mặt. Bạn có 10 phút để phản hồi.",
+      "errorTooEarly": "Còn sớm — đợi 30 phút sau giờ đấu đã.",
+      "errorEnded": "Trận đã kết thúc — khai kết quả thay vì báo vắng mặt.",
+      "errorAlready": "Bạn đã báo rồi.",
+      "errorWindowClosed": "Đã hết thời gian phản hồi.",
+      "errorNoClaim": "Không có báo cáo nào để phản hồi.",
+      "errorManagerOnly": "Chỉ đội trưởng hoặc điều phối viên mới thao tác được.",
+      "errorGeneric": "Không thực hiện được."
+    },
+    "cancel": {
+      "cta": "Rút lời thách đấu",
+      "errorTooLate": "Trận đã chốt, không rút được nữa."
+    }
   }
 }

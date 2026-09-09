@@ -3,14 +3,24 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth/auth_controller.dart';
 import '../../core/model/lobby.dart';
+import '../../core/model/lobby_homeground.dart';
 
 part 'lobby_detail_controller.g.dart';
 
 class LobbyDetailInfo {
   final Lobby lobby;
-  final String? homeGroundName;
 
-  const LobbyDetailInfo({required this.lobby, this.homeGroundName});
+  /// Ordered — the first entry is primary. Empty for a lobby with no
+  /// homegrounds set.
+  final List<LobbyHomeground> homeGrounds;
+
+  const LobbyDetailInfo({required this.lobby, this.homeGrounds = const []});
+
+  String? get homeGroundName =>
+      homeGrounds.isEmpty ? null : homeGrounds.first.name;
+
+  int get extraHomeGroundCount =>
+      homeGrounds.length > 1 ? homeGrounds.length - 1 : 0;
 }
 
 @riverpod
@@ -19,23 +29,38 @@ class LobbyDetailController extends _$LobbyDetailController {
   Future<LobbyDetailInfo> build(String lobbyId) async {
     final supabase = Supabase.instance.client;
 
-    // `lobby` has two FKs to `location` (`home_ground` and
-    // `challenge_offer_location`, the latter added for the Challenger
-    // System's offer terms), so an unqualified `location(...)` embed is
-    // ambiguous — PostgREST rejects it with a 300/PGRST201 ("more than one
-    // relationship was found"). Pin the FK explicitly to keep resolving the
-    // homeground, not the challenge-offer venue.
     final row = await supabase
         .from('lobby')
-        .select('*, location!lobby_home_ground_fkey(name)')
+        .select(
+          '*, lobby_homeground(location_id, is_primary, created_at, location(name))',
+        )
         .eq('id', lobbyId)
         .single()
         .timeout(const Duration(seconds: 5));
 
-    final data = Map<String, dynamic>.from(row as Map)..remove('location');
+    final data = Map<String, dynamic>.from(row as Map)
+      ..remove('lobby_homeground');
+    final ghRows = ((row['lobby_homeground'] as List?) ?? [])
+        .cast<Map<String, dynamic>>()
+        .toList()
+      ..sort((a, b) {
+        if (a['is_primary'] == true) return -1;
+        if (b['is_primary'] == true) return 1;
+        return (a['created_at'] as String? ?? '').compareTo(
+          b['created_at'] as String? ?? '',
+        );
+      });
+    final homeGrounds = [
+      for (final g in ghRows)
+        LobbyHomeground(
+          id: g['location_id'] as String,
+          name: (g['location'] as Map?)?['name'] as String? ?? '',
+          isPrimary: g['is_primary'] as bool? ?? false,
+        ),
+    ];
+    data['home_ground_ids'] = [for (final h in homeGrounds) h.id];
     final lobby = Lobby.fromJson(data);
-    final locName = (row['location'] as Map?)?['name'] as String?;
-    return LobbyDetailInfo(lobby: lobby, homeGroundName: locName);
+    return LobbyDetailInfo(lobby: lobby, homeGrounds: homeGrounds);
   }
 }
 

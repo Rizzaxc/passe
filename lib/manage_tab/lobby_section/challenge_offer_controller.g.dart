@@ -52,7 +52,7 @@ final class ChallengeOfferControllerProvider
 }
 
 String _$challengeOfferControllerHash() =>
-    r'39cec678ba7c105c70951caed0a6a9355016c0a9';
+    r'0ac60aa03ad641c8d232ceb68bda80f5f2916f94';
 
 final class ChallengeOfferControllerFamily extends $Family
     with

@@ -284,7 +284,7 @@ as bool,
 /// @nodoc
 mixin _$Lobby {
 
- String? get id;@JsonKey(name: 'captain_id') String? get captainId;@JsonKey(name: 'searchable_id') String? get searchableId; String get name;@JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson) Sport get sport; List<Timeslot>? get playtime; LobbyDetails? get details;@JsonKey(name: 'home_ground') String? get homeGround; LobbyVisibility get visibility;
+ String? get id;@JsonKey(name: 'captain_id') String? get captainId;@JsonKey(name: 'searchable_id') String? get searchableId; String get name;@JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson) Sport get sport; List<Timeslot>? get playtime; LobbyDetails? get details; String? get description;@JsonKey(name: 'home_ground_ids') List<String> get homeGroundIds; LobbyVisibility get visibility;
 /// Create a copy of Lobby
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -297,16 +297,16 @@ $LobbyCopyWith<Lobby> get copyWith => _$LobbyCopyWithImpl<Lobby>(this as Lobby, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Lobby&&(identical(other.id, id) || other.id == id)&&(identical(other.captainId, captainId) || other.captainId == captainId)&&(identical(other.searchableId, searchableId) || other.searchableId == searchableId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&const DeepCollectionEquality().equals(other.playtime, playtime)&&(identical(other.details, details) || other.details == details)&&(identical(other.homeGround, homeGround) || other.homeGround == homeGround)&&(identical(other.visibility, visibility) || other.visibility == visibility));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Lobby&&(identical(other.id, id) || other.id == id)&&(identical(other.captainId, captainId) || other.captainId == captainId)&&(identical(other.searchableId, searchableId) || other.searchableId == searchableId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&const DeepCollectionEquality().equals(other.playtime, playtime)&&(identical(other.details, details) || other.details == details)&&(identical(other.description, description) || other.description == description)&&const DeepCollectionEquality().equals(other.homeGroundIds, homeGroundIds)&&(identical(other.visibility, visibility) || other.visibility == visibility));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,captainId,searchableId,name,sport,const DeepCollectionEquality().hash(playtime),details,homeGround,visibility);
+int get hashCode => Object.hash(runtimeType,id,captainId,searchableId,name,sport,const DeepCollectionEquality().hash(playtime),details,description,const DeepCollectionEquality().hash(homeGroundIds),visibility);
 
 @override
 String toString() {
-  return 'Lobby(id: $id, captainId: $captainId, searchableId: $searchableId, name: $name, sport: $sport, playtime: $playtime, details: $details, homeGround: $homeGround, visibility: $visibility)';
+  return 'Lobby(id: $id, captainId: $captainId, searchableId: $searchableId, name: $name, sport: $sport, playtime: $playtime, details: $details, description: $description, homeGroundIds: $homeGroundIds, visibility: $visibility)';
 }
 
 
@@ -317,7 +317,7 @@ abstract mixin class $LobbyCopyWith<$Res>  {
   factory $LobbyCopyWith(Lobby value, $Res Function(Lobby) _then) = _$LobbyCopyWithImpl;
 @useResult
 $Res call({
- String? id,@JsonKey(name: 'captain_id') String? captainId,@JsonKey(name: 'searchable_id') String? searchableId, String name,@JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson) Sport sport, List<Timeslot>? playtime, LobbyDetails? details,@JsonKey(name: 'home_ground') String? homeGround, LobbyVisibility visibility
+ String? id,@JsonKey(name: 'captain_id') String? captainId,@JsonKey(name: 'searchable_id') String? searchableId, String name,@JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson) Sport sport, List<Timeslot>? playtime, LobbyDetails? details, String? description,@JsonKey(name: 'home_ground_ids') List<String> homeGroundIds, LobbyVisibility visibility
 });
 
 
@@ -334,7 +334,7 @@ class _$LobbyCopyWithImpl<$Res>
 
 /// Create a copy of Lobby
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? captainId = freezed,Object? searchableId = freezed,Object? name = null,Object? sport = null,Object? playtime = freezed,Object? details = freezed,Object? homeGround = freezed,Object? visibility = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? captainId = freezed,Object? searchableId = freezed,Object? name = null,Object? sport = null,Object? playtime = freezed,Object? details = freezed,Object? description = freezed,Object? homeGroundIds = null,Object? visibility = null,}) {
   return _then(_self.copyWith(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String?,captainId: freezed == captainId ? _self.captainId : captainId // ignore: cast_nullable_to_non_nullable
@@ -343,8 +343,9 @@ as String?,name: null == name ? _self.name : name // ignore: cast_nullable_to_no
 as String,sport: null == sport ? _self.sport : sport // ignore: cast_nullable_to_non_nullable
 as Sport,playtime: freezed == playtime ? _self.playtime : playtime // ignore: cast_nullable_to_non_nullable
 as List<Timeslot>?,details: freezed == details ? _self.details : details // ignore: cast_nullable_to_non_nullable
-as LobbyDetails?,homeGround: freezed == homeGround ? _self.homeGround : homeGround // ignore: cast_nullable_to_non_nullable
-as String?,visibility: null == visibility ? _self.visibility : visibility // ignore: cast_nullable_to_non_nullable
+as LobbyDetails?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String?,homeGroundIds: null == homeGroundIds ? _self.homeGroundIds : homeGroundIds // ignore: cast_nullable_to_non_nullable
+as List<String>,visibility: null == visibility ? _self.visibility : visibility // ignore: cast_nullable_to_non_nullable
 as LobbyVisibility,
   ));
 }
@@ -442,10 +443,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id, @JsonKey(name: 'captain_id')  String? captainId, @JsonKey(name: 'searchable_id')  String? searchableId,  String name, @JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson)  Sport sport,  List<Timeslot>? playtime,  LobbyDetails? details, @JsonKey(name: 'home_ground')  String? homeGround,  LobbyVisibility visibility)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id, @JsonKey(name: 'captain_id')  String? captainId, @JsonKey(name: 'searchable_id')  String? searchableId,  String name, @JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson)  Sport sport,  List<Timeslot>? playtime,  LobbyDetails? details,  String? description, @JsonKey(name: 'home_ground_ids')  List<String> homeGroundIds,  LobbyVisibility visibility)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Lobby() when $default != null:
-return $default(_that.id,_that.captainId,_that.searchableId,_that.name,_that.sport,_that.playtime,_that.details,_that.homeGround,_that.visibility);case _:
+return $default(_that.id,_that.captainId,_that.searchableId,_that.name,_that.sport,_that.playtime,_that.details,_that.description,_that.homeGroundIds,_that.visibility);case _:
   return orElse();
 
 }
@@ -463,10 +464,10 @@ return $default(_that.id,_that.captainId,_that.searchableId,_that.name,_that.spo
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id, @JsonKey(name: 'captain_id')  String? captainId, @JsonKey(name: 'searchable_id')  String? searchableId,  String name, @JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson)  Sport sport,  List<Timeslot>? playtime,  LobbyDetails? details, @JsonKey(name: 'home_ground')  String? homeGround,  LobbyVisibility visibility)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id, @JsonKey(name: 'captain_id')  String? captainId, @JsonKey(name: 'searchable_id')  String? searchableId,  String name, @JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson)  Sport sport,  List<Timeslot>? playtime,  LobbyDetails? details,  String? description, @JsonKey(name: 'home_ground_ids')  List<String> homeGroundIds,  LobbyVisibility visibility)  $default,) {final _that = this;
 switch (_that) {
 case _Lobby():
-return $default(_that.id,_that.captainId,_that.searchableId,_that.name,_that.sport,_that.playtime,_that.details,_that.homeGround,_that.visibility);case _:
+return $default(_that.id,_that.captainId,_that.searchableId,_that.name,_that.sport,_that.playtime,_that.details,_that.description,_that.homeGroundIds,_that.visibility);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -483,10 +484,10 @@ return $default(_that.id,_that.captainId,_that.searchableId,_that.name,_that.spo
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id, @JsonKey(name: 'captain_id')  String? captainId, @JsonKey(name: 'searchable_id')  String? searchableId,  String name, @JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson)  Sport sport,  List<Timeslot>? playtime,  LobbyDetails? details, @JsonKey(name: 'home_ground')  String? homeGround,  LobbyVisibility visibility)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id, @JsonKey(name: 'captain_id')  String? captainId, @JsonKey(name: 'searchable_id')  String? searchableId,  String name, @JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson)  Sport sport,  List<Timeslot>? playtime,  LobbyDetails? details,  String? description, @JsonKey(name: 'home_ground_ids')  List<String> homeGroundIds,  LobbyVisibility visibility)?  $default,) {final _that = this;
 switch (_that) {
 case _Lobby() when $default != null:
-return $default(_that.id,_that.captainId,_that.searchableId,_that.name,_that.sport,_that.playtime,_that.details,_that.homeGround,_that.visibility);case _:
+return $default(_that.id,_that.captainId,_that.searchableId,_that.name,_that.sport,_that.playtime,_that.details,_that.description,_that.homeGroundIds,_that.visibility);case _:
   return null;
 
 }
@@ -497,8 +498,8 @@ return $default(_that.id,_that.captainId,_that.searchableId,_that.name,_that.spo
 /// @nodoc
 @JsonSerializable()
 
-class _Lobby implements Lobby {
-  const _Lobby({this.id, @JsonKey(name: 'captain_id') this.captainId, @JsonKey(name: 'searchable_id') this.searchableId, required this.name, @JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson) required this.sport, final  List<Timeslot>? playtime, this.details, @JsonKey(name: 'home_ground') this.homeGround, this.visibility = LobbyVisibility.discoverable}): _playtime = playtime;
+class _Lobby extends Lobby {
+  const _Lobby({this.id, @JsonKey(name: 'captain_id') this.captainId, @JsonKey(name: 'searchable_id') this.searchableId, required this.name, @JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson) required this.sport, final  List<Timeslot>? playtime, this.details, this.description, @JsonKey(name: 'home_ground_ids') final  List<String> homeGroundIds = const <String>[], this.visibility = LobbyVisibility.discoverable}): _playtime = playtime,_homeGroundIds = homeGroundIds,super._();
   factory _Lobby.fromJson(Map<String, dynamic> json) => _$LobbyFromJson(json);
 
 @override final  String? id;
@@ -516,7 +517,14 @@ class _Lobby implements Lobby {
 }
 
 @override final  LobbyDetails? details;
-@override@JsonKey(name: 'home_ground') final  String? homeGround;
+@override final  String? description;
+ final  List<String> _homeGroundIds;
+@override@JsonKey(name: 'home_ground_ids') List<String> get homeGroundIds {
+  if (_homeGroundIds is EqualUnmodifiableListView) return _homeGroundIds;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_homeGroundIds);
+}
+
 @override@JsonKey() final  LobbyVisibility visibility;
 
 /// Create a copy of Lobby
@@ -532,16 +540,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Lobby&&(identical(other.id, id) || other.id == id)&&(identical(other.captainId, captainId) || other.captainId == captainId)&&(identical(other.searchableId, searchableId) || other.searchableId == searchableId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&const DeepCollectionEquality().equals(other._playtime, _playtime)&&(identical(other.details, details) || other.details == details)&&(identical(other.homeGround, homeGround) || other.homeGround == homeGround)&&(identical(other.visibility, visibility) || other.visibility == visibility));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Lobby&&(identical(other.id, id) || other.id == id)&&(identical(other.captainId, captainId) || other.captainId == captainId)&&(identical(other.searchableId, searchableId) || other.searchableId == searchableId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&const DeepCollectionEquality().equals(other._playtime, _playtime)&&(identical(other.details, details) || other.details == details)&&(identical(other.description, description) || other.description == description)&&const DeepCollectionEquality().equals(other._homeGroundIds, _homeGroundIds)&&(identical(other.visibility, visibility) || other.visibility == visibility));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,captainId,searchableId,name,sport,const DeepCollectionEquality().hash(_playtime),details,homeGround,visibility);
+int get hashCode => Object.hash(runtimeType,id,captainId,searchableId,name,sport,const DeepCollectionEquality().hash(_playtime),details,description,const DeepCollectionEquality().hash(_homeGroundIds),visibility);
 
 @override
 String toString() {
-  return 'Lobby(id: $id, captainId: $captainId, searchableId: $searchableId, name: $name, sport: $sport, playtime: $playtime, details: $details, homeGround: $homeGround, visibility: $visibility)';
+  return 'Lobby(id: $id, captainId: $captainId, searchableId: $searchableId, name: $name, sport: $sport, playtime: $playtime, details: $details, description: $description, homeGroundIds: $homeGroundIds, visibility: $visibility)';
 }
 
 
@@ -552,7 +560,7 @@ abstract mixin class _$LobbyCopyWith<$Res> implements $LobbyCopyWith<$Res> {
   factory _$LobbyCopyWith(_Lobby value, $Res Function(_Lobby) _then) = __$LobbyCopyWithImpl;
 @override @useResult
 $Res call({
- String? id,@JsonKey(name: 'captain_id') String? captainId,@JsonKey(name: 'searchable_id') String? searchableId, String name,@JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson) Sport sport, List<Timeslot>? playtime, LobbyDetails? details,@JsonKey(name: 'home_ground') String? homeGround, LobbyVisibility visibility
+ String? id,@JsonKey(name: 'captain_id') String? captainId,@JsonKey(name: 'searchable_id') String? searchableId, String name,@JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson) Sport sport, List<Timeslot>? playtime, LobbyDetails? details, String? description,@JsonKey(name: 'home_ground_ids') List<String> homeGroundIds, LobbyVisibility visibility
 });
 
 
@@ -569,7 +577,7 @@ class __$LobbyCopyWithImpl<$Res>
 
 /// Create a copy of Lobby
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? captainId = freezed,Object? searchableId = freezed,Object? name = null,Object? sport = null,Object? playtime = freezed,Object? details = freezed,Object? homeGround = freezed,Object? visibility = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? captainId = freezed,Object? searchableId = freezed,Object? name = null,Object? sport = null,Object? playtime = freezed,Object? details = freezed,Object? description = freezed,Object? homeGroundIds = null,Object? visibility = null,}) {
   return _then(_Lobby(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String?,captainId: freezed == captainId ? _self.captainId : captainId // ignore: cast_nullable_to_non_nullable
@@ -578,8 +586,9 @@ as String?,name: null == name ? _self.name : name // ignore: cast_nullable_to_no
 as String,sport: null == sport ? _self.sport : sport // ignore: cast_nullable_to_non_nullable
 as Sport,playtime: freezed == playtime ? _self._playtime : playtime // ignore: cast_nullable_to_non_nullable
 as List<Timeslot>?,details: freezed == details ? _self.details : details // ignore: cast_nullable_to_non_nullable
-as LobbyDetails?,homeGround: freezed == homeGround ? _self.homeGround : homeGround // ignore: cast_nullable_to_non_nullable
-as String?,visibility: null == visibility ? _self.visibility : visibility // ignore: cast_nullable_to_non_nullable
+as LobbyDetails?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String?,homeGroundIds: null == homeGroundIds ? _self._homeGroundIds : homeGroundIds // ignore: cast_nullable_to_non_nullable
+as List<String>,visibility: null == visibility ? _self.visibility : visibility // ignore: cast_nullable_to_non_nullable
 as LobbyVisibility,
   ));
 }

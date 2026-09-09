@@ -6,7 +6,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod/legacy.dart';
-import '../core/feature_flags.dart';
 import '../core/sport_selector.dart';
 import '../ui/main.dart';
 import 'challenger_section/main.dart';
@@ -45,11 +44,13 @@ class DiscoverTab extends ConsumerWidget {
 
   static final instance = DiscoverTab();
 
-  /// Indices after teammate shift down in default builds because Challenger
-  /// is compiled as an opt-in client feature.
-  static const tabCount = ClientFeatureFlags.challengerFlow ? 5 : 4;
-  static int get challengerIndex => ClientFeatureFlags.challengerFlow ? 2 : 0;
-  static int get professionalIndex => ClientFeatureFlags.challengerFlow ? 3 : 2;
+  /// Challenger ships as the friendly (referee-free) mode, so the subtab is
+  /// always present. `ClientFeatureFlags.challengerFlow` now gates only the
+  /// REFEREED variant's extra affordances (hiring an official, pro-mode result
+  /// entry) — not whether a lobby can challenge another at all.
+  static const tabCount = 5;
+  static const challengerIndex = 2;
+  static const professionalIndex = 3;
   static int get locationIndex => tabCount - 1;
 
   /// Deep-links a Discover subtab using one of the indices above.
@@ -100,11 +101,10 @@ class _DiscoverViewState extends ConsumerState<_DiscoverView> {
       icon: const Icon(CupertinoIcons.person_2_fill),
       child: TeammateSubtab(openFilter: widget.openFilter),
     ),
-    if (ClientFeatureFlags.challengerFlow)
-      (
-        icon: const FaIcon(FontAwesomeIcons.fireFlameCurved),
-        child: const ChallengerSubtab(),
-      ),
+    (
+      icon: const FaIcon(FontAwesomeIcons.fireFlameCurved),
+      child: const ChallengerSubtab(),
+    ),
     (
       icon: const FaIcon(FontAwesomeIcons.flagCheckered),
       child: const ProfessionalSubtab(),

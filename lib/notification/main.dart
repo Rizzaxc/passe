@@ -140,8 +140,15 @@ IconData _iconFor(NotificationKind? kind) => switch (kind) {
   NotificationKind.challengeReceived ||
   NotificationKind.challengeDeclined ||
   NotificationKind.challengeScheduled => FLucideIcons.swords,
-  NotificationKind.challengeLapsed => FLucideIcons.calendarX,
+  NotificationKind.challengeReadyForHome => FLucideIcons.swords,
+  NotificationKind.challengeLapsed ||
+  NotificationKind.challengeOfferExpired => FLucideIcons.calendarX,
   NotificationKind.matchResultRecorded => FLucideIcons.trophy,
+  // Both are "we need an answer from you about a match that already
+  // happened", so they read as the clock, not the trophy.
+  NotificationKind.matchResultPending ||
+  NotificationKind.noShowClaimed => FLucideIcons.clipboardList,
+  NotificationKind.matchDisputed => FLucideIcons.triangleAlert,
   NotificationKind.lobbyInvite => FLucideIcons.users,
   NotificationKind.lobbyJoinRequest => FLucideIcons.userPlus,
   NotificationKind.lobbyJoinRequestApproved => FLucideIcons.userCheck,

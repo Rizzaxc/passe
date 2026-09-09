@@ -60,7 +60,7 @@ class _ScheduleActivitySheetState
   TimeOfDay _start = const TimeOfDay(hour: 18, minute: 0);
   TimeOfDay _end = const TimeOfDay(hour: 20, minute: 0);
 
-  // Seeded from the lobby's home_ground when the lobby info resolves;
+  // Seeded from the lobby's primary homeground when the lobby info resolves;
   // HomeGroundField below renders the picker UI around this id.
   String? _locationId;
 
@@ -148,7 +148,7 @@ class _ScheduleActivitySheetState
     // If not, the listen() in build() picks up the value once it lands.
     final info = ref.read(lobbyDetailControllerProvider(widget.lobbyId)).value;
     if (info != null) {
-      _locationId = info.lobby.homeGround;
+      _locationId = info.lobby.primaryHomeGround;
     }
   }
 
@@ -444,7 +444,7 @@ class _ScheduleActivitySheetState
       (prev, next) {
         final info = next.value;
         if (widget.existing == null && info != null && _locationId == null) {
-          setState(() => _locationId = info.lobby.homeGround);
+          setState(() => _locationId = info.lobby.primaryHomeGround);
         }
       },
     );

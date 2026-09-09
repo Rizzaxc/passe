@@ -231,7 +231,12 @@ class FreeplayActivitySummaryCard extends StatelessWidget {
                             ? null
                             : NetworkImage(activity.hostAvatarUrl!),
                         child: activity.hostAvatarUrl == null
-                            ? const Icon(FLucideIcons.ticket, size: 16)
+                            ? Icon(
+                                activity.isLobbyOwned
+                                    ? FLucideIcons.users
+                                    : FLucideIcons.ticket,
+                                size: 16,
+                              )
                             : null,
                       ),
                       const SizedBox(width: 9),
@@ -250,7 +255,10 @@ class FreeplayActivitySummaryCard extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              'freeplay.verifiedHost'.tr(),
+                              (activity.isLobbyOwned
+                                      ? 'freeplay.lobbyOwner'
+                                      : 'freeplay.verifiedHost')
+                                  .tr(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: context.theme.typography.body.xs.copyWith(

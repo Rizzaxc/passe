@@ -21,11 +21,27 @@ enum FreeplayRequestStatus {
 
 double _money(Object? value) => double.tryParse(value?.toString() ?? '') ?? 0;
 
+/// Who owns a freeplay listing.
+///
+/// [host] is the original product: a curated `freeplay_host` puts up a
+/// standalone drop-in session. [lobby] is a non-private lobby exposing seats on
+/// an activity it already scheduled — same request flow, but the owner chip is
+/// a lobby (opens the lobby public preview, not a Host page) and there is no
+/// host avatar. Derived server-side from `activity.freeplay_host_id`.
+enum FreeplayOwnerKind {
+  host,
+  lobby;
+
+  static FreeplayOwnerKind fromDb(Object? value) =>
+      value?.toString() == 'lobby' ? lobby : host;
+}
+
 class FreeplayActivity {
   final String id;
   final String hostId;
   final String hostName;
   final String? hostAvatarUrl;
+  final FreeplayOwnerKind ownerKind;
   final String description;
   final DateTime startTime;
   final DateTime endTime;
@@ -73,6 +89,7 @@ class FreeplayActivity {
     this.locationLat,
     this.locationLon,
     this.hostAvatarUrl,
+    this.ownerKind = FreeplayOwnerKind.host,
     this.mySkill,
     this.myRequestId,
     this.myRequestStatus,
@@ -82,6 +99,7 @@ class FreeplayActivity {
     this.cancelled = false,
   });
 
+  bool get isLobbyOwned => ownerKind == FreeplayOwnerKind.lobby;
   int get seatsLeft => capacity - acceptedCount;
   bool get isFull => seatsLeft <= 0;
   bool get isOngoing =>
@@ -94,6 +112,7 @@ class FreeplayActivity {
       hostId: (json['host_id'] ?? '').toString(),
       hostName: (json['host_name'] ?? '').toString(),
       hostAvatarUrl: json['host_avatar_url'] as String?,
+      ownerKind: FreeplayOwnerKind.fromDb(json['owner_kind']),
       description: (json['description'] ?? '').toString(),
       startTime: DateTime.parse(json['start_time'].toString()).toLocal(),
       endTime: DateTime.parse(json['end_time'].toString()).toLocal(),

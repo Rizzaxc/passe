@@ -8,6 +8,7 @@ class LobbyFeedItem {
   final String? homegroundName;
   final List<Timeslot> playtime;
   final LobbyDetails? details;
+  final String? description;
   final LobbyVisibility visibility;
   final int timeslotCompatScore;
   final double profileCompatScore;
@@ -48,6 +49,7 @@ class LobbyFeedItem {
     this.homegroundName,
     required this.playtime,
     this.details,
+    this.description,
     required this.visibility,
     required this.timeslotCompatScore,
     required this.profileCompatScore,
@@ -85,11 +87,13 @@ class LobbyFeedItem {
       details: json['details'] is Map<String, dynamic>
           ? LobbyDetails.fromJson(json['details'] as Map<String, dynamic>)
           : null,
+      description: json['description'] as String?,
       visibility: LobbyVisibility.values.firstWhere(
         (v) => v.name == (json['visibility'] as String?),
         orElse: () => LobbyVisibility.discoverable,
       ),
-      timeslotCompatScore: (json['timeslot_compat_score'] as num?)?.toInt() ?? 0,
+      timeslotCompatScore:
+          (json['timeslot_compat_score'] as num?)?.toInt() ?? 0,
       profileCompatScore:
           double.tryParse(json['profile_compat_score']?.toString() ?? '') ?? 0,
       matchFactors: json['match_factors'] is List
@@ -98,8 +102,9 @@ class LobbyFeedItem {
       alreadyRequested: json['already_requested'] as bool? ?? false,
       memberCount: (json['member_count'] as num?)?.toInt(),
       lobbyMmr: (json['lobby_mmr'] as num?)?.toInt(),
-      favorability:
-          ChallengeFavorability.fromValue(json['favorability'] as String?),
+      favorability: ChallengeFavorability.fromValue(
+        json['favorability'] as String?,
+      ),
       offerTime: json['offer_time'] != null
           ? DateTime.parse(json['offer_time'] as String).toLocal()
           : null,

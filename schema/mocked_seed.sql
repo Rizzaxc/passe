@@ -194,12 +194,11 @@ BEGIN
     -- ── 12 lobbies (captain auto-joined by trigger) ────────────────────────
     FOR i IN 1..12 LOOP
         v_cap := v_user[i];  -- distinct captains
-        INSERT INTO lobby (captain_id, name, sport_id, home_ground, visibility, open_to_challengers, playtime, details)
+        INSERT INTO lobby (captain_id, name, sport_id, visibility, open_to_challengers, playtime, details)
         VALUES (
             v_cap,
             'mocked_' || v_lobnames[i],
             1,
-            v_loc[1 + (i % 14)],
             (CASE WHEN i % 6 = 0 THEN 'private' WHEN i % 2 = 0 THEN 'public' ELSE 'discoverable' END)::lobby_visibility,
             (i % 5 <> 0),
             jsonb_build_array(
@@ -210,6 +209,16 @@ BEGIN
                                'skill', 800 + (i * 50) % 800))
         RETURNING id INTO v_id;
         v_lobby := array_append(v_lobby, v_id);
+
+        -- 1–2 homegrounds (every 3rd lobby gets a second one, to exercise the
+        -- multi-value UI in dev); first inserted is primary.
+        INSERT INTO lobby_homeground (lobby_id, location_id, is_primary)
+        VALUES (v_id, v_loc[1 + (i % 14)], true);
+        IF i % 3 = 0 THEN
+            INSERT INTO lobby_homeground (lobby_id, location_id, is_primary)
+            VALUES (v_id, v_loc[1 + ((i + 5) % 14)], false)
+            ON CONFLICT (lobby_id, location_id) DO NOTHING;
+        END IF;
 
         -- overlapping membership: grow to 5–10 total members
         v_target := 5 + (i % 6);

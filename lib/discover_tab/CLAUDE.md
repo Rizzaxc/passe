@@ -34,6 +34,14 @@ another screen), so `DiscoverTab` is back to being single-purpose.
   **undo** button (`RequestedLobbyIds.unrequest`). Challenger CTA: "Thách đấu" (disabled placeholder).
 - `teammate_section/`, `challenger_section/`, `professional_section/`, `location_section/` — one
   `main.dart` (UI) + `feed_controller.dart` (`@riverpod` data) each.
+- `freeplay_section/main.dart` is the thinnest of the five: the models, providers, card and detail
+  page all live in [`lib/freeplay/`](../freeplay/) because the host/manager side of the same data
+  is rendered from Manage (see [`lib/manage_tab/CLAUDE.md`](../manage_tab/CLAUDE.md)).
+- `lobby_public_preview_sheet.dart` / `lobby_public_preview_controller.dart` — the read-only
+  "who are these people" sheet for a lobby you don't belong to (`get_lobby_public_preview`,
+  anon-granted, **refuses `private` lobbies**, collapsing not-found and private into one answer so a
+  guessed uuid can't probe existence). Opened by tapping a `LobbyFeedCard`, and by the owner chip on
+  a lobby-owned freeplay listing. It is *not* `LobbyDetailPage` — that one is for members.
 
 ## Shared filter
 
@@ -43,10 +51,11 @@ user's `details.location` and `details.playtime`** on build, defaulting to `City
 Changing the city clears districts. Feeds `ref.watch(filterStateProvider)` so they refetch on any
 filter change. `FilterState.onCommit()` (persisting the filter server-side) is a TODO.
 
-**`search` (`p_search`) is wired into all four RPCs** (`schema/home_feed_search.sql`, applied to
+**`search` (`p_search`) is wired into every subtab RPC** (`schema/home_feed_search.sql`, applied to
 prod): teammate/challenger match `lobby.name` OR
 `lobby.searchable_id`; professional matches `professional.display_name`; location matches
-name/address via the existing `search_locations` fuzzy match. All four are diacritic-insensitive
+name/address via the existing `search_locations` fuzzy match; freeplay matches the listing owner's
+name (Host display name *or* lobby name) plus venue and address. All are diacritic-insensitive
 (`extensions.unaccent`). **Location is the one exception to "search narrows the result set"**: its
 district filter is OR'd with the search term (broadens results), not AND'd — see the Location
 subtab section below for why.
@@ -57,6 +66,7 @@ Quick map, then the full contract for each:
 
 | Subtab | Source | Model | Action |
 |---|---|---|---|
+| Freeplay | `home_freeplay_data` RPC (anon-granted) | `FreeplayActivity` (`lib/freeplay/model.dart`) | "Xin một chỗ" → `request_freeplay_seat` RPC |
 | Teammate | `home_teammate_lobby_data` RPC | `LobbyFeedItem` | "Xin vào" → insert `lobby_befriend_record` (`request`) |
 | Challenger | `home_challenger_lobby_data` RPC | `LobbyFeedItem` (`memberCount` + offer terms set) | "Thách đấu" → confirm-terms sheet → `send_challenge` RPC from the "challenging as" context lobby (see root CLAUDE.md ▸ Challenger System) |
 | Professional | `home_professional_data` RPC (sport + soft city/district/schedule + role toggle; ranked verified/rating/reviews; `price_from` from `professional_service`) | `ProfessionalFeedItem` | tap → `ProfessionalDetailRoute`; book = "coming soon" toast |
@@ -66,6 +76,35 @@ Conventions across all four: `p_sport_id` is `Sport.index`; `p_city` is `City.db
 are `district.id` strings; every RPC/query carries `.timeout(const Duration(seconds: 5))`.
 `LobbyFeedItem` and `ProfessionalFeedItem` are **plain classes with manual `fromJson`** (not
 freezed) — edit them by hand, no build_runner.
+
+### Freeplay subtab
+
+- Shows single **drop-in seats** in the next 7 days: one row per open session, cheapest path from
+  "I'm free tonight" to actually playing. Index `0` — the first thing Discover shows.
+- Data: `home_freeplay_data(p_sport_id, p_timeslots, p_city, p_districts, p_search, p_page_size,
+  p_page_number)`. **Granted to `anon`** — a signed-out visitor sees the feed (the seat request
+  itself is authenticated-only).
+- **A listing has one of two owners, and the feed returns both in one ordered list.** `owner_kind`
+  (`'host' | 'lobby'`) is the discriminator; it is *derived* server-side from
+  `activity.freeplay_host_id`, never stored:
+  - `'host'` — the original product: a curated `freeplay_host` row (provisioned out of band, there
+    is no self-serve RPC) putting up a standalone session. `host_id` is a `freeplay_host.id`; the
+    owner chip pushes `FreeplayHostRoute`.
+  - `'lobby'` — a **non-private** lobby offering spare seats on an activity it already scheduled
+    (`schema/lobby_freeplay_exposure.sql`). `host_id` is a `lobby.id`, `host_name` is the lobby
+    name, `host_avatar_url` is null, and the owner chip opens `showLobbyPublicPreviewSheet` instead.
+    `FreeplayActivity.isLobbyOwned` is the client-side switch — branch on it, never on whether
+    `hostAvatarUrl` happens to be null.
+- The feed excludes private lobbies at query time, so flipping a lobby to private would withdraw its
+  listings — which is exactly why the server refuses that flip while one is live (see
+  [`lib/manage_tab/CLAUDE.md`](../manage_tab/CLAUDE.md) ▸ Freeplay exposure).
+- **Action**: "Xin một chỗ" → `request_freeplay_seat`, which opens a two-party (Host) or requester +
+  every-manager (lobby) thread on the shared messaging layer. Rejections worth knowing: a lobby
+  *member* can't request a seat in their own lobby's listing (they RSVP), and a `declined` request
+  is terminal.
+- Price is gendered (`male_price` / `female_price`) and snapshotted onto the request at request
+  time, so it never drifts afterwards. `numeric` comes back as `String` — `_money()` in
+  `lib/freeplay/model.dart` parses it.
 
 ### Teammate subtab
 
@@ -255,5 +294,9 @@ freezed) — edit them by hand, no build_runner.
 - Every feed implements scroll-to-refresh via `RefreshIndicator` + `ref.invalidate(feedProvider)`
   then `await ref.read(feedProvider.future)`. Keep this on any new feed.
 - All feed RPCs/queries carry the mandatory `.timeout(const Duration(seconds: 5))`.
+- **A freeplay seat is not lobby membership.** Accepting an outsider onto a lobby-owned listing
+  deliberately writes **no** `activity_confirmation` row: that row is the lobby's own commitment
+  quorum and bill-split basis. Anything that wants to show guests has to union
+  `freeplay_request` explicitly — don't "fix" it by inserting a confirmation.
 - Challenger interactions must NOT reuse `lobby_befriend_record` (that table is user↔lobby /
   user↔user only) — the challenge handshake needs its own `lobby_challenge` table, still unbuilt.
