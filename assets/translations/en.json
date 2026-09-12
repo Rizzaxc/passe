@@ -833,6 +833,8 @@
     "usernameTaken": "This username is already taken",
     "confirmLogout": "Confirm Logout?",
     "termsPrivacyTitle": "Terms & Privacy",
+    "unlinkHealth": "Unlink Health Service",
+    "unlinkHealthDone": "Health service unlinked",
     "confirmDeleteAccountHold": "Hold to delete account",
     "deleteAccount": "Delete account",
     "deleteAccountTitle": "Permanently delete account",

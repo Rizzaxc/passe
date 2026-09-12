@@ -94,11 +94,34 @@ class HealthController extends _$HealthController {
   /// Check if health permissions are currently granted.
   ///
   /// iOS HealthKit does not expose read-permission status — `hasPermissions`
-  /// always returns `null` for READ types. On iOS we trust the cached /
-  /// backend link; if the user revokes access in Settings, sync reads
-  /// degrade to empty results and they can unlink manually.
+  /// always returns `null` for READ types — so we can't just ask. Instead we
+  /// re-call `requestAuthorization`: HealthKit treats this as a silent no-op
+  /// (no OS sheet, immediate return) whenever every requested type already
+  /// has a determined status for this app, whatever that status is — granted
+  /// *or* denied. The sheet only reappears for a type HealthKit considers
+  /// not-determined, which is exactly the case this call needs to catch: the
+  /// app's authorization was dropped entirely (confirmed via Settings ▸
+  /// Privacy & Security ▸ Health no longer listing the app at all — this
+  /// shipped broken in production once, traced through a Sentry
+  /// `Health._dataQuery` failure on every single read/sync). A blind
+  /// `return true` here never notices that and never recovers — sync just
+  /// fails forever with no way back in short of the user manually unlinking
+  /// and relinking.
   Future<bool> _checkHealthPermissions() async {
-    if (Platform.isIOS) return true;
+    if (Platform.isIOS) {
+      try {
+        await _health.configure();
+        final permissions = _healthDataTypes
+            .map((type) => HealthDataAccess.READ)
+            .toList();
+        return await _health.requestAuthorization(
+          _healthDataTypes,
+          permissions: permissions,
+        );
+      } catch (e) {
+        return false;
+      }
+    }
 
     try {
       await _health.configure();

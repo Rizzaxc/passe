@@ -10,7 +10,7 @@ class PasseTalkerObserver extends TalkerObserver {
 
   @override
   void onException(TalkerException err) {
-    Sentry.captureException(err, stackTrace: err.stackTrace);
+    Sentry.captureException(err.exception, stackTrace: err.stackTrace);
     super.onException(err);
   }
 

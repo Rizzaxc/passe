@@ -1,8 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../core/legal_links.dart';
+import '../health_tab/health_controller.dart';
 import '../ui/main.dart';
 import 'delete_account_sheet.dart';
 
@@ -18,7 +20,7 @@ void showTermsPrivacySheet(BuildContext rootContext) {
   );
 }
 
-class _TermsPrivacySheet extends StatelessWidget {
+class _TermsPrivacySheet extends ConsumerWidget {
   final BuildContext rootContext;
 
   const _TermsPrivacySheet({required this.rootContext});
@@ -28,8 +30,14 @@ class _TermsPrivacySheet extends StatelessWidget {
     if (rootContext.mounted) showDeleteAccountSheet(rootContext);
   }
 
+  Future<void> _unlinkHealth(BuildContext context, WidgetRef ref) async {
+    await ref.read(healthControllerProvider.notifier).unlinkHealthService();
+    if (!context.mounted) return;
+    showFToast(context: context, title: Text('profile.unlinkHealthDone'.tr()));
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
 
     return SingleChildScrollView(
@@ -60,6 +68,15 @@ class _TermsPrivacySheet extends StatelessWidget {
                 title: Text('auth.privacyNotice'.tr()),
                 suffix: const Icon(FLucideIcons.externalLink),
                 onPress: () => openPrivacyNotice(context),
+              ),
+            ],
+          ),
+          FTileGroup(
+            children: [
+              FTile(
+                prefix: const Icon(FLucideIcons.heartOff),
+                title: Text('profile.unlinkHealth'.tr()),
+                onPress: () => _unlinkHealth(context, ref),
               ),
             ],
           ),

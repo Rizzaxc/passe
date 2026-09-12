@@ -833,6 +833,8 @@
     "usernameTaken": "Username này đã được sử dụng",
     "confirmLogout": "Bấm giữ để đăng xuất",
     "termsPrivacyTitle": "Điều khoản & Quyền riêng tư",
+    "unlinkHealth": "Ngắt kết nối Health",
+    "unlinkHealthDone": "Đã ngắt kết nối Health",
     "confirmDeleteAccountHold": "Bấm giữ để xoá tài khoản",
     "deleteAccount": "Xoá tài khoản",
     "deleteAccountTitle": "Xoá tài khoản vĩnh viễn",

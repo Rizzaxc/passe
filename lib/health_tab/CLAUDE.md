@@ -148,9 +148,25 @@ renders. (Previously undocumented — added in the 2026-07 audit pass.)
 
 ## Gotchas
 
-- **Permissions are READ-only and can be revoked out of band** — never assume a cached `linked`
-  status means access still works; the controller re-checks `hasPermissions` every build. Preserve
-  that re-verification. `syncNow()` guards on `healthControllerProvider` so it inherits this check.
+- **Permissions are READ-only and can be revoked — or dropped entirely — out of band.** Never assume
+  a cached `linked` status means access still works. iOS HealthKit doesn't expose READ-permission
+  status (`hasPermissions` always returns `null` for READ types), so `_checkHealthPermissions` on iOS
+  re-calls `requestAuthorization` instead: HealthKit no-ops it silently whenever every requested type
+  already has a determined status for this app (granted *or* denied) — the OS sheet only reappears
+  for a not-determined type, which is what catches authorization having been dropped entirely (the
+  app disappears from Settings ▸ Privacy & Security ▸ Health altogether, not just toggled off). This
+  shipped broken once as a blind `return true` on iOS: the app kept reporting `linked` forever while
+  every device read failed (`Health._dataQuery` erroring on literally every call), with no path back
+  short of manually unlinking/relinking. Preserve the re-verification on both platforms. `syncNow()`
+  guards on `healthControllerProvider` so it inherits this check.
+- **`talker.handle(e, st, ...)` on an `Exception` must still report the real error to Sentry.**
+  `PasseTalkerObserver.onException` (`lib/logger/observer.dart`) used to call
+  `Sentry.captureException(err, ...)` with `err` being the `TalkerException` *wrapper* Talker builds
+  — since that class has no custom `toString()`, every such report showed up in Sentry as the useless
+  `Instance of 'TalkerException'`, discarding the real exception type/message app-wide. Fixed to pass
+  `err.exception` (the real wrapped error) instead — mirroring `onError`, which already passed
+  `err.error` correctly. This is exactly what masked the health-read failure above from Sentry until
+  it was fixed.
 - `_health.configure()` throws on the iOS simulator (no HealthKit) — handle/expect failure there;
   **test on a real device** (the launch sync + capture are untestable on the simulator).
 - **Two refresh directions, don't conflate them**: the Sync button → `syncNow()` pulls the device
