@@ -52,7 +52,7 @@ user grants health permissions, every subtab is replaced by the "not linked" CTA
 
 ## Data flow
 
-UI reads the Supabase rollup tables; a sync step fills them from the device. Two passes in
+UI reads the Supabase rollup tables; a sync step fills them from the device. Three passes in
 `syncNow()`: (1) **daily summaries** — first run backfills 90 days, then today + the gap since
 `user_health_link.last_sync_at`; (2) **activity capture** — `health_capture_candidates` returns the
 user's confirmed/proposed activities + coach bookings (past `end_time`, no existing metrics row).
@@ -65,7 +65,19 @@ there's no commitment to anchor "did something happen" on, so those still need w
 they're worth surfacing at all, in the `activity_data` **"Detected workouts"** section: *attach*
 (health-only — writes metrics, never touches attendance/đá) or *dismiss* (writes a `dismissed=true`
 tombstone so it isn't re-prompted). Capture is sport-agnostic; only the recap-list display filters by
-the context sport.
+the context sport. (3) **standalone workout detection** —
+`HealthSyncController._createStandaloneActivities` (`health_sync_service.dart`), gated by
+`standaloneWorkoutSyncSettingProvider` (`health_settings_controller.dart`, default **on**). Scans
+the device for `WORKOUT` records that map to one of the 5 supported sports
+(`Sport.fromHealthWorkoutType`) and don't overlap any existing Passe activity, then inserts a bare
+"personal" `activity` row for each (`lobby_id`/`freeplay_host_id`/`course_id` all `NULL` — see the
+Gotchas entry below). It deliberately does **not** capture metrics itself: a bare self-activity
+always comes back `confirmed = false` from `health_capture_candidates` (that flag only looks at
+`activity_confirmation`/`freeplay_request` rows), so it lands in "Detected workouts" and goes
+through the exact same attach/dismiss review as an unconfirmed lobby session — no changes needed
+to that pipeline for this to work. `HealthDataService.readWorkoutSessions` does the on-device
+scan + merges overlapping/adjacent same-sport records (a paired iPhone + Watch can log the same
+real session twice) into single spans.
 
 ## Link-status flow
 
@@ -244,3 +256,15 @@ renders. (Previously undocumented — added in the 2026-07 audit pass.)
 - Backend writes keep the `.timeout(const Duration(seconds: 5))`.
 - `schema/health_3zone.sql` is the migration (applied). It was hand-patched into `schema/passe.sql`
   (CLI couldn't `pg_dump` here) — re-dump properly when you next can.
+- **`activity.activity_source_exclusivity` permits an all-`NULL` source** —
+  `num_nonnulls(lobby_id, freeplay_host_id, course_id) <= 1`, not `= 1` — and the INSERT RLS policy
+  only requires `user_id = auth.uid() AND course_id IS NULL`. Standalone workout detection
+  (above) is the first feature to actually create such a row (a "personal" activity with no
+  lobby/freeplay/course tie); verified before building it that this is inert everywhere else that
+  reads `activity` broadly — `my_schedule_data` INNER JOINs lobby/freeplay/course so a bare row
+  never appears on the calendar, every `AFTER INSERT` trigger either no-ops on NULL FKs or
+  explicitly early-returns when `lobby_id IS NULL` (`fn_emit_activity_scheduled`), wall-post
+  eligibility requires an `activity_confirmation` row a bare activity never has, and every cron
+  sweep gates on `lobby_id`/`course_id`/`cost_type`/`confirmation_threshold`. Keep that property if
+  you touch any of those — the whole point of a bare self-activity is that it's invisible outside
+  the health-capture/recap path until the user explicitly attaches it.

@@ -220,6 +220,60 @@ final class ActivityHealthListProvider
 String _$activityHealthListHash() =>
     r'0aa3deec00ee3d4baa2cf4f37f20a0b6e90afa25';
 
+/// Report counts by sport (RPC), so an empty recap list for the context sport
+/// can hint that reports exist under a different sport instead of looking
+/// identical to "never synced". Keyed by `Sport.index`; unrecognized ids
+/// (there shouldn't be any) are dropped.
+
+@ProviderFor(activityHealthSportCounts)
+final activityHealthSportCountsProvider = ActivityHealthSportCountsProvider._();
+
+/// Report counts by sport (RPC), so an empty recap list for the context sport
+/// can hint that reports exist under a different sport instead of looking
+/// identical to "never synced". Keyed by `Sport.index`; unrecognized ids
+/// (there shouldn't be any) are dropped.
+
+final class ActivityHealthSportCountsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<Sport, int>>,
+          Map<Sport, int>,
+          FutureOr<Map<Sport, int>>
+        >
+    with $FutureModifier<Map<Sport, int>>, $FutureProvider<Map<Sport, int>> {
+  /// Report counts by sport (RPC), so an empty recap list for the context sport
+  /// can hint that reports exist under a different sport instead of looking
+  /// identical to "never synced". Keyed by `Sport.index`; unrecognized ids
+  /// (there shouldn't be any) are dropped.
+  ActivityHealthSportCountsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'activityHealthSportCountsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$activityHealthSportCountsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<Sport, int>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<Sport, int>> create(Ref ref) {
+    return activityHealthSportCounts(ref);
+  }
+}
+
+String _$activityHealthSportCountsHash() =>
+    r'93b9a0c1cb303c0099f3c2eb6ed3545f676f20e1';
+
 /// Candidate activities the user never confirmed but for which the wearable
 /// shows exercise evidence — the reconciliation inbox. Re-checks the device per
 /// candidate (the RPC only narrows the set; the device holds the samples).

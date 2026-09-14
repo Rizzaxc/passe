@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/model/activity.dart';
+import '../core/model/enum.dart';
 import '../logger/talker.dart';
 import 'health_controller.dart';
 import 'model/activity_health_metrics.dart';
@@ -12,6 +13,11 @@ import 'model/daily_health_summary.dart';
 import 'model/hr_sample.dart';
 
 part 'health_data_service.g.dart';
+
+/// A standalone device workout span (no Passe activity), merged from
+/// overlapping/adjacent raw HealthKit/Health Connect WORKOUT records of the
+/// same mapped sport. See [HealthDataService.readWorkoutSessions].
+typedef WorkoutSession = ({Sport sport, DateTime startTime, DateTime endTime});
 
 /// Resolved per-user heart-rate thresholds (bpm) used to bucket the 3-zone
 /// model and derive training load. `estimated` is true when the values are
@@ -352,6 +358,60 @@ class HealthDataService extends _$HealthDataService {
     }
   }
 
+  /// Scan the device for standalone WORKOUT sessions since [windowStart] whose
+  /// activity type maps to one of Passe's 5 supported sports — an unmapped
+  /// type (running, cycling, gym, …) is dropped, since the app has no
+  /// sport-scoped surface to show it in (see [Sport.fromHealthWorkoutType]).
+  /// Returns merged spans only; the caller decides whether a span already
+  /// has a Passe activity before creating anything.
+  Future<List<WorkoutSession>> readWorkoutSessions({
+    required DateTime windowStart,
+  }) async {
+    final read = await _readHealthData(
+      label: 'standalone workout scan',
+      types: [HealthDataType.WORKOUT],
+      startTime: windowStart,
+      endTime: DateTime.now(),
+    );
+    if (!read.succeeded) return [];
+
+    // Group into per-sport point lists — _readHealthData already sorts
+    // ascending by dateFrom, so each group stays chronological.
+    final bySport = <Sport, List<HealthDataPoint>>{};
+    for (final point in read.data) {
+      final value = point.value;
+      if (value is! WorkoutHealthValue) continue;
+      if (!point.dateTo.isAfter(point.dateFrom)) continue;
+      final sport = Sport.fromHealthWorkoutType(value.workoutActivityType);
+      if (sport == Sport.others) continue;
+      (bySport[sport] ??= []).add(point);
+    }
+
+    // Merge overlapping/adjacent same-sport points into single spans — more
+    // than one raw record can represent the same real-world session (e.g. a
+    // paired iPhone + Watch both logging it).
+    final sessions = <WorkoutSession>[];
+    for (final entry in bySport.entries) {
+      DateTime? start, end;
+      for (final point in entry.value) {
+        if (start == null || end == null) {
+          start = point.dateFrom;
+          end = point.dateTo;
+        } else if (!point.dateFrom.isAfter(end)) {
+          if (point.dateTo.isAfter(end)) end = point.dateTo;
+        } else {
+          sessions.add((sport: entry.key, startTime: start, endTime: end));
+          start = point.dateFrom;
+          end = point.dateTo;
+        }
+      }
+      if (start != null && end != null) {
+        sessions.add((sport: entry.key, startTime: start, endTime: end));
+      }
+    }
+    return sessions;
+  }
+
   /// Read raw HR samples (full resolution) — used by the recap detail when the
   /// curve isn't already persisted. Most callers read the downsampled rows from
   /// `activity_hr_sample` instead.
@@ -490,6 +550,32 @@ class HealthDataService extends _$HealthDataService {
             endTime: endTime,
           )
           .timeout(const Duration(seconds: 15));
+      // HealthKit's native query sorts by *end date descending* (newest
+      // first), not ascending by start — every consumer here (zone-seconds'
+      // gap-to-next-sample math, `.last` for "most recent weight") assumes
+      // ascending order. Left as-is, nearly every inter-sample gap in
+      // `_calculateHrZones` comes out negative and gets floored by its
+      // `.clamp(1, 60)` to 1 second, collapsing a real ~45-minute session to
+      // a couple dozen total "zone seconds" (this shipped broken — the
+      // zone bar's relative proportions still looked sane since those come
+      // from sample *counts*, not durations, masking it until someone
+      // checked the actual minute totals).
+      //
+      // Separately, `HealthDataPoint.dateFrom`/`dateTo` are built via
+      // `DateTime.fromMillisecondsSinceEpoch` without `isUtc: true`, so they
+      // carry the device's local time zone. `.toUtc()` only changes the
+      // representation (the absolute instant is already correct), but it's
+      // what makes a later `.toIso8601String()` include an explicit offset —
+      // without it, Postgres reads the naked local wall-clock string as UTC
+      // and every persisted `activity_hr_sample.timestamp` silently shifts
+      // by the device's UTC offset (confirmed: a session that ran
+      // 13:46–14:28 UTC got saved as 20:46–21:28, Vietnam's UTC+7 showing up
+      // exactly).
+      for (final point in data) {
+        point.dateFrom = point.dateFrom.toUtc();
+        point.dateTo = point.dateTo.toUtc();
+      }
+      data.sort((a, b) => a.dateFrom.compareTo(b.dateFrom));
       return _HealthRead(data, succeeded: true);
     } catch (e, st) {
       talker.handle(e, st, 'Failed to read $label');

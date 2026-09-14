@@ -9,6 +9,7 @@ import 'achievements_section/model/achievement_celebration.dart';
 import 'health_controller.dart';
 import 'health_data_controller.dart';
 import 'health_data_service.dart';
+import 'health_settings_controller.dart';
 import 'vitality_score_controller.dart';
 
 part 'health_sync_service.g.dart';
@@ -75,6 +76,14 @@ class HealthSyncController extends _$HealthSyncController {
         );
       }
 
+      await _createStandaloneActivities(userId);
+      if (!ref.mounted) {
+        return HealthSyncResult(
+          daysSynced: daysSynced,
+          activitiesCaptured: captured,
+        );
+      }
+
       final celebration = await _evaluateAchievements(userId);
       if (!ref.mounted) {
         return HealthSyncResult(
@@ -97,6 +106,7 @@ class HealthSyncController extends _$HealthSyncController {
 
       ref.invalidate(dailyHealthTrendProvider);
       ref.invalidate(activityHealthListProvider);
+      ref.invalidate(activityHealthSportCountsProvider);
       ref.invalidate(detectedWorkoutsProvider);
       ref.invalidate(vitalityScoreSummaryProvider);
 
@@ -237,6 +247,88 @@ class HealthSyncController extends _$HealthSyncController {
     return captured;
   }
 
+  /// Create bare "personal" activity rows (`lobby_id`/`freeplay_host_id`/
+  /// `course_id` all NULL — schema-legal: `activity_source_exclusivity` is
+  /// `<= 1`, not `= 1`) for standalone device workouts of the 5 supported
+  /// sports that have no existing Passe activity overlapping their window.
+  /// Deliberately does **not** capture metrics itself:
+  /// `health_capture_candidates`'s `confirmed` flag is computed purely from
+  /// `activity_confirmation`/`freeplay_request` rows, so a bare self-activity
+  /// always comes back unconfirmed and flows into the existing "Detected
+  /// workouts" review inbox unchanged — the same reconciliation flow an
+  /// unconfirmed lobby session already goes through, reused as-is.
+  /// `attach()`/`dismiss()` need no changes: once this row exists it behaves
+  /// exactly like any other unconfirmed candidate.
+  ///
+  /// Gated by [standaloneWorkoutSyncSettingProvider] (default on) — off
+  /// skips the device scan entirely, not just the writes. Own try/catch,
+  /// mirroring [_evaluateVitalityScore]: a failure here must never block
+  /// achievement/vitality evaluation right after it.
+  Future<void> _createStandaloneActivities(String userId) async {
+    try {
+      final enabled = await ref.read(
+        standaloneWorkoutSyncSettingProvider.future,
+      );
+      if (!ref.mounted || !enabled) return;
+
+      final windowStart = DateTime.now().subtract(
+        const Duration(days: healthBackfillDays),
+      );
+      final sessions = await _service.readWorkoutSessions(
+        windowStart: windowStart,
+      );
+      if (sessions.isEmpty || !ref.mounted) return;
+
+      // Every activity in the window regardless of source/confirmation —
+      // used only to skip a span that's already represented, including a
+      // bare activity this same method created on a previous sync (this is
+      // what makes repeated syncs idempotent with no separate dedup table).
+      final existingRows = await _supabase
+          .from('activity')
+          .select('start_time, end_time')
+          .eq('user_id', userId)
+          .gte('start_time', windowStart.toUtc().toIso8601String())
+          .timeout(const Duration(seconds: 5));
+      final existing = (existingRows as List)
+          .map(
+            (r) => (
+              start: DateTime.parse(r['start_time'] as String),
+              end: r['end_time'] != null
+                  ? DateTime.parse(r['end_time'] as String)
+                  : null,
+            ),
+          )
+          .toList();
+
+      for (final session in sessions) {
+        if (!ref.mounted) return;
+        final overlaps = existing.any(
+          (a) =>
+              a.start.isBefore(session.endTime) &&
+              (a.end == null || a.end!.isAfter(session.startTime)),
+        );
+        if (overlaps) continue;
+
+        // One bad insert must not abort the rest of the batch.
+        try {
+          await _supabase
+              .from('activity')
+              .insert({
+                'user_id': userId,
+                'sport_id': session.sport.index,
+                'start_time': session.startTime.toUtc().toIso8601String(),
+                'end_time': session.endTime.toUtc().toIso8601String(),
+              })
+              .timeout(const Duration(seconds: 5));
+        } catch (e, st) {
+          talker.handle(e, st, 'Failed to create standalone activity');
+        }
+      }
+    } catch (e, st) {
+      talker.handle(e, st, 'Standalone workout detection failed');
+    }
+  }
+
   /// Re-run the achievement evaluator after fresh data lands. Persists unlocks
   /// + banks XP server-side; the shared [evaluateAchievements] helper stashes
   /// the celebration payload (consumed by the achievements subtab) and lights
@@ -281,6 +373,7 @@ class HealthSyncController extends _$HealthSyncController {
     if (!ref.mounted) return true;
     ref.invalidate(detectedWorkoutsProvider);
     ref.invalidate(activityHealthListProvider);
+    ref.invalidate(activityHealthSportCountsProvider);
     return true;
   }
 

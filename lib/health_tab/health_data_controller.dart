@@ -158,6 +158,28 @@ Future<List<ActivityHealthRow>> activityHealthList(Ref ref) async {
       .toList();
 }
 
+/// Report counts by sport (RPC), so an empty recap list for the context sport
+/// can hint that reports exist under a different sport instead of looking
+/// identical to "never synced". Keyed by `Sport.index`; unrecognized ids
+/// (there shouldn't be any) are dropped.
+@riverpod
+Future<Map<Sport, int>> activityHealthSportCounts(Ref ref) async {
+  final userId = ref.watch(currentUserIdProvider);
+  if (userId == null) return {};
+
+  final rows = await Supabase.instance.client
+      .rpc('activity_health_sport_counts')
+      .timeout(const Duration(seconds: 5));
+
+  final counts = <Sport, int>{};
+  for (final r in rows as List) {
+    final sportId = (r['sport_id'] as num).toInt();
+    if (sportId < 0 || sportId >= Sport.values.length) continue;
+    counts[Sport.values[sportId]] = (r['report_count'] as num).toInt();
+  }
+  return counts;
+}
+
 /// Candidate activities the user never confirmed but for which the wearable
 /// shows exercise evidence — the reconciliation inbox. Re-checks the device per
 /// candidate (the RPC only narrows the set; the device holds the samples).

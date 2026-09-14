@@ -1145,6 +1145,7 @@
       "noVenue": "Chưa có sân",
       "capacity": "Số chỗ mở",
       "capacityHint": "Chỉ tính người ngoài lobby — thành viên vẫn RSVP như thường.",
+      "price": "Giá mỗi người",
       "description": "Mô tả",
       "lockNotice": "Khi đã có người xin chỗ, buổi chơi không đổi được giờ và sân cho tới khi bạn gỡ kèo.",
       "submit": "Đăng kèo",
@@ -1244,9 +1245,16 @@
         "saved": "Đã cập nhật vùng nhịp tim"
       }
     },
+    "standaloneWorkout": {
+      "title": "Nhận diện buổi tập độc lập",
+      "description": "Nhận diện các buổi bạn không lên lịch trong Passe (ví dụ một trận đấu tự phát) để chúng xuất hiện trong mục \"Buổi tập được phát hiện\" cho bạn xem xét."
+    },
     "activityData": {
       "title": "Hoạt động",
       "selectSport": "Chọn một môn để xem tóm tắt hoạt động.",
+      "otherSportHint": {
+        "other": "Bạn có {} báo cáo cho {sport} — chuyển môn để xem"
+      },
       "sample": {
         "label": "Preview",
         "session": "Buổi tập tiếp theo của bạn",
@@ -1315,6 +1323,7 @@
       "maxHr": "Nhịp tim tối đa",
       "calories": "Calo",
       "distance": "Quãng đường",
+      "steps": "bước",
       "effort": "Nỗ lực",
       "hrCurve": "Nhịp tim",
       "zones": "Vùng nhịp tim",

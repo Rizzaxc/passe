@@ -8,6 +8,7 @@ import '../../ui/main.dart';
 import '../activity_data_section/zone_bar.dart';
 import '../health_data_controller.dart';
 import '../health_data_service.dart';
+import '../health_settings_controller.dart';
 import '../model/daily_health_summary.dart';
 import '../vitality_score_controller.dart';
 import 'health_metric.dart';
@@ -76,6 +77,8 @@ class _UserHealthSubtabState extends ConsumerState<UserHealthSubtab> {
               ),
               const SizedBox(height: 12),
               const _HrZoneSection(),
+              const SizedBox(height: 12),
+              const _StandaloneWorkoutSyncSection(),
             ],
           );
         },
@@ -579,6 +582,61 @@ class _HrZoneSection extends ConsumerWidget {
     showPSheet(
       context: context,
       builder: (_) => _HrZoneEditSheet(current: current),
+    );
+  }
+}
+
+/// Toggle for standalone device-workout detection (a session with no lobby/
+/// freeplay/course tie in Passe) — see `HealthSyncController` in
+/// `health_sync_service.dart`. Defaults on; off skips that sync step
+/// entirely, so nothing gets created for review either.
+class _StandaloneWorkoutSyncSection extends ConsumerWidget {
+  const _StandaloneWorkoutSyncSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final enabled =
+        ref.watch(standaloneWorkoutSyncSettingProvider).value ?? true;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.card,
+        border: Border.all(color: colors.border),
+        borderRadius: context.theme.style.borderRadius.md,
+        boxShadow: context.theme.style.shadow,
+      ),
+      child: Row(
+        spacing: 12,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 3,
+              children: [
+                Text(
+                  'health.standaloneWorkout.title'.tr(),
+                  style: context.theme.typography.body.sm.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  'health.standaloneWorkout.description'.tr(),
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          FSwitch(
+            value: enabled,
+            onChange: (v) =>
+                ref.read(standaloneWorkoutSyncSettingProvider.notifier).set(v),
+          ),
+        ],
+      ),
     );
   }
 }

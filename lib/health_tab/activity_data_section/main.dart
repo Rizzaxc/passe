@@ -21,11 +21,13 @@ class ActivityDataSubtab extends ConsumerWidget {
     final sport = ref.watch(selectedSportStateProvider).value;
     final detected = ref.watch(detectedWorkoutsProvider);
     final recaps = ref.watch(activityHealthListProvider);
+    final sportCounts = ref.watch(activityHealthSportCountsProvider);
 
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(activityHealthListProvider);
         ref.invalidate(detectedWorkoutsProvider);
+        ref.invalidate(activityHealthSportCountsProvider);
         await ref.read(activityHealthListProvider.future);
       },
       child: (sport == null || sport == Sport.others)
@@ -69,7 +71,20 @@ class ActivityDataSubtab extends ConsumerWidget {
                   ),
                   data: (rows) {
                     if (rows.isEmpty) {
-                      return const _SampleRecapCard();
+                      final hint = sportCounts.maybeWhen(
+                        data: (counts) => _bestOtherSport(counts, sport),
+                        orElse: () => null,
+                      );
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (hint != null) ...[
+                            _OtherSportHint(sport: hint.$1, count: hint.$2),
+                            const SizedBox(height: 10),
+                          ],
+                          const _SampleRecapCard(),
+                        ],
+                      );
                     }
                     return Column(
                       children: [
@@ -110,6 +125,19 @@ String _sourceLabel(String source) => switch (source) {
 
 String _dateLabel(BuildContext context, DateTime dt) =>
     DateFormat.MMMEd(context.locale.toString()).format(dt);
+
+/// The other sport with the most reports, excluding [current] — so a user
+/// viewing an empty recap list for one sport can be pointed at reports
+/// filed under a different one instead of it looking identical to "never
+/// synced". `null` when there's nothing else to point at.
+(Sport, int)? _bestOtherSport(Map<Sport, int> counts, Sport current) {
+  (Sport, int)? best;
+  for (final entry in counts.entries) {
+    if (entry.key == current || entry.value <= 0) continue;
+    if (best == null || entry.value > best.$2) best = (entry.key, entry.value);
+  }
+  return best;
+}
 
 // ─── Detected workout card ──────────────────────────────────────────────────
 
@@ -229,6 +257,49 @@ class _DetectedCardState extends ConsumerState<_DetectedCard> {
   }
 }
 
+// ─── Other-sport hint (shown above the sample card when empty) ────────────────
+
+/// Points at reports filed under a different sport when the context sport's
+/// recap list is empty but another sport has real data. Tapping switches the
+/// context sport directly rather than making the user go find the selector.
+class _OtherSportHint extends ConsumerWidget {
+  final Sport sport;
+  final int count;
+  const _OtherSportHint({required this.sport, required this.count});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () =>
+          ref.read(selectedSportStateProvider.notifier).change(sport),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: colors.secondary,
+          borderRadius: context.theme.style.borderRadius.md,
+        ),
+        child: Row(
+          spacing: 8,
+          children: [
+            Icon(FLucideIcons.arrowRightLeft, size: 16, color: colors.primary),
+            Expanded(
+              child: Text(
+                'health.activityData.otherSportHint'.plural(
+                  count,
+                  namedArgs: {'sport': sport.getLocalizedName(context)},
+                ),
+                style: context.theme.typography.body.sm,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Sample recap (shown in place of the empty state) ──────────────────────────
 
 /// A dimmed, non-interactive stand-in for `_RecapCard` so a first-time user
@@ -246,7 +317,7 @@ class _SampleRecapCard extends StatelessWidget {
           opacity: 0.45,
           child: IgnorePointer(
             child: Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: colors.card,
                 border: Border.all(color: colors.border),
@@ -254,10 +325,12 @@ class _SampleRecapCard extends StatelessWidget {
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 10,
+                spacing: 14,
                 children: [
                   Row(
+                    spacing: 12,
                     children: [
+                      _ActivityIconBadge(colors: colors),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,19 +363,31 @@ class _SampleRecapCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Row(
-                    spacing: 16,
+                  Divider(height: 1, color: colors.border),
+                  Wrap(
+                    spacing: 18,
+                    runSpacing: 10,
                     children: [
-                      _MiniStat(
-                        value: '45m',
-                        label: 'health.recap.duration'.tr(),
+                      _StatChip(icon: FLucideIcons.timer, value: '45m'),
+                      _StatChip(
+                        icon: FLucideIcons.heartPulse,
+                        value: '132',
+                        unit: 'bpm',
                       ),
-                      _MiniStat(value: '132', label: 'health.recap.avgHr'.tr()),
-                      _MiniStat(
+                      _StatChip(
+                        icon: FLucideIcons.flame,
                         value: '410',
-                        label: 'health.recap.calories'.tr(),
+                        unit: 'kcal',
                       ),
                     ],
+                  ),
+                  Text(
+                    'health.recap.zones'.tr().toUpperCase(),
+                    style: context.theme.typography.body.xs.copyWith(
+                      color: colors.mutedForeground,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                   const ZoneBar(
                     easy: 600,
@@ -377,12 +462,16 @@ class _RecapCard extends StatelessWidget {
       _sourceLabel(row.source).tr(),
       if (row.locationLabel != null) row.locationLabel!,
     ].join(' · ');
+    final totalZoneSeconds =
+        (row.hrZoneEasySeconds ?? 0) +
+        (row.hrZoneModerateSeconds ?? 0) +
+        (row.hrZoneHardSeconds ?? 0);
 
     return GestureDetector(
       onTap: () => showActivityRecapSheet(context, row),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: colors.card,
           border: Border.all(color: colors.border),
@@ -391,10 +480,12 @@ class _RecapCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 10,
+          spacing: 14,
           children: [
             Row(
+              spacing: 12,
               children: [
+                _ActivityIconBadge(colors: colors),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,12 +493,16 @@ class _RecapCard extends StatelessWidget {
                     children: [
                       Text(
                         _dateLabel(context, row.startTime),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: context.theme.typography.body.sm.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       Text(
                         subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: context.theme.typography.body.xs.copyWith(
                           color: colors.mutedForeground,
                         ),
@@ -422,36 +517,57 @@ class _RecapCard extends StatelessWidget {
                 ),
               ],
             ),
-            Row(
-              spacing: 16,
+            Divider(height: 1, color: colors.border),
+            Wrap(
+              spacing: 18,
+              runSpacing: 10,
               children: [
                 if (row.durationMinutes != null)
-                  _MiniStat(
+                  _StatChip(
+                    icon: FLucideIcons.timer,
                     value: _duration(row.durationMinutes!),
-                    label: 'health.recap.duration'.tr(),
                   ),
                 if (row.avgHeartRate != null)
-                  _MiniStat(
+                  _StatChip(
+                    icon: FLucideIcons.heartPulse,
                     value: '${row.avgHeartRate}',
-                    label: 'health.recap.avgHr'.tr(),
+                    unit: 'bpm',
                   ),
                 if (row.activeCalories != null)
-                  _MiniStat(
+                  _StatChip(
+                    icon: FLucideIcons.flame,
                     value: '${row.activeCalories!.round()}',
-                    label: 'health.recap.calories'.tr(),
+                    unit: 'kcal',
+                  ),
+                if (row.steps != null && row.steps! > 0)
+                  _StatChip(
+                    icon: FLucideIcons.footprints,
+                    value: '${row.steps}',
+                    unit: 'health.recap.steps'.tr(),
+                  ),
+                if (row.distanceMeters != null && row.distanceMeters! > 0)
+                  _StatChip(
+                    icon: FLucideIcons.route,
+                    value: _distance(row.distanceMeters!),
                   ),
               ],
             ),
-            if ((row.hrZoneEasySeconds ?? 0) +
-                    (row.hrZoneModerateSeconds ?? 0) +
-                    (row.hrZoneHardSeconds ?? 0) >
-                0)
+            if (totalZoneSeconds > 0) ...[
+              Text(
+                'health.recap.zones'.tr().toUpperCase(),
+                style: context.theme.typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                ),
+              ),
               ZoneBar(
                 easy: row.hrZoneEasySeconds ?? 0,
                 moderate: row.hrZoneModerateSeconds ?? 0,
                 hard: row.hrZoneHardSeconds ?? 0,
                 compact: true,
               ),
+            ],
           ],
         ),
       ),
@@ -460,32 +576,68 @@ class _RecapCard extends StatelessWidget {
 
   String _duration(int minutes) =>
       minutes >= 60 ? '${minutes ~/ 60}h ${minutes % 60}m' : '${minutes}m';
+
+  String _distance(double meters) => meters >= 1000
+      ? '${(meters / 1000).toStringAsFixed(1)} km'
+      : '${meters.round()} m';
 }
 
-class _MiniStat extends StatelessWidget {
+/// Circular icon badge anchoring the card visually in place of a wall of
+/// text — a fixed activity icon rather than per-sport art (the icon set here
+/// has no sport-specific glyphs worth maintaining a mapping for).
+class _ActivityIconBadge extends StatelessWidget {
+  final FColors colors;
+  const _ActivityIconBadge({required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(FLucideIcons.activity, size: 18, color: colors.primary),
+    );
+  }
+}
+
+/// Icon-led stat: an icon carries the "what" so the value doesn't need a
+/// separate label line underneath it, trading the old cramped
+/// value-over-caption stack for a single denser-but-airier row.
+class _StatChip extends StatelessWidget {
+  final IconData icon;
   final String value;
-  final String label;
-  const _MiniStat({required this.value, required this.label});
+  final String? unit;
+  const _StatChip({required this.icon, required this.value, this.unit});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 1,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 6,
       children: [
-        Text(
-          value,
-          style: context.theme.typography.body.md.copyWith(
-            fontWeight: FontWeight.w700,
-            height: 1,
-          ),
-        ),
-        Text(
-          label.toUpperCase(),
-          style: context.theme.typography.body.xs.copyWith(
-            color: colors.mutedForeground,
-            letterSpacing: 0.3,
+        Icon(icon, size: 16, color: colors.primary),
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: value,
+                style: context.theme.typography.body.sm.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (unit != null)
+                TextSpan(
+                  text: ' $unit',
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                ),
+            ],
           ),
         ),
       ],

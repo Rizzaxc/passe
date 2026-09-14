@@ -1149,6 +1149,7 @@
       "noVenue": "No venue yet",
       "capacity": "Seats offered",
       "capacityHint": "Outsiders only — members still RSVP as usual.",
+      "price": "Price per person",
       "description": "Description",
       "lockNotice": "Once someone has asked for a seat, the session's time and venue are locked until you withdraw the listing.",
       "submit": "Publish listing",
@@ -1248,9 +1249,17 @@
         "saved": "HR zone updated"
       }
     },
+    "standaloneWorkout": {
+      "title": "Detect solo workouts",
+      "description": "Recognize sessions you didn't schedule in Passe (e.g. a solo match) so they can show up under Detected workouts for review."
+    },
     "activityData": {
       "title": "Activity",
       "selectSport": "Choose a sport to see your activity recaps.",
+      "otherSportHint": {
+        "one": "You have {} report for {sport} — switch sport to see it",
+        "other": "You have {} reports for {sport} — switch sport to see them"
+      },
       "sample": {
         "label": "Preview",
         "session": "Your next session",
@@ -1319,6 +1328,7 @@
       "maxHr": "Max HR",
       "calories": "Calories",
       "distance": "Distance",
+      "steps": "steps",
       "effort": "Effort",
       "hrCurve": "Heart rate",
       "zones": "Zones",
