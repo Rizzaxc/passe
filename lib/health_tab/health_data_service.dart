@@ -226,6 +226,30 @@ class HealthDataService extends _$HealthDataService {
         hardSeconds: hard,
       );
 
+      // A read that genuinely found nothing (device wasn't worn, the Watch
+      // hasn't synced to the phone yet, or — as shipped once — the sync ran
+      // on a device/session with no real HealthKit store at all, e.g. the
+      // iOS Simulator) must not count as "captured": saveActivityMetrics
+      // would still write a row, and health_capture_candidates excludes any
+      // activity with an *existing* metrics row regardless of whether it's
+      // meaningful — permanently blocking a real retry later. Treat a fully
+      // empty result exactly like a failed read: return null so the caller
+      // skips saving and it's picked up again on a later sync instead.
+      final isEmpty =
+          steps == null &&
+          distance == null &&
+          calories == null &&
+          avgHr == null &&
+          maxHr == null &&
+          minHr == null &&
+          avgHrv == null &&
+          weight == null &&
+          workoutType == null &&
+          easy == 0 &&
+          moderate == 0 &&
+          hard == 0;
+      if (isEmpty) return null;
+
       final metrics = ActivityHealthMetrics(
         userId: activity.userId,
         activityId: activity.id!,

@@ -21,13 +21,15 @@ HealthDataType get hrvDataType => Platform.isIOS
 
 /// Platform-native distance types. HealthKit exposes distance per movement
 /// category, while Health Connect exposes one aggregate delta record.
+///
+/// Only walking/running distance is requested on iOS — cycling and swimming
+/// distance were dropped to shrink the HealthKit permission ask, since
+/// Passe's 5 sports don't include cycling or swimming. Health Connect has no
+/// per-category split to trim: `DISTANCE_DELTA` is already one aggregate
+/// covering every activity type.
 List<HealthDataType> healthDistanceDataTypes({bool? isIOS}) =>
     (isIOS ?? Platform.isIOS)
-    ? const [
-        HealthDataType.DISTANCE_WALKING_RUNNING,
-        HealthDataType.DISTANCE_CYCLING,
-        HealthDataType.DISTANCE_SWIMMING,
-      ]
+    ? const [HealthDataType.DISTANCE_WALKING_RUNNING]
     : const [HealthDataType.DISTANCE_DELTA];
 
 /// Record used alongside active energy to derive whole-day calories.

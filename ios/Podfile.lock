@@ -36,7 +36,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/video_thumbnail/ios"
 
 SPEC CHECKSUMS:
-  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
   health: c1dfe8bc28ccd5998a32bdd0963943bfe9ac8320
   libwebp: af5937a13536ef73f3784d69cc342b98961acf33
   video_thumbnail: c4e2a3c539e247d4de13cd545344fd2d26ffafd1

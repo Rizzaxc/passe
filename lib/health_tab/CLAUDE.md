@@ -40,7 +40,8 @@ user grants health permissions, every subtab is replaced by the "not linked" CTA
   opening `_HrZoneEditSheet` to declare real values. LT1/LT2 are required on save (int, LT1 < LT2 ≤
   250); Max HR is optional — leave it blank to keep the age-bucket estimate.
 - `activity_data_section/` — recap list + detected-workouts inbox (`main.dart`), `recap_sheet.dart`
-  (per-activity HR-curve detail), `zone_bar.dart` (3-zone stacked bar).
+  (per-activity HR-curve detail), `zone_bar.dart` (3-zone stacked bar), `recap_widgets.dart` (shared
+  between the two: `ActivityIconBadge`, `StatChip`, `sourceLabelKey`, `cardTitleDateLabel`).
 - `achievements_section/` — the gamification screen (see **Gamification** below):
   `main.dart` (level header + badges grouped by progress state), `badge_card.dart`
   (tier-icon card), `celebration_sheet.dart` (post-sync unlock/level-up sheet),
@@ -205,11 +206,15 @@ renders. (Previously undocumented — added in the 2026-07 audit pass.)
   `ActivityHealthMetrics`/`DailyHealthSummary`/`ActivityHealthRow`. UI reads that want a
   platform-agnostic value should coalesce both (see `HealthMetric.hrv.value()`).
 - **Distance and total energy are platform-split too.** Health Connect exposes
-  `DISTANCE_DELTA` and `TOTAL_CALORIES_BURNED`; HealthKit exposes distance as walking/running,
-  cycling, and swimming records, and whole-day energy is derived by adding active + basal energy.
-  Keep permission requests and reads routed through `healthDistanceDataTypes()` /
-  `healthAdditionalEnergyDataType()`. Requesting Android's `DISTANCE_DELTA` on iOS makes the
-  `health` package throw and causes the whole activity capture to return no metrics.
+  `DISTANCE_DELTA` and `TOTAL_CALORIES_BURNED`; HealthKit exposes distance per movement category, and
+  whole-day energy is derived by adding active + basal energy. On iOS only `DISTANCE_WALKING_RUNNING`
+  is requested/read — `DISTANCE_CYCLING`/`DISTANCE_SWIMMING` were dropped since none of Passe's 5
+  sports involve cycling or swimming, and asking for them just widened the HealthKit permission
+  prompt for no benefit. Health Connect's `DISTANCE_DELTA` is already one aggregate record with no
+  per-category split, so there's nothing equivalent to trim there. Keep permission requests and reads
+  routed through `healthDistanceDataTypes()` / `healthAdditionalEnergyDataType()`. Requesting
+  Android's `DISTANCE_DELTA` on iOS makes the `health` package throw and causes the whole activity
+  capture to return no metrics.
 - **HR zones are a 3-zone LT model** (easy/moderate/hard by `lt1_bpm`/`lt2_bpm`). Defaults estimate
   LT1≈80% / LT2≈88% of an age-bucket max HR; `HrThresholds.estimated` drives the "estimated" tag in
   the recap sheet until the user declares real thresholds on `user_health_link`.
@@ -268,3 +273,35 @@ renders. (Previously undocumented — added in the 2026-07 audit pass.)
   sweep gates on `lobby_id`/`course_id`/`cost_type`/`confirmation_threshold`. Keep that property if
   you touch any of those — the whole point of a bare self-activity is that it's invisible outside
   the health-capture/recap path until the user explicitly attaches it.
+- **A captured metrics row is permanent even if it's empty.** `health_capture_candidates` excludes
+  any activity with an *existing* `activity_health_metrics` row, regardless of whether that row has
+  real data — a read that finds nothing (device wasn't worn, or ran somewhere with no real
+  HealthKit store, e.g. the iOS Simulator — this shipped as a real bug once) must never reach
+  `saveActivityMetrics`, or it permanently blocks a real retry. `readActivityHealthData` now returns
+  `null` (treated exactly like a failed read) when every field it computed is empty, instead of
+  saving an all-`NULL` row. If you ever find a stuck empty capture, the only fix is deleting its
+  `activity_health_metrics` (and `activity_hr_sample`) rows so it becomes a candidate again.
+- **`activity_health_data`'s `source_name`/`lobby_id`/`course_id`** (schema/activity_health_data_source_info.sql)
+  resolve the actual lobby/coach/host name (`lobby.name` / `coalesce(course.name,
+  professional.display_name)` / `freeplay_host.display_name`) and the ids needed to link back to
+  that hub — all `NULL` for a `'self'` activity, which has nowhere to link. The recap sheet's
+  `_SourceSubsection` (`recap_sheet.dart`) uses them to open `LobbyDetailRoute` (Planner tab,
+  `highlightActivityId` set), `CourseDetailRoute`, or `FreeplayDetailRoute` — the last needs no extra
+  column since it takes the activity id directly, which the RPC already returns as `activity_id`.
+  Postgres refuses `CREATE OR REPLACE FUNCTION` for a `RETURNS TABLE` function even to append a
+  column at the end ("cannot change return type of existing function" — the table desugars to OUT
+  parameters) — any future change to this function's column list needs `DROP FUNCTION` first, same
+  as these migrations. The same migration also adds the fields `SourceAvatar` (`recap_widgets.dart`)
+  needs to show the real lobby/coach/host photo instead of the generic activity icon:
+  `lobby_has_avatar` (pairs with `lobby_id`/`source_name` for `LobbyAvatar`), `avatar_user_id`/
+  `avatar_username`/`avatar_generated` (the coach's *linked user* identity via
+  `professional.linked_user_id`, for `PUserAvatar` — null when the coach profile isn't linked to a
+  user account), and `freeplay_avatar_url` (`freeplay_host.avatar_url` directly). All null for
+  `'self'`; `SourceAvatar` falls back to the plain `ActivityIconBadge` whenever the fields it needs
+  for a given source aren't there, rather than fabricating an avatar.
+- **Every `DateTime` this RPC returns is UTC** (`timestamptz` via `DateTime.parse`, which always
+  yields `isUtc: true`) — `cardTitleDateLabel`/`_dateLabel` (`recap_widgets.dart`/`main.dart`) and
+  the HR-curve chart's X-axis labels (`recap_sheet.dart`) all call `.toLocal()` before formatting or
+  doing same-day comparisons. This shipped broken once: formatting the raw UTC value directly showed
+  a session that started at 8:45 PM in Vietnam as 1:45 PM, and could put it on the wrong calendar day
+  entirely near local midnight. Any new date/time display in this tab needs the same `.toLocal()`.

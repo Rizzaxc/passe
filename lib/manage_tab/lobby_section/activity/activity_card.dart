@@ -1578,7 +1578,13 @@ class _FreeplayBlock extends ConsumerWidget {
           lobbyId: lobbyId,
           upcoming: upcoming,
         ),
-        child: Text('lobbyHub.freeplayExpose.cta'.tr()),
+        child: Flexible(
+          child: Text(
+            'lobbyHub.freeplayExpose.cta'.tr(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       );
     }
 

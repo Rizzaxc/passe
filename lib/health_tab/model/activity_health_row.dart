@@ -31,6 +31,24 @@ abstract class ActivityHealthRow with _$ActivityHealthRow {
     @JsonKey(name: 'effort_score') double? effortScore,
     @JsonKey(name: 'workout_type') String? workoutType,
     @JsonKey(name: 'recorded_at') DateTime? recordedAt,
+    // The lobby/coach/host name — null for a 'self' (standalone) activity,
+    // where there's nothing to name.
+    @JsonKey(name: 'source_name') String? sourceName,
+    // Only set when source == 'lobby' — lets the recap sheet link back to it.
+    @JsonKey(name: 'lobby_id') String? lobbyId,
+    // Only set when source == 'professional' (a course session).
+    @JsonKey(name: 'course_id') String? courseId,
+    // Avatar sourcing — each set only for its matching `source`, all null
+    // for 'self'. Lobby: pairs with lobbyId/sourceName for `LobbyAvatar`.
+    @JsonKey(name: 'lobby_has_avatar') bool? lobbyHasAvatar,
+    // Professional/course: the coach's *linked user* identity, for
+    // `PUserAvatar` — null when the coach profile isn't linked to a user
+    // account (falls back to the generic activity icon).
+    @JsonKey(name: 'avatar_user_id') String? avatarUserId,
+    @JsonKey(name: 'avatar_username') String? avatarUsername,
+    @JsonKey(name: 'avatar_generated') String? avatarGenerated,
+    // Freeplay: freeplay_host.avatar_url directly.
+    @JsonKey(name: 'freeplay_avatar_url') String? freeplayAvatarUrl,
   }) = _ActivityHealthRow;
 
   factory ActivityHealthRow.fromJson(Map<String, dynamic> json) =>

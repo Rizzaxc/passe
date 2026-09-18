@@ -918,7 +918,7 @@
       "total": "Tổng cộng",
       "threshold": "Ngưỡng xác nhận",
       "thresholdHint": "Buổi chơi chính thức khi đủ số người",
-      "tooSoon": "Buổi quá gần (<2 giờ) — tắt sẵn",
+      "tooSoon": "Hẹn quá gần (<2 giờ)",
       "deadlineAt": "Hạn: {time}",
       "noDeadline": "Không có hạn chót",
       "deadline": "Hạn chót xác nhận",
@@ -1314,10 +1314,13 @@
     },
     "source": {
       "lobby": "Lobby",
+      "freeplay": "Kèo",
       "professional": "Huấn luyện",
       "self": "Cá nhân"
     },
     "recap": {
+      "today": "Hôm nay",
+      "yesterday": "Hôm qua",
       "duration": "Thời lượng",
       "avgHr": "Nhịp tim TB",
       "maxHr": "Nhịp tim tối đa",
@@ -1327,7 +1330,11 @@
       "effort": "Nỗ lực",
       "hrCurve": "Nhịp tim",
       "zones": "Vùng nhịp tim",
-      "estimated": "(ước tính)"
+      "estimated": "(ước tính)",
+      "tab": {
+        "stats": "Chỉ số",
+        "chart": "Biểu đồ"
+      }
     },
     "zone": {
       "easy": "Nhẹ",

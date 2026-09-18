@@ -32,6 +32,14 @@ _ActivityHealthRow _$ActivityHealthRowFromJson(Map json) => _ActivityHealthRow(
   recordedAt: json['recorded_at'] == null
       ? null
       : DateTime.parse(json['recorded_at'] as String),
+  sourceName: json['source_name'] as String?,
+  lobbyId: json['lobby_id'] as String?,
+  courseId: json['course_id'] as String?,
+  lobbyHasAvatar: json['lobby_has_avatar'] as bool?,
+  avatarUserId: json['avatar_user_id'] as String?,
+  avatarUsername: json['avatar_username'] as String?,
+  avatarGenerated: json['avatar_generated'] as String?,
+  freeplayAvatarUrl: json['freeplay_avatar_url'] as String?,
 );
 
 Map<String, dynamic> _$ActivityHealthRowToJson(_ActivityHealthRow instance) =>
@@ -57,4 +65,12 @@ Map<String, dynamic> _$ActivityHealthRowToJson(_ActivityHealthRow instance) =>
       'effort_score': ?instance.effortScore,
       'workout_type': ?instance.workoutType,
       'recorded_at': ?instance.recordedAt?.toIso8601String(),
+      'source_name': ?instance.sourceName,
+      'lobby_id': ?instance.lobbyId,
+      'course_id': ?instance.courseId,
+      'lobby_has_avatar': ?instance.lobbyHasAvatar,
+      'avatar_user_id': ?instance.avatarUserId,
+      'avatar_username': ?instance.avatarUsername,
+      'avatar_generated': ?instance.avatarGenerated,
+      'freeplay_avatar_url': ?instance.freeplayAvatarUrl,
     };

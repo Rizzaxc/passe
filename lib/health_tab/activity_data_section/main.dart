@@ -11,6 +11,7 @@ import '../health_data_service.dart';
 import '../health_sync_service.dart';
 import '../model/activity_health_row.dart';
 import 'recap_sheet.dart';
+import 'recap_widgets.dart';
 import 'zone_bar.dart';
 
 class ActivityDataSubtab extends ConsumerWidget {
@@ -117,14 +118,14 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-String _sourceLabel(String source) => switch (source) {
-  'lobby' => 'health.source.lobby',
-  'professional' => 'health.source.professional',
-  _ => 'health.source.self',
-};
-
+/// Weekday + month + day — used only by [_DetectedCard], where a review card
+/// benefits from the extra precision of the raw calendar date. The recap
+/// card/sheet *titles* use [cardTitleDateLabel] instead.
+///
+/// [dt] is UTC (Supabase `timestamptz` via `DateTime.parse`) — `.toLocal()`
+/// first or the date can land on the wrong day for the device's timezone.
 String _dateLabel(BuildContext context, DateTime dt) =>
-    DateFormat.MMMEd(context.locale.toString()).format(dt);
+    DateFormat.MMMEd(context.locale.toString()).format(dt.toLocal());
 
 /// The other sport with the most reports, excluding [current] — so a user
 /// viewing an empty recap list for one sport can be pointed at reports
@@ -194,7 +195,7 @@ class _DetectedCardState extends ConsumerState<_DetectedCard> {
                   spacing: 2,
                   children: [
                     Text(
-                      '${_dateLabel(context, w.startTime)} · ${_sourceLabel(w.source).tr()}',
+                      '${_dateLabel(context, w.startTime)} · ${sourceLabelKey(w.source).tr()}',
                       style: context.theme.typography.body.sm.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -330,7 +331,7 @@ class _SampleRecapCard extends StatelessWidget {
                   Row(
                     spacing: 12,
                     children: [
-                      _ActivityIconBadge(colors: colors),
+                      ActivityIconBadge(colors: colors),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,13 +369,13 @@ class _SampleRecapCard extends StatelessWidget {
                     spacing: 18,
                     runSpacing: 10,
                     children: [
-                      _StatChip(icon: FLucideIcons.timer, value: '45m'),
-                      _StatChip(
+                      StatChip(icon: FLucideIcons.timer, value: '45m'),
+                      StatChip(
                         icon: FLucideIcons.heartPulse,
                         value: '132',
                         unit: 'bpm',
                       ),
-                      _StatChip(
+                      StatChip(
                         icon: FLucideIcons.flame,
                         value: '410',
                         unit: 'kcal',
@@ -458,10 +459,6 @@ class _RecapCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final subtitle = [
-      _sourceLabel(row.source).tr(),
-      if (row.locationLabel != null) row.locationLabel!,
-    ].join(' · ');
     final totalZoneSeconds =
         (row.hrZoneEasySeconds ?? 0) +
         (row.hrZoneModerateSeconds ?? 0) +
@@ -485,24 +482,24 @@ class _RecapCard extends StatelessWidget {
             Row(
               spacing: 12,
               children: [
-                _ActivityIconBadge(colors: colors),
+                SourceAvatar(row: row),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 2,
                     children: [
                       Text(
-                        _dateLabel(context, row.startTime),
+                        cardTitleDateLabel(context, row.startTime),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: context.theme.typography.body.sm.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      SourceLocationLines(
+                        source: row.source,
+                        sourceName: row.sourceName,
+                        locationLabel: row.locationLabel,
                         style: context.theme.typography.body.xs.copyWith(
                           color: colors.mutedForeground,
                         ),
@@ -523,30 +520,30 @@ class _RecapCard extends StatelessWidget {
               runSpacing: 10,
               children: [
                 if (row.durationMinutes != null)
-                  _StatChip(
+                  StatChip(
                     icon: FLucideIcons.timer,
                     value: _duration(row.durationMinutes!),
                   ),
                 if (row.avgHeartRate != null)
-                  _StatChip(
+                  StatChip(
                     icon: FLucideIcons.heartPulse,
                     value: '${row.avgHeartRate}',
                     unit: 'bpm',
                   ),
                 if (row.activeCalories != null)
-                  _StatChip(
+                  StatChip(
                     icon: FLucideIcons.flame,
                     value: '${row.activeCalories!.round()}',
                     unit: 'kcal',
                   ),
                 if (row.steps != null && row.steps! > 0)
-                  _StatChip(
+                  StatChip(
                     icon: FLucideIcons.footprints,
                     value: '${row.steps}',
                     unit: 'health.recap.steps'.tr(),
                   ),
                 if (row.distanceMeters != null && row.distanceMeters! > 0)
-                  _StatChip(
+                  StatChip(
                     icon: FLucideIcons.route,
                     value: _distance(row.distanceMeters!),
                   ),
@@ -580,67 +577,4 @@ class _RecapCard extends StatelessWidget {
   String _distance(double meters) => meters >= 1000
       ? '${(meters / 1000).toStringAsFixed(1)} km'
       : '${meters.round()} m';
-}
-
-/// Circular icon badge anchoring the card visually in place of a wall of
-/// text — a fixed activity icon rather than per-sport art (the icon set here
-/// has no sport-specific glyphs worth maintaining a mapping for).
-class _ActivityIconBadge extends StatelessWidget {
-  final FColors colors;
-  const _ActivityIconBadge({required this.colors});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.12),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(FLucideIcons.activity, size: 18, color: colors.primary),
-    );
-  }
-}
-
-/// Icon-led stat: an icon carries the "what" so the value doesn't need a
-/// separate label line underneath it, trading the old cramped
-/// value-over-caption stack for a single denser-but-airier row.
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String? unit;
-  const _StatChip({required this.icon, required this.value, this.unit});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 6,
-      children: [
-        Icon(icon, size: 16, color: colors.primary),
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: value,
-                style: context.theme.typography.body.sm.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (unit != null)
-                TextSpan(
-                  text: ' $unit',
-                  style: context.theme.typography.body.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }

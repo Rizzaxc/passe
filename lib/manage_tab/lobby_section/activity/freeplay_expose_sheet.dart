@@ -205,6 +205,9 @@ class _ExposeSheetState extends ConsumerState<_ExposeSheet> {
             control: FTextFieldControl.managed(controller: _capacity),
             onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
           ),
+          PSheetSectionLabel(
+            label: 'lobbyHub.freeplayExpose.price'.tr(),
+          ),
           Row(
             spacing: 10,
             children: [
