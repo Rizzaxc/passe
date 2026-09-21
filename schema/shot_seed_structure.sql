@@ -39,26 +39,38 @@
 --               DH Bach khoa TP.HCM (193, alumni=true)
 --   * industry: technology (17)
 --
--- ⚠ THE HERO HAS NO SAVED DISTRICTS, ON PURPOSE. DO NOT "FIX" THIS.
+-- ── Districts: depends on the ward backfill having run ──────────────────────
 --   `DiscoverFilterController.build()` (lib/discover_tab/filter_controller.dart)
 --   seeds the filter from user.details.location.districts, and the teammate /
 --   challenger / professional feeds send District *ids* (`hcm_binhthanh`) as
---   p_districts. `home_teammate_lobby_data` compares those against the
---   homeground venue's `location.district`, which on real directory rows is the
---   legacy string "Quan Binh Thanh". An id can never equal a legacy name, so any
---   saved district makes the teammate feed return ZERO ROWS and kills the
---   Discover screenshots. Leaving districts empty short-circuits the filter
---   (`cardinality(p_districts) = 0`). This mismatch is a real product gap — see
---   the comment in lib/discover_tab/location_section/feed_controller.dart, which
---   works around it by sending BOTH the legacy name and the id.
+--   p_districts, compared against the homeground venue's `location.district`.
+--
+--   That only matches because of the venue overhaul: schema/location_ward_normalization.sql
+--   plus the tool/venue backfill rewrite `location.district` from the scrape's
+--   free text ("Quan Binh Thanh", "Phuong Thao Dien", blank) to the canonical
+--   District.id, preserving the old value in `district_legacy`. Verified live:
+--   754 of 997 HCMC rows now carry a ward id, and all 11 homegrounds below do.
+--
+--   BEFORE that backfill an id could never equal a legacy name, so any saved
+--   district made the teammate feed return ZERO rows. If you ever see an empty
+--   Discover feed with a district chip active, check `location.district` first —
+--   it means the backfill was reverted or a venue moved to an un-normalized row.
+--   Setting districts to '[]' short-circuits the filter (cardinality = 0) and is
+--   the safe fallback.
 --
 -- ── Venues ──────────────────────────────────────────────────────────────────
--- Real `source='directory'` rows only, resolved BY NAME at run time (never
--- hardcoded uuids), and only venues whose OSM `sport:[...]` tag actually
--- contains the sport — a soccer lobby gets a real pitch, a pickleball lobby a
--- real court. Binh Thanh carries both, which is why the hero lives there.
--- Deliberately excluded: the `Sport Station` row, which has city_cluster=1 but
--- sits in Dong Nai with an empty district.
+-- Real directory rows only, resolved BY NAME at run time (never hardcoded
+-- uuids), and only venues whose `sport_ids` actually contains the sport — a
+-- soccer lobby gets a real pitch, a pickleball lobby a real court. Binh Thanh
+-- carries both, which is why the hero lives there.
+--
+-- `sport_ids bigint[]` (schema/location_sport_tags.sql, populated by
+-- tool/venue/normalize.py) replaced parsing the raw OSM `tags` "sport:[a, b]"
+-- strings client-side. Raw `tags` is still kept as the provenance record, but
+-- it is NOT the thing to filter on any more.
+--
+-- The old `Sport Station` trap — city_cluster=1 but physically in Dong Nai —
+-- is gone; the overhaul purged the mis-clustered rows (HCMC went ~2050 -> 997).
 --
 -- ── The FitScore gradient (the whole point of the cast size) ────────────────
 -- `calculate_profile_compat` scores  raw -> 2.5 + min(raw,10)/10 * 2.5.
@@ -114,9 +126,17 @@ WHERE lm.lobby_id = l.id
   AND l.id::text LIKE '5107%'
   AND lm.user_id <> l.captain_id;
 
--- The hero is a MEMBER of a seeded pickleball lobby and a member of nothing
--- else; this also drops any seeded user from a non-seeded lobby.
-DELETE FROM public.lobby_member WHERE user_id::text LIKE '5107%';
+-- A seeded user's membership in a NON-seeded lobby, if one was ever added by
+-- hand during a shoot. Captain rows are excluded here for the same reason as
+-- above: lobby_member_prevent_captain_leave RAISEs on them, and the captain row
+-- of a seeded lobby is removed by the lobby DELETE below (ON DELETE CASCADE).
+-- Deleting them blind made this script fail on its second run against an
+-- already-seeded database.
+DELETE FROM public.lobby_member lm
+USING public.lobby l
+WHERE lm.lobby_id = l.id
+  AND lm.user_id::text LIKE '5107%'
+  AND lm.user_id <> l.captain_id;
 
 DELETE FROM public.lobby_homeground WHERE lobby_id::text LIKE '5107%';
 DELETE FROM public.lobby            WHERE id::text      LIKE '5107%';
@@ -232,12 +252,14 @@ BEGIN
                 'generatedAvatar', v_names[i],
                 'location', jsonb_build_object(
                     'city', 1,
-                    -- See the header warning: the HERO must have no districts or
-                    -- the Discover feeds return nothing. The rest of the cast is
-                    -- given wards purely so their profile pages look complete.
+                    -- The hero's six wards are exactly the ones his seeded
+                    -- lobbies' homegrounds sit in, so the Discover filter opens
+                    -- pre-filled with real ward chips and still returns every
+                    -- card. Six is also District's per-filter cap
+                    -- (FilterController.setDistricts trims above 6).
                     'districts', CASE WHEN i = 1
-                                      THEN '[]'::jsonb
-                                      ELSE '["hcm_binhthanh","hcm_giadinh"]'::jsonb END
+                                      THEN '["hcm_binhthanh","hcm_binhloitrung","hcm_binhquoi","hcm_thanhmytay","hcm_dienhong","hcm_xuanhoa"]'::jsonb
+                                      ELSE '["hcm_binhthanh","hcm_binhloitrung"]'::jsonb END
                 )
             ))
         ON CONFLICT (id) DO UPDATE
@@ -433,10 +455,7 @@ BEGIN
         WHERE l.name = rec.venue
           AND l.city_cluster = 1
           AND l.district <> ''
-          AND EXISTS (
-                SELECT 1 FROM unnest(l.tags) t
-                WHERE t LIKE 'sport:%'
-                  AND t LIKE '%' || CASE rec.sport_id WHEN 1 THEN 'soccer' ELSE 'pickleball' END || '%')
+          AND l.sport_ids @> ARRAY[rec.sport_id]::bigint[]
         LIMIT 1;
 
         IF v_loc IS NULL THEN
