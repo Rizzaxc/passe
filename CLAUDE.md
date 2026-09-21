@@ -113,9 +113,15 @@ primary glossary until a `CONTEXT.md` exists (see `docs/agents/domain.md`).
   carries `legacyDistrict` (the pre-reform quận/huyện name) purely as a display/grouping label, not a
   functional key. Data is scoped to the *old* HCMC/Hanoi footprints (102 + 126 units) — HCMC's 2025
   merger with Bình Dương and Bà Rịa–Vũng Tàu is **not** modeled; expanding city coverage to the new
-  provincial boundary is a separate product decision. Saved district preferences from before this
-  conversion (old ids like `hcm_q1`) silently fail to resolve — every call site already treats a miss
-  as "unknown" rather than crashing.
+  provincial boundary is a separate product decision. (241 `location` rows *are* in that annexed
+  area; they're marked `is_verified = false` and hidden from venue browse — see
+  `lib/discover_tab/CLAUDE.md`.) Saved district preferences from before this conversion (old ids like
+  `hcm_q1`) silently fail to resolve — every call site already treats a miss as "unknown" rather than
+  crashing. **`location.district` now stores the canonical `District.id`**, assigned geometrically
+  from OSM ward polygons by `tool/venue/` rather than parsed from the scrape's free text;
+  `location.district_legacy` keeps the original value. The 228-ward list the importer matches against
+  is *generated* from this enum by `test/tool/generate_district_fixture_test.dart` — never hand-copy
+  it, which is the exact drift that left `schema/mocked_seed.sql` seeding dead `hcm_q1` ids.
 - **Compat score** — matchmaking output on a lobby feed row: `timeslot_compat_score` (schedule
   overlap) and `profile_compat_score` (networks/industries/skill proximity, 0–5).
 - **ELO / elo seed** — skill rating. `elo_seed` (beginner/casual/fair/good/advanced, 200 Elo apart —

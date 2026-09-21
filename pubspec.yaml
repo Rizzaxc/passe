@@ -342,3 +342,11 @@ scripts:
   svg: dart run vector_graphics_compiler --input-dir ./assets/icons --out-dir ./assets/icons
   schema: export $(grep -v '^#' secret/db.env | xargs) && PGPASSWORD=$SUPABASE_DB_PASSWORD pg_dump --schema-only -h aws-0-ap-southeast-1.pooler.supabase.com -p 5432 -U postgres.qlezbnjfuabcxlsxxnrw -d postgres -f schema/passe.sql
   iosfix: sh tool/fix_ios_spm.sh
+  # Venue data pipeline — see tool/venue/README.md for the run order and for
+  # why each artifact is (or isn't) committed.
+  venue:setup: cd tool/venue && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+  venue:fixture: flutter test test/tool/generate_district_fixture_test.dart
+  venue:wards: cd tool/venue && .venv/bin/python -u fetch_wards.py
+  venue:fetch: cd tool/venue && .venv/bin/python -u fetch_venues.py
+  venue:build: cd tool/venue && .venv/bin/python -u emit_sql.py
+  venue:verify: cd tool/venue && .venv/bin/python verify.py

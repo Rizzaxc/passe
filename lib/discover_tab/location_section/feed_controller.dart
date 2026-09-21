@@ -17,75 +17,56 @@ class LocationFeed extends _$LocationFeed {
     final sport = ref.watch(selectedSportStateProvider.select((v) => v.value));
     if (sport == null) return [];
 
-    // `location.district` is free text from a 3rd-party scrape, not
-    // `District.id`. Verified against prod: the real (non-`mocked_`) rows
-    // for HCMC's 16 old urban quận store the exact old-district label
-    // ("Quận 7", "Quận Bình Thạnh") — which is exactly what each ward's
-    // `legacyDistrict` holds (~43% of HCMC rows match this way). `id` is
-    // included too for the handful of rows already using it (the `mocked_`
-    // seed, plus a few coincidental matches where a ward kept its parent
-    // district's name, e.g. `hcm_govap`). Rows using a pre-2021 sub-ward
-    // name (e.g. "Phường Thảo Điền", predating even the old Quận 2/Thủ Đức
-    // merger) or no district at all won't match any selected filter — a
-    // real, accepted gap given the data's quality, not a bug to chase
-    // further without a normalization pass on the source data.
+    // `location.district` is free text from a 3rd-party scrape, so one
+    // selected ward has to be offered to the RPC under every spelling the
+    // data might store it as — `search_locations` compares with `=`, not a
+    // fuzzy match (it does unaccent both sides, so diacritics are handled
+    // server-side; spelling is not). Measured against prod, the four forms:
+    //   `id`              — the canonical value the tool/venue ward backfill
+    //                       writes (`hcm_ankhanh`), plus pre-existing
+    //                       coincidences like `hcm_govap`.
+    //   `legacyDistrict`  — the old quận label ("Quận 7"), stored by 436
+    //                       HCMC / 676 Hanoi rows.
+    //   `name`            — a bare ward name, no prefix.
+    //   "Phường "/"Xã " + name — the prefixed ward label the scrape's
+    //                       reverse-geocode wrote for 425 HCMC + 13 Hanoi
+    //                       rows, which matched nothing at all before this
+    //                       set included them.
     final districtLabels = <String>{
-      for (final d in filter.districts) ...[d.legacyDistrict, d.id],
+      for (final d in filter.districts) ...[
+        d.id,
+        d.legacyDistrict,
+        d.name,
+        d.toString(), // "Phường Thảo Điền" / "Xã …"
+      ],
     }.toList();
 
-    List<Location> results;
-    if (filter.search.isNotEmpty || districtLabels.isNotEmpty) {
-      // `search_locations` OR's the name/address search against the
-      // district filter (not AND's) — picking a district should broaden
-      // results, not narrow a name search down further. City is a hard AND
-      // on top of that OR (schema/location_search_city_filter.sql).
-      final response = await Supabase.instance.client
-          .rpc(
-            'search_locations',
-            params: {
-              'search_term': filter.search,
-              'p_districts': districtLabels,
-              if (filter.city != City.none) 'p_city_cluster': filter.city.dbIndex,
-            },
-          )
-          .timeout(const Duration(seconds: 5));
-      results = (response as List)
-          .map((e) => Location.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } else {
-      var query = Supabase.instance.client.from('location').select();
+    // One code path. `search_locations` gained a match-all branch (empty term
+    // + no wards returns the city's venues) precisely so the old direct
+    // `.from('location').select()` fallback could go: that query could not
+    // express the sport predicate without re-reading the raw tag strings, and
+    // filtering after a flat LIMIT 60 is what made a thin sport (badminton,
+    // pickleball) render an empty list while matches sat past the limit.
+    //
+    // District is OR'd with the search term, not AND'd — picking a ward
+    // broadens results rather than narrowing a name search. City and sport
+    // are hard ANDs on top of that OR.
+    final response = await Supabase.instance.client
+        .rpc(
+          'search_locations',
+          params: {
+            'search_term': filter.search,
+            'p_districts': districtLabels,
+            if (filter.city != City.none) 'p_city_cluster': filter.city.dbIndex,
+            // `Sport.others` means "nothing chosen" — send null so the server
+            // skips the filter entirely rather than matching sport id 0.
+            if (sport != Sport.others) 'p_sport_id': sport.index,
+          },
+        )
+        .timeout(const Duration(seconds: 5));
 
-      if (filter.city != City.none) {
-        query = query.eq('city_cluster', filter.city.dbIndex);
-      }
-
-      // Fetched pre-sport-filter, so a slightly larger page (60, up from 40)
-      // keeps a reasonable result count once venues for other sports are
-      // dropped below.
-      final response = await query
-          .limit(60)
-          .timeout(const Duration(seconds: 5));
-      results = (response as List)
-          .map((e) => Location.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-
-    // Sport-scope client-side (same precedent as the professional subtab's
-    // `visibleRoles` filter) — the raw `tags` format ("key:[v1, v2]" OSM
-    // strings) isn't something SQL can cleanly filter on without a
-    // normalization migration. `Sport.others` (no sport chosen) skips
-    // filtering entirely rather than hiding everything.
-    if (sport == Sport.others) return results;
-    final matched = results.where((l) => l.matchesSport(sport)).toList();
-
-    // Venues explicitly tagged for the context sport surface first; untagged
-    // ones (kept above since we can't confirm irrelevance) trail behind —
-    // stable sort preserves each group's original (search-rank/limit) order.
-    matched.sort((a, b) {
-      final aTagged = a.sports.contains(sport) ? 0 : 1;
-      final bTagged = b.sports.contains(sport) ? 0 : 1;
-      return aTagged.compareTo(bTagged);
-    });
-    return matched;
+    return (response as List)
+        .map((e) => Location.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

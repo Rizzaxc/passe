@@ -1,0 +1,4 @@
+{
+  "_comment": "OSM relation id -> District.id, for wards whose OSM name does not normalize onto an enum ward name. Keyed by OSM ID, never by name: ids are stable, names get retyped upstream. Currently EMPTY, and that is the expected state - all 102 HCMC and 126 Hanoi enum wards matched OSM exactly on the first run. Add an entry only after reading data/unmatched_wards.txt and confirming the rename by hand.",
+  "aliases": {}
+}

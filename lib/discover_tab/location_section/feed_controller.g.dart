@@ -33,7 +33,7 @@ final class LocationFeedProvider
   LocationFeed create() => LocationFeed();
 }
 
-String _$locationFeedHash() => r'd8315600039d4f2496bf59bae9f3cf0996fb9478';
+String _$locationFeedHash() => r'924cb785e2ba6831f7deab5006998c08cb096325';
 
 abstract class _$LocationFeed extends $AsyncNotifier<List<Location>> {
   FutureOr<List<Location>> build();

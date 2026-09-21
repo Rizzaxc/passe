@@ -18,6 +18,18 @@ _Location _$LocationFromJson(Map json) => _Location(
   lon: (json['lon'] as num?)?.toDouble(),
   tags: json['tags'] == null ? const <String>[] : _tagsFromJson(json['tags']),
   cityCluster: (json['city_cluster'] as num?)?.toInt(),
+  sportIds:
+      (json['sport_ids'] as List<dynamic>?)
+          ?.map((e) => (e as num).toInt())
+          .toList() ??
+      const <int>[],
+  amenityKinds:
+      (json['amenity_kinds'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>[],
+  declaredSport: json['has_declared_sport'] as bool? ?? false,
+  districtLegacy: json['district_legacy'] as String?,
 );
 
 Map<String, dynamic> _$LocationToJson(_Location instance) => <String, dynamic>{
@@ -32,4 +44,8 @@ Map<String, dynamic> _$LocationToJson(_Location instance) => <String, dynamic>{
   'lon': ?instance.lon,
   'tags': instance.tags,
   'city_cluster': ?instance.cityCluster,
+  'sport_ids': instance.sportIds,
+  'amenity_kinds': instance.amenityKinds,
+  'has_declared_sport': instance.declaredSport,
+  'district_legacy': ?instance.districtLegacy,
 };

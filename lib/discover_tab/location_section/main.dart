@@ -169,9 +169,10 @@ class _VenueCard extends StatelessWidget {
     final colors = context.theme.colors;
     final address = location.displayAddress;
     final amenities = location.amenityKeys;
-    final displayName = location.hasName
-        ? location.name
-        : 'homeTab.location.unnamed'.tr();
+    // Unnamed venues get a description built from their own tags rather than
+    // one shared placeholder — see `Location.describe`. Still rendered in the
+    // muted/italic treatment below, because it is a description, not a name.
+    final displayName = location.describe(tr: (k) => k.tr());
 
     return Container(
       decoration: BoxDecoration(
@@ -200,10 +201,9 @@ class _VenueCard extends StatelessWidget {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(8),
-                      child: Icon(
-                        FLucideIcons.mapPin,
-                        size: 16,
-                        color: colors.primary,
+                      child: IconTheme(
+                        data: IconThemeData(size: 16, color: colors.primary),
+                        child: _venueGlyph(location),
                       ),
                     ),
                   ),
@@ -281,6 +281,23 @@ class _VenueCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The venue's glyph: its sport where the tags name exactly one, otherwise a
+/// map pin.
+///
+/// Every venue used to render the same tinted `mapPin` circle, which is most
+/// of why a list of correctly-geocoded but unnamed rows read as broken — a
+/// screen of identical grey pins with identical placeholder titles. A
+/// shuttlecock on a badminton court carries more information than the name
+/// often does. Falls back to the pin deliberately: a multi-sport complex has
+/// no single right icon, and guessing one would be worse than not guessing.
+Widget _venueGlyph(Location location, {double size = 16}) {
+  final sports = location.sports;
+  if (sports.length == 1 && sports.first != Sport.others) {
+    return sports.first.getIcon(size: size);
+  }
+  return Icon(FLucideIcons.mapPin, size: size);
 }
 
 /// Pill styling matches the professional subtab's `_SportChip`, minus the
@@ -497,9 +514,7 @@ class _VenueDetailSheet extends StatelessWidget {
         spacing: 16,
         children: [
           PSheetTitle(
-            label: location.hasName
-                ? location.name
-                : 'homeTab.location.unnamed'.tr(),
+            label: location.describe(tr: (k) => k.tr()),
             trailing: FButton.icon(
               variant: .ghost,
               onPress: () => Navigator.of(context).pop(),

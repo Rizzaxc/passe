@@ -243,43 +243,80 @@ freezed) — edit them by hand, no build_runner.
   commercial OSM-derived tile provider rather than relying on caching alone.
 - **Coordinates & tags**: the `Location` freezed model carries `lat`, `lon`, `tags`, `cityCluster`,
   plus `coord` (→ `LatLng?`) and `displayAddress` helpers.
-- **Sport-scoped** (`Location.matchesSport`/`.sports`/`hasDeclaredSport` in `core/model/location.dart`):
-  the feed watches `selectedSportStateProvider` and drops venues whose OSM `sport:[...]` tag names
-  sports Passe doesn't support (billiards, shooting, …) but *keeps* untagged venues (ambiguous —
-  could still be a general facility). `Sport.others` (nothing chosen) skips the filter. Filtering is
-  client-side, after fetch — the raw tag format ("key:[v1, v2]" strings) isn't something SQL can
-  cleanly filter without a normalization migration; same precedent as the professional subtab's
-  `visibleRoles` filter.
+- **Sport-scoped, now server-side.** `search_locations` takes `p_sport_id` and filters on the
+  `location.sport_ids bigint[]` column (GIN-indexed, `schema/location_sport_tags.sql`), populated
+  from the OSM tags by `tool/venue/normalize.py`. It used to be client-side, after a flat
+  `LIMIT 60` — which is how a thin sport (HCMC badminton had 24 real venues) could render an empty
+  list while matches sat past the limit, unfetched.
+  **The "keep untagged venues" semantic is load-bearing and must survive any rewrite**: the
+  predicate is `(NOT has_declared_sport OR sport_ids && ARRAY[p_sport_id])`, never a bare
+  `sport_ids && …`, because ~433 rows declare no sport at all and "no sport info" is not "wrong
+  sport". `has_declared_sport` records whether the source named *any* sport, including ones Passe
+  doesn't support, which is what still hides a volleyball-only court. `Sport.others` sends `null`,
+  not `0`. `Location.sports`/`hasDeclaredSport`/`amenityKeys` prefer the new columns and fall back
+  to parsing raw `tags`, so unmigrated rows, `user_submitted` rows (`create_location` writes no
+  tags) and stale cached JSON keep behaving as before.
 - **Sport/amenity chips** (`_SportChip`/`_TagChip` in `location_section/main.dart`) parse that same
   tag format instead of showing it raw: a chip per recognized Passe sport (icon + localized name,
   matching the professional subtab's `_SportChip` styling) plus a chip per recognized `leisure:[...]`
   facility value (`homeTab.location.amenity.<value>` translation keys — `pitch`, `sports_centre`,
   `stadium`, `swimming_pool`). Everything else in the tag set (opening_hours, building:levels,
   website, wikidata, …) is dropped rather than shown as raw OSM junk.
-- **District filter** matches `location.district` against each selected ward's `legacyDistrict`
-  (plus `id`, for the few rows already using it) — **not** `District.id`. `location.district` is
-  free text from a 3rd-party scrape; verified against prod that HCMC's 16 old urban quận store the
-  exact old-district label ("Quận 7", "Quận Bình Thạnh"), which is exactly what `legacyDistrict`
-  holds (~43% of HCMC rows match this way). Rows using a pre-2021 sub-ward name (predating even the
-  old Quận 2/Thủ Đức merger, e.g. "Phường Thảo Điền") or no district at all won't match any filter
-  selection — an accepted gap given the data's quality, not a bug to chase further without a
-  normalization pass on the source data (which is a 3rd-party API re-fetch, not something to migrate
-  by hand — see root CLAUDE.md district-model note).
-- If `FilterData.search` **or** `filter.districts` is non-empty, route through the
-  `search_locations(search_term, p_districts, p_city_cluster)` RPC instead of the direct city-only
-  query — search and district are **OR'd**, not AND'd (picking a district broadens results rather
-  than narrowing a name search; `p_districts` uses the same `legacyDistrict` + `id` label set as the
-  direct-query path above), while `p_city_cluster` is a hard **AND** on top of that OR (added by
-  `schema/location_search_city_filter.sql` — the RPC originally ignored city on this path, so a
-  district pick could leak the other supported city's venues whenever a district label coincided).
+- **District (ward) filter — the normalization pass has been done.** `location.district` now holds
+  the canonical `District.id` (`hcm_ankhanh`) for every row whose coordinates fall inside one of the
+  102 HCMC / 126 Hanoi wards, derived geometrically by `tool/venue/` from OSM `admin_level=6`
+  boundary polygons rather than parsed out of the text. Before this, `district` was free text mixing
+  legacy quận labels, pre-reform ward names and blanks, and **557 of 997 HCMC rows (56%) plus 376 of
+  1,052 Hanoi rows could not be surfaced by any ward selection at all.** After: Hanoi 0
+  unfilterable, HCMC 229 — and those 229 are exactly the out-of-footprint rows below.
+  The client still sends four labels per selected ward (`id`, `legacyDistrict`, `name`, and the
+  `"Phường X"`/`"Xã X"` form) because a handful of rows keep a legacy value, and `search_locations`
+  compares with `=`. Diacritics are handled server-side (both sides are `unaccent`ed); spelling is
+  not. `district_legacy` keeps the pre-normalization value, so the whole pass is reversible with one
+  UPDATE.
+- **Out-of-footprint rows.** 241 rows filed under `city_cluster = 1` are actually in Đồng Nai /
+  Bình Dương (Biên Hòa, Dĩ An, Thủ Dầu Một) — the 2025 reform merged those into HCMC, but
+  `VietnamLocationData` deliberately scopes to the *old* footprint. They're marked
+  `is_verified = false` and hidden when **browsing**, but still returned when **searching** by name:
+  if someone types a venue's name they asked for it specifically. Note `create_location` writes
+  `is_verified = false` for every user submission too, so the predicate is
+  `(is_verified OR source = 'user_submitted')` — a blanket verified-only filter breaks the
+  manual-entry flow.
+- **One code path.** Every case goes through
+  `search_locations(search_term, p_districts, p_city_cluster, p_sport_id)`; the old direct
+  `.from('location').select()` browse query is **gone**. It could only go once the RPC gained a
+  match-all branch (empty term + no wards now returns the city's venues; previously that combination
+  matched *nothing*, which is why the second path existed at all) — and it had to go, because it
+  couldn't express the sport predicate without re-reading raw tag strings client-side.
+  Search and district are **OR'd**, not AND'd (picking a ward broadens results rather than narrowing
+  a name search); `p_city_cluster` and `p_sport_id` are hard **AND**s on top of that OR.
+  Migration: `schema/search_locations_sport_scoped.sql`.
 - **Migration**: `schema/home_feed_search.sql` widens `search_locations` to also return
   `lat/lon/tags/city_cluster` (so searched venues are pinnable) and adds the `p_districts` OR-match;
   also adds `p_search` to the other 3 RPCs (see "Shared filter" above), applied to prod. Supersedes
   the retired `location_map_support.sql`. `schema/location_search_city_filter.sql` (also applied)
   layers the `p_city_cluster` AND on top.
-- **Unnamed venues**: ~20% of scraped rows have `name = ''` (not null — every one still has an
-  address). `Location.hasName` gates the fallback; both the card and the detail sheet show
-  `'homeTab.location.unnamed'.tr()` instead of a blank title.
+- **Unnamed venues** (406 rows, 20%): real, correctly geocoded places OSM never labelled. Three
+  things happen, and **none of them renames the venue on the server** — `location.name` stays
+  exactly as the map source left it:
+  1. `Location.describe()` builds a client-side description from the row's own facility kind and
+     street/ward ("Sân cầu lông — Đ. Nguyễn Hữu Cảnh") instead of one shared placeholder. Still
+     rendered muted/italic: it is a description, not a claimed name.
+  2. `_venueGlyph()` uses the venue's sport icon when its tags name exactly one, falling back to the
+     map pin. A screen of identical grey pins is most of why a correctly-populated list read as
+     broken. Map markers stay pins deliberately — a pin is the right metaphor on a map.
+  3. A lobby member who knows the real name can set one via `set_lobby_location_alias`
+     (`schema/lobby_location_alias.sql`). The alias is **scoped to that lobby**, and the RPC
+     **refuses a venue that already has a name** — a nickname is local knowledge, not a global
+     claim, and letting anyone relabel a shared row every other lobby reads is how
+     "Nhà Thi Đấu Phú Thọ" becomes "sân ông Tư" for everybody. The guard lives in the function
+     because a CHECK cannot span two tables.
+- **Venue data is grown by `tool/venue/`** — see its README. Re-runnable and idempotent on
+  `external_id`; it never deletes (six columns across five tables FK into `location`) and never
+  touches a `user_submitted` row.
+  **OSM is exhausted as a volume source**: an exhaustive Overpass pull over the HCMC footprint
+  returns 1,836 elements of which only 303 are named, and all of OSM HCMC holds 47 badminton and 18
+  pickleball venues. Real coverage has to come from `tool/venue/curated_seed.csv`.
 - Roadmap: we don't own venue data yet; booking arrives with local-business integration. The detail
   sheet states this (`homeTab.location.roadmapNote`).
 - Model: the `Location` freezed model in `core/model/location.dart`.

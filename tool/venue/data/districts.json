@@ -1,0 +1,2282 @@
+[
+  {
+    "id": "hcm_tandinh",
+    "name": "Tân Định",
+    "name_key": "tandinh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 1"
+  },
+  {
+    "id": "hcm_benthanh",
+    "name": "Bến Thành",
+    "name_key": "benthanh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 1"
+  },
+  {
+    "id": "hcm_saigon",
+    "name": "Sài Gòn",
+    "name_key": "saigon",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 1"
+  },
+  {
+    "id": "hcm_cauonglanh",
+    "name": "Cầu Ông Lãnh",
+    "name_key": "cauonglanh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 1"
+  },
+  {
+    "id": "hcm_banco",
+    "name": "Bàn Cờ",
+    "name_key": "banco",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 3"
+  },
+  {
+    "id": "hcm_xuanhoa",
+    "name": "Xuân Hòa",
+    "name_key": "xuanhoa",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 3"
+  },
+  {
+    "id": "hcm_nhieuloc",
+    "name": "Nhiêu Lộc",
+    "name_key": "nhieuloc",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 3"
+  },
+  {
+    "id": "hcm_vinhhoi",
+    "name": "Vĩnh Hội",
+    "name_key": "vinhhoi",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 4"
+  },
+  {
+    "id": "hcm_khanhhoi",
+    "name": "Khánh Hội",
+    "name_key": "khanhhoi",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 4"
+  },
+  {
+    "id": "hcm_xomchieu",
+    "name": "Xóm Chiếu",
+    "name_key": "xomchieu",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 4"
+  },
+  {
+    "id": "hcm_choquan",
+    "name": "Chợ Quán",
+    "name_key": "choquan",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 5"
+  },
+  {
+    "id": "hcm_andong",
+    "name": "An Đông",
+    "name_key": "andong",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 5"
+  },
+  {
+    "id": "hcm_cholon",
+    "name": "Chợ Lớn",
+    "name_key": "cholon",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 5"
+  },
+  {
+    "id": "hcm_binhtien",
+    "name": "Bình Tiên",
+    "name_key": "binhtien",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 6"
+  },
+  {
+    "id": "hcm_binhtay",
+    "name": "Bình Tây",
+    "name_key": "binhtay",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 6"
+  },
+  {
+    "id": "hcm_binhphu",
+    "name": "Bình Phú",
+    "name_key": "binhphu",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 6"
+  },
+  {
+    "id": "hcm_phulam",
+    "name": "Phú Lâm",
+    "name_key": "phulam",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 6"
+  },
+  {
+    "id": "hcm_tanmy",
+    "name": "Tân Mỹ",
+    "name_key": "tanmy",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 7"
+  },
+  {
+    "id": "hcm_tanhung",
+    "name": "Tân Hưng",
+    "name_key": "tanhung",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 7"
+  },
+  {
+    "id": "hcm_tanthuan",
+    "name": "Tân Thuận",
+    "name_key": "tanthuan",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 7"
+  },
+  {
+    "id": "hcm_phuthuan",
+    "name": "Phú Thuận",
+    "name_key": "phuthuan",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 7"
+  },
+  {
+    "id": "hcm_chanhhung",
+    "name": "Chánh Hưng",
+    "name_key": "chanhhung",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 8"
+  },
+  {
+    "id": "hcm_binhdong",
+    "name": "Bình Đông",
+    "name_key": "binhdong",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 8"
+  },
+  {
+    "id": "hcm_phudinh",
+    "name": "Phú Định",
+    "name_key": "phudinh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 8"
+  },
+  {
+    "id": "hcm_vuonlai",
+    "name": "Vườn Lài",
+    "name_key": "vuonlai",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 10"
+  },
+  {
+    "id": "hcm_dienhong",
+    "name": "Diên Hồng",
+    "name_key": "dienhong",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 10"
+  },
+  {
+    "id": "hcm_hoahung",
+    "name": "Hòa Hưng",
+    "name_key": "hoahung",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 10"
+  },
+  {
+    "id": "hcm_hoabinh",
+    "name": "Hòa Bình",
+    "name_key": "hoabinh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 11"
+  },
+  {
+    "id": "hcm_phutho",
+    "name": "Phú Thọ",
+    "name_key": "phutho",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 11"
+  },
+  {
+    "id": "hcm_binhthoi",
+    "name": "Bình Thới",
+    "name_key": "binhthoi",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 11"
+  },
+  {
+    "id": "hcm_minhphung",
+    "name": "Minh Phụng",
+    "name_key": "minhphung",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 11"
+  },
+  {
+    "id": "hcm_donghungthuan",
+    "name": "Đông Hưng Thuận",
+    "name_key": "donghungthuan",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 12"
+  },
+  {
+    "id": "hcm_trungmytay",
+    "name": "Trung Mỹ Tây",
+    "name_key": "trungmytay",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 12"
+  },
+  {
+    "id": "hcm_tanthoihiep",
+    "name": "Tân Thới Hiệp",
+    "name_key": "tanthoihiep",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 12"
+  },
+  {
+    "id": "hcm_thoian",
+    "name": "Thới An",
+    "name_key": "thoian",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 12"
+  },
+  {
+    "id": "hcm_anphudong",
+    "name": "An Phú Đông",
+    "name_key": "anphudong",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận 12"
+  },
+  {
+    "id": "hcm_giadinh",
+    "name": "Gia Định",
+    "name_key": "giadinh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bình Thạnh"
+  },
+  {
+    "id": "hcm_binhthanh",
+    "name": "Bình Thạnh",
+    "name_key": "binhthanh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bình Thạnh"
+  },
+  {
+    "id": "hcm_binhloitrung",
+    "name": "Bình Lợi Trung",
+    "name_key": "binhloitrung",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bình Thạnh"
+  },
+  {
+    "id": "hcm_thanhmytay",
+    "name": "Thạnh Mỹ Tây",
+    "name_key": "thanhmytay",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bình Thạnh"
+  },
+  {
+    "id": "hcm_binhquoi",
+    "name": "Bình Quới",
+    "name_key": "binhquoi",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bình Thạnh"
+  },
+  {
+    "id": "hcm_binhtan",
+    "name": "Bình Tân",
+    "name_key": "binhtan",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bình Tân"
+  },
+  {
+    "id": "hcm_binhhunghoa",
+    "name": "Bình Hưng Hòa",
+    "name_key": "binhhunghoa",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bình Tân"
+  },
+  {
+    "id": "hcm_binhtridong",
+    "name": "Bình Trị Đông",
+    "name_key": "binhtridong",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bình Tân"
+  },
+  {
+    "id": "hcm_anlac",
+    "name": "An Lạc",
+    "name_key": "anlac",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bình Tân"
+  },
+  {
+    "id": "hcm_tantao",
+    "name": "Tân Tạo",
+    "name_key": "tantao",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bình Tân"
+  },
+  {
+    "id": "hcm_hanhthong",
+    "name": "Hạnh Thông",
+    "name_key": "hanhthong",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Gò Vấp"
+  },
+  {
+    "id": "hcm_annhon",
+    "name": "An Nhơn",
+    "name_key": "annhon",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Gò Vấp"
+  },
+  {
+    "id": "hcm_govap",
+    "name": "Gò Vấp",
+    "name_key": "govap",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Gò Vấp"
+  },
+  {
+    "id": "hcm_thongtayhoi",
+    "name": "Thông Tây Hội",
+    "name_key": "thongtayhoi",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Gò Vấp"
+  },
+  {
+    "id": "hcm_anhoitay",
+    "name": "An Hội Tây",
+    "name_key": "anhoitay",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Gò Vấp"
+  },
+  {
+    "id": "hcm_anhoidong",
+    "name": "An Hội Đông",
+    "name_key": "anhoidong",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Gò Vấp"
+  },
+  {
+    "id": "hcm_ducnhuan",
+    "name": "Đức Nhuận",
+    "name_key": "ducnhuan",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Phú Nhuận"
+  },
+  {
+    "id": "hcm_caukieu",
+    "name": "Cầu Kiệu",
+    "name_key": "caukieu",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Phú Nhuận"
+  },
+  {
+    "id": "hcm_phunhuan",
+    "name": "Phú Nhuận",
+    "name_key": "phunhuan",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Phú Nhuận"
+  },
+  {
+    "id": "hcm_tansonhoa",
+    "name": "Tân Sơn Hòa",
+    "name_key": "tansonhoa",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tân Bình"
+  },
+  {
+    "id": "hcm_tansonnhat",
+    "name": "Tân Sơn Nhất",
+    "name_key": "tansonnhat",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tân Bình"
+  },
+  {
+    "id": "hcm_tanhoa",
+    "name": "Tân Hòa",
+    "name_key": "tanhoa",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tân Bình"
+  },
+  {
+    "id": "hcm_bayhien",
+    "name": "Bảy Hiền",
+    "name_key": "bayhien",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tân Bình"
+  },
+  {
+    "id": "hcm_tanbinh",
+    "name": "Tân Bình",
+    "name_key": "tanbinh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tân Bình"
+  },
+  {
+    "id": "hcm_tanson",
+    "name": "Tân Sơn",
+    "name_key": "tanson",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tân Bình"
+  },
+  {
+    "id": "hcm_taythanh",
+    "name": "Tây Thạnh",
+    "name_key": "taythanh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tân Phú"
+  },
+  {
+    "id": "hcm_tansonnhi",
+    "name": "Tân Sơn Nhì",
+    "name_key": "tansonnhi",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tân Phú"
+  },
+  {
+    "id": "hcm_phuthohoa",
+    "name": "Phú Thọ Hòa",
+    "name_key": "phuthohoa",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tân Phú"
+  },
+  {
+    "id": "hcm_phuthanh",
+    "name": "Phú Thạnh",
+    "name_key": "phuthanh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tân Phú"
+  },
+  {
+    "id": "hcm_tanphu",
+    "name": "Tân Phú",
+    "name_key": "tanphu",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tân Phú"
+  },
+  {
+    "id": "hcm_hiepbinh",
+    "name": "Hiệp Bình",
+    "name_key": "hiepbinh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thành phố Thủ Đức"
+  },
+  {
+    "id": "hcm_tambinh",
+    "name": "Tam Bình",
+    "name_key": "tambinh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thành phố Thủ Đức"
+  },
+  {
+    "id": "hcm_thuduc",
+    "name": "Thủ Đức",
+    "name_key": "thuduc",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thành phố Thủ Đức"
+  },
+  {
+    "id": "hcm_linhxuan",
+    "name": "Linh Xuân",
+    "name_key": "linhxuan",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thành phố Thủ Đức"
+  },
+  {
+    "id": "hcm_longbinh",
+    "name": "Long Bình",
+    "name_key": "longbinh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thành phố Thủ Đức"
+  },
+  {
+    "id": "hcm_tangnhonphu",
+    "name": "Tăng Nhơn Phú",
+    "name_key": "tangnhonphu",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thành phố Thủ Đức"
+  },
+  {
+    "id": "hcm_phuoclong",
+    "name": "Phước Long",
+    "name_key": "phuoclong",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thành phố Thủ Đức"
+  },
+  {
+    "id": "hcm_longphuoc",
+    "name": "Long Phước",
+    "name_key": "longphuoc",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thành phố Thủ Đức"
+  },
+  {
+    "id": "hcm_longtruong",
+    "name": "Long Trường",
+    "name_key": "longtruong",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thành phố Thủ Đức"
+  },
+  {
+    "id": "hcm_ankhanh",
+    "name": "An Khánh",
+    "name_key": "ankhanh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thành phố Thủ Đức"
+  },
+  {
+    "id": "hcm_binhtrung",
+    "name": "Bình Trưng",
+    "name_key": "binhtrung",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thành phố Thủ Đức"
+  },
+  {
+    "id": "hcm_catlai",
+    "name": "Cát Lái",
+    "name_key": "catlai",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thành phố Thủ Đức"
+  },
+  {
+    "id": "hcm_vinhloc",
+    "name": "Vĩnh Lộc",
+    "name_key": "vinhloc",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Bình Chánh"
+  },
+  {
+    "id": "hcm_tanvinhloc",
+    "name": "Tân Vĩnh Lộc",
+    "name_key": "tanvinhloc",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Bình Chánh"
+  },
+  {
+    "id": "hcm_binhloi",
+    "name": "Bình Lợi",
+    "name_key": "binhloi",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Bình Chánh"
+  },
+  {
+    "id": "hcm_tannhut",
+    "name": "Tân Nhựt",
+    "name_key": "tannhut",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Bình Chánh"
+  },
+  {
+    "id": "hcm_binhchanh",
+    "name": "Bình Chánh",
+    "name_key": "binhchanh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Bình Chánh"
+  },
+  {
+    "id": "hcm_hunglong",
+    "name": "Hưng Long",
+    "name_key": "hunglong",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Bình Chánh"
+  },
+  {
+    "id": "hcm_binhhung",
+    "name": "Bình Hưng",
+    "name_key": "binhhung",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Bình Chánh"
+  },
+  {
+    "id": "hcm_annhontay",
+    "name": "An Nhơn Tây",
+    "name_key": "annhontay",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Củ Chi"
+  },
+  {
+    "id": "hcm_thaimy",
+    "name": "Thái Mỹ",
+    "name_key": "thaimy",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Củ Chi"
+  },
+  {
+    "id": "hcm_nhuanduc",
+    "name": "Nhuận Đức",
+    "name_key": "nhuanduc",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Củ Chi"
+  },
+  {
+    "id": "hcm_tananhoi",
+    "name": "Tân An Hội",
+    "name_key": "tananhoi",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Củ Chi"
+  },
+  {
+    "id": "hcm_cuchi",
+    "name": "Củ Chi",
+    "name_key": "cuchi",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Củ Chi"
+  },
+  {
+    "id": "hcm_phuhoadong",
+    "name": "Phú Hòa Đông",
+    "name_key": "phuhoadong",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Củ Chi"
+  },
+  {
+    "id": "hcm_binhmy",
+    "name": "Bình Mỹ",
+    "name_key": "binhmy",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Củ Chi"
+  },
+  {
+    "id": "hcm_binhkhanh",
+    "name": "Bình Khánh",
+    "name_key": "binhkhanh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Cần Giờ"
+  },
+  {
+    "id": "hcm_cangio",
+    "name": "Cần Giờ",
+    "name_key": "cangio",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Cần Giờ"
+  },
+  {
+    "id": "hcm_anthoidong",
+    "name": "An Thới Đông",
+    "name_key": "anthoidong",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Cần Giờ"
+  },
+  {
+    "id": "hcm_thanhan",
+    "name": "Thạnh An",
+    "name_key": "thanhan",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Cần Giờ"
+  },
+  {
+    "id": "hcm_hocmon",
+    "name": "Hóc Môn",
+    "name_key": "hocmon",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Hóc Môn"
+  },
+  {
+    "id": "hcm_badiem",
+    "name": "Bà Điểm",
+    "name_key": "badiem",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Hóc Môn"
+  },
+  {
+    "id": "hcm_xuanthoison",
+    "name": "Xuân Thới Sơn",
+    "name_key": "xuanthoison",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Hóc Môn"
+  },
+  {
+    "id": "hcm_dongthanh",
+    "name": "Đông Thạnh",
+    "name_key": "dongthanh",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Hóc Môn"
+  },
+  {
+    "id": "hcm_nhabe",
+    "name": "Nhà Bè",
+    "name_key": "nhabe",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Nhà Bè"
+  },
+  {
+    "id": "hcm_hiepphuoc",
+    "name": "Hiệp Phước",
+    "name_key": "hiepphuoc",
+    "city": "hcm",
+    "city_cluster": 1,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Nhà Bè"
+  },
+  {
+    "id": "hn_hoankiem",
+    "name": "Hoàn Kiếm",
+    "name_key": "hoankiem",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hoàn Kiếm"
+  },
+  {
+    "id": "hn_cuanam",
+    "name": "Cửa Nam",
+    "name_key": "cuanam",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hoàn Kiếm"
+  },
+  {
+    "id": "hn_badinh",
+    "name": "Ba Đình",
+    "name_key": "badinh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Ba Đình"
+  },
+  {
+    "id": "hn_ngocha",
+    "name": "Ngọc Hà",
+    "name_key": "ngocha",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Ba Đình"
+  },
+  {
+    "id": "hn_giangvo",
+    "name": "Giảng Võ",
+    "name_key": "giangvo",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Ba Đình"
+  },
+  {
+    "id": "hn_haibatrung",
+    "name": "Hai Bà Trưng",
+    "name_key": "haibatrung",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hai Bà Trưng"
+  },
+  {
+    "id": "hn_vinhtuy",
+    "name": "Vĩnh Tuy",
+    "name_key": "vinhtuy",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hai Bà Trưng"
+  },
+  {
+    "id": "hn_bachmai",
+    "name": "Bạch Mai",
+    "name_key": "bachmai",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hai Bà Trưng"
+  },
+  {
+    "id": "hn_dongda",
+    "name": "Đống Đa",
+    "name_key": "dongda",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Đống Đa"
+  },
+  {
+    "id": "hn_kimlien",
+    "name": "Kim Liên",
+    "name_key": "kimlien",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Đống Đa"
+  },
+  {
+    "id": "hn_vanmieu",
+    "name": "Văn Miếu - Quốc Tử Giám",
+    "name_key": "vanmieuquoctugiam",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Đống Đa"
+  },
+  {
+    "id": "hn_lang",
+    "name": "Láng",
+    "name_key": "lang",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Đống Đa"
+  },
+  {
+    "id": "hn_ochodua",
+    "name": "Ô Chợ Dừa",
+    "name_key": "ochodua",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Đống Đa"
+  },
+  {
+    "id": "hn_hongha",
+    "name": "Hồng Hà",
+    "name_key": "hongha",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hoàng Mai"
+  },
+  {
+    "id": "hn_linhnam",
+    "name": "Lĩnh Nam",
+    "name_key": "linhnam",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hoàng Mai"
+  },
+  {
+    "id": "hn_hoangmai",
+    "name": "Hoàng Mai",
+    "name_key": "hoangmai",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hoàng Mai"
+  },
+  {
+    "id": "hn_vinhhung",
+    "name": "Vĩnh Hưng",
+    "name_key": "vinhhung",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hoàng Mai"
+  },
+  {
+    "id": "hn_tuongmai",
+    "name": "Tương Mai",
+    "name_key": "tuongmai",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hoàng Mai"
+  },
+  {
+    "id": "hn_dinhcong",
+    "name": "Định Công",
+    "name_key": "dinhcong",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hoàng Mai"
+  },
+  {
+    "id": "hn_hoangliet",
+    "name": "Hoàng Liệt",
+    "name_key": "hoangliet",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hoàng Mai"
+  },
+  {
+    "id": "hn_yenso",
+    "name": "Yên Sở",
+    "name_key": "yenso",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hoàng Mai"
+  },
+  {
+    "id": "hn_thanhxuan",
+    "name": "Thanh Xuân",
+    "name_key": "thanhxuan",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Thanh Xuân"
+  },
+  {
+    "id": "hn_khuongdinh",
+    "name": "Khương Đình",
+    "name_key": "khuongdinh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Thanh Xuân"
+  },
+  {
+    "id": "hn_phuongliet",
+    "name": "Phương Liệt",
+    "name_key": "phuongliet",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Thanh Xuân"
+  },
+  {
+    "id": "hn_caugiay",
+    "name": "Cầu Giấy",
+    "name_key": "caugiay",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Cầu Giấy"
+  },
+  {
+    "id": "hn_nghiado",
+    "name": "Nghĩa Đô",
+    "name_key": "nghiado",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Cầu Giấy"
+  },
+  {
+    "id": "hn_yenhoa",
+    "name": "Yên Hòa",
+    "name_key": "yenhoa",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Cầu Giấy"
+  },
+  {
+    "id": "hn_tayho",
+    "name": "Tây Hồ",
+    "name_key": "tayho",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tây Hồ"
+  },
+  {
+    "id": "hn_phuthuong",
+    "name": "Phú Thượng",
+    "name_key": "phuthuong",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Tây Hồ"
+  },
+  {
+    "id": "hn_taytuu",
+    "name": "Tây Tựu",
+    "name_key": "taytuu",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bắc Từ Liêm"
+  },
+  {
+    "id": "hn_phudien",
+    "name": "Phú Diễn",
+    "name_key": "phudien",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bắc Từ Liêm"
+  },
+  {
+    "id": "hn_xuandinh",
+    "name": "Xuân Đỉnh",
+    "name_key": "xuandinh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bắc Từ Liêm"
+  },
+  {
+    "id": "hn_dongngac",
+    "name": "Đông Ngạc",
+    "name_key": "dongngac",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bắc Từ Liêm"
+  },
+  {
+    "id": "hn_thuongcat",
+    "name": "Thượng Cát",
+    "name_key": "thuongcat",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bắc Từ Liêm"
+  },
+  {
+    "id": "hn_tuliem",
+    "name": "Từ Liêm",
+    "name_key": "tuliem",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Bắc Từ Liêm"
+  },
+  {
+    "id": "hn_xuanphuong",
+    "name": "Xuân Phương",
+    "name_key": "xuanphuong",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Nam Từ Liêm"
+  },
+  {
+    "id": "hn_taymo",
+    "name": "Tây Mỗ",
+    "name_key": "taymo",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Nam Từ Liêm"
+  },
+  {
+    "id": "hn_daimo",
+    "name": "Đại Mỗ",
+    "name_key": "daimo",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Nam Từ Liêm"
+  },
+  {
+    "id": "hn_longbien",
+    "name": "Long Biên",
+    "name_key": "longbien",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Long Biên"
+  },
+  {
+    "id": "hn_bode",
+    "name": "Bồ Đề",
+    "name_key": "bode",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Long Biên"
+  },
+  {
+    "id": "hn_viethung",
+    "name": "Việt Hưng",
+    "name_key": "viethung",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Long Biên"
+  },
+  {
+    "id": "hn_phucloi",
+    "name": "Phúc Lợi",
+    "name_key": "phucloi",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Long Biên"
+  },
+  {
+    "id": "hn_hadong",
+    "name": "Hà Đông",
+    "name_key": "hadong",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hà Đông"
+  },
+  {
+    "id": "hn_duongnoi",
+    "name": "Dương Nội",
+    "name_key": "duongnoi",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hà Đông"
+  },
+  {
+    "id": "hn_yennghia",
+    "name": "Yên Nghĩa",
+    "name_key": "yennghia",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hà Đông"
+  },
+  {
+    "id": "hn_phuluong",
+    "name": "Phú Lương",
+    "name_key": "phuluong",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hà Đông"
+  },
+  {
+    "id": "hn_kienhung",
+    "name": "Kiến Hưng",
+    "name_key": "kienhung",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Quận Hà Đông"
+  },
+  {
+    "id": "hn_thanhtri",
+    "name": "Thanh Trì",
+    "name_key": "thanhtri",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thanh Trì"
+  },
+  {
+    "id": "hn_daithanh",
+    "name": "Đại Thanh",
+    "name_key": "daithanh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thanh Trì"
+  },
+  {
+    "id": "hn_namphu",
+    "name": "Nam Phù",
+    "name_key": "namphu",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thanh Trì"
+  },
+  {
+    "id": "hn_ngochoi",
+    "name": "Ngọc Hồi",
+    "name_key": "ngochoi",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thanh Trì"
+  },
+  {
+    "id": "hn_thanhliet",
+    "name": "Thanh Liệt",
+    "name_key": "thanhliet",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Huyện Thanh Trì"
+  },
+  {
+    "id": "hn_thuongphuc",
+    "name": "Thượng Phúc",
+    "name_key": "thuongphuc",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thường Tín"
+  },
+  {
+    "id": "hn_thuongtin",
+    "name": "Thường Tín",
+    "name_key": "thuongtin",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thường Tín"
+  },
+  {
+    "id": "hn_chuongduong",
+    "name": "Chương Dương",
+    "name_key": "chuongduong",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thường Tín"
+  },
+  {
+    "id": "hn_hongvan",
+    "name": "Hồng Vân",
+    "name_key": "hongvan",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thường Tín"
+  },
+  {
+    "id": "hn_phuxuyen",
+    "name": "Phú Xuyên",
+    "name_key": "phuxuyen",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Phú Xuyên"
+  },
+  {
+    "id": "hn_phuongduc",
+    "name": "Phượng Dực",
+    "name_key": "phuongduc",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Phú Xuyên"
+  },
+  {
+    "id": "hn_chuyenmy",
+    "name": "Chuyên Mỹ",
+    "name_key": "chuyenmy",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Phú Xuyên"
+  },
+  {
+    "id": "hn_daixuyen",
+    "name": "Đại Xuyên",
+    "name_key": "daixuyen",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Phú Xuyên"
+  },
+  {
+    "id": "hn_thanhoai",
+    "name": "Thanh Oai",
+    "name_key": "thanhoai",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thanh Oai"
+  },
+  {
+    "id": "hn_binhminh",
+    "name": "Bình Minh",
+    "name_key": "binhminh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thanh Oai"
+  },
+  {
+    "id": "hn_tamhung",
+    "name": "Tam Hưng",
+    "name_key": "tamhung",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thanh Oai"
+  },
+  {
+    "id": "hn_danhoa",
+    "name": "Dân Hòa",
+    "name_key": "danhoa",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thanh Oai"
+  },
+  {
+    "id": "hn_vandinh",
+    "name": "Vân Đình",
+    "name_key": "vandinh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Ứng Hòa"
+  },
+  {
+    "id": "hn_ungthien",
+    "name": "Ứng Thiên",
+    "name_key": "ungthien",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Ứng Hòa"
+  },
+  {
+    "id": "hn_hoaxa",
+    "name": "Hòa Xá",
+    "name_key": "hoaxa",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Ứng Hòa"
+  },
+  {
+    "id": "hn_unghoa",
+    "name": "Ứng Hòa",
+    "name_key": "unghoa",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Ứng Hòa"
+  },
+  {
+    "id": "hn_myduc",
+    "name": "Mỹ Đức",
+    "name_key": "myduc",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Mỹ Đức"
+  },
+  {
+    "id": "hn_hongson",
+    "name": "Hồng Sơn",
+    "name_key": "hongson",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Mỹ Đức"
+  },
+  {
+    "id": "hn_phucson",
+    "name": "Phúc Sơn",
+    "name_key": "phucson",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Mỹ Đức"
+  },
+  {
+    "id": "hn_huongson",
+    "name": "Hương Sơn",
+    "name_key": "huongson",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Mỹ Đức"
+  },
+  {
+    "id": "hn_chuongmy",
+    "name": "Chương Mỹ",
+    "name_key": "chuongmy",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Huyện Chương Mỹ"
+  },
+  {
+    "id": "hn_phunghia",
+    "name": "Phú Nghĩa",
+    "name_key": "phunghia",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Chương Mỹ"
+  },
+  {
+    "id": "hn_xuanmai",
+    "name": "Xuân Mai",
+    "name_key": "xuanmai",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Chương Mỹ"
+  },
+  {
+    "id": "hn_tranphu",
+    "name": "Trần Phú",
+    "name_key": "tranphu",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Chương Mỹ"
+  },
+  {
+    "id": "hn_hoaphu",
+    "name": "Hòa Phú",
+    "name_key": "hoaphu",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Chương Mỹ"
+  },
+  {
+    "id": "hn_quangbi",
+    "name": "Quảng Bị",
+    "name_key": "quangbi",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Chương Mỹ"
+  },
+  {
+    "id": "hn_minhchau",
+    "name": "Minh Châu",
+    "name_key": "minhchau",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Chương Mỹ"
+  },
+  {
+    "id": "hn_quangoai",
+    "name": "Quảng Oai",
+    "name_key": "quangoai",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Ba Vì"
+  },
+  {
+    "id": "hn_vatlai",
+    "name": "Vật Lại",
+    "name_key": "vatlai",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Ba Vì"
+  },
+  {
+    "id": "hn_code",
+    "name": "Cổ Đô",
+    "name_key": "codo",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Ba Vì"
+  },
+  {
+    "id": "hn_batbat",
+    "name": "Bất Bạt",
+    "name_key": "batbat",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Ba Vì"
+  },
+  {
+    "id": "hn_suoihai",
+    "name": "Suối Hai",
+    "name_key": "suoihai",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Ba Vì"
+  },
+  {
+    "id": "hn_bavi",
+    "name": "Ba Vì",
+    "name_key": "bavi",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Ba Vì"
+  },
+  {
+    "id": "hn_yenbai",
+    "name": "Yên Bài",
+    "name_key": "yenbai",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Ba Vì"
+  },
+  {
+    "id": "hn_sontay",
+    "name": "Sơn Tây",
+    "name_key": "sontay",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thị xã Sơn Tây"
+  },
+  {
+    "id": "hn_tungthien",
+    "name": "Tùng Thiện",
+    "name_key": "tungthien",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "ward",
+    "prefix": "Phường",
+    "legacy": "Thị xã Sơn Tây"
+  },
+  {
+    "id": "hn_doaiphuong",
+    "name": "Đoài Phương",
+    "name_key": "doaiphuong",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Phúc Thọ"
+  },
+  {
+    "id": "hn_phuctho",
+    "name": "Phúc Thọ",
+    "name_key": "phuctho",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Phúc Thọ"
+  },
+  {
+    "id": "hn_phucloc",
+    "name": "Phúc Lộc",
+    "name_key": "phucloc",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Phúc Thọ"
+  },
+  {
+    "id": "hn_hatmon",
+    "name": "Hát Môn",
+    "name_key": "hatmon",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Phúc Thọ"
+  },
+  {
+    "id": "hn_thachthat",
+    "name": "Thạch Thất",
+    "name_key": "thachthat",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thạch Thất"
+  },
+  {
+    "id": "hn_habang",
+    "name": "Hạ Bằng",
+    "name_key": "habang",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thạch Thất"
+  },
+  {
+    "id": "hn_tayphuong",
+    "name": "Tây Phương",
+    "name_key": "tayphuong",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thạch Thất"
+  },
+  {
+    "id": "hn_hoalac",
+    "name": "Hòa Lạc",
+    "name_key": "hoalac",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thạch Thất"
+  },
+  {
+    "id": "hn_yenxuan",
+    "name": "Yên Xuân",
+    "name_key": "yenxuan",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Thạch Thất"
+  },
+  {
+    "id": "hn_quocoai",
+    "name": "Quốc Oai",
+    "name_key": "quocoai",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Quốc Oai"
+  },
+  {
+    "id": "hn_hungdao",
+    "name": "Hưng Đạo",
+    "name_key": "hungdao",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Quốc Oai"
+  },
+  {
+    "id": "hn_kieuphu",
+    "name": "Kiều Phú",
+    "name_key": "kieuphu",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Quốc Oai"
+  },
+  {
+    "id": "hn_phucat",
+    "name": "Phú Cát",
+    "name_key": "phucat",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Hoài Đức"
+  },
+  {
+    "id": "hn_hoaiduc",
+    "name": "Hoài Đức",
+    "name_key": "hoaiduc",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Hoài Đức"
+  },
+  {
+    "id": "hn_duonghoa",
+    "name": "Dương Hòa",
+    "name_key": "duonghoa",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Hoài Đức"
+  },
+  {
+    "id": "hn_songdong",
+    "name": "Sơn Đồng",
+    "name_key": "sondong",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Hoài Đức"
+  },
+  {
+    "id": "hn_ankhanh",
+    "name": "An Khánh",
+    "name_key": "ankhanh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Hoài Đức"
+  },
+  {
+    "id": "hn_danphuong",
+    "name": "Đan Phượng",
+    "name_key": "danphuong",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Đan Phượng"
+  },
+  {
+    "id": "hn_odien",
+    "name": "Ô Diên",
+    "name_key": "odien",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Đan Phượng"
+  },
+  {
+    "id": "hn_lienminh",
+    "name": "Liên Minh",
+    "name_key": "lienminh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Đan Phượng"
+  },
+  {
+    "id": "hn_gialam",
+    "name": "Gia Lâm",
+    "name_key": "gialam",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Gia Lâm"
+  },
+  {
+    "id": "hn_thuanan",
+    "name": "Thuận An",
+    "name_key": "thuanan",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Gia Lâm"
+  },
+  {
+    "id": "hn_battrang",
+    "name": "Bát Tràng",
+    "name_key": "battrang",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Gia Lâm"
+  },
+  {
+    "id": "hn_phudong",
+    "name": "Phù Đổng",
+    "name_key": "phudong",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Gia Lâm"
+  },
+  {
+    "id": "hn_donganh",
+    "name": "Đông Anh",
+    "name_key": "donganh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Đông Anh"
+  },
+  {
+    "id": "hn_thulam",
+    "name": "Thư Lâm",
+    "name_key": "thulam",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Đông Anh"
+  },
+  {
+    "id": "hn_phucthinh",
+    "name": "Phúc Thịnh",
+    "name_key": "phucthinh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Đông Anh"
+  },
+  {
+    "id": "hn_thienloc",
+    "name": "Thiên Lộc",
+    "name_key": "thienloc",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Đông Anh"
+  },
+  {
+    "id": "hn_vinhthanh",
+    "name": "Vĩnh Thanh",
+    "name_key": "vinhthanh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Đông Anh"
+  },
+  {
+    "id": "hn_melinh",
+    "name": "Mê Linh",
+    "name_key": "melinh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Mê Linh"
+  },
+  {
+    "id": "hn_yenlang",
+    "name": "Yên Lãng",
+    "name_key": "yenlang",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Mê Linh"
+  },
+  {
+    "id": "hn_tienthang",
+    "name": "Tiến Thắng",
+    "name_key": "tienthang",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Mê Linh"
+  },
+  {
+    "id": "hn_quangminh",
+    "name": "Quang Minh",
+    "name_key": "quangminh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Mê Linh"
+  },
+  {
+    "id": "hn_socson",
+    "name": "Sóc Sơn",
+    "name_key": "socson",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Sóc Sơn"
+  },
+  {
+    "id": "hn_daphuc",
+    "name": "Đa Phúc",
+    "name_key": "daphuc",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Sóc Sơn"
+  },
+  {
+    "id": "hn_noibai",
+    "name": "Nội Bài",
+    "name_key": "noibai",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Sóc Sơn"
+  },
+  {
+    "id": "hn_trunggia",
+    "name": "Trung Giã",
+    "name_key": "trunggia",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Sóc Sơn"
+  },
+  {
+    "id": "hn_kimanh",
+    "name": "Kim Anh",
+    "name_key": "kimanh",
+    "city": "hn",
+    "city_cluster": 2,
+    "type": "commune",
+    "prefix": "Xã",
+    "legacy": "Huyện Sóc Sơn"
+  }
+]

@@ -1,0 +1,274 @@
+# OSM wards with no District.id — expected for anything outside the
+# old HCMC/Hanoi footprints (Binh Duong, Dong Nai, Hung Yen, ...).
+# A '~' hint is REPORT ONLY and is never auto-applied: auto-accepting
+# a fuzzy administrative match is how 'Tan Hung' silently becomes
+# 'Tan Huong' and 80 venues land in the wrong ward. Promote a genuine
+# rename into ward_alias.json, keyed by OSM id.
+hcm	rel/10088783	Phường Mỹ Tho	mytho
+hcm	rel/10088904	Phường Đạo Thạnh	daothanh
+hcm	rel/10088905	Phường Mỹ Phong	myphong
+hcm	rel/10088908	Phường Thới Sơn	thoison
+hcm	rel/10088909	Phường Trung An	trungan
+hcm	rel/10522449	Xã Nhựt Tảo	nhuttao
+hcm	rel/10522450	Xã Tân Long	tanlong
+hcm	rel/10590955	Phường Chánh Hiệp	chanhhiep
+hcm	rel/13253186	Xã Tân An	tanan
+hcm	rel/13254047	Phường Trị An	trian
+hcm	rel/13420411	Phường Tân Đông Hiệp	tandonghiep
+hcm	rel/13452549	Xã Phước Thái	phuocthai
+hcm	rel/13452575	Xã Bình An	binhan  ~ Bình Tân (binhtan)
+hcm	rel/13452858	Phường Long Thành	longthanh  ~ Đông Thạnh (dongthanh)
+hcm	rel/13452953	Xã An Phước	anphuoc
+hcm	rel/13453216	Phường Trảng Bom	trangbom
+hcm	rel/13455517	Phường Phú Lợi	phuloi
+hcm	rel/13455518	Phường Bình Dương	binhduong  ~ Bình Đông (binhdong)
+hcm	rel/13470501	Phường Lái Thiêu	laithieu
+hcm	rel/13470503	Phường Bình Hòa	binhhoa
+hcm	rel/13470504	Phường An Phú	anphu  ~ Tân Phú (tanphu)
+hcm	rel/13470506	Phường Thuận Giao	thuangiao
+hcm	rel/13470588	Phường Thuận An	thuanan
+hcm	rel/13470837	Xã Đại Phước	daiphuoc
+hcm	rel/13470865	Xã Phước An	phuocan
+hcm	rel/13474219	Xã An Viễn	anvien
+hcm	rel/13474381	Phường Hố Nai	honai
+hcm	rel/13474383	Xã Bình Minh	binhminh
+hcm	rel/13477425	Phường Tân Uyên	tanuyen
+hcm	rel/13477540	Phường Tân Khánh	tankhanh  ~ An Khánh (ankhanh)
+hcm	rel/13477543	Phường Vĩnh Tân	vinhtan
+hcm	rel/13477544	Phường Bình Cơ	binhco
+hcm	rel/13477545	Phường Tân Hiệp	tanhiep
+hcm	rel/13477595	Phường Phú An	phuan
+hcm	rel/13477596	Phường Tây Nam	taynam
+hcm	rel/13477612	Phường Hòa Lợi	hoaloi
+hcm	rel/13477632	Phường Chánh Phú Hòa	chanhphuhoa
+hcm	rel/13477633	Phường Bến Cát	bencat
+hcm	rel/13477634	Phường Thới Hòa	thoihoa
+hcm	rel/13477646	Phường Trảng Bàng	trangbang
+hcm	rel/13483630	Phường Sơn Qui	sonqui
+hcm	rel/13483631	Phường Long Thuận	longthuan
+hcm	rel/13483778	Phường Gò Công	gocong
+hcm	rel/13483786	Phường Bình Xuân	binhxuan  ~ Linh Xuân (linhxuan)
+hcm	rel/13533977	Xã Mỹ An	myan
+hcm	rel/13534020	Xã Mỹ Thạnh	mythanh
+hcm	rel/13534034	Xã Thủ Thừa	thuthua
+hcm	rel/13534112	Xã Tân Trụ	tantru
+hcm	rel/13534131	Xã Vàm Cỏ	vamco
+hcm	rel/13568534	Xã Gia Thuận	giathuan
+hcm	rel/13568695	Xã Tân Đông	tandong  ~ An Đông (andong)
+hcm	rel/13568838	Xã Tân Điền	tandien
+hcm	rel/14681507	Xã Đồng Sơn	dongson
+hcm	rel/14681647	Xã Vĩnh Bình	vinhbinh
+hcm	rel/14728586	Xã Chợ Gạo	chogao
+hcm	rel/14736644	Xã An Thạnh Thủy	anthanhthuy
+hcm	rel/14736648	Xã Tân Thuận Bình	tanthuanbinh
+hcm	rel/14741360	Xã Lương Hòa Lạc	luonghoalac
+hcm	rel/14743456	Xã Mỹ Tịnh An	mytinhan
+hcm	rel/14743997	Xã Tân Hương	tanhuong  ~ Tân Hưng (tanhung)
+hcm	rel/14744000	Xã Châu Thành	chauthanh
+hcm	rel/14929839	Phường Gia Lộc	gialoc
+hcm	rel/14929840	Phường An Tịnh	antinh
+hcm	rel/14929860	Xã Hưng Thuận	hungthuan
+hcm	rel/15044270	Phường Long Nguyên	longnguyen
+hcm	rel/15071230	Xã Bắc Tân Uyên	bactanuyen
+hcm	rel/15071235	Xã Thường Tân	thuongtan
+hcm	rel/15350008	Xã Phước Hòa	phuochoa
+hcm	rel/3870770	Phường Đông Hòa	donghoa
+hcm	rel/5485644	Phường Phú Mỹ	phumy
+hcm	rel/5485645	Phường Tân Phước	tanphuoc
+hcm	rel/8390212	Phường Trấn Biên	tranbien
+hcm	rel/8392612	Phường Tam Hiệp	tamhiep
+hcm	rel/8392663	Phường Tân Triều	tantrieu
+hcm	rel/8392664	Phường Biên Hòa	bienhoa
+hcm	rel/8392665	Phường Trảng Dài	trangdai
+hcm	rel/8392688	Phường Long Hưng	longhung
+hcm	rel/8393474	Phường Phước Tân	phuoctan
+hcm	rel/8393475	Phường Tam Phước	tamphuoc
+hcm	rel/8405646	Phường Long An	longan
+hcm	rel/8433923	Phường Tân An	tanan
+hcm	rel/8433924	Phường Khánh Hậu	khanhhau
+hcm	rel/8435467	Xã Bến Lức	benluc
+hcm	rel/8435469	Xã Bình Đức	binhduc
+hcm	rel/8436658	Xã Lương Hòa	luonghoa
+hcm	rel/8436659	Xã Mỹ Yên	myyen
+hcm	rel/8436860	Xã Thạnh Lợi	thanhloi
+hcm	rel/8437717	Xã Cần Đước	canduoc
+hcm	rel/8437718	Xã Long Cang	longcang
+hcm	rel/8437720	Xã Rạch Kiến	rachkien
+hcm	rel/8437766	Xã Long Hựu	longhuu
+hcm	rel/8437913	Xã Mỹ Lệ	myle
+hcm	rel/8439056	Xã Tân Lân	tanlan
+hcm	rel/8439058	Xã Cần Giuộc	cangiuoc
+hcm	rel/8439082	Xã Mỹ Lộc	myloc
+hcm	rel/8445820	Xã Phước Lý	phuocly
+hcm	rel/8445867	Xã Phước Vĩnh Tây	phuocvinhtay
+hcm	rel/8445869	Xã Tân Tập	tantap
+hcm	rel/8447699	Xã Tầm Vu	tamvu
+hcm	rel/8447700	Xã An Lục Long	anluclong
+hcm	rel/8448188	Phường Thủ Dầu Một	thudaumot
+hcm	rel/8448992	Phường Dĩ An	dian
+hcm	rel/8449152	Xã Thuận Mỹ	thuanmy
+hcm	rel/8449153	Xã Vĩnh Công	vinhcong
+hcm	rel/8449154	Xã Đức Hòa	duchoa
+hcm	rel/8449155	Xã Hậu Nghĩa	haunghia
+hcm	rel/8449156	Xã Hiệp Hòa	hiephoa
+hcm	rel/9501588	Xã An Ninh	anninh
+hcm	rel/9502982	Xã Đức Lập	duclap
+hcm	rel/9502986	Xã Hòa Khánh	hoakhanh
+hcm	rel/9507785	Xã Mỹ Hạnh	myhanh
+hcm	rel/9800201	Xã Đức Huệ	duchue
+hcm	rel/9806927	Phường Nhơn Trạch	nhontrach
+hn	rel/16190351	Xã Xuân Cẩm	xuancam
+hn	rel/17776230	Phường Ninh Xá	ninhxa
+hn	rel/17777467	Phường Song Liễu	songlieu
+hn	rel/17777471	Phường Trí Quả	triqua
+hn	rel/18270239	Phường Tam Sơn	tamson
+hn	rel/18305439	Phường Hạp Lĩnh	haplinh
+hn	rel/18309842	Phường Kinh Bắc	kinhbac
+hn	rel/18309844	Phường Võ Cường	vocuong
+hn	rel/18316811	Xã Đại Đồng	daidong
+hn	rel/18317420	Phường Đồng Nguyên	dongnguyen
+hn	rel/18317425	Phường Phù Khê	phukhe
+hn	rel/18481850	Xã Phật Tích	phattich
+hn	rel/18485891	Xã Liên Bão	lienbao
+hn	rel/18508489	Xã Tam Đa	tamda
+hn	rel/18509071	Xã Yên Trung	yentrung
+hn	rel/18509763	Xã Tam Giang	tamgiang
+hn	rel/18514983	Xã Văn Môn	vanmon
+hn	rel/18787456	Xã Ngọc Thiện	ngocthien
+hn	rel/18787478	Xã Quang Trung	quangtrung
+hn	rel/18788173	Phường Tự Lạn	tulan
+hn	rel/18802345	Xã Hoàng Vân	hoangvan  ~ Hồng Vân (hongvan)
+hn	rel/18820860	Phường Vân Hà	vanha
+hn	rel/18847020	Xã Hợp Thịnh	hopthinh
+hn	rel/19425633	Phường Hiệp Hòa	hiephoa
+hn	rel/19425634	Phường Yên Phong	yenphong
+hn	rel/19425635	Phường Tiên Du	tiendu
+hn	rel/19425636	Phường Thuận Thành	thuanthanh
+hn	rel/19435883	Phường Từ Sơn	tuson
+hn	rel/19463170	Phường Hồng Châu	hongchau
+hn	rel/19463171	Phường Phố Hiến	phohien
+hn	rel/19522998	Phường Trung Thành	trungthanh
+hn	rel/19523082	Phường Vạn Xuân	vanxuan
+hn	rel/19526247	Phường Phổ Yên	phoyen
+hn	rel/19526291	Xã Thành Công	thanhcong
+hn	rel/19539151	Xã Vĩnh Trụ	vinhtru
+hn	rel/19539156	Phường Tiên Sơn	tienson
+hn	rel/19539166	Phường Tam Chúc	tamchuc
+hn	rel/19539171	Phường Phù Vân	phuvan
+hn	rel/19539173	Phường Phủ Lý	phuly
+hn	rel/19539180	Phường Nguyễn Úy	nguyenuy
+hn	rel/19539184	Xã Nam Xang	namxang
+hn	rel/19539194	Phường Lý Thường Kiệt	lythuongkiet
+hn	rel/19539195	Xã Lý Nhân	lynhan
+hn	rel/19539197	Phường Liêm Tuyền	liemtuyen
+hn	rel/19539199	Phường Lê Hồ	leho
+hn	rel/19539200	Phường Kim Thanh	kimthanh
+hn	rel/19539201	Phường Kim Bảng	kimbang
+hn	rel/19539210	Phường Hà Nam	hanam
+hn	rel/19539218	Phường Duy Tiên	duytien
+hn	rel/19539219	Phường Duy Tân	duytan
+hn	rel/19539220	Phường Duy Hà	duyha
+hn	rel/19539221	Phường Đồng Văn	dongvan
+hn	rel/19539232	Xã Bình Lục	binhluc
+hn	rel/19541827	Xã Yên Mỹ	yenmy
+hn	rel/19541828	Xã Xuân Trúc	xuantruc
+hn	rel/19541833	Xã Việt Yên	vietyen
+hn	rel/19541834	Xã Việt Tiến	viettien
+hn	rel/19541836	Xã Văn Giang	vangiang
+hn	rel/19541837	Xã Triệu Việt Vương	trieuvietvuong
+hn	rel/19541863	Phường Sơn Nam	sonnam
+hn	rel/19541868	Xã Phụng Công	phungcong
+hn	rel/19541871	Xã Như Quỳnh	nhuquynh
+hn	rel/19541872	Xã Nguyễn Văn Linh	nguyenvanlinh
+hn	rel/19541877	Xã Nghĩa Trụ	nghiatru
+hn	rel/19541878	Xã Nghĩa Dân	nghiadan
+hn	rel/19541885	Phường Mỹ Hào	myhao
+hn	rel/19541887	Xã Mễ Sở	meso
+hn	rel/19541888	Xã Lương Bằng	luongbang
+hn	rel/19541892	Xã Lạc Đạo	lacdao
+hn	rel/19541894	Xã Khoái Châu	khoaichau
+hn	rel/19541901	Xã Hoàn Long	hoanlong
+hn	rel/19541902	Xã Hiệp Cường	hiepcuong
+hn	rel/19541904	Xã Đức Hợp	duchop
+hn	rel/19541915	Xã Đại Đồng	daidong
+hn	rel/19541916	Xã Chí Minh	chiminh
+hn	rel/19541917	Xã Châu Ninh	chauninh
+hn	rel/19542971	Xã Yên Sơn	yenson  ~ Yên Sở (yenso)
+hn	rel/19542975	Xã Yên Lạc	yenlac
+hn	rel/19542978	Xã Xuân Lũng	xuanlung
+hn	rel/19542979	Xã Xuân Lãng	xuanlang
+hn	rel/19542980	Phường Xuân Hòa	xuanhoa
+hn	rel/19542983	Phường Vĩnh Yên	vinhyen
+hn	rel/19542984	Xã Vĩnh Tường	vinhtuong
+hn	rel/19542986	Phường Vĩnh Phúc	vinhphuc
+hn	rel/19542987	Xã Vĩnh Phú	vinhphu
+hn	rel/19542990	Xã Vĩnh An	vinhan
+hn	rel/19542991	Phường Việt Trì	viettri
+hn	rel/19542992	Xã Vạn Xuân	vanxuan
+hn	rel/19542994	Phường Vân Phú	vanphu
+hn	rel/19542998	Xã Tu Vũ	tuvu
+hn	rel/19543001	Xã Toàn Thắng	toanthang
+hn	rel/19543002	Xã Tiền Phong	tienphong
+hn	rel/19543004	Xã Tiên Lữ	tienlu
+hn	rel/19543006	Xã Thượng Cốc	thuongcoc
+hn	rel/19543007	Xã Thung Nai	thungnai
+hn	rel/19543009	Phường Thống Nhất	thongnhat
+hn	rel/19543010	Xã Thọ Văn	thovan
+hn	rel/19543011	Xã Thổ Tang	thotang
+hn	rel/19543012	Xã Thịnh Minh	thinhminh
+hn	rel/19543013	Xã Thanh Thủy	thanhthuy
+hn	rel/19543014	Xã Thanh Sơn	thanhson
+hn	rel/19543015	Phường Thanh Miếu	thanhmieu
+hn	rel/19543018	Xã Tề Lỗ	telo
+hn	rel/19543023	Xã Tân Lạc	tanlac
+hn	rel/19543024	Phường Tân Hòa	tanhoa
+hn	rel/19543025	Xã Tam Sơn	tamson
+hn	rel/19543026	Xã Tam Nông	tamnong
+hn	rel/19543027	Xã Tam Hồng	tamhong
+hn	rel/19543028	Xã Tam Dương Bắc	tamduongbac
+hn	rel/19543029	Xã Tam Dương	tamduong
+hn	rel/19543030	Xã Tam Đảo	tamdao
+hn	rel/19543031	Xã Sông Lô	songlo
+hn	rel/19543037	Xã Phùng Nguyên	phungnguyen
+hn	rel/19543038	Phường Phúc Yên	phucyen
+hn	rel/19543040	Xã Phù Ninh	phuninh
+hn	rel/19543043	Phường Phong Châu	phongchau
+hn	rel/19543045	Phường Nông Trang	nongtrang
+hn	rel/19543046	Xã Nhân Nghĩa	nhannghia
+hn	rel/19543047	Xã Nguyệt Đức	nguyetduc
+hn	rel/19543049	Xã Nật Sơn	natson
+hn	rel/19543050	Xã Mường Vang	muongvang
+hn	rel/19543051	Xã Mường Thàng	muongthang
+hn	rel/19543052	Xã Mường Hoa	muonghoa  ~ Dương Hòa (duonghoa)
+hn	rel/19543053	Xã Mường Động	muongdong
+hn	rel/19543054	Xã Mường Bi	muongbi
+hn	rel/19543059	Xã Lương Sơn	luongson  ~ Hương Sơn (huongson)
+hn	rel/19543061	Xã Liên Sơn	lienson
+hn	rel/19543063	Xã Liên Hòa	lienhoa
+hn	rel/19543064	Xã Liên Châu	lienchau
+hn	rel/19543065	Xã Lập Thạch	lapthach
+hn	rel/19543066	Xã Lâm Thao	lamthao
+hn	rel/19543071	Phường Kỳ Sơn	kyson
+hn	rel/19543072	Xã Kim Bôi	kimboi
+hn	rel/19543074	Xã Hy Cương	hycuong
+hn	rel/19543075	Xã Hương Cần	huongcan
+hn	rel/19543078	Xã Hợp Kim	hopkim
+hn	rel/19543079	Xã Hội Thịnh	hoithinh
+hn	rel/19543081	Xã Hoàng An	hoangan
+hn	rel/19543082	Phường Hòa Bình	hoabinh
+hn	rel/19543083	Xã Hiền Quan	hienquan
+hn	rel/19543087	Xã Dũng Tiến	dungtien  ~ Ứng Thiên (ungthien)
+hn	rel/19543092	Xã Đào Xá	daoxa
+hn	rel/19543098	Xã Đà Bắc	dabac
+hn	rel/19543099	Xã Cự Đồng	cudong
+hn	rel/19543104	Xã Cao Phong	caophong
+hn	rel/19543105	Xã Cao Dương	caoduong
+hn	rel/19543107	Xã Bình Xuyên	binhxuyen
+hn	rel/19543108	Xã Bình Tuyền	binhtuyen
+hn	rel/19543109	Xã Bình Phú	binhphu
+hn	rel/19543110	Xã Bình Nguyên	binhnguyen
+hn	rel/19543113	Xã Bản Nguyên	bannguyen
+hn	rel/19543115	Xã An Nghĩa	annghia
+hn	rel/19543116	Xã An Bình	anbinh
+hn	rel/19567356	Xã Kha Sơn	khason
+hn	rel/19567358	Xã Điềm Thụy	diemthuy

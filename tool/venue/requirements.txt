@@ -1,0 +1,6 @@
+# Deliberately minimal. Fuzzy matching uses stdlib difflib rather than
+# rapidfuzz: the enum<->OSM ward join is exact (102/102 and 126/126), so fuzzy
+# is only a report-only safety net and does not justify a C-extension dep that
+# lags new Python releases.
+requests>=2.32
+shapely>=2.0

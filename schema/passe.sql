@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict P88kQ1QnorRACnE8J3eIPtluLIxZqPtn57PKhugOH63AMs0wJVyhnxNLA0x91EY
+\restrict 12CrSOmeX5pFNZibzWIqnSem4bJffw7mBkA73FFtBrCHGUWqohJWJmqQr49GVUU
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.9 (Homebrew)
@@ -293,7 +293,8 @@ ALTER TYPE auth.factor_status OWNER TO supabase_auth_admin;
 CREATE TYPE auth.factor_type AS ENUM (
     'totp',
     'webauthn',
-    'phone'
+    'phone',
+    'recovery_code'
 );
 
 
@@ -409,6 +410,62 @@ CREATE TYPE public.activity_proposal_status AS ENUM (
 
 
 ALTER TYPE public.activity_proposal_status OWNER TO postgres;
+
+--
+-- Name: challenge_bounty_kind; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.challenge_bounty_kind AS ENUM (
+    'none',
+    'per_goal_diff',
+    'fixed_per_team'
+);
+
+
+ALTER TYPE public.challenge_bounty_kind OWNER TO postgres;
+
+--
+-- Name: challenge_cost_split; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.challenge_cost_split AS ENUM (
+    'none',
+    'split_even',
+    'loser_pays',
+    'home_pays',
+    'away_pays'
+);
+
+
+ALTER TYPE public.challenge_cost_split OWNER TO postgres;
+
+--
+-- Name: challenge_handicap_side; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.challenge_handicap_side AS ENUM (
+    'none',
+    'home',
+    'away'
+);
+
+
+ALTER TYPE public.challenge_handicap_side OWNER TO postgres;
+
+--
+-- Name: challenge_ruleset; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.challenge_ruleset AS ENUM (
+    'standard',
+    'best_of_sets',
+    'king_of_the_hill',
+    'team_tie',
+    'custom'
+);
+
+
+ALTER TYPE public.challenge_ruleset OWNER TO postgres;
 
 --
 -- Name: conversation_kind; Type: TYPE; Schema: public; Owner: postgres
@@ -582,6 +639,32 @@ CREATE TYPE public.lobby_befriend_status AS ENUM (
 ALTER TYPE public.lobby_befriend_status OWNER TO postgres;
 
 --
+-- Name: lobby_challenge_mode; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.lobby_challenge_mode AS ENUM (
+    'friendly',
+    'refereed'
+);
+
+
+ALTER TYPE public.lobby_challenge_mode OWNER TO postgres;
+
+--
+-- Name: lobby_challenge_offer_status; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.lobby_challenge_offer_status AS ENUM (
+    'open',
+    'taken',
+    'expired',
+    'withdrawn'
+);
+
+
+ALTER TYPE public.lobby_challenge_offer_status OWNER TO postgres;
+
+--
 -- Name: lobby_challenge_status; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -592,7 +675,11 @@ CREATE TYPE public.lobby_challenge_status AS ENUM (
     'cancelled',
     'scheduled',
     'played',
-    'lapsed'
+    'lapsed',
+    'pending_home',
+    'awaiting_reports',
+    'no_show_claimed',
+    'disputed'
 );
 
 
@@ -622,7 +709,8 @@ CREATE TYPE public.lobby_match_result AS ENUM (
     'win',
     'loss',
     'practice',
-    'draw'
+    'draw',
+    'disputed'
 );
 
 
@@ -654,6 +742,21 @@ CREATE TYPE public.lobby_payment_status AS ENUM (
 ALTER TYPE public.lobby_payment_status OWNER TO postgres;
 
 --
+-- Name: lobby_recommendation_kind; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.lobby_recommendation_kind AS ENUM (
+    'friendly',
+    'fairplay',
+    'unfriendly',
+    'dirty',
+    'smurfing'
+);
+
+
+ALTER TYPE public.lobby_recommendation_kind OWNER TO postgres;
+
+--
 -- Name: lobby_visibility; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -665,6 +768,22 @@ CREATE TYPE public.lobby_visibility AS ENUM (
 
 
 ALTER TYPE public.lobby_visibility OWNER TO postgres;
+
+--
+-- Name: match_result_source; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.match_result_source AS ENUM (
+    'referee',
+    'agreed',
+    'one_sided',
+    'forfeit',
+    'mutual_concession',
+    'disputed'
+);
+
+
+ALTER TYPE public.match_result_source OWNER TO postgres;
 
 --
 -- Name: message_kind; Type: TYPE; Schema: public; Owner: postgres
@@ -723,7 +842,12 @@ CREATE TYPE public.notification_kind AS ENUM (
     'course_member_removed',
     'activity_at_risk_organizer',
     'activity_at_risk_member',
-    'activity_cancelled_low_turnout'
+    'activity_cancelled_low_turnout',
+    'challenge_ready_for_home',
+    'challenge_offer_expired',
+    'match_result_pending',
+    'no_show_claimed',
+    'match_disputed'
 );
 
 
@@ -1853,34 +1977,96 @@ ALTER FUNCTION public.activity_confirmation_status(p_activity_id uuid) OWNER TO 
 -- Name: activity_health_data(bigint); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.activity_health_data(p_sport_id bigint) RETURNS TABLE(activity_id uuid, start_time timestamp with time zone, end_time timestamp with time zone, duration_minutes integer, location_label text, source text, steps integer, distance_meters real, active_calories real, avg_heart_rate integer, max_heart_rate integer, min_heart_rate integer, hrv_sdnn_ms real, hrv_rmssd_ms real, hr_zone_easy_seconds integer, hr_zone_moderate_seconds integer, hr_zone_hard_seconds integer, training_load real, effort_score real, workout_type text, recorded_at timestamp with time zone)
+CREATE FUNCTION public.activity_health_data(p_sport_id bigint) RETURNS TABLE(activity_id uuid, start_time timestamp with time zone, end_time timestamp with time zone, duration_minutes integer, location_label text, source text, steps integer, distance_meters real, active_calories real, avg_heart_rate integer, max_heart_rate integer, min_heart_rate integer, hrv_sdnn_ms real, hrv_rmssd_ms real, hr_zone_easy_seconds integer, hr_zone_moderate_seconds integer, hr_zone_hard_seconds integer, training_load real, effort_score real, workout_type text, recorded_at timestamp with time zone, source_name text, lobby_id uuid, course_id uuid, lobby_has_avatar boolean, avatar_user_id uuid, avatar_username text, avatar_generated text, freeplay_avatar_url text)
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  RETURN QUERY
+  SELECT
+    m.activity_id,
+    a.start_time,
+    a.end_time,
+    CASE WHEN a.end_time IS NOT NULL
+      THEN (EXTRACT(EPOCH FROM (a.end_time - a.start_time)) / 60)::int
+      ELSE NULL END AS duration_minutes,
+    COALESCE(loc.name, fa.venue_name) AS location_label,
+    CASE
+      WHEN a.course_id IS NOT NULL THEN 'professional'
+      WHEN a.freeplay_host_id IS NOT NULL THEN 'freeplay'
+      WHEN a.lobby_id IS NOT NULL THEN 'lobby'
+      ELSE 'self'
+    END AS source,
+    m.steps,
+    m.distance_meters,
+    m.active_calories,
+    m.avg_heart_rate,
+    m.max_heart_rate,
+    m.min_heart_rate,
+    m.hrv_sdnn_ms,
+    m.hrv_rmssd_ms,
+    m.hr_zone_easy_seconds,
+    m.hr_zone_moderate_seconds,
+    m.hr_zone_hard_seconds,
+    m.training_load,
+    m.effort_score,
+    m.workout_type,
+    m.recorded_at,
+    CASE
+      WHEN a.course_id IS NOT NULL THEN COALESCE(c.name, prof.display_name)
+      WHEN a.freeplay_host_id IS NOT NULL THEN fh.display_name
+      WHEN a.lobby_id IS NOT NULL THEN l.name
+      ELSE NULL
+    END AS source_name,
+    a.lobby_id,
+    a.course_id,
+    (l.details->>'hasAvatar')::boolean AS lobby_has_avatar,
+    avatar_user.id AS avatar_user_id,
+    avatar_user.username AS avatar_username,
+    avatar_user.details->>'generatedAvatar' AS avatar_generated,
+    fh.avatar_url AS freeplay_avatar_url
+  FROM public.activity_health_metrics m
+  JOIN public.activity a ON a.id = m.activity_id
+  LEFT JOIN public.location loc ON loc.id = a.location_id
+  LEFT JOIN public.freeplay_activity fa ON fa.activity_id = a.id
+  LEFT JOIN public.lobby l ON l.id = a.lobby_id
+  LEFT JOIN public.freeplay_host fh ON fh.id = a.freeplay_host_id
+  LEFT JOIN public.course c ON c.id = a.course_id
+  LEFT JOIN public.professional prof ON prof.id = c.professional_id
+  LEFT JOIN public."user" avatar_user ON avatar_user.id = prof.linked_user_id
+  WHERE m.user_id = v_uid
+    AND m.dismissed = false
+    AND a.sport_id = p_sport_id
+  ORDER BY a.start_time DESC;
+END;
+$$;
+
+
+ALTER FUNCTION public.activity_health_data(p_sport_id bigint) OWNER TO postgres;
+
+--
+-- Name: activity_health_sport_counts(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.activity_health_sport_counts() RETURNS TABLE(sport_id bigint, report_count bigint)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE v_uid uuid := auth.uid();
 BEGIN
-  RETURN QUERY SELECT m.activity_id, a.start_time, a.end_time,
-    CASE WHEN a.end_time IS NOT NULL
-         THEN (extract(epoch FROM (a.end_time - a.start_time))/60)::int END,
-    coalesce(loc.name, fa.venue_name),
-    CASE WHEN a.course_id IS NOT NULL THEN 'professional'
-      WHEN a.freeplay_host_id IS NOT NULL THEN 'freeplay'
-      WHEN a.lobby_id IS NOT NULL THEN 'lobby' ELSE 'self' END,
-    m.steps, m.distance_meters, m.active_calories, m.avg_heart_rate, m.max_heart_rate,
-    m.min_heart_rate, m.hrv_sdnn_ms, m.hrv_rmssd_ms, m.hr_zone_easy_seconds,
-    m.hr_zone_moderate_seconds, m.hr_zone_hard_seconds, m.training_load,
-    m.effort_score, m.workout_type, m.recorded_at
+  RETURN QUERY
+  SELECT a.sport_id, count(*)::bigint
   FROM public.activity_health_metrics m
   JOIN public.activity a ON a.id = m.activity_id
-  LEFT JOIN public.location loc ON loc.id = a.location_id
-  LEFT JOIN public.freeplay_activity fa ON fa.activity_id = a.id
-  WHERE m.user_id = v_uid AND m.dismissed = false AND a.sport_id = p_sport_id
-  ORDER BY a.start_time DESC;
+  WHERE m.user_id = v_uid AND m.dismissed = false
+  GROUP BY a.sport_id;
 END
 $$;
 
 
-ALTER FUNCTION public.activity_health_data(p_sport_id bigint) OWNER TO postgres;
+ALTER FUNCTION public.activity_health_sport_counts() OWNER TO postgres;
 
 --
 -- Name: activity_is_confirmed(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -1992,7 +2178,7 @@ ALTER FUNCTION public.block_user(p_user_id uuid) OWNER TO postgres;
 --
 
 CREATE FUNCTION public.calculate_profile_compat(p_user_id uuid, p_target_id uuid, p_sport_id bigint) RETURNS jsonb
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE
@@ -2007,11 +2193,19 @@ DECLARE
     host_id UUID;
     user_details   JSONB;
     target_details JSONB;
-    sport_id_text  TEXT;
 
-    user_skill_level INTEGER;
+    user_skill_level   INTEGER;
+    target_skill_level INTEGER;
     user_gender   TEXT;
     user_age      TEXT;
+
+    -- Verified-MMR path. NULL on either side means "not verified" and the
+    -- self-declared elo_seed tier is used instead.
+    c_mmr_match_window constant INTEGER := 100;
+    user_elo        INTEGER;
+    target_elo      INTEGER;
+    target_mmr      INTEGER;
+    skill_matched   BOOLEAN;
 
     shared_network_count        INTEGER := 0;
     active_shared_network_count INTEGER := 0;
@@ -2024,19 +2218,23 @@ DECLARE
     lobby_female_members              INTEGER := 0;
     has_active_shared_member          BOOLEAN := FALSE;
 BEGIN
-    sport_id_text := p_sport_id::TEXT;
+    -- Definer guard: inside a PostgREST request, a client may only score itself.
+    IF nullif(current_setting('request.jwt.claims', true), '') IS NOT NULL
+       AND p_user_id IS DISTINCT FROM auth.uid() THEN
+        RETURN jsonb_build_object('score', base_score, 'factors', factors);
+    END IF;
 
     SELECT EXISTS(SELECT 1 FROM public."user" WHERE id = p_target_id) INTO is_user;
 
     SELECT details INTO user_details FROM public."user" WHERE id = p_user_id;
 
-    IF user_details->'sport' ? sport_id_text AND user_details->'sport'->sport_id_text ? 'skill' THEN
-        user_skill_level := (user_details->'sport'->sport_id_text->>'skill')::INTEGER;
-    END IF;
+    -- Skill comes from <sport>_profile.elo_seed, mapped to its ordinal.
+    user_skill_level := public.fn_user_sport_skill_rank(p_user_id, p_sport_id);
     user_gender := user_details->>'gender';
     user_age    := user_details->>'ageGroup';
 
     IF is_user THEN
+        -- USER-TO-USER
         SELECT details INTO target_details FROM public."user" WHERE id = p_target_id;
 
         SELECT COUNT(*) INTO shared_network_count
@@ -2071,10 +2269,26 @@ BEGIN
             END IF;
         END IF;
 
-        IF user_skill_level IS NOT NULL AND
-           target_details->'sport' ? sport_id_text AND
-           target_details->'sport'->sport_id_text ? 'skill' AND
-           user_skill_level = (target_details->'sport'->sport_id_text->>'skill')::INTEGER THEN
+        -- Skill (+3). Prefer verified Elo over the self-declared seed: when
+        -- BOTH sides have a settled rating we have hard evidence, and two
+        -- ratings within c_mmr_match_window count as a match. When both are
+        -- verified and further apart than that, it is a decided NON-match —
+        -- we deliberately do NOT fall back to the seed there, because a
+        -- shared self-declared tier must not override real results showing a
+        -- gap. The seed only speaks when the evidence is absent.
+        user_elo   := public.fn_user_verified_elo(p_user_id, p_sport_id);
+        target_elo := public.fn_user_verified_elo(p_target_id, p_sport_id);
+
+        IF user_elo IS NOT NULL AND target_elo IS NOT NULL THEN
+            skill_matched := abs(user_elo - target_elo) <= c_mmr_match_window;
+        ELSE
+            target_skill_level := public.fn_user_sport_skill_rank(p_target_id, p_sport_id);
+            skill_matched := user_skill_level IS NOT NULL
+                         AND target_skill_level IS NOT NULL
+                         AND user_skill_level = target_skill_level;
+        END IF;
+
+        IF skill_matched THEN
             raw_score := raw_score + 3;
             factors := array_append(factors, 'skill');
         END IF;
@@ -2090,6 +2304,7 @@ BEGIN
         END IF;
 
     ELSE
+        -- USER-TO-LOBBY
         SELECT COUNT(*) INTO total_lobby_members
         FROM public.lobby_member
         WHERE lobby_id = p_target_id;
@@ -2136,19 +2351,30 @@ BEGIN
             END IF;
         END IF;
 
-        IF user_skill_level IS NOT NULL THEN
+        -- Skill (+3). Same precedence as the user-to-user branch: a verified
+        -- rating on BOTH sides (the caller's settled Elo vs. the lobby's
+        -- non-provisional MMR) decides it outright, within/outside
+        -- c_mmr_match_window. Only when either side is still provisional do we
+        -- fall back to counting members who share the caller's seed tier.
+        user_elo   := public.fn_user_verified_elo(p_user_id, p_sport_id);
+        target_mmr := public.fn_lobby_verified_mmr(p_target_id);
+
+        IF user_elo IS NOT NULL AND target_mmr IS NOT NULL THEN
+            skill_matched := abs(user_elo - target_mmr) <= c_mmr_match_window;
+        ELSIF user_skill_level IS NOT NULL THEN
             SELECT COUNT(DISTINCT lm.user_id) INTO lobby_members_with_same_skill
             FROM public.lobby_member lm
-                     JOIN public."user" u ON lm.user_id = u.id
             WHERE lm.lobby_id = p_target_id
-              AND u.details->'sport' ? sport_id_text
-              AND u.details->'sport'->sport_id_text ? 'skill'
-              AND (u.details->'sport'->sport_id_text->>'skill')::INTEGER = user_skill_level;
+              AND public.fn_user_sport_skill_rank(lm.user_id, p_sport_id) = user_skill_level;
 
-            IF lobby_members_with_same_skill * 2 >= total_lobby_members THEN
-                raw_score := raw_score + 3;
-                factors := array_append(factors, 'skill');
-            END IF;
+            skill_matched := lobby_members_with_same_skill * 2 >= total_lobby_members;
+        ELSE
+            skill_matched := FALSE;
+        END IF;
+
+        IF skill_matched THEN
+            raw_score := raw_score + 3;
+            factors := array_append(factors, 'skill');
         END IF;
 
         IF user_age IS NOT NULL THEN
@@ -2372,6 +2598,52 @@ $$;
 ALTER FUNCTION public.cancel_freeplay_request(p_request_id uuid) OWNER TO postgres;
 
 --
+-- Name: cancel_friendly_challenge(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.cancel_friendly_challenge(p_challenge_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_uid uuid := auth.uid(); c record; v_name text;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+
+    SELECT * INTO c FROM public.lobby_challenge WHERE id = p_challenge_id FOR UPDATE;
+    IF c.id IS NULL OR c.mode <> 'friendly' THEN RAISE EXCEPTION 'challenge not found'; END IF;
+    IF c.status NOT IN ('requested', 'pending_home') THEN
+        RAISE EXCEPTION 'this challenge can no longer be withdrawn';
+    END IF;
+    IF NOT public.lobby_can_manage(c.initiator_lobby_id, v_uid) THEN
+        RAISE EXCEPTION 'not a manager of the challenging lobby';
+    END IF;
+
+    UPDATE public.lobby_challenge
+       SET status = 'cancelled', updated_at = now() WHERE id = p_challenge_id;
+
+    -- Only tell the home lobby if they had actually been asked. A challenge
+    -- withdrawn while still gathering players never reached them, so a push
+    -- about it would be the first they ever heard of it.
+    IF c.status = 'pending_home' THEN
+        SELECT name INTO v_name FROM public.lobby WHERE id = c.initiator_lobby_id;
+        PERFORM public.fn_enqueue_notification(
+            'challenge_lapsed',
+            ARRAY(SELECT uid FROM (
+                SELECT captain_id AS uid FROM public.lobby WHERE id = c.target_lobby_id
+                UNION
+                SELECT user_id FROM public.lobby_member
+                 WHERE lobby_id = c.target_lobby_id AND role = 'coordinator') s),
+            'Thách đấu đã rút',
+            COALESCE(v_name, 'Đội thách đấu') || ' đã rút lời thách đấu',
+            jsonb_build_object('lobby_id', c.target_lobby_id, 'challenge_id', p_challenge_id));
+    END IF;
+END;
+$$;
+
+
+ALTER FUNCTION public.cancel_friendly_challenge(p_challenge_id uuid) OWNER TO postgres;
+
+--
 -- Name: cancel_referee_booking(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -2409,6 +2681,76 @@ $$;
 
 
 ALTER FUNCTION public.cancel_referee_booking(p_booking_id uuid) OWNER TO postgres;
+
+--
+-- Name: claim_no_show(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.claim_no_show(p_challenge_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid uuid := auth.uid(); c record; v_mine uuid; v_end timestamptz; v_name text;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+    SELECT * INTO c FROM public.lobby_challenge WHERE id = p_challenge_id FOR UPDATE;
+    IF c.id IS NULL OR c.mode <> 'friendly' THEN RAISE EXCEPTION 'challenge not found'; END IF;
+
+    v_mine := CASE
+        WHEN public.lobby_can_manage(c.target_lobby_id, v_uid)    THEN c.target_lobby_id
+        WHEN public.lobby_can_manage(c.initiator_lobby_id, v_uid) THEN c.initiator_lobby_id
+    END;
+    IF v_mine IS NULL THEN RAISE EXCEPTION 'not a manager of either lobby'; END IF;
+
+    SELECT max(a.end_time) INTO v_end FROM public.activity a WHERE a.challenge_id = p_challenge_id;
+    IF now() < c.proposed_time + interval '30 minutes' THEN
+        RAISE EXCEPTION 'too early — give them 30 minutes';
+    END IF;
+    IF v_end IS NOT NULL AND now() > v_end THEN
+        RAISE EXCEPTION 'the match has ended — report the result instead';
+    END IF;
+
+    IF c.status = 'no_show_claimed' THEN
+        IF c.no_show_claimed_by IS DISTINCT FROM v_mine THEN
+            PERFORM public.fn_settle_friendly_challenge(
+                p_challenge_id, 'disputed', 'disputed', NULL, NULL,
+                'Hai đội cùng báo đối phương không đến');
+            RETURN;
+        END IF;
+        RAISE EXCEPTION 'you have already made this claim';
+    END IF;
+
+    IF c.status <> 'scheduled' THEN RAISE EXCEPTION 'this match is not live'; END IF;
+
+    UPDATE public.lobby_challenge
+       SET status = 'no_show_claimed', no_show_claimed_by = v_mine,
+           no_show_claimed_at = now(), updated_at = now()
+     WHERE id = p_challenge_id;
+
+    SELECT name INTO v_name FROM public.lobby WHERE id = v_mine;
+    PERFORM public.fn_enqueue_notification(
+        'no_show_claimed',
+        ARRAY(SELECT uid FROM (
+            SELECT captain_id AS uid FROM public.lobby
+             WHERE id = CASE WHEN v_mine = c.target_lobby_id
+                             THEN c.initiator_lobby_id ELSE c.target_lobby_id END
+            UNION
+            SELECT user_id FROM public.lobby_member
+             WHERE lobby_id = CASE WHEN v_mine = c.target_lobby_id
+                                   THEN c.initiator_lobby_id ELSE c.target_lobby_id END
+               AND role = 'coordinator') s),
+        'Bị báo không đến',
+        COALESCE(v_name, 'Đối thủ') || ' báo đội bạn không có mặt. Bạn có 10 phút để phản hồi.',
+        jsonb_build_object(
+            'lobby_id', CASE WHEN v_mine = c.target_lobby_id
+                             THEN c.initiator_lobby_id ELSE c.target_lobby_id END,
+            'challenge_id', p_challenge_id));
+END;
+$$;
+
+
+ALTER FUNCTION public.claim_no_show(p_challenge_id uuid) OWNER TO postgres;
 
 --
 -- Name: complete_referee_booking(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -2583,6 +2925,39 @@ $$;
 
 
 ALTER FUNCTION public.conversation_data(p_conversation_id uuid, p_since timestamp with time zone) OWNER TO postgres;
+
+--
+-- Name: counter_no_show(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.counter_no_show(p_challenge_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_uid uuid := auth.uid(); c record; v_accused uuid;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+    SELECT * INTO c FROM public.lobby_challenge WHERE id = p_challenge_id FOR UPDATE;
+    IF c.id IS NULL OR c.status <> 'no_show_claimed' THEN
+        RAISE EXCEPTION 'there is no claim to answer';
+    END IF;
+    v_accused := CASE WHEN c.no_show_claimed_by = c.target_lobby_id
+                      THEN c.initiator_lobby_id ELSE c.target_lobby_id END;
+    IF NOT public.lobby_can_manage(v_accused, v_uid) THEN
+        RAISE EXCEPTION 'this claim is not against your lobby';
+    END IF;
+    IF now() > c.no_show_claimed_at + interval '10 minutes' THEN
+        RAISE EXCEPTION 'the window to answer has closed';
+    END IF;
+
+    PERFORM public.fn_settle_friendly_challenge(
+        p_challenge_id, 'disputed', 'disputed', NULL, NULL,
+        'Đội bị báo vắng mặt đã phản hồi');
+END;
+$$;
+
+
+ALTER FUNCTION public.counter_no_show(p_challenge_id uuid) OWNER TO postgres;
 
 --
 -- Name: course_activity_conflicts(uuid, timestamp with time zone, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: postgres
@@ -3675,17 +4050,21 @@ CREATE FUNCTION public.fn_apply_match_rating(p_match_id uuid) RETURNS void
     SET search_path TO ''
     AS $$
 DECLARE
+    -- Tunables. c_home_adv MUST match home_challenger_lobby_data's constant --
+    -- the rating has to honour the favorability the card promised.
     c_home_adv    constant integer := 50;
-    c_k_new       constant numeric := 32;
+    c_k_new       constant numeric := 32;   -- provisional (< c_provisional games)
     c_k_settled   constant numeric := 20;
     c_provisional constant integer := 10;
     c_margin_cap  constant numeric := 2.0;
+    c_forfeit_win constant numeric := 0.5;  -- the walkover discount
 
     v_home     uuid;
     v_away     uuid;
     v_result   public.lobby_match_result;
     v_sets     jsonb;
     v_activity uuid;
+    v_source   public.match_result_source;
     v_challenge uuid;
     v_sport    text;
     v_home_mmr integer;
@@ -3694,10 +4073,11 @@ DECLARE
     v_score    numeric;
     v_margin   numeric := 0;
     v_mult     numeric := 1;
+    v_disputed boolean;
     r          record;
 BEGIN
-    SELECT m.lobby_id, m.opponent_lobby_id, m.result, m.sets, m.activity_id
-      INTO v_home, v_away, v_result, v_sets, v_activity
+    SELECT m.lobby_id, m.opponent_lobby_id, m.result, m.sets, m.activity_id, m.result_source
+      INTO v_home, v_away, v_result, v_sets, v_activity, v_source
       FROM public.lobby_match m WHERE m.id = p_match_id;
 
     IF v_away IS NULL OR v_result = 'practice' THEN RETURN; END IF;
@@ -3705,6 +4085,8 @@ BEGIN
     SELECT challenge_id INTO v_challenge FROM public.activity WHERE id = v_activity;
     IF v_challenge IS NULL THEN RETURN; END IF;
 
+    -- Read both MMRs BEFORE any elo write, or the second lobby would be rated
+    -- against a cache the first lobby's update already moved.
     SELECT public.fn_sport_name(sport_id), mmr INTO v_sport, v_home_mmr
       FROM public.lobby WHERE id = v_home;
     SELECT mmr INTO v_away_mmr FROM public.lobby WHERE id = v_away;
@@ -3712,9 +4094,13 @@ BEGIN
 
     v_expected := 1.0 / (1.0 + power(10.0,
         ((v_away_mmr - (v_home_mmr + c_home_adv))::numeric / 400.0)));
+
+    v_disputed := (v_result = 'disputed');
     v_score := CASE v_result WHEN 'win' THEN 1.0 WHEN 'draw' THEN 0.5 ELSE 0.0 END;
 
-    IF v_sets IS NOT NULL AND jsonb_typeof(v_sets) = 'array' THEN
+    -- Blowout scaling off the aggregate scoreline. A disputed or forfeited
+    -- match has no agreed scoreline to scale by, so it stays at 1.
+    IF NOT v_disputed AND v_sets IS NOT NULL AND jsonb_typeof(v_sets) = 'array' THEN
         SELECT COALESCE(abs(sum((s->>0)::numeric - (s->>1)::numeric)), 0)
           INTO v_margin
           FROM jsonb_array_elements(v_sets) s;
@@ -3726,12 +4112,27 @@ BEGIN
     FOR r IN
         SELECT a.lobby_id,
                ac.user_id,
-               CASE WHEN a.lobby_id = v_home THEN v_score ELSE 1.0 - v_score END AS s,
-               CASE WHEN a.lobby_id = v_home THEN v_expected ELSE 1.0 - v_expected END AS e
+               -- A dispute is a loss for BOTH sides: s = 0 either way, so each
+               -- side's delta is K*(0 - its own expected score), which is
+               -- precisely what it would have lost by.
+               CASE WHEN v_disputed THEN 0.0
+                    WHEN a.lobby_id = v_home THEN v_score
+                    ELSE 1.0 - v_score END AS s,
+               CASE WHEN a.lobby_id = v_home THEN v_expected
+                    ELSE 1.0 - v_expected END AS e,
+               -- Halve only the winner of a walkover. The absent side is
+               -- untouched by this and takes the full hit.
+               CASE WHEN v_source = 'forfeit'
+                     AND ((a.lobby_id = v_home AND v_result = 'win')
+                       OR (a.lobby_id = v_away AND v_result = 'loss'))
+                    THEN c_forfeit_win ELSE 1.0 END AS forfeit_scale
           FROM public.activity a
           JOIN public.activity_confirmation ac ON ac.activity_id = a.id
          WHERE a.challenge_id = v_challenge AND ac.attendance = 'going'
     LOOP
+        -- Not ON CONFLICT: the unique key is (user_id, sport, format) and
+        -- `format` is NULL here, and NULLs are distinct in a unique index -- a
+        -- conflict clause would never fire and would quietly duplicate the row.
         IF NOT EXISTS (
             SELECT 1 FROM public.user_rating
              WHERE user_id = r.user_id AND sport = v_sport AND format IS NULL
@@ -3743,11 +4144,12 @@ BEGIN
         UPDATE public.user_rating ur
            SET elo = GREATEST(100, ur.elo + round(
                    (CASE WHEN ur.games_played < c_provisional THEN c_k_new ELSE c_k_settled END)
-                   * v_mult * (r.s - r.e))::integer),
+                   * v_mult * r.forfeit_scale * (r.s - r.e))::integer),
                games_played = ur.games_played + 1,
                updated_at = now()
          WHERE ur.user_id = r.user_id AND ur.sport = v_sport AND ur.format IS NULL;
     END LOOP;
+    -- Lobby MMR refreshes itself: trg_user_rating_recompute fires on the UPDATE.
 END;
 $$;
 
@@ -4259,6 +4661,7 @@ CREATE FUNCTION public.fn_cron_tick() RETURNS void
     AS $$
 BEGIN
   PERFORM public.fn_sweep_challenges();
+  PERFORM public.fn_sweep_friendly_challenges();
   PERFORM public.fn_sweep_activity_thresholds();
   PERFORM public.fn_sweep_activity_payment_requests();
   PERFORM public.fn_sweep_freeplay();
@@ -4289,6 +4692,26 @@ $$;
 
 
 ALTER FUNCTION public.fn_delete_notification(p_id bigint) OWNER TO postgres;
+
+--
+-- Name: fn_elo_seed_rank(text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_elo_seed_rank(p_seed text) RETURNS integer
+    LANGUAGE sql IMMUTABLE
+    SET search_path TO ''
+    AS $$
+    SELECT CASE p_seed
+        WHEN 'beginner' THEN 0
+        WHEN 'casual'   THEN 1
+        WHEN 'fair'     THEN 2
+        WHEN 'good'     THEN 3
+        WHEN 'advanced' THEN 4
+    END
+$$;
+
+
+ALTER FUNCTION public.fn_elo_seed_rank(p_seed text) OWNER TO postgres;
 
 --
 -- Name: fn_emit_activity_confirmed(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -4785,6 +5208,86 @@ $$;
 ALTER FUNCTION public.fn_freeplay_owner_user_ids(p_activity_id uuid) OWNER TO postgres;
 
 --
+-- Name: fn_friendly_challenge_quorum(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_friendly_challenge_quorum() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    a record; c record; v_going integer; v_name text;
+BEGIN
+    SELECT id, challenge_id, lobby_id, confirmation_threshold
+      INTO a FROM public.activity WHERE id = NEW.activity_id;
+    IF a.challenge_id IS NULL OR a.confirmation_threshold IS NULL THEN RETURN NEW; END IF;
+
+    SELECT * INTO c FROM public.lobby_challenge WHERE id = a.challenge_id;
+    IF c.mode <> 'friendly' OR c.status <> 'requested' THEN RETURN NEW; END IF;
+    IF c.initiator_lobby_id <> a.lobby_id THEN RETURN NEW; END IF;
+
+    SELECT count(*) INTO v_going FROM public.activity_confirmation
+     WHERE activity_id = a.id AND attendance = 'going';
+    IF v_going < a.confirmation_threshold THEN RETURN NEW; END IF;
+
+    UPDATE public.lobby_challenge
+       SET status = 'pending_home', updated_at = now()
+     WHERE id = c.id AND status = 'requested';
+
+    SELECT name INTO v_name FROM public.lobby WHERE id = c.initiator_lobby_id;
+    PERFORM public.fn_enqueue_notification(
+        'challenge_ready_for_home',
+        ARRAY(SELECT uid FROM (
+            SELECT captain_id AS uid FROM public.lobby WHERE id = c.target_lobby_id
+            UNION
+            SELECT user_id FROM public.lobby_member
+             WHERE lobby_id = c.target_lobby_id AND role = 'coordinator') s),
+        'Có đội sẵn sàng thách đấu',
+        COALESCE(v_name, 'Một đội') || ' đã đủ quân và đang chờ bạn duyệt',
+        jsonb_build_object('lobby_id', c.target_lobby_id, 'challenge_id', c.id));
+
+    INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+    SELECT l.id, l.captain_id, 'update',
+           jsonb_build_object(
+               'title', 'Chờ duyệt thách đấu',
+               'kind',  'challenge_ready',
+               'tone',  'amber',
+               'challenge_id', c.id,
+               'fields', jsonb_build_array(
+                   jsonb_build_array('Đội thách đấu', COALESCE(v_name, '—')),
+                   jsonb_build_array('Sân', COALESCE(
+                       (SELECT loc.name FROM public.location loc
+                         WHERE loc.id = c.proposed_location), '—')),
+                   jsonb_build_array('Đã đủ quân',
+                       v_going::text || ' người')))
+      FROM public.lobby l
+     WHERE l.id = c.target_lobby_id;
+
+    INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+    SELECT l.id, l.captain_id, 'update',
+           jsonb_build_object(
+               'title', 'Đã đủ quân',
+               'kind',  'challenge_awaiting_home',
+               'tone',  'blue',
+               'fields', jsonb_build_array(
+                   jsonb_build_array('Đối thủ', COALESCE(
+                       (SELECT name FROM public.lobby
+                         WHERE id = c.target_lobby_id), '—')),
+                   jsonb_build_array('Sân', COALESCE(
+                       (SELECT loc.name FROM public.location loc
+                         WHERE loc.id = c.proposed_location), '—')),
+                   jsonb_build_array('Trạng thái', 'Chờ đội chủ nhà trả lời')))
+      FROM public.lobby l
+     WHERE l.id = c.initiator_lobby_id;
+
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.fn_friendly_challenge_quorum() OWNER TO postgres;
+
+--
 -- Name: fn_guard_referee_booking_review(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -4971,6 +5474,77 @@ $$;
 ALTER FUNCTION public.fn_is_linked_professional(p_user_id uuid) OWNER TO postgres;
 
 --
+-- Name: fn_lapse_offer_challenges(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_lapse_offer_challenges(p_offer_id uuid, p_reason text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE r record;
+BEGIN
+    FOR r IN
+        SELECT id, initiator_lobby_id FROM public.lobby_challenge
+         WHERE offer_id = p_offer_id AND status IN ('requested', 'pending_home')
+    LOOP
+        UPDATE public.lobby_challenge
+           SET status = 'lapsed', updated_at = now() WHERE id = r.id;
+        PERFORM public.fn_enqueue_notification(
+            'challenge_lapsed',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = r.initiator_lobby_id),
+            'Thách đấu không thành',
+            p_reason,
+            jsonb_build_object('lobby_id', r.initiator_lobby_id, 'challenge_id', r.id));
+    END LOOP;
+END;
+$$;
+
+
+ALTER FUNCTION public.fn_lapse_offer_challenges(p_offer_id uuid, p_reason text) OWNER TO postgres;
+
+--
+-- Name: fn_lobby_dispute_penalty(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_lobby_dispute_penalty(p_lobby_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_streak integer;
+BEGIN
+    SELECT dispute_streak INTO v_streak FROM public.lobby WHERE id = p_lobby_id FOR UPDATE;
+    IF v_streak IS NULL THEN RETURN; END IF;
+
+    UPDATE public.lobby
+       SET dispute_penalty_total = dispute_penalty_total + (10 * (2 ^ LEAST(v_streak, 10)))::integer,
+           dispute_streak = LEAST(v_streak + 1, 10)
+     WHERE id = p_lobby_id;
+
+    PERFORM public.fn_recompute_lobby_trust(p_lobby_id);
+END;
+$$;
+
+
+ALTER FUNCTION public.fn_lobby_dispute_penalty(p_lobby_id uuid) OWNER TO postgres;
+
+--
+-- Name: fn_lobby_dispute_streak_reset(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_lobby_dispute_streak_reset(p_lobby_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    UPDATE public.lobby SET dispute_streak = 0
+     WHERE id = p_lobby_id AND dispute_streak <> 0;
+END;
+$$;
+
+
+ALTER FUNCTION public.fn_lobby_dispute_streak_reset(p_lobby_id uuid) OWNER TO postgres;
+
+--
 -- Name: fn_lobby_has_live_freeplay(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -5123,6 +5697,23 @@ $$;
 
 
 ALTER FUNCTION public.fn_lobby_recompute_stats(p_lobby_id uuid) OWNER TO postgres;
+
+--
+-- Name: fn_lobby_verified_mmr(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_lobby_verified_mmr(p_lobby_id uuid) RETURNS integer
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+    SELECT l.mmr
+    FROM public.lobby l
+    WHERE l.id = p_lobby_id
+      AND l.rated_match_count >= 5
+$$;
+
+
+ALTER FUNCTION public.fn_lobby_verified_mmr(p_lobby_id uuid) OWNER TO postgres;
 
 --
 -- Name: fn_mark_all_notifications_read(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -5650,6 +6241,46 @@ $$;
 ALTER FUNCTION public.fn_process_reminders() OWNER TO postgres;
 
 --
+-- Name: fn_recommendation_sign(public.lobby_recommendation_kind); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_recommendation_sign(p_kind public.lobby_recommendation_kind) RETURNS integer
+    LANGUAGE sql IMMUTABLE
+    SET search_path TO ''
+    AS $$
+    SELECT CASE p_kind WHEN 'friendly' THEN 1 WHEN 'fairplay' THEN 1 ELSE -1 END;
+$$;
+
+
+ALTER FUNCTION public.fn_recommendation_sign(p_kind public.lobby_recommendation_kind) OWNER TO postgres;
+
+--
+-- Name: fn_recompute_lobby_trust(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_recompute_lobby_trust(p_lobby_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    UPDATE public.lobby l
+       SET trust_score = 40
+           + COALESCE((
+               SELECT sum(GREATEST(-14, LEAST(14, per_match)))
+                 FROM (SELECT sum(public.fn_recommendation_sign(r.kind)) * 2 AS per_match
+                         FROM public.lobby_recommendation r
+                        WHERE r.subject_lobby_id = p_lobby_id
+                        GROUP BY r.match_id) m
+             ), 0)
+           - l.dispute_penalty_total
+     WHERE l.id = p_lobby_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.fn_recompute_lobby_trust(p_lobby_id uuid) OWNER TO postgres;
+
+--
 -- Name: fn_referee_booking_role_check(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -5740,6 +6371,90 @@ $$;
 
 
 ALTER FUNCTION public.fn_seed_initial_elo() OWNER TO postgres;
+
+--
+-- Name: fn_settle_friendly_challenge(uuid, public.lobby_match_result, public.match_result_source, jsonb, uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_settle_friendly_challenge(p_challenge_id uuid, p_result public.lobby_match_result, p_source public.match_result_source, p_sets jsonb DEFAULT NULL::jsonb, p_mvp_user_id uuid DEFAULT NULL::uuid, p_note text DEFAULT NULL::text) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    c        record;
+    v_home   uuid; v_away uuid;
+    v_act    uuid; v_start timestamptz; v_venue text;
+    v_match  uuid;
+    v_home_name text; v_away_name text;
+    v_title  text; v_body text;
+BEGIN
+    SELECT * INTO c FROM public.lobby_challenge WHERE id = p_challenge_id FOR UPDATE;
+    IF c.id IS NULL THEN RAISE EXCEPTION 'challenge not found'; END IF;
+    IF c.status IN ('played', 'disputed') THEN RETURN NULL; END IF;
+
+    v_home := c.target_lobby_id;
+    v_away := c.initiator_lobby_id;
+
+    SELECT a.id, a.start_time INTO v_act, v_start
+      FROM public.activity a
+     WHERE a.challenge_id = p_challenge_id AND a.lobby_id = v_home
+     LIMIT 1;
+    SELECT loc.name INTO v_venue FROM public.location loc WHERE loc.id = c.proposed_location;
+    SELECT name INTO v_home_name FROM public.lobby WHERE id = v_home;
+    SELECT name INTO v_away_name FROM public.lobby WHERE id = v_away;
+
+    INSERT INTO public.lobby_match
+        (lobby_id, activity_id, opponent_lobby_id, opponent_tag, result, sets,
+         mvp_user_id, note, venue_label, played_at, result_source)
+    VALUES (v_home, v_act, v_away, COALESCE(v_away_name, '—'),
+            p_result,
+            CASE WHEN p_result IN ('practice', 'disputed') THEN NULL ELSE p_sets END,
+            p_mvp_user_id, p_note, COALESCE(v_venue, '—'),
+            COALESCE(v_start, c.proposed_time, now()), p_source)
+    RETURNING id INTO v_match;
+
+    UPDATE public.lobby_challenge
+       SET status = (CASE WHEN p_result = 'disputed' THEN 'disputed' ELSE 'played' END)
+                    ::public.lobby_challenge_status,
+           updated_at = now()
+     WHERE id = p_challenge_id;
+
+    IF p_result = 'disputed' THEN
+        PERFORM public.fn_lobby_dispute_penalty(v_home);
+        PERFORM public.fn_lobby_dispute_penalty(v_away);
+        v_title := 'Tranh chấp kết quả';
+        v_body  := 'Hai đội khai kết quả khác nhau — trận đấu bị tính thua cho cả hai bên';
+        PERFORM public.fn_enqueue_notification('match_disputed',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = v_home),
+            v_title, v_body, jsonb_build_object('lobby_id', v_home, 'challenge_id', p_challenge_id));
+        PERFORM public.fn_enqueue_notification('match_disputed',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = v_away),
+            v_title, v_body, jsonb_build_object('lobby_id', v_away, 'challenge_id', p_challenge_id));
+    ELSE
+        IF p_source IN ('agreed', 'one_sided') THEN
+            PERFORM public.fn_lobby_dispute_streak_reset(v_home);
+            PERFORM public.fn_lobby_dispute_streak_reset(v_away);
+        END IF;
+        IF p_source = 'forfeit' THEN
+            PERFORM public.fn_lobby_dispute_penalty(
+                CASE WHEN p_result = 'win' THEN v_away ELSE v_home END);
+        END IF;
+        v_title := 'Kết quả trận đấu';
+        v_body  := 'Kết quả trận giao hữu đã được ghi nhận';
+        PERFORM public.fn_enqueue_notification('match_result_recorded',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = v_home),
+            v_title, v_body, jsonb_build_object('lobby_id', v_home, 'challenge_id', p_challenge_id));
+        PERFORM public.fn_enqueue_notification('match_result_recorded',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = v_away),
+            v_title, v_body, jsonb_build_object('lobby_id', v_away, 'challenge_id', p_challenge_id));
+    END IF;
+
+    RETURN v_match;
+END;
+$$;
+
+
+ALTER FUNCTION public.fn_settle_friendly_challenge(p_challenge_id uuid, p_result public.lobby_match_result, p_source public.match_result_source, p_sets jsonb, p_mvp_user_id uuid, p_note text) OWNER TO postgres;
 
 --
 -- Name: fn_sport_name(bigint); Type: FUNCTION; Schema: public; Owner: postgres
@@ -5981,17 +6696,11 @@ CREATE FUNCTION public.fn_sweep_challenges() RETURNS void
 DECLARE
     r record;
 BEGIN
-    UPDATE public.lobby
-       SET open_to_challengers    = false,
-           challenge_offer_time     = NULL,
-           challenge_offer_location = NULL,
-           challenge_offer_cost     = NULL
-     WHERE open_to_challengers AND challenge_offer_time <= now();
-
     FOR r IN
         SELECT c.id, c.initiator_lobby_id, c.target_lobby_id
           FROM public.lobby_challenge c
-         WHERE c.status = 'accepted'
+         WHERE c.mode = 'refereed'
+           AND c.status = 'accepted'
            AND EXISTS (
                SELECT 1 FROM public.activity a
                 WHERE a.challenge_id = c.id
@@ -6034,7 +6743,8 @@ BEGIN
           FROM public.lobby_challenge c
           JOIN public.activity a
             ON a.challenge_id = c.id AND a.lobby_id = c.target_lobby_id
-         WHERE c.status IN ('accepted', 'scheduled')
+         WHERE c.mode = 'refereed'
+           AND c.status IN ('accepted', 'scheduled')
            AND COALESCE(a.end_time, a.start_time) <= now()
            AND NOT EXISTS (SELECT 1 FROM public.lobby_match m WHERE m.activity_id = a.id)
     LOOP
@@ -6152,6 +6862,141 @@ $$;
 
 
 ALTER FUNCTION public.fn_sweep_freeplay() OWNER TO postgres;
+
+--
+-- Name: fn_sweep_friendly_challenges(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_sweep_friendly_challenges() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    r record;
+BEGIN
+    -- (a) Offers that closed with nobody biting. Nothing auto-renews.
+    FOR r IN
+        SELECT o.id, o.lobby_id, o.slot, o.kickoff, l.name AS lobby_name
+          FROM public.lobby_challenge_offer o
+          JOIN public.lobby l ON l.id = o.lobby_id
+         WHERE o.status = 'open' AND o.expires_at <= now()
+         FOR UPDATE OF o
+    LOOP
+        UPDATE public.lobby_challenge_offer SET status = 'expired' WHERE id = r.id;
+        PERFORM public.fn_lapse_offer_challenges(r.id, 'Lời mời thách đấu đã hết hạn');
+
+        PERFORM public.fn_enqueue_notification(
+            'challenge_offer_expired',
+            ARRAY(SELECT uid FROM (
+                SELECT captain_id AS uid FROM public.lobby WHERE id = r.lobby_id
+                UNION
+                SELECT user_id FROM public.lobby_member
+                 WHERE lobby_id = r.lobby_id AND role = 'coordinator') s),
+            'Lời mời hết hạn',
+            'Chưa có đội nào nhận lời. Đăng lại cho tuần sau?',
+            jsonb_build_object('lobby_id', r.lobby_id, 'offer_id', r.id));
+    END LOOP;
+
+    -- (b) No-show claims nobody answered: the claimant wins by walkover.
+    -- Cron granularity is one minute, so resolution lands at +10..11 minutes.
+    FOR r IN
+        SELECT c.id, c.no_show_claimed_by, c.target_lobby_id
+          FROM public.lobby_challenge c
+         WHERE c.mode = 'friendly'
+           AND c.status = 'no_show_claimed'
+           AND c.no_show_claimed_at + interval '10 minutes' <= now()
+         FOR UPDATE OF c
+    LOOP
+        PERFORM public.fn_settle_friendly_challenge(
+            r.id,
+            CASE WHEN r.no_show_claimed_by = r.target_lobby_id
+                 THEN 'win'::public.lobby_match_result
+                 ELSE 'loss'::public.lobby_match_result END,
+            'forfeit', NULL, NULL, 'Đối phương không có mặt');
+    END LOOP;
+
+    -- (c) Halfway reminder, stamped so it fires once, and only to the lobbies
+    -- that have not filed.
+    FOR r IN
+        SELECT c.id, c.initiator_lobby_id, c.target_lobby_id
+          FROM public.lobby_challenge c
+          JOIN public.activity a ON a.challenge_id = c.id AND a.lobby_id = c.target_lobby_id
+         WHERE c.mode = 'friendly'
+           AND c.status = 'awaiting_reports'
+           AND c.report_reminded_at IS NULL
+           AND a.end_time + interval '12 hours' <= now()
+         FOR UPDATE OF c
+    LOOP
+        UPDATE public.lobby_challenge SET report_reminded_at = now() WHERE id = r.id;
+
+        IF NOT EXISTS (SELECT 1 FROM public.lobby_challenge_report
+                        WHERE challenge_id = r.id AND lobby_id = r.target_lobby_id) THEN
+            PERFORM public.fn_enqueue_notification(
+                'match_result_pending',
+                ARRAY(SELECT uid FROM (
+                    SELECT captain_id AS uid FROM public.lobby WHERE id = r.target_lobby_id
+                    UNION
+                    SELECT user_id FROM public.lobby_member
+                     WHERE lobby_id = r.target_lobby_id AND role = 'coordinator') s),
+                'Chưa khai kết quả',
+                'Còn 12 tiếng. Nếu chỉ một đội khai, kết quả của đội đó được ghi nhận.',
+                jsonb_build_object('lobby_id', r.target_lobby_id, 'challenge_id', r.id));
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM public.lobby_challenge_report
+                        WHERE challenge_id = r.id AND lobby_id = r.initiator_lobby_id) THEN
+            PERFORM public.fn_enqueue_notification(
+                'match_result_pending',
+                ARRAY(SELECT uid FROM (
+                    SELECT captain_id AS uid FROM public.lobby WHERE id = r.initiator_lobby_id
+                    UNION
+                    SELECT user_id FROM public.lobby_member
+                     WHERE lobby_id = r.initiator_lobby_id AND role = 'coordinator') s),
+                'Chưa khai kết quả',
+                'Còn 12 tiếng. Nếu chỉ một đội khai, kết quả của đội đó được ghi nhận.',
+                jsonb_build_object('lobby_id', r.initiator_lobby_id, 'challenge_id', r.id));
+        END IF;
+    END LOOP;
+
+    -- (d) The 24h window closes. One report stands and rates; none becomes a
+    -- scoreless practice encounter, present in both histories but unrated.
+    FOR r IN
+        SELECT c.id,
+               (SELECT count(*) FROM public.lobby_challenge_report rr
+                 WHERE rr.challenge_id = c.id) AS n,
+               (SELECT rr.result FROM public.lobby_challenge_report rr
+                 WHERE rr.challenge_id = c.id LIMIT 1) AS only_result,
+               (SELECT rr.is_forfeit FROM public.lobby_challenge_report rr
+                 WHERE rr.challenge_id = c.id LIMIT 1) AS only_forfeit,
+               (SELECT rr.sets FROM public.lobby_challenge_report rr
+                 WHERE rr.challenge_id = c.id LIMIT 1) AS only_sets,
+               (SELECT rr.mvp_user_id FROM public.lobby_challenge_report rr
+                 WHERE rr.challenge_id = c.id LIMIT 1) AS only_mvp,
+               (SELECT rr.note FROM public.lobby_challenge_report rr
+                 WHERE rr.challenge_id = c.id LIMIT 1) AS only_note
+          FROM public.lobby_challenge c
+          JOIN public.activity a ON a.challenge_id = c.id AND a.lobby_id = c.target_lobby_id
+         WHERE c.mode = 'friendly'
+           AND c.status IN ('awaiting_reports', 'scheduled')
+           AND a.end_time + interval '24 hours' <= now()
+         FOR UPDATE OF c
+    LOOP
+        IF r.n = 1 THEN
+            PERFORM public.fn_settle_friendly_challenge(
+                r.id, r.only_result,
+                CASE WHEN r.only_forfeit THEN 'forfeit'::public.match_result_source
+                     ELSE 'one_sided'::public.match_result_source END,
+                r.only_sets, r.only_mvp, r.only_note);
+        ELSE
+            PERFORM public.fn_settle_friendly_challenge(
+                r.id, 'practice', 'one_sided', NULL, NULL,
+                'Không đội nào khai kết quả');
+        END IF;
+    END LOOP;
+END;
+$$;
+
+
+ALTER FUNCTION public.fn_sweep_friendly_challenges() OWNER TO postgres;
 
 --
 -- Name: fn_sweep_recurring_activities(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -6290,6 +7135,47 @@ $$;
 
 
 ALTER FUNCTION public.fn_touch_user_contact() OWNER TO postgres;
+
+--
+-- Name: fn_user_sport_skill_rank(uuid, bigint); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_user_sport_skill_rank(p_user_id uuid, p_sport_id bigint) RETURNS integer
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+    SELECT public.fn_elo_seed_rank(
+        CASE p_sport_id
+            WHEN 1 THEN (SELECT elo_seed FROM public.soccer_profile     WHERE user_id = p_user_id)
+            WHEN 2 THEN (SELECT elo_seed FROM public.basketball_profile WHERE user_id = p_user_id)
+            WHEN 3 THEN (SELECT elo_seed FROM public.badminton_profile  WHERE user_id = p_user_id)
+            WHEN 4 THEN (SELECT elo_seed FROM public.tennis_profile     WHERE user_id = p_user_id)
+            WHEN 5 THEN (SELECT elo_seed FROM public.pickleball_profile WHERE user_id = p_user_id)
+        END
+    )
+$$;
+
+
+ALTER FUNCTION public.fn_user_sport_skill_rank(p_user_id uuid, p_sport_id bigint) OWNER TO postgres;
+
+--
+-- Name: fn_user_verified_elo(uuid, bigint); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_user_verified_elo(p_user_id uuid, p_sport_id bigint) RETURNS integer
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+    SELECT ur.elo
+    FROM public.user_rating ur
+    WHERE ur.user_id = p_user_id
+      AND ur.sport   = public.fn_sport_name(p_sport_id)
+      AND ur.format IS NULL
+      AND ur.games_played >= 10
+$$;
+
+
+ALTER FUNCTION public.fn_user_verified_elo(p_user_id uuid, p_sport_id bigint) OWNER TO postgres;
 
 --
 -- Name: fn_valid_wall_post_media(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
@@ -6778,6 +7664,124 @@ $$;
 
 
 ALTER FUNCTION public.friend_data() OWNER TO postgres;
+
+--
+-- Name: friendly_challenge_data(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.friendly_challenge_data(p_lobby_id uuid) RETURNS TABLE(id uuid, direction text, other_lobby_id uuid, other_lobby_name text, other_lobby_mmr integer, other_lobby_trust integer, sport_id bigint, status public.lobby_challenge_status, we_are_home boolean, proposed_time timestamp with time zone, proposed_location_name text, venue_cost numeric, cost_split public.challenge_cost_split, bounty_kind public.challenge_bounty_kind, bounty_amount numeric, ruleset public.challenge_ruleset, ruleset_param smallint, handicap_side public.challenge_handicap_side, handicap_amount smallint, terms_note text, note text, activity_id uuid, going_count integer, confirmation_threshold integer, my_report public.lobby_match_result, my_report_forfeit boolean, opponent_reported boolean, no_show_claimed_by uuid, no_show_claimed_at timestamp with time zone, created_at timestamp with time zone)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+    SELECT c.id,
+           CASE WHEN c.initiator_lobby_id = p_lobby_id THEN 'outgoing' ELSE 'incoming' END,
+           CASE WHEN c.initiator_lobby_id = p_lobby_id THEN c.target_lobby_id
+                ELSE c.initiator_lobby_id END,
+           ol.name, ol.mmr, ol.trust_score,
+           c.sport_id, c.status, (c.target_lobby_id = p_lobby_id),
+           c.proposed_time,
+           (SELECT loc.name FROM public.location loc WHERE loc.id = c.proposed_location),
+           c.venue_cost, c.cost_split, c.bounty_kind, c.bounty_amount,
+           c.ruleset, c.ruleset_param, c.handicap_side, c.handicap_amount,
+           c.terms_note, c.note,
+           (SELECT a.id FROM public.activity a
+             WHERE a.challenge_id = c.id AND a.lobby_id = p_lobby_id LIMIT 1),
+           (SELECT count(*)::integer FROM public.activity_confirmation ac
+             JOIN public.activity a ON a.id = ac.activity_id
+            WHERE a.challenge_id = c.id AND a.lobby_id = c.initiator_lobby_id
+              AND ac.attendance = 'going'),
+           (SELECT a.confirmation_threshold FROM public.activity a
+             WHERE a.challenge_id = c.id AND a.lobby_id = c.initiator_lobby_id),
+           -- Flipped into the caller's frame: 'win' always means "we won".
+           (SELECT CASE
+                     WHEN c.target_lobby_id = p_lobby_id THEN r.result
+                     WHEN r.result = 'win'  THEN 'loss'::public.lobby_match_result
+                     WHEN r.result = 'loss' THEN 'win'::public.lobby_match_result
+                     ELSE r.result
+                   END
+              FROM public.lobby_challenge_report r
+             WHERE r.challenge_id = c.id AND r.lobby_id = p_lobby_id),
+           (SELECT r.is_forfeit FROM public.lobby_challenge_report r
+             WHERE r.challenge_id = c.id AND r.lobby_id = p_lobby_id),
+           EXISTS (SELECT 1 FROM public.lobby_challenge_report r
+                    WHERE r.challenge_id = c.id AND r.lobby_id <> p_lobby_id),
+           c.no_show_claimed_by, c.no_show_claimed_at,
+           c.created_at
+      FROM public.lobby_challenge c
+      JOIN public.lobby ol
+        ON ol.id = CASE WHEN c.initiator_lobby_id = p_lobby_id
+                        THEN c.target_lobby_id ELSE c.initiator_lobby_id END
+     WHERE c.mode = 'friendly'
+       AND p_lobby_id IN (c.initiator_lobby_id, c.target_lobby_id)
+       AND c.status IN ('requested','pending_home','scheduled','no_show_claimed','awaiting_reports')
+       AND NOT (c.target_lobby_id = p_lobby_id AND c.status = 'requested')
+       AND EXISTS (SELECT 1 FROM public.lobby_member lm
+                    WHERE lm.lobby_id = p_lobby_id AND lm.user_id = auth.uid())
+     ORDER BY c.proposed_time NULLS LAST, c.created_at;
+$$;
+
+
+ALTER FUNCTION public.friendly_challenge_data(p_lobby_id uuid) OWNER TO postgres;
+
+--
+-- Name: friendly_offer_feed_data(uuid, bigint, integer, character varying[], text, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.friendly_offer_feed_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer DEFAULT NULL::integer, p_districts character varying[] DEFAULT NULL::character varying[], p_search text DEFAULT NULL::text, p_mmr_window integer DEFAULT 200, p_page_size integer DEFAULT 20, p_page_number integer DEFAULT 1) RETURNS TABLE(offer_id uuid, slot smallint, lobby_id uuid, lobby_name text, lobby_mmr integer, trust_score integer, rated_match_count integer, member_count integer, description text, homeground_name text, kickoff timestamp with time zone, expires_at timestamp with time zone, location_name text, venue_cost numeric, cost_split public.challenge_cost_split, bounty_kind public.challenge_bounty_kind, bounty_amount numeric, ruleset public.challenge_ruleset, ruleset_param smallint, handicap_side public.challenge_handicap_side, handicap_amount smallint, terms_note text, favorability text, recommendation_counts jsonb, already_challenged boolean)
+    LANGUAGE plpgsql STABLE
+    SET search_path TO ''
+    AS $$
+DECLARE
+    c_home_adv constant integer := 50;
+    v_mmr integer;
+BEGIN
+    SELECT l.mmr INTO v_mmr FROM public.lobby l WHERE l.id = p_context_lobby_id;
+    v_mmr := COALESCE(v_mmr, 1000);
+
+    RETURN QUERY
+    SELECT o.id, o.slot, l.id, l.name::text,
+           l.mmr, l.trust_score, l.rated_match_count,
+           l.member_count, l.description,
+           (SELECT loc2.name FROM public.lobby_homeground hg
+              JOIN public.location loc2 ON loc2.id = hg.location_id
+             WHERE hg.lobby_id = l.id AND hg.is_primary LIMIT 1),
+           o.kickoff, o.expires_at, loc.name::text,
+           o.venue_cost, o.cost_split, o.bounty_kind, o.bounty_amount,
+           o.ruleset, o.ruleset_param, o.handicap_side, o.handicap_amount,
+           o.terms_note,
+           -- Stated from the CHALLENGER's point of view, honouring the same
+           -- home advantage the rating engine applies if this match happens.
+           CASE
+               WHEN (l.mmr + c_home_adv) - v_mmr >  p_mmr_window THEN 'harder'
+               WHEN v_mmr - (l.mmr + c_home_adv) >  p_mmr_window THEN 'easier'
+               ELSE 'even'
+           END::text,
+           public.lobby_recommendation_counts(l.id),
+           EXISTS (SELECT 1 FROM public.lobby_challenge c
+                    WHERE c.offer_id = o.id
+                      AND c.initiator_lobby_id = p_context_lobby_id
+                      AND c.status IN ('requested', 'pending_home'))
+      FROM public.lobby_challenge_offer o
+      JOIN public.lobby l ON l.id = o.lobby_id
+      JOIN public.location loc ON loc.id = o.location_id
+     WHERE o.status = 'open'
+       AND o.mode = 'friendly'
+       AND o.expires_at > now()
+       AND l.sport_id = p_sport_id
+       AND l.visibility <> 'private'
+       AND l.id <> COALESCE(p_context_lobby_id, '00000000-0000-0000-0000-000000000000'::uuid)
+       AND (p_city IS NULL OR loc.city_cluster = p_city)
+       AND (p_districts IS NULL OR array_length(p_districts, 1) IS NULL
+            OR loc.district = ANY(p_districts))
+       AND (p_search IS NULL OR btrim(p_search) = ''
+            OR l.name ILIKE '%' || btrim(p_search) || '%')
+     ORDER BY abs((l.mmr + c_home_adv) - v_mmr), o.kickoff
+     LIMIT p_page_size OFFSET (p_page_number - 1) * p_page_size;
+END;
+$$;
+
+
+ALTER FUNCTION public.friendly_offer_feed_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_search text, p_mmr_window integer, p_page_size integer, p_page_number integer) OWNER TO postgres;
 
 --
 -- Name: generate_lobby_invite_link(uuid, interval); Type: FUNCTION; Schema: public; Owner: postgres
@@ -8175,20 +9179,39 @@ $$;
 ALTER FUNCTION public.lobby_feed_data(p_lobby_id uuid, p_page_size integer, p_before timestamp with time zone) OWNER TO postgres;
 
 --
+-- Name: lobby_location_aliases(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.lobby_location_aliases(p_lobby_id uuid) RETURNS TABLE(location_id uuid, name text)
+    LANGUAGE sql STABLE
+    SET search_path TO 'public'
+    AS $$
+    SELECT a.location_id, a.name
+      FROM public.lobby_location_alias a
+     WHERE a.lobby_id = p_lobby_id
+       AND a.lobby_id IN (SELECT public.get_my_lobby_ids());
+$$;
+
+
+ALTER FUNCTION public.lobby_location_aliases(p_lobby_id uuid) OWNER TO postgres;
+
+--
 -- Name: lobby_match_history_data(uuid, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.lobby_match_history_data(p_lobby_id uuid, p_page_size integer DEFAULT 50, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, activity_id uuid, opponent_lobby_id uuid, opponent_name text, opponent_tag text, result public.lobby_match_result, sets jsonb, mvp_username character varying, note text, venue_label text, played_at timestamp with time zone, duration_label text, member_usernames text[], referee_booking_id uuid, referee_name text)
+CREATE FUNCTION public.lobby_match_history_data(p_lobby_id uuid, p_page_size integer DEFAULT 50, p_page_number integer DEFAULT 1) RETURNS TABLE(id uuid, activity_id uuid, opponent_lobby_id uuid, opponent_name text, opponent_tag text, result public.lobby_match_result, sets jsonb, mvp_username character varying, note text, venue_label text, played_at timestamp with time zone, duration_label text, member_usernames text[], referee_booking_id uuid, referee_name text, result_source public.match_result_source)
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
 BEGIN
     RETURN QUERY
     WITH mine AS (
+        -- Rows this lobby recorded: read as-is.
         SELECT m.*, false AS flipped, m.opponent_lobby_id AS other_id
           FROM public.lobby_match m
          WHERE m.lobby_id = p_lobby_id
         UNION ALL
+        -- Rows the opponent recorded against us: read from our side.
         SELECT m.*, true AS flipped, m.lobby_id AS other_id
           FROM public.lobby_match m
          WHERE m.opponent_lobby_id = p_lobby_id
@@ -8197,7 +9220,9 @@ BEGIN
            x.activity_id,
            x.other_id AS opponent_lobby_id,
            ol.name::text AS opponent_name,
-           (CASE WHEN x.flipped THEN COALESCE(ol.name, x.opponent_tag) ELSE x.opponent_tag END)::text,
+           CASE WHEN x.flipped THEN COALESCE(ol.name, x.opponent_tag) ELSE x.opponent_tag END::text,
+           -- 'draw', 'practice' and 'disputed' all read as themselves from
+           -- either end; only win/loss invert.
            CASE WHEN NOT x.flipped THEN x.result
                 WHEN x.result = 'win'  THEN 'loss'::public.lobby_match_result
                 WHEN x.result = 'loss' THEN 'win'::public.lobby_match_result
@@ -8217,7 +9242,8 @@ BEGIN
                 WHERE lm.lobby_id = p_lobby_id
            ) AS member_usernames,
            x.referee_booking_id,
-           ref.display_name AS referee_name
+           ref.display_name AS referee_name,
+           x.result_source
       FROM mine x
       LEFT JOIN public.lobby ol ON ol.id = x.other_id
       LEFT JOIN public."user" u ON u.id = x.mvp_user_id
@@ -8360,6 +9386,24 @@ $$;
 
 
 ALTER FUNCTION public.lobby_primary_homeground_id(p_lobby_id uuid) OWNER TO postgres;
+
+--
+-- Name: lobby_recommendation_counts(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.lobby_recommendation_counts(p_lobby_id uuid) RETURNS jsonb
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+    SELECT COALESCE(jsonb_object_agg(kind, n), '{}'::jsonb)
+      FROM (SELECT r.kind::text AS kind, count(*) AS n
+              FROM public.lobby_recommendation r
+             WHERE r.subject_lobby_id = p_lobby_id
+             GROUP BY r.kind) s;
+$$;
+
+
+ALTER FUNCTION public.lobby_recommendation_counts(p_lobby_id uuid) OWNER TO postgres;
 
 --
 -- Name: mark_conversation_read(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -8636,6 +9680,43 @@ $$;
 ALTER FUNCTION public.new_user_created_trigger_fn() OWNER TO postgres;
 
 --
+-- Name: pending_home_challengers(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.pending_home_challengers(p_lobby_id uuid) RETURNS TABLE(challenge_id uuid, offer_id uuid, offer_slot smallint, initiator_lobby_id uuid, initiator_name text, initiator_mmr integer, trust_score integer, rated_match_count integer, member_count integer, going_count integer, confirmation_threshold integer, kickoff timestamp with time zone, location_name text, note text, created_at timestamp with time zone, description text, homeground_name text, recommendation_counts jsonb)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+    SELECT c.id, c.offer_id, o.slot,
+           c.initiator_lobby_id, l.name, l.mmr,
+           l.trust_score, l.rated_match_count, l.member_count,
+           (SELECT count(*)::integer FROM public.activity_confirmation ac
+             JOIN public.activity a ON a.id = ac.activity_id
+            WHERE a.challenge_id = c.id AND a.lobby_id = c.initiator_lobby_id
+              AND ac.attendance = 'going'),
+           (SELECT a.confirmation_threshold FROM public.activity a
+             WHERE a.challenge_id = c.id AND a.lobby_id = c.initiator_lobby_id),
+           c.proposed_time,
+           (SELECT loc.name FROM public.location loc WHERE loc.id = c.proposed_location),
+           c.note, c.created_at, l.description,
+           (SELECT loc2.name FROM public.lobby_homeground hg
+              JOIN public.location loc2 ON loc2.id = hg.location_id
+             WHERE hg.lobby_id = l.id AND hg.is_primary LIMIT 1),
+           public.lobby_recommendation_counts(l.id)
+      FROM public.lobby_challenge c
+      JOIN public.lobby l ON l.id = c.initiator_lobby_id
+      LEFT JOIN public.lobby_challenge_offer o ON o.id = c.offer_id
+     WHERE c.target_lobby_id = p_lobby_id
+       AND c.mode = 'friendly'
+       AND c.status = 'pending_home'
+       AND public.lobby_can_manage(p_lobby_id, auth.uid())
+     ORDER BY c.created_at;
+$$;
+
+
+ALTER FUNCTION public.pending_home_challengers(p_lobby_id uuid) OWNER TO postgres;
+
+--
 -- Name: post_activity_note(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -8851,6 +9932,73 @@ $$;
 ALTER FUNCTION public.propose_course_activity(p_course_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_location_id uuid, p_note text) OWNER TO postgres;
 
 --
+-- Name: publish_challenge_offer(uuid, smallint, timestamp with time zone, uuid, timestamp with time zone, numeric, text, text, numeric, text, smallint, text, smallint, text, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.publish_challenge_offer(p_lobby_id uuid, p_slot smallint, p_kickoff timestamp with time zone, p_location uuid, p_expires_at timestamp with time zone DEFAULT NULL::timestamp with time zone, p_venue_cost numeric DEFAULT NULL::numeric, p_cost_split text DEFAULT 'none'::text, p_bounty_kind text DEFAULT 'none'::text, p_bounty_amount numeric DEFAULT NULL::numeric, p_ruleset text DEFAULT 'standard'::text, p_ruleset_param smallint DEFAULT NULL::smallint, p_handicap_side text DEFAULT 'none'::text, p_handicap_amount smallint DEFAULT NULL::smallint, p_terms_note text DEFAULT NULL::text, p_mode text DEFAULT 'friendly'::text) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid     uuid := auth.uid();
+    v_expires timestamptz;
+    v_old     uuid;
+    v_id      uuid;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+    IF NOT public.lobby_can_manage(p_lobby_id, v_uid) THEN
+        RAISE EXCEPTION 'not a manager of this lobby';
+    END IF;
+    IF p_slot IS NULL OR p_slot NOT BETWEEN 1 AND 3 THEN
+        RAISE EXCEPTION 'a lobby has three offer slots';
+    END IF;
+    IF p_kickoff IS NULL OR p_kickoff <= now() THEN
+        RAISE EXCEPTION 'the offered kickoff is in the past';
+    END IF;
+    IF p_location IS NULL THEN
+        RAISE EXCEPTION 'an offer needs a venue';
+    END IF;
+
+    v_expires := COALESCE(p_expires_at,
+                          GREATEST(p_kickoff - interval '24 hours',
+                                   LEAST(now() + interval '1 hour',
+                                         p_kickoff - interval '1 minute')));
+    IF v_expires >= p_kickoff THEN
+        RAISE EXCEPTION 'the offer must close before kickoff';
+    END IF;
+    IF v_expires <= now() THEN
+        RAISE EXCEPTION 'the offer would close in the past';
+    END IF;
+
+    SELECT id INTO v_old FROM public.lobby_challenge_offer
+     WHERE lobby_id = p_lobby_id AND slot = p_slot AND status = 'open'
+     FOR UPDATE;
+    IF v_old IS NOT NULL THEN
+        UPDATE public.lobby_challenge_offer SET status = 'withdrawn' WHERE id = v_old;
+        PERFORM public.fn_lapse_offer_challenges(v_old, 'Đội chủ nhà đã thay đổi lời mời');
+    END IF;
+
+    INSERT INTO public.lobby_challenge_offer
+        (lobby_id, mode, slot, kickoff, location_id, expires_at, venue_cost,
+         cost_split, bounty_kind, bounty_amount, ruleset, ruleset_param,
+         handicap_side, handicap_amount, terms_note, created_by)
+    VALUES (p_lobby_id, p_mode::public.lobby_challenge_mode, p_slot, p_kickoff,
+            p_location, v_expires, p_venue_cost,
+            p_cost_split::public.challenge_cost_split,
+            p_bounty_kind::public.challenge_bounty_kind, p_bounty_amount,
+            p_ruleset::public.challenge_ruleset, p_ruleset_param,
+            p_handicap_side::public.challenge_handicap_side, p_handicap_amount,
+            nullif(btrim(coalesce(p_terms_note, '')), ''), v_uid)
+    RETURNING id INTO v_id;
+
+    RETURN v_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.publish_challenge_offer(p_lobby_id uuid, p_slot smallint, p_kickoff timestamp with time zone, p_location uuid, p_expires_at timestamp with time zone, p_venue_cost numeric, p_cost_split text, p_bounty_kind text, p_bounty_amount numeric, p_ruleset text, p_ruleset_param smallint, p_handicap_side text, p_handicap_amount smallint, p_terms_note text, p_mode text) OWNER TO postgres;
+
+--
 -- Name: react_to_wall_post(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -8881,6 +10029,62 @@ $$;
 
 
 ALTER FUNCTION public.react_to_wall_post(p_post_id uuid, p_emoji text) OWNER TO postgres;
+
+--
+-- Name: recommend_lobby(uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.recommend_lobby(p_match_id uuid, p_subject_lobby_id uuid, p_kind text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid uuid := auth.uid();
+    m record; v_challenge uuid; v_my_lobby uuid;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+
+    SELECT lobby_id, opponent_lobby_id, activity_id, created_at
+      INTO m FROM public.lobby_match WHERE id = p_match_id;
+    IF m.lobby_id IS NULL THEN RAISE EXCEPTION 'match not found'; END IF;
+    IF m.opponent_lobby_id IS NULL THEN
+        RAISE EXCEPTION 'there is no opponent to vouch for';
+    END IF;
+    IF p_subject_lobby_id NOT IN (m.lobby_id, m.opponent_lobby_id) THEN
+        RAISE EXCEPTION 'that lobby did not play this match';
+    END IF;
+    IF now() > m.created_at + interval '24 hours' THEN
+        RAISE EXCEPTION 'the window to vouch has closed';
+    END IF;
+
+    SELECT challenge_id INTO v_challenge FROM public.activity WHERE id = m.activity_id;
+    IF v_challenge IS NULL THEN RAISE EXCEPTION 'not a challenge match'; END IF;
+
+    SELECT a.lobby_id INTO v_my_lobby
+      FROM public.activity a
+      JOIN public.activity_confirmation ac
+        ON ac.activity_id = a.id AND ac.user_id = v_uid AND ac.attendance = 'going'
+     WHERE a.challenge_id = v_challenge
+     LIMIT 1;
+    IF v_my_lobby IS NULL THEN
+        RAISE EXCEPTION 'only players who confirmed for this match can vouch';
+    END IF;
+    IF v_my_lobby = p_subject_lobby_id THEN
+        RAISE EXCEPTION 'you cannot vouch for your own lobby';
+    END IF;
+
+    INSERT INTO public.lobby_recommendation (match_id, voter_id, subject_lobby_id, kind)
+    VALUES (p_match_id, v_uid, p_subject_lobby_id, p_kind::public.lobby_recommendation_kind)
+    ON CONFLICT (match_id, voter_id) DO UPDATE
+        SET kind = EXCLUDED.kind, subject_lobby_id = EXCLUDED.subject_lobby_id,
+            created_at = now();
+
+    PERFORM public.fn_recompute_lobby_trust(p_subject_lobby_id);
+END;
+$$;
+
+
+ALTER FUNCTION public.recommend_lobby(p_match_id uuid, p_subject_lobby_id uuid, p_kind text) OWNER TO postgres;
 
 --
 -- Name: record_challenge_match(uuid, text, jsonb, uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
@@ -9215,6 +10419,159 @@ $$;
 
 
 ALTER FUNCTION public.remove_course_member(p_course_id uuid, p_user_id uuid) OWNER TO postgres;
+
+--
+-- Name: renew_challenge_offer(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.renew_challenge_offer(p_offer_id uuid) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_uid uuid := auth.uid(); o record; v_id uuid;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+    SELECT * INTO o FROM public.lobby_challenge_offer WHERE id = p_offer_id;
+    IF o.id IS NULL THEN RAISE EXCEPTION 'offer not found'; END IF;
+    IF NOT public.lobby_can_manage(o.lobby_id, v_uid) THEN
+        RAISE EXCEPTION 'not a manager of this lobby';
+    END IF;
+    IF o.status = 'open' THEN RAISE EXCEPTION 'that offer is still open'; END IF;
+    IF o.status = 'taken' THEN RAISE EXCEPTION 'that offer was already matched'; END IF;
+
+    v_id := public.publish_challenge_offer(
+        o.lobby_id, o.slot, o.kickoff + interval '7 days', o.location_id,
+        o.expires_at + interval '7 days', o.venue_cost, o.cost_split::text,
+        o.bounty_kind::text, o.bounty_amount, o.ruleset::text, o.ruleset_param,
+        o.handicap_side::text, o.handicap_amount, o.terms_note, o.mode::text);
+
+    UPDATE public.lobby_challenge_offer SET renewed_from = p_offer_id WHERE id = v_id;
+    RETURN v_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.renew_challenge_offer(p_offer_id uuid) OWNER TO postgres;
+
+--
+-- Name: report_match_result(uuid, text, jsonb, uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.report_match_result(p_challenge_id uuid, p_result text, p_sets jsonb DEFAULT NULL::jsonb, p_mvp_user_id uuid DEFAULT NULL::uuid, p_note text DEFAULT NULL::text) RETURNS text
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    v_uid uuid := auth.uid();
+    c record; rh record; ra record;   -- rh = home's report, ra = away's
+    v_mine uuid; v_is_home boolean; v_end timestamptz;
+    v_norm public.lobby_match_result; v_forfeit boolean := false;
+    v_sets jsonb;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+    SELECT * INTO c FROM public.lobby_challenge WHERE id = p_challenge_id FOR UPDATE;
+    IF c.id IS NULL OR c.mode <> 'friendly' THEN RAISE EXCEPTION 'challenge not found'; END IF;
+    IF c.status NOT IN ('scheduled', 'awaiting_reports') THEN
+        RAISE EXCEPTION 'this match is not open for reporting';
+    END IF;
+
+    v_mine := CASE
+        WHEN public.lobby_can_manage(c.target_lobby_id, v_uid)    THEN c.target_lobby_id
+        WHEN public.lobby_can_manage(c.initiator_lobby_id, v_uid) THEN c.initiator_lobby_id
+    END;
+    IF v_mine IS NULL THEN RAISE EXCEPTION 'not a manager of either lobby'; END IF;
+    v_is_home := (v_mine = c.target_lobby_id);
+
+    SELECT max(a.end_time) INTO v_end FROM public.activity a WHERE a.challenge_id = p_challenge_id;
+    IF v_end IS NOT NULL AND now() < v_end THEN
+        RAISE EXCEPTION 'the match has not finished yet';
+    END IF;
+
+    v_norm := CASE p_result
+        WHEN 'draw'         THEN 'draw'::public.lobby_match_result
+        WHEN 'win'          THEN CASE WHEN v_is_home THEN 'win'  ELSE 'loss' END
+        WHEN 'loss'         THEN CASE WHEN v_is_home THEN 'loss' ELSE 'win'  END
+        WHEN 'no_show_them' THEN CASE WHEN v_is_home THEN 'win'  ELSE 'loss' END
+        WHEN 'no_show_us'   THEN CASE WHEN v_is_home THEN 'loss' ELSE 'win'  END
+        ELSE NULL END;
+    IF v_norm IS NULL THEN RAISE EXCEPTION 'invalid result %', p_result; END IF;
+    v_forfeit := p_result IN ('no_show_them', 'no_show_us');
+
+    IF c.ruleset <> 'best_of_sets' OR v_forfeit THEN p_sets := NULL; END IF;
+
+    -- Sets live on disk HOME-FIRST because lobby_match_history_data reverses
+    -- each pair for the away reader. A manager types their OWN score first, so
+    -- an away report arrives [us, them] and has to be flipped here.
+    IF NOT v_is_home AND p_sets IS NOT NULL AND jsonb_typeof(p_sets) = 'array' THEN
+        SELECT jsonb_agg(jsonb_build_array(s->1, s->0))
+          INTO p_sets FROM jsonb_array_elements(p_sets) s;
+    END IF;
+
+    INSERT INTO public.lobby_challenge_report
+        (challenge_id, lobby_id, reported_by, result, is_forfeit, sets, mvp_user_id, note)
+    VALUES (p_challenge_id, v_mine, v_uid, v_norm, v_forfeit, p_sets, p_mvp_user_id,
+            nullif(btrim(coalesce(p_note, '')), ''))
+    ON CONFLICT (challenge_id, lobby_id) DO UPDATE
+        SET result = EXCLUDED.result, is_forfeit = EXCLUDED.is_forfeit,
+            sets = EXCLUDED.sets, mvp_user_id = EXCLUDED.mvp_user_id,
+            note = EXCLUDED.note, reported_by = EXCLUDED.reported_by,
+            created_at = now();
+
+    UPDATE public.lobby_challenge
+       SET status = 'awaiting_reports', updated_at = now()
+     WHERE id = p_challenge_id AND status = 'scheduled';
+
+    -- Read both rows by SIDE, never as "mine and theirs": two conflicting
+    -- reports collapse to the same unordered {win, loss} pair in the home frame
+    -- whichever way round they are, so an order-blind comparison cannot tell
+    -- "we both lost" from "we both won" -- and those are opposites.
+    SELECT * INTO rh FROM public.lobby_challenge_report
+     WHERE challenge_id = p_challenge_id AND lobby_id = c.target_lobby_id;
+    SELECT * INTO ra FROM public.lobby_challenge_report
+     WHERE challenge_id = p_challenge_id AND lobby_id = c.initiator_lobby_id;
+
+    IF rh.lobby_id IS NULL OR ra.lobby_id IS NULL THEN RETURN 'awaiting_opponent'; END IF;
+
+    -- Agreement is judged on the RESULT ALONE; lesser disagreements are dropped
+    -- rather than escalated (mismatched sets -> rated, scoreline discarded;
+    -- mismatched forfeit -> rated as an ordinary result).
+    IF rh.result = ra.result THEN
+        v_sets := CASE WHEN rh.sets IS NOT DISTINCT FROM ra.sets THEN rh.sets ELSE NULL END;
+        PERFORM public.fn_settle_friendly_challenge(
+            p_challenge_id, rh.result,
+            CASE WHEN rh.is_forfeit AND ra.is_forfeit
+                 THEN 'forfeit'::public.match_result_source
+                 ELSE 'agreed'::public.match_result_source END,
+            v_sets, COALESCE(rh.mvp_user_id, ra.mvp_user_id), COALESCE(rh.note, ra.note));
+        RETURN 'agreed';
+    END IF;
+
+    -- home 'loss' AND away 'win' = each lobby, writing blind, conceded to the
+    -- other. Not a conflict about the facts; recorded as a draw.
+    IF rh.result = 'loss' AND ra.result = 'win' THEN
+        IF rh.is_forfeit AND ra.is_forfeit THEN
+            PERFORM public.fn_settle_friendly_challenge(
+                p_challenge_id, 'practice', 'mutual_concession', NULL, NULL,
+                'Cả hai đội đều báo không có mặt');
+            RETURN 'no_match';
+        END IF;
+
+        PERFORM public.fn_settle_friendly_challenge(
+            p_challenge_id, 'draw', 'mutual_concession', NULL,
+            COALESCE(rh.mvp_user_id, ra.mvp_user_id),
+            'Cả hai đội đều nhận thua — tính hòa');
+        RETURN 'mutual_concession';
+    END IF;
+
+    PERFORM public.fn_settle_friendly_challenge(
+        p_challenge_id, 'disputed', 'disputed', NULL, NULL,
+        'Hai đội khai kết quả khác nhau');
+    RETURN 'disputed';
+END;
+$$;
+
+
+ALTER FUNCTION public.report_match_result(p_challenge_id uuid, p_result text, p_sets jsonb, p_mvp_user_id uuid, p_note text) OWNER TO postgres;
 
 --
 -- Name: request_freeplay_seat(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
@@ -9627,39 +10984,30 @@ CREATE FUNCTION public.respond_challenge(p_challenge_id uuid, p_action text) RET
     AS $$
 DECLARE
     c_match_minutes constant integer := 90;
-    v_uid         uuid := auth.uid();
-    v_init        uuid;
-    v_target      uuid;
-    v_status      public.lobby_challenge_status;
-    v_sport       bigint;
-    v_time        timestamptz;
-    v_loc         uuid;
-    v_cost        numeric;
-    v_target_name text;
-    v_init_name   text;
-    v_recipients  uuid[];
-    v_deadline    timestamptz;
-    v_end         timestamptz;
+    v_uid    uuid := auth.uid();
+    v_init   uuid; v_target uuid; v_sport bigint; v_status public.lobby_challenge_status;
+    v_time   timestamptz; v_loc uuid; v_cost numeric;
+    v_end    timestamptz; v_deadline timestamptz;
+    v_init_name text; v_target_name text;
+    v_recipients uuid[];
 BEGIN
     IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
 
-    SELECT initiator_lobby_id, target_lobby_id, status, sport_id,
+    SELECT initiator_lobby_id, target_lobby_id, sport_id, status,
            proposed_time, proposed_location, agreed_cost
-      INTO v_init, v_target, v_status, v_sport, v_time, v_loc, v_cost
-      FROM public.lobby_challenge WHERE id = p_challenge_id;
+      INTO v_init, v_target, v_sport, v_status, v_time, v_loc, v_cost
+      FROM public.lobby_challenge WHERE id = p_challenge_id FOR UPDATE;
 
     IF v_init IS NULL THEN RAISE EXCEPTION 'challenge not found'; END IF;
+    IF v_status <> 'requested' THEN RAISE EXCEPTION 'challenge already answered'; END IF;
     IF NOT public.lobby_can_manage(v_target, v_uid) THEN
         RAISE EXCEPTION 'not a manager of the target lobby';
     END IF;
-    IF v_status <> 'requested' THEN RAISE EXCEPTION 'challenge is no longer open'; END IF;
 
-    SELECT name INTO v_target_name FROM public.lobby WHERE id = v_target;
     SELECT name INTO v_init_name   FROM public.lobby WHERE id = v_init;
+    SELECT name INTO v_target_name FROM public.lobby WHERE id = v_target;
 
     IF p_action = 'accept' THEN
-        IF v_time <= now() THEN RAISE EXCEPTION 'that kickoff has already passed'; END IF;
-
         v_end := v_time + make_interval(mins => c_match_minutes);
         v_deadline := GREATEST(v_time - interval '2 days', now() + interval '1 hour');
         IF v_deadline >= v_time THEN
@@ -9669,13 +11017,12 @@ BEGIN
         UPDATE public.lobby_challenge
             SET status = 'accepted', updated_at = now() WHERE id = p_challenge_id;
 
+        -- THE FIX: cost_type/cost_amount, the columns that actually exist.
         INSERT INTO public.activity
             (user_id, sport_id, lobby_id, challenge_id, start_time, end_time, location_id,
-             prepayment_required, payment_type, prepayment_amount,
-             confirmation_threshold, confirmation_deadline)
+             cost_type, cost_amount, confirmation_threshold, confirmation_deadline)
         SELECT l.captain_id, v_sport, l.id, p_challenge_id, v_time, v_end, v_loc,
-               (COALESCE(v_cost, 0) > 0),
-               CASE WHEN COALESCE(v_cost, 0) > 0 THEN 'manual'::public.activity_payment_type END,
+               CASE WHEN COALESCE(v_cost, 0) > 0 THEN 'total'::public.activity_cost_type END,
                CASE WHEN COALESCE(v_cost, 0) > 0 THEN v_cost END,
                GREATEST(2, ceil(l.member_count / 2.0)::integer),
                v_deadline
@@ -9683,7 +11030,7 @@ BEGIN
          WHERE l.id IN (v_init, v_target);
 
         UPDATE public.lobby
-           SET open_to_challengers    = false,
+           SET open_to_challengers      = false,
                challenge_offer_time     = NULL,
                challenge_offer_location = NULL,
                challenge_offer_cost     = NULL
@@ -9955,6 +11302,105 @@ $$;
 ALTER FUNCTION public.respond_friend_request(p_friendship_id uuid, p_action text) OWNER TO postgres;
 
 --
+-- Name: respond_friendly_challenge(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.respond_friendly_challenge(p_challenge_id uuid, p_action text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    c_match_minutes constant integer := 90;
+    v_uid  uuid := auth.uid();
+    c      record;
+    v_home_captain uuid;
+    v_init_name text;
+    v_home_name text;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+
+    SELECT * INTO c FROM public.lobby_challenge WHERE id = p_challenge_id FOR UPDATE;
+    IF c.id IS NULL THEN RAISE EXCEPTION 'challenge not found'; END IF;
+    IF c.mode <> 'friendly' THEN RAISE EXCEPTION 'not a friendly challenge'; END IF;
+    IF c.status <> 'pending_home' THEN
+        RAISE EXCEPTION 'this challenge is not waiting on you';
+    END IF;
+    IF NOT public.lobby_can_manage(c.target_lobby_id, v_uid) THEN
+        RAISE EXCEPTION 'not a manager of the home lobby';
+    END IF;
+
+    SELECT name INTO v_init_name FROM public.lobby WHERE id = c.initiator_lobby_id;
+    SELECT name, captain_id INTO v_home_name, v_home_captain
+      FROM public.lobby WHERE id = c.target_lobby_id;
+
+    IF p_action = 'accept' THEN
+        UPDATE public.lobby_challenge
+           SET status = 'scheduled', updated_at = now() WHERE id = p_challenge_id;
+
+        INSERT INTO public.activity
+            (user_id, sport_id, lobby_id, challenge_id, start_time, end_time,
+             location_id, cost_type, cost_amount)
+        VALUES (v_home_captain, c.sport_id, c.target_lobby_id, p_challenge_id,
+                c.proposed_time, c.proposed_time + make_interval(mins => c_match_minutes),
+                c.proposed_location,
+                CASE WHEN COALESCE(c.venue_cost, 0) > 0 THEN 'total'::public.activity_cost_type END,
+                CASE WHEN COALESCE(c.venue_cost, 0) > 0 THEN c.venue_cost END);
+
+        UPDATE public.lobby_challenge_offer
+           SET status = 'taken' WHERE id = c.offer_id;
+
+        PERFORM public.fn_lapse_offer_challenges(c.offer_id,
+            COALESCE(v_home_name, 'Đội chủ nhà') || ' đã nhận lời thách đấu của đội khác');
+
+        PERFORM public.fn_enqueue_notification(
+            'challenger_confirmed',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = c.initiator_lobby_id),
+            'Thách đấu được chấp nhận',
+            COALESCE(v_home_name, 'Đối thủ') || ' đã nhận lời thách đấu',
+            jsonb_build_object('lobby_id', c.initiator_lobby_id, 'challenge_id', p_challenge_id));
+        PERFORM public.fn_enqueue_notification(
+            'challenge_scheduled',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = c.target_lobby_id),
+            'Trận đấu đã chốt',
+            'Trận gặp ' || COALESCE(v_init_name, 'đối thủ') || ' đã được xác nhận',
+            jsonb_build_object('lobby_id', c.target_lobby_id, 'challenge_id', p_challenge_id));
+
+        INSERT INTO public.lobby_feed_item (lobby_id, author_id, kind, payload)
+        SELECT l.id, l.captain_id, 'update',
+               jsonb_build_object(
+                   'title', 'Trận giao hữu',
+                   'kind',  'scheduled',
+                   'tone',  'blue',
+                   'fields', jsonb_build_array(
+                       jsonb_build_array('Đối thủ',
+                           CASE WHEN l.id = c.target_lobby_id THEN COALESCE(v_init_name, '—')
+                                ELSE COALESCE(v_home_name, '—') END),
+                       jsonb_build_array('Sân', COALESCE(
+                           (SELECT loc.name FROM public.location loc
+                             WHERE loc.id = c.proposed_location), '—'))))
+          FROM public.lobby l
+         WHERE l.id IN (c.initiator_lobby_id, c.target_lobby_id);
+
+    ELSIF p_action = 'decline' THEN
+        UPDATE public.lobby_challenge
+           SET status = 'declined', updated_at = now() WHERE id = p_challenge_id;
+
+        PERFORM public.fn_enqueue_notification(
+            'challenge_declined',
+            ARRAY(SELECT user_id FROM public.lobby_member WHERE lobby_id = c.initiator_lobby_id),
+            'Thách đấu bị từ chối',
+            COALESCE(v_home_name, 'Đối thủ') || ' đã từ chối lời thách đấu',
+            jsonb_build_object('lobby_id', c.initiator_lobby_id, 'challenge_id', p_challenge_id));
+    ELSE
+        RAISE EXCEPTION 'invalid action %', p_action;
+    END IF;
+END;
+$$;
+
+
+ALTER FUNCTION public.respond_friendly_challenge(p_challenge_id uuid, p_action text) OWNER TO postgres;
+
+--
 -- Name: revoke_lobby_invite_link(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -9977,53 +11423,67 @@ $$;
 ALTER FUNCTION public.revoke_lobby_invite_link(p_lobby_id uuid) OWNER TO postgres;
 
 --
--- Name: search_locations(text, character varying[], bigint); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: search_locations(text, character varying[], bigint, bigint); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.search_locations(search_term text, p_districts character varying[] DEFAULT NULL::character varying[], p_city_cluster bigint DEFAULT NULL::bigint) RETURNS TABLE(id uuid, name text, full_address text, street_number text, street_name text, district text, city text, lat double precision, lon double precision, tags text[], city_cluster bigint)
+CREATE FUNCTION public.search_locations(search_term text, p_districts character varying[] DEFAULT NULL::character varying[], p_city_cluster bigint DEFAULT NULL::bigint, p_sport_id bigint DEFAULT NULL::bigint) RETURNS TABLE(id uuid, name text, full_address text, street_number text, street_name text, district text, city text, lat double precision, lon double precision, tags text[], city_cluster bigint, sport_ids bigint[], has_declared_sport boolean, is_verified boolean, district_legacy text)
     LANGUAGE plpgsql STABLE
     SET search_path TO ''
     AS $$
+DECLARE
+    v_term text := COALESCE(search_term, '');
+    v_has_districts boolean := p_districts IS NOT NULL AND cardinality(p_districts) > 0;
+    v_wards text[];
 BEGIN
+    IF v_has_districts THEN
+        SELECT array_agg(extensions.unaccent(LOWER(x)))
+          INTO v_wards
+          FROM unnest(p_districts) AS x;
+    END IF;
+
     RETURN QUERY
     SELECT
-        l.id,
-        l.name,
-        l.full_address,
-        l.street_number,
-        l.street_name,
-        l.district,
-        l.city,
-        l.lat,
-        l.lon,
-        l.tags,
-        l.city_cluster
+        l.id, l.name, l.full_address, l.street_number, l.street_name,
+        l.district, l.city, l.lat, l.lon, l.tags, l.city_cluster,
+        l.sport_ids, l.has_declared_sport, l.is_verified, l.district_legacy
     FROM public.location l
     WHERE
         (p_city_cluster IS NULL OR l.city_cluster = p_city_cluster)
         AND (
+            p_sport_id IS NULL
+            OR NOT l.has_declared_sport
+            OR l.sport_ids && ARRAY[p_sport_id]::bigint[]
+        )
+        AND (
+            char_length(v_term) >= 2
+            OR l.is_verified
+            OR l.source = 'user_submitted'
+        )
+        AND (
             (
-                char_length(search_term) >= 8 AND (
-                    extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(l.name))) > 0.3
-                    OR extensions.word_similarity(LOWER(search_term), LOWER(l.name)) > 0.3
-                    OR extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(l.full_address))) > 0.3
-                    OR extensions.word_similarity(LOWER(search_term), LOWER(l.full_address)) > 0.3
+                char_length(v_term) >= 8 AND (
+                    extensions.word_similarity(extensions.unaccent(LOWER(v_term)), extensions.unaccent(LOWER(l.name))) > 0.3
+                    OR extensions.word_similarity(LOWER(v_term), LOWER(l.name)) > 0.3
+                    OR extensions.word_similarity(extensions.unaccent(LOWER(v_term)), extensions.unaccent(LOWER(l.full_address))) > 0.3
+                    OR extensions.word_similarity(LOWER(v_term), LOWER(l.full_address)) > 0.3
                 )
             )
             OR (
-                char_length(search_term) >= 2 AND (
-                    extensions.unaccent(LOWER(l.name)) LIKE '%' || extensions.unaccent(LOWER(search_term)) || '%'
-                    OR extensions.unaccent(LOWER(COALESCE(l.full_address, ''))) LIKE '%' || extensions.unaccent(LOWER(search_term)) || '%'
+                char_length(v_term) >= 2 AND (
+                    extensions.unaccent(LOWER(l.name)) LIKE '%' || extensions.unaccent(LOWER(v_term)) || '%'
+                    OR extensions.unaccent(LOWER(COALESCE(l.full_address, ''))) LIKE '%' || extensions.unaccent(LOWER(v_term)) || '%'
                 )
             )
-            OR (p_districts IS NOT NULL AND cardinality(p_districts) > 0 AND l.district = ANY(p_districts))
+            OR (v_has_districts AND extensions.unaccent(LOWER(l.district)) = ANY(v_wards))
+            OR (char_length(v_term) < 2 AND NOT v_has_districts)
         )
     ORDER BY
+        (p_sport_id IS NOT NULL AND l.sport_ids && ARRAY[p_sport_id]::bigint[]) DESC,
         GREATEST(
-            extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(l.name))),
-            extensions.word_similarity(LOWER(search_term), LOWER(l.name)),
-            extensions.word_similarity(extensions.unaccent(LOWER(search_term)), extensions.unaccent(LOWER(l.full_address))),
-            extensions.word_similarity(LOWER(search_term), LOWER(l.full_address))
+            extensions.word_similarity(extensions.unaccent(LOWER(v_term)), extensions.unaccent(LOWER(l.name))),
+            extensions.word_similarity(LOWER(v_term), LOWER(l.name)),
+            extensions.word_similarity(extensions.unaccent(LOWER(v_term)), extensions.unaccent(LOWER(l.full_address))),
+            extensions.word_similarity(LOWER(v_term), LOWER(l.full_address))
         ) DESC,
         l.name ASC
     LIMIT 60;
@@ -10031,7 +11491,7 @@ END;
 $$;
 
 
-ALTER FUNCTION public.search_locations(search_term text, p_districts character varying[], p_city_cluster bigint) OWNER TO postgres;
+ALTER FUNCTION public.search_locations(search_term text, p_districts character varying[], p_city_cluster bigint, p_sport_id bigint) OWNER TO postgres;
 
 --
 -- Name: search_networks_unaccent(text, integer); Type: FUNCTION; Schema: public; Owner: postgres
@@ -10331,6 +11791,92 @@ $$;
 ALTER FUNCTION public.send_friend_request(p_user_id uuid) OWNER TO postgres;
 
 --
+-- Name: send_friendly_challenge(uuid, uuid, integer, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.send_friendly_challenge(p_initiator_lobby uuid, p_offer_id uuid, p_threshold integer, p_note text DEFAULT NULL::text) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    c_match_minutes constant integer := 90;
+    v_uid     uuid := auth.uid();
+    o         record;
+    v_sport   bigint;
+    v_members integer;
+    v_captain uuid;
+    v_id      uuid;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+    IF NOT public.lobby_can_manage(p_initiator_lobby, v_uid) THEN
+        RAISE EXCEPTION 'not a manager of this lobby';
+    END IF;
+
+    SELECT * INTO o FROM public.lobby_challenge_offer WHERE id = p_offer_id FOR UPDATE;
+    IF o.id IS NULL OR o.status <> 'open' THEN
+        RAISE EXCEPTION 'that offer is no longer open';
+    END IF;
+    IF o.expires_at <= now() THEN
+        RAISE EXCEPTION 'that offer has closed';
+    END IF;
+    IF o.mode <> 'friendly' THEN
+        RAISE EXCEPTION 'that offer is not a friendly challenge';
+    END IF;
+    IF o.lobby_id = p_initiator_lobby THEN
+        RAISE EXCEPTION 'a lobby cannot challenge itself';
+    END IF;
+
+    SELECT sport_id, captain_id, member_count
+      INTO v_sport, v_captain, v_members
+      FROM public.lobby WHERE id = p_initiator_lobby;
+    IF v_sport IS DISTINCT FROM (SELECT sport_id FROM public.lobby WHERE id = o.lobby_id) THEN
+        RAISE EXCEPTION 'the two lobbies play different sports';
+    END IF;
+
+    IF p_threshold IS NULL OR p_threshold < 1 THEN
+        RAISE EXCEPTION 'the confirmation threshold must be at least 1';
+    END IF;
+    IF p_threshold > GREATEST(v_members, 1) THEN
+        RAISE EXCEPTION 'the threshold is larger than the lobby';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM public.lobby_challenge
+                WHERE initiator_lobby_id = p_initiator_lobby AND offer_id = p_offer_id
+                  AND status IN ('requested', 'pending_home')) THEN
+        RAISE EXCEPTION 'you already have an open challenge on this offer';
+    END IF;
+
+    INSERT INTO public.lobby_challenge
+        (initiator_lobby_id, target_lobby_id, sport_id, status, mode, offer_id,
+         proposed_time, proposed_location, agreed_cost, note,
+         venue_cost, cost_split, bounty_kind, bounty_amount,
+         ruleset, ruleset_param, handicap_side, handicap_amount, terms_note)
+    VALUES (p_initiator_lobby, o.lobby_id, v_sport, 'requested', 'friendly', p_offer_id,
+            o.kickoff, o.location_id, o.venue_cost,
+            nullif(btrim(coalesce(p_note, '')), ''),
+            o.venue_cost, o.cost_split, o.bounty_kind, o.bounty_amount,
+            o.ruleset, o.ruleset_param, o.handicap_side, o.handicap_amount, o.terms_note)
+    RETURNING id INTO v_id;
+
+    INSERT INTO public.activity
+        (user_id, sport_id, lobby_id, challenge_id, start_time, end_time,
+         location_id, cost_type, cost_amount,
+         confirmation_threshold, confirmation_deadline)
+    VALUES (v_captain, v_sport, p_initiator_lobby, v_id,
+            o.kickoff, o.kickoff + make_interval(mins => c_match_minutes),
+            o.location_id,
+            CASE WHEN COALESCE(o.venue_cost, 0) > 0 THEN 'total'::public.activity_cost_type END,
+            CASE WHEN COALESCE(o.venue_cost, 0) > 0 THEN o.venue_cost END,
+            p_threshold, o.expires_at);
+
+    RETURN v_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.send_friendly_challenge(p_initiator_lobby uuid, p_offer_id uuid, p_threshold integer, p_note text) OWNER TO postgres;
+
+--
 -- Name: send_message(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -10448,6 +11994,57 @@ $$;
 
 
 ALTER FUNCTION public.set_lobby_challenge_offer(p_lobby_id uuid, p_open boolean, p_time timestamp with time zone, p_location uuid, p_cost numeric) OWNER TO postgres;
+
+--
+-- Name: set_lobby_location_alias(uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.set_lobby_location_alias(p_lobby_id uuid, p_location_id uuid, p_name text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+    v_uid uuid := auth.uid();
+    v_venue_name text;
+BEGIN
+    IF v_uid IS NULL THEN
+        RAISE EXCEPTION 'not authenticated' USING ERRCODE = '42501';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM public.lobby_member
+         WHERE lobby_id = p_lobby_id AND user_id = v_uid
+    ) THEN
+        RAISE EXCEPTION 'not a member of this lobby' USING ERRCODE = '42501';
+    END IF;
+
+    SELECT name INTO v_venue_name
+      FROM public.location WHERE id = p_location_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'no such location' USING ERRCODE = '23503';
+    END IF;
+
+    IF btrim(coalesce(v_venue_name, '')) <> '' THEN
+        RAISE EXCEPTION 'this venue already has a name'
+            USING ERRCODE = '22023';
+    END IF;
+
+    IF btrim(coalesce(p_name, '')) = '' THEN
+        DELETE FROM public.lobby_location_alias
+         WHERE lobby_id = p_lobby_id AND location_id = p_location_id;
+        RETURN;
+    END IF;
+
+    INSERT INTO public.lobby_location_alias
+        (lobby_id, location_id, name, created_by)
+    VALUES (p_lobby_id, p_location_id, btrim(p_name), v_uid)
+    ON CONFLICT (lobby_id, location_id) DO UPDATE
+        SET name = EXCLUDED.name, created_by = EXCLUDED.created_by;
+END;
+$$;
+
+
+ALTER FUNCTION public.set_lobby_location_alias(p_lobby_id uuid, p_location_id uuid, p_name text) OWNER TO postgres;
 
 --
 -- Name: set_lobby_member_role(uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
@@ -11394,6 +12991,32 @@ $$;
 
 
 ALTER FUNCTION public.wall_feed_has_unread(p_since timestamp with time zone) OWNER TO postgres;
+
+--
+-- Name: withdraw_challenge_offer(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.withdraw_challenge_offer(p_offer_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_uid uuid := auth.uid(); v_lobby uuid;
+BEGIN
+    IF v_uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
+    SELECT lobby_id INTO v_lobby FROM public.lobby_challenge_offer
+     WHERE id = p_offer_id AND status = 'open' FOR UPDATE;
+    IF v_lobby IS NULL THEN RAISE EXCEPTION 'no open offer'; END IF;
+    IF NOT public.lobby_can_manage(v_lobby, v_uid) THEN
+        RAISE EXCEPTION 'not a manager of this lobby';
+    END IF;
+
+    UPDATE public.lobby_challenge_offer SET status = 'withdrawn' WHERE id = p_offer_id;
+    PERFORM public.fn_lapse_offer_challenges(p_offer_id, 'Đội chủ nhà đã rút lời mời');
+END;
+$$;
+
+
+ALTER FUNCTION public.withdraw_challenge_offer(p_offer_id uuid) OWNER TO postgres;
 
 --
 -- Name: withdraw_course_proposal(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -13647,6 +15270,39 @@ COMMENT ON COLUMN auth.mfa_factors.last_webauthn_challenge_data IS 'Stores the l
 
 
 --
+-- Name: mfa_recovery_code_sets; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE TABLE auth.mfa_recovery_code_sets (
+    id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    mfa_factor_id uuid NOT NULL,
+    failed_verification_count integer DEFAULT 0 NOT NULL,
+    verification_locked_until timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mfa_recovery_code_sets_failed_verification_count_check CHECK ((failed_verification_count >= 0))
+);
+
+
+ALTER TABLE auth.mfa_recovery_code_sets OWNER TO supabase_auth_admin;
+
+--
+-- Name: mfa_recovery_codes; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE TABLE auth.mfa_recovery_codes (
+    id uuid NOT NULL,
+    mfa_recovery_code_set_id uuid NOT NULL,
+    code_hash text NOT NULL,
+    consumed_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE auth.mfa_recovery_codes OWNER TO supabase_auth_admin;
+
+--
 -- Name: oauth_authorizations; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
 --
 
@@ -13760,6 +15416,7 @@ CREATE TABLE auth.one_time_tokens (
     relates_to text NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone,
     CONSTRAINT one_time_tokens_token_hash_check CHECK ((char_length(token_hash) > 0))
 );
 
@@ -13885,6 +15542,47 @@ ALTER TABLE auth.schema_migrations OWNER TO supabase_auth_admin;
 
 COMMENT ON TABLE auth.schema_migrations IS 'Auth: Manages updates to the auth system.';
 
+
+--
+-- Name: scim_tokens; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE TABLE auth.scim_tokens (
+    id uuid NOT NULL,
+    sso_provider_id uuid NOT NULL,
+    token_hash text NOT NULL,
+    prefix text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone,
+    revoked_at timestamp with time zone,
+    last_used_at timestamp with time zone,
+    CONSTRAINT scim_tokens_expires_at_future CHECK (((expires_at IS NULL) OR (expires_at > created_at))),
+    CONSTRAINT scim_tokens_revoked_after_created CHECK (((revoked_at IS NULL) OR (revoked_at >= created_at))),
+    CONSTRAINT scim_tokens_token_hash_check CHECK ((token_hash ~ '^[0-9a-f]{64}$'::text))
+);
+
+
+ALTER TABLE auth.scim_tokens OWNER TO supabase_auth_admin;
+
+--
+-- Name: scim_users; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE TABLE auth.scim_users (
+    id uuid NOT NULL,
+    sso_provider_id uuid NOT NULL,
+    user_id uuid,
+    resource jsonb NOT NULL,
+    user_name text GENERATED ALWAYS AS (lower((resource ->> 'userName'::text))) STORED NOT NULL,
+    external_id text GENERATED ALWAYS AS ((resource ->> 'externalId'::text)) STORED,
+    active boolean GENERATED ALWAYS AS (COALESCE(((resource ->> 'active'::text))::boolean, true)) STORED NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE auth.scim_users OWNER TO supabase_auth_admin;
 
 --
 -- Name: sessions; Type: TABLE; Schema: auth; Owner: supabase_auth_admin
@@ -14677,6 +16375,9 @@ CREATE TABLE public.lobby (
     challenge_offer_cost numeric(10,2),
     rated_match_count integer DEFAULT 0 NOT NULL,
     description text,
+    trust_score integer DEFAULT 40 NOT NULL,
+    dispute_penalty_total integer DEFAULT 0 NOT NULL,
+    dispute_streak integer DEFAULT 0 NOT NULL,
     CONSTRAINT lobby_challenge_offer_complete CHECK (((NOT open_to_challengers) OR ((challenge_offer_time IS NOT NULL) AND (challenge_offer_location IS NOT NULL) AND (challenge_offer_cost IS NOT NULL)))),
     CONSTRAINT lobby_description_length CHECK (((description IS NULL) OR (char_length(description) <= 3000)))
 );
@@ -14689,6 +16390,13 @@ ALTER TABLE public.lobby OWNER TO postgres;
 --
 
 COMMENT ON COLUMN public.lobby.challenge_offer_cost IS 'Cost per team for the offered match, EXCLUDING the referee fee (the referee is hired separately by the home team and settled out of band). Informational — there is no ledger.';
+
+
+--
+-- Name: COLUMN lobby.trust_score; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.lobby.trust_score IS 'Derived: 40 + sum(per-match recommendation net, clamped +/-14) - dispute_penalty_total. Never written directly - call fn_recompute_lobby_trust. Display only; gates nothing.';
 
 
 --
@@ -14729,11 +16437,103 @@ CREATE TABLE public.lobby_challenge (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     agreed_cost numeric(10,2),
+    mode public.lobby_challenge_mode DEFAULT 'friendly'::public.lobby_challenge_mode NOT NULL,
+    offer_id uuid,
+    venue_cost numeric(10,2),
+    cost_split public.challenge_cost_split DEFAULT 'none'::public.challenge_cost_split NOT NULL,
+    bounty_kind public.challenge_bounty_kind DEFAULT 'none'::public.challenge_bounty_kind NOT NULL,
+    bounty_amount numeric(10,2),
+    ruleset public.challenge_ruleset DEFAULT 'standard'::public.challenge_ruleset NOT NULL,
+    ruleset_param smallint,
+    handicap_side public.challenge_handicap_side DEFAULT 'none'::public.challenge_handicap_side NOT NULL,
+    handicap_amount smallint,
+    terms_note text,
+    no_show_claimed_by uuid,
+    no_show_claimed_at timestamp with time zone,
+    report_reminded_at timestamp with time zone,
     CONSTRAINT lobby_challenge_distinct CHECK ((initiator_lobby_id <> target_lobby_id))
 );
 
 
 ALTER TABLE public.lobby_challenge OWNER TO postgres;
+
+--
+-- Name: lobby_challenge_offer; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.lobby_challenge_offer (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    lobby_id uuid NOT NULL,
+    mode public.lobby_challenge_mode DEFAULT 'friendly'::public.lobby_challenge_mode NOT NULL,
+    slot smallint NOT NULL,
+    status public.lobby_challenge_offer_status DEFAULT 'open'::public.lobby_challenge_offer_status NOT NULL,
+    kickoff timestamp with time zone NOT NULL,
+    location_id uuid NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    venue_cost numeric(10,2),
+    cost_split public.challenge_cost_split DEFAULT 'none'::public.challenge_cost_split NOT NULL,
+    bounty_kind public.challenge_bounty_kind DEFAULT 'none'::public.challenge_bounty_kind NOT NULL,
+    bounty_amount numeric(10,2),
+    ruleset public.challenge_ruleset DEFAULT 'standard'::public.challenge_ruleset NOT NULL,
+    ruleset_param smallint,
+    handicap_side public.challenge_handicap_side DEFAULT 'none'::public.challenge_handicap_side NOT NULL,
+    handicap_amount smallint,
+    terms_note text,
+    created_by uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    renewed_from uuid,
+    CONSTRAINT lobby_challenge_offer_bounty_shape CHECK (((bounty_kind = 'none'::public.challenge_bounty_kind) = (bounty_amount IS NULL))),
+    CONSTRAINT lobby_challenge_offer_costs_nonneg CHECK ((((venue_cost IS NULL) OR (venue_cost >= (0)::numeric)) AND ((bounty_amount IS NULL) OR (bounty_amount >= (0)::numeric)))),
+    CONSTRAINT lobby_challenge_offer_custom_needs_note CHECK (((ruleset <> 'custom'::public.challenge_ruleset) OR (btrim(COALESCE(terms_note, ''::text)) <> ''::text))),
+    CONSTRAINT lobby_challenge_offer_expiry_before_kickoff CHECK ((expires_at < kickoff)),
+    CONSTRAINT lobby_challenge_offer_handicap_shape CHECK ((((handicap_side = 'none'::public.challenge_handicap_side) = (handicap_amount IS NULL)) AND ((handicap_amount IS NULL) OR (handicap_amount > 0)))),
+    CONSTRAINT lobby_challenge_offer_note_length CHECK (((terms_note IS NULL) OR (char_length(terms_note) <= 280))),
+    CONSTRAINT lobby_challenge_offer_ruleset_param_shape CHECK (
+CASE ruleset
+    WHEN 'best_of_sets'::public.challenge_ruleset THEN ((ruleset_param IS NOT NULL) AND (ruleset_param > 0))
+    WHEN 'team_tie'::public.challenge_ruleset THEN ((ruleset_param IS NOT NULL) AND (ruleset_param > 0))
+    ELSE (ruleset_param IS NULL)
+END),
+    CONSTRAINT lobby_challenge_offer_slot_range CHECK (((slot >= 1) AND (slot <= 3)))
+);
+
+
+ALTER TABLE public.lobby_challenge_offer OWNER TO postgres;
+
+--
+-- Name: TABLE lobby_challenge_offer; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.lobby_challenge_offer IS 'A lobby''s advertised fixture. Up to 3 open at once per lobby (slot 1..3, index-enforced). Replaces lobby.challenge_offer_time/_location/_cost, which could hold exactly one offer with no identity to snapshot and nowhere to put expiry, format or handicap. Public-readable (guests browse Discover); all writes go through SECURITY DEFINER RPCs so the slot cap and the manage-tier gate cannot be bypassed.';
+
+
+--
+-- Name: lobby_challenge_report; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.lobby_challenge_report (
+    challenge_id uuid NOT NULL,
+    lobby_id uuid NOT NULL,
+    reported_by uuid,
+    result public.lobby_match_result NOT NULL,
+    is_forfeit boolean DEFAULT false NOT NULL,
+    sets jsonb,
+    mvp_user_id uuid,
+    note text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT lobby_challenge_report_note_length CHECK (((note IS NULL) OR (char_length(note) <= 280))),
+    CONSTRAINT lobby_challenge_report_result_shape CHECK ((result <> 'disputed'::public.lobby_match_result))
+);
+
+
+ALTER TABLE public.lobby_challenge_report OWNER TO postgres;
+
+--
+-- Name: TABLE lobby_challenge_report; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.lobby_challenge_report IS 'One blind result report per lobby per friendly challenge. result is stored normalised to the HOME frame so the two rows compare directly. RLS is what makes reporting blind: the opponent row is unreadable until the challenge leaves awaiting_reports. Matching reports rate the match; conflicting ones make it disputed and cost both lobbies a loss.';
+
 
 --
 -- Name: lobby_feed_item; Type: TABLE; Schema: public; Owner: postgres
@@ -14831,6 +16631,22 @@ CREATE TABLE public.lobby_invite_link (
 ALTER TABLE public.lobby_invite_link OWNER TO postgres;
 
 --
+-- Name: lobby_location_alias; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.lobby_location_alias (
+    lobby_id uuid NOT NULL,
+    location_id uuid NOT NULL,
+    name text NOT NULL,
+    created_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT lobby_location_alias_name_check CHECK (((btrim(name) <> ''::text) AND (char_length(name) <= 80)))
+);
+
+
+ALTER TABLE public.lobby_location_alias OWNER TO postgres;
+
+--
 -- Name: lobby_match; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -14849,8 +16665,9 @@ CREATE TABLE public.lobby_match (
     duration_label text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     referee_booking_id uuid,
-    CONSTRAINT lobby_match_referee_required_for_scored_challenge CHECK (((opponent_lobby_id IS NULL) OR (result = 'practice'::public.lobby_match_result) OR (referee_booking_id IS NOT NULL))),
-    CONSTRAINT lobby_match_sets_only_when_decided CHECK ((((result = 'practice'::public.lobby_match_result) AND (sets IS NULL)) OR (result <> 'practice'::public.lobby_match_result)))
+    result_source public.match_result_source DEFAULT 'referee'::public.match_result_source NOT NULL,
+    CONSTRAINT lobby_match_referee_required_for_scored_challenge CHECK (((opponent_lobby_id IS NULL) OR (result = 'practice'::public.lobby_match_result) OR (referee_booking_id IS NOT NULL) OR (result_source <> 'referee'::public.match_result_source))),
+    CONSTRAINT lobby_match_sets_only_when_decided CHECK ((((result = ANY (ARRAY['practice'::public.lobby_match_result, 'disputed'::public.lobby_match_result])) AND (sets IS NULL)) OR (result <> ALL (ARRAY['practice'::public.lobby_match_result, 'disputed'::public.lobby_match_result]))))
 );
 
 
@@ -14868,6 +16685,13 @@ COMMENT ON TABLE public.lobby_match IS 'Recorded match results for a lobby. sets
 --
 
 COMMENT ON COLUMN public.lobby_match.referee_booking_id IS 'FK to the professional_booking that hired the referee for this match. Required for challenge matches (see lobby_match_referee_required_for_challenge). RESTRICT on delete because the booking row is the historical record of the hire — deleting it would orphan the audit trail.';
+
+
+--
+-- Name: COLUMN lobby_match.result_source; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.lobby_match.result_source IS 'How this result came to be. referee: a hired official recorded it (the flag-gated flow). agreed: both lobbies filed blind reports that matched. one_sided: only one lobby filed by the 24h deadline. forfeit: an uncountered no-show claim. mutual_concession: both lobbies conceded, recorded as a draw. disputed: the two blind reports conflicted.';
 
 
 --
@@ -14976,6 +16800,21 @@ CREATE TABLE public.lobby_payment_settlement_item (
 ALTER TABLE public.lobby_payment_settlement_item OWNER TO postgres;
 
 --
+-- Name: lobby_recommendation; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.lobby_recommendation (
+    match_id uuid NOT NULL,
+    voter_id uuid NOT NULL,
+    subject_lobby_id uuid NOT NULL,
+    kind public.lobby_recommendation_kind NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.lobby_recommendation OWNER TO postgres;
+
+--
 -- Name: location; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -14995,11 +16834,22 @@ CREATE TABLE public.location (
     source text DEFAULT 'directory'::text NOT NULL,
     submitted_by uuid,
     is_verified boolean DEFAULT true NOT NULL,
-    CONSTRAINT location_source_check CHECK ((source = ANY (ARRAY['directory'::text, 'user_submitted'::text])))
+    district_legacy text,
+    sport_ids bigint[] DEFAULT '{}'::bigint[] NOT NULL,
+    amenity_kinds text[] DEFAULT '{}'::text[] NOT NULL,
+    has_declared_sport boolean DEFAULT false NOT NULL,
+    CONSTRAINT location_source_check CHECK ((source = ANY (ARRAY['directory'::text, 'user_submitted'::text, 'curated'::text])))
 );
 
 
 ALTER TABLE public.location OWNER TO postgres;
+
+--
+-- Name: COLUMN location.external_id; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.location.external_id IS 'Import idempotency key, namespaced: `osm:<type>/<id>` for OpenStreetMap elements, `passe:<city>-<slug>` for the hand-curated seed, `legacy:<uuid>` for pre-existing rows with no resolvable upstream id, and NULL for rows created by create_location (user submissions, which the importer never overwrites). Bare numeric values are un-renamespaced rows from the original scrape, pending the tool/venue import.';
+
 
 --
 -- Name: COLUMN location.lat; Type: COMMENT; Schema: public; Owner: postgres
@@ -15013,6 +16863,34 @@ COMMENT ON COLUMN public.location.lat IS 'latitude';
 --
 
 COMMENT ON COLUMN public.location.lon IS 'longitude';
+
+
+--
+-- Name: COLUMN location.district_legacy; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.location.district_legacy IS 'Pre-normalization value of `district` as the original scrape stored it (a "Quan X" label, a "Phuong Y" label, or blank). Kept for reversibility and as a coarse legacy filter target. `district` itself is the canonical ward id (District.id) once the tool/venue backfill has run.';
+
+
+--
+-- Name: COLUMN location.sport_ids; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.location.sport_ids IS 'Passe sport ids this venue supports, derived from OSM tags by tool/venue/normalize.py. Empty means "no sport declared", which is NOT the same as "supports nothing" - see has_declared_sport.';
+
+
+--
+-- Name: COLUMN location.amenity_kinds; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.location.amenity_kinds IS 'Recognized facility kinds (pitch, sports_centre, stadium, swimming_pool, track), as homeTab.location.amenity.<value> translation-key suffixes.';
+
+
+--
+-- Name: COLUMN location.has_declared_sport; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.location.has_declared_sport IS 'Whether the source data declared ANY sport, including sports Passe does not support (volleyball, swimming). Distinguishes "explicitly for a different sport" (hide) from "no sport info" (keep). Filters MUST read it: a bare sport_ids && ARRAY[p_sport_id] silently drops the 433 untagged rows the client deliberately keeps today.';
 
 
 --
@@ -16294,6 +18172,38 @@ ALTER TABLE ONLY auth.mfa_factors
 
 
 --
+-- Name: mfa_recovery_code_sets mfa_recovery_code_sets_mfa_factor_id_key; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+--
+
+ALTER TABLE ONLY auth.mfa_recovery_code_sets
+    ADD CONSTRAINT mfa_recovery_code_sets_mfa_factor_id_key UNIQUE (mfa_factor_id);
+
+
+--
+-- Name: mfa_recovery_code_sets mfa_recovery_code_sets_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+--
+
+ALTER TABLE ONLY auth.mfa_recovery_code_sets
+    ADD CONSTRAINT mfa_recovery_code_sets_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: mfa_recovery_code_sets mfa_recovery_code_sets_user_id_key; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+--
+
+ALTER TABLE ONLY auth.mfa_recovery_code_sets
+    ADD CONSTRAINT mfa_recovery_code_sets_user_id_key UNIQUE (user_id);
+
+
+--
+-- Name: mfa_recovery_codes mfa_recovery_codes_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+--
+
+ALTER TABLE ONLY auth.mfa_recovery_codes
+    ADD CONSTRAINT mfa_recovery_codes_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: oauth_authorizations oauth_authorizations_authorization_code_key; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
 --
 
@@ -16403,6 +18313,22 @@ ALTER TABLE ONLY auth.saml_relay_states
 
 ALTER TABLE ONLY auth.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: scim_tokens scim_tokens_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+--
+
+ALTER TABLE ONLY auth.scim_tokens
+    ADD CONSTRAINT scim_tokens_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scim_users scim_users_pkey; Type: CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+--
+
+ALTER TABLE ONLY auth.scim_users
+    ADD CONSTRAINT scim_users_pkey PRIMARY KEY (id);
 
 
 --
@@ -16702,11 +18628,27 @@ ALTER TABLE ONLY public.lobby_befriend_record
 
 
 --
+-- Name: lobby_challenge_offer lobby_challenge_offer_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_challenge_offer
+    ADD CONSTRAINT lobby_challenge_offer_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: lobby_challenge lobby_challenge_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.lobby_challenge
     ADD CONSTRAINT lobby_challenge_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lobby_challenge_report lobby_challenge_report_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_challenge_report
+    ADD CONSTRAINT lobby_challenge_report_pkey PRIMARY KEY (challenge_id, lobby_id);
 
 
 --
@@ -16755,6 +18697,14 @@ ALTER TABLE ONLY public.lobby_invite_link
 
 ALTER TABLE ONLY public.lobby_invite_link
     ADD CONSTRAINT lobby_invite_link_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lobby_location_alias lobby_location_alias_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_location_alias
+    ADD CONSTRAINT lobby_location_alias_pkey PRIMARY KEY (lobby_id, location_id);
 
 
 --
@@ -16846,19 +18796,19 @@ ALTER TABLE ONLY public.lobby
 
 
 --
+-- Name: lobby_recommendation lobby_recommendation_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_recommendation
+    ADD CONSTRAINT lobby_recommendation_pkey PRIMARY KEY (match_id, voter_id);
+
+
+--
 -- Name: location location_external_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.location
     ADD CONSTRAINT location_external_id_key UNIQUE (external_id);
-
-
---
--- Name: location location_full_address_key; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.location
-    ADD CONSTRAINT location_full_address_key UNIQUE (full_address);
 
 
 --
@@ -17499,6 +19449,13 @@ CREATE INDEX mfa_factors_user_id_idx ON auth.mfa_factors USING btree (user_id);
 
 
 --
+-- Name: mfa_recovery_codes_set_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE INDEX mfa_recovery_codes_set_id_idx ON auth.mfa_recovery_codes USING btree (mfa_recovery_code_set_id);
+
+
+--
 -- Name: oauth_auth_pending_exp_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
 --
 
@@ -17629,6 +19586,97 @@ CREATE INDEX saml_relay_states_for_email_idx ON auth.saml_relay_states USING btr
 --
 
 CREATE INDEX saml_relay_states_sso_provider_id_idx ON auth.saml_relay_states USING btree (sso_provider_id);
+
+
+--
+-- Name: scim_tokens_expires_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE INDEX scim_tokens_expires_at_idx ON auth.scim_tokens USING btree (expires_at);
+
+
+--
+-- Name: scim_tokens_revoked_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE INDEX scim_tokens_revoked_at_idx ON auth.scim_tokens USING btree (revoked_at);
+
+
+--
+-- Name: scim_tokens_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE INDEX scim_tokens_sso_provider_id_idx ON auth.scim_tokens USING btree (sso_provider_id);
+
+
+--
+-- Name: scim_tokens_token_hash_key; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE UNIQUE INDEX scim_tokens_token_hash_key ON auth.scim_tokens USING btree (token_hash);
+
+
+--
+-- Name: scim_users_created_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE INDEX scim_users_created_at_idx ON auth.scim_users USING btree (sso_provider_id, created_at, id) WHERE (deleted_at IS NULL);
+
+
+--
+-- Name: scim_users_deleted_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE INDEX scim_users_deleted_at_idx ON auth.scim_users USING btree (deleted_at);
+
+
+--
+-- Name: scim_users_external_id_key; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE UNIQUE INDEX scim_users_external_id_key ON auth.scim_users USING btree (sso_provider_id, external_id) WHERE ((external_id IS NOT NULL) AND (deleted_at IS NULL));
+
+
+--
+-- Name: scim_users_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE INDEX scim_users_id_idx ON auth.scim_users USING btree (sso_provider_id, id) WHERE (deleted_at IS NULL);
+
+
+--
+-- Name: scim_users_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE INDEX scim_users_sso_provider_id_idx ON auth.scim_users USING btree (sso_provider_id);
+
+
+--
+-- Name: scim_users_updated_at_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE INDEX scim_users_updated_at_idx ON auth.scim_users USING btree (sso_provider_id, updated_at, id) WHERE (deleted_at IS NULL);
+
+
+--
+-- Name: scim_users_user_id_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE INDEX scim_users_user_id_idx ON auth.scim_users USING btree (user_id);
+
+
+--
+-- Name: scim_users_user_name_idx; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE INDEX scim_users_user_name_idx ON auth.scim_users USING btree (sso_provider_id, user_name COLLATE "C", id) WHERE (deleted_at IS NULL);
+
+
+--
+-- Name: scim_users_user_name_key; Type: INDEX; Schema: auth; Owner: supabase_auth_admin
+--
+
+CREATE UNIQUE INDEX scim_users_user_name_key ON auth.scim_users USING btree (sso_provider_id, user_name) WHERE (deleted_at IS NULL);
 
 
 --
@@ -18094,6 +20142,13 @@ CREATE INDEX idx_lobby_invite_link_lobby_id ON public.lobby_invite_link USING bt
 
 
 --
+-- Name: idx_lobby_location_alias_location; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_lobby_location_alias_location ON public.lobby_location_alias USING btree (location_id);
+
+
+--
 -- Name: idx_lobby_member_lobby_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -18122,6 +20177,13 @@ CREATE INDEX idx_location_city_cluster ON public.location USING btree (city_clus
 
 
 --
+-- Name: idx_location_full_address; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_location_full_address ON public.location USING btree (full_address);
+
+
+--
 -- Name: idx_location_full_address_trgm; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -18133,6 +20195,13 @@ CREATE INDEX idx_location_full_address_trgm ON public.location USING gin (public
 --
 
 CREATE INDEX idx_location_name_trgm ON public.location USING gin (public.immutable_unaccent(lower(name)) extensions.gin_trgm_ops);
+
+
+--
+-- Name: idx_location_sport_ids; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_location_sport_ids ON public.location USING gin (sport_ids);
 
 
 --
@@ -18248,6 +20317,34 @@ CREATE INDEX idx_vitality_score_user_date ON public.vitality_score USING btree (
 
 
 --
+-- Name: lobby_challenge_offer_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX lobby_challenge_offer_idx ON public.lobby_challenge USING btree (offer_id, status);
+
+
+--
+-- Name: lobby_challenge_offer_lobby_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX lobby_challenge_offer_lobby_idx ON public.lobby_challenge_offer USING btree (lobby_id, status);
+
+
+--
+-- Name: lobby_challenge_offer_one_per_slot_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX lobby_challenge_offer_one_per_slot_idx ON public.lobby_challenge_offer USING btree (lobby_id, slot) WHERE (status = 'open'::public.lobby_challenge_offer_status);
+
+
+--
+-- Name: lobby_challenge_offer_open_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX lobby_challenge_offer_open_idx ON public.lobby_challenge_offer USING btree (expires_at) WHERE (status = 'open'::public.lobby_challenge_offer_status);
+
+
+--
 -- Name: lobby_challenge_offer_time_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -18255,10 +20352,10 @@ CREATE INDEX lobby_challenge_offer_time_idx ON public.lobby USING btree (challen
 
 
 --
--- Name: lobby_challenge_one_open; Type: INDEX; Schema: public; Owner: postgres
+-- Name: lobby_challenge_one_open_per_offer; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX lobby_challenge_one_open ON public.lobby_challenge USING btree (initiator_lobby_id, target_lobby_id) WHERE (status = 'requested'::public.lobby_challenge_status);
+CREATE UNIQUE INDEX lobby_challenge_one_open_per_offer ON public.lobby_challenge USING btree (initiator_lobby_id, offer_id) WHERE (status = ANY (ARRAY['requested'::public.lobby_challenge_status, 'pending_home'::public.lobby_challenge_status]));
 
 
 --
@@ -18364,6 +20461,13 @@ CREATE INDEX lobby_payment_settlement_lobby_idx ON public.lobby_payment_settleme
 --
 
 CREATE INDEX lobby_payment_settlement_recipient_idx ON public.lobby_payment_settlement USING btree (recipient_id);
+
+
+--
+-- Name: lobby_recommendation_subject_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX lobby_recommendation_subject_idx ON public.lobby_recommendation USING btree (subject_lobby_id, kind);
 
 
 --
@@ -18887,7 +20991,7 @@ CREATE TRIGGER lobby_join_request_response_notify AFTER UPDATE OF status ON publ
 -- Name: lobby_match lobby_match_apply_rating; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER lobby_match_apply_rating AFTER INSERT ON public.lobby_match FOR EACH ROW WHEN (((new.opponent_lobby_id IS NOT NULL) AND (new.result <> 'practice'::public.lobby_match_result) AND (new.referee_booking_id IS NOT NULL))) EXECUTE FUNCTION public.trg_lobby_match_rating();
+CREATE TRIGGER lobby_match_apply_rating AFTER INSERT ON public.lobby_match FOR EACH ROW WHEN (((new.opponent_lobby_id IS NOT NULL) AND (new.result <> 'practice'::public.lobby_match_result))) EXECUTE FUNCTION public.trg_lobby_match_rating();
 
 
 --
@@ -19021,6 +21125,13 @@ CREATE TRIGGER trg_course_member_denormalise BEFORE INSERT OR UPDATE OF course_i
 --
 
 CREATE TRIGGER trg_course_review_rollup AFTER INSERT ON public.course_review FOR EACH ROW EXECUTE FUNCTION public.fn_course_review_rollup();
+
+
+--
+-- Name: activity_confirmation trg_friendly_challenge_quorum; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trg_friendly_challenge_quorum AFTER INSERT OR UPDATE ON public.activity_confirmation FOR EACH ROW EXECUTE FUNCTION public.fn_friendly_challenge_quorum();
 
 
 --
@@ -19168,6 +21279,30 @@ ALTER TABLE ONLY auth.mfa_factors
 
 
 --
+-- Name: mfa_recovery_code_sets mfa_recovery_code_sets_mfa_factor_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+--
+
+ALTER TABLE ONLY auth.mfa_recovery_code_sets
+    ADD CONSTRAINT mfa_recovery_code_sets_mfa_factor_id_fkey FOREIGN KEY (mfa_factor_id) REFERENCES auth.mfa_factors(id) ON DELETE CASCADE;
+
+
+--
+-- Name: mfa_recovery_code_sets mfa_recovery_code_sets_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+--
+
+ALTER TABLE ONLY auth.mfa_recovery_code_sets
+    ADD CONSTRAINT mfa_recovery_code_sets_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: mfa_recovery_codes mfa_recovery_codes_mfa_recovery_code_set_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+--
+
+ALTER TABLE ONLY auth.mfa_recovery_codes
+    ADD CONSTRAINT mfa_recovery_codes_mfa_recovery_code_set_id_fkey FOREIGN KEY (mfa_recovery_code_set_id) REFERENCES auth.mfa_recovery_code_sets(id) ON DELETE CASCADE;
+
+
+--
 -- Name: oauth_authorizations oauth_authorizations_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
 --
 
@@ -19237,6 +21372,30 @@ ALTER TABLE ONLY auth.saml_relay_states
 
 ALTER TABLE ONLY auth.saml_relay_states
     ADD CONSTRAINT saml_relay_states_sso_provider_id_fkey FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE;
+
+
+--
+-- Name: scim_tokens scim_tokens_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+--
+
+ALTER TABLE ONLY auth.scim_tokens
+    ADD CONSTRAINT scim_tokens_sso_provider_id_fkey FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE;
+
+
+--
+-- Name: scim_users scim_users_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+--
+
+ALTER TABLE ONLY auth.scim_users
+    ADD CONSTRAINT scim_users_sso_provider_id_fkey FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE;
+
+
+--
+-- Name: scim_users scim_users_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: supabase_auth_admin
+--
+
+ALTER TABLE ONLY auth.scim_users
+    ADD CONSTRAINT scim_users_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL;
 
 
 --
@@ -19664,6 +21823,38 @@ ALTER TABLE ONLY public.lobby_challenge
 
 
 --
+-- Name: lobby_challenge lobby_challenge_no_show_claimed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_challenge
+    ADD CONSTRAINT lobby_challenge_no_show_claimed_by_fkey FOREIGN KEY (no_show_claimed_by) REFERENCES public.lobby(id) ON DELETE SET NULL;
+
+
+--
+-- Name: lobby_challenge_offer lobby_challenge_offer_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_challenge_offer
+    ADD CONSTRAINT lobby_challenge_offer_created_by_fkey FOREIGN KEY (created_by) REFERENCES public."user"(id) ON DELETE SET NULL;
+
+
+--
+-- Name: lobby_challenge lobby_challenge_offer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_challenge
+    ADD CONSTRAINT lobby_challenge_offer_id_fkey FOREIGN KEY (offer_id) REFERENCES public.lobby_challenge_offer(id) ON DELETE SET NULL;
+
+
+--
+-- Name: lobby_challenge_offer lobby_challenge_offer_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_challenge_offer
+    ADD CONSTRAINT lobby_challenge_offer_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
+
+
+--
 -- Name: lobby lobby_challenge_offer_location_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -19672,11 +21863,59 @@ ALTER TABLE ONLY public.lobby
 
 
 --
+-- Name: lobby_challenge_offer lobby_challenge_offer_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_challenge_offer
+    ADD CONSTRAINT lobby_challenge_offer_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.location(id);
+
+
+--
+-- Name: lobby_challenge_offer lobby_challenge_offer_renewed_from_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_challenge_offer
+    ADD CONSTRAINT lobby_challenge_offer_renewed_from_fkey FOREIGN KEY (renewed_from) REFERENCES public.lobby_challenge_offer(id) ON DELETE SET NULL;
+
+
+--
 -- Name: lobby_challenge lobby_challenge_proposed_location_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.lobby_challenge
     ADD CONSTRAINT lobby_challenge_proposed_location_fkey FOREIGN KEY (proposed_location) REFERENCES public.location(id);
+
+
+--
+-- Name: lobby_challenge_report lobby_challenge_report_challenge_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_challenge_report
+    ADD CONSTRAINT lobby_challenge_report_challenge_id_fkey FOREIGN KEY (challenge_id) REFERENCES public.lobby_challenge(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_challenge_report lobby_challenge_report_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_challenge_report
+    ADD CONSTRAINT lobby_challenge_report_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_challenge_report lobby_challenge_report_mvp_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_challenge_report
+    ADD CONSTRAINT lobby_challenge_report_mvp_user_id_fkey FOREIGN KEY (mvp_user_id) REFERENCES public."user"(id) ON DELETE SET NULL;
+
+
+--
+-- Name: lobby_challenge_report lobby_challenge_report_reported_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_challenge_report
+    ADD CONSTRAINT lobby_challenge_report_reported_by_fkey FOREIGN KEY (reported_by) REFERENCES public."user"(id) ON DELETE SET NULL;
 
 
 --
@@ -19773,6 +22012,30 @@ ALTER TABLE ONLY public.lobby_invite_link
 
 ALTER TABLE ONLY public.lobby_invite_link
     ADD CONSTRAINT lobby_invite_link_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_location_alias lobby_location_alias_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_location_alias
+    ADD CONSTRAINT lobby_location_alias_created_by_fkey FOREIGN KEY (created_by) REFERENCES public."user"(id);
+
+
+--
+-- Name: lobby_location_alias lobby_location_alias_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_location_alias
+    ADD CONSTRAINT lobby_location_alias_lobby_id_fkey FOREIGN KEY (lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_location_alias lobby_location_alias_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_location_alias
+    ADD CONSTRAINT lobby_location_alias_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.location(id) ON DELETE CASCADE;
 
 
 --
@@ -19901,6 +22164,30 @@ ALTER TABLE ONLY public.lobby_payment_settlement
 
 ALTER TABLE ONLY public.lobby_payment_settlement
     ADD CONSTRAINT lobby_payment_settlement_recipient_id_fkey FOREIGN KEY (recipient_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_recommendation lobby_recommendation_match_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_recommendation
+    ADD CONSTRAINT lobby_recommendation_match_id_fkey FOREIGN KEY (match_id) REFERENCES public.lobby_match(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_recommendation lobby_recommendation_subject_lobby_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_recommendation
+    ADD CONSTRAINT lobby_recommendation_subject_lobby_id_fkey FOREIGN KEY (subject_lobby_id) REFERENCES public.lobby(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lobby_recommendation lobby_recommendation_voter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lobby_recommendation
+    ADD CONSTRAINT lobby_recommendation_voter_id_fkey FOREIGN KEY (voter_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
 
 --
@@ -20662,10 +22949,24 @@ CREATE POLICY "Enable read access for all users" ON public.lobby FOR SELECT USIN
 
 
 --
+-- Name: lobby_challenge_offer Enable read access for all users; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Enable read access for all users" ON public.lobby_challenge_offer FOR SELECT USING (true);
+
+
+--
 -- Name: lobby_homeground Enable read access for all users; Type: POLICY; Schema: public; Owner: postgres
 --
 
 CREATE POLICY "Enable read access for all users" ON public.lobby_homeground FOR SELECT USING (true);
+
+
+--
+-- Name: lobby_recommendation Enable read access for all users; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Enable read access for all users" ON public.lobby_recommendation FOR SELECT USING (true);
 
 
 --
@@ -20974,6 +23275,26 @@ CREATE POLICY "Members of either lobby can read challenges" ON public.lobby_chal
 --
 
 CREATE POLICY "Members of either lobby can read the match" ON public.lobby_match FOR SELECT TO authenticated USING (((lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)) OR ((opponent_lobby_id IS NOT NULL) AND (opponent_lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)))));
+
+
+--
+-- Name: lobby_location_alias Members read their lobby's venue aliases; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Members read their lobby's venue aliases" ON public.lobby_location_alias FOR SELECT USING ((lobby_id IN ( SELECT public.get_my_lobby_ids() AS get_my_lobby_ids)));
+
+
+--
+-- Name: lobby_challenge_report Members read their own report, and both once resolved; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Members read their own report, and both once resolved" ON public.lobby_challenge_report FOR SELECT TO authenticated USING (((EXISTS ( SELECT 1
+   FROM public.lobby_member lm
+  WHERE ((lm.lobby_id = lobby_challenge_report.lobby_id) AND (lm.user_id = ( SELECT auth.uid() AS uid))))) OR (EXISTS ( SELECT 1
+   FROM public.lobby_challenge c
+  WHERE ((c.id = lobby_challenge_report.challenge_id) AND (c.status <> 'awaiting_reports'::public.lobby_challenge_status) AND (EXISTS ( SELECT 1
+           FROM public.lobby_member lm2
+          WHERE ((lm2.user_id = ( SELECT auth.uid() AS uid)) AND (lm2.lobby_id = ANY (ARRAY[c.initiator_lobby_id, c.target_lobby_id]))))))))));
 
 
 --
@@ -21479,6 +23800,18 @@ ALTER TABLE public.lobby_befriend_record ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lobby_challenge ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: lobby_challenge_offer; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.lobby_challenge_offer ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lobby_challenge_report; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.lobby_challenge_report ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: lobby_feed_item; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
@@ -21509,6 +23842,12 @@ ALTER TABLE public.lobby_homeground ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lobby_invite_link ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: lobby_location_alias; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.lobby_location_alias ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: lobby_match; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
@@ -21537,6 +23876,12 @@ ALTER TABLE public.lobby_payment_settlement ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.lobby_payment_settlement_item ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lobby_recommendation; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.lobby_recommendation ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: location; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -23071,6 +25416,15 @@ GRANT ALL ON FUNCTION public.activity_health_data(p_sport_id bigint) TO service_
 
 
 --
+-- Name: FUNCTION activity_health_sport_counts(); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.activity_health_sport_counts() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.activity_health_sport_counts() TO authenticated;
+GRANT ALL ON FUNCTION public.activity_health_sport_counts() TO service_role;
+
+
+--
 -- Name: FUNCTION activity_is_confirmed(p_activity_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -23170,12 +25524,30 @@ GRANT ALL ON FUNCTION public.cancel_freeplay_request(p_request_id uuid) TO servi
 
 
 --
+-- Name: FUNCTION cancel_friendly_challenge(p_challenge_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.cancel_friendly_challenge(p_challenge_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.cancel_friendly_challenge(p_challenge_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.cancel_friendly_challenge(p_challenge_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION cancel_referee_booking(p_booking_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
 REVOKE ALL ON FUNCTION public.cancel_referee_booking(p_booking_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.cancel_referee_booking(p_booking_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.cancel_referee_booking(p_booking_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION claim_no_show(p_challenge_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.claim_no_show(p_challenge_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.claim_no_show(p_challenge_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.claim_no_show(p_challenge_id uuid) TO service_role;
 
 
 --
@@ -23203,6 +25575,15 @@ GRANT ALL ON FUNCTION public.confirm_challenge_activity(p_activity_id uuid) TO s
 REVOKE ALL ON FUNCTION public.conversation_data(p_conversation_id uuid, p_since timestamp with time zone) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.conversation_data(p_conversation_id uuid, p_since timestamp with time zone) TO authenticated;
 GRANT ALL ON FUNCTION public.conversation_data(p_conversation_id uuid, p_since timestamp with time zone) TO service_role;
+
+
+--
+-- Name: FUNCTION counter_no_show(p_challenge_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.counter_no_show(p_challenge_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.counter_no_show(p_challenge_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.counter_no_show(p_challenge_id uuid) TO service_role;
 
 
 --
@@ -23573,6 +25954,15 @@ GRANT ALL ON FUNCTION public.fn_delete_notification(p_id bigint) TO service_role
 
 
 --
+-- Name: FUNCTION fn_elo_seed_rank(p_seed text); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.fn_elo_seed_rank(p_seed text) TO anon;
+GRANT ALL ON FUNCTION public.fn_elo_seed_rank(p_seed text) TO authenticated;
+GRANT ALL ON FUNCTION public.fn_elo_seed_rank(p_seed text) TO service_role;
+
+
+--
 -- Name: FUNCTION fn_emit_activity_confirmed(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -23684,6 +26074,14 @@ GRANT ALL ON FUNCTION public.fn_freeplay_owner_user_ids(p_activity_id uuid) TO s
 
 
 --
+-- Name: FUNCTION fn_friendly_challenge_quorum(); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_friendly_challenge_quorum() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_friendly_challenge_quorum() TO service_role;
+
+
+--
 -- Name: FUNCTION fn_guard_referee_booking_review(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -23760,6 +26158,30 @@ GRANT ALL ON FUNCTION public.fn_is_linked_professional(p_user_id uuid) TO servic
 
 
 --
+-- Name: FUNCTION fn_lapse_offer_challenges(p_offer_id uuid, p_reason text); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_lapse_offer_challenges(p_offer_id uuid, p_reason text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_lapse_offer_challenges(p_offer_id uuid, p_reason text) TO service_role;
+
+
+--
+-- Name: FUNCTION fn_lobby_dispute_penalty(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_lobby_dispute_penalty(p_lobby_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_lobby_dispute_penalty(p_lobby_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION fn_lobby_dispute_streak_reset(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_lobby_dispute_streak_reset(p_lobby_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_lobby_dispute_streak_reset(p_lobby_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION fn_lobby_has_live_freeplay(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -23800,6 +26222,14 @@ GRANT ALL ON FUNCTION public.fn_lobby_recompute_rated_matches(p_lobby_id uuid) T
 
 REVOKE ALL ON FUNCTION public.fn_lobby_recompute_stats(p_lobby_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.fn_lobby_recompute_stats(p_lobby_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION fn_lobby_verified_mmr(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_lobby_verified_mmr(p_lobby_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_lobby_verified_mmr(p_lobby_id uuid) TO service_role;
 
 
 --
@@ -23900,6 +26330,23 @@ GRANT ALL ON FUNCTION public.fn_process_reminders() TO service_role;
 
 
 --
+-- Name: FUNCTION fn_recommendation_sign(p_kind public.lobby_recommendation_kind); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.fn_recommendation_sign(p_kind public.lobby_recommendation_kind) TO anon;
+GRANT ALL ON FUNCTION public.fn_recommendation_sign(p_kind public.lobby_recommendation_kind) TO authenticated;
+GRANT ALL ON FUNCTION public.fn_recommendation_sign(p_kind public.lobby_recommendation_kind) TO service_role;
+
+
+--
+-- Name: FUNCTION fn_recompute_lobby_trust(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_recompute_lobby_trust(p_lobby_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_recompute_lobby_trust(p_lobby_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION fn_referee_booking_role_check(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -23923,6 +26370,14 @@ GRANT ALL ON FUNCTION public.fn_reject_pair_befriend() TO service_role;
 GRANT ALL ON FUNCTION public.fn_seed_initial_elo() TO anon;
 GRANT ALL ON FUNCTION public.fn_seed_initial_elo() TO authenticated;
 GRANT ALL ON FUNCTION public.fn_seed_initial_elo() TO service_role;
+
+
+--
+-- Name: FUNCTION fn_settle_friendly_challenge(p_challenge_id uuid, p_result public.lobby_match_result, p_source public.match_result_source, p_sets jsonb, p_mvp_user_id uuid, p_note text); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_settle_friendly_challenge(p_challenge_id uuid, p_result public.lobby_match_result, p_source public.match_result_source, p_sets jsonb, p_mvp_user_id uuid, p_note text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_settle_friendly_challenge(p_challenge_id uuid, p_result public.lobby_match_result, p_source public.match_result_source, p_sets jsonb, p_mvp_user_id uuid, p_note text) TO service_role;
 
 
 --
@@ -23984,6 +26439,14 @@ GRANT ALL ON FUNCTION public.fn_sweep_freeplay() TO service_role;
 
 
 --
+-- Name: FUNCTION fn_sweep_friendly_challenges(); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_sweep_friendly_challenges() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_sweep_friendly_challenges() TO service_role;
+
+
+--
 -- Name: FUNCTION fn_sweep_recurring_activities(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -24006,6 +26469,23 @@ GRANT ALL ON FUNCTION public.fn_sync_freeplay_conversation_members(p_request_id 
 GRANT ALL ON FUNCTION public.fn_touch_user_contact() TO anon;
 GRANT ALL ON FUNCTION public.fn_touch_user_contact() TO authenticated;
 GRANT ALL ON FUNCTION public.fn_touch_user_contact() TO service_role;
+
+
+--
+-- Name: FUNCTION fn_user_sport_skill_rank(p_user_id uuid, p_sport_id bigint); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.fn_user_sport_skill_rank(p_user_id uuid, p_sport_id bigint) TO anon;
+GRANT ALL ON FUNCTION public.fn_user_sport_skill_rank(p_user_id uuid, p_sport_id bigint) TO authenticated;
+GRANT ALL ON FUNCTION public.fn_user_sport_skill_rank(p_user_id uuid, p_sport_id bigint) TO service_role;
+
+
+--
+-- Name: FUNCTION fn_user_verified_elo(p_user_id uuid, p_sport_id bigint); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_user_verified_elo(p_user_id uuid, p_sport_id bigint) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_user_verified_elo(p_user_id uuid, p_sport_id bigint) TO service_role;
 
 
 --
@@ -24159,6 +26639,24 @@ GRANT ALL ON FUNCTION public.freeplay_user_skill(p_user_id uuid, p_sport_id bigi
 GRANT ALL ON FUNCTION public.friend_data() TO anon;
 GRANT ALL ON FUNCTION public.friend_data() TO authenticated;
 GRANT ALL ON FUNCTION public.friend_data() TO service_role;
+
+
+--
+-- Name: FUNCTION friendly_challenge_data(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.friendly_challenge_data(p_lobby_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.friendly_challenge_data(p_lobby_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.friendly_challenge_data(p_lobby_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION friendly_offer_feed_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_search text, p_mmr_window integer, p_page_size integer, p_page_number integer); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.friendly_offer_feed_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_search text, p_mmr_window integer, p_page_size integer, p_page_number integer) TO anon;
+GRANT ALL ON FUNCTION public.friendly_offer_feed_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_search text, p_mmr_window integer, p_page_size integer, p_page_number integer) TO authenticated;
+GRANT ALL ON FUNCTION public.friendly_offer_feed_data(p_context_lobby_id uuid, p_sport_id bigint, p_city integer, p_districts character varying[], p_search text, p_mmr_window integer, p_page_size integer, p_page_number integer) TO service_role;
 
 
 --
@@ -24379,6 +26877,16 @@ GRANT ALL ON FUNCTION public.lobby_feed_data(p_lobby_id uuid, p_page_size intege
 
 
 --
+-- Name: FUNCTION lobby_location_aliases(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.lobby_location_aliases(p_lobby_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.lobby_location_aliases(p_lobby_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.lobby_location_aliases(p_lobby_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.lobby_location_aliases(p_lobby_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION lobby_match_history_data(p_lobby_id uuid, p_page_size integer, p_page_number integer); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -24420,6 +26928,15 @@ GRANT ALL ON FUNCTION public.lobby_money_data(p_lobby_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.lobby_primary_homeground_id(p_lobby_id uuid) TO anon;
 GRANT ALL ON FUNCTION public.lobby_primary_homeground_id(p_lobby_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.lobby_primary_homeground_id(p_lobby_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION lobby_recommendation_counts(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.lobby_recommendation_counts(p_lobby_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.lobby_recommendation_counts(p_lobby_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.lobby_recommendation_counts(p_lobby_id uuid) TO service_role;
 
 
 --
@@ -24495,6 +27012,15 @@ GRANT ALL ON FUNCTION public.new_user_created_trigger_fn() TO service_role;
 
 
 --
+-- Name: FUNCTION pending_home_challengers(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.pending_home_challengers(p_lobby_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.pending_home_challengers(p_lobby_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.pending_home_challengers(p_lobby_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION post_activity_note(p_activity_id uuid, p_note text); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -24531,12 +27057,30 @@ GRANT ALL ON FUNCTION public.propose_course_activity(p_course_id uuid, p_start t
 
 
 --
+-- Name: FUNCTION publish_challenge_offer(p_lobby_id uuid, p_slot smallint, p_kickoff timestamp with time zone, p_location uuid, p_expires_at timestamp with time zone, p_venue_cost numeric, p_cost_split text, p_bounty_kind text, p_bounty_amount numeric, p_ruleset text, p_ruleset_param smallint, p_handicap_side text, p_handicap_amount smallint, p_terms_note text, p_mode text); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.publish_challenge_offer(p_lobby_id uuid, p_slot smallint, p_kickoff timestamp with time zone, p_location uuid, p_expires_at timestamp with time zone, p_venue_cost numeric, p_cost_split text, p_bounty_kind text, p_bounty_amount numeric, p_ruleset text, p_ruleset_param smallint, p_handicap_side text, p_handicap_amount smallint, p_terms_note text, p_mode text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.publish_challenge_offer(p_lobby_id uuid, p_slot smallint, p_kickoff timestamp with time zone, p_location uuid, p_expires_at timestamp with time zone, p_venue_cost numeric, p_cost_split text, p_bounty_kind text, p_bounty_amount numeric, p_ruleset text, p_ruleset_param smallint, p_handicap_side text, p_handicap_amount smallint, p_terms_note text, p_mode text) TO authenticated;
+GRANT ALL ON FUNCTION public.publish_challenge_offer(p_lobby_id uuid, p_slot smallint, p_kickoff timestamp with time zone, p_location uuid, p_expires_at timestamp with time zone, p_venue_cost numeric, p_cost_split text, p_bounty_kind text, p_bounty_amount numeric, p_ruleset text, p_ruleset_param smallint, p_handicap_side text, p_handicap_amount smallint, p_terms_note text, p_mode text) TO service_role;
+
+
+--
 -- Name: FUNCTION react_to_wall_post(p_post_id uuid, p_emoji text); Type: ACL; Schema: public; Owner: postgres
 --
 
 REVOKE ALL ON FUNCTION public.react_to_wall_post(p_post_id uuid, p_emoji text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.react_to_wall_post(p_post_id uuid, p_emoji text) TO authenticated;
 GRANT ALL ON FUNCTION public.react_to_wall_post(p_post_id uuid, p_emoji text) TO service_role;
+
+
+--
+-- Name: FUNCTION recommend_lobby(p_match_id uuid, p_subject_lobby_id uuid, p_kind text); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.recommend_lobby(p_match_id uuid, p_subject_lobby_id uuid, p_kind text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.recommend_lobby(p_match_id uuid, p_subject_lobby_id uuid, p_kind text) TO authenticated;
+GRANT ALL ON FUNCTION public.recommend_lobby(p_match_id uuid, p_subject_lobby_id uuid, p_kind text) TO service_role;
 
 
 --
@@ -24600,6 +27144,24 @@ GRANT ALL ON FUNCTION public.reject_referee_booking(p_booking_id uuid, p_reason 
 REVOKE ALL ON FUNCTION public.remove_course_member(p_course_id uuid, p_user_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.remove_course_member(p_course_id uuid, p_user_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.remove_course_member(p_course_id uuid, p_user_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION renew_challenge_offer(p_offer_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.renew_challenge_offer(p_offer_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.renew_challenge_offer(p_offer_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.renew_challenge_offer(p_offer_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION report_match_result(p_challenge_id uuid, p_result text, p_sets jsonb, p_mvp_user_id uuid, p_note text); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.report_match_result(p_challenge_id uuid, p_result text, p_sets jsonb, p_mvp_user_id uuid, p_note text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.report_match_result(p_challenge_id uuid, p_result text, p_sets jsonb, p_mvp_user_id uuid, p_note text) TO authenticated;
+GRANT ALL ON FUNCTION public.report_match_result(p_challenge_id uuid, p_result text, p_sets jsonb, p_mvp_user_id uuid, p_note text) TO service_role;
 
 
 --
@@ -24694,6 +27256,15 @@ GRANT ALL ON FUNCTION public.respond_friend_request(p_friendship_id uuid, p_acti
 
 
 --
+-- Name: FUNCTION respond_friendly_challenge(p_challenge_id uuid, p_action text); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.respond_friendly_challenge(p_challenge_id uuid, p_action text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.respond_friendly_challenge(p_challenge_id uuid, p_action text) TO authenticated;
+GRANT ALL ON FUNCTION public.respond_friendly_challenge(p_challenge_id uuid, p_action text) TO service_role;
+
+
+--
 -- Name: FUNCTION revoke_lobby_invite_link(p_lobby_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -24703,12 +27274,12 @@ GRANT ALL ON FUNCTION public.revoke_lobby_invite_link(p_lobby_id uuid) TO servic
 
 
 --
--- Name: FUNCTION search_locations(search_term text, p_districts character varying[], p_city_cluster bigint); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION search_locations(search_term text, p_districts character varying[], p_city_cluster bigint, p_sport_id bigint); Type: ACL; Schema: public; Owner: postgres
 --
 
-GRANT ALL ON FUNCTION public.search_locations(search_term text, p_districts character varying[], p_city_cluster bigint) TO anon;
-GRANT ALL ON FUNCTION public.search_locations(search_term text, p_districts character varying[], p_city_cluster bigint) TO authenticated;
-GRANT ALL ON FUNCTION public.search_locations(search_term text, p_districts character varying[], p_city_cluster bigint) TO service_role;
+GRANT ALL ON FUNCTION public.search_locations(search_term text, p_districts character varying[], p_city_cluster bigint, p_sport_id bigint) TO anon;
+GRANT ALL ON FUNCTION public.search_locations(search_term text, p_districts character varying[], p_city_cluster bigint, p_sport_id bigint) TO authenticated;
+GRANT ALL ON FUNCTION public.search_locations(search_term text, p_districts character varying[], p_city_cluster bigint, p_sport_id bigint) TO service_role;
 
 
 --
@@ -24766,6 +27337,15 @@ GRANT ALL ON FUNCTION public.send_friend_request(p_user_id uuid) TO service_role
 
 
 --
+-- Name: FUNCTION send_friendly_challenge(p_initiator_lobby uuid, p_offer_id uuid, p_threshold integer, p_note text); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.send_friendly_challenge(p_initiator_lobby uuid, p_offer_id uuid, p_threshold integer, p_note text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.send_friendly_challenge(p_initiator_lobby uuid, p_offer_id uuid, p_threshold integer, p_note text) TO authenticated;
+GRANT ALL ON FUNCTION public.send_friendly_challenge(p_initiator_lobby uuid, p_offer_id uuid, p_threshold integer, p_note text) TO service_role;
+
+
+--
 -- Name: FUNCTION send_message(p_conversation_id uuid, p_body text); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -24790,6 +27370,16 @@ GRANT ALL ON FUNCTION public.set_freeplay_intake(p_activity_id uuid, p_closed bo
 GRANT ALL ON FUNCTION public.set_lobby_challenge_offer(p_lobby_id uuid, p_open boolean, p_time timestamp with time zone, p_location uuid, p_cost numeric) TO anon;
 GRANT ALL ON FUNCTION public.set_lobby_challenge_offer(p_lobby_id uuid, p_open boolean, p_time timestamp with time zone, p_location uuid, p_cost numeric) TO authenticated;
 GRANT ALL ON FUNCTION public.set_lobby_challenge_offer(p_lobby_id uuid, p_open boolean, p_time timestamp with time zone, p_location uuid, p_cost numeric) TO service_role;
+
+
+--
+-- Name: FUNCTION set_lobby_location_alias(p_lobby_id uuid, p_location_id uuid, p_name text); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.set_lobby_location_alias(p_lobby_id uuid, p_location_id uuid, p_name text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_lobby_location_alias(p_lobby_id uuid, p_location_id uuid, p_name text) TO anon;
+GRANT ALL ON FUNCTION public.set_lobby_location_alias(p_lobby_id uuid, p_location_id uuid, p_name text) TO authenticated;
+GRANT ALL ON FUNCTION public.set_lobby_location_alias(p_lobby_id uuid, p_location_id uuid, p_name text) TO service_role;
 
 
 --
@@ -25000,6 +27590,15 @@ GRANT ALL ON FUNCTION public.wall_feed_data(p_sport_id bigint, p_page_size integ
 REVOKE ALL ON FUNCTION public.wall_feed_has_unread(p_since timestamp with time zone) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.wall_feed_has_unread(p_since timestamp with time zone) TO authenticated;
 GRANT ALL ON FUNCTION public.wall_feed_has_unread(p_since timestamp with time zone) TO service_role;
+
+
+--
+-- Name: FUNCTION withdraw_challenge_offer(p_offer_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.withdraw_challenge_offer(p_offer_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.withdraw_challenge_offer(p_offer_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.withdraw_challenge_offer(p_offer_id uuid) TO service_role;
 
 
 --
@@ -25317,6 +27916,22 @@ GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.mfa_
 
 
 --
+-- Name: TABLE mfa_recovery_code_sets; Type: ACL; Schema: auth; Owner: supabase_auth_admin
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.mfa_recovery_code_sets TO postgres;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.mfa_recovery_code_sets TO dashboard_user;
+
+
+--
+-- Name: TABLE mfa_recovery_codes; Type: ACL; Schema: auth; Owner: supabase_auth_admin
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.mfa_recovery_codes TO postgres;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.mfa_recovery_codes TO dashboard_user;
+
+
+--
 -- Name: TABLE oauth_authorizations; Type: ACL; Schema: auth; Owner: supabase_auth_admin
 --
 
@@ -25390,6 +28005,22 @@ GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.saml
 GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.saml_relay_states TO postgres;
 GRANT SELECT ON TABLE auth.saml_relay_states TO postgres WITH GRANT OPTION;
 GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.saml_relay_states TO dashboard_user;
+
+
+--
+-- Name: TABLE scim_tokens; Type: ACL; Schema: auth; Owner: supabase_auth_admin
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.scim_tokens TO postgres;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.scim_tokens TO dashboard_user;
+
+
+--
+-- Name: TABLE scim_users; Type: ACL; Schema: auth; Owner: supabase_auth_admin
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.scim_users TO postgres;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE auth.scim_users TO dashboard_user;
 
 
 --
@@ -25726,6 +28357,24 @@ GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lo
 
 
 --
+-- Name: TABLE lobby_challenge_offer; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_challenge_offer TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_challenge_offer TO authenticated;
+GRANT ALL ON TABLE public.lobby_challenge_offer TO service_role;
+
+
+--
+-- Name: TABLE lobby_challenge_report; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_challenge_report TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_challenge_report TO authenticated;
+GRANT ALL ON TABLE public.lobby_challenge_report TO service_role;
+
+
+--
 -- Name: TABLE lobby_feed_item; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -25768,6 +28417,15 @@ GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lo
 GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_invite_link TO anon;
 GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_invite_link TO authenticated;
 GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_invite_link TO service_role;
+
+
+--
+-- Name: TABLE lobby_location_alias; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_location_alias TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_location_alias TO authenticated;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_location_alias TO service_role;
 
 
 --
@@ -25818,6 +28476,15 @@ GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lo
 --
 
 GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_payment_settlement_item TO service_role;
+
+
+--
+-- Name: TABLE lobby_recommendation; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_recommendation TO anon;
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.lobby_recommendation TO authenticated;
+GRANT ALL ON TABLE public.lobby_recommendation TO service_role;
 
 
 --
@@ -26714,5 +29381,5 @@ ALTER EVENT TRIGGER pgrst_drop_watch OWNER TO supabase_admin;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict P88kQ1QnorRACnE8J3eIPtluLIxZqPtn57PKhugOH63AMs0wJVyhnxNLA0x91EY
+\unrestrict 12CrSOmeX5pFNZibzWIqnSem4bJffw7mBkA73FFtBrCHGUWqohJWJmqQr49GVUU
 
