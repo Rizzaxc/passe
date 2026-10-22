@@ -1710,7 +1710,11 @@
       "activity_cancelled": "Buổi tập đã bị huỷ",
       "course_ended": "Khoá học đã kết thúc",
       "target_reached": "Khoá học đã đủ {target} buổi",
-      "no_students_left": "Khoá học không còn học viên nào"
+      "no_students_left": "Khoá học không còn học viên nào",
+      "enrollment_offer_elsewhere": "Huấn luyện viên mời bạn tham gia {course_name}",
+      "moved_to_course": "{username} đã chuyển sang {course_name}",
+      "inquiry_declined": "Huấn luyện viên hiện chưa thể nhận {username}",
+      "course_updated": "Huấn luyện viên đã cập nhật thông tin khoá học"
     }
   },
   "course": {
@@ -1840,7 +1844,37 @@
     "sessionActions": "Tuỳ chọn buổi tập",
     "reviewStar": "{star} sao",
     "coachSportMismatch": "Huấn luyện viên này không dạy {sport}",
-    "startInPast": "Chọn thời gian trong tương lai"
+    "startInPast": "Chọn thời gian trong tương lai",
+    "declineInquiry": "Từ chối",
+    "declineInquiryTitle": "Từ chối liên hệ này?",
+    "declineInquiryBody": "{username} sẽ được báo rằng bạn hiện chưa thể nhận thêm học viên, và cuộc trò chuyện này sẽ đóng lại.",
+    "offerTargetLabel": "Mời vào khoá học",
+    "offerTargetNew": "Khoá học mới (cuộc trò chuyện này)",
+    "offerTargetStudents": {
+      "zero": "Chưa có học viên",
+      "one": "{} học viên",
+      "other": "{} học viên"
+    },
+    "offerTargetJoin": "Học viên sẽ tham gia {course} với tên và số buổi hiện có. Khi chấp nhận, họ sẽ rời cuộc trò chuyện này.",
+    "editCourse": "Sửa khoá học",
+    "saveCourse": "Lưu",
+    "editTargetHint": "Đã tập {held} buổi. Tăng số buổi dự kiến để gia hạn khoá học.",
+    "attendance": {
+      "title": "Điểm danh",
+      "present": "Có mặt",
+      "absent": "Vắng",
+      "fromRsvp": "(đã báo tham gia)",
+      "unmarked": "(chưa điểm danh)",
+      "youAttended": "Bạn đã tham gia buổi này",
+      "youMissed": "Bạn được ghi nhận vắng mặt",
+      "noneToReport": "Không còn học viên có mặt cần nhận xét. Hãy điểm danh trước."
+    },
+    "rates": {
+      "title": "Học phí tham khảo",
+      "offApp": "Thanh toán trực tiếp với huấn luyện viên."
+    },
+    "unavailable": "Không tải được khoá học, hoặc bạn không còn quyền truy cập.",
+    "backToHub": "Về danh sách khoá học"
   },
   "challenge": {
     "party": {

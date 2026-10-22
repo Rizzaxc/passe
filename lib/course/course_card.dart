@@ -48,7 +48,7 @@ class CourseCard extends StatelessWidget {
           : course.coachName ?? 'course.newInquiry'.tr());
 
   Color _frameColor() {
-    if (course.status == CourseStatus.ended) return pbGreen;
+    if (course.isClosedForMe) return pbGreen;
     if (course.hasAction) return pbCoral;
     if (course.memberStatus == CourseMemberStatus.inquiring) return pbAmber;
     return pbBlueDeep;
@@ -84,7 +84,7 @@ class CourseCard extends StatelessWidget {
                   children: [
                     _CourseAvatar(
                       name: _title,
-                      ended: course.status == CourseStatus.ended,
+                      ended: course.isClosedForMe,
                       userId: coachSide
                           ? course.studentUserId
                           : course.coachUserId,
@@ -256,9 +256,12 @@ class _CourseRoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ended = status == CourseStatus.ended;
-    final label = ended
+    final departed = !coachSide && (memberStatus?.hasLeft ?? false);
+    final ended = status == CourseStatus.ended || departed;
+    final label = status == CourseStatus.ended
         ? 'course.ended'.tr()
+        : departed
+        ? 'course.status.${memberStatus!.name}'.tr()
         : coachSide
         ? 'course.coachCourse'.tr()
         : memberStatus == CourseMemberStatus.inquiring

@@ -37,6 +37,10 @@ enum NotificationKind {
   courseSessionReport('course_session_report'),
   courseEnded('course_ended'),
   courseMemberRemoved('course_member_removed'),
+  // Coach-side prompts on a still-running course; they used to reuse
+  // `course_ended`. See schema/course_notification_kinds.sql.
+  courseTargetReached('course_target_reached'),
+  courseNoStudents('course_no_students'),
   friendRequest('friend_request'),
   friendAccepted('friend_accepted'),
   paymentRequested('payment_requested'),
@@ -73,7 +77,9 @@ enum NotificationKind {
     courseActivityChanged ||
     courseSessionReport ||
     courseEnded ||
-    courseMemberRemoved => true,
+    courseMemberRemoved ||
+    courseTargetReached ||
+    courseNoStudents => true,
     _ => false,
   };
 

@@ -5,6 +5,8 @@
 /// and sessions the coach approves. It replaced per-lesson coach bookings.
 library;
 
+import '../core/model/enum.dart';
+
 enum CourseStatus {
   active,
   ended;
@@ -29,6 +31,10 @@ enum CourseMemberStatus {
   /// Whether this member has actually joined the course, as opposed to just
   /// having messaged the coach.
   bool get isEnrolled => this == enrolled;
+
+  /// Departed — either by leaving, being removed, or the coach ending the
+  /// course (which marks every member `left`).
+  bool get hasLeft => this == left || this == removed;
 }
 
 enum ProposalStatus {
@@ -130,6 +136,12 @@ class CourseSummary {
     return (heldSessionCount / target).clamp(0.0, 1.0);
   }
 
+  /// Player side: the course is over *for this viewer* — ended outright, or
+  /// they left/were removed. `my_courses_data` keeps such rows (only for
+  /// students who attended a session) so they can still review the coach.
+  bool get isClosedForMe =>
+      status == CourseStatus.ended || (memberStatus?.hasLeft ?? false);
+
   bool get hasAction =>
       pendingOfferId != null ||
       pendingRsvpCount > 0 ||
@@ -200,6 +212,72 @@ class CourseMember {
   );
 }
 
+/// One person on a started session's roster (coach view only): who was in
+/// the course at kickoff, what they RSVP'd, and the coach's attendance mark.
+class SessionRosterEntry {
+  final String userId;
+  final String username;
+  final String? generatedAvatar;
+  final String? rsvp;
+
+  /// The coach's own mark; null = not marked yet.
+  final bool? marked;
+
+  /// The effective answer (`fn_course_attended`): the mark when there is one,
+  /// otherwise a `going` RSVP. Gates reports and the student's review.
+  final bool attended;
+
+  const SessionRosterEntry({
+    required this.userId,
+    required this.username,
+    required this.attended,
+    this.generatedAvatar,
+    this.rsvp,
+    this.marked,
+  });
+
+  factory SessionRosterEntry.fromJson(Map<String, dynamic> json) =>
+      SessionRosterEntry(
+        userId: json['user_id'].toString(),
+        username: json['username']?.toString() ?? '',
+        generatedAvatar: json['generated_avatar'] as String?,
+        rsvp: json['rsvp'] as String?,
+        marked: json['marked'] as bool?,
+        attended: json['attended'] as bool? ?? false,
+      );
+}
+
+/// One of the coach's listed coaching services for the course's sport.
+/// Courses carry no money; this only answers "how much?" on the course page.
+class CoachRate {
+  final double? priceAmount;
+  final ProfessionalPricingKind pricingKind;
+  final int? minDurationMinutes;
+  final int? maxParticipants;
+  final String? description;
+
+  const CoachRate({
+    required this.pricingKind,
+    this.priceAmount,
+    this.minDurationMinutes,
+    this.maxParticipants,
+    this.description,
+  });
+
+  factory CoachRate.fromJson(Map<String, dynamic> json) => CoachRate(
+    // numeric comes back as a String or a num depending on the path.
+    priceAmount: double.tryParse(json['price_amount']?.toString() ?? ''),
+    pricingKind: ProfessionalPricingKind.fromValue(
+      json['pricing_kind'] as String?,
+    ),
+    minDurationMinutes: int.tryParse(
+      json['min_duration_minutes']?.toString() ?? '',
+    ),
+    maxParticipants: int.tryParse(json['max_participants']?.toString() ?? ''),
+    description: json['description'] as String?,
+  );
+}
+
 class CourseSession {
   final String activityId;
   final DateTime startTime;
@@ -221,6 +299,13 @@ class CourseSession {
   final String? myAttendance;
   final int goingCount;
 
+  /// Student side, once the session has started: whether they count as
+  /// having attended. Null before start and for the coach.
+  final bool? myAttended;
+
+  /// Coach side, once the session has started; empty otherwise.
+  final List<SessionRosterEntry> roster;
+
   const CourseSession({
     required this.activityId,
     required this.startTime,
@@ -239,9 +324,15 @@ class CourseSession {
     this.proposedBy,
     this.myAttendance,
     this.goingCount = 0,
+    this.myAttended,
+    this.roster = const [],
   });
 
   bool get isPending => proposalStatus == ProposalStatus.pending;
+
+  /// RSVP closes, and the session can no longer be moved or cancelled, once
+  /// it starts (enforced server-side too).
+  bool get hasStarted => !startTime.isAfter(DateTime.now());
 
   bool get hasFinished => (endTime ?? startTime).isBefore(DateTime.now());
 
@@ -265,6 +356,12 @@ class CourseSession {
     proposedBy: json['proposed_by']?.toString(),
     myAttendance: json['my_attendance'] as String?,
     goingCount: int.tryParse(json['going_count']?.toString() ?? '') ?? 0,
+    myAttended: json['my_attended'] as bool?,
+    roster:
+        (json['roster'] as List?)
+            ?.map((e) => SessionRosterEntry.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        const [],
   );
 }
 
@@ -321,6 +418,7 @@ class CourseDetail {
   final String? offerName;
   final String? offerDescription;
   final int? offerTargetSessionCount;
+  final List<CoachRate> coachRates;
 
   const CourseDetail({
     required this.courseId,
@@ -344,6 +442,7 @@ class CourseDetail {
     this.offerName,
     this.offerDescription,
     this.offerTargetSessionCount,
+    this.coachRates = const [],
   });
 
   /// Whether the viewer may act on the course — propose/schedule sessions,
@@ -351,6 +450,18 @@ class CourseDetail {
   /// has course *access* (they can read the thread) but not this — the
   /// coach hasn't accepted them yet, so there's nothing to plan or attend.
   bool get canManage => isCoach || (myMemberStatus?.isEnrolled ?? false);
+
+  /// A departed student who attended a session — `course_detail_data` gives
+  /// them a read-only view (no roster, nothing after they left) so they can
+  /// look back and review the coach.
+  bool get isAlumnus => myMemberStatus?.hasLeft ?? false;
+
+  /// Mirrors `submit_course_review`'s eligibility gate; the attendance half
+  /// is implied, since a departed student without it can't load the course.
+  bool get canReview =>
+      !isCoach &&
+      myReviewRating == null &&
+      (status == CourseStatus.ended || isAlumnus);
 
   List<CourseSession> get upcoming => sessions
       .where(
@@ -407,5 +518,6 @@ class CourseDetail {
     offerTargetSessionCount: json['offer_target_session_count'] == null
         ? null
         : int.tryParse(json['offer_target_session_count'].toString()),
+    coachRates: _list(json['coach_rates'], CoachRate.fromJson),
   );
 }

@@ -182,16 +182,37 @@ class CourseActionController extends _$CourseActionController {
     courseId: courseId,
   );
 
-  Future<void> respondToOffer(String offerId, bool accept, {String? courseId}) =>
-      _run(
-        () => _client
-            .rpc(
-              'respond_enrollment_offer',
-              params: {'p_offer_id': offerId, 'p_accept': accept},
-            )
-            .timeout(_rpcTimeout),
-        courseId: courseId,
-      );
+  /// Returns the course the offer belongs to. That can differ from
+  /// [courseId] (the thread it was shown in): a group-course offer surfaces
+  /// in the student's inquiry thread, and accepting moves them into the
+  /// group course — the caller should navigate there.
+  Future<String> respondToOffer(
+    String offerId,
+    bool accept, {
+    String? courseId,
+  }) => _run(
+    () async =>
+        (await _client
+                .rpc(
+                  'respond_enrollment_offer',
+                  params: {'p_offer_id': offerId, 'p_accept': accept},
+                )
+                .timeout(_rpcTimeout))
+            .toString(),
+    courseId: courseId,
+  );
+
+  /// Coach-only: turn down someone who's only inquiring. Ends the thread
+  /// server-side if it was a bare inquiry with nobody else in it.
+  Future<void> declineInquiry(String courseId, String userId) => _run(
+    () => _client
+        .rpc(
+          'decline_course_inquiry',
+          params: {'p_course_id': courseId, 'p_user_id': userId},
+        )
+        .timeout(_rpcTimeout),
+    courseId: courseId,
+  );
 
   Future<void> leave(String courseId) => _run(
     () => _client
@@ -305,6 +326,49 @@ class CourseActionController extends _$CourseActionController {
             })
             .timeout(_rpcTimeout);
       }, courseId: courseId);
+
+  /// Coach-only, once a session has started. Overrides the student's RSVP
+  /// as the attendance signal for reports and reviews; correctable.
+  Future<void> markAttendance({
+    required String activityId,
+    required String studentId,
+    required bool attended,
+    String? courseId,
+  }) => _run(
+    () => _client
+        .rpc(
+          'mark_course_attendance',
+          params: {
+            'p_activity_id': activityId,
+            'p_student_id': studentId,
+            'p_attended': attended,
+          },
+        )
+        .timeout(_rpcTimeout),
+    courseId: courseId,
+  );
+
+  /// Coach-only. Raising the target past the sessions already held re-arms
+  /// the "target reached" prompt — this is how a course is extended.
+  Future<void> updateCourse({
+    required String courseId,
+    required String name,
+    String? description,
+    int? targetSessionCount,
+  }) => _run(
+    () => _client
+        .rpc(
+          'update_course',
+          params: {
+            'p_course_id': courseId,
+            'p_name': name.trim(),
+            'p_description': description?.trim(),
+            'p_target_session_count': targetSessionCount,
+          },
+        )
+        .timeout(_rpcTimeout),
+    courseId: courseId,
+  );
 
   /// Final on submission: no edit, no delete.
   Future<void> submitReport({

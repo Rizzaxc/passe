@@ -178,6 +178,8 @@ IconData _iconFor(NotificationKind? kind) => switch (kind) {
   NotificationKind.courseSessionReport ||
   NotificationKind.courseEnded ||
   NotificationKind.courseMemberRemoved => FLucideIcons.graduationCap,
+  NotificationKind.courseTargetReached => FLucideIcons.flagTriangleRight,
+  NotificationKind.courseNoStudents => FLucideIcons.userX,
   NotificationKind.activityAtRiskOrganizer ||
   NotificationKind.activityAtRiskMember => FLucideIcons.calendarClock,
   NotificationKind.activityCancelledLowTurnout => FLucideIcons.calendarX,

@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../auth/auth_controller.dart';
 import '../core/format.dart';
 import '../core/location_repository.dart';
+import '../core/model/enum.dart';
 import '../logger/talker.dart';
 import '../manage_tab/lobby_section/feed/home_ground_selector.dart';
 import '../router.dart';
@@ -122,6 +123,48 @@ class _CourseInfoSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
           ],
+          // Courses carry no money in-app; the coach's listed rates are how
+          // a student answers "how much?" before settling off-app.
+          if (course.coachRates.isNotEmpty) ...[
+            PSectionHeader(title: 'course.rates.title'.tr()),
+            for (final rate in course.coachRates)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (rate.priceAmount != null)
+                      Text(
+                        (rate.pricingKind == ProfessionalPricingKind.hourly
+                                ? 'homeTab.professional.pricePerHour'
+                                : 'homeTab.professional.pricePerSession')
+                            .tr(
+                              namedArgs: {
+                                'price': formatVnd(rate.priceAmount!),
+                              },
+                            ),
+                        style: context.theme.typography.body.sm.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    if (rate.description?.trim().isNotEmpty == true)
+                      Text(
+                        rate.description!,
+                        style: context.theme.typography.body.xs.copyWith(
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            Text(
+              'course.rates.offApp'.tr(),
+              style: context.theme.typography.body.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           PSectionHeader(title: 'course.members'.tr()),
           for (final member in course.members)
             FTile(
@@ -145,6 +188,26 @@ class _CourseInfoSheet extends ConsumerWidget {
                   ? FButton.icon(
                       variant: .ghost,
                       onPress: () async {
+                        // An inquirer was never in the course: decline them
+                        // with neutral copy instead of "removing" them.
+                        if (member.status == CourseMemberStatus.inquiring) {
+                          final confirmed = await confirmCourseAction(
+                            context,
+                            title: 'course.declineInquiryTitle'.tr(),
+                            body: 'course.declineInquiryBody'.tr(
+                              namedArgs: {'username': member.username},
+                            ),
+                            confirmLabel: 'course.declineInquiry'.tr(),
+                            destructive: true,
+                          );
+                          if (!confirmed) return;
+                          await controller.declineInquiry(
+                            course.courseId,
+                            member.userId,
+                          );
+                          if (context.mounted) Navigator.pop(context);
+                          return;
+                        }
                         final confirmed = await confirmCourseAction(
                           context,
                           title: 'course.removeMemberTitle'.tr(),
@@ -168,6 +231,16 @@ class _CourseInfoSheet extends ConsumerWidget {
               onPress: () => showEnrollmentOfferSheet(context, course),
               child: Text('course.sendOffer'.tr()),
             ),
+            // An unnamed inquiry gets its identity from the first accepted
+            // offer, so editing only makes sense once it's a real course.
+            if (course.name != null) ...[
+              const SizedBox(height: 8),
+              FButton(
+                variant: .outline,
+                onPress: () => showEditCourseSheet(context, course),
+                child: Text('course.editCourse'.tr()),
+              ),
+            ],
             const SizedBox(height: 8),
             // Only the coach can end a course; reaching the session target
             // prompts but never closes it.
@@ -188,7 +261,9 @@ class _CourseInfoSheet extends ConsumerWidget {
               child: Text('course.end'.tr()),
             ),
           ],
-          if (!course.isCoach)
+          if (!course.isCoach &&
+              !course.isAlumnus &&
+              course.status == CourseStatus.active)
             FButton(
               variant: .destructive,
               onPress: () async {
@@ -205,6 +280,117 @@ class _CourseInfoSheet extends ConsumerWidget {
               },
               child: Text('course.leave'.tr()),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> showEditCourseSheet(BuildContext context, CourseDetail course) =>
+    showPSheet(
+      context: context,
+      builder: (_) => _EditCourseSheet(course: course),
+    );
+
+/// Coach-only. Raising the target past the sessions already held is how a
+/// course is extended ("gia hạn") — it re-arms the target-reached prompt.
+class _EditCourseSheet extends ConsumerStatefulWidget {
+  final CourseDetail course;
+
+  const _EditCourseSheet({required this.course});
+
+  @override
+  ConsumerState<_EditCourseSheet> createState() => _EditCourseSheetState();
+}
+
+class _EditCourseSheetState extends ConsumerState<_EditCourseSheet> {
+  late final _name = TextEditingController(text: widget.course.name ?? '');
+  late final _description = TextEditingController(
+    text: widget.course.description ?? '',
+  );
+  late final _target = TextEditingController(
+    text: widget.course.targetSessionCount?.toString() ?? '',
+  );
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _description.dispose();
+    _target.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_name.text.trim().isEmpty) {
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleAlert),
+        variant: .destructive,
+        title: Text('course.offerNameRequired'.tr()),
+        alignment: .bottomCenter,
+      );
+      return;
+    }
+    try {
+      await ref
+          .read(courseActionControllerProvider.notifier)
+          .updateCourse(
+            courseId: widget.course.courseId,
+            name: _name.text,
+            description: _description.text,
+            targetSessionCount: int.tryParse(_target.text.trim()),
+          );
+      if (mounted) Navigator.pop(context);
+    } catch (e, st) {
+      talker.handle(e, st, 'Update course failed');
+      if (mounted) {
+        showFToast(
+          context: context,
+          variant: .destructive,
+          title: Text('course.actionFailed'.tr()),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final busy = ref.watch(courseActionControllerProvider);
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PSheetTitle(label: 'course.editCourse'.tr()),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _name),
+            label: Text('course.offerName'.tr()),
+          ),
+          const SizedBox(height: 12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _description),
+            label: Text('course.offerDescription'.tr()),
+            maxLines: 3,
+          ),
+          const SizedBox(height: 12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _target),
+            label: Text('course.offerTarget'.tr()),
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'course.editTargetHint'.tr(
+              namedArgs: {'held': '${widget.course.heldSessionCount}'},
+            ),
+            style: context.theme.typography.body.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+          const SizedBox(height: 20),
+          FButton(
+            onPress: busy ? null : _save,
+            child: Text('course.saveCourse'.tr()),
+          ),
         ],
       ),
     );
@@ -265,6 +451,10 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
   final _target = TextEditingController();
   final _search = TextEditingController();
   String? _userId;
+
+  /// Another of the coach's courses to offer a seat in, instead of making
+  /// this thread a course of its own. Null = this course.
+  String? _targetCourseId;
   _EnrollCandidate? _searchSelection;
   List<_EnrollCandidate>? _searchResults;
   bool _searching = false;
@@ -367,6 +557,23 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
         .where((m) => m.status == CourseMemberStatus.inquiring)
         .toList();
     final busy = ref.watch(courseActionControllerProvider);
+    // The coach's other live, named courses in this sport — the group
+    // courses an inquirer can be offered a seat in. Accepting moves them out
+    // of this thread (course_group_enrollment.sql).
+    final otherCourses = widget.course.isCoach
+        ? (ref.watch(proCoursesProvider).value ?? const <CourseSummary>[])
+              .where(
+                (c) =>
+                    c.courseId != widget.course.courseId &&
+                    c.status == CourseStatus.active &&
+                    c.name != null &&
+                    c.sportId == widget.course.sportId,
+              )
+              .toList()
+        : const <CourseSummary>[];
+    final target = otherCourses
+        .where((c) => c.courseId == _targetCourseId)
+        .firstOrNull;
 
     return SingleChildScrollView(
       child: Column(
@@ -498,23 +705,62 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
               ),
             ],
           ],
+          if (otherCourses.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            PSectionHeader(title: 'course.offerTargetLabel'.tr()),
+            FTile(
+              title: Text(
+                widget.course.name ?? 'course.offerTargetNew'.tr(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              suffix: target == null ? const Icon(FLucideIcons.check) : null,
+              onPress: () => setState(() => _targetCourseId = null),
+            ),
+            for (final other in otherCourses)
+              FTile(
+                title: Text(
+                  other.name!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  'course.offerTargetStudents'.plural(other.studentCount),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                suffix: target?.courseId == other.courseId
+                    ? const Icon(FLucideIcons.check)
+                    : null,
+                onPress: () => setState(() => _targetCourseId = other.courseId),
+              ),
+          ],
           const SizedBox(height: 16),
-          FTextField(
-            control: FTextFieldControl.managed(controller: _name),
-            label: Text('course.offerName'.tr()),
-          ),
-          const SizedBox(height: 12),
-          FTextField(
-            control: FTextFieldControl.managed(controller: _description),
-            label: Text('course.offerDescription'.tr()),
-            maxLines: 3,
-          ),
-          const SizedBox(height: 12),
-          FTextField(
-            control: FTextFieldControl.managed(controller: _target),
-            label: Text('course.offerTarget'.tr()),
-            keyboardType: TextInputType.number,
-          ),
+          if (target != null)
+            Text(
+              'course.offerTargetJoin'.tr(namedArgs: {'course': target.name!}),
+              style: context.theme.typography.body.sm.copyWith(
+                color: colors.mutedForeground,
+              ),
+            )
+          else ...[
+            FTextField(
+              control: FTextFieldControl.managed(controller: _name),
+              label: Text('course.offerName'.tr()),
+            ),
+            const SizedBox(height: 12),
+            FTextField(
+              control: FTextFieldControl.managed(controller: _description),
+              label: Text('course.offerDescription'.tr()),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 12),
+            FTextField(
+              control: FTextFieldControl.managed(controller: _target),
+              label: Text('course.offerTarget'.tr()),
+              keyboardType: TextInputType.number,
+            ),
+          ],
           const SizedBox(height: 20),
           // The name is validated on tap, not in the `onPress` guard. Nothing
           // listens to `_name`, so gating the button on `_name.text` left it
@@ -526,7 +772,7 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
             onPress: busy || _userId == null
                 ? null
                 : () async {
-                    if (_name.text.trim().isEmpty) {
+                    if (target == null && _name.text.trim().isEmpty) {
                       showFToast(
                         context: context,
                         icon: const Icon(FLucideIcons.circleAlert),
@@ -540,15 +786,20 @@ class _EnrollmentOfferSheetState extends ConsumerState<_EnrollmentOfferSheet> {
                       await ref
                           .read(courseActionControllerProvider.notifier)
                           .sendEnrollmentOffer(
-                            courseId: widget.course.courseId,
+                            courseId:
+                                target?.courseId ?? widget.course.courseId,
                             userId: _userId!,
-                            name: _name.text,
-                            description: _description.text.trim().isEmpty
+                            // Joining an existing course keeps its identity;
+                            // the offer just carries its name for display.
+                            name: target?.name ?? _name.text,
+                            description:
+                                target != null ||
+                                    _description.text.trim().isEmpty
                                 ? null
                                 : _description.text,
-                            targetSessionCount: int.tryParse(
-                              _target.text.trim(),
-                            ),
+                            targetSessionCount: target != null
+                                ? null
+                                : int.tryParse(_target.text.trim()),
                           );
                       if (context.mounted) Navigator.pop(context);
                     } catch (e, st) {
@@ -1117,9 +1368,10 @@ class _RescheduleSessionSheetState
             onPress: busy
                 ? null
                 : () async {
-                    // Hard-deletes the activity and cascades away any session
-                    // reports written for it — confirm it like every other
-                    // destructive course action in this file.
+                    // Hard-deletes the activity — confirm it like every other
+                    // destructive course action in this file. The server
+                    // refuses once the session has started, so a held
+                    // session's RSVPs and reports can't be cascaded away.
                     final confirmed = await confirmCourseAction(
                       context,
                       title: 'course.cancelSessionTitle'.tr(),
@@ -1190,14 +1442,15 @@ class _SessionReportSheetState extends ConsumerState<_SessionReportSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Only students who RSVP'd going can be written up; the server enforces
-    // it too, but showing an ineligible name would just produce an error.
+    // Only students who count as attended (the coach's mark, else a `going`
+    // RSVP) can be written up; the server enforces it too, but showing an
+    // ineligible name would just produce an error.
     final written = widget.course.reports
         .where((r) => r.activityId == widget.session.activityId)
         .map((r) => r.studentId)
         .toSet();
-    final candidates = widget.course.members
-        .where((m) => m.status.isEnrolled && !written.contains(m.userId))
+    final candidates = widget.session.roster
+        .where((e) => e.attended && !written.contains(e.userId))
         .toList();
     final busy = ref.watch(courseActionControllerProvider);
 
@@ -1206,6 +1459,11 @@ class _SessionReportSheetState extends ConsumerState<_SessionReportSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PSheetTitle(label: 'course.writeReport'.tr()),
+          if (candidates.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text('course.attendance.noneToReport'.tr()),
+            ),
           for (final member in candidates)
             FTile(
               title: Text(

@@ -94,7 +94,31 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
       // on `canManage` inside each tab instead.
       child: async.when(
         loading: () => const Center(child: FCircularProgress()),
-        error: (_, _) => Center(child: Text('course.loadFailed'.tr())),
+        // Also where a push lands for a course the viewer no longer has
+        // access to (left without attending, declined inquiry) — give them
+        // a way out instead of a dead end.
+        error: (_, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 12,
+              children: [
+                Text('course.unavailable'.tr(), textAlign: TextAlign.center),
+                FButton(
+                  variant: .outline,
+                  onPress: () =>
+                      ref.invalidate(courseDetailProvider(widget.id)),
+                  child: Text('course.retry'.tr()),
+                ),
+                FButton(
+                  onPress: () => const ManageCourseRoute().go(context),
+                  child: Text('course.backToHub'.tr()),
+                ),
+              ],
+            ),
+          ),
+        ),
         data: (course) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -304,13 +328,18 @@ class _PendingOfferCard extends ConsumerWidget {
       if (!confirmed || !context.mounted) return;
     }
     try {
-      await ref
+      final joinedId = await ref
           .read(courseActionControllerProvider.notifier)
           .respondToOffer(
             course.pendingOfferId!,
             accept,
             courseId: course.courseId,
           );
+      // A group-course offer shown in this inquiry thread moved us into
+      // that course; this thread is now closed to us.
+      if (accept && joinedId != course.courseId && context.mounted) {
+        CourseDetailRoute(id: joinedId).pushReplacement(context);
+      }
     } catch (e, st) {
       talker.handle(e, st, 'Respond to enrollment offer failed');
       if (context.mounted) {
@@ -385,48 +414,128 @@ class _FeedTab extends ConsumerWidget {
 /// already in this thread — no search, since the whole point is "this
 /// person is right here, enroll them" (search stays behind the info
 /// sheet's own "Send enrollment offer" for the rarer cold-invite case).
-class _EnrollInquirerChip extends StatelessWidget {
+/// Beside it, the other answer to an inquiry: declining it.
+class _EnrollInquirerChip extends ConsumerWidget {
   final CourseDetail course;
 
   const _EnrollInquirerChip({required this.course});
 
+  Future<void> _decline(BuildContext context, WidgetRef ref) async {
+    final inquirer = course.members
+        .where((m) => m.status == CourseMemberStatus.inquiring)
+        .firstOrNull;
+    if (inquirer == null) return;
+    final confirmed = await confirmCourseAction(
+      context,
+      title: 'course.declineInquiryTitle'.tr(),
+      body: 'course.declineInquiryBody'.tr(
+        namedArgs: {'username': inquirer.username},
+      ),
+      confirmLabel: 'course.declineInquiry'.tr(),
+      destructive: true,
+    );
+    if (!confirmed || !context.mounted) return;
+    try {
+      await ref
+          .read(courseActionControllerProvider.notifier)
+          .declineInquiry(course.courseId, inquirer.userId);
+      // A bare inquiry is ended server-side once nobody is left in it, so
+      // there's nothing more to do on this page.
+      if (context.mounted) context.pop();
+    } catch (e, st) {
+      talker.handle(e, st, 'Decline course inquiry failed');
+      if (context.mounted) {
+        showFToast(
+          context: context,
+          variant: .destructive,
+          title: Text('course.actionFailed'.tr()),
+        );
+      }
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
+    final busy = ref.watch(courseActionControllerProvider);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Semantics(
-        button: true,
-        label: 'course.enrollChip'.tr(),
-        child: FTappable(
-          onPress: () =>
-              showEnrollmentOfferSheet(context, course, allowSearch: false),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: colors.primary,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  FLucideIcons.userPlus,
-                  size: 14,
-                  color: colors.primaryForeground,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          Semantics(
+            button: true,
+            label: 'course.enrollChip'.tr(),
+            child: FTappable(
+              onPress: () =>
+                  showEnrollmentOfferSheet(context, course, allowSearch: false),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  'course.enrollChip'.tr(),
-                  style: context.theme.typography.body.sm.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: colors.primaryForeground,
-                  ),
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  borderRadius: BorderRadius.circular(999),
                 ),
-              ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      FLucideIcons.userPlus,
+                      size: 14,
+                      color: colors.primaryForeground,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'course.enrollChip'.tr(),
+                      style: context.theme.typography.body.sm.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colors.primaryForeground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
+          Semantics(
+            button: true,
+            label: 'course.declineInquiry'.tr(),
+            child: FTappable(
+              onPress: busy ? null : () => _decline(context, ref),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(color: colors.border),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      FLucideIcons.userX,
+                      size: 14,
+                      color: colors.mutedForeground,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'course.declineInquiry'.tr(),
+                      style: context.theme.typography.body.sm.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -786,7 +895,8 @@ class _SessionCard extends ConsumerWidget {
                     ),
                   ],
                 ),
-                if (course.canManage) ...[
+                // RSVP closes at kickoff (server-side too).
+                if (course.canManage && !session.hasStarted) ...[
                   const SizedBox(height: 10),
                   _CourseRsvpControl(
                     value: session.myAttendance ?? '',
@@ -798,7 +908,8 @@ class _SessionCard extends ConsumerWidget {
                     ),
                   ),
                 ],
-                if (course.isCoach) ...[
+                // A started session can't be moved or cancelled any more.
+                if (course.isCoach && !session.hasStarted) ...[
                   const SizedBox(height: 12),
                   Align(
                     alignment: Alignment.centerRight,
@@ -1070,10 +1181,7 @@ class _HistoryTab extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          if (course.status == CourseStatus.ended &&
-              course.canManage &&
-              !course.isCoach &&
-              course.myReviewRating == null)
+          if (course.canReview)
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: FButton(
@@ -1100,6 +1208,7 @@ class _PastSessionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.theme.colors;
     final reports = course.reports
         .where((r) => r.activityId == session.activityId)
         .toList();
@@ -1135,6 +1244,40 @@ class _PastSessionTile extends StatelessWidget {
                   )
                 : null,
           ),
+          if (!course.isCoach && session.myAttended != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 12, right: 12),
+              child: Text(
+                session.myAttended!
+                    ? 'course.attendance.youAttended'.tr()
+                    : 'course.attendance.youMissed'.tr(),
+                style: context.theme.typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+            ),
+          if (course.isCoach && session.roster.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 12, right: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'course.attendance.title'.tr(),
+                    style: context.theme.typography.body.xs.copyWith(
+                      color: colors.mutedForeground,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  for (final entry in session.roster)
+                    _AttendanceRow(
+                      course: course,
+                      session: session,
+                      entry: entry,
+                    ),
+                ],
+              ),
+            ),
           for (final report in reports)
             Padding(
               padding: const EdgeInsets.only(top: 6, left: 12, right: 12),
@@ -1142,7 +1285,7 @@ class _PastSessionTile extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: context.theme.colors.muted,
+                  color: colors.muted,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -1151,6 +1294,127 @@ class _PastSessionTile extends StatelessWidget {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One student on a started session's roster, with the coach's
+/// present/absent mark. The mark overrides the RSVP as the attendance signal
+/// (reports, review eligibility) and stays correctable.
+class _AttendanceRow extends ConsumerWidget {
+  final CourseDetail course;
+  final CourseSession session;
+  final SessionRosterEntry entry;
+
+  const _AttendanceRow({
+    required this.course,
+    required this.session,
+    required this.entry,
+  });
+
+  Future<void> _mark(BuildContext context, WidgetRef ref, bool attended) async {
+    try {
+      await ref
+          .read(courseActionControllerProvider.notifier)
+          .markAttendance(
+            activityId: session.activityId,
+            studentId: entry.userId,
+            attended: attended,
+            courseId: course.courseId,
+          );
+    } catch (e, st) {
+      talker.handle(e, st, 'Mark course attendance failed');
+      if (context.mounted) {
+        showFToast(
+          context: context,
+          variant: .destructive,
+          title: Text('course.actionFailed'.tr()),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final busy = ref.watch(courseActionControllerProvider);
+    final hint = entry.marked != null
+        ? null
+        : entry.rsvp == 'going'
+        ? 'course.attendance.fromRsvp'.tr()
+        : 'course.attendance.unmarked'.tr();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => UserRoute(
+                id: entry.userId,
+                $extra: entry.username,
+              ).push(context),
+              child: Row(
+                children: [
+                  PUserAvatar(
+                    userId: entry.userId,
+                    username: entry.username,
+                    generatedAvatar: entry.generatedAvatar,
+                    radius: 12,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text.rich(
+                      TextSpan(
+                        text: entry.username,
+                        children: [
+                          if (hint != null)
+                            TextSpan(
+                              text: '  $hint',
+                              style: context.theme.typography.body.xs.copyWith(
+                                color: colors.mutedForeground,
+                              ),
+                            ),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.theme.typography.body.sm,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Semantics(
+            button: true,
+            label: 'course.attendance.present'.tr(),
+            child: FButton.icon(
+              variant: entry.attended ? .primary : .outline,
+              size: .sm,
+              onPress: busy || entry.marked == true
+                  ? null
+                  : () => _mark(context, ref, true),
+              child: const Icon(FLucideIcons.check, size: 14),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Semantics(
+            button: true,
+            label: 'course.attendance.absent'.tr(),
+            child: FButton.icon(
+              variant: entry.attended ? .outline : .destructive,
+              size: .sm,
+              onPress: busy || entry.marked == false
+                  ? null
+                  : () => _mark(context, ref, false),
+              child: const Icon(FLucideIcons.x, size: 14),
+            ),
+          ),
         ],
       ),
     );

@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict 12CrSOmeX5pFNZibzWIqnSem4bJffw7mBkA73FFtBrCHGUWqohJWJmqQr49GVUU
+\restrict 7W2uX7vUngcLA8WCfYHGbIjfD5BZSDoc6oJlD0QIjcRMU7wj0P8SqMr5ZS7Plnf
 
 -- Dumped from database version 17.6
--- Dumped by pg_dump version 17.9 (Homebrew)
+-- Dumped by pg_dump version 17.11 (Homebrew)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -847,7 +847,9 @@ CREATE TYPE public.notification_kind AS ENUM (
     'challenge_offer_expired',
     'match_result_pending',
     'no_show_claimed',
-    'match_disputed'
+    'match_disputed',
+    'course_target_reached',
+    'course_no_students'
 );
 
 
@@ -2522,12 +2524,17 @@ CREATE FUNCTION public.cancel_course_activity(p_activity_id uuid) RETURNS void
     SET search_path TO ''
     AS $$
 DECLARE v_uid uuid := auth.uid(); v_course uuid; v_start timestamptz;
+        v_status public.activity_proposal_status;
 BEGIN
-  SELECT a.course_id, a.start_time INTO v_course, v_start FROM public.activity a
+  SELECT a.course_id, a.start_time, a.proposal_status INTO v_course, v_start, v_status
+  FROM public.activity a
   WHERE a.id = p_activity_id AND a.course_id IS NOT NULL FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'course session not found'; END IF;
   IF NOT public.fn_is_course_coach(v_course, v_uid) THEN
     RAISE EXCEPTION 'coach access required';
+  END IF;
+  IF v_status = 'approved' AND v_start <= now() THEN
+    RAISE EXCEPTION 'session already started';
   END IF;
 
   DELETE FROM public.activity WHERE id = p_activity_id;
@@ -2996,46 +3003,81 @@ ALTER FUNCTION public.course_activity_conflicts(p_professional_id uuid, p_start 
 -- Name: course_detail_data(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.course_detail_data(p_course_id uuid) RETURNS TABLE(course_id uuid, conversation_id uuid, name text, description text, status text, sport_id bigint, professional_id uuid, coach_name text, coach_user_id uuid, is_coach boolean, my_member_status text, target_session_count integer, held_session_count integer, members jsonb, sessions jsonb, reports jsonb, my_review_rating smallint, pending_offer_id uuid, offer_name text, offer_description text, offer_target_session_count integer)
+CREATE FUNCTION public.course_detail_data(p_course_id uuid) RETURNS TABLE(course_id uuid, conversation_id uuid, name text, description text, status text, sport_id bigint, professional_id uuid, coach_name text, coach_user_id uuid, is_coach boolean, my_member_status text, target_session_count integer, held_session_count integer, members jsonb, sessions jsonb, reports jsonb, my_review_rating smallint, pending_offer_id uuid, offer_name text, offer_description text, offer_target_session_count integer, coach_rates jsonb)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid := auth.uid(); v_is_coach boolean;
+DECLARE v_uid uuid := auth.uid(); v_is_coach boolean; v_is_alumnus boolean := false;
+        v_left_at timestamptz;
 BEGIN
   v_is_coach := public.fn_is_course_coach(p_course_id, v_uid);
   IF NOT v_is_coach AND NOT public.fn_is_course_member(p_course_id, v_uid) THEN
-    RAISE EXCEPTION 'course not found';
+    v_is_alumnus := public.fn_is_course_alumnus(p_course_id, v_uid);
+    IF NOT v_is_alumnus THEN RAISE EXCEPTION 'course not found'; END IF;
+    SELECT m.left_at INTO v_left_at FROM public.course_member m
+    WHERE m.course_id = p_course_id AND m.user_id = v_uid;
   END IF;
 
   RETURN QUERY
   SELECT c.id, conv.id, c.name, c.description, c.status::text, c.sport_id,
          c.professional_id, p.display_name, p.linked_user_id, v_is_coach,
          (SELECT m.status::text FROM public.course_member m
-          WHERE m.course_id = c.id AND m.user_id = v_uid AND m.left_at IS NULL),
+          WHERE m.course_id = c.id AND m.user_id = v_uid),
          c.target_session_count, public.fn_course_held_sessions(c.id),
-         coalesce((
+         CASE WHEN v_is_alumnus THEN '[]'::jsonb ELSE coalesce((
            SELECT jsonb_agg(jsonb_build_object(
              'user_id', m.user_id, 'username', u.username,
              'generated_avatar', u.details->>'generatedAvatar',
              'status', m.status::text, 'joined_at', m.joined_at)
              ORDER BY u.username)
            FROM public.course_member m JOIN public."user" u ON u.id = m.user_id
-           WHERE m.course_id = c.id AND m.left_at IS NULL), '[]'::jsonb),
+           WHERE m.course_id = c.id AND m.left_at IS NULL), '[]'::jsonb) END,
          coalesce((
            SELECT jsonb_agg(jsonb_build_object(
              'activity_id', a.id, 'start_time', a.start_time, 'end_time', a.end_time,
-             'location_id', a.location_id, 'venue_name', loc.name, 'note', a.note,
-             'proposal_status', a.proposal_status::text,
+             'location_id', a.location_id,
+             'venue_name', loc.name,
+             'street_address', coalesce(
+               nullif(btrim(loc.full_address), ''),
+               nullif(concat_ws(', ', nullif(btrim(loc.street_number), ''),
+                 nullif(btrim(loc.street_name), ''), nullif(btrim(loc.district), ''),
+                 nullif(btrim(loc.city), '')), '')
+             ),
+             'location_street_number', loc.street_number,
+             'location_street_name', loc.street_name,
+             'location_district', loc.district,
+             'location_city', loc.city,
+             'location_lat', loc.lat, 'location_lon', loc.lon,
+             'note', a.note, 'proposal_status', a.proposal_status::text,
              'proposed_by', a.proposed_by,
              'my_attendance', (SELECT ac.attendance::text FROM public.activity_confirmation ac
                                WHERE ac.activity_id = a.id AND ac.user_id = v_uid),
+             'my_attended', CASE WHEN a.start_time <= now() AND NOT v_is_coach
+                              THEN public.fn_course_attended(a.id, v_uid) END,
              'going_count', (SELECT count(*) FROM public.activity_confirmation ac
-                             WHERE ac.activity_id = a.id AND ac.attendance = 'going'))
+                             WHERE ac.activity_id = a.id AND ac.attendance = 'going'),
+             'roster', CASE WHEN v_is_coach AND a.proposal_status = 'approved'
+                             AND a.start_time <= now() THEN coalesce((
+               SELECT jsonb_agg(jsonb_build_object(
+                 'user_id', m.user_id, 'username', u.username,
+                 'generated_avatar', u.details->>'generatedAvatar',
+                 'rsvp', (SELECT ac.attendance::text FROM public.activity_confirmation ac
+                          WHERE ac.activity_id = a.id AND ac.user_id = m.user_id),
+                 'marked', (SELECT s.attended FROM public.course_session_attendance s
+                            WHERE s.activity_id = a.id AND s.student_id = m.user_id),
+                 'attended', public.fn_course_attended(a.id, m.user_id))
+                 ORDER BY u.username)
+               FROM public.course_member m JOIN public."user" u ON u.id = m.user_id
+               WHERE m.course_id = c.id
+                 AND public.fn_course_member_at(c.id, m.user_id, a.start_time)),
+               '[]'::jsonb) END)
              ORDER BY a.start_time)
            FROM public.activity a
            LEFT JOIN public.location loc ON loc.id = a.location_id
            WHERE a.course_id = c.id
-             AND a.proposal_status IN ('approved','pending')), '[]'::jsonb),
+             AND (CASE WHEN v_is_alumnus
+                       THEN a.proposal_status = 'approved' AND a.start_time <= v_left_at
+                       ELSE a.proposal_status IN ('approved','pending') END)), '[]'::jsonb),
          coalesce((
            SELECT jsonb_agg(jsonb_build_object(
              'activity_id', r.activity_id, 'student_id', r.student_id,
@@ -3046,16 +3088,31 @@ BEGIN
              AND (v_is_coach OR r.student_id = v_uid)), '[]'::jsonb),
          (SELECT rv.rating FROM public.course_review rv
           WHERE rv.course_id = c.id AND rv.student_id = v_uid),
-         offer.id, offer.name, offer.description, offer.target_session_count
+         offer.id, offer.name, offer.description, offer.target_session_count,
+         coalesce((
+           SELECT jsonb_agg(jsonb_build_object(
+             'price_amount', s.price_amount, 'pricing_kind', s.pricing_kind,
+             'min_duration_minutes', s.min_duration_minutes,
+             'max_participants', s.max_participants,
+             'description', s.service_description)
+             ORDER BY s.price_amount)
+           FROM public.professional_service s
+           WHERE s.professional_id = c.professional_id AND s.sport_id = c.sport_id
+             AND s.service_type = 'coaching' AND s.is_active), '[]'::jsonb)
   FROM public.course c
   JOIN public.professional p ON p.id = c.professional_id
   LEFT JOIN public.conversation conv ON conv.course_id = c.id
   LEFT JOIN LATERAL (
     SELECT o.id, o.name, o.description, o.target_session_count
     FROM public.course_enrollment_offer o
-    WHERE o.course_id = c.id AND o.user_id = v_uid AND o.status = 'pending'
-    ORDER BY o.created_at DESC LIMIT 1
-  ) offer ON NOT v_is_coach
+    JOIN public.course oc ON oc.id = o.course_id
+    WHERE o.user_id = v_uid AND o.status = 'pending'
+      AND (o.course_id = c.id OR (
+        oc.professional_id = c.professional_id AND oc.sport_id = c.sport_id
+        AND oc.status = 'active'
+        AND NOT public.fn_is_course_member(oc.id, v_uid)))
+    ORDER BY (o.course_id = c.id) DESC, o.created_at DESC LIMIT 1
+  ) offer ON NOT v_is_coach AND NOT v_is_alumnus
   WHERE c.id = p_course_id;
 END
 $$;
@@ -3354,6 +3411,48 @@ $$;
 
 
 ALTER FUNCTION public.create_wall_post(p_activity_id uuid, p_media jsonb, p_caption text, p_ttl_days smallint, p_tagged_users uuid[]) OWNER TO postgres;
+
+--
+-- Name: decline_course_inquiry(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.decline_course_inquiry(p_course_id uuid, p_user_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_uid uuid := auth.uid(); v_username text;
+BEGIN
+  IF NOT public.fn_is_course_coach(p_course_id, v_uid) THEN
+    RAISE EXCEPTION 'coach access required';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM public.course_member m
+    WHERE m.course_id = p_course_id AND m.user_id = p_user_id
+      AND m.status = 'inquiring' AND m.left_at IS NULL
+  ) THEN RAISE EXCEPTION 'inquiry not found'; END IF;
+
+  SELECT u.username::text INTO v_username FROM public."user" u WHERE u.id = p_user_id;
+  PERFORM public.fn_course_system_message(p_course_id, 'inquiry_declined',
+    jsonb_build_object('username', v_username));
+
+  UPDATE public.course_member SET status = 'removed', left_at = now()
+  WHERE course_id = p_course_id AND user_id = p_user_id;
+  UPDATE public.conversation_member SET left_at = now()
+  WHERE user_id = p_user_id
+    AND conversation_id = (SELECT id FROM public.conversation WHERE course_id = p_course_id);
+  UPDATE public.course_enrollment_offer SET status = 'withdrawn', responded_at = now()
+  WHERE course_id = p_course_id AND user_id = p_user_id AND status = 'pending';
+
+  PERFORM public.fn_enqueue_notification('course_member_removed', ARRAY[p_user_id],
+    'Huấn luyện viên đã phản hồi', 'Huấn luyện viên hiện chưa thể nhận thêm học viên.',
+    jsonb_build_object('course_id', p_course_id));
+
+  PERFORM public.fn_course_end_if_empty_inquiry(p_course_id);
+END
+$$;
+
+
+ALTER FUNCTION public.decline_course_inquiry(p_course_id uuid, p_user_id uuid) OWNER TO postgres;
 
 --
 -- Name: delete_payment_info(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -4262,6 +4361,23 @@ $$;
 ALTER FUNCTION public.fn_can_receive_conversation_topic(p_topic text, p_uid uuid) OWNER TO postgres;
 
 --
+-- Name: fn_can_rsvp_course_activity(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_can_rsvp_course_activity(p_activity_id uuid, p_uid uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT public.fn_can_access_course_activity(p_activity_id, p_uid) AND EXISTS (
+    SELECT 1 FROM public.activity a
+    WHERE a.id = p_activity_id AND a.start_time > now()
+  );
+$$;
+
+
+ALTER FUNCTION public.fn_can_rsvp_course_activity(p_activity_id uuid, p_uid uuid) OWNER TO postgres;
+
+--
 -- Name: fn_can_see_message(uuid, timestamp with time zone, uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -4533,6 +4649,52 @@ $$;
 ALTER FUNCTION public.fn_course_add_member(p_course_id uuid, p_user_id uuid, p_status public.course_member_status) OWNER TO postgres;
 
 --
+-- Name: fn_course_attended(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_course_attended(p_activity_id uuid, p_uid uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT coalesce(
+    (SELECT s.attended FROM public.course_session_attendance s
+     WHERE s.activity_id = p_activity_id AND s.student_id = p_uid),
+    EXISTS (SELECT 1 FROM public.activity_confirmation ac
+            WHERE ac.activity_id = p_activity_id AND ac.user_id = p_uid
+              AND ac.attendance = 'going'));
+$$;
+
+
+ALTER FUNCTION public.fn_course_attended(p_activity_id uuid, p_uid uuid) OWNER TO postgres;
+
+--
+-- Name: fn_course_end_if_empty_inquiry(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_course_end_if_empty_inquiry(p_course_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM public.course_member m
+    WHERE m.course_id = p_course_id AND m.left_at IS NULL
+  ) THEN RETURN; END IF;
+
+  UPDATE public.course SET status = 'ended', ended_at = now()
+  WHERE id = p_course_id AND status = 'active' AND name IS NULL;
+  IF NOT FOUND THEN RETURN; END IF;
+
+  DELETE FROM public.activity WHERE course_id = p_course_id AND start_time > now();
+  UPDATE public.course_enrollment_offer SET status = 'withdrawn', responded_at = now()
+  WHERE course_id = p_course_id AND status = 'pending';
+END
+$$;
+
+
+ALTER FUNCTION public.fn_course_end_if_empty_inquiry(p_course_id uuid) OWNER TO postgres;
+
+--
 -- Name: fn_course_held_sessions(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -4548,6 +4710,25 @@ $$;
 
 
 ALTER FUNCTION public.fn_course_held_sessions(p_course_id uuid) OWNER TO postgres;
+
+--
+-- Name: fn_course_member_at(uuid, uuid, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_course_member_at(p_course_id uuid, p_uid uuid, p_at timestamp with time zone) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.course_member m
+    WHERE m.course_id = p_course_id AND m.user_id = p_uid
+      AND m.status <> 'inquiring'
+      AND m.joined_at <= p_at AND (m.left_at IS NULL OR m.left_at > p_at)
+  );
+$$;
+
+
+ALTER FUNCTION public.fn_course_member_at(p_course_id uuid, p_uid uuid, p_at timestamp with time zone) OWNER TO postgres;
 
 --
 -- Name: fn_course_member_denormalise(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -4591,7 +4772,7 @@ BEGIN
   SELECT p.linked_user_id INTO v_coach FROM public.professional p
   JOIN public.course c ON c.professional_id = p.id WHERE c.id = p_course_id;
   IF v_coach IS NOT NULL THEN
-    PERFORM public.fn_enqueue_notification('course_ended', ARRAY[v_coach],
+    PERFORM public.fn_enqueue_notification('course_no_students', ARRAY[v_coach],
       'Khoá học không còn học viên', 'Bạn có thể mời học viên mới hoặc kết thúc khoá học.',
       jsonb_build_object('course_id', p_course_id));
   END IF;
@@ -5402,6 +5583,30 @@ $$;
 
 
 ALTER FUNCTION public.fn_is_conversation_member(p_conversation_id uuid, p_uid uuid) OWNER TO postgres;
+
+--
+-- Name: fn_is_course_alumnus(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.fn_is_course_alumnus(p_course_id uuid, p_uid uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.course_member m
+    WHERE m.course_id = p_course_id AND m.user_id = p_uid
+      AND m.left_at IS NOT NULL
+      AND EXISTS (
+        SELECT 1 FROM public.activity a
+        WHERE a.course_id = p_course_id AND a.proposal_status = 'approved'
+          AND coalesce(a.end_time, a.start_time) < now()
+          AND public.fn_course_attended(a.id, p_uid)
+      )
+  );
+$$;
+
+
+ALTER FUNCTION public.fn_is_course_alumnus(p_course_id uuid, p_uid uuid) OWNER TO postgres;
 
 --
 -- Name: fn_is_course_coach(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -6224,8 +6429,14 @@ BEGIN
   LOOP
     PERFORM public.fn_enqueue_notification(
       'pro_session_reminder',
-      (SELECT array_agg(ac.user_id) FROM public.activity_confirmation ac
-       WHERE ac.activity_id = r.id AND ac.attendance = 'going'),
+      (SELECT array_agg(uid) FROM (
+          SELECT ac.user_id AS uid FROM public.activity_confirmation ac
+          WHERE ac.activity_id = r.id AND ac.attendance = 'going'
+          UNION
+          SELECT p.linked_user_id FROM public.course c
+          JOIN public.professional p ON p.id = c.professional_id
+          WHERE c.id = r.course_id AND p.linked_user_id IS NOT NULL
+       ) s),
       'Sắp tới giờ tập với coach',
       'Buổi tập của bạn bắt đầu lúc '
         || to_char(r.start_time AT TIME ZONE 'Asia/Ho_Chi_Minh', 'HH24:MI'),
@@ -6804,7 +7015,7 @@ BEGIN
     SELECT p.linked_user_id INTO v_coach FROM public.professional p
     WHERE p.id = r.professional_id;
     IF v_coach IS NOT NULL THEN
-      PERFORM public.fn_enqueue_notification('course_ended', ARRAY[v_coach],
+      PERFORM public.fn_enqueue_notification('course_target_reached', ARRAY[v_coach],
         'Khoá học đã đủ số buổi', 'Bạn có thể gia hạn hoặc kết thúc khoá học.',
         jsonb_build_object('course_id', r.id));
     END IF;
@@ -9422,6 +9633,37 @@ $$;
 ALTER FUNCTION public.mark_conversation_read(p_conversation_id uuid) OWNER TO postgres;
 
 --
+-- Name: mark_course_attendance(uuid, uuid, boolean); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.mark_course_attendance(p_activity_id uuid, p_student_id uuid, p_attended boolean) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_uid uuid := auth.uid(); v_course uuid; v_start timestamptz;
+BEGIN
+  SELECT a.course_id, a.start_time INTO v_course, v_start FROM public.activity a
+  WHERE a.id = p_activity_id AND a.proposal_status = 'approved' AND a.start_time <= now();
+  IF NOT FOUND THEN RAISE EXCEPTION 'started session not found'; END IF;
+  IF NOT public.fn_is_course_coach(v_course, v_uid) THEN
+    RAISE EXCEPTION 'coach access required';
+  END IF;
+  IF p_attended IS NULL THEN RAISE EXCEPTION 'attended required'; END IF;
+  IF NOT public.fn_course_member_at(v_course, p_student_id, v_start) THEN
+    RAISE EXCEPTION 'student was not in the course';
+  END IF;
+
+  INSERT INTO public.course_session_attendance(activity_id, student_id, attended)
+  VALUES (p_activity_id, p_student_id, p_attended)
+  ON CONFLICT (activity_id, student_id) DO UPDATE
+    SET attended = excluded.attended, marked_at = now();
+END
+$$;
+
+
+ALTER FUNCTION public.mark_course_attendance(p_activity_id uuid, p_student_id uuid, p_attended boolean) OWNER TO postgres;
+
+--
 -- Name: mark_payment_request_paid(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -9531,21 +9773,30 @@ CREATE FUNCTION public.my_courses_data() RETURNS TABLE(course_id uuid, conversat
          c.professional_id, p.display_name, cu.details->>'generatedAvatar',
          p.linked_user_id,
          c.sport_id, c.target_session_count, public.fn_course_held_sessions(c.id),
-         nxt.id, nxt.start_time,
+         CASE WHEN m.left_at IS NULL THEN nxt.id END,
+         CASE WHEN m.left_at IS NULL THEN nxt.start_time END,
          last_msg.created_at, last_msg.body, last_msg.kind::text, last_msg.payload,
          (SELECT count(*)::integer FROM public.message x
           WHERE x.conversation_id = conv.id
             AND x.created_at > cm.last_read_at
             AND x.created_at >= cm.joined_at
             AND (cm.left_at IS NULL OR x.created_at <= cm.left_at)),
-         (SELECT o.id FROM public.course_enrollment_offer o
-          WHERE o.course_id = c.id AND o.user_id = m.user_id AND o.status = 'pending'
-          LIMIT 1),
-         (SELECT count(*)::integer FROM public.activity a
-          WHERE a.course_id = c.id AND a.proposal_status = 'approved'
-            AND a.start_time > now()
-            AND NOT EXISTS (SELECT 1 FROM public.activity_confirmation ac
-                            WHERE ac.activity_id = a.id AND ac.user_id = m.user_id))
+         CASE WHEN m.left_at IS NULL THEN
+           (SELECT o.id FROM public.course_enrollment_offer o
+            JOIN public.course oc ON oc.id = o.course_id
+            WHERE o.user_id = m.user_id AND o.status = 'pending'
+              AND (o.course_id = c.id OR (
+                oc.professional_id = c.professional_id AND oc.sport_id = c.sport_id
+                AND oc.status = 'active'
+                AND NOT public.fn_is_course_member(oc.id, m.user_id)))
+            LIMIT 1) END,
+         CASE WHEN m.left_at IS NULL THEN
+           (SELECT count(*)::integer FROM public.activity a
+            WHERE a.course_id = c.id AND a.proposal_status = 'approved'
+              AND a.start_time > now()
+              AND NOT EXISTS (SELECT 1 FROM public.activity_confirmation ac
+                              WHERE ac.activity_id = a.id AND ac.user_id = m.user_id))
+         ELSE 0 END
   FROM public.course_member m
   JOIN public.course c ON c.id = m.course_id
   JOIN public.professional p ON p.id = c.professional_id
@@ -9565,8 +9816,9 @@ CREATE FUNCTION public.my_courses_data() RETURNS TABLE(course_id uuid, conversat
       AND (cm.left_at IS NULL OR x.created_at <= cm.left_at)
     ORDER BY x.created_at DESC LIMIT 1
   ) last_msg ON true
-  WHERE m.user_id = auth.uid() AND m.left_at IS NULL
-  ORDER BY coalesce(last_msg.created_at, c.created_at) DESC;
+  WHERE m.user_id = auth.uid()
+    AND (m.left_at IS NULL OR public.fn_is_course_alumnus(c.id, m.user_id))
+  ORDER BY (m.left_at IS NOT NULL), coalesce(last_msg.created_at, c.created_at) DESC;
 $$;
 
 
@@ -9836,12 +10088,13 @@ CREATE FUNCTION public.pro_courses_data() RETURNS TABLE(course_id uuid, conversa
           WHERE a.course_id = c.id AND a.proposal_status = 'pending'),
          (SELECT count(*)::integer
           FROM public.activity a
-          JOIN public.activity_confirmation ac ON ac.activity_id = a.id
+          JOIN public.course_member m ON m.course_id = a.course_id
           WHERE a.course_id = c.id AND a.proposal_status = 'approved'
             AND coalesce(a.end_time, a.start_time) < now()
-            AND ac.attendance = 'going'
+            AND public.fn_course_member_at(c.id, m.user_id, a.start_time)
+            AND public.fn_course_attended(a.id, m.user_id)
             AND NOT EXISTS (SELECT 1 FROM public.course_session_report r
-                            WHERE r.activity_id = a.id AND r.student_id = ac.user_id))
+                            WHERE r.activity_id = a.id AND r.student_id = m.user_id))
   FROM public.course c
   JOIN public.professional p ON p.id = c.professional_id
   LEFT JOIN public.conversation conv ON conv.course_id = c.id
@@ -9864,6 +10117,9 @@ CREATE FUNCTION public.pro_courses_data() RETURNS TABLE(course_id uuid, conversa
     ORDER BY m.joined_at LIMIT 1
   ) earliest ON true
   WHERE p.linked_user_id = auth.uid()
+    AND (c.name IS NOT NULL OR EXISTS (
+      SELECT 1 FROM public.course_member m
+      WHERE m.course_id = c.id AND m.left_at IS NULL))
   ORDER BY coalesce(last_msg.created_at, c.created_at) DESC;
 $$;
 
@@ -10817,14 +11073,15 @@ CREATE FUNCTION public.reschedule_course_activity(p_activity_id uuid, p_start ti
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid := auth.uid(); v_course uuid;
+DECLARE v_uid uuid := auth.uid(); v_course uuid; v_old_start timestamptz;
 BEGIN
-  SELECT a.course_id INTO v_course FROM public.activity a
+  SELECT a.course_id, a.start_time INTO v_course, v_old_start FROM public.activity a
   WHERE a.id = p_activity_id AND a.proposal_status = 'approved' FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'approved session not found'; END IF;
   IF NOT public.fn_is_course_coach(v_course, v_uid) THEN
     RAISE EXCEPTION 'coach access required';
   END IF;
+  IF v_old_start <= now() THEN RAISE EXCEPTION 'session already started'; END IF;
   IF p_end IS NOT NULL AND p_end <= p_start THEN RAISE EXCEPTION 'invalid time range'; END IF;
   IF p_start <= now() THEN RAISE EXCEPTION 'cannot schedule in the past'; END IF;
 
@@ -11137,13 +11394,14 @@ ALTER FUNCTION public.respond_course_proposal(p_activity_id uuid, p_approve bool
 -- Name: respond_enrollment_offer(uuid, boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.respond_enrollment_offer(p_offer_id uuid, p_accept boolean) RETURNS void
+CREATE FUNCTION public.respond_enrollment_offer(p_offer_id uuid, p_accept boolean) RETURNS uuid
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE v_uid uuid := auth.uid(); v_offer record; v_coach uuid; v_username text;
+        v_thread uuid; v_course_name text;
 BEGIN
-  SELECT o.*, c.professional_id, c.sport_id INTO v_offer
+  SELECT o.*, c.professional_id, c.sport_id, c.name AS course_name INTO v_offer
   FROM public.course_enrollment_offer o
   JOIN public.course c ON c.id = o.course_id
   WHERE o.id = p_offer_id AND o.user_id = v_uid AND o.status = 'pending'
@@ -11154,13 +11412,14 @@ BEGIN
   IF NOT p_accept THEN
     UPDATE public.course_enrollment_offer
     SET status = 'declined', responded_at = now() WHERE id = p_offer_id;
-    RETURN;
+    RETURN v_offer.course_id;
   END IF;
 
   IF EXISTS (
     SELECT 1 FROM public.course_member m
     WHERE m.user_id = v_uid AND m.sport_id = v_offer.sport_id
-      AND m.status = 'enrolled' AND m.course_id <> v_offer.course_id
+      AND m.status = 'enrolled' AND m.left_at IS NULL
+      AND m.course_id <> v_offer.course_id
   ) THEN
     RAISE EXCEPTION 'already enrolled with a coach for this sport';
   END IF;
@@ -11168,8 +11427,37 @@ BEGIN
   UPDATE public.course_enrollment_offer
   SET status = 'accepted', responded_at = now() WHERE id = p_offer_id;
 
-  UPDATE public.course_member SET status = 'enrolled'
-  WHERE course_id = v_offer.course_id AND user_id = v_uid;
+  UPDATE public.course_enrollment_offer o SET status = 'withdrawn', responded_at = now()
+  FROM public.course oc
+  WHERE oc.id = o.course_id AND o.user_id = v_uid AND o.status = 'pending'
+    AND oc.professional_id = v_offer.professional_id AND oc.sport_id = v_offer.sport_id;
+
+  SELECT u.username::text INTO v_username FROM public."user" u WHERE u.id = v_uid;
+  v_course_name := coalesce(v_offer.course_name, v_offer.name);
+
+  IF public.fn_is_course_member(v_offer.course_id, v_uid) THEN
+    UPDATE public.course_member SET status = 'enrolled'
+    WHERE course_id = v_offer.course_id AND user_id = v_uid;
+  ELSE
+    SELECT m.course_id INTO v_thread FROM public.course_member m
+    WHERE m.user_id = v_uid AND m.professional_id = v_offer.professional_id
+      AND m.sport_id = v_offer.sport_id AND m.left_at IS NULL
+      AND m.course_id <> v_offer.course_id
+    LIMIT 1;
+
+    IF v_thread IS NOT NULL THEN
+      PERFORM public.fn_course_system_message(v_thread, 'moved_to_course',
+        jsonb_build_object('username', v_username, 'course_name', v_course_name));
+      UPDATE public.course_member SET status = 'left', left_at = now()
+      WHERE course_id = v_thread AND user_id = v_uid;
+      UPDATE public.conversation_member SET left_at = now()
+      WHERE user_id = v_uid
+        AND conversation_id = (SELECT id FROM public.conversation WHERE course_id = v_thread);
+      PERFORM public.fn_course_end_if_empty_inquiry(v_thread);
+    END IF;
+
+    PERFORM public.fn_course_add_member(v_offer.course_id, v_uid, 'enrolled');
+  END IF;
 
   UPDATE public.course SET
     name = coalesce(name, v_offer.name),
@@ -11177,7 +11465,6 @@ BEGIN
     target_session_count = coalesce(target_session_count, v_offer.target_session_count)
   WHERE id = v_offer.course_id;
 
-  SELECT u.username::text INTO v_username FROM public."user" u WHERE u.id = v_uid;
   PERFORM public.fn_course_system_message(v_offer.course_id, 'enrollment_accepted',
     jsonb_build_object('username', v_username));
 
@@ -11188,6 +11475,8 @@ BEGIN
       'Học viên đã tham gia', coalesce(v_username,'') || ' đã tham gia khoá học.',
       jsonb_build_object('course_id', v_offer.course_id));
   END IF;
+
+  RETURN v_offer.course_id;
 END
 $$;
 
@@ -11676,14 +11965,15 @@ CREATE FUNCTION public.send_enrollment_offer(p_course_id uuid, p_user_id uuid, p
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE v_uid uuid := auth.uid(); v_id uuid;
+DECLARE v_uid uuid := auth.uid(); v_id uuid; v_course record;
+        v_thread uuid; v_thread_status public.course_member_status;
 BEGIN
   IF NOT public.fn_is_course_coach(p_course_id, v_uid) THEN
     RAISE EXCEPTION 'coach access required';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.course WHERE id = p_course_id AND status = 'active') THEN
-    RAISE EXCEPTION 'course is not active';
-  END IF;
+  SELECT c.id, c.name, c.professional_id, c.sport_id INTO v_course
+  FROM public.course c WHERE c.id = p_course_id AND c.status = 'active';
+  IF NOT FOUND THEN RAISE EXCEPTION 'course is not active'; END IF;
   IF nullif(btrim(p_name),'') IS NULL THEN RAISE EXCEPTION 'name required'; END IF;
 
   IF p_user_id IS NULL THEN RAISE EXCEPTION 'no target user'; END IF;
@@ -11695,11 +11985,19 @@ BEGIN
     RAISE EXCEPTION 'not allowed';
   END IF;
 
-  IF NOT EXISTS (
-    SELECT 1 FROM public.course_member m
-    WHERE m.course_id = p_course_id AND m.user_id = p_user_id AND m.left_at IS NULL
-  ) THEN
-    PERFORM public.fn_course_add_member(p_course_id, p_user_id, 'inquiring');
+  IF NOT public.fn_is_course_member(p_course_id, p_user_id) THEN
+    SELECT m.course_id, m.status INTO v_thread, v_thread_status
+    FROM public.course_member m
+    WHERE m.user_id = p_user_id AND m.professional_id = v_course.professional_id
+      AND m.sport_id = v_course.sport_id AND m.left_at IS NULL
+      AND m.course_id <> p_course_id
+    LIMIT 1;
+
+    IF v_thread_status = 'enrolled' THEN
+      RAISE EXCEPTION 'already enrolled in another of your courses';
+    ELSIF v_thread IS NULL THEN
+      PERFORM public.fn_course_add_member(p_course_id, p_user_id, 'inquiring');
+    END IF;
   END IF;
 
   INSERT INTO public.course_enrollment_offer(
@@ -11707,9 +12005,15 @@ BEGIN
   VALUES (p_course_id, p_user_id, btrim(p_name), p_description, p_target_session_count)
   RETURNING id INTO v_id;
 
+  IF v_thread IS NOT NULL THEN
+    PERFORM public.fn_course_system_message(v_thread, 'enrollment_offer_elsewhere',
+      jsonb_build_object('course_name', coalesce(v_course.name, btrim(p_name)),
+                         'course_id', p_course_id, 'offer_id', v_id));
+  END IF;
+
   PERFORM public.fn_enqueue_notification('course_enrollment_offer', ARRAY[p_user_id],
     'Lời mời tham gia khoá học', btrim(p_name),
-    jsonb_build_object('course_id', p_course_id, 'offer_id', v_id));
+    jsonb_build_object('course_id', coalesce(v_thread, p_course_id), 'offer_id', v_id));
   RETURN v_id;
 END
 $$;
@@ -12285,10 +12589,9 @@ BEGIN
 
   IF NOT EXISTS (
     SELECT 1 FROM public.activity a
-    JOIN public.activity_confirmation ac ON ac.activity_id = a.id
-    WHERE a.course_id = p_course_id AND ac.user_id = v_uid
-      AND ac.attendance = 'going' AND a.proposal_status = 'approved'
+    WHERE a.course_id = p_course_id AND a.proposal_status = 'approved'
       AND coalesce(a.end_time, a.start_time) < now()
+      AND public.fn_course_attended(a.id, v_uid)
   ) THEN RAISE EXCEPTION 'no attended session to review'; END IF;
 
   IF EXISTS (
@@ -12323,11 +12626,9 @@ BEGIN
   IF NOT public.fn_is_course_coach(v_course, v_uid) THEN
     RAISE EXCEPTION 'coach access required';
   END IF;
-  IF NOT EXISTS (
-    SELECT 1 FROM public.activity_confirmation ac
-    WHERE ac.activity_id = p_activity_id AND ac.user_id = p_student_id
-      AND ac.attendance = 'going'
-  ) THEN RAISE EXCEPTION 'student did not attend'; END IF;
+  IF NOT public.fn_course_attended(p_activity_id, p_student_id) THEN
+    RAISE EXCEPTION 'student did not attend';
+  END IF;
   IF nullif(btrim(p_body),'') IS NULL OR char_length(btrim(p_body)) > 1000 THEN
     RAISE EXCEPTION 'invalid report';
   END IF;
@@ -12627,6 +12928,39 @@ $$;
 
 
 ALTER FUNCTION public.unfriend(p_user_id uuid) OWNER TO postgres;
+
+--
+-- Name: update_course(uuid, text, text, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_course(p_course_id uuid, p_name text, p_description text DEFAULT NULL::text, p_target_session_count integer DEFAULT NULL::integer) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE v_uid uuid := auth.uid();
+BEGIN
+  IF NOT public.fn_is_course_coach(p_course_id, v_uid) THEN
+    RAISE EXCEPTION 'coach access required';
+  END IF;
+  IF nullif(btrim(p_name),'') IS NULL THEN RAISE EXCEPTION 'name required'; END IF;
+
+  UPDATE public.course SET
+    name = btrim(p_name),
+    description = nullif(btrim(p_description), ''),
+    target_session_count = p_target_session_count,
+    target_reached_at = CASE
+      WHEN p_target_session_count IS NULL THEN NULL
+      WHEN p_target_session_count > public.fn_course_held_sessions(p_course_id) THEN NULL
+      ELSE target_reached_at END
+  WHERE id = p_course_id AND status = 'active';
+  IF NOT FOUND THEN RAISE EXCEPTION 'course is not active'; END IF;
+
+  PERFORM public.fn_course_system_message(p_course_id, 'course_updated');
+END
+$$;
+
+
+ALTER FUNCTION public.update_course(p_course_id uuid, p_name text, p_description text, p_target_session_count integer) OWNER TO postgres;
 
 --
 -- Name: update_freeplay_activity(uuid, timestamp with time zone, timestamp with time zone, integer, numeric, numeric, text[], text, uuid, text, text, bigint, text); Type: FUNCTION; Schema: public; Owner: postgres
@@ -14052,6 +14386,37 @@ $$;
 ALTER FUNCTION storage.can_insert_object(bucketid text, name text, owner uuid, metadata jsonb) OWNER TO supabase_storage_admin;
 
 --
+-- Name: enforce_bucket_lifecycle_service_role(); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+--
+
+CREATE FUNCTION storage.enforce_bucket_lifecycle_service_role() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'pg_catalog'
+    AS $$
+BEGIN
+  IF current_user::text IS DISTINCT FROM TG_ARGV[0]
+     AND (
+       OLD.lifecycle_configuration IS DISTINCT FROM NEW.lifecycle_configuration
+       OR OLD.lifecycle_configuration_generation IS DISTINCT FROM NEW.lifecycle_configuration_generation
+     ) THEN
+    -- AFTER runs only after caller RLS has accepted the proposed row. The API
+    -- recognizes this specific error after rolling back its permission probe;
+    -- direct non-service writes still fail and cannot persist the change.
+    RAISE EXCEPTION 'bucket control columns may only be changed by the configured storage service role'
+      USING ERRCODE = 'PST01',
+            SCHEMA = TG_TABLE_SCHEMA,
+            TABLE = TG_TABLE_NAME,
+            CONSTRAINT = TG_NAME;
+  END IF;
+
+  RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION storage.enforce_bucket_lifecycle_service_role() OWNER TO supabase_storage_admin;
+
+--
 -- Name: enforce_bucket_name_length(); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
 --
 
@@ -14138,8 +14503,14 @@ CREATE FUNCTION storage.get_common_prefix(p_key text, p_prefix text, p_delimiter
     LANGUAGE sql IMMUTABLE
     AS $$
 SELECT CASE
-    WHEN position(p_delimiter IN substring(p_key FROM length(p_prefix) + 1)) > 0
-    THEN left(p_key, length(p_prefix) + position(p_delimiter IN substring(p_key FROM length(p_prefix) + 1)))
+    WHEN p_delimiter <> ''
+         AND position(p_delimiter IN substring(p_key FROM length(p_prefix) + 1)) > 0
+    THEN left(
+        p_key,
+        length(p_prefix)
+            + position(p_delimiter IN substring(p_key FROM length(p_prefix) + 1))
+            + length(p_delimiter) - 1
+    )
     ELSE NULL
 END;
 $$;
@@ -14148,76 +14519,109 @@ $$;
 ALTER FUNCTION storage.get_common_prefix(p_key text, p_prefix text, p_delimiter text) OWNER TO supabase_storage_admin;
 
 --
--- Name: get_size_by_bucket(); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: get_size_by_bucket(text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
 --
 
-CREATE FUNCTION storage.get_size_by_bucket() RETURNS TABLE(size bigint, bucket_id text)
+CREATE FUNCTION storage.get_size_by_bucket(noncurrent_versions text DEFAULT 'include'::text, delete_markers text DEFAULT 'include'::text) RETURNS TABLE(size bigint, bucket_id text)
     LANGUAGE plpgsql STABLE
     AS $$
 BEGIN
+    -- COALESCE first: NULL NOT IN (...) evaluates to NULL (not TRUE), so a
+    -- bare NOT IN check silently leaves an explicit NULL argument unreset.
+    noncurrent_versions := COALESCE(noncurrent_versions, 'include');
+    delete_markers := COALESCE(delete_markers, 'include');
+    IF noncurrent_versions NOT IN ('exclude', 'only', 'include') THEN
+        noncurrent_versions := 'include';
+    END IF;
+    IF delete_markers NOT IN ('exclude', 'only', 'include') THEN
+        delete_markers := 'include';
+    END IF;
+
     return query
         select sum((metadata->>'size')::bigint)::bigint as size, obj.bucket_id
         from "storage".objects as obj
+        where (noncurrent_versions != 'exclude' OR obj.archived_at IS NULL)
+          and (noncurrent_versions != 'only' OR obj.archived_at IS NOT NULL)
+          and (delete_markers != 'exclude' OR NOT obj.is_delete_marker)
+          and (delete_markers != 'only' OR obj.is_delete_marker)
         group by obj.bucket_id;
 END
 $$;
 
 
-ALTER FUNCTION storage.get_size_by_bucket() OWNER TO supabase_storage_admin;
+ALTER FUNCTION storage.get_size_by_bucket(noncurrent_versions text, delete_markers text) OWNER TO supabase_storage_admin;
 
 --
--- Name: list_multipart_uploads_with_delimiter(text, text, text, integer, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: list_multipart_uploads_with_delimiter(text, text, text, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
 --
 
-CREATE FUNCTION storage.list_multipart_uploads_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer DEFAULT 100, next_key_token text DEFAULT ''::text, next_upload_token text DEFAULT ''::text) RETURNS TABLE(key text, id text, created_at timestamp with time zone)
-    LANGUAGE plpgsql
+CREATE FUNCTION storage.list_multipart_uploads_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer DEFAULT 100, next_key_token text DEFAULT ''::text, next_upload_token text DEFAULT ''::text, raw_prefix_param text DEFAULT NULL::text) RETURNS TABLE(key text, id text, created_at timestamp with time zone)
+    LANGUAGE sql STABLE
     AS $_$
-BEGIN
-    RETURN QUERY EXECUTE
-        'SELECT DISTINCT ON(key COLLATE "C") * from (
-            SELECT
-                CASE
-                    WHEN position($2 IN substring(key from length($1) + 1)) > 0 THEN
-                        substring(key from 1 for length($1) + position($2 IN substring(key from length($1) + 1)))
-                    ELSE
-                        key
-                END AS key, id, created_at
-            FROM
-                storage.s3_multipart_uploads
-            WHERE
-                bucket_id = $5 AND
-                key ILIKE $1 || ''%'' AND
-                CASE
-                    WHEN $4 != '''' AND $6 = '''' THEN
-                        CASE
-                            WHEN position($2 IN substring(key from length($1) + 1)) > 0 THEN
-                                substring(key from 1 for length($1) + position($2 IN substring(key from length($1) + 1))) COLLATE "C" > $4
-                            ELSE
-                                key COLLATE "C" > $4
-                            END
-                    ELSE
-                        true
-                END AND
-                CASE
-                    WHEN $6 != '''' THEN
-                        id COLLATE "C" > $6
-                    ELSE
-                        true
-                    END
-            ORDER BY
-                key COLLATE "C" ASC, created_at ASC) as e order by key COLLATE "C" LIMIT $3'
-        USING prefix_param, delimiter_param, max_keys, next_key_token, bucket_id, next_upload_token;
-END;
+WITH candidates AS (
+    SELECT
+        upload.key AS object_key,
+        CASE
+            WHEN position($3 IN substring(upload.key FROM length(coalesce($7, $2)) + 1)) > 0
+            THEN left(
+                upload.key,
+                length(coalesce($7, $2))
+                    + position($3 IN substring(upload.key FROM length(coalesce($7, $2)) + 1))
+                    + length($3) - 1
+            )
+            ELSE upload.key
+        END AS result_key,
+        upload.id,
+        upload.created_at,
+        position($3 IN substring(upload.key FROM length(coalesce($7, $2)) + 1)) > 0 AS is_common_prefix
+    FROM storage.s3_multipart_uploads AS upload
+    WHERE upload.bucket_id = $1
+      AND upload.key COLLATE "C" LIKE $2 || '%'
+), filtered AS (
+    SELECT candidate.*
+    FROM candidates AS candidate
+    WHERE $5 = ''
+       OR candidate.result_key COLLATE "C" > $5
+       OR (
+           candidate.result_key COLLATE "C" = $5
+           AND NOT candidate.is_common_prefix
+           AND $6 <> ''
+           -- A completed or aborted marker repeats the remaining same-key uploads.
+           AND COALESCE(
+               (candidate.created_at, candidate.id COLLATE "C") > (
+                   SELECT marker.created_at, marker.id COLLATE "C"
+                   FROM storage.s3_multipart_uploads AS marker
+                   WHERE marker.bucket_id = $1
+                     AND marker.key COLLATE "C" = $5
+                     AND marker.id = $6
+               ),
+               TRUE
+           )
+       )
+), ranked AS (
+    SELECT
+        filtered.*,
+        row_number() OVER (
+            PARTITION BY filtered.result_key COLLATE "C"
+            ORDER BY filtered.created_at, filtered.id COLLATE "C"
+        ) AS prefix_rank
+    FROM filtered
+)
+SELECT ranked.result_key, ranked.id, ranked.created_at
+FROM ranked
+WHERE NOT ranked.is_common_prefix OR ranked.prefix_rank = 1
+ORDER BY ranked.result_key COLLATE "C", ranked.created_at, ranked.id COLLATE "C"
+LIMIT $4;
 $_$;
 
 
-ALTER FUNCTION storage.list_multipart_uploads_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer, next_key_token text, next_upload_token text) OWNER TO supabase_storage_admin;
+ALTER FUNCTION storage.list_multipart_uploads_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer, next_key_token text, next_upload_token text, raw_prefix_param text) OWNER TO supabase_storage_admin;
 
 --
--- Name: list_objects_with_delimiter(text, text, text, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: list_objects_with_delimiter(text, text, text, integer, text, text, text, text, text, timestamp with time zone, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
 --
 
-CREATE FUNCTION storage.list_objects_with_delimiter(_bucket_id text, prefix_param text, delimiter_param text, max_keys integer DEFAULT 100, start_after text DEFAULT ''::text, next_token text DEFAULT ''::text, sort_order text DEFAULT 'asc'::text) RETURNS TABLE(name text, id uuid, metadata jsonb, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone)
+CREATE FUNCTION storage.list_objects_with_delimiter(_bucket_id text, prefix_param text, delimiter_param text, max_keys integer DEFAULT 100, start_after text DEFAULT ''::text, next_token text DEFAULT ''::text, sort_order text DEFAULT 'asc'::text, noncurrent_versions text DEFAULT 'exclude'::text, delete_markers text DEFAULT 'exclude'::text, next_token_archived_at timestamp with time zone DEFAULT NULL::timestamp with time zone, next_token_version text DEFAULT ''::text) RETURNS TABLE(name text, id uuid, metadata jsonb, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, version text, archived_at timestamp with time zone, is_delete_marker boolean, is_versioned boolean)
     LANGUAGE plpgsql STABLE
     AS $_$
 DECLARE
@@ -14229,15 +14633,38 @@ DECLARE
     v_is_asc BOOLEAN;
     v_prefix TEXT;
     v_start TEXT;
+    v_start_relative TEXT;
     v_upper_bound TEXT;
     v_file_batch_size INT;
+    v_version_filter TEXT;
 
-    -- Seek state
+    -- true when noncurrent_versions can return >1 row per name; keeps them
+    -- ordered most-recent-first and lets pagination resume mid-key
+    v_multi_row BOOLEAN;
+    v_name_order TEXT;
+    v_exact_range_predicate TEXT;
+    v_strict_range_predicate TEXT;
+    v_inclusive_range_predicate TEXT;
+
+    -- Seek state for the current name. archived_at is normalized to JavaScript's
+    -- millisecond precision and version breaks ties within the same millisecond.
+    -- Current rows use 'infinity'; NULL means no tiebreak has been established.
     v_next_seek TEXT;
+    v_next_seek_at TIMESTAMPTZ;
+    v_next_seek_version TEXT;
+    v_next_seek_strict BOOLEAN := false;
+    v_cursor_is_folder BOOLEAN;
     v_count INT := 0;
+    v_previous_seek TEXT;
+    v_previous_seek_at TIMESTAMPTZ;
+    v_previous_seek_version TEXT;
+    v_previous_count INT;
 
     -- Dynamic SQL for batch query only
     v_batch_query TEXT;
+    v_batch_query_strict TEXT;
+    v_delete_marker_peek_query TEXT;
+    v_delete_marker_peek_query_strict TEXT;
 
 BEGIN
     -- ========================================================================
@@ -14247,36 +14674,204 @@ BEGIN
     v_prefix := coalesce(prefix_param, '');
     v_start := CASE WHEN coalesce(next_token, '') <> '' THEN next_token ELSE coalesce(start_after, '') END;
     v_file_batch_size := LEAST(GREATEST(max_keys * 2, 100), 1000);
+    v_next_seek_at := NULL;
+    v_next_seek_version := '';
+
+    -- COALESCE first: NULL NOT IN (...) evaluates to NULL (not TRUE), so a
+    -- bare NOT IN check silently leaves an explicit NULL argument unreset.
+    noncurrent_versions := COALESCE(noncurrent_versions, 'exclude');
+    delete_markers := COALESCE(delete_markers, 'exclude');
+    IF noncurrent_versions NOT IN ('exclude', 'only', 'include') THEN
+        noncurrent_versions := 'exclude';
+    END IF;
+    IF delete_markers NOT IN ('exclude', 'only', 'include') THEN
+        delete_markers := 'exclude';
+    END IF;
+
+    v_multi_row := noncurrent_versions IN ('only', 'include');
+    v_name_order := CASE WHEN v_is_asc THEN 'ASC' ELSE 'DESC' END;
+
+    v_version_filter := '';
+    IF noncurrent_versions = 'exclude' THEN
+        v_version_filter := v_version_filter || ' AND o.archived_at IS NULL';
+    ELSIF noncurrent_versions = 'only' THEN
+        v_version_filter := v_version_filter || ' AND o.archived_at IS NOT NULL';
+    END IF;
+    IF delete_markers = 'exclude' THEN
+        v_version_filter := v_version_filter || ' AND NOT o.is_delete_marker';
+    ELSIF delete_markers = 'only' THEN
+        v_version_filter := v_version_filter || ' AND o.is_delete_marker';
+    END IF;
 
     -- Calculate upper bound for prefix filtering (bytewise, using COLLATE "C")
     IF v_prefix = '' THEN
         v_upper_bound := NULL;
-    ELSIF right(v_prefix, 1) = delimiter_param THEN
-        v_upper_bound := left(v_prefix, -1) || chr(ascii(delimiter_param) + 1);
     ELSE
         v_upper_bound := left(v_prefix, -1) || chr(ascii(right(v_prefix, 1)) + 1);
     END IF;
 
-    -- Build batch query (dynamic SQL - called infrequently, amortized over many rows)
-    IF v_is_asc THEN
-        IF v_upper_bound IS NOT NULL THEN
-            v_batch_query := 'SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata ' ||
-                'FROM storage.objects o WHERE o.bucket_id = $1 AND o.name COLLATE "C" >= $2 ' ||
-                'AND o.name COLLATE "C" < $3 ORDER BY o.name COLLATE "C" ASC LIMIT $4';
+    -- Keep caller-provided cursors inside the requested prefix range.
+    IF v_start <> '' AND v_upper_bound IS NOT NULL THEN
+        IF v_is_asc THEN
+            IF v_start COLLATE "C" < v_prefix COLLATE "C" THEN
+                v_start := '';
+            ELSIF v_start COLLATE "C" >= v_upper_bound COLLATE "C" THEN
+                RETURN;
+            END IF;
         ELSE
-            v_batch_query := 'SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata ' ||
-                'FROM storage.objects o WHERE o.bucket_id = $1 AND o.name COLLATE "C" >= $2 ' ||
-                'ORDER BY o.name COLLATE "C" ASC LIMIT $4';
+            IF v_start COLLATE "C" < v_prefix COLLATE "C" THEN
+                RETURN;
+            ELSIF v_start COLLATE "C" >= v_upper_bound COLLATE "C" THEN
+                v_start := '';
+            END IF;
+        END IF;
+    END IF;
+
+    v_start_relative := substring(v_start FROM length(v_prefix) + 1);
+
+    -- Direction affects only the indexed name range and its ordering. Cursor
+    -- state transitions and within-key version ordering stay shared.
+    IF v_is_asc THEN
+        v_exact_range_predicate := 'TRUE';
+        v_strict_range_predicate := 'o.name COLLATE "C" > $2';
+        v_inclusive_range_predicate := 'o.name COLLATE "C" >= $2';
+        IF v_upper_bound IS NOT NULL THEN
+            v_exact_range_predicate := 'o.name COLLATE "C" < $3';
+            v_strict_range_predicate := v_strict_range_predicate || ' AND o.name COLLATE "C" < $3';
+            v_inclusive_range_predicate := v_inclusive_range_predicate || ' AND o.name COLLATE "C" < $3';
         END IF;
     ELSE
-        IF v_upper_bound IS NOT NULL THEN
-            v_batch_query := 'SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata ' ||
-                'FROM storage.objects o WHERE o.bucket_id = $1 AND o.name COLLATE "C" < $2 ' ||
-                'AND o.name COLLATE "C" >= $3 ORDER BY o.name COLLATE "C" DESC LIMIT $4';
-        ELSE
-            v_batch_query := 'SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata ' ||
-                'FROM storage.objects o WHERE o.bucket_id = $1 AND o.name COLLATE "C" < $2 ' ||
-                'ORDER BY o.name COLLATE "C" DESC LIMIT $4';
+        v_exact_range_predicate := 'TRUE';
+        v_strict_range_predicate := 'o.name COLLATE "C" < $2';
+        v_inclusive_range_predicate := 'o.name COLLATE "C" < $2';
+        IF v_prefix <> '' THEN
+            v_exact_range_predicate := 'o.name COLLATE "C" >= $3';
+            v_strict_range_predicate := v_strict_range_predicate || ' AND o.name COLLATE "C" >= $3';
+            v_inclusive_range_predicate := v_inclusive_range_predicate || ' AND o.name COLLATE "C" >= $3';
+        END IF;
+    END IF;
+
+    -- Build batch query (dynamic SQL - called infrequently, amortized over many rows)
+    -- The multi-row order matches the externally serialized cursor exactly:
+    -- archived_at at millisecond precision, then version as the final tiebreak.
+    --
+    -- When v_multi_row, the seek is a keyset tuple comparison ("name > $2 OR
+    -- (name = $2 AND tiebreak)") - Postgres won't split that OR into indexable
+    -- form (confirmed even with fully literal values), so as one WHERE clause
+    -- it forces a full bucket scan filtered row-by-row. Splitting it into two
+    -- independently-indexable branches (exact name match with the tiebreak
+    -- filter, vs. strictly-past names) combined with UNION ALL lets each
+    -- branch keep name as a real index condition; the outer ORDER BY/LIMIT
+    -- re-merges them into the same page the single query used to produce.
+    IF v_multi_row THEN
+        v_batch_query := format(
+            $sql$
+            SELECT *
+            FROM (
+                (
+                    SELECT o.name, o.id, o.updated_at, o.created_at,
+                           o.last_accessed_at, o.metadata, o.version,
+                           o.archived_at, o.is_delete_marker, o.is_versioned
+                    FROM storage.objects o
+                    WHERE o.bucket_id = $1
+                      AND o.name COLLATE "C" = $2
+                      AND %s
+                      AND NOT $7::boolean
+                      AND (
+                          $5::timestamptz IS NULL
+                          OR COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) < $5
+                          OR (
+                              COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) = $5
+                              AND COALESCE(o.version, '') > $6
+                          )
+                      )
+                      %s
+                    ORDER BY
+                        COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) DESC,
+                        COALESCE(o.version, '') ASC
+                    LIMIT $4
+                )
+                UNION ALL
+                (
+                    SELECT o.name, o.id, o.updated_at, o.created_at,
+                           o.last_accessed_at, o.metadata, o.version,
+                           o.archived_at, o.is_delete_marker, o.is_versioned
+                    FROM storage.objects o
+                    WHERE o.bucket_id = $1
+                      AND %s
+                      %s
+                    ORDER BY
+                        o.name COLLATE "C" %s,
+                        COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) DESC,
+                        COALESCE(o.version, '') ASC
+                    LIMIT $4
+                )
+            ) sub
+            ORDER BY
+                sub.name COLLATE "C" %s,
+                COALESCE(date_trunc('milliseconds', sub.archived_at), 'infinity'::timestamptz) DESC,
+                COALESCE(sub.version, '') ASC
+            LIMIT $4
+            $sql$,
+            v_exact_range_predicate,
+            v_version_filter,
+            v_strict_range_predicate,
+            v_version_filter,
+            v_name_order,
+            v_name_order
+        );
+    ELSE
+        v_batch_query := format(
+            $sql$
+            SELECT o.name, o.id, o.updated_at, o.created_at,
+                   o.last_accessed_at, o.metadata, o.version,
+                   o.archived_at, o.is_delete_marker, o.is_versioned
+            FROM storage.objects o
+            WHERE o.bucket_id = $1
+              AND %s
+              %s
+            ORDER BY o.name COLLATE "C" %s, o.archived_at DESC
+            LIMIT $4
+            $sql$,
+            v_inclusive_range_predicate,
+            v_version_filter,
+            v_name_order
+        );
+
+        -- Strict counterpart of the query above: used once the single-row
+        -- ASC batch advance (below) has left v_next_seek pointing at the
+        -- last row already emitted, so an inclusive predicate would
+        -- re-match it forever. Only single-row mode ever sets strict mode,
+        -- so this variant is never needed when v_multi_row.
+        v_batch_query_strict := format(
+            $sql$
+            SELECT o.name, o.id, o.updated_at, o.created_at,
+                   o.last_accessed_at, o.metadata, o.version,
+                   o.archived_at, o.is_delete_marker, o.is_versioned
+            FROM storage.objects o
+            WHERE o.bucket_id = $1
+              AND %s
+              %s
+            ORDER BY o.name COLLATE "C" %s, o.archived_at DESC
+            LIMIT $4
+            $sql$,
+            v_strict_range_predicate,
+            v_version_filter,
+            v_name_order
+        );
+    END IF;
+
+    -- The static peek predicates cannot use the partial delete-marker index
+    -- once PL/pgSQL switches to a generic plan because whether
+    -- is_delete_marker is required remains parameter-dependent. Reuse the
+    -- already-specialized batch query with a one-row limit for this sparse
+    -- filter so the plan sees a literal `o.is_delete_marker` predicate.
+    IF delete_markers = 'only' THEN
+        v_delete_marker_peek_query :=
+            'SELECT marker_page.name FROM (' || v_batch_query || ') marker_page LIMIT 1';
+        IF NOT v_multi_row THEN
+            v_delete_marker_peek_query_strict :=
+                'SELECT marker_page.name FROM (' || v_batch_query_strict || ') marker_page LIMIT 1';
         END IF;
     END IF;
 
@@ -14287,20 +14882,18 @@ BEGIN
         IF v_is_asc THEN
             v_next_seek := v_prefix;
         ELSE
-            -- DESC without cursor: find the last item in range
-            IF v_upper_bound IS NOT NULL THEN
-                SELECT o.name INTO v_next_seek FROM storage.objects o
-                WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" >= v_prefix AND o.name COLLATE "C" < v_upper_bound
-                ORDER BY o.name COLLATE "C" DESC LIMIT 1;
-            ELSIF v_prefix <> '' THEN
-                SELECT o.name INTO v_next_seek FROM storage.objects o
-                WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" >= v_prefix
-                ORDER BY o.name COLLATE "C" DESC LIMIT 1;
-            ELSE
-                SELECT o.name INTO v_next_seek FROM storage.objects o
-                WHERE o.bucket_id = _bucket_id
-                ORDER BY o.name COLLATE "C" DESC LIMIT 1;
-            END IF;
+            -- DESC without cursor performs one specialized initial seek so
+            -- partial current-version and delete-marker indexes remain available.
+            EXECUTE format(
+                'SELECT o.name FROM storage.objects o WHERE o.bucket_id = $1%s%s ORDER BY o.name COLLATE "C" DESC LIMIT 1',
+                CASE WHEN v_upper_bound IS NOT NULL
+                    THEN ' AND o.name COLLATE "C" >= $2 AND o.name COLLATE "C" < $3'
+                    ELSE ''
+                END,
+                v_version_filter
+            )
+            INTO v_next_seek
+            USING _bucket_id, v_prefix, v_upper_bound;
 
             IF v_next_seek IS NOT NULL THEN
                 v_next_seek := v_next_seek || delimiter_param;
@@ -14309,23 +14902,38 @@ BEGIN
             END IF;
         END IF;
     ELSE
-        -- Cursor provided: determine if it refers to a folder or leaf
-        IF EXISTS (
-            SELECT 1 FROM storage.objects o
-            WHERE o.bucket_id = _bucket_id
-              AND o.name COLLATE "C" LIKE v_start || delimiter_param || '%'
-            LIMIT 1
-        ) THEN
-            -- Cursor refers to a folder
+        -- Folder continuation tokens retain their trailing delimiter. A
+        -- delimiter-less startAfter is always a literal key boundary.
+        v_cursor_is_folder := delimiter_param <> ''
+            AND v_start_relative <> ''
+            AND right(v_start_relative, length(delimiter_param)) = delimiter_param;
+
+        IF v_cursor_is_folder THEN
+            v_next_seek := CASE
+                WHEN right(v_start, length(delimiter_param)) = delimiter_param
+                    THEN v_start
+                ELSE v_start || delimiter_param
+            END;
             IF v_is_asc THEN
-                v_next_seek := v_start || chr(ascii(delimiter_param) + 1);
-            ELSE
-                v_next_seek := v_start || delimiter_param;
+                v_next_seek := left(v_next_seek, -1)
+                    || chr(ascii(right(v_next_seek, 1)) + 1);
             END IF;
+            v_next_seek_strict := NOT v_is_asc;
         ELSE
-            -- Cursor refers to a leaf object
-            IF v_is_asc THEN
-                v_next_seek := v_start || delimiter_param;
+            -- leaf object: when v_multi_row, stay on v_start with the
+            -- caller-supplied tiebreak so a page boundary mid-key resumes
+            -- that key's remaining rows instead of skipping them. Truncate
+            -- to milliseconds like every other v_next_seek_at assignment -
+            -- harmless today since object.ts's cursor always round-trips
+            -- through JS Date first, but this shouldn't rely on that.
+            IF v_multi_row THEN
+                v_next_seek := v_start;
+                v_next_seek_at := date_trunc('milliseconds', next_token_archived_at);
+                v_next_seek_version := coalesce(next_token_version, '');
+                v_next_seek_strict := coalesce(next_token, '') = '';
+            ELSIF v_is_asc THEN
+                v_next_seek := v_start;
+                v_next_seek_strict := true;
             ELSE
                 v_next_seek := v_start;
             END IF;
@@ -14339,30 +14947,196 @@ BEGIN
     LOOP
         EXIT WHEN v_count >= max_keys;
 
+        v_previous_seek := v_next_seek;
+        v_previous_seek_at := v_next_seek_at;
+        v_previous_seek_version := v_next_seek_version;
+        v_previous_count := v_count;
+
         -- STEP 1: PEEK using STATIC SQL (plan cached, very fast)
-        IF v_is_asc THEN
-            IF v_upper_bound IS NOT NULL THEN
-                SELECT o.name INTO v_peek_name FROM storage.objects o
-                WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" >= v_next_seek AND o.name COLLATE "C" < v_upper_bound
-                ORDER BY o.name COLLATE "C" ASC LIMIT 1;
+        -- v_multi_row is branched here (rather than folded into the WHERE
+        -- clause as a bound parameter) so each concrete query keeps an
+        -- unconditional seek predicate - once PL/pgSQL switches to its
+        -- cached generic plan (after 5 calls), a parameter-gated
+        -- "(NOT v_multi_row AND name >= $x) OR (v_multi_row AND ...)"
+        -- predicate stops the planner from using name as an index
+        -- condition at all, degrading every subsequent peek to a full
+        -- index scan filtered row-by-row instead of a bounded range scan.
+        -- v_multi_row's seek predicate is a keyset tuple comparison
+        -- ("name > x OR (name = x AND tiebreak)") - Postgres does not
+        -- split this OR into indexable form even with fully literal
+        -- values, so it falls back to a full scan filtered row-by-row.
+        -- Splitting it into two independently-indexable branches (exact
+        -- name match with the tiebreak filter, vs. strictly-past name)
+        -- combined with UNION ALL lets each branch keep name as a real
+        -- index condition; the outer ORDER BY/LIMIT picks whichever of
+        -- the (at most 2) rows sorts first.
+        IF delete_markers = 'only' THEN
+            EXECUTE CASE WHEN v_next_seek_strict AND NOT v_multi_row
+                THEN v_delete_marker_peek_query_strict
+                ELSE v_delete_marker_peek_query
+            END
+                INTO v_peek_name
+                USING _bucket_id, v_next_seek,
+                    CASE WHEN v_is_asc THEN COALESCE(v_upper_bound, v_prefix) ELSE v_prefix END,
+                    1, v_next_seek_at, v_next_seek_version, v_next_seek_strict;
+        ELSIF v_multi_row THEN
+            IF v_is_asc THEN
+                IF v_upper_bound IS NOT NULL THEN
+                    SELECT sub.name INTO v_peek_name FROM (
+                        (SELECT o.name FROM storage.objects o
+                         WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" = v_next_seek
+                           AND o.name COLLATE "C" < v_upper_bound
+                           AND NOT v_next_seek_strict
+                           AND (v_next_seek_at IS NULL
+                                OR COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) < v_next_seek_at
+                                OR (COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) = v_next_seek_at
+                                    AND COALESCE(o.version, '') > v_next_seek_version))
+                           AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                           AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                           AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                           AND (delete_markers != 'only' OR o.is_delete_marker)
+                         ORDER BY COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) DESC, COALESCE(o.version, '') ASC LIMIT 1)
+                        UNION ALL
+                        (SELECT o.name FROM storage.objects o
+                         WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" > v_next_seek AND o.name COLLATE "C" < v_upper_bound
+                           AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                           AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                           AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                           AND (delete_markers != 'only' OR o.is_delete_marker)
+                         ORDER BY o.name COLLATE "C" ASC LIMIT 1)
+                    ) sub ORDER BY sub.name COLLATE "C" ASC LIMIT 1;
+                ELSE
+                    SELECT sub.name INTO v_peek_name FROM (
+                        (SELECT o.name FROM storage.objects o
+                         WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" = v_next_seek
+                           AND NOT v_next_seek_strict
+                           AND (v_next_seek_at IS NULL
+                                OR COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) < v_next_seek_at
+                                OR (COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) = v_next_seek_at
+                                    AND COALESCE(o.version, '') > v_next_seek_version))
+                           AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                           AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                           AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                           AND (delete_markers != 'only' OR o.is_delete_marker)
+                         ORDER BY COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) DESC, COALESCE(o.version, '') ASC LIMIT 1)
+                        UNION ALL
+                        (SELECT o.name FROM storage.objects o
+                         WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" > v_next_seek
+                           AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                           AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                           AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                           AND (delete_markers != 'only' OR o.is_delete_marker)
+                         ORDER BY o.name COLLATE "C" ASC LIMIT 1)
+                    ) sub ORDER BY sub.name COLLATE "C" ASC LIMIT 1;
+                END IF;
             ELSE
-                SELECT o.name INTO v_peek_name FROM storage.objects o
-                WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" >= v_next_seek
-                ORDER BY o.name COLLATE "C" ASC LIMIT 1;
+                IF v_upper_bound IS NOT NULL THEN
+                    SELECT sub.name INTO v_peek_name FROM (
+                        (SELECT o.name FROM storage.objects o
+                         WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" = v_next_seek
+                           AND o.name COLLATE "C" >= v_prefix
+                           AND NOT v_next_seek_strict
+                           AND (v_next_seek_at IS NULL
+                                OR COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) < v_next_seek_at
+                                OR (COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) = v_next_seek_at
+                                    AND COALESCE(o.version, '') > v_next_seek_version))
+                           AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                           AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                           AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                           AND (delete_markers != 'only' OR o.is_delete_marker)
+                         ORDER BY COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) DESC, COALESCE(o.version, '') ASC LIMIT 1)
+                        UNION ALL
+                        (SELECT o.name FROM storage.objects o
+                         WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" < v_next_seek AND o.name COLLATE "C" >= v_prefix
+                           AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                           AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                           AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                           AND (delete_markers != 'only' OR o.is_delete_marker)
+                         ORDER BY o.name COLLATE "C" DESC LIMIT 1)
+                    ) sub ORDER BY sub.name COLLATE "C" DESC LIMIT 1;
+                ELSE
+                    SELECT sub.name INTO v_peek_name FROM (
+                        (SELECT o.name FROM storage.objects o
+                         WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" = v_next_seek
+                           AND NOT v_next_seek_strict
+                           AND (v_next_seek_at IS NULL
+                                OR COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) < v_next_seek_at
+                                OR (COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) = v_next_seek_at
+                                    AND COALESCE(o.version, '') > v_next_seek_version))
+                           AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                           AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                           AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                           AND (delete_markers != 'only' OR o.is_delete_marker)
+                         ORDER BY COALESCE(date_trunc('milliseconds', o.archived_at), 'infinity'::timestamptz) DESC, COALESCE(o.version, '') ASC LIMIT 1)
+                        UNION ALL
+                        (SELECT o.name FROM storage.objects o
+                         WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" < v_next_seek
+                           AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                           AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                           AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                           AND (delete_markers != 'only' OR o.is_delete_marker)
+                         ORDER BY o.name COLLATE "C" DESC LIMIT 1)
+                    ) sub ORDER BY sub.name COLLATE "C" DESC LIMIT 1;
+                END IF;
             END IF;
         ELSE
-            IF v_upper_bound IS NOT NULL THEN
-                SELECT o.name INTO v_peek_name FROM storage.objects o
-                WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" < v_next_seek AND o.name COLLATE "C" >= v_prefix
-                ORDER BY o.name COLLATE "C" DESC LIMIT 1;
-            ELSIF v_prefix <> '' THEN
-                SELECT o.name INTO v_peek_name FROM storage.objects o
-                WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" < v_next_seek AND o.name COLLATE "C" >= v_prefix
-                ORDER BY o.name COLLATE "C" DESC LIMIT 1;
+            -- Single-row mode is always noncurrent_versions='exclude'. Keep
+            -- this predicate literal so generic plans use the current index.
+            IF v_is_asc THEN
+                IF v_next_seek_strict AND v_upper_bound IS NOT NULL THEN
+                    SELECT o.name INTO v_peek_name FROM storage.objects o
+                    WHERE o.bucket_id = _bucket_id
+                      AND o.name COLLATE "C" > v_next_seek
+                      AND o.name COLLATE "C" < v_upper_bound
+                      AND o.archived_at IS NULL
+                      AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                      AND (delete_markers != 'only' OR o.is_delete_marker)
+                    ORDER BY o.name COLLATE "C" ASC LIMIT 1;
+                ELSIF v_next_seek_strict THEN
+                    SELECT o.name INTO v_peek_name FROM storage.objects o
+                    WHERE o.bucket_id = _bucket_id
+                      AND o.name COLLATE "C" > v_next_seek
+                      AND o.archived_at IS NULL
+                      AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                      AND (delete_markers != 'only' OR o.is_delete_marker)
+                    ORDER BY o.name COLLATE "C" ASC LIMIT 1;
+                ELSIF v_upper_bound IS NOT NULL THEN
+                    SELECT o.name INTO v_peek_name FROM storage.objects o
+                    WHERE o.bucket_id = _bucket_id
+                      AND o.name COLLATE "C" >= v_next_seek
+                      AND o.name COLLATE "C" < v_upper_bound
+                      AND o.archived_at IS NULL
+                      AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                      AND (delete_markers != 'only' OR o.is_delete_marker)
+                    ORDER BY o.name COLLATE "C" ASC LIMIT 1;
+                ELSE
+                    SELECT o.name INTO v_peek_name FROM storage.objects o
+                    WHERE o.bucket_id = _bucket_id
+                      AND o.name COLLATE "C" >= v_next_seek
+                      AND o.archived_at IS NULL
+                      AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                      AND (delete_markers != 'only' OR o.is_delete_marker)
+                    ORDER BY o.name COLLATE "C" ASC LIMIT 1;
+                END IF;
             ELSE
-                SELECT o.name INTO v_peek_name FROM storage.objects o
-                WHERE o.bucket_id = _bucket_id AND o.name COLLATE "C" < v_next_seek
-                ORDER BY o.name COLLATE "C" DESC LIMIT 1;
+                IF v_upper_bound IS NOT NULL THEN
+                    SELECT o.name INTO v_peek_name FROM storage.objects o
+                    WHERE o.bucket_id = _bucket_id
+                      AND o.name COLLATE "C" < v_next_seek
+                      AND o.name COLLATE "C" >= v_prefix
+                      AND o.archived_at IS NULL
+                      AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                      AND (delete_markers != 'only' OR o.is_delete_marker)
+                    ORDER BY o.name COLLATE "C" DESC LIMIT 1;
+                ELSE
+                    SELECT o.name INTO v_peek_name FROM storage.objects o
+                    WHERE o.bucket_id = _bucket_id
+                      AND o.name COLLATE "C" < v_next_seek
+                      AND o.archived_at IS NULL
+                      AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                      AND (delete_markers != 'only' OR o.is_delete_marker)
+                    ORDER BY o.name COLLATE "C" DESC LIMIT 1;
+                END IF;
             END IF;
         END IF;
 
@@ -14373,33 +15147,53 @@ BEGIN
 
         IF v_common_prefix IS NOT NULL THEN
             -- FOLDER: Emit and skip to next folder (no heap access needed)
-            name := rtrim(v_common_prefix, delimiter_param);
+            name := v_common_prefix;
             id := NULL;
             updated_at := NULL;
             created_at := NULL;
             last_accessed_at := NULL;
             metadata := NULL;
+            version := NULL;
+            archived_at := NULL;
+            is_delete_marker := NULL;
+            is_versioned := NULL;
             RETURN NEXT;
             v_count := v_count + 1;
 
             -- Advance seek past the folder range
             IF v_is_asc THEN
-                v_next_seek := left(v_common_prefix, -1) || chr(ascii(delimiter_param) + 1);
+                v_next_seek := left(v_common_prefix, -1)
+                    || chr(ascii(right(v_common_prefix, 1)) + 1);
             ELSE
                 v_next_seek := v_common_prefix;
             END IF;
+            v_next_seek_at := NULL;
+            v_next_seek_version := '';
+            v_next_seek_strict := NOT v_is_asc;
         ELSE
             -- FILE: Batch fetch using DYNAMIC SQL (overhead amortized over many rows)
             -- For ASC: upper_bound is the exclusive upper limit (< condition)
             -- For DESC: prefix is the inclusive lower limit (>= condition)
-            FOR v_current IN EXECUTE v_batch_query USING _bucket_id, v_next_seek,
-                CASE WHEN v_is_asc THEN COALESCE(v_upper_bound, v_prefix) ELSE v_prefix END, v_file_batch_size
+            FOR v_current IN EXECUTE CASE WHEN v_next_seek_strict AND NOT v_multi_row THEN v_batch_query_strict ELSE v_batch_query END
+                USING _bucket_id, v_next_seek,
+                CASE WHEN v_is_asc THEN COALESCE(v_upper_bound, v_prefix) ELSE v_prefix END, v_file_batch_size, v_next_seek_at, v_next_seek_version,
+                v_next_seek_strict
             LOOP
                 v_common_prefix := storage.get_common_prefix(v_current.name, v_prefix, delimiter_param);
 
                 IF v_common_prefix IS NOT NULL THEN
-                    -- Hit a folder: exit batch, let peek handle it
-                    v_next_seek := v_current.name;
+                    -- Hit a folder: exit batch, let peek handle it. Reset
+                    -- strict mode too it may have been set by an earlier
+                    -- row in this same batch (see the single-row ASC advance
+                    -- below), and v_next_seek here is the folder-triggering
+                    -- row's own name, which the next peek must find inclusively.
+                    v_next_seek := CASE
+                        WHEN v_is_asc THEN v_current.name
+                        ELSE v_current.name || delimiter_param
+                    END;
+                    v_next_seek_at := NULL;
+                    v_next_seek_version := '';
+                    v_next_seek_strict := false;
                     EXIT;
                 END IF;
 
@@ -14410,12 +15204,29 @@ BEGIN
                 created_at := v_current.created_at;
                 last_accessed_at := v_current.last_accessed_at;
                 metadata := v_current.metadata;
+                version := v_current.version;
+                archived_at := v_current.archived_at;
+                is_delete_marker := v_current.is_delete_marker;
+                is_versioned := v_current.is_versioned;
                 RETURN NEXT;
                 v_count := v_count + 1;
 
-                -- Advance seek past this file
-                IF v_is_asc THEN
-                    v_next_seek := v_current.name || delimiter_param;
+                -- when v_multi_row, stay on this name and record its
+                -- archived_at as the new tiebreak so remaining rows for the
+                -- same key are picked up before moving to the next name
+                IF v_multi_row THEN
+                    v_next_seek := v_current.name;
+                    v_next_seek_at := COALESCE(date_trunc('milliseconds', v_current.archived_at), 'infinity'::timestamptz);
+                    v_next_seek_version := COALESCE(v_current.version, '');
+                    v_next_seek_strict := false;
+                ELSIF v_is_asc THEN
+                    -- Appending the delimiter as a fake lexical successor
+                    -- would skip a real key like `name || '!'` (or any
+                    -- character sorting below the delimiter), which sorts
+                    -- between `name` and `name || delimiter`. Track the real
+                    -- name and mark the next comparison strict instead.
+                    v_next_seek := v_current.name;
+                    v_next_seek_strict := true;
                 ELSE
                     v_next_seek := v_current.name;
                 END IF;
@@ -14423,12 +15234,20 @@ BEGIN
                 EXIT WHEN v_count >= max_keys;
             END LOOP;
         END IF;
+
+        IF v_count = v_previous_count
+           AND v_next_seek IS NOT DISTINCT FROM v_previous_seek
+           AND v_next_seek_at IS NOT DISTINCT FROM v_previous_seek_at
+           AND v_next_seek_version IS NOT DISTINCT FROM v_previous_seek_version THEN
+            RAISE EXCEPTION 'storage.list_objects_with_delimiter made no progress at seek (%, %, %)',
+                v_next_seek, v_next_seek_at, v_next_seek_version;
+        END IF;
     END LOOP;
 END;
 $_$;
 
 
-ALTER FUNCTION storage.list_objects_with_delimiter(_bucket_id text, prefix_param text, delimiter_param text, max_keys integer, start_after text, next_token text, sort_order text) OWNER TO supabase_storage_admin;
+ALTER FUNCTION storage.list_objects_with_delimiter(_bucket_id text, prefix_param text, delimiter_param text, max_keys integer, start_after text, next_token text, sort_order text, noncurrent_versions text, delete_markers text, next_token_archived_at timestamp with time zone, next_token_version text) OWNER TO supabase_storage_admin;
 
 --
 -- Name: operation(); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
@@ -14444,6 +15263,66 @@ $$;
 
 
 ALTER FUNCTION storage.operation() OWNER TO supabase_storage_admin;
+
+--
+-- Name: protect_bucket_control_columns(); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+--
+
+CREATE FUNCTION storage.protect_bucket_control_columns() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'pg_catalog'
+    AS $$
+DECLARE
+  configuration_changed boolean;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.lifecycle_configuration IS NOT NULL
+       OR NEW.lifecycle_configuration_generation IS NOT NULL THEN
+      IF NOT pg_has_role(current_user, TG_ARGV[0], 'MEMBER') THEN
+        RAISE EXCEPTION 'only members of the configured storage service role may insert lifecycle policy state'
+          USING ERRCODE = '42501',
+                HINT = format(
+                  'Insert with both lifecycle columns NULL and configure lifecycle through the Storage API afterward, or insert as a member of %I.',
+                  TG_ARGV[0]
+                );
+      END IF;
+    END IF;
+
+    RETURN NEW;
+  END IF;
+
+  configuration_changed =
+    OLD.lifecycle_configuration IS DISTINCT FROM NEW.lifecycle_configuration
+    OR OLD.lifecycle_configuration_generation IS DISTINCT FROM NEW.lifecycle_configuration_generation;
+
+  IF NOT configuration_changed THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.type IS DISTINCT FROM 'STANDARD' THEN
+    RAISE EXCEPTION 'bucket versioning and lifecycle controls require a Standard bucket'
+      USING ERRCODE = '0A000';
+  END IF;
+
+  IF NEW.lifecycle_configuration IS NULL
+     AND NEW.lifecycle_configuration_generation IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.lifecycle_configuration IS NULL
+     OR NEW.lifecycle_configuration_generation IS NULL
+     OR OLD.lifecycle_configuration IS NOT DISTINCT FROM NEW.lifecycle_configuration
+     OR OLD.lifecycle_configuration_generation IS NOT DISTINCT FROM NEW.lifecycle_configuration_generation THEN
+    RAISE EXCEPTION 'a changed lifecycle policy requires a new non-null generation'
+      USING ERRCODE = '22023';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION storage.protect_bucket_control_columns() OWNER TO supabase_storage_admin;
 
 --
 -- Name: protect_delete(); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
@@ -14467,10 +15346,10 @@ $$;
 ALTER FUNCTION storage.protect_delete() OWNER TO supabase_storage_admin;
 
 --
--- Name: search(text, text, integer, integer, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: search(text, text, integer, integer, integer, text, text, text, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
 --
 
-CREATE FUNCTION storage.search(prefix text, bucketname text, limits integer DEFAULT 100, levels integer DEFAULT 1, offsets integer DEFAULT 0, search text DEFAULT ''::text, sortcolumn text DEFAULT 'name'::text, sortorder text DEFAULT 'asc'::text) RETURNS TABLE(name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb)
+CREATE FUNCTION storage.search(prefix text, bucketname text, limits integer DEFAULT 100, levels integer DEFAULT 1, offsets integer DEFAULT 0, search text DEFAULT ''::text, sortcolumn text DEFAULT 'name'::text, sortorder text DEFAULT 'asc'::text, noncurrent_versions text DEFAULT 'exclude'::text, delete_markers text DEFAULT 'exclude'::text) RETURNS TABLE(name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb, version text, archived_at timestamp with time zone, is_delete_marker boolean, is_versioned boolean)
     LANGUAGE plpgsql STABLE
     AS $_$
 DECLARE
@@ -14491,14 +15370,26 @@ DECLARE
     v_sort_order TEXT;
     v_upper_bound TEXT;
     v_file_batch_size INT;
+    v_version_filter TEXT;
+    v_multi_row BOOLEAN;
 
     -- Dynamic SQL for batch query only
     v_batch_query TEXT;
+    v_delete_marker_peek_query TEXT;
+    v_delete_marker_peek_query_strict TEXT;
 
     -- Seek state
     v_next_seek TEXT;
+    v_next_seek_at TIMESTAMPTZ;
+    v_next_seek_version TEXT;
+    v_next_seek_strict BOOLEAN := false;
     v_count INT := 0;
     v_skipped INT := 0;
+    v_previous_seek TEXT;
+    v_previous_seek_at TIMESTAMPTZ;
+    v_previous_seek_version TEXT;
+    v_previous_count INT;
+    v_previous_skipped INT;
 BEGIN
     -- ========================================================================
     -- INITIALIZATION
@@ -14511,6 +15402,33 @@ BEGIN
     v_combined_levels := coalesce(array_length(string_to_array(v_prefix, v_delimiter), 1), 1);
     v_is_asc := lower(coalesce(sortorder, 'asc')) = 'asc';
     v_file_batch_size := LEAST(GREATEST(v_limit * 2, 100), 1000);
+    v_next_seek_at := NULL;
+    v_next_seek_version := '';
+
+    -- COALESCE first: NULL NOT IN (...) evaluates to NULL (not TRUE), so a
+    -- bare NOT IN check silently leaves an explicit NULL argument unreset.
+    noncurrent_versions := COALESCE(noncurrent_versions, 'exclude');
+    delete_markers := COALESCE(delete_markers, 'exclude');
+    IF noncurrent_versions NOT IN ('exclude', 'only', 'include') THEN
+        noncurrent_versions := 'exclude';
+    END IF;
+    IF delete_markers NOT IN ('exclude', 'only', 'include') THEN
+        delete_markers := 'exclude';
+    END IF;
+
+    v_multi_row := noncurrent_versions IN ('only', 'include');
+
+    v_version_filter := '';
+    IF noncurrent_versions = 'exclude' THEN
+        v_version_filter := v_version_filter || ' AND o.archived_at IS NULL';
+    ELSIF noncurrent_versions = 'only' THEN
+        v_version_filter := v_version_filter || ' AND o.archived_at IS NOT NULL';
+    END IF;
+    IF delete_markers = 'exclude' THEN
+        v_version_filter := v_version_filter || ' AND NOT o.is_delete_marker';
+    ELSIF delete_markers = 'only' THEN
+        v_version_filter := v_version_filter || ' AND o.is_delete_marker';
+    END IF;
 
     -- Validate sort column
     CASE lower(coalesce(sortcolumn, 'name'))
@@ -14535,6 +15453,10 @@ BEGIN
                 WHERE objects.name ILIKE $3 || '%%'
                   AND bucket_id = $4
                   AND array_length(objects.path_tokens, 1) <> $2
+                  AND ($7 != 'exclude' OR objects.archived_at IS NULL)
+                  AND ($7 != 'only' OR objects.archived_at IS NOT NULL)
+                  AND ($8 != 'exclude' OR NOT objects.is_delete_marker)
+                  AND ($8 != 'only' OR objects.is_delete_marker)
                 GROUP BY folder
                 ORDER BY folder %s
             )
@@ -14543,18 +15465,29 @@ BEGIN
                    NULL::timestamptz AS updated_at,
                    NULL::timestamptz AS created_at,
                    NULL::timestamptz AS last_accessed_at,
-                   NULL::jsonb AS metadata FROM folders)
+                   NULL::jsonb AS metadata,
+                   NULL::text AS version,
+                   NULL::timestamptz AS archived_at,
+                   NULL::boolean AS is_delete_marker,
+                   NULL::boolean AS is_versioned FROM folders)
             UNION ALL
             (SELECT array_to_string(path_tokens[$1:$2], '/') AS "name",
-                   id, updated_at, created_at, last_accessed_at, metadata
+                   id, updated_at, created_at, last_accessed_at, metadata,
+                   version, archived_at, is_delete_marker, is_versioned
              FROM storage.objects
              WHERE objects.name ILIKE $3 || '%%'
                AND bucket_id = $4
                AND array_length(objects.path_tokens, 1) = $2
-             ORDER BY %I %s)
+               AND ($7 != 'exclude' OR objects.archived_at IS NULL)
+               AND ($7 != 'only' OR objects.archived_at IS NOT NULL)
+               AND ($8 != 'exclude' OR NOT objects.is_delete_marker)
+               AND ($8 != 'only' OR objects.is_delete_marker)
+             -- name, then version, as tiebreaks so two versions of the same
+             -- key tying on the sort column still sort deterministically
+             ORDER BY %I %s, name COLLATE "C" %s, COALESCE(version, '') %s)
             LIMIT $5 OFFSET $6
-            $sql$, v_sort_order, v_order_by, v_sort_order
-        ) USING v_prefix_start, v_combined_levels, v_prefix, bucketname, v_limit, offsets;
+            $sql$, v_sort_order, v_order_by, v_sort_order, v_sort_order, v_sort_order
+        ) USING v_prefix_start, v_combined_levels, v_prefix, bucketname, v_limit, offsets, noncurrent_versions, delete_markers;
         RETURN;
     END IF;
 
@@ -14571,26 +15504,95 @@ BEGIN
         v_upper_bound := left(v_prefix_lower, -1) || chr(ascii(right(v_prefix_lower, 1)) + 1);
     END IF;
 
-    -- Build batch query (dynamic SQL - called infrequently, amortized over many rows)
+    -- Build a resume-safe batch query. The exact-name branch returns remaining
+    -- versions after the current (archived_at, version) boundary; the strict
+    -- name branch returns subsequent keys. UNION ALL keeps both predicates
+    -- independently indexable.
     IF v_is_asc THEN
         IF v_upper_bound IS NOT NULL THEN
-            v_batch_query := 'SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata ' ||
-                'FROM storage.objects o WHERE o.bucket_id = $1 AND lower(o.name) COLLATE "C" >= $2 ' ||
-                'AND lower(o.name) COLLATE "C" < $3 ORDER BY lower(o.name) COLLATE "C" ASC LIMIT $4';
+            v_batch_query := 'SELECT * FROM (' ||
+                '(SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata, o.version, o.archived_at, o.is_delete_marker, o.is_versioned FROM storage.objects o ' ||
+                'WHERE o.bucket_id = $1 AND lower(o.name) COLLATE "C" = $2 AND ($5::timestamptz IS NULL OR COALESCE(o.archived_at, ''infinity''::timestamptz) < $5 OR (COALESCE(o.archived_at, ''infinity''::timestamptz) = $5 AND COALESCE(o.version, '''') > $6))' ||
+                v_version_filter || ' ORDER BY COALESCE(o.archived_at, ''infinity''::timestamptz) DESC, COALESCE(o.version, '''') ASC LIMIT $4) UNION ALL ' ||
+                '(SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata, o.version, o.archived_at, o.is_delete_marker, o.is_versioned FROM storage.objects o ' ||
+                'WHERE o.bucket_id = $1 AND lower(o.name) COLLATE "C" > $2 AND lower(o.name) COLLATE "C" < $3' || v_version_filter ||
+                ' ORDER BY lower(o.name) COLLATE "C" ASC, COALESCE(o.archived_at, ''infinity''::timestamptz) DESC, COALESCE(o.version, '''') ASC LIMIT $4)' ||
+                ') sub ORDER BY lower(sub.name) COLLATE "C" ASC, COALESCE(sub.archived_at, ''infinity''::timestamptz) DESC, COALESCE(sub.version, '''') ASC LIMIT $4';
         ELSE
-            v_batch_query := 'SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata ' ||
-                'FROM storage.objects o WHERE o.bucket_id = $1 AND lower(o.name) COLLATE "C" >= $2 ' ||
-                'ORDER BY lower(o.name) COLLATE "C" ASC LIMIT $4';
+            v_batch_query := 'SELECT * FROM (' ||
+                '(SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata, o.version, o.archived_at, o.is_delete_marker, o.is_versioned FROM storage.objects o ' ||
+                'WHERE o.bucket_id = $1 AND lower(o.name) COLLATE "C" = $2 AND ($5::timestamptz IS NULL OR COALESCE(o.archived_at, ''infinity''::timestamptz) < $5 OR (COALESCE(o.archived_at, ''infinity''::timestamptz) = $5 AND COALESCE(o.version, '''') > $6))' ||
+                v_version_filter || ' ORDER BY COALESCE(o.archived_at, ''infinity''::timestamptz) DESC, COALESCE(o.version, '''') ASC LIMIT $4) UNION ALL ' ||
+                '(SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata, o.version, o.archived_at, o.is_delete_marker, o.is_versioned FROM storage.objects o ' ||
+                'WHERE o.bucket_id = $1 AND lower(o.name) COLLATE "C" > $2' || v_version_filter ||
+                ' ORDER BY lower(o.name) COLLATE "C" ASC, COALESCE(o.archived_at, ''infinity''::timestamptz) DESC, COALESCE(o.version, '''') ASC LIMIT $4)' ||
+                ') sub ORDER BY lower(sub.name) COLLATE "C" ASC, COALESCE(sub.archived_at, ''infinity''::timestamptz) DESC, COALESCE(sub.version, '''') ASC LIMIT $4';
         END IF;
     ELSE
         IF v_upper_bound IS NOT NULL THEN
-            v_batch_query := 'SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata ' ||
-                'FROM storage.objects o WHERE o.bucket_id = $1 AND lower(o.name) COLLATE "C" < $2 ' ||
-                'AND lower(o.name) COLLATE "C" >= $3 ORDER BY lower(o.name) COLLATE "C" DESC LIMIT $4';
+            v_batch_query := 'SELECT * FROM (' ||
+                '(SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata, o.version, o.archived_at, o.is_delete_marker, o.is_versioned FROM storage.objects o ' ||
+                'WHERE o.bucket_id = $1 AND lower(o.name) COLLATE "C" = $2 AND ($5::timestamptz IS NULL OR COALESCE(o.archived_at, ''infinity''::timestamptz) < $5 OR (COALESCE(o.archived_at, ''infinity''::timestamptz) = $5 AND COALESCE(o.version, '''') > $6))' ||
+                v_version_filter || ' ORDER BY COALESCE(o.archived_at, ''infinity''::timestamptz) DESC, COALESCE(o.version, '''') ASC LIMIT $4) UNION ALL ' ||
+                '(SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata, o.version, o.archived_at, o.is_delete_marker, o.is_versioned FROM storage.objects o ' ||
+                'WHERE o.bucket_id = $1 AND lower(o.name) COLLATE "C" < $2 AND lower(o.name) COLLATE "C" >= $3' || v_version_filter ||
+                ' ORDER BY lower(o.name) COLLATE "C" DESC, COALESCE(o.archived_at, ''infinity''::timestamptz) DESC, COALESCE(o.version, '''') ASC LIMIT $4)' ||
+                ') sub ORDER BY lower(sub.name) COLLATE "C" DESC, COALESCE(sub.archived_at, ''infinity''::timestamptz) DESC, COALESCE(sub.version, '''') ASC LIMIT $4';
         ELSE
-            v_batch_query := 'SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata ' ||
-                'FROM storage.objects o WHERE o.bucket_id = $1 AND lower(o.name) COLLATE "C" < $2 ' ||
-                'ORDER BY lower(o.name) COLLATE "C" DESC LIMIT $4';
+            v_batch_query := 'SELECT * FROM (' ||
+                '(SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata, o.version, o.archived_at, o.is_delete_marker, o.is_versioned FROM storage.objects o ' ||
+                'WHERE o.bucket_id = $1 AND lower(o.name) COLLATE "C" = $2 AND ($5::timestamptz IS NULL OR COALESCE(o.archived_at, ''infinity''::timestamptz) < $5 OR (COALESCE(o.archived_at, ''infinity''::timestamptz) = $5 AND COALESCE(o.version, '''') > $6))' ||
+                v_version_filter || ' ORDER BY COALESCE(o.archived_at, ''infinity''::timestamptz) DESC, COALESCE(o.version, '''') ASC LIMIT $4) UNION ALL ' ||
+                '(SELECT o.name, o.id, o.updated_at, o.created_at, o.last_accessed_at, o.metadata, o.version, o.archived_at, o.is_delete_marker, o.is_versioned FROM storage.objects o ' ||
+                'WHERE o.bucket_id = $1 AND lower(o.name) COLLATE "C" < $2' || v_version_filter ||
+                ' ORDER BY lower(o.name) COLLATE "C" DESC, COALESCE(o.archived_at, ''infinity''::timestamptz) DESC, COALESCE(o.version, '''') ASC LIMIT $4)' ||
+                ') sub ORDER BY lower(sub.name) COLLATE "C" DESC, COALESCE(sub.archived_at, ''infinity''::timestamptz) DESC, COALESCE(sub.version, '''') ASC LIMIT $4';
+        END IF;
+    END IF;
+
+    -- Keep the delete-marker predicate literal so the cached generic
+    -- plan can use idx_objects_delete_markers during the main-loop peek.
+    IF delete_markers = 'only' THEN
+        IF v_multi_row THEN
+            v_delete_marker_peek_query :=
+                'SELECT marker_page.name FROM (' || v_batch_query || ') marker_page LIMIT 1';
+        ELSIF v_is_asc THEN
+            -- Two separate literal query strings, not one gated by a bound
+            -- boolean: folding "$n AND op1 OR NOT $n AND op2" into a single
+            -- query defeats the generic plan's ability to push either
+            -- comparison into the index. Branching in PL/pgSQL control flow
+            -- instead keeps each query's index condition intact.
+            v_delete_marker_peek_query :=
+                'SELECT o.name FROM storage.objects o WHERE o.bucket_id = $1 ' ||
+                'AND lower(o.name) COLLATE "C" >= $2' ||
+                CASE WHEN v_upper_bound IS NOT NULL
+                    THEN ' AND lower(o.name) COLLATE "C" < $3'
+                    ELSE ''
+                END ||
+                v_version_filter ||
+                ' ORDER BY lower(o.name) COLLATE "C" ASC LIMIT 1';
+            -- Strict variant: used once the single-row ASC batch advance
+            -- (below) has left v_next_seek pointing at the last row already
+            -- emitted, so a plain >= would re-match it forever.
+            v_delete_marker_peek_query_strict :=
+                'SELECT o.name FROM storage.objects o WHERE o.bucket_id = $1 ' ||
+                'AND lower(o.name) COLLATE "C" > $2' ||
+                CASE WHEN v_upper_bound IS NOT NULL
+                    THEN ' AND lower(o.name) COLLATE "C" < $3'
+                    ELSE ''
+                END ||
+                v_version_filter ||
+                ' ORDER BY lower(o.name) COLLATE "C" ASC LIMIT 1';
+        ELSE
+            v_delete_marker_peek_query :=
+                'SELECT o.name FROM storage.objects o WHERE o.bucket_id = $1 ' ||
+                'AND lower(o.name) COLLATE "C" < $2' ||
+                CASE WHEN v_upper_bound IS NOT NULL
+                    THEN ' AND lower(o.name) COLLATE "C" >= $3'
+                    ELSE ''
+                END ||
+                v_version_filter ||
+                ' ORDER BY lower(o.name) COLLATE "C" DESC LIMIT 1';
         END IF;
     END IF;
 
@@ -14598,20 +15600,18 @@ BEGIN
     IF v_is_asc THEN
         v_next_seek := v_prefix_lower;
     ELSE
-        -- DESC: find the last item in range first (static SQL)
-        IF v_upper_bound IS NOT NULL THEN
-            SELECT o.name INTO v_peek_name FROM storage.objects o
-            WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" >= v_prefix_lower AND lower(o.name) COLLATE "C" < v_upper_bound
-            ORDER BY lower(o.name) COLLATE "C" DESC LIMIT 1;
-        ELSIF v_prefix_lower <> '' THEN
-            SELECT o.name INTO v_peek_name FROM storage.objects o
-            WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" >= v_prefix_lower
-            ORDER BY lower(o.name) COLLATE "C" DESC LIMIT 1;
-        ELSE
-            SELECT o.name INTO v_peek_name FROM storage.objects o
-            WHERE o.bucket_id = bucketname
-            ORDER BY lower(o.name) COLLATE "C" DESC LIMIT 1;
-        END IF;
+        -- DESC performs one specialized initial seek so partial current-version
+        -- and delete-marker indexes remain available.
+        EXECUTE format(
+            'SELECT o.name FROM storage.objects o WHERE o.bucket_id = $1%s%s ORDER BY lower(o.name) COLLATE "C" DESC LIMIT 1',
+            CASE WHEN v_upper_bound IS NOT NULL
+                THEN ' AND lower(o.name) COLLATE "C" >= $2 AND lower(o.name) COLLATE "C" < $3'
+                ELSE ''
+            END,
+            v_version_filter
+        )
+        INTO v_peek_name
+        USING bucketname, v_prefix_lower, v_upper_bound;
 
         IF v_peek_name IS NOT NULL THEN
             v_next_seek := lower(v_peek_name) || v_delimiter;
@@ -14622,39 +15622,172 @@ BEGIN
 
     -- ========================================================================
     -- MAIN LOOP: Hybrid peek-then-batch algorithm
-    -- Uses STATIC SQL for peek (hot path) and DYNAMIC SQL for batch
+    -- Uses STATIC SQL for peek (hot path) and DYNAMIC SQL for batch and
+    -- the delete-marker-only path
     -- ========================================================================
     LOOP
         EXIT WHEN v_count >= v_limit;
 
-        -- STEP 1: PEEK using STATIC SQL (plan cached, very fast)
-        IF v_is_asc THEN
-            IF v_upper_bound IS NOT NULL THEN
-                SELECT o.name INTO v_peek_name FROM storage.objects o
-                WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" >= v_next_seek AND lower(o.name) COLLATE "C" < v_upper_bound
-                ORDER BY lower(o.name) COLLATE "C" ASC LIMIT 1;
-            ELSE
-                SELECT o.name INTO v_peek_name FROM storage.objects o
-                WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" >= v_next_seek
-                ORDER BY lower(o.name) COLLATE "C" ASC LIMIT 1;
+        v_previous_seek := v_next_seek;
+        v_previous_seek_at := v_next_seek_at;
+        v_previous_seek_version := v_next_seek_version;
+        v_previous_count := v_count;
+        v_previous_skipped := v_skipped;
+
+        -- STEP 1: PEEK
+        v_peek_name := NULL;
+        IF delete_markers = 'only' THEN
+            EXECUTE CASE WHEN v_next_seek_strict
+                THEN v_delete_marker_peek_query_strict
+                ELSE v_delete_marker_peek_query
+            END
+                INTO v_peek_name
+                USING bucketname, v_next_seek,
+                    CASE WHEN v_is_asc THEN COALESCE(v_upper_bound, v_prefix_lower) ELSE v_prefix_lower END,
+                    1, v_next_seek_at, v_next_seek_version;
+        ELSIF v_multi_row AND v_next_seek_at IS NOT NULL THEN
+            SELECT o.name INTO v_peek_name
+            FROM storage.objects o
+            WHERE o.bucket_id = bucketname
+              AND lower(o.name) COLLATE "C" = v_next_seek
+              AND (COALESCE(o.archived_at, 'infinity'::timestamptz) < v_next_seek_at
+                   OR (COALESCE(o.archived_at, 'infinity'::timestamptz) = v_next_seek_at
+                       AND COALESCE(o.version, '') > v_next_seek_version))
+              AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+              AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+              AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+              AND (delete_markers != 'only' OR o.is_delete_marker)
+            ORDER BY COALESCE(o.archived_at, 'infinity'::timestamptz) DESC,
+                     COALESCE(o.version, '') ASC
+            LIMIT 1;
+
+            -- The current key is exhausted. Clear its version boundary and
+            -- make the following ASC name peek strict. Appending '/' is not a
+            -- valid lexical successor because keys ending in characters such
+            -- as '!' sort between the exhausted name and name || '/'.
+            IF v_peek_name IS NULL THEN
+                IF v_is_asc THEN
+                    v_next_seek_strict := true;
+                END IF;
+                v_next_seek_at := NULL;
+                v_next_seek_version := '';
             END IF;
-        ELSE
-            IF v_upper_bound IS NOT NULL THEN
+        END IF;
+
+        -- Single-row mode is always noncurrent_versions='exclude'. Keep the
+        -- current-row predicate literal so generic plans use the current index.
+        IF delete_markers != 'only' AND v_peek_name IS NULL AND NOT v_multi_row THEN
+            IF v_is_asc THEN
+                IF v_next_seek_strict AND v_upper_bound IS NOT NULL THEN
+                    SELECT o.name INTO v_peek_name FROM storage.objects o
+                    WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" > v_next_seek AND lower(o.name) COLLATE "C" < v_upper_bound
+                      AND o.archived_at IS NULL
+                      AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                    ORDER BY lower(o.name) COLLATE "C" ASC LIMIT 1;
+                ELSIF v_next_seek_strict THEN
+                    SELECT o.name INTO v_peek_name FROM storage.objects o
+                    WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" > v_next_seek
+                      AND o.archived_at IS NULL
+                      AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                    ORDER BY lower(o.name) COLLATE "C" ASC LIMIT 1;
+                ELSIF v_upper_bound IS NOT NULL THEN
+                    SELECT o.name INTO v_peek_name FROM storage.objects o
+                    WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" >= v_next_seek AND lower(o.name) COLLATE "C" < v_upper_bound
+                      AND o.archived_at IS NULL
+                      AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                    ORDER BY lower(o.name) COLLATE "C" ASC LIMIT 1;
+                ELSE
+                    SELECT o.name INTO v_peek_name FROM storage.objects o
+                    WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" >= v_next_seek
+                      AND o.archived_at IS NULL
+                      AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                    ORDER BY lower(o.name) COLLATE "C" ASC LIMIT 1;
+                END IF;
+            ELSIF v_upper_bound IS NOT NULL THEN
                 SELECT o.name INTO v_peek_name FROM storage.objects o
                 WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" < v_next_seek AND lower(o.name) COLLATE "C" >= v_prefix_lower
-                ORDER BY lower(o.name) COLLATE "C" DESC LIMIT 1;
-            ELSIF v_prefix_lower <> '' THEN
-                SELECT o.name INTO v_peek_name FROM storage.objects o
-                WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" < v_next_seek AND lower(o.name) COLLATE "C" >= v_prefix_lower
+                  AND o.archived_at IS NULL
+                  AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
                 ORDER BY lower(o.name) COLLATE "C" DESC LIMIT 1;
             ELSE
                 SELECT o.name INTO v_peek_name FROM storage.objects o
                 WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" < v_next_seek
+                  AND o.archived_at IS NULL
+                  AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                ORDER BY lower(o.name) COLLATE "C" DESC LIMIT 1;
+            END IF;
+        ELSIF delete_markers != 'only' AND v_peek_name IS NULL AND v_is_asc THEN
+            IF v_next_seek_strict AND v_upper_bound IS NOT NULL THEN
+                SELECT o.name INTO v_peek_name FROM storage.objects o
+                WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" > v_next_seek AND lower(o.name) COLLATE "C" < v_upper_bound
+                  AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                  AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                  AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                  AND (delete_markers != 'only' OR o.is_delete_marker)
+                ORDER BY lower(o.name) COLLATE "C" ASC LIMIT 1;
+            ELSIF v_next_seek_strict THEN
+                SELECT o.name INTO v_peek_name FROM storage.objects o
+                WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" > v_next_seek
+                  AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                  AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                  AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                  AND (delete_markers != 'only' OR o.is_delete_marker)
+                ORDER BY lower(o.name) COLLATE "C" ASC LIMIT 1;
+            ELSIF v_upper_bound IS NOT NULL THEN
+                SELECT o.name INTO v_peek_name FROM storage.objects o
+                WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" >= v_next_seek AND lower(o.name) COLLATE "C" < v_upper_bound
+                  AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                  AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                  AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                  AND (delete_markers != 'only' OR o.is_delete_marker)
+                ORDER BY lower(o.name) COLLATE "C" ASC LIMIT 1;
+            ELSE
+                SELECT o.name INTO v_peek_name FROM storage.objects o
+                WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" >= v_next_seek
+                  AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                  AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                  AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                  AND (delete_markers != 'only' OR o.is_delete_marker)
+                ORDER BY lower(o.name) COLLATE "C" ASC LIMIT 1;
+            END IF;
+        ELSIF delete_markers != 'only' AND v_peek_name IS NULL THEN
+            IF v_upper_bound IS NOT NULL THEN
+                SELECT o.name INTO v_peek_name FROM storage.objects o
+                WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" < v_next_seek AND lower(o.name) COLLATE "C" >= v_prefix_lower
+                  AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                  AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                  AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                  AND (delete_markers != 'only' OR o.is_delete_marker)
+                ORDER BY lower(o.name) COLLATE "C" DESC LIMIT 1;
+            ELSE
+                SELECT o.name INTO v_peek_name FROM storage.objects o
+                WHERE o.bucket_id = bucketname AND lower(o.name) COLLATE "C" < v_next_seek
+                  AND (noncurrent_versions != 'exclude' OR o.archived_at IS NULL)
+                  AND (noncurrent_versions != 'only' OR o.archived_at IS NOT NULL)
+                  AND (delete_markers != 'exclude' OR NOT o.is_delete_marker)
+                  AND (delete_markers != 'only' OR o.is_delete_marker)
                 ORDER BY lower(o.name) COLLATE "C" DESC LIMIT 1;
             END IF;
         END IF;
 
         EXIT WHEN v_peek_name IS NULL;
+
+        -- If the peek landed on a different key than we were tracking, any
+        -- version boundary belongs to the OLD key and must not leak into the
+        -- new one - e.g. the deleteMarkers='only' peek doesn't know or care
+        -- whether it's continuing the same key or jumping to a new one, so
+        -- it never clears these itself.
+        IF lower(v_peek_name) IS DISTINCT FROM v_next_seek THEN
+            v_next_seek_at := NULL;
+            v_next_seek_version := '';
+        END IF;
+
+        -- The peek is authoritative for the next key to process. This is
+        -- especially important after exhausting a multi-version key: the
+        -- version boundary has been cleared, so executing the batch against
+        -- a stale v_next_seek would replay every version of that old key.
+        v_next_seek := lower(v_peek_name);
+        v_next_seek_strict := false;
 
         -- STEP 2: Check if this is a FOLDER or FILE
         v_common_prefix := storage.get_common_prefix(lower(v_peek_name), v_prefix_lower, v_delimiter);
@@ -14670,6 +15803,10 @@ BEGIN
                 created_at := NULL;
                 last_accessed_at := NULL;
                 metadata := NULL;
+                version := NULL;
+                archived_at := NULL;
+                is_delete_marker := NULL;
+                is_versioned := NULL;
                 RETURN NEXT;
                 v_count := v_count + 1;
             END IF;
@@ -14680,19 +15817,32 @@ BEGIN
             ELSE
                 v_next_seek := lower(v_common_prefix);
             END IF;
+            v_next_seek_at := NULL;
+            v_next_seek_version := '';
         ELSE
             -- FILE: Batch fetch using DYNAMIC SQL (overhead amortized over many rows)
             -- For ASC: upper_bound is the exclusive upper limit (< condition)
             -- For DESC: prefix_lower is the inclusive lower limit (>= condition)
             FOR v_current IN EXECUTE v_batch_query
                 USING bucketname, v_next_seek,
-                    CASE WHEN v_is_asc THEN COALESCE(v_upper_bound, v_prefix_lower) ELSE v_prefix_lower END, v_file_batch_size
+                    CASE WHEN v_is_asc THEN COALESCE(v_upper_bound, v_prefix_lower) ELSE v_prefix_lower END, v_file_batch_size,
+                    v_next_seek_at, v_next_seek_version
             LOOP
                 v_common_prefix := storage.get_common_prefix(lower(v_current.name), v_prefix_lower, v_delimiter);
 
                 IF v_common_prefix IS NOT NULL THEN
-                    -- Hit a folder: exit batch, let peek handle it
-                    v_next_seek := lower(v_current.name);
+                    -- Hit a folder: exit batch, let peek handle it. Reset
+                    -- strict mode too - it may have been set by an earlier
+                    -- row in this same batch (see the single-row ASC advance
+                    -- below), and v_next_seek here is the folder-triggering
+                    -- row's own name, which the next peek must find inclusively.
+                    v_next_seek := CASE
+                        WHEN v_is_asc THEN lower(v_current.name)
+                        ELSE lower(v_current.name) || v_delimiter
+                    END;
+                    v_next_seek_at := NULL;
+                    v_next_seek_version := '';
+                    v_next_seek_strict := false;
                     EXIT;
                 END IF;
 
@@ -14707,13 +15857,29 @@ BEGIN
                     created_at := v_current.created_at;
                     last_accessed_at := v_current.last_accessed_at;
                     metadata := v_current.metadata;
+                    version := v_current.version;
+                    archived_at := v_current.archived_at;
+                    is_delete_marker := v_current.is_delete_marker;
+                    is_versioned := v_current.is_versioned;
                     RETURN NEXT;
                     v_count := v_count + 1;
                 END IF;
 
-                -- Advance seek past this file
-                IF v_is_asc THEN
-                    v_next_seek := lower(v_current.name) || v_delimiter;
+                -- Multi-row mode must remain on this key until all of its
+                -- versions have crossed the internal batch boundary.
+                IF v_multi_row THEN
+                    v_next_seek := lower(v_current.name);
+                    v_next_seek_at := COALESCE(v_current.archived_at, 'infinity'::timestamptz);
+                    v_next_seek_version := COALESCE(v_current.version, '');
+                ELSIF v_is_asc THEN
+                    -- Appending the delimiter as a fake lexical successor would
+                    -- skip a real key like `name || '!'` (or any character
+                    -- sorting below the delimiter), which sorts between `name`
+                    -- and `name || delimiter`. Track the real name and mark the
+                    -- next comparison strict instead - same fix as the
+                    -- exhausted-key case above.
+                    v_next_seek := lower(v_current.name);
+                    v_next_seek_strict := true;
                 ELSE
                     v_next_seek := lower(v_current.name);
                 END IF;
@@ -14721,28 +15887,58 @@ BEGIN
                 EXIT WHEN v_count >= v_limit;
             END LOOP;
         END IF;
+
+        IF v_count = v_previous_count
+           AND v_skipped = v_previous_skipped
+           AND v_next_seek IS NOT DISTINCT FROM v_previous_seek
+           AND v_next_seek_at IS NOT DISTINCT FROM v_previous_seek_at
+           AND v_next_seek_version IS NOT DISTINCT FROM v_previous_seek_version THEN
+            RAISE EXCEPTION 'storage.search made no progress at seek (%, %, %)',
+                v_next_seek, v_next_seek_at, v_next_seek_version;
+        END IF;
     END LOOP;
 END;
 $_$;
 
 
-ALTER FUNCTION storage.search(prefix text, bucketname text, limits integer, levels integer, offsets integer, search text, sortcolumn text, sortorder text) OWNER TO supabase_storage_admin;
+ALTER FUNCTION storage.search(prefix text, bucketname text, limits integer, levels integer, offsets integer, search text, sortcolumn text, sortorder text, noncurrent_versions text, delete_markers text) OWNER TO supabase_storage_admin;
 
 --
--- Name: search_by_timestamp(text, text, integer, integer, text, text, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: search_by_timestamp(text, text, integer, integer, text, text, text, text, text, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
 --
 
-CREATE FUNCTION storage.search_by_timestamp(p_prefix text, p_bucket_id text, p_limit integer, p_level integer, p_start_after text, p_sort_order text, p_sort_column text, p_sort_column_after text) RETURNS TABLE(key text, name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb)
+CREATE FUNCTION storage.search_by_timestamp(p_prefix text, p_bucket_id text, p_limit integer, p_level integer, p_start_after text, p_sort_order text, p_sort_column text, p_sort_column_after text, noncurrent_versions text DEFAULT 'exclude'::text, delete_markers text DEFAULT 'exclude'::text, p_start_after_version text DEFAULT ''::text) RETURNS TABLE(key text, name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb, version text, archived_at timestamp with time zone, is_delete_marker boolean, is_versioned boolean)
     LANGUAGE plpgsql STABLE
     AS $_$
 DECLARE
     v_cursor_op text;
     v_query text;
     v_prefix text;
+    v_prefix_pattern text;
     v_sort_order text;
     v_sort_column text;
+    v_version_tiebreak text;
 BEGIN
     v_prefix := coalesce(p_prefix, '');
+    -- Keep the raw prefix for common-prefix calculations and escape only LIKE metacharacters.
+    v_prefix_pattern := replace(v_prefix, chr(92), chr(92) || chr(92));
+    v_prefix_pattern := replace(v_prefix_pattern, '%', chr(92) || '%');
+    v_prefix_pattern := replace(v_prefix_pattern, '_', chr(92) || '_');
+
+    -- COALESCE first: NULL NOT IN (...) evaluates to NULL (not TRUE), so a
+    -- bare NOT IN check silently leaves an explicit NULL argument unreset.
+    noncurrent_versions := COALESCE(noncurrent_versions, 'exclude');
+    delete_markers := COALESCE(delete_markers, 'exclude');
+    IF noncurrent_versions NOT IN ('exclude', 'only', 'include') THEN
+        noncurrent_versions := 'exclude';
+    END IF;
+    IF delete_markers NOT IN ('exclude', 'only', 'include') THEN
+        delete_markers := 'exclude';
+    END IF;
+
+    -- $9 is only populated in multi-row mode; it's always '' otherwise, so
+    -- only use each row's real version as a tiebreak in multi-row mode.
+    v_version_tiebreak := CASE WHEN noncurrent_versions IN ('only', 'include') THEN 'COALESCE(version, '''')' ELSE '''''' END;
 
     -- Defense-in-depth: this function is independently reachable and must
     -- not trust p_sort_order/p_sort_column to already be validated by a
@@ -14773,21 +15969,33 @@ BEGIN
                 o.created_at AS obj_created_at,
                 o.last_accessed_at AS obj_last_accessed_at,
                 o.metadata AS obj_metadata,
+                o.version AS obj_version,
+                o.archived_at AS obj_archived_at,
+                o.is_delete_marker AS obj_is_delete_marker,
+                o.is_versioned AS obj_is_versioned,
                 storage.get_common_prefix(o.name, $1, '/') AS common_prefix
             FROM storage.objects o
             WHERE o.bucket_id = $2
-              AND o.name COLLATE "C" LIKE $1 || '%%'
+              AND o.name COLLATE "C" LIKE $10 || '%%'
+              AND ($7 != 'exclude' OR o.archived_at IS NULL)
+              AND ($7 != 'only' OR o.archived_at IS NOT NULL)
+              AND ($8 != 'exclude' OR NOT o.is_delete_marker)
+              AND ($8 != 'only' OR o.is_delete_marker)
         ),
         -- Aggregate common prefixes (folders)
         -- Both created_at and updated_at use MIN(obj_created_at) to match the old prefixes table behavior
         aggregated_prefixes AS (
             SELECT
-                rtrim(common_prefix, '/') AS name,
+                common_prefix AS name,
                 NULL::uuid AS id,
                 MIN(obj_created_at) AS updated_at,
                 MIN(obj_created_at) AS created_at,
                 NULL::timestamptz AS last_accessed_at,
                 NULL::jsonb AS metadata,
+                NULL::text AS version,
+                NULL::timestamptz AS archived_at,
+                NULL::boolean AS is_delete_marker,
+                NULL::boolean AS is_versioned,
                 TRUE AS is_prefix
             FROM raw_objects
             WHERE common_prefix IS NOT NULL
@@ -14801,6 +16009,10 @@ BEGIN
                 obj_created_at AS created_at,
                 obj_last_accessed_at AS last_accessed_at,
                 obj_metadata AS metadata,
+                obj_version AS version,
+                obj_archived_at AS archived_at,
+                obj_is_delete_marker AS is_delete_marker,
+                obj_is_versioned AS is_versioned,
                 FALSE AS is_prefix
             FROM raw_objects
             WHERE common_prefix IS NULL
@@ -14816,11 +16028,14 @@ BEGIN
             WHERE (
                 $5 = ''
                 OR ROW(
-                    date_trunc('milliseconds', %I),
-                    name COLLATE "C"
+                    COALESCE(date_trunc('milliseconds', %I), 'epoch'::timestamptz),
+                    name COLLATE "C",
+                    %s
                 ) %s ROW(
-                    COALESCE(NULLIF($6, '')::timestamptz, 'epoch'::timestamptz),
-                    $5
+                    -- truncated the same way as the stored value above
+                    date_trunc('milliseconds', COALESCE(NULLIF($6, '')::timestamptz, 'epoch'::timestamptz)),
+                    $5,
+                    $9
                 )
             )
         )
@@ -14831,33 +16046,42 @@ BEGIN
             updated_at,
             created_at,
             last_accessed_at,
-            metadata
+            metadata,
+            version,
+            archived_at,
+            is_delete_marker,
+            is_versioned
         FROM filtered
         ORDER BY
             COALESCE(date_trunc('milliseconds', %I), 'epoch'::timestamptz) %s,
-            name COLLATE "C" %s
+            name COLLATE "C" %s,
+            COALESCE(version, '') %s
         LIMIT $4
     $sql$,
         v_sort_column,
+        v_version_tiebreak,
         v_cursor_op,
         v_sort_column,
+        v_sort_order,
         v_sort_order,
         v_sort_order
     );
 
+    -- version is the third tiebreak component for two versions of the same
+    -- key tying on both timestamp and name (see filtered CTE / ORDER BY above)
     RETURN QUERY EXECUTE v_query
-    USING v_prefix, p_bucket_id, p_level, p_limit, p_start_after, p_sort_column_after;
+    USING v_prefix, p_bucket_id, p_level, p_limit, p_start_after, p_sort_column_after, noncurrent_versions, delete_markers, coalesce(p_start_after_version, ''), v_prefix_pattern;
 END;
 $_$;
 
 
-ALTER FUNCTION storage.search_by_timestamp(p_prefix text, p_bucket_id text, p_limit integer, p_level integer, p_start_after text, p_sort_order text, p_sort_column text, p_sort_column_after text) OWNER TO supabase_storage_admin;
+ALTER FUNCTION storage.search_by_timestamp(p_prefix text, p_bucket_id text, p_limit integer, p_level integer, p_start_after text, p_sort_order text, p_sort_column text, p_sort_column_after text, noncurrent_versions text, delete_markers text, p_start_after_version text) OWNER TO supabase_storage_admin;
 
 --
--- Name: search_v2(text, text, integer, integer, text, text, text, text); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
+-- Name: search_v2(text, text, integer, integer, text, text, text, text, text, text, timestamp with time zone, text, boolean); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
 --
 
-CREATE FUNCTION storage.search_v2(prefix text, bucket_name text, limits integer DEFAULT 100, levels integer DEFAULT 1, start_after text DEFAULT ''::text, sort_order text DEFAULT 'asc'::text, sort_column text DEFAULT 'name'::text, sort_column_after text DEFAULT ''::text) RETURNS TABLE(key text, name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb)
+CREATE FUNCTION storage.search_v2(prefix text, bucket_name text, limits integer DEFAULT 100, levels integer DEFAULT 1, start_after text DEFAULT ''::text, sort_order text DEFAULT 'asc'::text, sort_column text DEFAULT 'name'::text, sort_column_after text DEFAULT ''::text, noncurrent_versions text DEFAULT 'exclude'::text, delete_markers text DEFAULT 'exclude'::text, start_after_archived_at timestamp with time zone DEFAULT NULL::timestamp with time zone, start_after_version text DEFAULT ''::text, start_after_is_continuation boolean DEFAULT false) RETURNS TABLE(key text, name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb, version text, archived_at timestamp with time zone, is_delete_marker boolean, is_versioned boolean)
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
@@ -14891,29 +16115,38 @@ BEGIN
             l.updated_at,
             l.created_at,
             l.last_accessed_at,
-            l.metadata
+            l.metadata,
+            l.version,
+            l.archived_at,
+            l.is_delete_marker,
+            l.is_versioned
         FROM storage.list_objects_with_delimiter(
             bucket_name,
             coalesce(prefix, ''),
             '/',
             v_limit,
-            start_after,
-            '',
-            v_sort_ord
+            CASE WHEN start_after_is_continuation THEN '' ELSE start_after END,
+            CASE WHEN start_after_is_continuation THEN start_after ELSE '' END,
+            v_sort_ord,
+            noncurrent_versions,
+            delete_markers,
+            start_after_archived_at,
+            start_after_version
         ) l;
     ELSE
         -- Use aggregation approach for timestamp sorting
         -- Not efficient for large datasets but supports correct pagination
         RETURN QUERY SELECT * FROM storage.search_by_timestamp(
             prefix, bucket_name, v_limit, levels, start_after,
-            v_sort_ord, v_sort_col, sort_column_after
+            v_sort_ord, v_sort_col, sort_column_after,
+            noncurrent_versions, delete_markers, start_after_version
         );
     END IF;
 END;
 $$;
 
 
-ALTER FUNCTION storage.search_v2(prefix text, bucket_name text, limits integer, levels integer, start_after text, sort_order text, sort_column text, sort_column_after text) OWNER TO supabase_storage_admin;
+ALTER FUNCTION storage.search_v2(prefix text, bucket_name text, limits integer, levels integer, start_after text, sort_order text, sort_column text, sort_column_after text, noncurrent_versions text, delete_markers text, start_after_archived_at timestamp with time zone, start_after_version text, start_after_is_continuation boolean) OWNER TO supabase_storage_admin;
 
 --
 -- Name: update_updated_at_column(); Type: FUNCTION; Schema: storage; Owner: supabase_storage_admin
@@ -16155,6 +17388,20 @@ CREATE TABLE public.course_review (
 
 
 ALTER TABLE public.course_review OWNER TO postgres;
+
+--
+-- Name: course_session_attendance; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.course_session_attendance (
+    activity_id uuid NOT NULL,
+    student_id uuid NOT NULL,
+    attended boolean NOT NULL,
+    marked_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.course_session_attendance OWNER TO postgres;
 
 --
 -- Name: course_session_report; Type: TABLE; Schema: public; Owner: postgres
@@ -17847,6 +19094,15 @@ CREATE TABLE storage.buckets (
     owner_id text,
     type storage.buckettype DEFAULT 'STANDARD'::storage.buckettype NOT NULL,
     versioning_status text DEFAULT 'DISABLED'::text NOT NULL,
+    lifecycle_configuration jsonb,
+    lifecycle_configuration_generation uuid,
+    CONSTRAINT buckets_lifecycle_configuration_pair_check CHECK (((lifecycle_configuration IS NULL) = (lifecycle_configuration_generation IS NULL))),
+    CONSTRAINT buckets_lifecycle_configuration_shape_check CHECK (((lifecycle_configuration IS NULL) OR ((jsonb_typeof(lifecycle_configuration) = 'object'::text) AND (lifecycle_configuration ? 'rules'::text) AND
+CASE
+    WHEN (jsonb_typeof((lifecycle_configuration -> 'rules'::text)) = 'array'::text) THEN ((jsonb_array_length((lifecycle_configuration -> 'rules'::text)) >= 1) AND (jsonb_array_length((lifecycle_configuration -> 'rules'::text)) <= 1000))
+    ELSE false
+END))),
+    CONSTRAINT buckets_lifecycle_configuration_standard_only_check CHECK (((type = 'STANDARD'::storage.buckettype) OR ((lifecycle_configuration IS NULL) AND (lifecycle_configuration_generation IS NULL)))),
     CONSTRAINT buckets_versioning_dark_check CHECK ((versioning_status = 'DISABLED'::text)),
     CONSTRAINT buckets_versioning_standard_only_check CHECK (((type = 'STANDARD'::storage.buckettype) OR (versioning_status = 'DISABLED'::text))),
     CONSTRAINT buckets_versioning_status_check CHECK ((versioning_status = ANY (ARRAY['DISABLED'::text, 'ENABLED'::text, 'SUSPENDED'::text])))
@@ -18529,6 +19785,14 @@ ALTER TABLE ONLY public.course_review
 
 ALTER TABLE ONLY public.course_review
     ADD CONSTRAINT course_review_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: course_session_attendance course_session_attendance_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.course_session_attendance
+    ADD CONSTRAINT course_session_attendance_pkey PRIMARY KEY (activity_id, student_id);
 
 
 --
@@ -20688,13 +21952,6 @@ CREATE UNIQUE INDEX bname ON storage.buckets USING btree (name);
 
 
 --
--- Name: bucketid_objname; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
---
-
-CREATE UNIQUE INDEX bucketid_objname ON storage.objects USING btree (bucket_id, name);
-
-
---
 -- Name: buckets_analytics_unique_name_idx; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
 --
 
@@ -20727,6 +21984,13 @@ CREATE INDEX idx_objects_bucket_id_name_lower ON storage.objects USING btree (bu
 --
 
 CREATE UNIQUE INDEX idx_objects_current_version ON storage.objects USING btree (bucket_id, name COLLATE "C") WHERE (archived_at IS NULL);
+
+
+--
+-- Name: idx_objects_delete_markers; Type: INDEX; Schema: storage; Owner: supabase_storage_admin
+--
+
+CREATE INDEX idx_objects_delete_markers ON storage.objects USING btree (bucket_id, name COLLATE "C") WHERE is_delete_marker;
 
 
 --
@@ -21226,6 +22490,27 @@ CREATE TRIGGER enforce_bucket_name_length_trigger BEFORE INSERT OR UPDATE OF nam
 
 
 --
+-- Name: buckets protect_bucket_control_insert; Type: TRIGGER; Schema: storage; Owner: supabase_storage_admin
+--
+
+CREATE TRIGGER protect_bucket_control_insert BEFORE INSERT ON storage.buckets FOR EACH ROW EXECUTE FUNCTION storage.protect_bucket_control_columns('service_role');
+
+
+--
+-- Name: buckets protect_bucket_control_update; Type: TRIGGER; Schema: storage; Owner: supabase_storage_admin
+--
+
+CREATE TRIGGER protect_bucket_control_update BEFORE UPDATE OF lifecycle_configuration, lifecycle_configuration_generation ON storage.buckets FOR EACH ROW EXECUTE FUNCTION storage.protect_bucket_control_columns();
+
+
+--
+-- Name: buckets protect_bucket_control_update_role; Type: TRIGGER; Schema: storage; Owner: supabase_storage_admin
+--
+
+CREATE TRIGGER protect_bucket_control_update_role AFTER UPDATE OF lifecycle_configuration, lifecycle_configuration_generation ON storage.buckets FOR EACH ROW EXECUTE FUNCTION storage.enforce_bucket_lifecycle_service_role('service_role');
+
+
+--
 -- Name: buckets protect_buckets_delete; Type: TRIGGER; Schema: storage; Owner: supabase_storage_admin
 --
 
@@ -21684,6 +22969,22 @@ ALTER TABLE ONLY public.course_review
 
 ALTER TABLE ONLY public.course_review
     ADD CONSTRAINT course_review_student_id_fkey FOREIGN KEY (student_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: course_session_attendance course_session_attendance_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.course_session_attendance
+    ADD CONSTRAINT course_session_attendance_activity_id_fkey FOREIGN KEY (activity_id) REFERENCES public.activity(id) ON DELETE CASCADE;
+
+
+--
+-- Name: course_session_attendance course_session_attendance_student_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.course_session_attendance
+    ADD CONSTRAINT course_session_attendance_student_id_fkey FOREIGN KEY (student_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
 
 --
@@ -22896,21 +24197,21 @@ CREATE POLICY "Clients can view their own bookings" ON public.referee_booking FO
 -- Name: activity_confirmation Course members can change own attendance; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Course members can change own attendance" ON public.activity_confirmation FOR UPDATE TO authenticated USING (((user_id = ( SELECT auth.uid() AS uid)) AND public.fn_can_access_course_activity(activity_id, ( SELECT auth.uid() AS uid)))) WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND public.fn_can_access_course_activity(activity_id, ( SELECT auth.uid() AS uid))));
+CREATE POLICY "Course members can change own attendance" ON public.activity_confirmation FOR UPDATE TO authenticated USING (((user_id = ( SELECT auth.uid() AS uid)) AND public.fn_can_rsvp_course_activity(activity_id, ( SELECT auth.uid() AS uid)))) WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND public.fn_can_rsvp_course_activity(activity_id, ( SELECT auth.uid() AS uid))));
 
 
 --
 -- Name: activity_confirmation Course members can retract own attendance; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Course members can retract own attendance" ON public.activity_confirmation FOR DELETE TO authenticated USING (((user_id = ( SELECT auth.uid() AS uid)) AND public.fn_can_access_course_activity(activity_id, ( SELECT auth.uid() AS uid))));
+CREATE POLICY "Course members can retract own attendance" ON public.activity_confirmation FOR DELETE TO authenticated USING (((user_id = ( SELECT auth.uid() AS uid)) AND public.fn_can_rsvp_course_activity(activity_id, ( SELECT auth.uid() AS uid))));
 
 
 --
 -- Name: activity_confirmation Course members can set own attendance; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Course members can set own attendance" ON public.activity_confirmation FOR INSERT TO authenticated WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND public.fn_can_access_course_activity(activity_id, ( SELECT auth.uid() AS uid))));
+CREATE POLICY "Course members can set own attendance" ON public.activity_confirmation FOR INSERT TO authenticated WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) AND public.fn_can_rsvp_course_activity(activity_id, ( SELECT auth.uid() AS uid))));
 
 
 --
@@ -23711,6 +25012,12 @@ ALTER TABLE public.course_member ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.course_review ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: course_session_attendance; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.course_session_attendance ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: course_session_report; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -25661,6 +26968,15 @@ GRANT ALL ON FUNCTION public.create_wall_post(p_activity_id uuid, p_media jsonb,
 
 
 --
+-- Name: FUNCTION decline_course_inquiry(p_course_id uuid, p_user_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.decline_course_inquiry(p_course_id uuid, p_user_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.decline_course_inquiry(p_course_id uuid, p_user_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.decline_course_inquiry(p_course_id uuid, p_user_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION delete_payment_info(p_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -25820,6 +27136,15 @@ GRANT ALL ON FUNCTION public.fn_can_receive_conversation_topic(p_topic text, p_u
 
 
 --
+-- Name: FUNCTION fn_can_rsvp_course_activity(p_activity_id uuid, p_uid uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_can_rsvp_course_activity(p_activity_id uuid, p_uid uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_can_rsvp_course_activity(p_activity_id uuid, p_uid uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.fn_can_rsvp_course_activity(p_activity_id uuid, p_uid uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION fn_can_see_message(p_conversation_id uuid, p_created_at timestamp with time zone, p_uid uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -25896,11 +27221,35 @@ GRANT ALL ON FUNCTION public.fn_course_add_member(p_course_id uuid, p_user_id uu
 
 
 --
+-- Name: FUNCTION fn_course_attended(p_activity_id uuid, p_uid uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_course_attended(p_activity_id uuid, p_uid uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_course_attended(p_activity_id uuid, p_uid uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION fn_course_end_if_empty_inquiry(p_course_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_course_end_if_empty_inquiry(p_course_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_course_end_if_empty_inquiry(p_course_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION fn_course_held_sessions(p_course_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
 REVOKE ALL ON FUNCTION public.fn_course_held_sessions(p_course_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.fn_course_held_sessions(p_course_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION fn_course_member_at(p_course_id uuid, p_uid uuid, p_at timestamp with time zone); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_course_member_at(p_course_id uuid, p_uid uuid, p_at timestamp with time zone) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_course_member_at(p_course_id uuid, p_uid uuid, p_at timestamp with time zone) TO service_role;
 
 
 --
@@ -26093,8 +27442,7 @@ GRANT ALL ON FUNCTION public.fn_guard_referee_booking_review() TO service_role;
 -- Name: FUNCTION fn_invoke_send_push(); Type: ACL; Schema: public; Owner: postgres
 --
 
-GRANT ALL ON FUNCTION public.fn_invoke_send_push() TO anon;
-GRANT ALL ON FUNCTION public.fn_invoke_send_push() TO authenticated;
+REVOKE ALL ON FUNCTION public.fn_invoke_send_push() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.fn_invoke_send_push() TO service_role;
 
 
@@ -26122,6 +27470,14 @@ GRANT ALL ON FUNCTION public.fn_is_blocked(p_a uuid, p_b uuid) TO service_role;
 
 REVOKE ALL ON FUNCTION public.fn_is_conversation_member(p_conversation_id uuid, p_uid uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.fn_is_conversation_member(p_conversation_id uuid, p_uid uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION fn_is_course_alumnus(p_course_id uuid, p_uid uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.fn_is_course_alumnus(p_course_id uuid, p_uid uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.fn_is_course_alumnus(p_course_id uuid, p_uid uuid) TO service_role;
 
 
 --
@@ -26324,8 +27680,7 @@ GRANT ALL ON FUNCTION public.fn_poke_wall_gc() TO service_role;
 -- Name: FUNCTION fn_process_reminders(); Type: ACL; Schema: public; Owner: postgres
 --
 
-GRANT ALL ON FUNCTION public.fn_process_reminders() TO anon;
-GRANT ALL ON FUNCTION public.fn_process_reminders() TO authenticated;
+REVOKE ALL ON FUNCTION public.fn_process_reminders() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.fn_process_reminders() TO service_role;
 
 
@@ -26949,6 +28304,15 @@ GRANT ALL ON FUNCTION public.mark_conversation_read(p_conversation_id uuid) TO s
 
 
 --
+-- Name: FUNCTION mark_course_attendance(p_activity_id uuid, p_student_id uuid, p_attended boolean); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.mark_course_attendance(p_activity_id uuid, p_student_id uuid, p_attended boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.mark_course_attendance(p_activity_id uuid, p_student_id uuid, p_attended boolean) TO authenticated;
+GRANT ALL ON FUNCTION public.mark_course_attendance(p_activity_id uuid, p_student_id uuid, p_attended boolean) TO service_role;
+
+
+--
 -- Name: FUNCTION mark_payment_request_paid(p_feed_item_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -27512,6 +28876,15 @@ GRANT ALL ON FUNCTION public.unfriend(p_user_id uuid) TO service_role;
 
 
 --
+-- Name: FUNCTION update_course(p_course_id uuid, p_name text, p_description text, p_target_session_count integer); Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON FUNCTION public.update_course(p_course_id uuid, p_name text, p_description text, p_target_session_count integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.update_course(p_course_id uuid, p_name text, p_description text, p_target_session_count integer) TO authenticated;
+GRANT ALL ON FUNCTION public.update_course(p_course_id uuid, p_name text, p_description text, p_target_session_count integer) TO service_role;
+
+
+--
 -- Name: FUNCTION update_freeplay_activity(p_activity_id uuid, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_capacity integer, p_male_price numeric, p_female_price numeric, p_recommended_skills text[], p_description text, p_location_id uuid, p_venue_name text, p_street_address text, p_city_cluster bigint, p_ward text); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -27786,31 +29159,10 @@ GRANT ALL ON FUNCTION storage.foldername(name text) TO postgres;
 
 
 --
--- Name: FUNCTION get_size_by_bucket(); Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON FUNCTION storage.get_size_by_bucket() TO postgres;
-
-
---
--- Name: FUNCTION list_multipart_uploads_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer, next_key_token text, next_upload_token text); Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON FUNCTION storage.list_multipart_uploads_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer, next_key_token text, next_upload_token text) TO postgres;
-
-
---
 -- Name: FUNCTION operation(); Type: ACL; Schema: storage; Owner: supabase_storage_admin
 --
 
 GRANT ALL ON FUNCTION storage.operation() TO postgres;
-
-
---
--- Name: FUNCTION search(prefix text, bucketname text, limits integer, levels integer, offsets integer, search text, sortcolumn text, sortorder text); Type: ACL; Schema: storage; Owner: supabase_storage_admin
---
-
-GRANT ALL ON FUNCTION storage.search(prefix text, bucketname text, limits integer, levels integer, offsets integer, search text, sortcolumn text, sortorder text) TO postgres;
 
 
 --
@@ -28233,6 +29585,13 @@ GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.co
 --
 
 GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.course_review TO service_role;
+
+
+--
+-- Name: TABLE course_session_attendance; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.course_session_attendance TO service_role;
 
 
 --
@@ -28957,8 +30316,8 @@ GRANT USAGE ON SEQUENCE realtime.subscription_id_seq TO service_role;
 
 REVOKE ALL ON TABLE storage.buckets FROM supabase_storage_admin;
 GRANT ALL ON TABLE storage.buckets TO supabase_storage_admin WITH GRANT OPTION;
-GRANT ALL ON TABLE storage.buckets TO anon;
-GRANT ALL ON TABLE storage.buckets TO authenticated;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE storage.buckets TO anon;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE storage.buckets TO authenticated;
 GRANT ALL ON TABLE storage.buckets TO service_role;
 GRANT ALL ON TABLE storage.buckets TO postgres WITH GRANT OPTION;
 
@@ -28968,8 +30327,8 @@ GRANT ALL ON TABLE storage.buckets TO postgres WITH GRANT OPTION;
 --
 
 GRANT ALL ON TABLE storage.buckets_analytics TO service_role;
-GRANT ALL ON TABLE storage.buckets_analytics TO authenticated;
-GRANT ALL ON TABLE storage.buckets_analytics TO anon;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE storage.buckets_analytics TO authenticated;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE storage.buckets_analytics TO anon;
 
 
 --
@@ -28977,8 +30336,8 @@ GRANT ALL ON TABLE storage.buckets_analytics TO anon;
 --
 
 GRANT SELECT ON TABLE storage.buckets_vectors TO service_role;
-GRANT SELECT ON TABLE storage.buckets_vectors TO authenticated;
 GRANT SELECT ON TABLE storage.buckets_vectors TO anon;
+GRANT SELECT ON TABLE storage.buckets_vectors TO authenticated;
 
 
 --
@@ -28987,8 +30346,8 @@ GRANT SELECT ON TABLE storage.buckets_vectors TO anon;
 
 REVOKE ALL ON TABLE storage.objects FROM supabase_storage_admin;
 GRANT ALL ON TABLE storage.objects TO supabase_storage_admin WITH GRANT OPTION;
-GRANT ALL ON TABLE storage.objects TO anon;
-GRANT ALL ON TABLE storage.objects TO authenticated;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE storage.objects TO anon;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE storage.objects TO authenticated;
 GRANT ALL ON TABLE storage.objects TO service_role;
 GRANT ALL ON TABLE storage.objects TO postgres WITH GRANT OPTION;
 
@@ -29018,8 +30377,8 @@ GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE storage.s
 --
 
 GRANT SELECT ON TABLE storage.vector_indexes TO service_role;
-GRANT SELECT ON TABLE storage.vector_indexes TO authenticated;
 GRANT SELECT ON TABLE storage.vector_indexes TO anon;
+GRANT SELECT ON TABLE storage.vector_indexes TO authenticated;
 
 
 --
@@ -29381,5 +30740,5 @@ ALTER EVENT TRIGGER pgrst_drop_watch OWNER TO supabase_admin;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 12CrSOmeX5pFNZibzWIqnSem4bJffw7mBkA73FFtBrCHGUWqohJWJmqQr49GVUU
+\unrestrict 7W2uX7vUngcLA8WCfYHGbIjfD5BZSDoc6oJlD0QIjcRMU7wj0P8SqMr5ZS7Plnf
 

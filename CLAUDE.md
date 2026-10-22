@@ -543,6 +543,24 @@ Replaced the coach half of the booking system. Full schema notes live in
   times only, so a student can't probe who else their coach teaches.
 - **No money.** No rate, no payment flow, no packages; a coach states rates on their profile and
   settles off-app. This is the one deliberate regression from the booking system.
+  `course_detail_data.coach_rates` echoes those profile rates on the course page.
+- **Group enrollment moves an inquirer.** Every inquiry is its own course, and the
+  one-live-thread index forbids a second live row with the same coach+sport, so an offer into a
+  coach's *other* course surfaces in the student's inquiry thread instead; accepting moves them
+  (inquiry row → `left`, join the target as `enrolled`, an empty unnamed inquiry is ended).
+  `respond_enrollment_offer` returns the course the student ended up in.
+  `decline_course_inquiry` is the coach's "no" to an inquiry. `pro_courses_data` hides unnamed
+  courses with nobody in them. Schema: `schema/course_group_enrollment.sql`.
+- **Attendance = coach's mark, else a `going` RSVP** (`fn_course_attended`,
+  `course_session_attendance`, `mark_course_attendance`). It gates session reports, review
+  eligibility and alumni access. Course RSVP closes at the session's start, and a started session
+  can't be cancelled or rescheduled (it would cascade away its RSVPs/reports).
+  Schema: `schema/course_attendance_and_editing.sql`.
+- **Alumni keep read-only access.** A departed member who attended a session (an ended course
+  marks everyone `left`) can still open it — no roster, nothing after they left — and that's the
+  only route to `submit_course_review`. Schema: `schema/course_alumni_review_access.sql`.
+- **Editing/extending**: `update_course` (coach) edits name/description/target; raising the
+  target past the held count re-arms the target sweep.
 - Client: [`lib/course/`](lib/course/). The player hub is Manage index 2; the coach's course inbox is
   index 0 in coach mode. `ManageCourseRoute` resolves that difference for notification fallbacks.
 
@@ -587,7 +605,8 @@ Push (raw FCM HTTP v1, iOS + Android) is **built**. Design + remaining provision
   `challenge_scheduled`, `challenge_lapsed`, `match_result_recorded`, (with courses)
   `course_message`, `course_enrollment_offer`, `course_enrollment_accepted`,
   `course_activity_proposed`, `course_activity_approved`, `course_activity_changed`,
-  `course_session_report`, `course_ended`, `course_member_removed`, (with the threshold/deadline
+  `course_session_report`, `course_ended`, `course_member_removed`, `course_target_reached`,
+  `course_no_students` (coach-side prompts on a still-running course), (with the threshold/deadline
   enforcement below) `activity_at_risk_organizer`, `activity_at_risk_member`,
   `activity_cancelled_low_turnout`, (with friendship)
   `friend_request`, `friend_accepted`, and `member_kicked` (a captain removes a member —

@@ -1715,7 +1715,11 @@
       "activity_cancelled": "Session cancelled",
       "course_ended": "Course ended",
       "target_reached": "The course reached {target} sessions",
-      "no_students_left": "This course has no students left"
+      "no_students_left": "This course has no students left",
+      "enrollment_offer_elsewhere": "The coach invited you to join {course_name}",
+      "moved_to_course": "{username} joined {course_name}",
+      "inquiry_declined": "The coach can't take {username} on right now",
+      "course_updated": "The coach updated the course details"
     }
   },
   "course": {
@@ -1845,7 +1849,37 @@
     "sessionActions": "Session options",
     "reviewStar": "{star} stars",
     "coachSportMismatch": "This coach does not teach {sport}",
-    "startInPast": "Pick a time in the future"
+    "startInPast": "Pick a time in the future",
+    "declineInquiry": "Decline",
+    "declineInquiryTitle": "Decline this inquiry?",
+    "declineInquiryBody": "{username} will be told you can't take them on right now, and this thread will close.",
+    "offerTargetLabel": "Offer a place in",
+    "offerTargetNew": "A new course (this thread)",
+    "offerTargetStudents": {
+      "zero": "No students yet",
+      "one": "{} student",
+      "other": "{} students"
+    },
+    "offerTargetJoin": "They will join {course} with its existing name and session target. Accepting moves them out of this thread.",
+    "editCourse": "Edit course",
+    "saveCourse": "Save",
+    "editTargetHint": "{held} sessions held so far. Raising the target extends the course.",
+    "attendance": {
+      "title": "Attendance",
+      "present": "Present",
+      "absent": "Absent",
+      "fromRsvp": "(RSVP going)",
+      "unmarked": "(not marked)",
+      "youAttended": "You attended this session",
+      "youMissed": "Marked absent",
+      "noneToReport": "No attending student left to write up. Mark attendance first."
+    },
+    "rates": {
+      "title": "Coach's rates",
+      "offApp": "Payment is settled directly with the coach."
+    },
+    "unavailable": "This course couldn't be loaded, or you no longer have access to it.",
+    "backToHub": "Back to my courses"
   },
   "challenge": {
     "party": {

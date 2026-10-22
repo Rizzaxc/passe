@@ -163,7 +163,9 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
     NotificationKind.courseActivityApproved ||
     NotificationKind.courseActivityChanged ||
     NotificationKind.courseSessionReport ||
-    NotificationKind.courseEnded =>
+    NotificationKind.courseEnded ||
+    NotificationKind.courseTargetReached ||
+    NotificationKind.courseNoStudents =>
       courseId == null
           ? const ManageCourseRoute().location
           : CourseDetailRoute(id: courseId).location,
