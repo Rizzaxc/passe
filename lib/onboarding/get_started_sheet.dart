@@ -1,10 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../auth/guest_prompt.dart';
 import '../manage_tab/lobby_section/feed/lobby_form_sheet.dart';
+import '../manage_tab/lobby_section/invite_link/redeem_code_sheet.dart';
 import '../router.dart';
 import '../social/friends_screen.dart';
 import '../ui/sheet.dart';
@@ -51,6 +53,19 @@ class _GetStartedContent extends ConsumerWidget {
       if (!context.mounted || lobby == null) return;
       Navigator.of(context).pop();
       LobbyDetailRoute(id: lobby.id!, $extra: lobby.name).go(context);
+    }
+
+    // Someone who installed from an invite link lost it on the way through
+    // the store — there's no deferred deep link — so let them paste it.
+    // Like createLobby, this only leaves the guide once there's a code.
+    Future<void> redeemInvite() async {
+      if (!ensureSignedIn(context, ref)) return;
+      final code = await pickInviteCode(context);
+      if (code == null || !context.mounted) return;
+      final router = GoRouter.of(context);
+      Navigator.of(context).pop();
+      // Push-only: InviteRoute sits outside the shell.
+      router.push(InviteRoute(code: code).location);
     }
 
     // Guard *before* popping this sheet — ensureSignedIn needs a live
@@ -124,6 +139,21 @@ class _GetStartedContent extends ConsumerWidget {
                 ),
                 suffix: const Icon(FLucideIcons.chevronRight),
                 onPress: addFriends,
+              ),
+              FTile(
+                prefix: const Icon(FLucideIcons.ticket),
+                title: Text(
+                  'onboarding.getStarted.redeem.title'.tr(),
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                ),
+                subtitle: Text(
+                  'onboarding.getStarted.redeem.subtitle'.tr(),
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                ),
+                suffix: const Icon(FLucideIcons.chevronRight),
+                onPress: redeemInvite,
               ),
               FTile(
                 prefix: const Icon(FLucideIcons.users),

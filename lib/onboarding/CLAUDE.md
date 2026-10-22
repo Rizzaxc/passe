@@ -23,8 +23,9 @@ Two phases:
    already sport-scoped shell, in order:
    `story_sheet.dart` (what Passe is) → `profile_sheet.dart` (signed-in only; gender/age/playtime/
    skill) → `coach_marks.dart` (bottom-nav feature tour) → `get_started_sheet.dart` (closing choice:
-   **create a lobby with people you already know** as the hero action, plus find teammates / add a
-   friend / hire a coach / connect a wearable as secondary tiles — see the "why a hero action" note
+   **create a lobby with people you already know** as the hero action, plus "Có mã mời?" (paste an
+   invite link/code — the stand-in for a deferred deep link) / find teammates / add a friend /
+   hire a coach / connect a wearable as secondary tiles — see the "why a hero action" note
    below). Each step is gated on its own
    persisted flag (`onboarding_prefs.dart`), so the chain is idempotent and safe to re-invoke.
    `onboarding_step_badge.dart` is the shared "X/4" pill each step's header shows so the sequence

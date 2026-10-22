@@ -9,6 +9,8 @@ import '../../../../core/feature_flags.dart';
 import '../../../../ui/button_styles.dart';
 import '../../../logger/talker.dart';
 import '../challenge_offer_sheet.dart';
+import '../invite_member_sheet.dart';
+import '../members/controller.dart';
 import '../schedule_activity_sheet.dart';
 import 'feed_controller.dart';
 
@@ -56,6 +58,13 @@ class PlannerEmptyState extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
+    // A captain alone in their lobby can schedule, but nobody would see it —
+    // so lead with inviting people and keep scheduling as the second move.
+    final alone =
+        isLeader &&
+        (ref.watch(lobbyMembersControllerProvider(lobbyId)).value?.length ??
+                2) <=
+            1;
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
       child: Container(
@@ -105,7 +114,9 @@ class PlannerEmptyState extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              isLeader
+              alone
+                  ? 'lobbyHub.planner.aloneHint'.tr()
+                  : isLeader
                   ? ClientFeatureFlags.challengerFlow
                         ? 'lobbyHub.planner.leaderChallengeHint'.tr()
                         : 'lobbyHub.planner.leaderHint'.tr()
@@ -123,13 +134,31 @@ class PlannerEmptyState extends ConsumerWidget {
               Column(
                 spacing: 8,
                 children: [
+                  if (alone)
+                    SizedBox(
+                      width: double.infinity,
+                      child: FButton(
+                        size: .sm,
+                        style: FButtonStyleExtension.accentBlueStyle(
+                          context.theme.buttonStyles.primary.base,
+                        ),
+                        onPress: () => showInviteMemberSheet(context, lobbyId),
+                        child: _CTALabel(
+                          icon: const Icon(FLucideIcons.userPlus, size: 16),
+                          label: 'lobbyHub.planner.inviteFirst'.tr(),
+                        ),
+                      ),
+                    ),
                   SizedBox(
                     width: double.infinity,
                     child: FButton(
                       size: .sm,
-                      style: FButtonStyleExtension.accentBlueStyle(
-                        context.theme.buttonStyles.primary.base,
-                      ),
+                      variant: alone ? .outline : .primary,
+                      style: alone
+                          ? const .context()
+                          : FButtonStyleExtension.accentBlueStyle(
+                              context.theme.buttonStyles.primary.base,
+                            ),
                       onPress: () =>
                           showScheduleActivitySheet(context, lobbyId),
                       child: _CTALabel(

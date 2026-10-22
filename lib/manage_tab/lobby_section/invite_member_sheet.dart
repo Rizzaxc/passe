@@ -34,6 +34,13 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
   bool _searching = false;
   bool _sending = false;
 
+  /// Users invited from this sheet in this session — their rows flip to
+  /// "Đã mời" instead of the sheet closing after each one.
+  final Set<String> _invited = {};
+
+  /// Friends ticked in the shortlist, sent together by one button.
+  final Set<String> _selectedFriends = {};
+
   @override
   void dispose() {
     _userController.dispose();
@@ -106,54 +113,96 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
     }
   }
 
-  Future<void> _inviteUser(_UserResult user) async {
+  /// Inserts one `invite` befriend record. Returns null on success, or the
+  /// error kind for the caller to report.
+  Future<_InviteError?> _sendInvite(String userId) async {
     final currentUserId = ref.read(currentUserIdProvider);
-    if (currentUserId == null) return;
-
-    setState(() => _sending = true);
+    if (currentUserId == null) return _InviteError.failed;
     try {
       await Supabase.instance.client
           .from('lobby_befriend_record')
           .insert({
             'initiator_user_id': currentUserId,
-            'target_user_id': user.id,
+            'target_user_id': userId,
             'target_lobby_id': widget.lobbyId,
             'interaction_type': 'invite',
           })
           .timeout(const Duration(seconds: 5));
-
-      if (!mounted) return;
-      Navigator.of(context).pop();
-      showFToast(
-        context: context,
-        icon: const Icon(FLucideIcons.userPlus),
-        title: Text(
-          'lobby.inviteUser.success'.tr(namedArgs: {'username': user.username}),
-        ),
-        alignment: .bottomCenter,
-      );
+      return null;
     } catch (e, st) {
       talker.handle(e, st, 'Invite user failed');
-      if (!mounted) return;
-      final msg = e.toString();
-      if (msg.contains('already a member')) {
-        showFToast(
-          context: context,
-          icon: const Icon(FLucideIcons.info),
-          title: Text('lobby.inviteUser.alreadyMember'.tr()),
-          alignment: .bottomCenter,
+      return e.toString().contains('already a member')
+          ? _InviteError.alreadyMember
+          : _InviteError.failed;
+    }
+  }
+
+  void _toast(String title, {bool error = false}) {
+    showFToast(
+      context: context,
+      icon: Icon(error ? FLucideIcons.circleX : FLucideIcons.userPlus),
+      variant: error ? FToastVariant.destructive : FToastVariant.primary,
+      title: Text(title),
+      alignment: .bottomCenter,
+    );
+  }
+
+  Future<void> _inviteUser(_UserResult user) async {
+    setState(() => _sending = true);
+    final error = await _sendInvite(user.id);
+    if (!mounted) return;
+    setState(() {
+      _sending = false;
+      if (error == null) _invited.add(user.id);
+    });
+    switch (error) {
+      case null:
+        _toast(
+          'lobby.inviteUser.success'.tr(namedArgs: {'username': user.username}),
         );
-      } else {
-        showFToast(
-          context: context,
-          icon: const Icon(FLucideIcons.circleX),
-          variant: .destructive,
-          title: Text('lobby.inviteUser.failed'.tr()),
-          alignment: .bottomCenter,
-        );
+      case _InviteError.alreadyMember:
+        _toast('lobby.inviteUser.alreadyMember'.tr());
+      case _InviteError.failed:
+        _toast('lobby.inviteUser.failed'.tr(), error: true);
+    }
+  }
+
+  /// Sends every ticked friend in one go and reports the outcome once,
+  /// naming anyone it couldn't reach rather than failing the whole batch.
+  Future<void> _inviteSelected(List<FriendUser> candidates) async {
+    final targets = [
+      for (final f in candidates)
+        if (_selectedFriends.contains(f.userId)) f,
+    ];
+    if (targets.isEmpty) return;
+    setState(() => _sending = true);
+    final results = await Future.wait([
+      for (final f in targets) _sendInvite(f.userId),
+    ]);
+    if (!mounted) return;
+    final failed = <String>[];
+    setState(() {
+      _sending = false;
+      for (var i = 0; i < targets.length; i++) {
+        final f = targets[i];
+        _selectedFriends.remove(f.userId);
+        if (results[i] == null) {
+          _invited.add(f.userId);
+        } else {
+          failed.add(f.username);
+        }
       }
-    } finally {
-      if (mounted) setState(() => _sending = false);
+    });
+    final sent = targets.length - failed.length;
+    if (failed.isEmpty) {
+      _toast('lobby.inviteUser.batchSuccess'.tr(namedArgs: {'count': '$sent'}));
+    } else {
+      _toast(
+        'lobby.inviteUser.batchPartial'.tr(
+          namedArgs: {'count': '$sent', 'names': failed.join(', ')},
+        ),
+        error: sent == 0,
+      );
     }
   }
 
@@ -196,21 +245,35 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
             separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (_, i) {
               final f = candidates[i];
+              final invited = _invited.contains(f.userId);
               return _FriendShortlistCard(
                 friend: f,
                 busy: _sending,
-                onInvite: () => _inviteUser(
-                  _UserResult(
-                    id: f.userId,
-                    username: f.username,
-                    tagNumber: f.tagNumber,
-                    generatedAvatar: f.generatedAvatar,
-                  ),
-                ),
+                invited: invited,
+                selected: _selectedFriends.contains(f.userId),
+                onToggle: invited
+                    ? null
+                    : () => setState(() {
+                        if (!_selectedFriends.remove(f.userId)) {
+                          _selectedFriends.add(f.userId);
+                        }
+                      }),
               );
             },
           ),
         ),
+        if (_selectedFriends.isNotEmpty)
+          FButton(
+            onPress: _sending ? null : () => _inviteSelected(candidates),
+            prefix: _sending ? null : const Icon(FLucideIcons.send),
+            child: _sending
+                ? const FCircularProgress()
+                : Text(
+                    'lobby.inviteUser.sendSelected'.tr(
+                      namedArgs: {'count': '${_selectedFriends.length}'},
+                    ),
+                  ),
+          ),
       ],
     );
   }
@@ -254,7 +317,29 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
             // Info. Keeping it here makes the Invite Member action the single
             // place for both direct invites and shareable links.
             if (canManage)
-              InviteLinkCard(lobbyId: widget.lobbyId, canManage: canManage),
+              InviteLinkCard(lobbyId: widget.lobbyId, canManage: canManage)
+            else
+              // Members otherwise just see the link card missing, with no
+              // hint that it exists or who can make one.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 8,
+                children: [
+                  Icon(
+                    FLucideIcons.info,
+                    size: 16,
+                    color: colors.mutedForeground,
+                  ),
+                  Expanded(
+                    child: Text(
+                      'lobby.inviteLink.managersOnly'.tr(),
+                      style: context.theme.typography.body.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
 
             // Non-member friends, invitable in one tap instead of searching.
             _buildFriendShortlist(context),
@@ -286,11 +371,7 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
                       variant: .outline,
                       onPress: _searching ? null : _search,
                       child: _searching
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
+                          ? const FCircularProgress()
                           : Text('lobby.inviteUser.search'.tr()),
                     ),
                   ],
@@ -334,6 +415,7 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
                             _UserRow(
                               user: _searchResults![i],
                               busy: _sending,
+                              invited: _invited.contains(_searchResults![i].id),
                               onInvite: () => _inviteUser(_searchResults![i]),
                             ),
                             if (i < _searchResults!.length - 1)
@@ -357,6 +439,8 @@ class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
 
 // ─── Models / helpers ────────────────────────────────────────────
 
+enum _InviteError { alreadyMember, failed }
+
 class _UserResult {
   final String id;
   final String username;
@@ -374,12 +458,16 @@ class _UserResult {
 class _FriendShortlistCard extends StatelessWidget {
   final FriendUser friend;
   final bool busy;
-  final VoidCallback onInvite;
+  final bool selected;
+  final bool invited;
+  final VoidCallback? onToggle;
 
   const _FriendShortlistCard({
     required this.friend,
     required this.busy,
-    required this.onInvite,
+    required this.selected,
+    required this.invited,
+    required this.onToggle,
   });
 
   @override
@@ -387,27 +475,56 @@ class _FriendShortlistCard extends StatelessWidget {
     final colors = context.theme.colors;
 
     return GestureDetector(
-      onTap: busy ? null : onInvite,
+      behavior: HitTestBehavior.opaque,
+      onTap: busy ? null : onToggle,
       child: SizedBox(
         width: 64,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            PUserAvatar(
-              userId: friend.userId,
-              username: friend.username,
-              generatedAvatar: friend.generatedAvatar,
-              radius: 24,
-              // Own tap target nested inside the card's invite-tap area —
-              // wins the gesture arena over the card's GestureDetector, so
-              // the avatar opens the profile while the rest of the card
-              // still triggers the invite (see root CLAUDE.md's user-row rule).
-              onTap: () => UserRoute(id: friend.userId, $extra: friend.username)
-                  .push(context),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Opacity(
+                  opacity: invited ? 0.5 : 1,
+                  child: PUserAvatar(
+                    userId: friend.userId,
+                    username: friend.username,
+                    generatedAvatar: friend.generatedAvatar,
+                    radius: 24,
+                    // Own tap target nested inside the card's select-tap
+                    // area — wins the gesture arena, so the avatar opens the
+                    // profile while the name below toggles selection (see
+                    // root CLAUDE.md's user-row rule).
+                    onTap: () => UserRoute(
+                      id: friend.userId,
+                      $extra: friend.username,
+                    ).push(context),
+                  ),
+                ),
+                if (selected || invited)
+                  Positioned(
+                    right: -2,
+                    bottom: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: invited ? colors.mutedForeground : colors.primary,
+                        border: Border.all(color: colors.background, width: 2),
+                      ),
+                      child: Icon(
+                        FLucideIcons.check,
+                        size: 12,
+                        color: colors.primaryForeground,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 6),
             Text(
-              friend.username,
+              invited ? 'lobby.inviteUser.invited'.tr() : friend.username,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -425,11 +542,13 @@ class _FriendShortlistCard extends StatelessWidget {
 class _UserRow extends StatelessWidget {
   final _UserResult user;
   final bool busy;
+  final bool invited;
   final VoidCallback onInvite;
 
   const _UserRow({
     required this.user,
     required this.busy,
+    required this.invited,
     required this.onInvite,
   });
 
@@ -473,6 +592,8 @@ class _UserRow extends StatelessWidget {
                           ),
                         ],
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -480,11 +601,19 @@ class _UserRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          FButton.icon(
-            size: .sm,
-            onPress: busy ? null : onInvite,
-            child: const Icon(FLucideIcons.userPlus, size: 14),
-          ),
+          if (invited)
+            Text(
+              'lobby.inviteUser.invited'.tr(),
+              style: context.theme.typography.body.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            )
+          else
+            FButton.icon(
+              size: .sm,
+              onPress: busy ? null : onInvite,
+              child: const Icon(FLucideIcons.userPlus, size: 14),
+            ),
         ],
       ),
     );

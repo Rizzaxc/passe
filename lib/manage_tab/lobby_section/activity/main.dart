@@ -5,9 +5,12 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../members/controller.dart';
 import 'feed.dart';
 import 'feed_controller.dart';
+import 'getting_started_card.dart';
 import 'trigger_bar.dart';
+import 'upcoming_controller.dart';
 
 class LobbyFeedTab extends HookConsumerWidget {
   final String lobbyId;
@@ -53,6 +56,13 @@ class LobbyFeedTab extends HookConsumerWidget {
           child: RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(lobbyFeedControllerProvider(lobbyId));
+              if (isLeader) {
+                // The checklist ticks off real data — refresh it too.
+                ref.invalidate(lobbyMembersControllerProvider(lobbyId));
+                ref.invalidate(
+                  lobbyUpcomingActivitiesControllerProvider(lobbyId),
+                );
+              }
               await ref.read(lobbyFeedControllerProvider(lobbyId).future);
             },
             child: ListView(
@@ -60,6 +70,10 @@ class LobbyFeedTab extends HookConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
+                // A new lobby's Feed is empty until something happens in it;
+                // the checklist gives a manager the two moves that make
+                // something happen.
+                if (isLeader) LobbyGettingStartedCard(lobbyId: lobbyId),
                 for (final item in feed)
                   FeedItemWidget(
                     item: item,

@@ -8,9 +8,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../logger/talker.dart';
+import '../notifications/notification_service.dart';
 import '../router.dart';
 import '../ui/main.dart';
 import 'friendship_controller.dart';
+import 'invite_to_passe.dart';
+import 'user_page_controller.dart';
 
 /// The friends hub: open requests, the friend list, and a username#tag search
 /// to add someone new. Pushed from the Profile tab (below Industry &
@@ -31,6 +34,7 @@ class FriendsScreen extends ConsumerStatefulWidget {
 
 class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   final _controller = TextEditingController();
+  final _searchFocus = FocusNode();
   List<_UserResult>? _results;
   bool _searching = false;
   Timer? _debounce;
@@ -49,6 +53,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   void dispose() {
     _debounce?.cancel();
     _controller.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
@@ -131,11 +136,31 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     UserRoute(id: id, $extra: name).push(context);
   }
 
+  /// Where a search result stands relative to the caller, so the row can
+  /// offer the one action that makes sense instead of only a chevron.
+  FriendState _stateFor(String userId, List<FriendUser> edges) {
+    for (final e in edges) {
+      if (e.userId != userId) continue;
+      return switch (e.direction) {
+        FriendDirection.friend => FriendState.friend,
+        FriendDirection.incoming => FriendState.incoming,
+        FriendDirection.outgoing => FriendState.outgoing,
+      };
+    }
+    return FriendState.none;
+  }
+
+  Future<void> _refresh() async {
+    ref.invalidate(friendshipControllerProvider);
+    await ref.read(friendshipControllerProvider.future);
+  }
+
   @override
   Widget build(BuildContext context) {
     final edges = ref.watch(friendshipControllerProvider);
     final incoming = ref.watch(incomingFriendRequestsProvider);
     final friends = ref.watch(friendsProvider);
+    final edgeList = edges.value ?? const <FriendUser>[];
 
     return FScaffold(
       header: FHeader.nested(
@@ -144,67 +169,114 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           FHeaderAction.back(onPress: () => Navigator.of(context).pop()),
         ],
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 16,
-          children: [
-            PSearchField(
-              controller: _controller,
-              hint: 'social.searchHint'.tr(),
-              onChange: _onQueryChanged,
-            ),
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 16,
+            children: [
+              PSearchField(
+                controller: _controller,
+                focusNode: _searchFocus,
+                hint: 'social.searchHint'.tr(),
+                onChange: _onQueryChanged,
+              ),
 
-            if (_searching)
-              const Center(child: CircularProgressIndicator())
-            else if (_results != null) ...[
-              PSectionHeader(title: 'social.searchResults'.tr()),
-              if (_results!.isEmpty)
-                Text(
-                  'social.noResults'.tr(),
-                  style: context.theme.typography.body.sm.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                    fontStyle: FontStyle.italic,
-                  ),
-                  textAlign: TextAlign.center,
-                )
-              else
-                for (final r in _results!)
-                  _PersonRow(
-                    userId: r.id,
-                    username: r.username,
-                    tagNumber: r.tagNumber,
-                    generatedAvatar: r.generatedAvatar,
-                    onTap: () => _openUser(r.id, r.username),
-                  ),
-            ],
-
-            if (edges.isLoading)
-              const Center(child: CircularProgressIndicator())
-            else ...[
-              if (incoming.isNotEmpty) ...[
-                PSectionHeader(title: 'social.incomingRequests'.tr()),
-                for (final f in incoming)
-                  _RequestRow(
-                    friend: f,
-                    onTap: () => _openUser(f.userId, f.username),
-                  ),
+              if (_searching)
+                const Center(child: FCircularProgress())
+              else if (_results != null) ...[
+                PSectionHeader(title: 'social.searchResults'.tr()),
+                if (_results!.isEmpty)
+                  Text(
+                    'social.noResults'.tr(),
+                    style: context.theme.typography.body.sm.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                      fontStyle: FontStyle.italic,
+                    ),
+                    textAlign: TextAlign.center,
+                  )
+                else
+                  for (final r in _results!)
+                    _PersonRow(
+                      userId: r.id,
+                      username: r.username,
+                      tagNumber: r.tagNumber,
+                      generatedAvatar: r.generatedAvatar,
+                      onTap: () => _openUser(r.id, r.username),
+                      action: _SearchResultAction(
+                        userId: r.id,
+                        state: _stateFor(r.id, edgeList),
+                        friendshipId: edgeList
+                            .where((e) => e.userId == r.id)
+                            .firstOrNull
+                            ?.friendshipId,
+                      ),
+                    ),
               ],
-              PSectionHeader(title: 'social.friends'.tr()),
-              if (friends.isEmpty)
-                PEmptySectionPlaceholder(subtitle: 'social.noFriends'.tr())
-              else
-                for (final f in friends)
-                  _PersonRow(
-                    userId: f.userId,
-                    username: f.username,
-                    tagNumber: f.tagNumber,
-                    generatedAvatar: f.generatedAvatar,
-                    onTap: () => _openUser(f.userId, f.username),
-                  ),
+
+              const InviteToPasseCard(),
+
+              if (edges.isLoading && !edges.hasValue)
+                const Center(child: FCircularProgress())
+              else if (edges.hasError && !edges.hasValue)
+                PEmptySectionPlaceholder(
+                  subtitle: 'social.friendsLoadFailed'.tr(),
+                  actions: [
+                    FButton(
+                      size: .sm,
+                      variant: .outline,
+                      prefix: const Icon(FLucideIcons.refreshCw),
+                      onPress: () =>
+                          ref.invalidate(friendshipControllerProvider),
+                      child: Text('social.retry'.tr()),
+                    ),
+                  ],
+                )
+              else ...[
+                if (incoming.isNotEmpty) ...[
+                  PSectionHeader(title: 'social.incomingRequests'.tr()),
+                  for (final f in incoming)
+                    _RequestRow(
+                      friend: f,
+                      onTap: () => _openUser(f.userId, f.username),
+                    ),
+                ],
+                PSectionHeader(title: 'social.friends'.tr()),
+                if (friends.isEmpty)
+                  // Was a dead end: a sentence and nothing to do about it.
+                  PEmptySectionPlaceholder(
+                    subtitle: 'social.noFriends'.tr(),
+                    actions: [
+                      FButton(
+                        size: .sm,
+                        prefix: const Icon(FLucideIcons.share2),
+                        onPress: () => shareInviteToPasse(context, ref),
+                        child: Text('social.invitePasse.title'.tr()),
+                      ),
+                      FButton(
+                        size: .sm,
+                        variant: .outline,
+                        prefix: const Icon(FLucideIcons.search),
+                        onPress: () => _searchFocus.requestFocus(),
+                        child: Text('social.searchByHandle'.tr()),
+                      ),
+                    ],
+                  )
+                else
+                  for (final f in friends)
+                    _PersonRow(
+                      userId: f.userId,
+                      username: f.username,
+                      tagNumber: f.tagNumber,
+                      generatedAvatar: f.generatedAvatar,
+                      onTap: () => _openUser(f.userId, f.username),
+                    ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -232,12 +304,16 @@ class _PersonRow extends StatelessWidget {
   final String? generatedAvatar;
   final VoidCallback onTap;
 
+  /// Replaces the chevron when set — e.g. a search result's "Kết bạn".
+  final Widget? action;
+
   const _PersonRow({
     required this.userId,
     required this.username,
     required this.tagNumber,
     required this.onTap,
     this.generatedAvatar,
+    this.action,
   });
 
   @override
@@ -266,9 +342,101 @@ class _PersonRow extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      suffix: const Icon(FLucideIcons.chevronRight),
+      suffix: action ?? const Icon(FLucideIcons.chevronRight),
       onPress: onTap,
     );
+  }
+}
+
+/// The inline relationship action on a search result — the same states as
+/// `/user/:id`'s CTA, compressed to one small control so adding someone
+/// doesn't take a detour through their page.
+class _SearchResultAction extends ConsumerStatefulWidget {
+  final String userId;
+  final FriendState state;
+  final String? friendshipId;
+
+  const _SearchResultAction({
+    required this.userId,
+    required this.state,
+    this.friendshipId,
+  });
+
+  @override
+  ConsumerState<_SearchResultAction> createState() =>
+      _SearchResultActionState();
+}
+
+class _SearchResultActionState extends ConsumerState<_SearchResultAction> {
+  bool _busy = false;
+
+  Future<void> _run(Future<void> Function() action) async {
+    setState(() => _busy = true);
+    try {
+      await action();
+    } catch (e, st) {
+      talker.handle(e, st, 'Friend search action failed');
+      if (!mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: Text('social.actionFailed'.tr()),
+        alignment: .bottomCenter,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _add() async {
+    final notifier = ref.read(friendshipControllerProvider.notifier);
+    await _run(() => notifier.sendRequest(widget.userId));
+    if (!mounted) return;
+    await ref
+        .read(notificationServiceProvider)
+        .maybePromptAndRegister(context, ref);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.watch(authControllerProvider).value;
+    if (user == null || user.isGuest) {
+      return const Icon(FLucideIcons.chevronRight);
+    }
+    if (_busy) return const FCircularProgress();
+    final notifier = ref.read(friendshipControllerProvider.notifier);
+
+    return switch (widget.state) {
+      FriendState.none => FButton(
+        size: .sm,
+        prefix: const Icon(FLucideIcons.userPlus, size: 14),
+        onPress: _add,
+        child: Text('social.addFriendShort'.tr()),
+      ),
+      FriendState.outgoing => FButton(
+        size: .sm,
+        variant: .outline,
+        onPress: null,
+        child: Text('social.requestSent'.tr()),
+      ),
+      FriendState.incoming => FButton(
+        size: .sm,
+        onPress: widget.friendshipId == null
+            ? null
+            : () => _run(
+                () => notifier.respond(widget.friendshipId!, accept: true),
+              ),
+        child: Text('social.accept'.tr()),
+      ),
+      FriendState.friend => Text(
+        'social.friendLabel'.tr(),
+        style: context.theme.typography.body.xs.copyWith(
+          color: context.theme.colors.mutedForeground,
+        ),
+      ),
+      FriendState.blocked => const Icon(FLucideIcons.chevronRight),
+    };
   }
 }
 
@@ -316,7 +484,21 @@ class _RequestRowState extends ConsumerState<_RequestRow> {
         generatedAvatar: f.generatedAvatar,
         radius: 16,
       ),
-      title: Text(f.username, maxLines: 1, overflow: TextOverflow.ellipsis),
+      title: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(text: f.username),
+            TextSpan(
+              text: ' #${f.tagNumber}',
+              style: context.theme.typography.body.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+          ],
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       suffix: Row(
         mainAxisSize: MainAxisSize.min,
         spacing: 6,

@@ -434,7 +434,7 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                     child: Row(
                       children: [
                         Text(
-                          'SearchID',
+                          'lobby.searchID'.tr(),
                           style: context.theme.typography.body.xs.copyWith(
                             color: colors.mutedForeground,
                             fontWeight: FontWeight.w600,
@@ -469,6 +469,17 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                           child: const Icon(FLucideIcons.copy, size: 14),
                         ),
                       ],
+                    ),
+                  ),
+                  // What the code is for — otherwise it reads as an internal
+                  // id nobody would think to share.
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 2),
+                    child: Text(
+                      'lobby.searchIDExplanation'.tr(),
+                      style: context.theme.typography.body.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
                     ),
                   ),
                 ],

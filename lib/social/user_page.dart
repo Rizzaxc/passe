@@ -9,6 +9,7 @@ import '../notifications/notification_service.dart';
 import '../ui/main.dart';
 import 'block_report_sheet.dart';
 import 'friendship_controller.dart';
+import 'invite_to_lobby_sheet.dart';
 import 'profile_overview_tab.dart';
 import 'user_page_controller.dart';
 
@@ -49,7 +50,7 @@ class UserPage extends ConsumerWidget {
         ],
       ),
       child: profileAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, st) =>
             PEmptySectionPlaceholder(subtitle: 'social.profileError'.tr()),
         data: (profile) {
@@ -206,6 +207,38 @@ class _FriendCtaState extends ConsumerState<_FriendCta> {
         .maybePromptAndRegister(context, ref);
   }
 
+  /// Cancelling is one mis-tap away from sending, on the same button — ask
+  /// first.
+  Future<void> _cancelRequest() async {
+    final ok = await showFDialog<bool>(
+      context: context,
+      builder: (dialogCtx, style, animation) => PConfirmDialog(
+        animation: animation,
+        title: Text('social.cancelRequestTitle'.tr()),
+        body: Text(
+          'social.cancelRequestBody'.tr(
+            namedArgs: {'name': widget.profile.username},
+          ),
+        ),
+        actions: [
+          FButton(
+            variant: .outline,
+            onPress: () => Navigator.of(dialogCtx).pop(false),
+            child: Text('social.keep'.tr()),
+          ),
+          FButton(
+            variant: .destructive,
+            onPress: () => Navigator.of(dialogCtx).pop(true),
+            child: Text('social.cancelRequestConfirm'.tr()),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final notifier = ref.read(friendshipControllerProvider.notifier);
+    await _run(() => notifier.unfriend(widget.profile.userId));
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).value;
@@ -228,9 +261,7 @@ class _FriendCtaState extends ConsumerState<_FriendCta> {
         ),
       FriendState.outgoing => FButton(
           variant: .outline,
-          onPress: _busy
-              ? null
-              : () => _run(() => notifier.unfriend(profile.userId)),
+          onPress: _busy ? null : _cancelRequest,
           prefix: const Icon(FLucideIcons.clock),
           child: Text('social.requestSentCancel'.tr()),
         ),
@@ -258,11 +289,39 @@ class _FriendCtaState extends ConsumerState<_FriendCta> {
             ),
           ],
         ),
-      FriendState.friend => FButton(
-          variant: .outline,
-          onPress: null,
-          prefix: const Icon(FLucideIcons.userCheck),
-          child: Text('social.alreadyFriends'.tr()),
+      // A friend is the one person you can bring into a lobby without
+      // searching for them — offer it right here.
+      FriendState.friend => Row(
+          spacing: 8,
+          children: [
+            Expanded(
+              child: FButton(
+                onPress: () => showInviteToLobbySheet(
+                  context,
+                  userId: profile.userId,
+                  username: profile.username,
+                ),
+                prefix: const Icon(FLucideIcons.usersRound),
+                child: Text(
+                  'social.inviteToLobby'.tr(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            Expanded(
+              child: FButton(
+                variant: .outline,
+                onPress: null,
+                prefix: const Icon(FLucideIcons.userCheck),
+                child: Text(
+                  'social.alreadyFriends'.tr(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
         ),
       FriendState.blocked => FButton(
           variant: .outline,

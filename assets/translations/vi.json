@@ -401,6 +401,12 @@
         "title": "Đang chờ duyệt · {count}",
         "waiting": "Đang chờ đội trưởng duyệt",
         "cancel": "Huỷ yêu cầu"
+      },
+      "add": {
+        "title": "Thêm lobby",
+        "create": "Tạo lobby mới",
+        "createSubtitle": "Lập nhóm với những người bạn hay chơi cùng",
+        "redeemSubtitle": "Có người gửi bạn link hoặc mã mời? Vào thẳng lobby của họ"
       }
     },
     "rail": {
@@ -422,7 +428,7 @@
     "noActivity": "Chưa có lịch chơi",
     "nameRequired": "Tên lobby là bắt buộc",
     "nameTooShort": "Tên phải có ít nhất 3 ký tự",
-    "ageGroup": "Nhóm Tuổi",
+    "ageGroup": "Nhóm tuổi",
     "description": "Mô tả",
     "descriptionHint": "Chia sẻ về lobby của bạn...",
     "descriptionTooLong": "Mô tả tối đa 3000 ký tự",
@@ -449,11 +455,11 @@
       "noRatedMatches": "Chưa có trận có trọng tài"
     },
     "visibility": {
-      "private": "Nội Bộ",
+      "private": "Nội bộ",
       "privateDescription": "Không hiện trên search hay matchmaking. Người ngoài cần phải được mời",
-      "discoverable": "Mặc Định",
+      "discoverable": "Mặc định",
       "discoverableDescription": "Hiện trên search và matchmaking. Người ngoài có thể xin gia nhập",
-      "public": "Công Khai",
+      "public": "Công khai",
       "publicDescription": "Thông tin lobby và thành viên được công khai",
       "blockedByFreeplay": "Lobby đang mở kèo — hãy gỡ kèo trước khi chuyển sang riêng tư."
     },
@@ -469,8 +475,8 @@
     "scheduleActivity": "Lên lịch",
     "enterHub": "Vào Lobby",
     "lookingForActivity": "Chưa có buổi chơi",
-    "searchIDCopied": "Đã sao chép SearchID",
-    "searchIDExplanation": "Người chơi khác có thể dùng SearchID ở filter trang chủ để tìm thấy Lobby của bạn",
+    "searchIDCopied": "Đã sao chép mã lobby",
+    "searchIDExplanation": "Người khác nhập mã này vào ô tìm kiếm trong bộ lọc Khám phá để tìm lobby của bạn.",
     "shareId": "Chia sẻ ID",
     "invite": "Mời",
     "leave": {
@@ -575,29 +581,45 @@
       "failed": "Không thể gửi lời mời. Vui lòng thử lại.",
       "send": "Gửi lời mời",
       "search": "Tìm",
-      "alreadyMember": "Người dùng đã là thành viên"
+      "alreadyMember": "Người dùng đã là thành viên",
+      "invited": "Đã mời",
+      "sendSelected": "Mời {count} người",
+      "batchSuccess": "Đã gửi lời mời đến {count} người",
+      "batchPartial": "Đã mời {count} người. Chưa mời được: {names}"
     },
     "inviteLink": {
-      "title": "Invite Link",
+      "title": "Link mời",
       "description": "Bất kỳ ai có liên kết này sẽ vào lobby ngay, không cần duyệt.",
-      "create": "Tạo Invite Link",
+      "create": "Tạo link mời",
       "copy": "Sao chép",
       "share": "Chia sẻ",
       "regenerate": "Tạo lại",
       "remove": "Xóa",
-      "copied": "Đã sao chép Invite Link",
+      "copied": "Đã sao chép link mời",
       "error": "Có lỗi xảy ra. Vui lòng thử lại.",
-      "landingTitle": "Lời Mời Lobby",
+      "landingTitle": "Lời mời vào lobby",
       "invitedTo": "Bạn được mời vào",
       "memberCount": "{count} thành viên",
       "captainedBy": "Đội trưởng: {name}",
-      "join": "Tham Gia",
+      "join": "Tham gia",
       "joined": "Bạn đã vào {name}",
       "alreadyMember": "Bạn đã là thành viên",
-      "invalid": "Invite Link này không còn hiệu lực",
-      "notFound": "Invite Link không hợp lệ",
-      "expired": "Invite Link đã hết hạn",
-      "revoked": "Invite Link đã bị xóa"
+      "invalid": "Link mời này không còn hiệu lực",
+      "notFound": "Link mời không hợp lệ",
+      "expired": "Link mời đã hết hạn",
+      "revoked": "Link mời đã bị xoá",
+      "shareText": "Vào lobby {lobby} trên Passe nhé: {url}",
+      "shareTextFrom": "{inviter} mời bạn vào lobby {lobby} trên Passe: {url}",
+      "regenerateConfirmTitle": "Tạo link mới?",
+      "regenerateConfirmBody": "Link cũ sẽ ngừng hoạt động. Ai chưa dùng link cũ sẽ cần link mới.",
+      "removeConfirmTitle": "Xoá link mời?",
+      "removeConfirmBody": "Không ai vào lobby bằng link này được nữa.",
+      "managersOnly": "Chỉ đội trưởng hoặc điều phối viên tạo được link mời. Bạn vẫn có thể mời bạn bè trực tiếp bên dưới.",
+      "redeemTitle": "Nhập mã mời",
+      "redeemBody": "Dán link mời hoặc nhập mã bạn được gửi.",
+      "redeemHint": "passe.vn/invite/… hoặc mã",
+      "redeemContinue": "Tiếp tục",
+      "redeemInvalid": "Mã mời không hợp lệ"
     },
     "matchFactor": {
       "skill": "Trình độ phù hợp",
@@ -612,24 +634,26 @@
       "feed": "Bảng tin",
       "planner": "Lịch chơi",
       "history": "Lịch sử"
-    }
+    },
+    "searchID": "Mã lobby",
+    "editTitle": "Sửa lobby"
   },
   "createLobby": {
-    "title": "Tạo Lobby",
+    "title": "Tạo lobby",
     "create": "Tạo",
-    "lobbyName": "Tên Lobby",
-    "lobbyNameHint": "Nhập tên cho Lobby của bạn",
-    "description": "Mô Tả",
+    "lobbyName": "Tên lobby",
+    "lobbyNameHint": "Đặt tên cho lobby của bạn",
+    "description": "Mô tả",
     "descriptionHint": "Mô tả phòng chơi của bạn (không bắt buộc)",
     "sport": "Môn",
     "sportLocked": "Không thể thay đổi môn thể thao",
-    "visibility": "Độ Riêng tư",
-    "public": "Công Khai",
+    "visibility": "Độ riêng tư",
+    "public": "Công khai",
     "publicDescription": "Hiện nhiều thông tin hơn",
-    "private": "Nội Bộ",
+    "private": "Nội bộ",
     "privateDescription": "Không hiện trên search hay matchmaking. Cần phải được mời",
-    "homeGround": "Sân Nhà",
-    "homeGrounds": "Sân Nhà",
+    "homeGround": "Sân nhà",
+    "homeGrounds": "Sân nhà",
     "homeGroundsDescription": "Các thành viên sẽ dùng đây làm điểm hẹn mặc định khi có buổi chơi. Sân có gắn sao là sân chính — chạm vào sân khác để đặt làm sân chính",
     "homeGroundDescription": "Đây sẽ là điểm hẹn mặc định để các thành viên tìm đến khi có buổi chơi. Tìm sân của bạn, hoặc nhập trực tiếp thông tin bên dưới nếu chưa có trong danh sách",
     "homeGroundHint": "Tìm theo tên địa điểm/ địa chỉ...",
@@ -643,16 +667,18 @@
     "homeGroundMaxReached": "Tối đa 5 sân nhà",
     "streetNumber": "Số nhà",
     "streetName": "Tên đường",
-    "district": "Quận/Huyện",
+    "district": "Phường/Xã",
     "city": "Thành phố",
-    "specificLocation": "Địa Điểm Cụ Thể",
+    "specificLocation": "Địa điểm cụ thể",
     "specificLocationHint": "Nhập địa điểm cụ thể",
-    "playtime": "Thời Gian Chơi",
-    "dayOfWeek": "Ngày Trong Tuần",
-    "timeSlot": "Khung Giờ",
-    "setTimeslot": "Đặt Khung Giờ",
-    "maxParticipants": "Số Người Tham Gia Tối Đa",
-    "participantCount": "{count} người tham gia"
+    "playtime": "Thời gian chơi",
+    "dayOfWeek": "Ngày trong tuần",
+    "timeSlot": "Khung giờ",
+    "setTimeslot": "Đặt khung giờ",
+    "maxParticipants": "Số người tham gia tối đa",
+    "participantCount": "{count} người tham gia",
+    "titleWithSport": "Tạo lobby {sport}",
+    "moreDetails": "Thêm chi tiết (tuỳ chọn)"
   },
   "soccer": {
     "position": {
@@ -849,7 +875,7 @@
     "ageGroup": "Nhóm tuổi",
     "location": "Địa điểm",
     "locationCity": "Thành phố",
-    "locationDistrict": "Quận/ Huyện",
+    "locationDistrict": "Phường/Xã",
     "locationDistrictHint": "Chọn tối đa 6 quận/ huyện",
     "playtime": "Khung giờ thường chơi",
     "zalo": "Zalo",
@@ -1006,7 +1032,13 @@
         "friday": "T6",
         "saturday": "T7",
         "sunday": "CN"
-      }
+      },
+      "endBeforeStart": "Giờ kết thúc phải sau giờ bắt đầu",
+      "requireQuorum": "Cần đủ người mới chốt",
+      "requireQuorumOn": "Không đủ người lúc bắt đầu thì buổi chơi tự huỷ",
+      "requireQuorumOff": "Buổi chơi diễn ra dù bao nhiêu người tham gia",
+      "share": "Chia sẻ",
+      "shareJoin": "Vào lobby để xác nhận: {url}"
     },
     "challenge": {
       "title": "Nhận Thách Đấu",
@@ -1083,7 +1115,9 @@
       "schedule": "Lên Lịch",
       "remind": "Nhắc đội trưởng",
       "activityTitle": "Hoạt Động",
-      "loadFailed": "Không tải được hoạt động"
+      "loadFailed": "Không tải được hoạt động",
+      "aloneHint": "Lobby mới chỉ có bạn. Mời mọi người vào trước để họ thấy và xác nhận buổi chơi.",
+      "inviteFirst": "Mời thành viên trước"
     },
     "actions": {
       "poll": "Tạo bình chọn",
@@ -1217,6 +1251,14 @@
       "withdraw": "Gỡ kèo",
       "withdrawTitle": "Gỡ kèo?",
       "withdrawBody": "Buổi chơi của lobby vẫn giữ nguyên. Mọi yêu cầu và chỗ đã nhận của người ngoài sẽ bị huỷ."
+    },
+    "gettingStarted": {
+      "title": "Bắt đầu",
+      "body": "Hai bước để lobby có buổi chơi đầu tiên.",
+      "invite": "Mời thành viên",
+      "inviteHint": "Gửi link mời hoặc mời bạn bè trên Passe",
+      "schedule": "Lên lịch buổi đầu tiên",
+      "scheduleHint": "Chọn giờ và sân, mọi người sẽ xác nhận tham gia"
     }
   },
   "payment": {
@@ -1506,6 +1548,10 @@
         "title": "Kết nối thiết bị đeo",
         "subtitle": "Theo dõi thay đổi của cơ thể bạn và chinh phục thử thách",
         "optional": "Tuỳ chọn"
+      },
+      "redeem": {
+        "title": "Có mã mời?",
+        "subtitle": "Dán link hoặc mã bạn bè gửi để vào lobby của họ"
       }
     }
   },
@@ -1539,7 +1585,31 @@
     "wallAuthored": "Bài viết",
     "wallTagged": "Được gắn thẻ",
     "wallEmpty": "Chưa có bài viết nào",
-    "wallTaggedEmpty": "Chưa được gắn thẻ trong bài nào"
+    "wallTaggedEmpty": "Chưa được gắn thẻ trong bài nào",
+    "friendsLoadFailed": "Không tải được danh sách bạn bè",
+    "retry": "Thử lại",
+    "searchByHandle": "Tìm theo username#tag",
+    "addFriendShort": "Kết bạn",
+    "requestSent": "Đã gửi",
+    "friendLabel": "Bạn bè",
+    "cancelRequestTitle": "Huỷ lời mời kết bạn?",
+    "cancelRequestBody": "{name} sẽ không thấy lời mời của bạn nữa.",
+    "cancelRequestConfirm": "Huỷ lời mời",
+    "keep": "Giữ lại",
+    "inviteToLobby": "Mời vào lobby",
+    "inviteToLobbyTitle": "Mời {name} vào lobby",
+    "inviteToLobbyEmpty": "Bạn chưa có lobby nào mà {name} chưa tham gia.",
+    "inviteToLobbyCreate": "Tạo lobby mới",
+    "inviteToLobbySent": "Đã mời {name} vào {lobby}",
+    "inviteToLobbyPending": "Đã mời",
+    "memberCount": "{count} thành viên",
+    "invitePasse": {
+      "title": "Mời bạn bè dùng Passe",
+      "yourHandle": "Mã của bạn: ",
+      "share": "Mời",
+      "shareText": "Chơi thể thao cùng mình trên Passe nhé! Tải app ở {url} rồi tìm mình: {handle}",
+      "handleCopied": "Đã sao chép username#tag"
+    }
   },
   "freeplay": {
     "title": "Kèo",
@@ -2222,5 +2292,6 @@
       "professional": "HLV",
       "location": "Sân"
     }
-  }
+  },
+  "cancel": "Huỷ"
 }

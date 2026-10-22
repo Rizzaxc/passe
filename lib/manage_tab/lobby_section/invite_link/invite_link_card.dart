@@ -5,11 +5,36 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../auth/auth_controller.dart';
 import '../../../logger/talker.dart';
+import '../../../ui/main.dart';
+import '../lobby_detail_controller.dart';
 import 'invite_link_controller.dart';
 
 String buildInviteLinkUrl(String code) =>
     Uri.https('passe.vn', '/invite/$code').toString();
+
+/// The text a shared invite link travels with. A bare URL in a chat app
+/// reads as spam; naming the lobby, sport and inviter tells the recipient
+/// what they're tapping before they tap it. Any missing piece just drops out.
+String buildInviteShareText({
+  required String url,
+  String? inviter,
+  String? lobbyName,
+  String? sportName,
+}) {
+  final lobby = [
+    if (lobbyName != null && lobbyName.isNotEmpty) lobbyName,
+    if (sportName != null && sportName.isNotEmpty) '($sportName)',
+  ].join(' ');
+  if (lobby.isEmpty) return url;
+  final key = inviter != null && inviter.isNotEmpty
+      ? 'lobby.inviteLink.shareTextFrom'
+      : 'lobby.inviteLink.shareText';
+  return key.tr(
+    namedArgs: {'inviter': inviter ?? '', 'lobby': lobby, 'url': url},
+  );
+}
 
 /// Captain/coordinator-only card in the lobby info sheet: shows the lobby's
 /// current invite link (or a create button if none exists yet), with
@@ -63,7 +88,84 @@ class _InviteLinkCardState extends ConsumerState<InviteLinkCard> {
   }
 
   Future<void> _share(String code) async {
-    await SharePlus.instance.share(ShareParams(text: buildInviteLinkUrl(code)));
+    final lobby = ref
+        .read(lobbyDetailControllerProvider(widget.lobbyId))
+        .value
+        ?.lobby;
+    final user = ref.read(authControllerProvider).value;
+    final text = buildInviteShareText(
+      url: buildInviteLinkUrl(code),
+      inviter: user == null || user.isGuest ? null : user.username,
+      lobbyName: lobby?.name,
+      sportName: lobby?.sport.getLocalizedName(context),
+    );
+    final box = context.findRenderObject() as RenderBox?;
+    await SharePlus.instance.share(
+      ShareParams(
+        text: text,
+        sharePositionOrigin: box == null
+            ? null
+            : box.localToGlobal(Offset.zero) & box.size,
+      ),
+    );
+  }
+
+  /// Regenerating or removing kills the link everyone already has, so both
+  /// ask first — a mis-tap here silently breaks every invite in flight.
+  Future<bool> _confirm({
+    required String title,
+    required String body,
+    required String action,
+  }) async {
+    final ok = await showFDialog<bool>(
+      context: context,
+      builder: (dialogCtx, style, animation) => PConfirmDialog(
+        animation: animation,
+        title: Text(title),
+        body: Text(body),
+        actions: [
+          FButton(
+            variant: .outline,
+            onPress: () => Navigator.of(dialogCtx).pop(false),
+            child: Text('cancel'.tr()),
+          ),
+          FButton(
+            variant: .destructive,
+            onPress: () => Navigator.of(dialogCtx).pop(true),
+            child: Text(action),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
+  }
+
+  Future<void> _regenerate() async {
+    final ok = await _confirm(
+      title: 'lobby.inviteLink.regenerateConfirmTitle'.tr(),
+      body: 'lobby.inviteLink.regenerateConfirmBody'.tr(),
+      action: 'lobby.inviteLink.regenerate'.tr(),
+    );
+    if (!ok || !mounted) return;
+    await _run(
+      () => ref
+          .read(inviteLinkControllerProvider(widget.lobbyId).notifier)
+          .generate(),
+    );
+  }
+
+  Future<void> _remove() async {
+    final ok = await _confirm(
+      title: 'lobby.inviteLink.removeConfirmTitle'.tr(),
+      body: 'lobby.inviteLink.removeConfirmBody'.tr(),
+      action: 'lobby.inviteLink.remove'.tr(),
+    );
+    if (!ok || !mounted) return;
+    await _run(
+      () => ref
+          .read(inviteLinkControllerProvider(widget.lobbyId).notifier)
+          .revoke(),
+    );
   }
 
   @override
@@ -83,13 +185,7 @@ class _InviteLinkCardState extends ConsumerState<InviteLinkCard> {
       child: linkAsync.when(
         loading: () => const Padding(
           padding: EdgeInsets.symmetric(vertical: 8),
-          child: Center(
-            child: SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
+          child: Center(child: FCircularProgress()),
         ),
         error: (_, _) => Text(
           'lobby.inviteLink.error'.tr(),
@@ -129,14 +225,7 @@ class _InviteLinkCardState extends ConsumerState<InviteLinkCard> {
                       .generate(),
                 ),
           child: _busy
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
+              ? const FCircularProgress()
               : Text('lobby.inviteLink.create'.tr()),
         ),
       ],
@@ -197,40 +286,16 @@ class _InviteLinkCardState extends ConsumerState<InviteLinkCard> {
             Expanded(
               child: FButton(
                 variant: .ghost,
-                onPress: _busy
-                    ? null
-                    : () => _run(
-                        () => ref
-                            .read(
-                              inviteLinkControllerProvider(
-                                widget.lobbyId,
-                              ).notifier,
-                            )
-                            .generate(),
-                      ),
+                onPress: _busy ? null : _regenerate,
                 child: _busy
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                    ? const FCircularProgress()
                     : Text('lobby.inviteLink.regenerate'.tr()),
               ),
             ),
             Expanded(
               child: FButton(
                 variant: .ghost,
-                onPress: _busy
-                    ? null
-                    : () => _run(
-                        () => ref
-                            .read(
-                              inviteLinkControllerProvider(
-                                widget.lobbyId,
-                              ).notifier,
-                            )
-                            .revoke(),
-                      ),
+                onPress: _busy ? null : _remove,
                 child: Text(
                   'lobby.inviteLink.remove'.tr(),
                   style: TextStyle(color: colors.destructive),

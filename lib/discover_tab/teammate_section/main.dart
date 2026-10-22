@@ -8,7 +8,6 @@ import '../../auth/guest_prompt.dart';
 import '../../core/model/lobby_feed_item.dart';
 import '../../logger/talker.dart';
 import '../../manage_tab/lobby_section/feed/lobby_form_sheet.dart';
-import '../../router.dart';
 import '../../ui/main.dart';
 import '../filter.dart';
 import '../lobby_feed_card.dart';
@@ -98,9 +97,7 @@ class TeammateSubtab extends HookConsumerWidget {
             prefix: const Icon(FLucideIcons.plus),
             onPress: () async {
               if (!ensureSignedIn(context, ref)) return;
-              final lobby = await showLobbyFormSheet(context: context, ref: ref);
-              if (!context.mounted || lobby == null) return;
-              LobbyDetailRoute(id: lobby.id!, $extra: lobby.name).go(context);
+              await createLobbyAndOpen(context, ref);
             },
             child: Text('homeTab.teammate.createLobby'.tr()),
           ),

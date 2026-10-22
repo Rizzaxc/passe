@@ -25,6 +25,7 @@ import '../professional/controller.dart';
 import '../professional/pro_mode/service_editor_main.dart';
 import '../social/friends_screen.dart';
 import '../social/friendship_controller.dart';
+import '../social/invite_to_passe.dart';
 import '../ui/main.dart';
 import 'age_group_selection_screen.dart';
 import 'change_password_screen.dart';
@@ -524,7 +525,33 @@ class ProfileTab extends ConsumerWidget {
             ),
           ),
           title: Text('profile.username'.tr()),
-          details: Text('${profileState.username}#${user.tagNumber}'),
+          // The handle is how friends find you in search — one tap to copy
+          // it, one to send it along with an invite to the app.
+          details: Text(
+            '${profileState.username}#${user.tagNumber}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          suffix: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FButton.icon(
+                variant: .ghost,
+                size: .sm,
+                onPress: () => copyPasseHandle(
+                  context,
+                  '${profileState.username}#${user.tagNumber}',
+                ),
+                child: const Icon(FLucideIcons.copy, size: 16),
+              ),
+              FButton.icon(
+                variant: .ghost,
+                size: .sm,
+                onPress: () => shareInviteToPasse(context, ref),
+                child: const Icon(FLucideIcons.share2, size: 16),
+              ),
+            ],
+          ),
         ),
         if (user.email != null)
           FTile(title: Text('profile.email'.tr()), details: Text(user.email!)),

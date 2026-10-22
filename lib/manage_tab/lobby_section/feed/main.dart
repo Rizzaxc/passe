@@ -11,6 +11,7 @@ import '../../../logger/talker.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
 import '../invite_member_sheet.dart';
+import 'lobby_add_sheet.dart';
 import 'lobby_controller.dart';
 import 'lobby_form_sheet.dart';
 import 'my_pending_requests_controller.dart';
@@ -54,7 +55,7 @@ class LobbySubtab extends ConsumerWidget {
                 );
                 return;
               }
-              showLobbyFormSheet(context: context, ref: ref, lobbyId: null);
+              showLobbyAddSheet(context, ref);
             },
             child: const Icon(FLucideIcons.plus),
           ),
@@ -89,11 +90,7 @@ class LobbySubtab extends ConsumerWidget {
                               size: .sm,
                               variant: .outline,
                               prefix: const Icon(FLucideIcons.plus),
-                              onPress: () => showLobbyFormSheet(
-                                context: context,
-                                ref: ref,
-                                lobbyId: null,
-                              ),
+                              onPress: () => createLobbyAndOpen(context, ref),
                               child: Text('manageTab.lobby.createFirst'.tr()),
                             ),
                           ],

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth/auth_controller.dart';
 import '../../core/format.dart';
+import '../../logger/talker.dart';
 import 'activity/feed_controller.dart';
 import 'activity/upcoming_controller.dart';
 import 'lobby_detail_controller.dart';
@@ -21,6 +22,17 @@ enum ActivityCostType {
   final String db;
   const ActivityCostType(this.db);
 }
+
+/// Default "need N going" for a new activity. A fixed 4 used to ship for
+/// every lobby, so a 1–3 member lobby's first session could never reach it
+/// and got auto-cancelled at kickoff by `fn_sweep_activity_thresholds`.
+/// Never more than the lobby can supply, never below 1.
+int defaultConfirmationThreshold(int memberCount) => memberCount.clamp(1, 4);
+
+/// Whether a new activity starts with a threshold at all. Below 4 members a
+/// quorum mostly just risks an auto-cancel, so it starts off and the
+/// organizer can opt in.
+bool thresholdEnabledByDefault(int memberCount) => memberCount >= 4;
 
 @riverpod
 class ScheduleActivityController extends _$ScheduleActivityController {
@@ -104,6 +116,22 @@ class ScheduleActivityController extends _$ScheduleActivityController {
           .single()
           .timeout(const Duration(seconds: 5));
       final newActivityId = inserted['id'] as String;
+
+      // The organizer is obviously coming — count them as `going` rather
+      // than leaving the first RSVP (and a step toward quorum) for them to
+      // do by hand. Best-effort: the activity exists either way.
+      try {
+        await supabase
+            .from('activity_confirmation')
+            .upsert({
+              'activity_id': newActivityId,
+              'user_id': user.id,
+              'attendance': 'going',
+            })
+            .timeout(const Duration(seconds: 5));
+      } catch (e, st) {
+        talker.handle(e, st, 'Organizer auto-RSVP failed');
+      }
 
       if (recurrenceDayOfWeek != null) {
         // Seed the series with itself — fn_sweep_recurring_activities

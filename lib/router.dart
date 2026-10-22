@@ -11,6 +11,7 @@ import 'auth/reset_password_screen.dart';
 import 'auth/welcome_screen.dart';
 import 'core/model/passe_user.dart';
 import 'core/model/professional_feed_item.dart';
+import 'core/pending_destination.dart';
 import 'core/state/has_lobby_state.dart';
 import 'course/course_detail_page.dart';
 import 'currency/wallet_home_screen.dart';
@@ -146,8 +147,10 @@ GoRouter router(Ref ref) {
   // the real destination, always landing the user on Discover instead —
   // which is indistinguishable from "the requested screen doesn't load" to
   // anyone hitting a cold start already deep in the app (Manage▸Lobby
-  // included).
-  String? pendingDestination;
+  // included). Also spent when the user leaves `/onboarding`, so a deep link
+  // (`passe.vn/invite/CODE`) survives a brand-new user's sport pick — see
+  // [PendingDestination].
+  final pendingDestination = PendingDestination();
 
   final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -175,13 +178,11 @@ GoRouter router(Ref ref) {
           state.uri.path == const WelcomeRoute().location ||
           isPasswordRecoveryFlow;
 
-      // Track the latest genuine (non-splash, non-auth-flow) location this
-      // pass has been asked to resolve, so a later `isSplash -> Discover`
-      // fallback can send the user back to it instead of Discover. Splash/auth
-      // routes themselves are never "destinations" worth restoring.
-      if (!isSplash && !isAuthFlow) {
-        pendingDestination = state.uri.toString();
-      }
+      // Track the latest genuine (non-splash, non-auth, non-onboarding)
+      // location this pass has been asked to resolve, so a later
+      // `isSplash -> Discover` fallback can send the user back to it instead
+      // of Discover.
+      pendingDestination.observe(state.uri);
 
       // See [resolveLandingLocation].
       String resolveInitialTabDestination({required bool isGuest}) =>
@@ -224,7 +225,9 @@ GoRouter router(Ref ref) {
             return isOnboarding ? null : const OnboardingRoute().location;
           }
           return isOnboarding
-              ? resolveInitialTabDestination(isGuest: isGuest)
+              ? pendingDestination.take(
+                  resolveInitialTabDestination(isGuest: isGuest),
+                )
               : null;
         }
 
@@ -263,11 +266,9 @@ GoRouter router(Ref ref) {
             final onboardingRedirect = gateOnboarding(isGuest: true);
             if (onboardingRedirect != null) return onboardingRedirect;
             if (isSplash || isAuthFlow) {
-              final destination =
-                  pendingDestination ??
-                  resolveInitialTabDestination(isGuest: true);
-              pendingDestination = null;
-              return destination;
+              return pendingDestination.take(
+                resolveInitialTabDestination(isGuest: true),
+              );
             }
             return null;
           }
@@ -275,11 +276,9 @@ GoRouter router(Ref ref) {
           final onboardingRedirect = gateOnboarding(isGuest: false);
           if (onboardingRedirect != null) return onboardingRedirect;
           if (isSplash || isAuthFlow) {
-            final destination =
-                pendingDestination ??
-                resolveInitialTabDestination(isGuest: false);
-            pendingDestination = null;
-            return destination;
+            return pendingDestination.take(
+              resolveInitialTabDestination(isGuest: false),
+            );
           }
           return null;
       }

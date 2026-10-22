@@ -73,8 +73,20 @@ coaching courses. Unlike Discover, this is about entities the user is already a 
     instant auto-join (`redeem_lobby_invite_link`, `SECURITY DEFINER`) — no approval step, unlike a
     `lobby_befriend_record` join request. Guests hit the existing `ensureSignedIn` prompt
     (`lib/auth/guest_prompt.dart`); the router's own `pendingDestination` bookkeeping already bounces
-    them back to `/invite/CODE` after sign-in, so there's no separate pending-state provider. Schema:
-    `schema/lobby_invite_link.sql`.
+    them back to `/invite/CODE` after sign-in, so there's no separate pending-state provider
+    (`core/pending_destination.dart` — `/onboarding` is a detour too, so a brand-new user's link
+    survives the sport pick; it used to be overwritten). Schema: `schema/lobby_invite_link.sql`.
+    `redeem_code_sheet.dart` ("Nhập mã mời", `parseInviteCode` accepts a bare code or a pasted
+    link) is the manual stand-in for a deferred deep link: a store install loses the tapped link.
+    Reached from Manage ▸ Lobby's "+" chooser (`feed/lobby_add_sheet.dart`) and onboarding's
+    get-started sheet. The shared link travels with a sentence (`buildInviteShareText`: inviter,
+    lobby, sport), and "Tạo lại"/"Xóa" confirm first since both break every link in flight.
+  - **Creating a lobby always lands in it**: every create entry point goes through
+    `createLobbyAndOpen` (`feed/lobby_form_sheet.dart`). The form leads with avatar, sport, name and
+    visibility; the rest folds under "Thêm chi tiết (tuỳ chọn)". A new lobby's Feed shows managers
+    the "Bắt đầu" card (`activity/getting_started_card.dart`: invite members, schedule the first
+    session), ticked from the roster and upcoming activities, dismissible per lobby. Because it
+    teaches Feed + Planner by doing, `lobby_hub_tour.dart` no longer tours those two tabs.
 
 ## Domain model
 
@@ -161,6 +173,15 @@ coaching courses. Unlike Discover, this is about entities the user is already a 
   `activity_card.dart`'s `_RsvpControl`. Notification-card inline actions:
   `lib/notification/main.dart`'s `_ActivityAtRiskActions` (mirrors the `lobbyInvite` pattern — see
   root CLAUDE.md ▸ Notifications).
+
+- **Confirmation threshold defaults to the roster** (`defaultConfirmationThreshold` /
+  `thresholdEnabledByDefault` in `schedule_activity_controller.dart`): `min(4, members)`, and
+  *off* below 4 members. It used to be a fixed 4 with the stepper floored at 2, so every 1–3
+  member lobby's first session was auto-cancelled at kickoff by the threshold sweep. Off means
+  `confirmation_threshold` and `confirmation_deadline` are both null. `schedule()` also
+  auto-RSVPs the organizer `going` (first occurrence only; best-effort). The sheet uses forui's
+  `FLineCalendar` (the 7-day horizon) and `FTimePicker` rather than Material's pickers, rejects
+  end ≤ start, and a new session's toast offers "Chia sẻ" (time, venue, invite link).
 
 ## Gotchas
 

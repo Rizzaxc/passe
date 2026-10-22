@@ -3,13 +3,18 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:share_plus/share_plus.dart';
+
 import '../../core/format.dart';
 import '../../core/location_repository.dart';
 import '../../ui/dialog.dart';
 import '../../ui/sheet.dart';
 import 'activity/upcoming_controller.dart';
 import 'feed/home_ground_selector.dart';
+import 'invite_link/invite_link_card.dart';
+import 'invite_link/invite_link_controller.dart';
 import 'lobby_detail_controller.dart';
+import 'members/controller.dart';
 import 'schedule_activity_controller.dart';
 
 /// Captain-side "schedule the next play session" flow.
@@ -74,7 +79,14 @@ class _ScheduleActivitySheetState
   ActivityCostType _costType = ActivityCostType.perPax;
   final _amountController = TextEditingController(text: '50000');
 
+  // Seeded from the roster size once it loads (see _seedThreshold) — a fixed
+  // 4 auto-cancelled every small lobby's first session at kickoff.
   int _confirmationThreshold = 4;
+  bool _thresholdEnabled = false;
+
+  /// Set once the organizer touches the threshold, so a late-arriving member
+  /// count doesn't overwrite their choice.
+  bool _thresholdTouched = false;
 
   // How many hours before kickoff confirmations lock in, chosen via the
   // slider. Clamped to [_minDeadlineLeadHours, _maxAllowedDeadlineLeadHours]
@@ -107,6 +119,10 @@ class _ScheduleActivitySheetState
       ).add(const Duration(days: 1));
       // Lobby home ground default — populated once async info resolves.
       _seedDefaultsFromLobby();
+      final members = ref
+          .read(lobbyMembersControllerProvider(widget.lobbyId))
+          .value;
+      if (members != null) _seedThreshold(members.length);
     }
     _recomputeDeadline();
   }
@@ -130,6 +146,8 @@ class _ScheduleActivitySheetState
     if (existing.costAmount != null) {
       _amountController.text = existing.costAmount!.toString();
     }
+    _thresholdEnabled = existing.confirmationThreshold != null;
+    _thresholdTouched = true;
     _confirmationThreshold = existing.confirmationThreshold ?? 4;
     _deadlineManuallyOff = existing.confirmationDeadline == null;
     final existingDeadline = existing.confirmationDeadline;
@@ -141,6 +159,12 @@ class _ScheduleActivitySheetState
         _maxDeadlineLeadHours.toDouble(),
       );
     }
+  }
+
+  void _seedThreshold(int memberCount) {
+    if (_thresholdTouched) return;
+    _confirmationThreshold = defaultConfirmationThreshold(memberCount);
+    _thresholdEnabled = thresholdEnabledByDefault(memberCount);
   }
 
   void _seedDefaultsFromLobby() {
@@ -161,32 +185,22 @@ class _ScheduleActivitySheetState
 
   // ── Picker helpers ────────────────────────────────────────────
 
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final picked = await showDatePicker(
+  void _setDate(DateTime picked) {
+    setState(() {
+      _date = DateTime(picked.year, picked.month, picked.day);
+      _recomputeDeadline();
+    });
+  }
+
+  Future<TimeOfDay?> _pickTime(TimeOfDay initial, String title) {
+    return showPSheet<TimeOfDay>(
       context: context,
-      useRootNavigator: true,
-      initialDate: _date,
-      firstDate: today,
-      // Captains can schedule at most a week out. Anything further is a
-      // recurrence concern, not an ad-hoc session.
-      lastDate: today.add(const Duration(days: _maxScheduleHorizonDays)),
+      builder: (_) => _TimePickerSheet(initial: initial, title: title),
     );
-    if (picked != null) {
-      setState(() {
-        _date = picked;
-        _recomputeDeadline();
-      });
-    }
   }
 
   Future<void> _pickStart() async {
-    final picked = await showTimePicker(
-      context: context,
-      useRootNavigator: true,
-      initialTime: _start,
-    );
+    final picked = await _pickTime(_start, 'lobbyHub.schedule.start'.tr());
     if (picked != null) {
       setState(() {
         _start = picked;
@@ -199,11 +213,7 @@ class _ScheduleActivitySheetState
   }
 
   Future<void> _pickEnd() async {
-    final picked = await showTimePicker(
-      context: context,
-      useRootNavigator: true,
-      initialTime: _end,
-    );
+    final picked = await _pickTime(_end, 'lobbyHub.schedule.end'.tr());
     if (picked != null) setState(() => _end = picked);
   }
 
@@ -343,6 +353,20 @@ class _ScheduleActivitySheetState
       return;
     }
 
+    // Sessions run within one day (end is built on the same date), so an
+    // end at or before the start can only be a mis-pick — it used to save
+    // a negative-length activity.
+    if (!end.isAfter(start)) {
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleAlert),
+        variant: .destructive,
+        title: Text('lobbyHub.schedule.endBeforeStart'.tr()),
+        alignment: .bottomCenter,
+      );
+      return;
+    }
+
     final amountText = _amountController.text.trim();
     final amount = _costEnabled ? num.tryParse(amountText) : null;
     if (_costEnabled && (amount == null || amount <= 0)) {
@@ -384,8 +408,12 @@ class _ScheduleActivitySheetState
           locationId: resolvedLocationId,
           costType: _costEnabled ? _costType : null,
           costAmount: amount,
-          confirmationThreshold: _confirmationThreshold,
-          confirmationDeadline: _confirmationDeadline,
+          confirmationThreshold: _thresholdEnabled
+              ? _confirmationThreshold
+              : null,
+          confirmationDeadline: _thresholdEnabled
+              ? _confirmationDeadline
+              : null,
           recurrenceDayOfWeek: dayOfWeek,
         );
       } else {
@@ -395,8 +423,12 @@ class _ScheduleActivitySheetState
           locationId: resolvedLocationId,
           costType: _costEnabled ? _costType : null,
           costAmount: amount,
-          confirmationThreshold: _confirmationThreshold,
-          confirmationDeadline: _confirmationDeadline,
+          confirmationThreshold: _thresholdEnabled
+              ? _confirmationThreshold
+              : null,
+          confirmationDeadline: _thresholdEnabled
+              ? _confirmationDeadline
+              : null,
           recurrenceDayOfWeek: dayOfWeek,
         );
       }
@@ -413,6 +445,7 @@ class _ScheduleActivitySheetState
     }
 
     if (!mounted) return;
+    final shareText = existing == null ? _buildShareText(start, end) : null;
     Navigator.of(context).pop();
     showFToast(
       context: context,
@@ -422,8 +455,52 @@ class _ScheduleActivitySheetState
             ? 'lobbyHub.schedule.updated'.tr()
             : 'lobbyHub.schedule.created'.tr(),
       ),
+      // A new session is the moment people need to hear about it — the
+      // lobby feed only reaches members who already have the app.
+      suffixBuilder: shareText == null
+          ? null
+          : (toastContext, entry) => FButton(
+              size: .sm,
+              variant: .outline,
+              onPress: () {
+                entry.dismiss();
+                SharePlus.instance.share(ShareParams(text: shareText));
+              },
+              child: Text('lobbyHub.schedule.share'.tr()),
+            ),
+      duration: shareText == null ? null : const Duration(seconds: 8),
       alignment: .bottomCenter,
     );
+  }
+
+  /// "{lobby} · {sport} — {date} {start}–{end} @ {venue}", plus the invite
+  /// link when the lobby has one, so a recipient outside the lobby can join
+  /// and RSVP in one tap.
+  String _buildShareText(DateTime start, DateTime end) {
+    final info = ref.read(lobbyDetailControllerProvider(widget.lobbyId)).value;
+    final venue = _freeAddress != null
+        ? [
+            _freeAddress!['locationName'],
+            _freeAddress!['streetNumber'],
+            _freeAddress!['streetName'],
+          ].whereType<String>().where((e) => e.isNotEmpty).join(' ')
+        : info?.homeGrounds.where((h) => h.id == _locationId).firstOrNull?.name;
+    final code = ref
+        .read(inviteLinkControllerProvider(widget.lobbyId))
+        .value
+        ?.code;
+    return [
+      [
+        if (info != null) info.lobby.name,
+        if (info != null) info.lobby.sport.getLocalizedName(context),
+      ].join(' · '),
+      '${_fmtDate(_date)} ${_fmtTime(_start)}–${_fmtTime(_end)}'
+          '${venue == null || venue.isEmpty ? '' : ' @ $venue'}',
+      if (code != null)
+        'lobbyHub.schedule.shareJoin'.tr(
+          namedArgs: {'url': buildInviteLinkUrl(code)},
+        ),
+    ].where((l) => l.isNotEmpty).join('\n');
   }
 
   // ── Build ─────────────────────────────────────────────────────
@@ -449,6 +526,13 @@ class _ScheduleActivitySheetState
       },
     );
 
+    ref.listen(lobbyMembersControllerProvider(widget.lobbyId), (_, next) {
+      final members = next.value;
+      if (widget.existing == null && members != null && !_thresholdTouched) {
+        setState(() => _seedThreshold(members.length));
+      }
+    });
+
     return SingleChildScrollView(
       controller: _scrollController,
       primary: false,
@@ -471,11 +555,10 @@ class _ScheduleActivitySheetState
           _Section(
             label: 'lobbyHub.schedule.whenWhere'.tr(),
             children: [
-              _PickerRow(
-                icon: FLucideIcons.calendar,
-                label: 'lobbyHub.schedule.date'.tr(),
-                value: _fmtDate(_date),
-                onTap: _pickDate,
+              _DateStrip(
+                date: _date,
+                maxDays: _maxScheduleHorizonDays,
+                onChanged: _setDate,
               ),
               _PickerRow(
                 icon: FLucideIcons.clock,
@@ -552,20 +635,41 @@ class _ScheduleActivitySheetState
           _Section(
             label: 'lobbyHub.schedule.attendance'.tr(),
             children: [
-              _ThresholdRow(
-                value: _confirmationThreshold,
-                onChanged: (v) => setState(() => _confirmationThreshold = v),
-              ),
-              _DeadlineRow(
-                tooSoon: _tooSoonForDeadline,
-                manuallyOff: _deadlineManuallyOff,
-                deadline: _confirmationDeadline,
-                onChanged: (on) => setState(() {
-                  _deadlineManuallyOff = !on;
-                  _recomputeDeadline();
+              // Off means no quorum: nothing freezes RSVPs and nothing
+              // auto-cancels the session at kickoff.
+              _SwitchRow(
+                icon: FLucideIcons.userCheck,
+                label: 'lobbyHub.schedule.requireQuorum'.tr(),
+                sub: _thresholdEnabled
+                    ? 'lobbyHub.schedule.requireQuorumOn'.tr()
+                    : 'lobbyHub.schedule.requireQuorumOff'.tr(),
+                value: _thresholdEnabled,
+                onChanged: (v) => setState(() {
+                  _thresholdTouched = true;
+                  _thresholdEnabled = v;
                 }),
               ),
-              if (!_tooSoonForDeadline && !_deadlineManuallyOff)
+              if (_thresholdEnabled) ...[
+                _ThresholdRow(
+                  value: _confirmationThreshold,
+                  onChanged: (v) => setState(() {
+                    _thresholdTouched = true;
+                    _confirmationThreshold = v;
+                  }),
+                ),
+                _DeadlineRow(
+                  tooSoon: _tooSoonForDeadline,
+                  manuallyOff: _deadlineManuallyOff,
+                  deadline: _confirmationDeadline,
+                  onChanged: (on) => setState(() {
+                    _deadlineManuallyOff = !on;
+                    _recomputeDeadline();
+                  }),
+                ),
+              ],
+              if (_thresholdEnabled &&
+                  !_tooSoonForDeadline &&
+                  !_deadlineManuallyOff)
                 _DeadlineLeadSlider(
                   hours: _deadlineLeadHours,
                   maxHours: _maxAllowedDeadlineLeadHours,
@@ -580,14 +684,7 @@ class _ScheduleActivitySheetState
           FButton(
             onPress: saving ? null : _submit,
             child: saving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
+                ? const FCircularProgress()
                 : Text(
                     widget.existing != null
                         ? 'lobbyHub.schedule.update'.tr()
@@ -969,7 +1066,7 @@ class _ThresholdRow extends StatelessWidget {
           ),
           _StepperButton(
             icon: FLucideIcons.minus,
-            onTap: value > 2 ? () => onChanged(value - 1) : null,
+            onTap: value > 1 ? () => onChanged(value - 1) : null,
           ),
           SizedBox(
             width: 28,
@@ -1187,5 +1284,102 @@ class _DeadlineLeadSlider extends StatelessWidget {
       return 'lobbyHub.schedule.leadDays'.tr(namedArgs: {'count': '$days'});
     }
     return 'lobbyHub.schedule.leadHours'.tr(namedArgs: {'count': '$rounded'});
+  }
+}
+
+// ── Date strip & time picker ────────────────────────────────────
+
+/// Inline forui line calendar over today … today + [maxDays] — the whole
+/// scheduling horizon fits one swipe, so a modal date picker was an extra
+/// step for nothing.
+class _DateStrip extends StatelessWidget {
+  final DateTime date;
+  final int maxDays;
+  final ValueChanged<DateTime> onChanged;
+
+  const _DateStrip({
+    required this.date,
+    required this.maxDays,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    // forui calendars work in UTC-midnight dates; convert at the edges.
+    final today = DateTime.utc(now.year, now.month, now.day);
+    final last = today.add(Duration(days: maxDays));
+    final selected = DateTime.utc(date.year, date.month, date.day);
+
+    return SizedBox(
+      height: 72,
+      child: FLineCalendar(
+        control: .lifted(
+          date: selected,
+          onChange: (d) {
+            if (d != null) onChanged(DateTime(d.year, d.month, d.day));
+          },
+        ),
+        scrollControl: .managed(
+          start: today,
+          end: last,
+          today: today,
+          initialDate: selected,
+        ),
+        selectable: (d) => !d.isBefore(today) && !d.isAfter(last),
+      ),
+    );
+  }
+}
+
+/// forui wheel time picker in a sheet, replacing Material's dial.
+class _TimePickerSheet extends StatefulWidget {
+  final TimeOfDay initial;
+  final String title;
+
+  const _TimePickerSheet({required this.initial, required this.title});
+
+  @override
+  State<_TimePickerSheet> createState() => _TimePickerSheetState();
+}
+
+class _TimePickerSheetState extends State<_TimePickerSheet> {
+  late FTime _time = FTime(widget.initial.hour, widget.initial.minute);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 16,
+      children: [
+        PSheetTitle(
+          label: widget.title,
+          trailing: FButton.icon(
+            variant: .ghost,
+            onPress: () => Navigator.of(context).pop(),
+            child: const Icon(FLucideIcons.x),
+          ),
+        ),
+        SizedBox(
+          height: 180,
+          child: FTimePicker(
+            hour24: true,
+            minuteInterval: 5,
+            control: .lifted(
+              time: _time,
+              onChange: (t) => setState(() => _time = t),
+            ),
+          ),
+        ),
+        FButton(
+          onPress: () => Navigator.of(
+            context,
+          ).pop(TimeOfDay(hour: _time.hour, minute: _time.minute)),
+          child: Text('done'.tr()),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
   }
 }

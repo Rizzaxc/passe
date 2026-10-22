@@ -22,6 +22,10 @@ class PSearchField<T> extends StatefulWidget {
   /// their own glyph here.
   final IconData? prefixIcon;
 
+  /// Lets a caller move focus into the field (e.g. an empty state's
+  /// "search by username#tag" button).
+  final FocusNode? focusNode;
+
   // Typeahead
   final Future<List<T>> Function(String query)? suggestionsBuilder;
   final Widget Function(BuildContext context, T item) formatSuggestion;
@@ -42,6 +46,7 @@ class PSearchField<T> extends StatefulWidget {
     required this.controller,
     this.onChange,
     this.prefixIcon,
+    this.focusNode,
     this.suggestionsBuilder,
     this.formatSuggestion = _defaultFormat,
     this.displayStringForOption,
@@ -121,6 +126,7 @@ class _PSearchFieldState<T> extends State<PSearchField<T>> {
     final field = FTextField(
       hint: widget.hint,
       label: widget.label,
+      focusNode: widget.focusNode,
       autocorrect: false,
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
       prefixBuilder: (context, style, states) => Padding(

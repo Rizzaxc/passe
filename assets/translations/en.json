@@ -399,6 +399,12 @@
         "title": "Awaiting approval · {count}",
         "waiting": "Waiting for the captain",
         "cancel": "Cancel request"
+      },
+      "add": {
+        "title": "Add a lobby",
+        "create": "Create a new lobby",
+        "createSubtitle": "Start a group with the people you already play with",
+        "redeemSubtitle": "Got a link or code from someone? Jump straight into their lobby"
       }
     },
     "rail": {
@@ -420,7 +426,7 @@
     "noActivity": "No upcoming activity",
     "nameRequired": "Lobby name is required",
     "nameTooShort": "Name must be at least 3 characters",
-    "ageGroup": "Age Group",
+    "ageGroup": "Age group",
     "description": "Description",
     "descriptionHint": "Tell people what your lobby is about...",
     "descriptionTooLong": "Description must be 3000 characters or fewer",
@@ -467,8 +473,8 @@
     "scheduleActivity": "Schedule",
     "enterHub": "Enter Lobby Hub",
     "lookingForActivity": "No upcoming session",
-    "searchIDCopied": "Lobby SearchID copied to clipboard",
-    "searchIDExplanation": "Other players can use this ID to join your lobby using the home screen filter.",
+    "searchIDCopied": "Lobby code copied",
+    "searchIDExplanation": "Others can type this code into Discover's filter search to find your lobby.",
     "shareId": "Share ID",
     "invite": "Invite",
     "leave": {
@@ -573,19 +579,23 @@
       "failed": "Failed to send invite. Please try again.",
       "send": "Send Invite",
       "search": "Search",
-      "alreadyMember": "User is already a member"
+      "alreadyMember": "User is already a member",
+      "invited": "Invited",
+      "sendSelected": "Invite {count}",
+      "batchSuccess": "Invites sent to {count}",
+      "batchPartial": "Invited {count}. Couldn't invite: {names}"
     },
     "inviteLink": {
-      "title": "Invite Link",
+      "title": "Invite link",
       "description": "Anyone with this link joins instantly, no approval needed.",
-      "create": "Create Invite Link",
+      "create": "Create invite link",
       "copy": "Copy",
       "share": "Share",
       "regenerate": "Regenerate",
       "remove": "Remove",
       "copied": "Invite link copied",
       "error": "Something went wrong. Please try again.",
-      "landingTitle": "Lobby Invite",
+      "landingTitle": "Lobby invite",
       "invitedTo": "You're invited to join",
       "memberCount": "{count} members",
       "captainedBy": "Captain: {name}",
@@ -595,7 +605,19 @@
       "invalid": "This invite link no longer works",
       "notFound": "This invite link is invalid",
       "expired": "This invite link has expired",
-      "revoked": "This invite link has been removed"
+      "revoked": "This invite link has been removed",
+      "shareText": "Join {lobby} on Passe: {url}",
+      "shareTextFrom": "{inviter} invited you to {lobby} on Passe: {url}",
+      "regenerateConfirmTitle": "Create a new link?",
+      "regenerateConfirmBody": "The old link stops working. Anyone who hasn't used it yet will need the new one.",
+      "removeConfirmTitle": "Remove invite link?",
+      "removeConfirmBody": "Nobody will be able to join with this link anymore.",
+      "managersOnly": "Only the captain or a coordinator can create an invite link. You can still invite friends directly below.",
+      "redeemTitle": "Enter invite code",
+      "redeemBody": "Paste the invite link or type the code you were sent.",
+      "redeemHint": "passe.vn/invite/… or code",
+      "redeemContinue": "Continue",
+      "redeemInvalid": "That doesn't look like an invite code"
     },
     "matchFactor": {
       "skill": "Similar skill",
@@ -610,13 +632,15 @@
       "feed": "Feed",
       "planner": "Planner",
       "history": "History"
-    }
+    },
+    "searchID": "Lobby code",
+    "editTitle": "Edit lobby"
   },
   "createLobby": {
-    "title": "Create Lobby",
+    "title": "Create a lobby",
     "create": "Create",
-    "lobbyName": "Lobby Name",
-    "lobbyNameHint": "Enter a name for your lobby",
+    "lobbyName": "Lobby name",
+    "lobbyNameHint": "Name your lobby",
     "description": "Description",
     "descriptionHint": "Describe your lobby (optional)",
     "sport": "Sport",
@@ -626,8 +650,8 @@
     "publicDescription": "Anyone can find and join your lobby",
     "private": "Private",
     "privateDescription": "Only people with the link can join",
-    "homeGround": "Home Ground",
-    "homeGrounds": "Home Grounds",
+    "homeGround": "Home ground",
+    "homeGrounds": "Home grounds",
     "homeGroundsDescription": "Members will use these as the default meeting points for activities. The starred one is primary — tap another to make it primary instead",
     "homeGroundDescription": "Members will use this as the default meeting point for activities. Search for it, or just fill in the details below yourself if it's not listed",
     "homeGroundHint": "Search by venue name...",
@@ -642,17 +666,19 @@
     "homeGroundMaxReached": "Up to 5 home grounds",
     "streetNumber": "St. number",
     "streetName": "Street name",
-    "district": "District",
+    "district": "Ward",
     "city": "City",
-    "specificLocation": "Specific Location",
+    "specificLocation": "Specific location",
     "specificLocationHint": "Enter a specific location",
     "playtime": "Playtime",
     "playtimeShort": "Playtime",
-    "dayOfWeek": "Day of Week",
-    "timeSlot": "Time Slot",
-    "setTimeslot": "Set Timeslot",
-    "maxParticipants": "Maximum Participants",
-    "participantCount": "{count} participants"
+    "dayOfWeek": "Day of week",
+    "timeSlot": "Time slot",
+    "setTimeslot": "Set time slot",
+    "maxParticipants": "Maximum participants",
+    "participantCount": "{count} participants",
+    "titleWithSport": "Create a {sport} lobby",
+    "moreDetails": "More details (optional)"
   },
   "soccer": {
     "position": {
@@ -848,7 +874,7 @@
     "ageGroup": "Age Group",
     "location": "Location",
     "locationCity": "City",
-    "locationDistrict": "District",
+    "locationDistrict": "Ward",
     "locationDistrictHint": "Pick up to 6 districts",
     "playtime": "Playtime",
     "zalo": "Zalo",
@@ -1006,7 +1032,13 @@
         "friday": "Fri",
         "saturday": "Sat",
         "sunday": "Sun"
-      }
+      },
+      "endBeforeStart": "End time must be after the start time",
+      "requireQuorum": "Require a minimum turnout",
+      "requireQuorumOn": "Cancels automatically if not enough people are going at kickoff",
+      "requireQuorumOff": "Goes ahead however many people are going",
+      "share": "Share",
+      "shareJoin": "Join the lobby to RSVP: {url}"
     },
     "challenge": {
       "title": "Accept Challenges",
@@ -1083,7 +1115,9 @@
       "schedule": "Schedule",
       "remind": "Remind Captain",
       "activityTitle": "Activities",
-      "loadFailed": "Unable to load activities"
+      "loadFailed": "Unable to load activities",
+      "aloneHint": "It's just you in this lobby so far. Invite people first so they can see and RSVP to sessions.",
+      "inviteFirst": "Invite members first"
     },
     "actions": {
       "poll": "Create poll",
@@ -1221,6 +1255,14 @@
       "withdraw": "Withdraw listing",
       "withdrawTitle": "Withdraw from freeplay?",
       "withdrawBody": "The lobby's own session stays as it is. Every outside request and accepted seat is cancelled."
+    },
+    "gettingStarted": {
+      "title": "Get started",
+      "body": "Two steps to your lobby's first game.",
+      "invite": "Invite members",
+      "inviteHint": "Share an invite link or invite friends on Passe",
+      "schedule": "Schedule the first session",
+      "scheduleHint": "Pick a time and venue, then everyone RSVPs"
     }
   },
   "payment": {
@@ -1511,6 +1553,10 @@
         "title": "Connect a wearable",
         "subtitle": "Track heart rate and effort during sessions",
         "optional": "Optional"
+      },
+      "redeem": {
+        "title": "Got an invite code?",
+        "subtitle": "Paste the link or code a friend sent to join their lobby"
       }
     }
   },
@@ -1544,7 +1590,31 @@
     "wallAuthored": "Posts",
     "wallTagged": "Tagged",
     "wallEmpty": "No posts yet",
-    "wallTaggedEmpty": "Not tagged in anything yet"
+    "wallTaggedEmpty": "Not tagged in anything yet",
+    "friendsLoadFailed": "Couldn't load your friends",
+    "retry": "Retry",
+    "searchByHandle": "Search by username#tag",
+    "addFriendShort": "Add",
+    "requestSent": "Sent",
+    "friendLabel": "Friends",
+    "cancelRequestTitle": "Cancel friend request?",
+    "cancelRequestBody": "{name} won't see your request anymore.",
+    "cancelRequestConfirm": "Cancel request",
+    "keep": "Keep",
+    "inviteToLobby": "Invite to a lobby",
+    "inviteToLobbyTitle": "Invite {name} to a lobby",
+    "inviteToLobbyEmpty": "You don't have a lobby {name} isn't already in.",
+    "inviteToLobbyCreate": "Create a lobby",
+    "inviteToLobbySent": "Invited {name} to {lobby}",
+    "inviteToLobbyPending": "Invited",
+    "memberCount": "{count} members",
+    "invitePasse": {
+      "title": "Invite friends to Passe",
+      "yourHandle": "Your handle: ",
+      "share": "Invite",
+      "shareText": "Come play with me on Passe! Get the app at {url} and find me: {handle}",
+      "handleCopied": "username#tag copied"
+    }
   },
   "freeplay": {
     "title": "Drop-ins",
@@ -2227,5 +2297,6 @@
       "professional": "Coaches",
       "location": "Venues"
     }
-  }
+  },
+  "cancel": "Cancel"
 }

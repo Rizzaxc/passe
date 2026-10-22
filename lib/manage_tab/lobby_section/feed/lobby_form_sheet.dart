@@ -13,6 +13,7 @@ import '../../../core/model/lobby_homeground.dart';
 import '../../../core/model/timeslot.dart';
 import '../../../core/timeslot_picker.dart';
 import '../../../notifications/notification_service.dart';
+import '../../../router.dart';
 import '../../../ui/main.dart';
 import '../activity/freeplay_expose_controller.dart';
 import 'home_ground_selector.dart';
@@ -33,6 +34,17 @@ Future<Lobby?> showLobbyFormSheet({
       existingHomeGrounds: existingHomeGrounds,
     ),
   );
+}
+
+/// Create a lobby and land in it. Every create entry point (Manage's "+",
+/// its empty state, Discover's empty state, onboarding's hero action) goes
+/// through here, so a brand-new lobby always opens on its Feed and the
+/// "Bắt đầu" checklist rather than dropping the user back on a list.
+Future<Lobby?> createLobbyAndOpen(BuildContext context, WidgetRef ref) async {
+  final lobby = await showLobbyFormSheet(context: context, ref: ref);
+  if (lobby?.id == null || !context.mounted) return lobby;
+  LobbyDetailRoute(id: lobby!.id!, $extra: lobby.name).go(context);
+  return lobby;
 }
 
 class LobbyFormSheet extends ConsumerStatefulWidget {
@@ -95,6 +107,16 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
       lobbyFormControllerProvider(widget.lobbyId).notifier,
     );
     final lobby = formState.lobby;
+    final isEdit = widget.lobbyId != null;
+    final pickedSport = lobby.sport == Sport.others ? null : lobby.sport;
+
+    // Edit mode opens the optional section when it already holds something,
+    // so an existing homeground or description isn't hidden behind a fold.
+    final hasOptionalDetails =
+        lobby.details?.ageGroup != null ||
+        formState.homeGrounds.isNotEmpty ||
+        (lobby.description?.isNotEmpty ?? false) ||
+        (lobby.playtime?.isNotEmpty ?? false);
 
     return Form(
       key: _formKey,
@@ -105,6 +127,23 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
           spacing: 16,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            PSheetTitle(
+              label: isEdit
+                  ? 'lobby.editTitle'.tr()
+                  : pickedSport == null
+                  ? 'createLobby.title'.tr()
+                  : 'createLobby.titleWithSport'.tr(
+                      namedArgs: {
+                        'sport': pickedSport.getLocalizedName(context),
+                      },
+                    ),
+              trailing: FButton.icon(
+                variant: .ghost,
+                onPress: () => Navigator.of(context).pop(),
+                child: const Icon(FLucideIcons.x),
+              ),
+            ),
+
             // Avatar
             _AvatarSection(
               lobbyId: widget.lobbyId,
@@ -137,8 +176,8 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
               children: [
                 PSheetSectionLabel(label: 'createLobby.sport'.tr()),
                 PSportPicker(
-                  value: lobby.sport == Sport.others ? null : lobby.sport,
-                  onChanged: widget.lobbyId == null
+                  value: pickedSport,
+                  onChanged: !isEdit
                       ? (sport) => notifier.updateDraft(sport: sport)
                       : null,
                 ),
@@ -175,7 +214,9 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
                 children: [
                   Icon(switch (v) {
                     LobbyVisibility.public => FLucideIcons.eye,
-                    LobbyVisibility.discoverable => FLucideIcons.eyeOff,
+                    // Findable by search, not shown in the feed — eyeOff
+                    // read as "hidden", which is the private option's job.
+                    LobbyVisibility.discoverable => FLucideIcons.search,
                     LobbyVisibility.private => FLucideIcons.lock,
                   }),
                   Text(
@@ -198,7 +239,9 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
                 if (v == LobbyVisibility.private &&
                     widget.lobbyId != null &&
                     (ref
-                            .watch(lobbyHasLiveFreeplayProvider(widget.lobbyId!))
+                            .watch(
+                              lobbyHasLiveFreeplayProvider(widget.lobbyId!),
+                            )
                             .value ??
                         false)) {
                   showFToast(
@@ -214,71 +257,85 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
               },
             ),
 
-            // Age Group
-            PSegmentedButton<AgeGroup>(
-              label: Text('lobby.ageGroup'.tr()),
-              values: AgeGroup.values,
-              selected: lobby.details?.ageGroup,
-              format: (ag) => FaIcon(switch (ag) {
-                AgeGroup.student => FontAwesomeIcons.graduationCap,
-                AgeGroup.mature => FontAwesomeIcons.briefcase,
-                AgeGroup.middleAge => FontAwesomeIcons.wineGlass,
-              }),
-              description: (ag) => ag.getLocalizedName(context),
-              onChange: (ag) => notifier.updateDetails(ageGroup: ag),
-              deselectable: true,
-            ),
+            // Everything below is optional — a lobby needs a sport, a name
+            // and a visibility to exist. Folding the rest keeps the create
+            // path to one screen instead of a long form.
+            FAccordion(
+              children: [
+                FAccordionItem(
+                  initiallyExpanded: isEdit && hasOptionalDetails,
+                  title: Text('createLobby.moreDetails'.tr()),
+                  child: Column(
+                    spacing: 16,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Age Group
+                      PSegmentedButton<AgeGroup>(
+                        label: Text('lobby.ageGroup'.tr()),
+                        values: AgeGroup.values,
+                        selected: lobby.details?.ageGroup,
+                        format: (ag) => FaIcon(switch (ag) {
+                          AgeGroup.student => FontAwesomeIcons.graduationCap,
+                          AgeGroup.mature => FontAwesomeIcons.briefcase,
+                          AgeGroup.middleAge => FontAwesomeIcons.wineGlass,
+                        }),
+                        description: (ag) => ag.getLocalizedName(context),
+                        onChange: (ag) => notifier.updateDetails(ageGroup: ag),
+                        deselectable: true,
+                      ),
 
-            // Home Grounds
-            HomeGroundListField(
-              value: formState.homeGrounds,
-              lobbyId: widget.lobbyId,
-              onChanged: notifier.updateHomeGrounds,
-            ),
+                      // Home Grounds
+                      HomeGroundListField(
+                        value: formState.homeGrounds,
+                        lobbyId: widget.lobbyId,
+                        onChanged: notifier.updateHomeGrounds,
+                      ),
 
-            // Description
-            FTextFormField(
-              label: Text('lobby.description'.tr()),
-              hint: 'lobby.descriptionHint'.tr(),
-              maxLines: 5,
-              maxLength: 3000,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              control: FTextFieldControl.managed(
-                controller: _descriptionController,
-                onChange: (value) =>
-                    notifier.updateDraft(description: value.text),
-              ),
-              validator: (value) => (value != null && value.length > 3000)
-                  ? 'lobby.descriptionTooLong'.tr()
-                  : null,
-            ),
+                      // Description
+                      FTextFormField(
+                        label: Text('lobby.description'.tr()),
+                        hint: 'lobby.descriptionHint'.tr(),
+                        maxLines: 5,
+                        maxLength: 3000,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        control: FTextFieldControl.managed(
+                          controller: _descriptionController,
+                          onChange: (value) =>
+                              notifier.updateDraft(description: value.text),
+                        ),
+                        validator: (value) =>
+                            (value != null && value.length > 3000)
+                            ? 'lobby.descriptionTooLong'.tr()
+                            : null,
+                      ),
 
-            // Playtime
-            _TimeslotSection(
-              playtime: lobby.playtime ?? [],
-              onAdd: (timeslot) {
-                final updated = <Timeslot>[...(lobby.playtime ?? [])];
-                if (!updated.contains(timeslot)) {
-                  updated.add(timeslot);
-                  notifier.updateDraft(playtime: updated);
-                }
-              },
-              onRemove: (timeslot) {
-                final updated = <Timeslot>[...(lobby.playtime ?? [])];
-                updated.remove(timeslot);
-                notifier.updateDraft(playtime: updated);
-              },
+                      // Playtime
+                      _TimeslotSection(
+                        playtime: lobby.playtime ?? [],
+                        onAdd: (timeslot) {
+                          final updated = <Timeslot>[...(lobby.playtime ?? [])];
+                          if (!updated.contains(timeslot)) {
+                            updated.add(timeslot);
+                            notifier.updateDraft(playtime: updated);
+                          }
+                        },
+                        onRemove: (timeslot) {
+                          final updated = <Timeslot>[...(lobby.playtime ?? [])];
+                          updated.remove(timeslot);
+                          notifier.updateDraft(playtime: updated);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
 
             // Save button
             FButton(
               onPress: formState.isSaving ? null : () => _onSave(context),
               child: formState.isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                  ? const FCircularProgress()
                   : Text(
                       widget.lobbyId != null
                           ? 'lobby.saveButton'.tr()

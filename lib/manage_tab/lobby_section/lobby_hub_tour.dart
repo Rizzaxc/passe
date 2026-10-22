@@ -18,7 +18,9 @@ class LobbyHubTourTargets {
   final planner = GlobalKey(debugLabel: 'lobbyTour.planner');
   final history = GlobalKey(debugLabel: 'lobbyTour.history');
 
-  List<GlobalKey> get all => [info, feed, planner, history];
+  /// The targets the tour actually highlights, in step order. [feed] and
+  /// [planner] stay as anchors for the rail but aren't toured.
+  List<GlobalKey> get toured => [info, history];
 }
 
 /// Device-level completion ledger. This cannot use a normal user-namespaced
@@ -65,7 +67,7 @@ Future<void> maybeShowLobbyHubTour({
 }) async {
   if (_showingForUserIds.contains(userId)) return;
 
-  final keys = [...targets.all, NavCoachKeys.health];
+  final keys = [...targets.toured, NavCoachKeys.health];
   if (keys.any((key) => key.currentContext == null)) {
     return;
   }
@@ -107,10 +109,12 @@ Future<void> maybeShowLobbyHubTour({
     }
   }
 
+  // Feed and Planner aren't toured any more: the Feed's "Bắt đầu" card
+  // (`activity/getting_started_card.dart`) walks a manager through both by
+  // doing — invite people, schedule the first session — which teaches more
+  // than a highlight over a tab label.
   const steps = [
     ('info', 'lobbyHub.tour.infoTitle', 'lobbyHub.tour.infoBody'),
-    ('feed', 'lobbyHub.tour.feedTitle', 'lobbyHub.tour.feedBody'),
-    ('planner', 'lobbyHub.tour.plannerTitle', 'lobbyHub.tour.plannerBody'),
     ('history', 'lobbyHub.tour.historyTitle', 'lobbyHub.tour.historyBody'),
     ('health', 'lobbyHub.tour.healthTitle', 'lobbyHub.tour.healthBody'),
   ];

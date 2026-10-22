@@ -40,6 +40,17 @@ Before this existed there was no `/user/:id` route at all and no way to connect 
   300ms debounce (which only applies in its typeahead/`suggestionsBuilder` mode; unused here since
   results render inline as `FTileGroup` rows, not an overlay dropdown).
 - `block_report_sheet.dart` — unfriend / block / unblock actions on a person.
+- `invite_to_passe.dart` — the only way to bring in someone who isn't on the app yet:
+  `shareInviteToPasse` shares "come play on Passe" + the sender's `username#tag` + `passe.vn`
+  (there's no deferred deep link, so the handle is how the recipient finds them after install).
+  `InviteToPasseCard` sits under the Friends search; Profile ▸ Account's username tile has copy +
+  share buttons. Profile universal links and contacts import are deliberately not built.
+- `invite_to_lobby_sheet.dart` — `/user/:id` ▸ "Mời vào lobby" for a friend: lists the caller's
+  lobbies (every sport) the friend isn't in and sends the same `invite` befriend record as
+  `invite_member_sheet.dart`.
+- Search results on `FriendsScreen` carry an inline relationship action (Kết bạn / Đã gửi /
+  Chấp nhận / Bạn bè) derived from `friendshipControllerProvider`'s edges — no extra query.
+  Cancelling an outgoing request on `/user/:id` asks for confirmation first.
 
 ## Domain
 
