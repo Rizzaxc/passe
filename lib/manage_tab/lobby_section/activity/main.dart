@@ -49,9 +49,21 @@ class LobbyFeedTab extends HookConsumerWidget {
       return null;
     }, [feed.length]);
 
+    final hasScheduledBefore = feed.any(
+      (i) => i is UpdateItem && i.kind == UpdateKind.scheduled,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Pinned above the list, not inside it: the list jumps to the newest
+        // message on load, which scrolled an in-list card (and its dismiss
+        // button) out of sight in any lobby with a few items already.
+        if (isLeader)
+          LobbyGettingStartedCard(
+            lobbyId: lobbyId,
+            hasScheduledBefore: hasScheduledBefore,
+          ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
@@ -70,10 +82,6 @@ class LobbyFeedTab extends HookConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
-                // A new lobby's Feed is empty until something happens in it;
-                // the checklist gives a manager the two moves that make
-                // something happen.
-                if (isLeader) LobbyGettingStartedCard(lobbyId: lobbyId),
                 for (final item in feed)
                   FeedItemWidget(
                     item: item,

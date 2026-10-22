@@ -20,12 +20,15 @@ class GettingStartedProgress {
     required this.hasActivity,
   });
 
+  /// [hasScheduledBefore] covers a lobby whose sessions are all in the
+  /// past: it has done this step even with nothing upcoming.
   factory GettingStartedProgress.from({
     required int memberCount,
     required int upcomingCount,
+    bool hasScheduledBefore = false,
   }) => GettingStartedProgress(
     hasMembers: memberCount > 1,
-    hasActivity: upcomingCount > 0,
+    hasActivity: upcomingCount > 0 || hasScheduledBefore,
   );
 
   int get doneCount => (hasMembers ? 1 : 0) + (hasActivity ? 1 : 0);
@@ -64,7 +67,15 @@ final _dismissedProvider = FutureProvider.autoDispose.family<bool, String>(
 class LobbyGettingStartedCard extends ConsumerWidget {
   final String lobbyId;
 
-  const LobbyGettingStartedCard({super.key, required this.lobbyId});
+  /// Whether the lobby's feed already shows a session being scheduled —
+  /// passed in by the Feed tab, which has the items in hand.
+  final bool hasScheduledBefore;
+
+  const LobbyGettingStartedCard({
+    super.key,
+    required this.lobbyId,
+    this.hasScheduledBefore = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -83,6 +94,7 @@ class LobbyGettingStartedCard extends ConsumerWidget {
     final progress = GettingStartedProgress.from(
       memberCount: members.value!.length,
       upcomingCount: upcoming.value!.length,
+      hasScheduledBefore: hasScheduledBefore,
     );
     if (progress.isComplete) return const SizedBox.shrink();
 
@@ -90,7 +102,7 @@ class LobbyGettingStartedCard extends ConsumerWidget {
     final typography = context.theme.typography;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(top: 8, bottom: 4),
       padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
       decoration: BoxDecoration(
         color: colors.card,

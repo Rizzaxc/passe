@@ -53,5 +53,15 @@ void main() {
         isTrue,
       );
     });
+
+    test('a lobby whose sessions are all past has scheduled already', () {
+      final p = GettingStartedProgress.from(
+        memberCount: 2,
+        upcomingCount: 0,
+        hasScheduledBefore: true,
+      );
+      expect(p.hasActivity, isTrue);
+      expect(p.isComplete, isTrue);
+    });
   });
 }
