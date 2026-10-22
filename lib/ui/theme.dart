@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'button_styles.dart';
+import 'package:material_ui/material_ui.dart';
 
+import 'button_styles.dart';
 import 'select_menu_tile_style.dart';
 import 'select_style.dart';
 import 'tabs_style.dart';

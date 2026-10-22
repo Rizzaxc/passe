@@ -1,7 +1,5 @@
 PODS:
   - Flutter (1.0.0)
-  - health (13.3.1):
-    - Flutter
   - libwebp (1.6.0):
     - libwebp/demux (= 1.6.0)
     - libwebp/mux (= 1.6.0)
@@ -20,7 +18,6 @@ PODS:
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - health (from `.symlinks/plugins/health/ios`)
   - video_thumbnail (from `.symlinks/plugins/video_thumbnail/ios`)
 
 SPEC REPOS:
@@ -30,14 +27,11 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  health:
-    :path: ".symlinks/plugins/health/ios"
   video_thumbnail:
     :path: ".symlinks/plugins/video_thumbnail/ios"
 
 SPEC CHECKSUMS:
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
-  health: c1dfe8bc28ccd5998a32bdd0963943bfe9ac8320
   libwebp: af5937a13536ef73f3784d69cc342b98961acf33
   video_thumbnail: c4e2a3c539e247d4de13cd545344fd2d26ffafd1
 

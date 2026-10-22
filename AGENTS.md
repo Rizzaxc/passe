@@ -248,7 +248,7 @@ JSON — parse with `double.tryParse`. Complex reads go through Postgres functio
   `part 'x.freezed.dart'` directive (controllers annotated `@riverpod`, models annotated
   `@freezed`/`@JsonSerializable`, and `lib/router.dart`) is regenerated, not hand-edited. After
   editing any annotated file you MUST run:
-  `dart run build_runner build --delete-conflicting-outputs`
+  `dart run build_runner build`
   (use `watch` instead of `build` during active dev). Never edit `*.g.dart` / `*.freezed.dart` by hand.
 - `flutter analyze` is the lint gate (`flutter_lints`). Suppress a single line with
   `// ignore: rule_name` only when genuinely warranted.

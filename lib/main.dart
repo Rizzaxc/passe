@@ -5,13 +5,13 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -97,8 +97,6 @@ Future<void> main() async {
       // which keeps local dev's build/hot-reload errors out of the issue feed.
       options.dsn = env == envLocal ? '' : sentryDSN;
       options.tracesSampleRate = sampleRates[env];
-      // ignore: experimental_member_use
-      options.profilesSampleRate = 1.0;
       options.environment = env;
     },
     appRunner: () {
@@ -156,7 +154,9 @@ class Passe extends HookConsumerWidget {
       ),
       theme: ui.pbThemeLight.toApproximateMaterialTheme(),
       routerConfig: router,
-      localizationsDelegates: context.localizationDelegates,
+      // easy_localization only ships the legacy flutter_localizations
+      // delegates; material_ui/cupertino_ui widgets need their own.
+      localizationsDelegates: [...context.localizationDelegates, ...GlobalMaterialLocalizations.delegates],
       supportedLocales: context.supportedLocales,
       locale: context.locale,
     );

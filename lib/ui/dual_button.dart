@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A dual button component that joins two FButtons together vertically or horizontally.
 /// Flex controls how much the first button occupies total space.

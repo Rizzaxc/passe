@@ -2,9 +2,9 @@
 // RLS ("Captain can post updates and polls") enforces the captain-only part
 // server-side too; the picker already only shows this tile to the captain.
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../auth/auth_controller.dart';

@@ -1,9 +1,9 @@
 // Planner tab empty state — shown when a lobby has zero current/future
 // activities. Extracted from the old pinned hero's empty branch.
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/feature_flags.dart';
 import '../../../../ui/button_styles.dart';

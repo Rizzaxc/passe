@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'activity.dart';
@@ -9,6 +9,7 @@ part of 'activity.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $ActivityCopyWith<Activity> get copyWith => _$ActivityCopyWithImpl<Activity>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Activity&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.sportId, sportId) || other.sportId == sportId)&&(identical(other.startTime, startTime) || other.startTime == startTime)&&(identical(other.endTime, endTime) || other.endTime == endTime)&&(identical(other.lobbyId, lobbyId) || other.lobbyId == lobbyId)&&(identical(other.courseId, courseId) || other.courseId == courseId)&&(identical(other.proposalStatus, proposalStatus) || other.proposalStatus == proposalStatus)&&(identical(other.refereeBookingId, refereeBookingId) || other.refereeBookingId == refereeBookingId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  final _this = this as Activity;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Activity&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.sportId, _this.sportId) || other.sportId == _this.sportId)&&(identical(other.startTime, _this.startTime) || other.startTime == _this.startTime)&&(identical(other.endTime, _this.endTime) || other.endTime == _this.endTime)&&(identical(other.lobbyId, _this.lobbyId) || other.lobbyId == _this.lobbyId)&&(identical(other.courseId, _this.courseId) || other.courseId == _this.courseId)&&(identical(other.proposalStatus, _this.proposalStatus) || other.proposalStatus == _this.proposalStatus)&&(identical(other.refereeBookingId, _this.refereeBookingId) || other.refereeBookingId == _this.refereeBookingId)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,sportId,startTime,endTime,lobbyId,courseId,proposalStatus,refereeBookingId,createdAt);
+int get hashCode {
+  final _this = this as Activity;
+  return Object.hash(runtimeType,_this.id,_this.userId,_this.sportId,_this.startTime,_this.endTime,_this.lobbyId,_this.courseId,_this.proposalStatus,_this.refereeBookingId,_this.createdAt);
+}
 
 @override
 String toString() {
-  return 'Activity(id: $id, userId: $userId, sportId: $sportId, startTime: $startTime, endTime: $endTime, lobbyId: $lobbyId, courseId: $courseId, proposalStatus: $proposalStatus, refereeBookingId: $refereeBookingId, createdAt: $createdAt)';
+  final _this = this as Activity;
+  return 'Activity(id: ${_this.id}, userId: ${_this.userId}, sportId: ${_this.sportId}, startTime: ${_this.startTime}, endTime: ${_this.endTime}, lobbyId: ${_this.lobbyId}, courseId: ${_this.courseId}, proposalStatus: ${_this.proposalStatus}, refereeBookingId: ${_this.refereeBookingId}, createdAt: ${_this.createdAt})';
 }
 
 
@@ -66,7 +72,7 @@ class _$ActivityCopyWithImpl<$Res>
 /// Create a copy of Activity
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? userId = null,Object? sportId = null,Object? startTime = null,Object? endTime = freezed,Object? lobbyId = freezed,Object? courseId = freezed,Object? proposalStatus = freezed,Object? refereeBookingId = freezed,Object? createdAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(Activity(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String?,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,sportId: null == sportId ? _self.sportId : sportId // ignore: cast_nullable_to_non_nullable
@@ -245,16 +251,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Activity&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.sportId, sportId) || other.sportId == sportId)&&(identical(other.startTime, startTime) || other.startTime == startTime)&&(identical(other.endTime, endTime) || other.endTime == endTime)&&(identical(other.lobbyId, lobbyId) || other.lobbyId == lobbyId)&&(identical(other.courseId, courseId) || other.courseId == courseId)&&(identical(other.proposalStatus, proposalStatus) || other.proposalStatus == proposalStatus)&&(identical(other.refereeBookingId, refereeBookingId) || other.refereeBookingId == refereeBookingId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Activity&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.sportId, sportId) || other.sportId == sportId)&&(identical(other.startTime, startTime) || other.startTime == startTime)&&(identical(other.endTime, endTime) || other.endTime == endTime)&&(identical(other.lobbyId, lobbyId) || other.lobbyId == lobbyId)&&(identical(other.courseId, courseId) || other.courseId == courseId)&&(identical(other.proposalStatus, proposalStatus) || other.proposalStatus == proposalStatus)&&(identical(other.refereeBookingId, refereeBookingId) || other.refereeBookingId == refereeBookingId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,sportId,startTime,endTime,lobbyId,courseId,proposalStatus,refereeBookingId,createdAt);
+int get hashCode {
+    return Object.hash(runtimeType,id,userId,sportId,startTime,endTime,lobbyId,courseId,proposalStatus,refereeBookingId,createdAt);
+}
 
 @override
 String toString() {
-  return 'Activity(id: $id, userId: $userId, sportId: $sportId, startTime: $startTime, endTime: $endTime, lobbyId: $lobbyId, courseId: $courseId, proposalStatus: $proposalStatus, refereeBookingId: $refereeBookingId, createdAt: $createdAt)';
+    return 'Activity(id: $id, userId: $userId, sportId: $sportId, startTime: $startTime, endTime: $endTime, lobbyId: $lobbyId, courseId: $courseId, proposalStatus: $proposalStatus, refereeBookingId: $refereeBookingId, createdAt: $createdAt)';
 }
 
 

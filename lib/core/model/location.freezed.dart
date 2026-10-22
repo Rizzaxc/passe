@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'location.dart';
@@ -9,6 +9,7 @@ part of 'location.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -30,16 +31,21 @@ $LocationCopyWith<Location> get copyWith => _$LocationCopyWithImpl<Location>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Location&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.fullAddress, fullAddress) || other.fullAddress == fullAddress)&&(identical(other.streetNumber, streetNumber) || other.streetNumber == streetNumber)&&(identical(other.streetName, streetName) || other.streetName == streetName)&&(identical(other.district, district) || other.district == district)&&(identical(other.city, city) || other.city == city)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lon, lon) || other.lon == lon)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.cityCluster, cityCluster) || other.cityCluster == cityCluster)&&const DeepCollectionEquality().equals(other.sportIds, sportIds)&&const DeepCollectionEquality().equals(other.amenityKinds, amenityKinds)&&(identical(other.declaredSport, declaredSport) || other.declaredSport == declaredSport)&&(identical(other.districtLegacy, districtLegacy) || other.districtLegacy == districtLegacy));
+  final _this = this as Location;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Location&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.fullAddress, _this.fullAddress) || other.fullAddress == _this.fullAddress)&&(identical(other.streetNumber, _this.streetNumber) || other.streetNumber == _this.streetNumber)&&(identical(other.streetName, _this.streetName) || other.streetName == _this.streetName)&&(identical(other.district, _this.district) || other.district == _this.district)&&(identical(other.city, _this.city) || other.city == _this.city)&&(identical(other.lat, _this.lat) || other.lat == _this.lat)&&(identical(other.lon, _this.lon) || other.lon == _this.lon)&&const DeepCollectionEquality().equals(other.tags, _this.tags)&&(identical(other.cityCluster, _this.cityCluster) || other.cityCluster == _this.cityCluster)&&const DeepCollectionEquality().equals(other.sportIds, _this.sportIds)&&const DeepCollectionEquality().equals(other.amenityKinds, _this.amenityKinds)&&(identical(other.declaredSport, _this.declaredSport) || other.declaredSport == _this.declaredSport)&&(identical(other.districtLegacy, _this.districtLegacy) || other.districtLegacy == _this.districtLegacy));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,fullAddress,streetNumber,streetName,district,city,lat,lon,const DeepCollectionEquality().hash(tags),cityCluster,const DeepCollectionEquality().hash(sportIds),const DeepCollectionEquality().hash(amenityKinds),declaredSport,districtLegacy);
+int get hashCode {
+  final _this = this as Location;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.fullAddress,_this.streetNumber,_this.streetName,_this.district,_this.city,_this.lat,_this.lon,const DeepCollectionEquality().hash(_this.tags),_this.cityCluster,const DeepCollectionEquality().hash(_this.sportIds),const DeepCollectionEquality().hash(_this.amenityKinds),_this.declaredSport,_this.districtLegacy);
+}
 
 @override
 String toString() {
-  return 'Location(id: $id, name: $name, fullAddress: $fullAddress, streetNumber: $streetNumber, streetName: $streetName, district: $district, city: $city, lat: $lat, lon: $lon, tags: $tags, cityCluster: $cityCluster, sportIds: $sportIds, amenityKinds: $amenityKinds, declaredSport: $declaredSport, districtLegacy: $districtLegacy)';
+  final _this = this as Location;
+  return 'Location(id: ${_this.id}, name: ${_this.name}, fullAddress: ${_this.fullAddress}, streetNumber: ${_this.streetNumber}, streetName: ${_this.streetName}, district: ${_this.district}, city: ${_this.city}, lat: ${_this.lat}, lon: ${_this.lon}, tags: ${_this.tags}, cityCluster: ${_this.cityCluster}, sportIds: ${_this.sportIds}, amenityKinds: ${_this.amenityKinds}, declaredSport: ${_this.declaredSport}, districtLegacy: ${_this.districtLegacy})';
 }
 
 
@@ -68,7 +74,7 @@ class _$LocationCopyWithImpl<$Res>
 /// Create a copy of Location
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? fullAddress = freezed,Object? streetNumber = freezed,Object? streetName = freezed,Object? district = freezed,Object? city = freezed,Object? lat = freezed,Object? lon = freezed,Object? tags = null,Object? cityCluster = freezed,Object? sportIds = null,Object? amenityKinds = null,Object? declaredSport = null,Object? districtLegacy = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(Location(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,fullAddress: freezed == fullAddress ? _self.fullAddress : fullAddress // ignore: cast_nullable_to_non_nullable
@@ -225,7 +231,7 @@ return $default(_that.id,_that.name,_that.fullAddress,_that.streetNumber,_that.s
 @JsonSerializable()
 
 class _Location extends Location {
-  const _Location({required this.id, required this.name, @JsonKey(name: 'full_address') this.fullAddress, @JsonKey(name: 'street_number', fromJson: _streetNumberFromJson) this.streetNumber, @JsonKey(name: 'street_name') this.streetName, this.district, this.city, this.lat, this.lon, @JsonKey(fromJson: _tagsFromJson) final  List<String> tags = const <String>[], @JsonKey(name: 'city_cluster') this.cityCluster, @JsonKey(name: 'sport_ids') final  List<int> sportIds = const <int>[], @JsonKey(name: 'amenity_kinds') final  List<String> amenityKinds = const <String>[], @JsonKey(name: 'has_declared_sport') this.declaredSport = false, @JsonKey(name: 'district_legacy') this.districtLegacy}): _tags = tags,_sportIds = sportIds,_amenityKinds = amenityKinds,super._();
+  const _Location({required this.id, required this.name, @JsonKey(name: 'full_address') this.fullAddress, @JsonKey(name: 'street_number', fromJson: _streetNumberFromJson) this.streetNumber, @JsonKey(name: 'street_name') this.streetName, this.district, this.city, this.lat, this.lon, @JsonKey(fromJson: _tagsFromJson)  List<String> tags = const <String>[], @JsonKey(name: 'city_cluster') this.cityCluster, @JsonKey(name: 'sport_ids')  List<int> sportIds = const <int>[], @JsonKey(name: 'amenity_kinds')  List<String> amenityKinds = const <String>[], @JsonKey(name: 'has_declared_sport') this.declaredSport = false, @JsonKey(name: 'district_legacy') this.districtLegacy}): _tags = tags,_sportIds = sportIds,_amenityKinds = amenityKinds,super._();
   factory _Location.fromJson(Map<String, dynamic> json) => _$LocationFromJson(json);
 
 @override final  String id;
@@ -277,16 +283,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Location&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.fullAddress, fullAddress) || other.fullAddress == fullAddress)&&(identical(other.streetNumber, streetNumber) || other.streetNumber == streetNumber)&&(identical(other.streetName, streetName) || other.streetName == streetName)&&(identical(other.district, district) || other.district == district)&&(identical(other.city, city) || other.city == city)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lon, lon) || other.lon == lon)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.cityCluster, cityCluster) || other.cityCluster == cityCluster)&&const DeepCollectionEquality().equals(other._sportIds, _sportIds)&&const DeepCollectionEquality().equals(other._amenityKinds, _amenityKinds)&&(identical(other.declaredSport, declaredSport) || other.declaredSport == declaredSport)&&(identical(other.districtLegacy, districtLegacy) || other.districtLegacy == districtLegacy));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Location&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.fullAddress, fullAddress) || other.fullAddress == fullAddress)&&(identical(other.streetNumber, streetNumber) || other.streetNumber == streetNumber)&&(identical(other.streetName, streetName) || other.streetName == streetName)&&(identical(other.district, district) || other.district == district)&&(identical(other.city, city) || other.city == city)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lon, lon) || other.lon == lon)&&const DeepCollectionEquality().equals(other.tags, _tags)&&(identical(other.cityCluster, cityCluster) || other.cityCluster == cityCluster)&&const DeepCollectionEquality().equals(other.sportIds, _sportIds)&&const DeepCollectionEquality().equals(other.amenityKinds, _amenityKinds)&&(identical(other.declaredSport, declaredSport) || other.declaredSport == declaredSport)&&(identical(other.districtLegacy, districtLegacy) || other.districtLegacy == districtLegacy));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,fullAddress,streetNumber,streetName,district,city,lat,lon,const DeepCollectionEquality().hash(_tags),cityCluster,const DeepCollectionEquality().hash(_sportIds),const DeepCollectionEquality().hash(_amenityKinds),declaredSport,districtLegacy);
+int get hashCode {
+    return Object.hash(runtimeType,id,name,fullAddress,streetNumber,streetName,district,city,lat,lon,const DeepCollectionEquality().hash(_tags),cityCluster,const DeepCollectionEquality().hash(_sportIds),const DeepCollectionEquality().hash(_amenityKinds),declaredSport,districtLegacy);
+}
 
 @override
 String toString() {
-  return 'Location(id: $id, name: $name, fullAddress: $fullAddress, streetNumber: $streetNumber, streetName: $streetName, district: $district, city: $city, lat: $lat, lon: $lon, tags: $tags, cityCluster: $cityCluster, sportIds: $sportIds, amenityKinds: $amenityKinds, declaredSport: $declaredSport, districtLegacy: $districtLegacy)';
+    return 'Location(id: $id, name: $name, fullAddress: $fullAddress, streetNumber: $streetNumber, streetName: $streetName, district: $district, city: $city, lat: $lat, lon: $lon, tags: $tags, cityCluster: $cityCluster, sportIds: $sportIds, amenityKinds: $amenityKinds, declaredSport: $declaredSport, districtLegacy: $districtLegacy)';
 }
 
 

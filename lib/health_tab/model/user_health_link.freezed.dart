@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'user_health_link.dart';
@@ -9,6 +9,7 @@ part of 'user_health_link.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $UserHealthLinkCopyWith<UserHealthLink> get copyWith => _$UserHealthLinkCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserHealthLink&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.platform, platform) || other.platform == platform)&&(identical(other.linkedAt, linkedAt) || other.linkedAt == linkedAt)&&(identical(other.lastSyncAt, lastSyncAt) || other.lastSyncAt == lastSyncAt)&&(identical(other.maxHeartRate, maxHeartRate) || other.maxHeartRate == maxHeartRate)&&(identical(other.lt1Bpm, lt1Bpm) || other.lt1Bpm == lt1Bpm)&&(identical(other.lt2Bpm, lt2Bpm) || other.lt2Bpm == lt2Bpm));
+  final _this = this as UserHealthLink;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserHealthLink&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.platform, _this.platform) || other.platform == _this.platform)&&(identical(other.linkedAt, _this.linkedAt) || other.linkedAt == _this.linkedAt)&&(identical(other.lastSyncAt, _this.lastSyncAt) || other.lastSyncAt == _this.lastSyncAt)&&(identical(other.maxHeartRate, _this.maxHeartRate) || other.maxHeartRate == _this.maxHeartRate)&&(identical(other.lt1Bpm, _this.lt1Bpm) || other.lt1Bpm == _this.lt1Bpm)&&(identical(other.lt2Bpm, _this.lt2Bpm) || other.lt2Bpm == _this.lt2Bpm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,userId,platform,linkedAt,lastSyncAt,maxHeartRate,lt1Bpm,lt2Bpm);
+int get hashCode {
+  final _this = this as UserHealthLink;
+  return Object.hash(runtimeType,_this.userId,_this.platform,_this.linkedAt,_this.lastSyncAt,_this.maxHeartRate,_this.lt1Bpm,_this.lt2Bpm);
+}
 
 @override
 String toString() {
-  return 'UserHealthLink(userId: $userId, platform: $platform, linkedAt: $linkedAt, lastSyncAt: $lastSyncAt, maxHeartRate: $maxHeartRate, lt1Bpm: $lt1Bpm, lt2Bpm: $lt2Bpm)';
+  final _this = this as UserHealthLink;
+  return 'UserHealthLink(userId: ${_this.userId}, platform: ${_this.platform}, linkedAt: ${_this.linkedAt}, lastSyncAt: ${_this.lastSyncAt}, maxHeartRate: ${_this.maxHeartRate}, lt1Bpm: ${_this.lt1Bpm}, lt2Bpm: ${_this.lt2Bpm})';
 }
 
 
@@ -66,7 +72,7 @@ class _$UserHealthLinkCopyWithImpl<$Res>
 /// Create a copy of UserHealthLink
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? platform = null,Object? linkedAt = null,Object? lastSyncAt = freezed,Object? maxHeartRate = freezed,Object? lt1Bpm = freezed,Object? lt2Bpm = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(UserHealthLink(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,platform: null == platform ? _self.platform : platform // ignore: cast_nullable_to_non_nullable
 as HealthPlatform,linkedAt: null == linkedAt ? _self.linkedAt : linkedAt // ignore: cast_nullable_to_non_nullable
@@ -239,16 +245,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserHealthLink&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.platform, platform) || other.platform == platform)&&(identical(other.linkedAt, linkedAt) || other.linkedAt == linkedAt)&&(identical(other.lastSyncAt, lastSyncAt) || other.lastSyncAt == lastSyncAt)&&(identical(other.maxHeartRate, maxHeartRate) || other.maxHeartRate == maxHeartRate)&&(identical(other.lt1Bpm, lt1Bpm) || other.lt1Bpm == lt1Bpm)&&(identical(other.lt2Bpm, lt2Bpm) || other.lt2Bpm == lt2Bpm));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserHealthLink&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.platform, platform) || other.platform == platform)&&(identical(other.linkedAt, linkedAt) || other.linkedAt == linkedAt)&&(identical(other.lastSyncAt, lastSyncAt) || other.lastSyncAt == lastSyncAt)&&(identical(other.maxHeartRate, maxHeartRate) || other.maxHeartRate == maxHeartRate)&&(identical(other.lt1Bpm, lt1Bpm) || other.lt1Bpm == lt1Bpm)&&(identical(other.lt2Bpm, lt2Bpm) || other.lt2Bpm == lt2Bpm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,userId,platform,linkedAt,lastSyncAt,maxHeartRate,lt1Bpm,lt2Bpm);
+int get hashCode {
+    return Object.hash(runtimeType,userId,platform,linkedAt,lastSyncAt,maxHeartRate,lt1Bpm,lt2Bpm);
+}
 
 @override
 String toString() {
-  return 'UserHealthLink(userId: $userId, platform: $platform, linkedAt: $linkedAt, lastSyncAt: $lastSyncAt, maxHeartRate: $maxHeartRate, lt1Bpm: $lt1Bpm, lt2Bpm: $lt2Bpm)';
+    return 'UserHealthLink(userId: $userId, platform: $platform, linkedAt: $linkedAt, lastSyncAt: $lastSyncAt, maxHeartRate: $maxHeartRate, lt1Bpm: $lt1Bpm, lt2Bpm: $lt2Bpm)';
 }
 
 

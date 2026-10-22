@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'sport_profile.dart';
@@ -9,6 +9,7 @@ part of 'sport_profile.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $SoccerProfileCopyWith<SoccerProfile> get copyWith => _$SoccerProfileCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SoccerProfile&&const DeepCollectionEquality().equals(other.position, position)&&const DeepCollectionEquality().equals(other.pitch, pitch)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
+  final _this = this as SoccerProfile;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SoccerProfile&&const DeepCollectionEquality().equals(other.position, _this.position)&&const DeepCollectionEquality().equals(other.pitch, _this.pitch)&&(identical(other.eloSeed, _this.eloSeed) || other.eloSeed == _this.eloSeed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(position),const DeepCollectionEquality().hash(pitch),eloSeed);
+int get hashCode {
+  final _this = this as SoccerProfile;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.position),const DeepCollectionEquality().hash(_this.pitch),_this.eloSeed);
+}
 
 @override
 String toString() {
-  return 'SoccerProfile(position: $position, pitch: $pitch, eloSeed: $eloSeed)';
+  final _this = this as SoccerProfile;
+  return 'SoccerProfile(position: ${_this.position}, pitch: ${_this.pitch}, eloSeed: ${_this.eloSeed})';
 }
 
 
@@ -66,7 +72,7 @@ class _$SoccerProfileCopyWithImpl<$Res>
 /// Create a copy of SoccerProfile
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? position = freezed,Object? pitch = freezed,Object? eloSeed = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(SoccerProfile(
 position: freezed == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as List<SoccerPosition>?,pitch: freezed == pitch ? _self.pitch : pitch // ignore: cast_nullable_to_non_nullable
 as List<SoccerPitch>?,eloSeed: freezed == eloSeed ? _self.eloSeed : eloSeed // ignore: cast_nullable_to_non_nullable
@@ -211,7 +217,7 @@ return $default(_that.position,_that.pitch,_that.eloSeed);case _:
 @JsonSerializable()
 
 class _SoccerProfile implements SoccerProfile {
-  const _SoccerProfile({final  List<SoccerPosition>? position, final  List<SoccerPitch>? pitch, @JsonKey(name: 'elo_seed') this.eloSeed}): _position = position,_pitch = pitch;
+  const _SoccerProfile({ List<SoccerPosition>? position,  List<SoccerPitch>? pitch, @JsonKey(name: 'elo_seed') this.eloSeed}): _position = position,_pitch = pitch;
   factory _SoccerProfile.fromJson(Map<String, dynamic> json) => _$SoccerProfileFromJson(json);
 
  final  List<SoccerPosition>? _position;
@@ -247,16 +253,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SoccerProfile&&const DeepCollectionEquality().equals(other._position, _position)&&const DeepCollectionEquality().equals(other._pitch, _pitch)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SoccerProfile&&const DeepCollectionEquality().equals(other.position, _position)&&const DeepCollectionEquality().equals(other.pitch, _pitch)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_position),const DeepCollectionEquality().hash(_pitch),eloSeed);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_position),const DeepCollectionEquality().hash(_pitch),eloSeed);
+}
 
 @override
 String toString() {
-  return 'SoccerProfile(position: $position, pitch: $pitch, eloSeed: $eloSeed)';
+    return 'SoccerProfile(position: $position, pitch: $pitch, eloSeed: $eloSeed)';
 }
 
 
@@ -313,16 +321,21 @@ $BasketballProfileCopyWith<BasketballProfile> get copyWith => _$BasketballProfil
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BasketballProfile&&const DeepCollectionEquality().equals(other.position, position)&&const DeepCollectionEquality().equals(other.pitch, pitch)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
+  final _this = this as BasketballProfile;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BasketballProfile&&const DeepCollectionEquality().equals(other.position, _this.position)&&const DeepCollectionEquality().equals(other.pitch, _this.pitch)&&(identical(other.eloSeed, _this.eloSeed) || other.eloSeed == _this.eloSeed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(position),const DeepCollectionEquality().hash(pitch),eloSeed);
+int get hashCode {
+  final _this = this as BasketballProfile;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.position),const DeepCollectionEquality().hash(_this.pitch),_this.eloSeed);
+}
 
 @override
 String toString() {
-  return 'BasketballProfile(position: $position, pitch: $pitch, eloSeed: $eloSeed)';
+  final _this = this as BasketballProfile;
+  return 'BasketballProfile(position: ${_this.position}, pitch: ${_this.pitch}, eloSeed: ${_this.eloSeed})';
 }
 
 
@@ -351,7 +364,7 @@ class _$BasketballProfileCopyWithImpl<$Res>
 /// Create a copy of BasketballProfile
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? position = freezed,Object? pitch = freezed,Object? eloSeed = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(BasketballProfile(
 position: freezed == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as List<BasketballPosition>?,pitch: freezed == pitch ? _self.pitch : pitch // ignore: cast_nullable_to_non_nullable
 as List<BasketballPitch>?,eloSeed: freezed == eloSeed ? _self.eloSeed : eloSeed // ignore: cast_nullable_to_non_nullable
@@ -496,7 +509,7 @@ return $default(_that.position,_that.pitch,_that.eloSeed);case _:
 @JsonSerializable()
 
 class _BasketballProfile implements BasketballProfile {
-  const _BasketballProfile({final  List<BasketballPosition>? position, final  List<BasketballPitch>? pitch, @JsonKey(name: 'elo_seed') this.eloSeed}): _position = position,_pitch = pitch;
+  const _BasketballProfile({ List<BasketballPosition>? position,  List<BasketballPitch>? pitch, @JsonKey(name: 'elo_seed') this.eloSeed}): _position = position,_pitch = pitch;
   factory _BasketballProfile.fromJson(Map<String, dynamic> json) => _$BasketballProfileFromJson(json);
 
  final  List<BasketballPosition>? _position;
@@ -532,16 +545,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BasketballProfile&&const DeepCollectionEquality().equals(other._position, _position)&&const DeepCollectionEquality().equals(other._pitch, _pitch)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _BasketballProfile&&const DeepCollectionEquality().equals(other.position, _position)&&const DeepCollectionEquality().equals(other.pitch, _pitch)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_position),const DeepCollectionEquality().hash(_pitch),eloSeed);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_position),const DeepCollectionEquality().hash(_pitch),eloSeed);
+}
 
 @override
 String toString() {
-  return 'BasketballProfile(position: $position, pitch: $pitch, eloSeed: $eloSeed)';
+    return 'BasketballProfile(position: $position, pitch: $pitch, eloSeed: $eloSeed)';
 }
 
 
@@ -598,16 +613,21 @@ $BadmintonProfileCopyWith<BadmintonProfile> get copyWith => _$BadmintonProfileCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BadmintonProfile&&(identical(other.dominantHand, dominantHand) || other.dominantHand == dominantHand)&&const DeepCollectionEquality().equals(other.discipline, discipline)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
+  final _this = this as BadmintonProfile;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BadmintonProfile&&(identical(other.dominantHand, _this.dominantHand) || other.dominantHand == _this.dominantHand)&&const DeepCollectionEquality().equals(other.discipline, _this.discipline)&&(identical(other.eloSeed, _this.eloSeed) || other.eloSeed == _this.eloSeed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,dominantHand,const DeepCollectionEquality().hash(discipline),eloSeed);
+int get hashCode {
+  final _this = this as BadmintonProfile;
+  return Object.hash(runtimeType,_this.dominantHand,const DeepCollectionEquality().hash(_this.discipline),_this.eloSeed);
+}
 
 @override
 String toString() {
-  return 'BadmintonProfile(dominantHand: $dominantHand, discipline: $discipline, eloSeed: $eloSeed)';
+  final _this = this as BadmintonProfile;
+  return 'BadmintonProfile(dominantHand: ${_this.dominantHand}, discipline: ${_this.discipline}, eloSeed: ${_this.eloSeed})';
 }
 
 
@@ -636,7 +656,7 @@ class _$BadmintonProfileCopyWithImpl<$Res>
 /// Create a copy of BadmintonProfile
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? dominantHand = freezed,Object? discipline = freezed,Object? eloSeed = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(BadmintonProfile(
 dominantHand: freezed == dominantHand ? _self.dominantHand : dominantHand // ignore: cast_nullable_to_non_nullable
 as DominantHand?,discipline: freezed == discipline ? _self.discipline : discipline // ignore: cast_nullable_to_non_nullable
 as List<RacketDiscipline>?,eloSeed: freezed == eloSeed ? _self.eloSeed : eloSeed // ignore: cast_nullable_to_non_nullable
@@ -781,7 +801,7 @@ return $default(_that.dominantHand,_that.discipline,_that.eloSeed);case _:
 @JsonSerializable()
 
 class _BadmintonProfile implements BadmintonProfile {
-  const _BadmintonProfile({@JsonKey(name: 'dominant_hand') this.dominantHand, final  List<RacketDiscipline>? discipline, @JsonKey(name: 'elo_seed') this.eloSeed}): _discipline = discipline;
+  const _BadmintonProfile({@JsonKey(name: 'dominant_hand') this.dominantHand,  List<RacketDiscipline>? discipline, @JsonKey(name: 'elo_seed') this.eloSeed}): _discipline = discipline;
   factory _BadmintonProfile.fromJson(Map<String, dynamic> json) => _$BadmintonProfileFromJson(json);
 
 @override@JsonKey(name: 'dominant_hand') final  DominantHand? dominantHand;
@@ -809,16 +829,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BadmintonProfile&&(identical(other.dominantHand, dominantHand) || other.dominantHand == dominantHand)&&const DeepCollectionEquality().equals(other._discipline, _discipline)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _BadmintonProfile&&(identical(other.dominantHand, dominantHand) || other.dominantHand == dominantHand)&&const DeepCollectionEquality().equals(other.discipline, _discipline)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,dominantHand,const DeepCollectionEquality().hash(_discipline),eloSeed);
+int get hashCode {
+    return Object.hash(runtimeType,dominantHand,const DeepCollectionEquality().hash(_discipline),eloSeed);
+}
 
 @override
 String toString() {
-  return 'BadmintonProfile(dominantHand: $dominantHand, discipline: $discipline, eloSeed: $eloSeed)';
+    return 'BadmintonProfile(dominantHand: $dominantHand, discipline: $discipline, eloSeed: $eloSeed)';
 }
 
 
@@ -875,16 +897,21 @@ $TennisProfileCopyWith<TennisProfile> get copyWith => _$TennisProfileCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TennisProfile&&(identical(other.dominantHand, dominantHand) || other.dominantHand == dominantHand)&&const DeepCollectionEquality().equals(other.discipline, discipline)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
+  final _this = this as TennisProfile;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TennisProfile&&(identical(other.dominantHand, _this.dominantHand) || other.dominantHand == _this.dominantHand)&&const DeepCollectionEquality().equals(other.discipline, _this.discipline)&&(identical(other.eloSeed, _this.eloSeed) || other.eloSeed == _this.eloSeed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,dominantHand,const DeepCollectionEquality().hash(discipline),eloSeed);
+int get hashCode {
+  final _this = this as TennisProfile;
+  return Object.hash(runtimeType,_this.dominantHand,const DeepCollectionEquality().hash(_this.discipline),_this.eloSeed);
+}
 
 @override
 String toString() {
-  return 'TennisProfile(dominantHand: $dominantHand, discipline: $discipline, eloSeed: $eloSeed)';
+  final _this = this as TennisProfile;
+  return 'TennisProfile(dominantHand: ${_this.dominantHand}, discipline: ${_this.discipline}, eloSeed: ${_this.eloSeed})';
 }
 
 
@@ -913,7 +940,7 @@ class _$TennisProfileCopyWithImpl<$Res>
 /// Create a copy of TennisProfile
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? dominantHand = freezed,Object? discipline = freezed,Object? eloSeed = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(TennisProfile(
 dominantHand: freezed == dominantHand ? _self.dominantHand : dominantHand // ignore: cast_nullable_to_non_nullable
 as DominantHand?,discipline: freezed == discipline ? _self.discipline : discipline // ignore: cast_nullable_to_non_nullable
 as List<RacketDiscipline>?,eloSeed: freezed == eloSeed ? _self.eloSeed : eloSeed // ignore: cast_nullable_to_non_nullable
@@ -1058,7 +1085,7 @@ return $default(_that.dominantHand,_that.discipline,_that.eloSeed);case _:
 @JsonSerializable()
 
 class _TennisProfile implements TennisProfile {
-  const _TennisProfile({@JsonKey(name: 'dominant_hand') this.dominantHand, final  List<RacketDiscipline>? discipline, @JsonKey(name: 'elo_seed') this.eloSeed}): _discipline = discipline;
+  const _TennisProfile({@JsonKey(name: 'dominant_hand') this.dominantHand,  List<RacketDiscipline>? discipline, @JsonKey(name: 'elo_seed') this.eloSeed}): _discipline = discipline;
   factory _TennisProfile.fromJson(Map<String, dynamic> json) => _$TennisProfileFromJson(json);
 
 @override@JsonKey(name: 'dominant_hand') final  DominantHand? dominantHand;
@@ -1086,16 +1113,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TennisProfile&&(identical(other.dominantHand, dominantHand) || other.dominantHand == dominantHand)&&const DeepCollectionEquality().equals(other._discipline, _discipline)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TennisProfile&&(identical(other.dominantHand, dominantHand) || other.dominantHand == dominantHand)&&const DeepCollectionEquality().equals(other.discipline, _discipline)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,dominantHand,const DeepCollectionEquality().hash(_discipline),eloSeed);
+int get hashCode {
+    return Object.hash(runtimeType,dominantHand,const DeepCollectionEquality().hash(_discipline),eloSeed);
+}
 
 @override
 String toString() {
-  return 'TennisProfile(dominantHand: $dominantHand, discipline: $discipline, eloSeed: $eloSeed)';
+    return 'TennisProfile(dominantHand: $dominantHand, discipline: $discipline, eloSeed: $eloSeed)';
 }
 
 
@@ -1152,16 +1181,21 @@ $PickleballProfileCopyWith<PickleballProfile> get copyWith => _$PickleballProfil
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PickleballProfile&&(identical(other.dominantHand, dominantHand) || other.dominantHand == dominantHand)&&const DeepCollectionEquality().equals(other.discipline, discipline)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
+  final _this = this as PickleballProfile;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PickleballProfile&&(identical(other.dominantHand, _this.dominantHand) || other.dominantHand == _this.dominantHand)&&const DeepCollectionEquality().equals(other.discipline, _this.discipline)&&(identical(other.eloSeed, _this.eloSeed) || other.eloSeed == _this.eloSeed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,dominantHand,const DeepCollectionEquality().hash(discipline),eloSeed);
+int get hashCode {
+  final _this = this as PickleballProfile;
+  return Object.hash(runtimeType,_this.dominantHand,const DeepCollectionEquality().hash(_this.discipline),_this.eloSeed);
+}
 
 @override
 String toString() {
-  return 'PickleballProfile(dominantHand: $dominantHand, discipline: $discipline, eloSeed: $eloSeed)';
+  final _this = this as PickleballProfile;
+  return 'PickleballProfile(dominantHand: ${_this.dominantHand}, discipline: ${_this.discipline}, eloSeed: ${_this.eloSeed})';
 }
 
 
@@ -1190,7 +1224,7 @@ class _$PickleballProfileCopyWithImpl<$Res>
 /// Create a copy of PickleballProfile
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? dominantHand = freezed,Object? discipline = freezed,Object? eloSeed = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(PickleballProfile(
 dominantHand: freezed == dominantHand ? _self.dominantHand : dominantHand // ignore: cast_nullable_to_non_nullable
 as DominantHand?,discipline: freezed == discipline ? _self.discipline : discipline // ignore: cast_nullable_to_non_nullable
 as List<RacketDiscipline>?,eloSeed: freezed == eloSeed ? _self.eloSeed : eloSeed // ignore: cast_nullable_to_non_nullable
@@ -1335,7 +1369,7 @@ return $default(_that.dominantHand,_that.discipline,_that.eloSeed);case _:
 @JsonSerializable()
 
 class _PickleballProfile implements PickleballProfile {
-  const _PickleballProfile({@JsonKey(name: 'dominant_hand') this.dominantHand, final  List<RacketDiscipline>? discipline, @JsonKey(name: 'elo_seed') this.eloSeed}): _discipline = discipline;
+  const _PickleballProfile({@JsonKey(name: 'dominant_hand') this.dominantHand,  List<RacketDiscipline>? discipline, @JsonKey(name: 'elo_seed') this.eloSeed}): _discipline = discipline;
   factory _PickleballProfile.fromJson(Map<String, dynamic> json) => _$PickleballProfileFromJson(json);
 
 @override@JsonKey(name: 'dominant_hand') final  DominantHand? dominantHand;
@@ -1363,16 +1397,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PickleballProfile&&(identical(other.dominantHand, dominantHand) || other.dominantHand == dominantHand)&&const DeepCollectionEquality().equals(other._discipline, _discipline)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PickleballProfile&&(identical(other.dominantHand, dominantHand) || other.dominantHand == dominantHand)&&const DeepCollectionEquality().equals(other.discipline, _discipline)&&(identical(other.eloSeed, eloSeed) || other.eloSeed == eloSeed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,dominantHand,const DeepCollectionEquality().hash(_discipline),eloSeed);
+int get hashCode {
+    return Object.hash(runtimeType,dominantHand,const DeepCollectionEquality().hash(_discipline),eloSeed);
+}
 
 @override
 String toString() {
-  return 'PickleballProfile(dominantHand: $dominantHand, discipline: $discipline, eloSeed: $eloSeed)';
+    return 'PickleballProfile(dominantHand: $dominantHand, discipline: $discipline, eloSeed: $eloSeed)';
 }
 
 

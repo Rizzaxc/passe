@@ -15,6 +15,16 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+// video_thumbnail is unmaintained and still pins compileSdk 33, but the
+// AndroidX libs it now resolves to need 34+. Registered before the
+// evaluationDependsOn block below so afterEvaluate still fires.
+subprojects {
+    if (name == "video_thumbnail") {
+        afterEvaluate {
+            extensions.findByName("android")?.withGroovyBuilder { "compileSdkVersion"(36) }
+        }
+    }
+}
 subprojects {
     project.evaluationDependsOn(":app")
 }

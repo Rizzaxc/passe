@@ -1,9 +1,9 @@
 // Feed item models + renderers — action-based; activity notes are the one
 // intentionally short free-text action.
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../ui/theme.dart';
 import '../../../../ui/user_avatar.dart';

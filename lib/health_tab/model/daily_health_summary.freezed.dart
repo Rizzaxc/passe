@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'daily_health_summary.dart';
@@ -9,6 +9,7 @@ part of 'daily_health_summary.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $DailyHealthSummaryCopyWith<DailyHealthSummary> get copyWith => _$DailyHealthSum
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyHealthSummary&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.date, date) || other.date == date)&&(identical(other.restingHeartRate, restingHeartRate) || other.restingHeartRate == restingHeartRate)&&(identical(other.hrvSdnnMs, hrvSdnnMs) || other.hrvSdnnMs == hrvSdnnMs)&&(identical(other.hrvRmssdMs, hrvRmssdMs) || other.hrvRmssdMs == hrvRmssdMs)&&(identical(other.steps, steps) || other.steps == steps)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&(identical(other.activeCalories, activeCalories) || other.activeCalories == activeCalories)&&(identical(other.totalCalories, totalCalories) || other.totalCalories == totalCalories)&&(identical(other.sleepMinutes, sleepMinutes) || other.sleepMinutes == sleepMinutes)&&(identical(other.sleepQualityScore, sleepQualityScore) || other.sleepQualityScore == sleepQualityScore)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg)&&(identical(other.activityCount, activityCount) || other.activityCount == activityCount)&&(identical(other.totalActivityMinutes, totalActivityMinutes) || other.totalActivityMinutes == totalActivityMinutes)&&(identical(other.syncedAt, syncedAt) || other.syncedAt == syncedAt));
+  final _this = this as DailyHealthSummary;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyHealthSummary&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.date, _this.date) || other.date == _this.date)&&(identical(other.restingHeartRate, _this.restingHeartRate) || other.restingHeartRate == _this.restingHeartRate)&&(identical(other.hrvSdnnMs, _this.hrvSdnnMs) || other.hrvSdnnMs == _this.hrvSdnnMs)&&(identical(other.hrvRmssdMs, _this.hrvRmssdMs) || other.hrvRmssdMs == _this.hrvRmssdMs)&&(identical(other.steps, _this.steps) || other.steps == _this.steps)&&(identical(other.distanceMeters, _this.distanceMeters) || other.distanceMeters == _this.distanceMeters)&&(identical(other.activeCalories, _this.activeCalories) || other.activeCalories == _this.activeCalories)&&(identical(other.totalCalories, _this.totalCalories) || other.totalCalories == _this.totalCalories)&&(identical(other.sleepMinutes, _this.sleepMinutes) || other.sleepMinutes == _this.sleepMinutes)&&(identical(other.sleepQualityScore, _this.sleepQualityScore) || other.sleepQualityScore == _this.sleepQualityScore)&&(identical(other.weightKg, _this.weightKg) || other.weightKg == _this.weightKg)&&(identical(other.activityCount, _this.activityCount) || other.activityCount == _this.activityCount)&&(identical(other.totalActivityMinutes, _this.totalActivityMinutes) || other.totalActivityMinutes == _this.totalActivityMinutes)&&(identical(other.syncedAt, _this.syncedAt) || other.syncedAt == _this.syncedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,userId,date,restingHeartRate,hrvSdnnMs,hrvRmssdMs,steps,distanceMeters,activeCalories,totalCalories,sleepMinutes,sleepQualityScore,weightKg,activityCount,totalActivityMinutes,syncedAt);
+int get hashCode {
+  final _this = this as DailyHealthSummary;
+  return Object.hash(runtimeType,_this.userId,_this.date,_this.restingHeartRate,_this.hrvSdnnMs,_this.hrvRmssdMs,_this.steps,_this.distanceMeters,_this.activeCalories,_this.totalCalories,_this.sleepMinutes,_this.sleepQualityScore,_this.weightKg,_this.activityCount,_this.totalActivityMinutes,_this.syncedAt);
+}
 
 @override
 String toString() {
-  return 'DailyHealthSummary(userId: $userId, date: $date, restingHeartRate: $restingHeartRate, hrvSdnnMs: $hrvSdnnMs, hrvRmssdMs: $hrvRmssdMs, steps: $steps, distanceMeters: $distanceMeters, activeCalories: $activeCalories, totalCalories: $totalCalories, sleepMinutes: $sleepMinutes, sleepQualityScore: $sleepQualityScore, weightKg: $weightKg, activityCount: $activityCount, totalActivityMinutes: $totalActivityMinutes, syncedAt: $syncedAt)';
+  final _this = this as DailyHealthSummary;
+  return 'DailyHealthSummary(userId: ${_this.userId}, date: ${_this.date}, restingHeartRate: ${_this.restingHeartRate}, hrvSdnnMs: ${_this.hrvSdnnMs}, hrvRmssdMs: ${_this.hrvRmssdMs}, steps: ${_this.steps}, distanceMeters: ${_this.distanceMeters}, activeCalories: ${_this.activeCalories}, totalCalories: ${_this.totalCalories}, sleepMinutes: ${_this.sleepMinutes}, sleepQualityScore: ${_this.sleepQualityScore}, weightKg: ${_this.weightKg}, activityCount: ${_this.activityCount}, totalActivityMinutes: ${_this.totalActivityMinutes}, syncedAt: ${_this.syncedAt})';
 }
 
 
@@ -66,7 +72,7 @@ class _$DailyHealthSummaryCopyWithImpl<$Res>
 /// Create a copy of DailyHealthSummary
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? date = null,Object? restingHeartRate = freezed,Object? hrvSdnnMs = freezed,Object? hrvRmssdMs = freezed,Object? steps = freezed,Object? distanceMeters = freezed,Object? activeCalories = freezed,Object? totalCalories = freezed,Object? sleepMinutes = freezed,Object? sleepQualityScore = freezed,Object? weightKg = freezed,Object? activityCount = null,Object? totalActivityMinutes = null,Object? syncedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(DailyHealthSummary(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,restingHeartRate: freezed == restingHeartRate ? _self.restingHeartRate : restingHeartRate // ignore: cast_nullable_to_non_nullable
@@ -255,16 +261,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DailyHealthSummary&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.date, date) || other.date == date)&&(identical(other.restingHeartRate, restingHeartRate) || other.restingHeartRate == restingHeartRate)&&(identical(other.hrvSdnnMs, hrvSdnnMs) || other.hrvSdnnMs == hrvSdnnMs)&&(identical(other.hrvRmssdMs, hrvRmssdMs) || other.hrvRmssdMs == hrvRmssdMs)&&(identical(other.steps, steps) || other.steps == steps)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&(identical(other.activeCalories, activeCalories) || other.activeCalories == activeCalories)&&(identical(other.totalCalories, totalCalories) || other.totalCalories == totalCalories)&&(identical(other.sleepMinutes, sleepMinutes) || other.sleepMinutes == sleepMinutes)&&(identical(other.sleepQualityScore, sleepQualityScore) || other.sleepQualityScore == sleepQualityScore)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg)&&(identical(other.activityCount, activityCount) || other.activityCount == activityCount)&&(identical(other.totalActivityMinutes, totalActivityMinutes) || other.totalActivityMinutes == totalActivityMinutes)&&(identical(other.syncedAt, syncedAt) || other.syncedAt == syncedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DailyHealthSummary&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.date, date) || other.date == date)&&(identical(other.restingHeartRate, restingHeartRate) || other.restingHeartRate == restingHeartRate)&&(identical(other.hrvSdnnMs, hrvSdnnMs) || other.hrvSdnnMs == hrvSdnnMs)&&(identical(other.hrvRmssdMs, hrvRmssdMs) || other.hrvRmssdMs == hrvRmssdMs)&&(identical(other.steps, steps) || other.steps == steps)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&(identical(other.activeCalories, activeCalories) || other.activeCalories == activeCalories)&&(identical(other.totalCalories, totalCalories) || other.totalCalories == totalCalories)&&(identical(other.sleepMinutes, sleepMinutes) || other.sleepMinutes == sleepMinutes)&&(identical(other.sleepQualityScore, sleepQualityScore) || other.sleepQualityScore == sleepQualityScore)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg)&&(identical(other.activityCount, activityCount) || other.activityCount == activityCount)&&(identical(other.totalActivityMinutes, totalActivityMinutes) || other.totalActivityMinutes == totalActivityMinutes)&&(identical(other.syncedAt, syncedAt) || other.syncedAt == syncedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,userId,date,restingHeartRate,hrvSdnnMs,hrvRmssdMs,steps,distanceMeters,activeCalories,totalCalories,sleepMinutes,sleepQualityScore,weightKg,activityCount,totalActivityMinutes,syncedAt);
+int get hashCode {
+    return Object.hash(runtimeType,userId,date,restingHeartRate,hrvSdnnMs,hrvRmssdMs,steps,distanceMeters,activeCalories,totalCalories,sleepMinutes,sleepQualityScore,weightKg,activityCount,totalActivityMinutes,syncedAt);
+}
 
 @override
 String toString() {
-  return 'DailyHealthSummary(userId: $userId, date: $date, restingHeartRate: $restingHeartRate, hrvSdnnMs: $hrvSdnnMs, hrvRmssdMs: $hrvRmssdMs, steps: $steps, distanceMeters: $distanceMeters, activeCalories: $activeCalories, totalCalories: $totalCalories, sleepMinutes: $sleepMinutes, sleepQualityScore: $sleepQualityScore, weightKg: $weightKg, activityCount: $activityCount, totalActivityMinutes: $totalActivityMinutes, syncedAt: $syncedAt)';
+    return 'DailyHealthSummary(userId: $userId, date: $date, restingHeartRate: $restingHeartRate, hrvSdnnMs: $hrvSdnnMs, hrvRmssdMs: $hrvRmssdMs, steps: $steps, distanceMeters: $distanceMeters, activeCalories: $activeCalories, totalCalories: $totalCalories, sleepMinutes: $sleepMinutes, sleepQualityScore: $sleepQualityScore, weightKg: $weightKg, activityCount: $activityCount, totalActivityMinutes: $totalActivityMinutes, syncedAt: $syncedAt)';
 }
 
 

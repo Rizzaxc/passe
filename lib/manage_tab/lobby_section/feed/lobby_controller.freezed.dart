@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'lobby_controller.dart';
@@ -9,6 +9,7 @@ part of 'lobby_controller.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $LobbyFormStateCopyWith<LobbyFormState> get copyWith => _$LobbyFormStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other.homeGrounds, homeGrounds)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
+  final _this = this as LobbyFormState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyFormState&&(identical(other.lobby, _this.lobby) || other.lobby == _this.lobby)&&(identical(other.isSaving, _this.isSaving) || other.isSaving == _this.isSaving)&&const DeepCollectionEquality().equals(other.homeGrounds, _this.homeGrounds)&&(identical(other.pickedAvatar, _this.pickedAvatar) || other.pickedAvatar == _this.pickedAvatar));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(homeGrounds),pickedAvatar);
+int get hashCode {
+  final _this = this as LobbyFormState;
+  return Object.hash(runtimeType,_this.lobby,_this.isSaving,const DeepCollectionEquality().hash(_this.homeGrounds),_this.pickedAvatar);
+}
 
 @override
 String toString() {
-  return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, homeGrounds: $homeGrounds, pickedAvatar: $pickedAvatar)';
+  final _this = this as LobbyFormState;
+  return 'LobbyFormState(lobby: ${_this.lobby}, isSaving: ${_this.isSaving}, homeGrounds: ${_this.homeGrounds}, pickedAvatar: ${_this.pickedAvatar})';
 }
 
 
@@ -63,7 +69,7 @@ class _$LobbyFormStateCopyWithImpl<$Res>
 /// Create a copy of LobbyFormState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? lobby = null,Object? isSaving = null,Object? homeGrounds = null,Object? pickedAvatar = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(LobbyFormState(
 lobby: null == lobby ? _self.lobby : lobby // ignore: cast_nullable_to_non_nullable
 as Lobby,isSaving: null == isSaving ? _self.isSaving : isSaving // ignore: cast_nullable_to_non_nullable
 as bool,homeGrounds: null == homeGrounds ? _self.homeGrounds : homeGrounds // ignore: cast_nullable_to_non_nullable
@@ -218,7 +224,7 @@ return $default(_that.lobby,_that.isSaving,_that.homeGrounds,_that.pickedAvatar)
 
 
 class _LobbyFormState implements LobbyFormState {
-  const _LobbyFormState({required this.lobby, this.isSaving = false, final  List<LobbyHomeground> homeGrounds = const <LobbyHomeground>[], this.pickedAvatar}): _homeGrounds = homeGrounds;
+  const _LobbyFormState({required this.lobby, this.isSaving = false,  List<LobbyHomeground> homeGrounds = const <LobbyHomeground>[], this.pickedAvatar}): _homeGrounds = homeGrounds;
   
 
 @override final  Lobby lobby;
@@ -242,16 +248,18 @@ _$LobbyFormStateCopyWith<_LobbyFormState> get copyWith => __$LobbyFormStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other._homeGrounds, _homeGrounds)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyFormState&&(identical(other.lobby, lobby) || other.lobby == lobby)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&const DeepCollectionEquality().equals(other.homeGrounds, _homeGrounds)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(_homeGrounds),pickedAvatar);
+int get hashCode {
+    return Object.hash(runtimeType,lobby,isSaving,const DeepCollectionEquality().hash(_homeGrounds),pickedAvatar);
+}
 
 @override
 String toString() {
-  return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, homeGrounds: $homeGrounds, pickedAvatar: $pickedAvatar)';
+    return 'LobbyFormState(lobby: $lobby, isSaving: $isSaving, homeGrounds: $homeGrounds, pickedAvatar: $pickedAvatar)';
 }
 
 

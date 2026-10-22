@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'activity_health_metrics.dart';
@@ -9,6 +9,7 @@ part of 'activity_health_metrics.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $ActivityHealthMetricsCopyWith<ActivityHealthMetrics> get copyWith => _$Activity
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ActivityHealthMetrics&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.activityId, activityId) || other.activityId == activityId)&&(identical(other.steps, steps) || other.steps == steps)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&(identical(other.activeCalories, activeCalories) || other.activeCalories == activeCalories)&&(identical(other.avgHeartRate, avgHeartRate) || other.avgHeartRate == avgHeartRate)&&(identical(other.maxHeartRate, maxHeartRate) || other.maxHeartRate == maxHeartRate)&&(identical(other.minHeartRate, minHeartRate) || other.minHeartRate == minHeartRate)&&(identical(other.hrvSdnnMs, hrvSdnnMs) || other.hrvSdnnMs == hrvSdnnMs)&&(identical(other.hrvRmssdMs, hrvRmssdMs) || other.hrvRmssdMs == hrvRmssdMs)&&(identical(other.hrZoneEasySeconds, hrZoneEasySeconds) || other.hrZoneEasySeconds == hrZoneEasySeconds)&&(identical(other.hrZoneModerateSeconds, hrZoneModerateSeconds) || other.hrZoneModerateSeconds == hrZoneModerateSeconds)&&(identical(other.hrZoneHardSeconds, hrZoneHardSeconds) || other.hrZoneHardSeconds == hrZoneHardSeconds)&&(identical(other.trainingLoad, trainingLoad) || other.trainingLoad == trainingLoad)&&(identical(other.effortScore, effortScore) || other.effortScore == effortScore)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg)&&(identical(other.workoutType, workoutType) || other.workoutType == workoutType)&&(identical(other.dismissed, dismissed) || other.dismissed == dismissed)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt));
+  final _this = this as ActivityHealthMetrics;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ActivityHealthMetrics&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.activityId, _this.activityId) || other.activityId == _this.activityId)&&(identical(other.steps, _this.steps) || other.steps == _this.steps)&&(identical(other.distanceMeters, _this.distanceMeters) || other.distanceMeters == _this.distanceMeters)&&(identical(other.activeCalories, _this.activeCalories) || other.activeCalories == _this.activeCalories)&&(identical(other.avgHeartRate, _this.avgHeartRate) || other.avgHeartRate == _this.avgHeartRate)&&(identical(other.maxHeartRate, _this.maxHeartRate) || other.maxHeartRate == _this.maxHeartRate)&&(identical(other.minHeartRate, _this.minHeartRate) || other.minHeartRate == _this.minHeartRate)&&(identical(other.hrvSdnnMs, _this.hrvSdnnMs) || other.hrvSdnnMs == _this.hrvSdnnMs)&&(identical(other.hrvRmssdMs, _this.hrvRmssdMs) || other.hrvRmssdMs == _this.hrvRmssdMs)&&(identical(other.hrZoneEasySeconds, _this.hrZoneEasySeconds) || other.hrZoneEasySeconds == _this.hrZoneEasySeconds)&&(identical(other.hrZoneModerateSeconds, _this.hrZoneModerateSeconds) || other.hrZoneModerateSeconds == _this.hrZoneModerateSeconds)&&(identical(other.hrZoneHardSeconds, _this.hrZoneHardSeconds) || other.hrZoneHardSeconds == _this.hrZoneHardSeconds)&&(identical(other.trainingLoad, _this.trainingLoad) || other.trainingLoad == _this.trainingLoad)&&(identical(other.effortScore, _this.effortScore) || other.effortScore == _this.effortScore)&&(identical(other.weightKg, _this.weightKg) || other.weightKg == _this.weightKg)&&(identical(other.workoutType, _this.workoutType) || other.workoutType == _this.workoutType)&&(identical(other.dismissed, _this.dismissed) || other.dismissed == _this.dismissed)&&(identical(other.recordedAt, _this.recordedAt) || other.recordedAt == _this.recordedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,userId,activityId,steps,distanceMeters,activeCalories,avgHeartRate,maxHeartRate,minHeartRate,hrvSdnnMs,hrvRmssdMs,hrZoneEasySeconds,hrZoneModerateSeconds,hrZoneHardSeconds,trainingLoad,effortScore,weightKg,workoutType,dismissed,recordedAt]);
+int get hashCode {
+  final _this = this as ActivityHealthMetrics;
+  return Object.hashAll([runtimeType,_this.id,_this.userId,_this.activityId,_this.steps,_this.distanceMeters,_this.activeCalories,_this.avgHeartRate,_this.maxHeartRate,_this.minHeartRate,_this.hrvSdnnMs,_this.hrvRmssdMs,_this.hrZoneEasySeconds,_this.hrZoneModerateSeconds,_this.hrZoneHardSeconds,_this.trainingLoad,_this.effortScore,_this.weightKg,_this.workoutType,_this.dismissed,_this.recordedAt]);
+}
 
 @override
 String toString() {
-  return 'ActivityHealthMetrics(id: $id, userId: $userId, activityId: $activityId, steps: $steps, distanceMeters: $distanceMeters, activeCalories: $activeCalories, avgHeartRate: $avgHeartRate, maxHeartRate: $maxHeartRate, minHeartRate: $minHeartRate, hrvSdnnMs: $hrvSdnnMs, hrvRmssdMs: $hrvRmssdMs, hrZoneEasySeconds: $hrZoneEasySeconds, hrZoneModerateSeconds: $hrZoneModerateSeconds, hrZoneHardSeconds: $hrZoneHardSeconds, trainingLoad: $trainingLoad, effortScore: $effortScore, weightKg: $weightKg, workoutType: $workoutType, dismissed: $dismissed, recordedAt: $recordedAt)';
+  final _this = this as ActivityHealthMetrics;
+  return 'ActivityHealthMetrics(id: ${_this.id}, userId: ${_this.userId}, activityId: ${_this.activityId}, steps: ${_this.steps}, distanceMeters: ${_this.distanceMeters}, activeCalories: ${_this.activeCalories}, avgHeartRate: ${_this.avgHeartRate}, maxHeartRate: ${_this.maxHeartRate}, minHeartRate: ${_this.minHeartRate}, hrvSdnnMs: ${_this.hrvSdnnMs}, hrvRmssdMs: ${_this.hrvRmssdMs}, hrZoneEasySeconds: ${_this.hrZoneEasySeconds}, hrZoneModerateSeconds: ${_this.hrZoneModerateSeconds}, hrZoneHardSeconds: ${_this.hrZoneHardSeconds}, trainingLoad: ${_this.trainingLoad}, effortScore: ${_this.effortScore}, weightKg: ${_this.weightKg}, workoutType: ${_this.workoutType}, dismissed: ${_this.dismissed}, recordedAt: ${_this.recordedAt})';
 }
 
 
@@ -66,7 +72,7 @@ class _$ActivityHealthMetricsCopyWithImpl<$Res>
 /// Create a copy of ActivityHealthMetrics
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? userId = null,Object? activityId = null,Object? steps = freezed,Object? distanceMeters = freezed,Object? activeCalories = freezed,Object? avgHeartRate = freezed,Object? maxHeartRate = freezed,Object? minHeartRate = freezed,Object? hrvSdnnMs = freezed,Object? hrvRmssdMs = freezed,Object? hrZoneEasySeconds = freezed,Object? hrZoneModerateSeconds = freezed,Object? hrZoneHardSeconds = freezed,Object? trainingLoad = freezed,Object? effortScore = freezed,Object? weightKg = freezed,Object? workoutType = freezed,Object? dismissed = null,Object? recordedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ActivityHealthMetrics(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String?,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,activityId: null == activityId ? _self.activityId : activityId // ignore: cast_nullable_to_non_nullable
@@ -265,16 +271,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ActivityHealthMetrics&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.activityId, activityId) || other.activityId == activityId)&&(identical(other.steps, steps) || other.steps == steps)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&(identical(other.activeCalories, activeCalories) || other.activeCalories == activeCalories)&&(identical(other.avgHeartRate, avgHeartRate) || other.avgHeartRate == avgHeartRate)&&(identical(other.maxHeartRate, maxHeartRate) || other.maxHeartRate == maxHeartRate)&&(identical(other.minHeartRate, minHeartRate) || other.minHeartRate == minHeartRate)&&(identical(other.hrvSdnnMs, hrvSdnnMs) || other.hrvSdnnMs == hrvSdnnMs)&&(identical(other.hrvRmssdMs, hrvRmssdMs) || other.hrvRmssdMs == hrvRmssdMs)&&(identical(other.hrZoneEasySeconds, hrZoneEasySeconds) || other.hrZoneEasySeconds == hrZoneEasySeconds)&&(identical(other.hrZoneModerateSeconds, hrZoneModerateSeconds) || other.hrZoneModerateSeconds == hrZoneModerateSeconds)&&(identical(other.hrZoneHardSeconds, hrZoneHardSeconds) || other.hrZoneHardSeconds == hrZoneHardSeconds)&&(identical(other.trainingLoad, trainingLoad) || other.trainingLoad == trainingLoad)&&(identical(other.effortScore, effortScore) || other.effortScore == effortScore)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg)&&(identical(other.workoutType, workoutType) || other.workoutType == workoutType)&&(identical(other.dismissed, dismissed) || other.dismissed == dismissed)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ActivityHealthMetrics&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.activityId, activityId) || other.activityId == activityId)&&(identical(other.steps, steps) || other.steps == steps)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&(identical(other.activeCalories, activeCalories) || other.activeCalories == activeCalories)&&(identical(other.avgHeartRate, avgHeartRate) || other.avgHeartRate == avgHeartRate)&&(identical(other.maxHeartRate, maxHeartRate) || other.maxHeartRate == maxHeartRate)&&(identical(other.minHeartRate, minHeartRate) || other.minHeartRate == minHeartRate)&&(identical(other.hrvSdnnMs, hrvSdnnMs) || other.hrvSdnnMs == hrvSdnnMs)&&(identical(other.hrvRmssdMs, hrvRmssdMs) || other.hrvRmssdMs == hrvRmssdMs)&&(identical(other.hrZoneEasySeconds, hrZoneEasySeconds) || other.hrZoneEasySeconds == hrZoneEasySeconds)&&(identical(other.hrZoneModerateSeconds, hrZoneModerateSeconds) || other.hrZoneModerateSeconds == hrZoneModerateSeconds)&&(identical(other.hrZoneHardSeconds, hrZoneHardSeconds) || other.hrZoneHardSeconds == hrZoneHardSeconds)&&(identical(other.trainingLoad, trainingLoad) || other.trainingLoad == trainingLoad)&&(identical(other.effortScore, effortScore) || other.effortScore == effortScore)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg)&&(identical(other.workoutType, workoutType) || other.workoutType == workoutType)&&(identical(other.dismissed, dismissed) || other.dismissed == dismissed)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,userId,activityId,steps,distanceMeters,activeCalories,avgHeartRate,maxHeartRate,minHeartRate,hrvSdnnMs,hrvRmssdMs,hrZoneEasySeconds,hrZoneModerateSeconds,hrZoneHardSeconds,trainingLoad,effortScore,weightKg,workoutType,dismissed,recordedAt]);
+int get hashCode {
+    return Object.hashAll([runtimeType,id,userId,activityId,steps,distanceMeters,activeCalories,avgHeartRate,maxHeartRate,minHeartRate,hrvSdnnMs,hrvRmssdMs,hrZoneEasySeconds,hrZoneModerateSeconds,hrZoneHardSeconds,trainingLoad,effortScore,weightKg,workoutType,dismissed,recordedAt]);
+}
 
 @override
 String toString() {
-  return 'ActivityHealthMetrics(id: $id, userId: $userId, activityId: $activityId, steps: $steps, distanceMeters: $distanceMeters, activeCalories: $activeCalories, avgHeartRate: $avgHeartRate, maxHeartRate: $maxHeartRate, minHeartRate: $minHeartRate, hrvSdnnMs: $hrvSdnnMs, hrvRmssdMs: $hrvRmssdMs, hrZoneEasySeconds: $hrZoneEasySeconds, hrZoneModerateSeconds: $hrZoneModerateSeconds, hrZoneHardSeconds: $hrZoneHardSeconds, trainingLoad: $trainingLoad, effortScore: $effortScore, weightKg: $weightKg, workoutType: $workoutType, dismissed: $dismissed, recordedAt: $recordedAt)';
+    return 'ActivityHealthMetrics(id: $id, userId: $userId, activityId: $activityId, steps: $steps, distanceMeters: $distanceMeters, activeCalories: $activeCalories, avgHeartRate: $avgHeartRate, maxHeartRate: $maxHeartRate, minHeartRate: $minHeartRate, hrvSdnnMs: $hrvSdnnMs, hrvRmssdMs: $hrvRmssdMs, hrZoneEasySeconds: $hrZoneEasySeconds, hrZoneModerateSeconds: $hrZoneModerateSeconds, hrZoneHardSeconds: $hrZoneHardSeconds, trainingLoad: $trainingLoad, effortScore: $effortScore, weightKg: $weightKg, workoutType: $workoutType, dismissed: $dismissed, recordedAt: $recordedAt)';
 }
 
 

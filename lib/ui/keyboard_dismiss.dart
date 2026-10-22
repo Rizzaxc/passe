@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Applies Passe's mobile tap-outside keyboard behavior to every descendant
 /// text input, including Forui fields.

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'user_contact.dart';
@@ -9,6 +9,7 @@ part of 'user_contact.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $UserContactCopyWith<UserContact> get copyWith => _$UserContactCopyWithImpl<User
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserContact&&(identical(other.zalo, zalo) || other.zalo == zalo)&&(identical(other.zaloPublic, zaloPublic) || other.zaloPublic == zaloPublic));
+  final _this = this as UserContact;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserContact&&(identical(other.zalo, _this.zalo) || other.zalo == _this.zalo)&&(identical(other.zaloPublic, _this.zaloPublic) || other.zaloPublic == _this.zaloPublic));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,zalo,zaloPublic);
+int get hashCode {
+  final _this = this as UserContact;
+  return Object.hash(runtimeType,_this.zalo,_this.zaloPublic);
+}
 
 @override
 String toString() {
-  return 'UserContact(zalo: $zalo, zaloPublic: $zaloPublic)';
+  final _this = this as UserContact;
+  return 'UserContact(zalo: ${_this.zalo}, zaloPublic: ${_this.zaloPublic})';
 }
 
 
@@ -66,7 +72,7 @@ class _$UserContactCopyWithImpl<$Res>
 /// Create a copy of UserContact
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? zalo = freezed,Object? zaloPublic = null,}) {
-  return _then(_self.copyWith(
+  return _then(UserContact(
 zalo: freezed == zalo ? _self.zalo : zalo // ignore: cast_nullable_to_non_nullable
 as String?,zaloPublic: null == zaloPublic ? _self.zaloPublic : zaloPublic // ignore: cast_nullable_to_non_nullable
 as bool,
@@ -229,16 +235,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserContact&&(identical(other.zalo, zalo) || other.zalo == zalo)&&(identical(other.zaloPublic, zaloPublic) || other.zaloPublic == zaloPublic));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserContact&&(identical(other.zalo, zalo) || other.zalo == zalo)&&(identical(other.zaloPublic, zaloPublic) || other.zaloPublic == zaloPublic));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,zalo,zaloPublic);
+int get hashCode {
+    return Object.hash(runtimeType,zalo,zaloPublic);
+}
 
 @override
 String toString() {
-  return 'UserContact(zalo: $zalo, zaloPublic: $zaloPublic)';
+    return 'UserContact(zalo: $zalo, zaloPublic: $zaloPublic)';
 }
 
 

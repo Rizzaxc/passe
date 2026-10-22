@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'user_details.dart';
@@ -9,6 +9,7 @@ part of 'user_details.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $UserDetailsCopyWith<UserDetails> get copyWith => _$UserDetailsCopyWithImpl<User
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserDetails&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&const DeepCollectionEquality().equals(other.playtime, playtime)&&(identical(other.location, location) || other.location == location)&&(identical(other.avatar, avatar) || other.avatar == avatar));
+  final _this = this as UserDetails;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserDetails&&(identical(other.gender, _this.gender) || other.gender == _this.gender)&&(identical(other.ageGroup, _this.ageGroup) || other.ageGroup == _this.ageGroup)&&const DeepCollectionEquality().equals(other.playtime, _this.playtime)&&(identical(other.location, _this.location) || other.location == _this.location)&&(identical(other.avatar, _this.avatar) || other.avatar == _this.avatar));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,gender,ageGroup,const DeepCollectionEquality().hash(playtime),location,avatar);
+int get hashCode {
+  final _this = this as UserDetails;
+  return Object.hash(runtimeType,_this.gender,_this.ageGroup,const DeepCollectionEquality().hash(_this.playtime),_this.location,_this.avatar);
+}
 
 @override
 String toString() {
-  return 'UserDetails(gender: $gender, ageGroup: $ageGroup, playtime: $playtime, location: $location, avatar: $avatar)';
+  final _this = this as UserDetails;
+  return 'UserDetails(gender: ${_this.gender}, ageGroup: ${_this.ageGroup}, playtime: ${_this.playtime}, location: ${_this.location}, avatar: ${_this.avatar})';
 }
 
 
@@ -66,7 +72,7 @@ class _$UserDetailsCopyWithImpl<$Res>
 /// Create a copy of UserDetails
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? gender = freezed,Object? ageGroup = freezed,Object? playtime = freezed,Object? location = freezed,Object? avatar = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(UserDetails(
 gender: freezed == gender ? _self.gender : gender // ignore: cast_nullable_to_non_nullable
 as Gender?,ageGroup: freezed == ageGroup ? _self.ageGroup : ageGroup // ignore: cast_nullable_to_non_nullable
 as AgeGroup?,playtime: freezed == playtime ? _self.playtime : playtime // ignore: cast_nullable_to_non_nullable
@@ -225,7 +231,7 @@ return $default(_that.gender,_that.ageGroup,_that.playtime,_that.location,_that.
 @JsonSerializable()
 
 class _UserDetails implements UserDetails {
-  const _UserDetails({this.gender, this.ageGroup, final  List<Timeslot>? playtime, this.location, @JsonKey(name: 'generatedAvatar', fromJson: UserAvatar.decode, toJson: UserAvatar.encode) this.avatar}): _playtime = playtime;
+  const _UserDetails({this.gender, this.ageGroup,  List<Timeslot>? playtime, this.location, @JsonKey(name: 'generatedAvatar', fromJson: UserAvatar.decode, toJson: UserAvatar.encode) this.avatar}): _playtime = playtime;
   factory _UserDetails.fromJson(Map<String, dynamic> json) => _$UserDetailsFromJson(json);
 
 @override final  Gender? gender;
@@ -255,16 +261,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserDetails&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&const DeepCollectionEquality().equals(other._playtime, _playtime)&&(identical(other.location, location) || other.location == location)&&(identical(other.avatar, avatar) || other.avatar == avatar));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserDetails&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&const DeepCollectionEquality().equals(other.playtime, _playtime)&&(identical(other.location, location) || other.location == location)&&(identical(other.avatar, avatar) || other.avatar == avatar));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,gender,ageGroup,const DeepCollectionEquality().hash(_playtime),location,avatar);
+int get hashCode {
+    return Object.hash(runtimeType,gender,ageGroup,const DeepCollectionEquality().hash(_playtime),location,avatar);
+}
 
 @override
 String toString() {
-  return 'UserDetails(gender: $gender, ageGroup: $ageGroup, playtime: $playtime, location: $location, avatar: $avatar)';
+    return 'UserDetails(gender: $gender, ageGroup: $ageGroup, playtime: $playtime, location: $location, avatar: $avatar)';
 }
 
 

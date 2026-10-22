@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Small "X/Y" progress pill shown on each follow-up step's header so the
 /// multi-stage post-signup guide (story → profile → coach marks → get

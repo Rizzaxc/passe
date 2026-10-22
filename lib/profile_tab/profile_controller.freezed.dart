@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'profile_controller.dart';
@@ -9,6 +9,7 @@ part of 'profile_controller.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $ProfileStateCopyWith<ProfileState> get copyWith => _$ProfileStateCopyWithImpl<P
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileState&&(identical(other.username, username) || other.username == username)&&(identical(other.details, details) || other.details == details)&&const DeepCollectionEquality().equals(other.networks, networks)&&const DeepCollectionEquality().equals(other.industries, industries)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
+  final _this = this as ProfileState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileState&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.details, _this.details) || other.details == _this.details)&&const DeepCollectionEquality().equals(other.networks, _this.networks)&&const DeepCollectionEquality().equals(other.industries, _this.industries)&&(identical(other.pickedAvatar, _this.pickedAvatar) || other.pickedAvatar == _this.pickedAvatar));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,username,details,const DeepCollectionEquality().hash(networks),const DeepCollectionEquality().hash(industries),pickedAvatar);
+int get hashCode {
+  final _this = this as ProfileState;
+  return Object.hash(runtimeType,_this.username,_this.details,const DeepCollectionEquality().hash(_this.networks),const DeepCollectionEquality().hash(_this.industries),_this.pickedAvatar);
+}
 
 @override
 String toString() {
-  return 'ProfileState(username: $username, details: $details, networks: $networks, industries: $industries, pickedAvatar: $pickedAvatar)';
+  final _this = this as ProfileState;
+  return 'ProfileState(username: ${_this.username}, details: ${_this.details}, networks: ${_this.networks}, industries: ${_this.industries}, pickedAvatar: ${_this.pickedAvatar})';
 }
 
 
@@ -63,7 +69,7 @@ class _$ProfileStateCopyWithImpl<$Res>
 /// Create a copy of ProfileState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? username = null,Object? details = null,Object? networks = null,Object? industries = null,Object? pickedAvatar = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ProfileState(
 username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,details: null == details ? _self.details : details // ignore: cast_nullable_to_non_nullable
 as UserDetails,networks: null == networks ? _self.networks : networks // ignore: cast_nullable_to_non_nullable
@@ -219,7 +225,7 @@ return $default(_that.username,_that.details,_that.networks,_that.industries,_th
 
 
 class _ProfileState extends ProfileState {
-  const _ProfileState({required this.username, required this.details, final  List<Network> networks = const [], final  List<Industry> industries = const [], this.pickedAvatar}): _networks = networks,_industries = industries,super._();
+  const _ProfileState({required this.username, required this.details,  List<Network> networks = const [],  List<Industry> industries = const [], this.pickedAvatar}): _networks = networks,_industries = industries,super._();
   
 
 @override final  String username;
@@ -250,16 +256,18 @@ _$ProfileStateCopyWith<_ProfileState> get copyWith => __$ProfileStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProfileState&&(identical(other.username, username) || other.username == username)&&(identical(other.details, details) || other.details == details)&&const DeepCollectionEquality().equals(other._networks, _networks)&&const DeepCollectionEquality().equals(other._industries, _industries)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProfileState&&(identical(other.username, username) || other.username == username)&&(identical(other.details, details) || other.details == details)&&const DeepCollectionEquality().equals(other.networks, _networks)&&const DeepCollectionEquality().equals(other.industries, _industries)&&(identical(other.pickedAvatar, pickedAvatar) || other.pickedAvatar == pickedAvatar));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,username,details,const DeepCollectionEquality().hash(_networks),const DeepCollectionEquality().hash(_industries),pickedAvatar);
+int get hashCode {
+    return Object.hash(runtimeType,username,details,const DeepCollectionEquality().hash(_networks),const DeepCollectionEquality().hash(_industries),pickedAvatar);
+}
 
 @override
 String toString() {
-  return 'ProfileState(username: $username, details: $details, networks: $networks, industries: $industries, pickedAvatar: $pickedAvatar)';
+    return 'ProfileState(username: $username, details: $details, networks: $networks, industries: $industries, pickedAvatar: $pickedAvatar)';
 }
 
 
@@ -324,16 +332,21 @@ $NetworkSearchStateCopyWith<NetworkSearchState> get copyWith => _$NetworkSearchS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkSearchState&&const DeepCollectionEquality().equals(other.results, results)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&const DeepCollectionEquality().equals(other.cityFilters, cityFilters)&&const DeepCollectionEquality().equals(other.categoryFilters, categoryFilters));
+  final _this = this as NetworkSearchState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkSearchState&&const DeepCollectionEquality().equals(other.results, _this.results)&&(identical(other.isLoading, _this.isLoading) || other.isLoading == _this.isLoading)&&const DeepCollectionEquality().equals(other.cityFilters, _this.cityFilters)&&const DeepCollectionEquality().equals(other.categoryFilters, _this.categoryFilters));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(results),isLoading,const DeepCollectionEquality().hash(cityFilters),const DeepCollectionEquality().hash(categoryFilters));
+int get hashCode {
+  final _this = this as NetworkSearchState;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.results),_this.isLoading,const DeepCollectionEquality().hash(_this.cityFilters),const DeepCollectionEquality().hash(_this.categoryFilters));
+}
 
 @override
 String toString() {
-  return 'NetworkSearchState(results: $results, isLoading: $isLoading, cityFilters: $cityFilters, categoryFilters: $categoryFilters)';
+  final _this = this as NetworkSearchState;
+  return 'NetworkSearchState(results: ${_this.results}, isLoading: ${_this.isLoading}, cityFilters: ${_this.cityFilters}, categoryFilters: ${_this.categoryFilters})';
 }
 
 
@@ -362,7 +375,7 @@ class _$NetworkSearchStateCopyWithImpl<$Res>
 /// Create a copy of NetworkSearchState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? results = null,Object? isLoading = null,Object? cityFilters = null,Object? categoryFilters = null,}) {
-  return _then(_self.copyWith(
+  return _then(NetworkSearchState(
 results: null == results ? _self.results : results // ignore: cast_nullable_to_non_nullable
 as List<Network>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,cityFilters: null == cityFilters ? _self.cityFilters : cityFilters // ignore: cast_nullable_to_non_nullable
@@ -508,7 +521,7 @@ return $default(_that.results,_that.isLoading,_that.cityFilters,_that.categoryFi
 
 
 class _NetworkSearchState implements NetworkSearchState {
-  const _NetworkSearchState({final  List<Network> results = const [], this.isLoading = false, final  Set<City> cityFilters = const {}, final  Set<NetworkCategory> categoryFilters = const {}}): _results = results,_cityFilters = cityFilters,_categoryFilters = categoryFilters;
+  const _NetworkSearchState({ List<Network> results = const [], this.isLoading = false,  Set<City> cityFilters = const {},  Set<NetworkCategory> categoryFilters = const {}}): _results = results,_cityFilters = cityFilters,_categoryFilters = categoryFilters;
   
 
  final  List<Network> _results;
@@ -544,16 +557,18 @@ _$NetworkSearchStateCopyWith<_NetworkSearchState> get copyWith => __$NetworkSear
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NetworkSearchState&&const DeepCollectionEquality().equals(other._results, _results)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&const DeepCollectionEquality().equals(other._cityFilters, _cityFilters)&&const DeepCollectionEquality().equals(other._categoryFilters, _categoryFilters));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _NetworkSearchState&&const DeepCollectionEquality().equals(other.results, _results)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&const DeepCollectionEquality().equals(other.cityFilters, _cityFilters)&&const DeepCollectionEquality().equals(other.categoryFilters, _categoryFilters));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_results),isLoading,const DeepCollectionEquality().hash(_cityFilters),const DeepCollectionEquality().hash(_categoryFilters));
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_results),isLoading,const DeepCollectionEquality().hash(_cityFilters),const DeepCollectionEquality().hash(_categoryFilters));
+}
 
 @override
 String toString() {
-  return 'NetworkSearchState(results: $results, isLoading: $isLoading, cityFilters: $cityFilters, categoryFilters: $categoryFilters)';
+    return 'NetworkSearchState(results: $results, isLoading: $isLoading, cityFilters: $cityFilters, categoryFilters: $categoryFilters)';
 }
 
 

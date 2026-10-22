@@ -1,9 +1,9 @@
 // Planner tab — every current/future activity for a lobby, chronological,
 // soonest-first, with an always-reachable "+" to schedule another one.
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../ui/main.dart';
 import '../schedule_activity_controller.dart';

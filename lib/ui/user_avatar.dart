@@ -1,7 +1,7 @@
 import 'package:avatar_plus/avatar_plus.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// A user's avatar, resolved the same way everywhere.

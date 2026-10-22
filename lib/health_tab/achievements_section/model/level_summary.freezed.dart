@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'level_summary.dart';
@@ -9,6 +9,7 @@ part of 'level_summary.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $LevelSummaryCopyWith<LevelSummary> get copyWith => _$LevelSummaryCopyWithImpl<L
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LevelSummary&&(identical(other.level, level) || other.level == level)&&(identical(other.xpTotal, xpTotal) || other.xpTotal == xpTotal)&&(identical(other.currentFloor, currentFloor) || other.currentFloor == currentFloor)&&(identical(other.nextFloor, nextFloor) || other.nextFloor == nextFloor));
+  final _this = this as LevelSummary;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LevelSummary&&(identical(other.level, _this.level) || other.level == _this.level)&&(identical(other.xpTotal, _this.xpTotal) || other.xpTotal == _this.xpTotal)&&(identical(other.currentFloor, _this.currentFloor) || other.currentFloor == _this.currentFloor)&&(identical(other.nextFloor, _this.nextFloor) || other.nextFloor == _this.nextFloor));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,level,xpTotal,currentFloor,nextFloor);
+int get hashCode {
+  final _this = this as LevelSummary;
+  return Object.hash(runtimeType,_this.level,_this.xpTotal,_this.currentFloor,_this.nextFloor);
+}
 
 @override
 String toString() {
-  return 'LevelSummary(level: $level, xpTotal: $xpTotal, currentFloor: $currentFloor, nextFloor: $nextFloor)';
+  final _this = this as LevelSummary;
+  return 'LevelSummary(level: ${_this.level}, xpTotal: ${_this.xpTotal}, currentFloor: ${_this.currentFloor}, nextFloor: ${_this.nextFloor})';
 }
 
 
@@ -66,7 +72,7 @@ class _$LevelSummaryCopyWithImpl<$Res>
 /// Create a copy of LevelSummary
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? level = null,Object? xpTotal = null,Object? currentFloor = null,Object? nextFloor = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(LevelSummary(
 level: null == level ? _self.level : level // ignore: cast_nullable_to_non_nullable
 as int,xpTotal: null == xpTotal ? _self.xpTotal : xpTotal // ignore: cast_nullable_to_non_nullable
 as int,currentFloor: null == currentFloor ? _self.currentFloor : currentFloor // ignore: cast_nullable_to_non_nullable
@@ -233,16 +239,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LevelSummary&&(identical(other.level, level) || other.level == level)&&(identical(other.xpTotal, xpTotal) || other.xpTotal == xpTotal)&&(identical(other.currentFloor, currentFloor) || other.currentFloor == currentFloor)&&(identical(other.nextFloor, nextFloor) || other.nextFloor == nextFloor));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LevelSummary&&(identical(other.level, level) || other.level == level)&&(identical(other.xpTotal, xpTotal) || other.xpTotal == xpTotal)&&(identical(other.currentFloor, currentFloor) || other.currentFloor == currentFloor)&&(identical(other.nextFloor, nextFloor) || other.nextFloor == nextFloor));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,level,xpTotal,currentFloor,nextFloor);
+int get hashCode {
+    return Object.hash(runtimeType,level,xpTotal,currentFloor,nextFloor);
+}
 
 @override
 String toString() {
-  return 'LevelSummary(level: $level, xpTotal: $xpTotal, currentFloor: $currentFloor, nextFloor: $nextFloor)';
+    return 'LevelSummary(level: $level, xpTotal: $xpTotal, currentFloor: $currentFloor, nextFloor: $nextFloor)';
 }
 
 

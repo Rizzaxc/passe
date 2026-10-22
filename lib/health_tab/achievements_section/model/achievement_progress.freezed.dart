@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'achievement_progress.dart';
@@ -9,6 +9,7 @@ part of 'achievement_progress.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $AchievementProgressCopyWith<AchievementProgress> get copyWith => _$AchievementP
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AchievementProgress&&(identical(other.achievementId, achievementId) || other.achievementId == achievementId)&&(identical(other.code, code) || other.code == code)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.difficulty, difficulty) || other.difficulty == difficulty)&&(identical(other.consistency, consistency) || other.consistency == consistency)&&(identical(other.xpReward, xpReward) || other.xpReward == xpReward)&&(identical(other.repeatable, repeatable) || other.repeatable == repeatable)&&(identical(other.currentValue, currentValue) || other.currentValue == currentValue)&&(identical(other.threshold, threshold) || other.threshold == threshold)&&(identical(other.progress, progress) || other.progress == progress)&&(identical(other.state, state) || other.state == state)&&(identical(other.periodKey, periodKey) || other.periodKey == periodKey));
+  final _this = this as AchievementProgress;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AchievementProgress&&(identical(other.achievementId, _this.achievementId) || other.achievementId == _this.achievementId)&&(identical(other.code, _this.code) || other.code == _this.code)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.difficulty, _this.difficulty) || other.difficulty == _this.difficulty)&&(identical(other.consistency, _this.consistency) || other.consistency == _this.consistency)&&(identical(other.xpReward, _this.xpReward) || other.xpReward == _this.xpReward)&&(identical(other.repeatable, _this.repeatable) || other.repeatable == _this.repeatable)&&(identical(other.currentValue, _this.currentValue) || other.currentValue == _this.currentValue)&&(identical(other.threshold, _this.threshold) || other.threshold == _this.threshold)&&(identical(other.progress, _this.progress) || other.progress == _this.progress)&&(identical(other.state, _this.state) || other.state == _this.state)&&(identical(other.periodKey, _this.periodKey) || other.periodKey == _this.periodKey));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,achievementId,code,name,description,difficulty,consistency,xpReward,repeatable,currentValue,threshold,progress,state,periodKey);
+int get hashCode {
+  final _this = this as AchievementProgress;
+  return Object.hash(runtimeType,_this.achievementId,_this.code,_this.name,_this.description,_this.difficulty,_this.consistency,_this.xpReward,_this.repeatable,_this.currentValue,_this.threshold,_this.progress,_this.state,_this.periodKey);
+}
 
 @override
 String toString() {
-  return 'AchievementProgress(achievementId: $achievementId, code: $code, name: $name, description: $description, difficulty: $difficulty, consistency: $consistency, xpReward: $xpReward, repeatable: $repeatable, currentValue: $currentValue, threshold: $threshold, progress: $progress, state: $state, periodKey: $periodKey)';
+  final _this = this as AchievementProgress;
+  return 'AchievementProgress(achievementId: ${_this.achievementId}, code: ${_this.code}, name: ${_this.name}, description: ${_this.description}, difficulty: ${_this.difficulty}, consistency: ${_this.consistency}, xpReward: ${_this.xpReward}, repeatable: ${_this.repeatable}, currentValue: ${_this.currentValue}, threshold: ${_this.threshold}, progress: ${_this.progress}, state: ${_this.state}, periodKey: ${_this.periodKey})';
 }
 
 
@@ -66,7 +72,7 @@ class _$AchievementProgressCopyWithImpl<$Res>
 /// Create a copy of AchievementProgress
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? achievementId = null,Object? code = null,Object? name = null,Object? description = freezed,Object? difficulty = null,Object? consistency = null,Object? xpReward = null,Object? repeatable = null,Object? currentValue = null,Object? threshold = null,Object? progress = null,Object? state = null,Object? periodKey = null,}) {
-  return _then(_self.copyWith(
+  return _then(AchievementProgress(
 achievementId: null == achievementId ? _self.achievementId : achievementId // ignore: cast_nullable_to_non_nullable
 as String,code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -251,16 +257,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AchievementProgress&&(identical(other.achievementId, achievementId) || other.achievementId == achievementId)&&(identical(other.code, code) || other.code == code)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.difficulty, difficulty) || other.difficulty == difficulty)&&(identical(other.consistency, consistency) || other.consistency == consistency)&&(identical(other.xpReward, xpReward) || other.xpReward == xpReward)&&(identical(other.repeatable, repeatable) || other.repeatable == repeatable)&&(identical(other.currentValue, currentValue) || other.currentValue == currentValue)&&(identical(other.threshold, threshold) || other.threshold == threshold)&&(identical(other.progress, progress) || other.progress == progress)&&(identical(other.state, state) || other.state == state)&&(identical(other.periodKey, periodKey) || other.periodKey == periodKey));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AchievementProgress&&(identical(other.achievementId, achievementId) || other.achievementId == achievementId)&&(identical(other.code, code) || other.code == code)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.difficulty, difficulty) || other.difficulty == difficulty)&&(identical(other.consistency, consistency) || other.consistency == consistency)&&(identical(other.xpReward, xpReward) || other.xpReward == xpReward)&&(identical(other.repeatable, repeatable) || other.repeatable == repeatable)&&(identical(other.currentValue, currentValue) || other.currentValue == currentValue)&&(identical(other.threshold, threshold) || other.threshold == threshold)&&(identical(other.progress, progress) || other.progress == progress)&&(identical(other.state, state) || other.state == state)&&(identical(other.periodKey, periodKey) || other.periodKey == periodKey));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,achievementId,code,name,description,difficulty,consistency,xpReward,repeatable,currentValue,threshold,progress,state,periodKey);
+int get hashCode {
+    return Object.hash(runtimeType,achievementId,code,name,description,difficulty,consistency,xpReward,repeatable,currentValue,threshold,progress,state,periodKey);
+}
 
 @override
 String toString() {
-  return 'AchievementProgress(achievementId: $achievementId, code: $code, name: $name, description: $description, difficulty: $difficulty, consistency: $consistency, xpReward: $xpReward, repeatable: $repeatable, currentValue: $currentValue, threshold: $threshold, progress: $progress, state: $state, periodKey: $periodKey)';
+    return 'AchievementProgress(achievementId: $achievementId, code: $code, name: $name, description: $description, difficulty: $difficulty, consistency: $consistency, xpReward: $xpReward, repeatable: $repeatable, currentValue: $currentValue, threshold: $threshold, progress: $progress, state: $state, periodKey: $periodKey)';
 }
 
 

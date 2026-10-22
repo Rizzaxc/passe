@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'hr_sample.dart';
@@ -9,6 +9,7 @@ part of 'hr_sample.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $HrSampleCopyWith<HrSample> get copyWith => _$HrSampleCopyWithImpl<HrSample>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HrSample&&(identical(other.id, id) || other.id == id)&&(identical(other.activityId, activityId) || other.activityId == activityId)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.bpm, bpm) || other.bpm == bpm));
+  final _this = this as HrSample;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HrSample&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.activityId, _this.activityId) || other.activityId == _this.activityId)&&(identical(other.timestamp, _this.timestamp) || other.timestamp == _this.timestamp)&&(identical(other.bpm, _this.bpm) || other.bpm == _this.bpm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,activityId,timestamp,bpm);
+int get hashCode {
+  final _this = this as HrSample;
+  return Object.hash(runtimeType,_this.id,_this.activityId,_this.timestamp,_this.bpm);
+}
 
 @override
 String toString() {
-  return 'HrSample(id: $id, activityId: $activityId, timestamp: $timestamp, bpm: $bpm)';
+  final _this = this as HrSample;
+  return 'HrSample(id: ${_this.id}, activityId: ${_this.activityId}, timestamp: ${_this.timestamp}, bpm: ${_this.bpm})';
 }
 
 
@@ -66,7 +72,7 @@ class _$HrSampleCopyWithImpl<$Res>
 /// Create a copy of HrSample
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? activityId = null,Object? timestamp = null,Object? bpm = null,}) {
-  return _then(_self.copyWith(
+  return _then(HrSample(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int?,activityId: null == activityId ? _self.activityId : activityId // ignore: cast_nullable_to_non_nullable
 as String,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
@@ -233,16 +239,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HrSample&&(identical(other.id, id) || other.id == id)&&(identical(other.activityId, activityId) || other.activityId == activityId)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.bpm, bpm) || other.bpm == bpm));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HrSample&&(identical(other.id, id) || other.id == id)&&(identical(other.activityId, activityId) || other.activityId == activityId)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.bpm, bpm) || other.bpm == bpm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,activityId,timestamp,bpm);
+int get hashCode {
+    return Object.hash(runtimeType,id,activityId,timestamp,bpm);
+}
 
 @override
 String toString() {
-  return 'HrSample(id: $id, activityId: $activityId, timestamp: $timestamp, bpm: $bpm)';
+    return 'HrSample(id: $id, activityId: $activityId, timestamp: $timestamp, bpm: $bpm)';
 }
 
 
@@ -300,16 +308,21 @@ $HrSampleBatchCopyWith<HrSampleBatch> get copyWith => _$HrSampleBatchCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HrSampleBatch&&(identical(other.activityId, activityId) || other.activityId == activityId)&&const DeepCollectionEquality().equals(other.samples, samples));
+  final _this = this as HrSampleBatch;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HrSampleBatch&&(identical(other.activityId, _this.activityId) || other.activityId == _this.activityId)&&const DeepCollectionEquality().equals(other.samples, _this.samples));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,activityId,const DeepCollectionEquality().hash(samples));
+int get hashCode {
+  final _this = this as HrSampleBatch;
+  return Object.hash(runtimeType,_this.activityId,const DeepCollectionEquality().hash(_this.samples));
+}
 
 @override
 String toString() {
-  return 'HrSampleBatch(activityId: $activityId, samples: $samples)';
+  final _this = this as HrSampleBatch;
+  return 'HrSampleBatch(activityId: ${_this.activityId}, samples: ${_this.samples})';
 }
 
 
@@ -338,7 +351,7 @@ class _$HrSampleBatchCopyWithImpl<$Res>
 /// Create a copy of HrSampleBatch
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? activityId = null,Object? samples = null,}) {
-  return _then(_self.copyWith(
+  return _then(HrSampleBatch(
 activityId: null == activityId ? _self.activityId : activityId // ignore: cast_nullable_to_non_nullable
 as String,samples: null == samples ? _self.samples : samples // ignore: cast_nullable_to_non_nullable
 as List<HrSamplePoint>,
@@ -482,7 +495,7 @@ return $default(_that.activityId,_that.samples);case _:
 @JsonSerializable()
 
 class _HrSampleBatch implements HrSampleBatch {
-  const _HrSampleBatch({@JsonKey(name: 'activity_id') required this.activityId, required final  List<HrSamplePoint> samples}): _samples = samples;
+  const _HrSampleBatch({@JsonKey(name: 'activity_id') required this.activityId, required  List<HrSamplePoint> samples}): _samples = samples;
   factory _HrSampleBatch.fromJson(Map<String, dynamic> json) => _$HrSampleBatchFromJson(json);
 
 @override@JsonKey(name: 'activity_id') final  String activityId;
@@ -507,16 +520,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HrSampleBatch&&(identical(other.activityId, activityId) || other.activityId == activityId)&&const DeepCollectionEquality().equals(other._samples, _samples));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HrSampleBatch&&(identical(other.activityId, activityId) || other.activityId == activityId)&&const DeepCollectionEquality().equals(other.samples, _samples));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,activityId,const DeepCollectionEquality().hash(_samples));
+int get hashCode {
+    return Object.hash(runtimeType,activityId,const DeepCollectionEquality().hash(_samples));
+}
 
 @override
 String toString() {
-  return 'HrSampleBatch(activityId: $activityId, samples: $samples)';
+    return 'HrSampleBatch(activityId: $activityId, samples: $samples)';
 }
 
 
@@ -572,16 +587,21 @@ $HrSamplePointCopyWith<HrSamplePoint> get copyWith => _$HrSamplePointCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HrSamplePoint&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.bpm, bpm) || other.bpm == bpm));
+  final _this = this as HrSamplePoint;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HrSamplePoint&&(identical(other.timestamp, _this.timestamp) || other.timestamp == _this.timestamp)&&(identical(other.bpm, _this.bpm) || other.bpm == _this.bpm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,timestamp,bpm);
+int get hashCode {
+  final _this = this as HrSamplePoint;
+  return Object.hash(runtimeType,_this.timestamp,_this.bpm);
+}
 
 @override
 String toString() {
-  return 'HrSamplePoint(timestamp: $timestamp, bpm: $bpm)';
+  final _this = this as HrSamplePoint;
+  return 'HrSamplePoint(timestamp: ${_this.timestamp}, bpm: ${_this.bpm})';
 }
 
 
@@ -610,7 +630,7 @@ class _$HrSamplePointCopyWithImpl<$Res>
 /// Create a copy of HrSamplePoint
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? timestamp = null,Object? bpm = null,}) {
-  return _then(_self.copyWith(
+  return _then(HrSamplePoint(
 timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as DateTime,bpm: null == bpm ? _self.bpm : bpm // ignore: cast_nullable_to_non_nullable
 as int,
@@ -773,16 +793,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HrSamplePoint&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.bpm, bpm) || other.bpm == bpm));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HrSamplePoint&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.bpm, bpm) || other.bpm == bpm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,timestamp,bpm);
+int get hashCode {
+    return Object.hash(runtimeType,timestamp,bpm);
+}
 
 @override
 String toString() {
-  return 'HrSamplePoint(timestamp: $timestamp, bpm: $bpm)';
+    return 'HrSamplePoint(timestamp: $timestamp, bpm: $bpm)';
 }
 
 

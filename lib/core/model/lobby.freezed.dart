@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'lobby.dart';
@@ -9,6 +9,7 @@ part of 'lobby.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $LobbyDetailsCopyWith<LobbyDetails> get copyWith => _$LobbyDetailsCopyWithImpl<L
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyDetails&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&(identical(other.skill, skill) || other.skill == skill)&&(identical(other.hasAvatar, hasAvatar) || other.hasAvatar == hasAvatar));
+  final _this = this as LobbyDetails;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyDetails&&(identical(other.ageGroup, _this.ageGroup) || other.ageGroup == _this.ageGroup)&&(identical(other.skill, _this.skill) || other.skill == _this.skill)&&(identical(other.hasAvatar, _this.hasAvatar) || other.hasAvatar == _this.hasAvatar));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,ageGroup,skill,hasAvatar);
+int get hashCode {
+  final _this = this as LobbyDetails;
+  return Object.hash(runtimeType,_this.ageGroup,_this.skill,_this.hasAvatar);
+}
 
 @override
 String toString() {
-  return 'LobbyDetails(ageGroup: $ageGroup, skill: $skill, hasAvatar: $hasAvatar)';
+  final _this = this as LobbyDetails;
+  return 'LobbyDetails(ageGroup: ${_this.ageGroup}, skill: ${_this.skill}, hasAvatar: ${_this.hasAvatar})';
 }
 
 
@@ -66,7 +72,7 @@ class _$LobbyDetailsCopyWithImpl<$Res>
 /// Create a copy of LobbyDetails
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? ageGroup = freezed,Object? skill = freezed,Object? hasAvatar = null,}) {
-  return _then(_self.copyWith(
+  return _then(LobbyDetails(
 ageGroup: freezed == ageGroup ? _self.ageGroup : ageGroup // ignore: cast_nullable_to_non_nullable
 as AgeGroup?,skill: freezed == skill ? _self.skill : skill // ignore: cast_nullable_to_non_nullable
 as int?,hasAvatar: null == hasAvatar ? _self.hasAvatar : hasAvatar // ignore: cast_nullable_to_non_nullable
@@ -231,16 +237,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyDetails&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&(identical(other.skill, skill) || other.skill == skill)&&(identical(other.hasAvatar, hasAvatar) || other.hasAvatar == hasAvatar));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyDetails&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&(identical(other.skill, skill) || other.skill == skill)&&(identical(other.hasAvatar, hasAvatar) || other.hasAvatar == hasAvatar));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,ageGroup,skill,hasAvatar);
+int get hashCode {
+    return Object.hash(runtimeType,ageGroup,skill,hasAvatar);
+}
 
 @override
 String toString() {
-  return 'LobbyDetails(ageGroup: $ageGroup, skill: $skill, hasAvatar: $hasAvatar)';
+    return 'LobbyDetails(ageGroup: $ageGroup, skill: $skill, hasAvatar: $hasAvatar)';
 }
 
 
@@ -297,16 +305,21 @@ $LobbyCopyWith<Lobby> get copyWith => _$LobbyCopyWithImpl<Lobby>(this as Lobby, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Lobby&&(identical(other.id, id) || other.id == id)&&(identical(other.captainId, captainId) || other.captainId == captainId)&&(identical(other.searchableId, searchableId) || other.searchableId == searchableId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&const DeepCollectionEquality().equals(other.playtime, playtime)&&(identical(other.details, details) || other.details == details)&&(identical(other.description, description) || other.description == description)&&const DeepCollectionEquality().equals(other.homeGroundIds, homeGroundIds)&&(identical(other.visibility, visibility) || other.visibility == visibility));
+  final _this = this as Lobby;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Lobby&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.captainId, _this.captainId) || other.captainId == _this.captainId)&&(identical(other.searchableId, _this.searchableId) || other.searchableId == _this.searchableId)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&const DeepCollectionEquality().equals(other.playtime, _this.playtime)&&(identical(other.details, _this.details) || other.details == _this.details)&&(identical(other.description, _this.description) || other.description == _this.description)&&const DeepCollectionEquality().equals(other.homeGroundIds, _this.homeGroundIds)&&(identical(other.visibility, _this.visibility) || other.visibility == _this.visibility));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,captainId,searchableId,name,sport,const DeepCollectionEquality().hash(playtime),details,description,const DeepCollectionEquality().hash(homeGroundIds),visibility);
+int get hashCode {
+  final _this = this as Lobby;
+  return Object.hash(runtimeType,_this.id,_this.captainId,_this.searchableId,_this.name,_this.sport,const DeepCollectionEquality().hash(_this.playtime),_this.details,_this.description,const DeepCollectionEquality().hash(_this.homeGroundIds),_this.visibility);
+}
 
 @override
 String toString() {
-  return 'Lobby(id: $id, captainId: $captainId, searchableId: $searchableId, name: $name, sport: $sport, playtime: $playtime, details: $details, description: $description, homeGroundIds: $homeGroundIds, visibility: $visibility)';
+  final _this = this as Lobby;
+  return 'Lobby(id: ${_this.id}, captainId: ${_this.captainId}, searchableId: ${_this.searchableId}, name: ${_this.name}, sport: ${_this.sport}, playtime: ${_this.playtime}, details: ${_this.details}, description: ${_this.description}, homeGroundIds: ${_this.homeGroundIds}, visibility: ${_this.visibility})';
 }
 
 
@@ -335,7 +348,7 @@ class _$LobbyCopyWithImpl<$Res>
 /// Create a copy of Lobby
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? captainId = freezed,Object? searchableId = freezed,Object? name = null,Object? sport = null,Object? playtime = freezed,Object? details = freezed,Object? description = freezed,Object? homeGroundIds = null,Object? visibility = null,}) {
-  return _then(_self.copyWith(
+  return _then(Lobby(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String?,captainId: freezed == captainId ? _self.captainId : captainId // ignore: cast_nullable_to_non_nullable
 as String?,searchableId: freezed == searchableId ? _self.searchableId : searchableId // ignore: cast_nullable_to_non_nullable
@@ -499,7 +512,7 @@ return $default(_that.id,_that.captainId,_that.searchableId,_that.name,_that.spo
 @JsonSerializable()
 
 class _Lobby extends Lobby {
-  const _Lobby({this.id, @JsonKey(name: 'captain_id') this.captainId, @JsonKey(name: 'searchable_id') this.searchableId, required this.name, @JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson) required this.sport, final  List<Timeslot>? playtime, this.details, this.description, @JsonKey(name: 'home_ground_ids') final  List<String> homeGroundIds = const <String>[], this.visibility = LobbyVisibility.discoverable}): _playtime = playtime,_homeGroundIds = homeGroundIds,super._();
+  const _Lobby({this.id, @JsonKey(name: 'captain_id') this.captainId, @JsonKey(name: 'searchable_id') this.searchableId, required this.name, @JsonKey(name: 'sport_id', fromJson: _sportFromJson, toJson: _sportToJson) required this.sport,  List<Timeslot>? playtime, this.details, this.description, @JsonKey(name: 'home_ground_ids')  List<String> homeGroundIds = const <String>[], this.visibility = LobbyVisibility.discoverable}): _playtime = playtime,_homeGroundIds = homeGroundIds,super._();
   factory _Lobby.fromJson(Map<String, dynamic> json) => _$LobbyFromJson(json);
 
 @override final  String? id;
@@ -540,16 +553,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Lobby&&(identical(other.id, id) || other.id == id)&&(identical(other.captainId, captainId) || other.captainId == captainId)&&(identical(other.searchableId, searchableId) || other.searchableId == searchableId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&const DeepCollectionEquality().equals(other._playtime, _playtime)&&(identical(other.details, details) || other.details == details)&&(identical(other.description, description) || other.description == description)&&const DeepCollectionEquality().equals(other._homeGroundIds, _homeGroundIds)&&(identical(other.visibility, visibility) || other.visibility == visibility));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Lobby&&(identical(other.id, id) || other.id == id)&&(identical(other.captainId, captainId) || other.captainId == captainId)&&(identical(other.searchableId, searchableId) || other.searchableId == searchableId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&const DeepCollectionEquality().equals(other.playtime, _playtime)&&(identical(other.details, details) || other.details == details)&&(identical(other.description, description) || other.description == description)&&const DeepCollectionEquality().equals(other.homeGroundIds, _homeGroundIds)&&(identical(other.visibility, visibility) || other.visibility == visibility));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,captainId,searchableId,name,sport,const DeepCollectionEquality().hash(_playtime),details,description,const DeepCollectionEquality().hash(_homeGroundIds),visibility);
+int get hashCode {
+    return Object.hash(runtimeType,id,captainId,searchableId,name,sport,const DeepCollectionEquality().hash(_playtime),details,description,const DeepCollectionEquality().hash(_homeGroundIds),visibility);
+}
 
 @override
 String toString() {
-  return 'Lobby(id: $id, captainId: $captainId, searchableId: $searchableId, name: $name, sport: $sport, playtime: $playtime, details: $details, description: $description, homeGroundIds: $homeGroundIds, visibility: $visibility)';
+    return 'Lobby(id: $id, captainId: $captainId, searchableId: $searchableId, name: $name, sport: $sport, playtime: $playtime, details: $details, description: $description, homeGroundIds: $homeGroundIds, visibility: $visibility)';
 }
 
 

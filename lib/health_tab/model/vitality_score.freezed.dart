@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'vitality_score.dart';
@@ -9,6 +9,7 @@ part of 'vitality_score.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $VitalityScoreCopyWith<VitalityScore> get copyWith => _$VitalityScoreCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VitalityScore&&(identical(other.date, date) || other.date == date)&&(identical(other.score, score) || other.score == score)&&(identical(other.consistencyComponent, consistencyComponent) || other.consistencyComponent == consistencyComponent)&&(identical(other.loadComponent, loadComponent) || other.loadComponent == loadComponent)&&(identical(other.recoveryComponent, recoveryComponent) || other.recoveryComponent == recoveryComponent)&&(identical(other.volumeComponent, volumeComponent) || other.volumeComponent == volumeComponent)&&(identical(other.streakBonus, streakBonus) || other.streakBonus == streakBonus)&&(identical(other.ctl, ctl) || other.ctl == ctl)&&(identical(other.atl, atl) || other.atl == atl));
+  final _this = this as VitalityScore;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VitalityScore&&(identical(other.date, _this.date) || other.date == _this.date)&&(identical(other.score, _this.score) || other.score == _this.score)&&(identical(other.consistencyComponent, _this.consistencyComponent) || other.consistencyComponent == _this.consistencyComponent)&&(identical(other.loadComponent, _this.loadComponent) || other.loadComponent == _this.loadComponent)&&(identical(other.recoveryComponent, _this.recoveryComponent) || other.recoveryComponent == _this.recoveryComponent)&&(identical(other.volumeComponent, _this.volumeComponent) || other.volumeComponent == _this.volumeComponent)&&(identical(other.streakBonus, _this.streakBonus) || other.streakBonus == _this.streakBonus)&&(identical(other.ctl, _this.ctl) || other.ctl == _this.ctl)&&(identical(other.atl, _this.atl) || other.atl == _this.atl));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,date,score,consistencyComponent,loadComponent,recoveryComponent,volumeComponent,streakBonus,ctl,atl);
+int get hashCode {
+  final _this = this as VitalityScore;
+  return Object.hash(runtimeType,_this.date,_this.score,_this.consistencyComponent,_this.loadComponent,_this.recoveryComponent,_this.volumeComponent,_this.streakBonus,_this.ctl,_this.atl);
+}
 
 @override
 String toString() {
-  return 'VitalityScore(date: $date, score: $score, consistencyComponent: $consistencyComponent, loadComponent: $loadComponent, recoveryComponent: $recoveryComponent, volumeComponent: $volumeComponent, streakBonus: $streakBonus, ctl: $ctl, atl: $atl)';
+  final _this = this as VitalityScore;
+  return 'VitalityScore(date: ${_this.date}, score: ${_this.score}, consistencyComponent: ${_this.consistencyComponent}, loadComponent: ${_this.loadComponent}, recoveryComponent: ${_this.recoveryComponent}, volumeComponent: ${_this.volumeComponent}, streakBonus: ${_this.streakBonus}, ctl: ${_this.ctl}, atl: ${_this.atl})';
 }
 
 
@@ -66,7 +72,7 @@ class _$VitalityScoreCopyWithImpl<$Res>
 /// Create a copy of VitalityScore
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? date = null,Object? score = freezed,Object? consistencyComponent = freezed,Object? loadComponent = freezed,Object? recoveryComponent = freezed,Object? volumeComponent = freezed,Object? streakBonus = null,Object? ctl = freezed,Object? atl = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VitalityScore(
 date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,score: freezed == score ? _self.score : score // ignore: cast_nullable_to_non_nullable
 as double?,consistencyComponent: freezed == consistencyComponent ? _self.consistencyComponent : consistencyComponent // ignore: cast_nullable_to_non_nullable
@@ -243,16 +249,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VitalityScore&&(identical(other.date, date) || other.date == date)&&(identical(other.score, score) || other.score == score)&&(identical(other.consistencyComponent, consistencyComponent) || other.consistencyComponent == consistencyComponent)&&(identical(other.loadComponent, loadComponent) || other.loadComponent == loadComponent)&&(identical(other.recoveryComponent, recoveryComponent) || other.recoveryComponent == recoveryComponent)&&(identical(other.volumeComponent, volumeComponent) || other.volumeComponent == volumeComponent)&&(identical(other.streakBonus, streakBonus) || other.streakBonus == streakBonus)&&(identical(other.ctl, ctl) || other.ctl == ctl)&&(identical(other.atl, atl) || other.atl == atl));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VitalityScore&&(identical(other.date, date) || other.date == date)&&(identical(other.score, score) || other.score == score)&&(identical(other.consistencyComponent, consistencyComponent) || other.consistencyComponent == consistencyComponent)&&(identical(other.loadComponent, loadComponent) || other.loadComponent == loadComponent)&&(identical(other.recoveryComponent, recoveryComponent) || other.recoveryComponent == recoveryComponent)&&(identical(other.volumeComponent, volumeComponent) || other.volumeComponent == volumeComponent)&&(identical(other.streakBonus, streakBonus) || other.streakBonus == streakBonus)&&(identical(other.ctl, ctl) || other.ctl == ctl)&&(identical(other.atl, atl) || other.atl == atl));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,date,score,consistencyComponent,loadComponent,recoveryComponent,volumeComponent,streakBonus,ctl,atl);
+int get hashCode {
+    return Object.hash(runtimeType,date,score,consistencyComponent,loadComponent,recoveryComponent,volumeComponent,streakBonus,ctl,atl);
+}
 
 @override
 String toString() {
-  return 'VitalityScore(date: $date, score: $score, consistencyComponent: $consistencyComponent, loadComponent: $loadComponent, recoveryComponent: $recoveryComponent, volumeComponent: $volumeComponent, streakBonus: $streakBonus, ctl: $ctl, atl: $atl)';
+    return 'VitalityScore(date: $date, score: $score, consistencyComponent: $consistencyComponent, loadComponent: $loadComponent, recoveryComponent: $recoveryComponent, volumeComponent: $volumeComponent, streakBonus: $streakBonus, ctl: $ctl, atl: $atl)';
 }
 
 
