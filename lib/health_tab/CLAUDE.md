@@ -65,8 +65,9 @@ there's no commitment to anchor "did something happen" on, so those still need w
 (a `WORKOUT` record = high, or ≥10 min of measured HR-zone time at any intensity = medium) before
 they're worth surfacing at all, in the `activity_data` **"Detected workouts"** section: *attach*
 (health-only — writes metrics, never touches attendance/đá) or *dismiss* (writes a `dismissed=true`
-tombstone so it isn't re-prompted). Capture is sport-agnostic; only the recap-list display filters by
-the context sport. (3) **standalone workout detection** —
+tombstone so it isn't re-prompted). Capture and the recap list are both sport-agnostic: the list
+calls `activity_health_data(p_sport_id => null)` and badges each recap with its own `sport_id`
+(`schema/activity_health_data_all_sports.sql`). (3) **standalone workout detection** —
 `HealthSyncController._createStandaloneActivities` (`health_sync_service.dart`), gated by
 `standaloneWorkoutSyncSettingProvider` (`health_settings_controller.dart`, default **on**). Scans
 the device for `WORKOUT` records that map to one of the 5 supported sports

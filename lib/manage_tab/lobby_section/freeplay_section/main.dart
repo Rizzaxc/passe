@@ -8,8 +8,11 @@ import '../../../freeplay/repository.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
 
-class PlayerFreeplaySection extends ConsumerWidget {
-  const PlayerFreeplaySection({super.key});
+/// Manage ▸ Kèo lẻ: the player's own freeplay seat requests (pending and
+/// accepted, upcoming). Its own rail tab — it used to be a capped strip
+/// wedged above the lobby list. History is the header's clock button.
+class PlayerFreeplaySubtab extends ConsumerWidget {
+  const PlayerFreeplaySubtab({super.key});
 
   Future<void> _showHistory(BuildContext context) => showPSheet(
     context: context,
@@ -20,8 +23,14 @@ class PlayerFreeplaySection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sessions = ref.watch(myFreeplayProvider(false));
+
+    Widget scrollable(List<Widget> children) => ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 24),
+      children: children,
+    );
+
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
         PSectionHeader(
           title: 'lobbyHub.freeplay.yourRequests'.tr(),
@@ -31,35 +40,59 @@ class PlayerFreeplaySection extends ConsumerWidget {
             child: const Icon(FLucideIcons.history),
           ),
         ),
-        sessions.when(
-          loading: () => const SizedBox(
-            height: 52,
-            child: Center(child: FCircularProgress()),
-          ),
-          error: (_, _) => const SizedBox.shrink(),
-          data: (items) => items.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: Text(
-                    'lobbyHub.freeplay.empty'.tr(),
-                    style: context.theme.typography.body.sm.copyWith(
-                      color: context.theme.colors.mutedForeground,
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(myFreeplayProvider(false));
+              await ref.read(myFreeplayProvider(false).future);
+            },
+            child: sessions.when(
+              loading: () => const Center(child: FCircularProgress()),
+              error: (_, _) => scrollable([
+                PEmptySectionPlaceholder(
+                  subtitle: 'lobbyHub.freeplay.loadFailed'.tr(),
+                  actions: [
+                    FButton(
+                      size: .sm,
+                      variant: .outline,
+                      prefix: const Icon(FLucideIcons.rotateCw),
+                      onPress: () => ref.invalidate(myFreeplayProvider(false)),
+                      child: Text('homeTab.loadError.retry'.tr()),
                     ),
-                  ),
-                )
-              : ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 210),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: items.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 6),
-                    itemBuilder: (context, index) =>
-                        _SessionTile(activity: items[index]),
-                  ),
+                  ],
                 ),
+              ]),
+              data: (items) => items.isEmpty
+                  ? scrollable([
+                      PEmptySectionPlaceholder(
+                        hero: Icon(
+                          FLucideIcons.ticket,
+                          size: 64,
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                        subtitle: 'lobbyHub.freeplay.empty'.tr(),
+                        actions: [
+                          FButton(
+                            size: .sm,
+                            prefix: const Icon(FLucideIcons.search),
+                            onPress: () =>
+                                const DiscoverFreeplayRoute().go(context),
+                            child: Text('lobbyHub.freeplay.find'.tr()),
+                          ),
+                        ],
+                      ),
+                    ])
+                  : ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(top: 4, bottom: 24),
+                      itemCount: items.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 6),
+                      itemBuilder: (context, index) =>
+                          _SessionTile(activity: items[index]),
+                    ),
+            ),
+          ),
         ),
-        const Divider(height: 1),
       ],
     );
   }

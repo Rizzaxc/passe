@@ -54,9 +54,21 @@ class _GuestPromptSheet extends StatelessWidget {
             ],
           ),
           FButton(
+            // Not WelcomeRoute: for a guest the router treats /welcome as an
+            // auth-flow page and bounces straight back to `pendingDestination`
+            // (where they already are), so the button did nothing. The Profile
+            // tab embeds the sign-in form for guests — one place to sign in.
+            //
+            // Close every sheet, not just this one: the prompt is often
+            // stacked on another sheet (the lobby preview's "Xin vào"), and
+            // a navigation under a still-open sheet looks like nothing
+            // happened.
             onPress: () {
-              Navigator.of(context).pop();
-              const WelcomeRoute().go(context);
+              Navigator.of(
+                context,
+                rootNavigator: true,
+              ).popUntil((route) => route is! PopupRoute);
+              const ProfileRoute().go(context);
             },
             child: Text('auth.guestPrompt.cta'.tr()),
           ),

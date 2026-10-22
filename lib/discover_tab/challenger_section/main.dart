@@ -8,7 +8,6 @@ import '../../core/model/challenge.dart';
 import '../../logger/talker.dart';
 import '../../router.dart';
 import '../../ui/main.dart';
-import '../filter.dart';
 import '../lobby_public_preview_sheet.dart';
 import '../main.dart';
 import 'confirm_challenge_sheet.dart';
@@ -33,10 +32,6 @@ class ChallengerSubtab extends ConsumerWidget {
 
     return Column(
       children: [
-        PSectionHeader(
-          title: 'home.challenger'.tr(),
-          suffix: const FilterWidget(),
-        ),
         if (!hasNoLobby) const _ContextLobbyPicker(),
         if (hasNoLobby)
           const Expanded(child: _NoLobbyState())
@@ -49,7 +44,7 @@ class ChallengerSubtab extends ConsumerWidget {
               },
               child: feed.when(
                 loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                    const Center(child: FCircularProgress()),
                 error: (e, st) {
                   talker.handle(e, st, 'friendly offer feed failed');
                   return ListView(
@@ -376,7 +371,8 @@ class _NoLobbyState extends ConsumerWidget {
                     context.theme.buttonStyles.primary.base,
                   ),
                   onPress: () =>
-                      ref.read(discoverSubtabRequestProvider.notifier).state = 1,
+                      ref.read(discoverSubtabRequestProvider.notifier).state =
+                          DiscoverTab.teammateIndex,
                   child: Text('homeTab.challenger.noLobby.findLobby'.tr()),
                 ),
               ),

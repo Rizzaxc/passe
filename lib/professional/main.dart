@@ -11,7 +11,6 @@ import '../core/icon/main.dart';
 import '../core/model/enum.dart';
 import '../core/model/location.dart';
 import '../core/model/professional_feed_item.dart';
-import '../core/state/selected_sport_state.dart';
 import '../core/zalo_link.dart';
 import '../course/course_controller.dart';
 import '../course/message_coach_sheet.dart';
@@ -926,9 +925,9 @@ class _CourtRow extends StatelessWidget {
 /// message, no sender, and no notification the moment a student opened the
 /// thread and backed out without typing anything.
 ///
-/// A coach's sport list can be wider than the sport the user is browsing in;
-/// the context sport is what scopes the course, matching every other feed on
-/// this screen. Guests get the standard sign-in prompt instead.
+/// The course's sport comes from the coach: their only sport, or the one the
+/// user picks from the coach's list. Guests get the standard sign-in prompt
+/// instead.
 Future<void> _messageCoach(
   BuildContext context,
   WidgetRef ref,
@@ -939,37 +938,20 @@ Future<void> _messageCoach(
     return;
   }
 
-  // A course is bound to one sport for its whole life, so there's nothing
-  // sensible to create without one. Say so rather than letting the tap do
-  // nothing — the sport selector is right there in the appbar.
-  final sport = ref.read(selectedSportStateProvider).value;
-  if (sport == null || sport == Sport.others) {
-    showFToast(
-      context: context,
-      icon: const Icon(FLucideIcons.circleAlert),
-      title: Text('course.pickSportFirst'.tr()),
-      alignment: .bottomCenter,
-    );
-    return;
-  }
-
-  // `message_coach` rejects a sport the coach isn't listed for. Catch it here
-  // so the user gets "this coach doesn't teach <sport>" rather than the generic
-  // failure toast — the context sport is orthogonal to what this coach offers,
-  // so landing here is ordinary, not an error.
-  if (!item.sports.contains(sport.index)) {
-    showFToast(
-      context: context,
-      icon: const Icon(FLucideIcons.circleAlert),
-      title: Text(
-        'course.coachSportMismatch'.tr(
-          namedArgs: {'sport': 'sport.${sport.name}'.tr()},
-        ),
-      ),
-      alignment: .bottomCenter,
-    );
-    return;
-  }
+  // A course is bound to one sport for its whole life, and there's no
+  // app-wide context sport to borrow one from any more: a single-sport coach
+  // decides it; otherwise ask, offering only the sports this coach teaches
+  // (`message_coach` rejects any other).
+  final teaches = [
+    for (final id in item.sports)
+      if (id > 0 && id < Sport.values.length) Sport.values[id],
+  ];
+  final Sport? sport = switch (teaches.length) {
+    0 => null,
+    1 => teaches.single,
+    _ => await _pickCoachSport(context, teaches),
+  };
+  if (sport == null || !context.mounted) return;
 
   try {
     final existingCourseId = await ref.read(
@@ -1180,4 +1162,26 @@ String? _coverageLabel(BuildContext context, ProfessionalFeedItem item) {
     (city) => city.dbIndex == item.preferredCityCluster,
   );
   return city.isEmpty ? null : city.first.getLocalizedName(context);
+}
+
+/// Asks which of a multi-sport coach's sports this course is for. Null when
+/// dismissed.
+Future<Sport?> _pickCoachSport(BuildContext context, List<Sport> sports) {
+  return showPSheet<Sport>(
+    context: context,
+    builder: (sheetContext) => Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 16,
+      children: [
+        PSheetTitle(label: 'course.pickCoachSport'.tr()),
+        PSportPicker(
+          value: null,
+          options: sports,
+          onChanged: (sport) => Navigator.of(sheetContext).pop(sport),
+        ),
+        const SizedBox(height: 8),
+      ],
+    ),
+  );
 }

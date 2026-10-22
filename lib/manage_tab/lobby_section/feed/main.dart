@@ -4,13 +4,16 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../auth/auth_controller.dart';
-import '../../../core/state/selected_sport_state.dart';
+import '../../../core/model/enum.dart';
+import '../../../discover_tab/lobby_public_preview_sheet.dart';
+import '../../../discover_tab/teammate_section/feed_controller.dart';
+import '../../../logger/talker.dart';
 import '../../../router.dart';
 import '../../../ui/main.dart';
-import '../freeplay_section/main.dart';
 import '../invite_member_sheet.dart';
 import 'lobby_controller.dart';
 import 'lobby_form_sheet.dart';
+import 'my_pending_requests_controller.dart';
 
 class LobbySubtab extends ConsumerWidget {
   const LobbySubtab({super.key});
@@ -20,8 +23,6 @@ class LobbySubtab extends ConsumerWidget {
     final lobbiesAsync = ref.watch(userLobbiesControllerProvider);
     final currentUser = ref.watch(authControllerProvider).value;
     final isGuest = currentUser?.isGuest ?? true;
-    final sport = ref.watch(selectedSportStateProvider).value;
-    final sportName = sport?.getLocalizedName(context).toLowerCase() ?? '';
 
     ref.listen(userLobbiesControllerProvider, (_, next) {
       if (next is AsyncError && context.mounted) {
@@ -38,7 +39,6 @@ class LobbySubtab extends ConsumerWidget {
 
     return Column(
       children: [
-        if (!isGuest) const PlayerFreeplaySection(),
         PSectionHeader(
           title: 'manageTab.lobby.title'.tr(),
           suffix: FButton.icon(
@@ -59,6 +59,9 @@ class LobbySubtab extends ConsumerWidget {
             child: const Icon(FLucideIcons.plus),
           ),
         ),
+        // Requests waiting on a captain belong to the Lobby section — they're
+        // lobbies you're about to be in — so they sit under its header.
+        if (!isGuest) const _PendingRequestsSection(),
         Expanded(
           child: isGuest
               ? const _GuestLobbyState()
@@ -72,12 +75,28 @@ class LobbySubtab extends ConsumerWidget {
                             size: 64,
                             color: context.theme.colors.mutedForeground,
                           ),
-                          title: 'manageTab.lobby.empty.title'.tr(
-                            namedArgs: {'sport': sportName},
-                          ),
-                          subtitle: 'manageTab.lobby.empty.message'.tr(
-                            namedArgs: {'sport': sportName},
-                          ),
+                          title: 'manageTab.lobby.empty.title'.tr(),
+                          subtitle: 'manageTab.lobby.empty.message'.tr(),
+                          actions: [
+                            FButton(
+                              size: .sm,
+                              prefix: const Icon(FLucideIcons.search),
+                              onPress: () =>
+                                  const DiscoverTeammateRoute().go(context),
+                              child: Text('manageTab.lobby.empty.findLobby'.tr()),
+                            ),
+                            FButton(
+                              size: .sm,
+                              variant: .outline,
+                              prefix: const Icon(FLucideIcons.plus),
+                              onPress: () => showLobbyFormSheet(
+                                context: context,
+                                ref: ref,
+                                lobbyId: null,
+                              ),
+                              child: Text('manageTab.lobby.createFirst'.tr()),
+                            ),
+                          ],
                         )
                       : RefreshIndicator(
                           onRefresh: () async {
@@ -218,11 +237,19 @@ class ManageLobbyCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         spacing: 6,
                         children: [
-                          if (isLeader || item.isCoordinator)
-                            _LobbyRoleBadge(
-                              isLeader: isLeader,
-                              isCoordinator: item.isCoordinator,
-                            ),
+                          // Eyebrow: the sport (the list mixes every sport
+                          // now) and, when it applies, your role.
+                          Row(
+                            spacing: 8,
+                            children: [
+                              Flexible(child: _SportEyebrow(sport: lobby.sport)),
+                              if (isLeader || item.isCoordinator)
+                                _LobbyRoleBadge(
+                                  isLeader: isLeader,
+                                  isCoordinator: item.isCoordinator,
+                                ),
+                            ],
+                          ),
                           Text(
                             lobby.name,
                             style: context.theme.typography.body.lg.copyWith(
@@ -327,6 +354,40 @@ class ManageLobbyCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The lobby's sport as a small caps eyebrow over its name — the same
+/// typographic tier as the role badge beside it, so the two read as one
+/// label line rather than a sticker on the avatar.
+class _SportEyebrow extends StatelessWidget {
+  final Sport sport;
+
+  const _SportEyebrow({required this.sport});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 5,
+      children: [
+        sport.getIcon(size: 7),
+        Flexible(
+          child: Text(
+            sport.getLocalizedName(context).toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.theme.typography.body.xs.copyWith(
+              color: pbInk.withValues(alpha: 0.62),
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              height: 1.0,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -488,6 +549,145 @@ class _NextActivityBoard extends StatelessWidget {
               height: 1,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Đang chờ duyệt" — the join requests the user has sent and nobody has
+/// answered yet, in every sport, as one full-width horizontal slide (one
+/// request per page, dots when there's more than one). Renders nothing while
+/// loading, on error, or when there are none: it's a status strip, not a
+/// section that needs an empty state of its own.
+class _PendingRequestsSection extends ConsumerStatefulWidget {
+  const _PendingRequestsSection();
+
+  @override
+  ConsumerState<_PendingRequestsSection> createState() =>
+      _PendingRequestsSectionState();
+}
+
+class _PendingRequestsSectionState
+    extends ConsumerState<_PendingRequestsSection> {
+  final _controller = PageController();
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _cancel(MyPendingRequest r) async {
+    try {
+      await ref.read(joinRequestStateProvider.notifier).unrequest(r.lobbyId);
+    } catch (e, st) {
+      talker.handle(e, st, 'cancel join request failed');
+      if (!mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: Text('errorGeneric'.tr()),
+        alignment: .bottomCenter,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final requests = ref.watch(myPendingRequestsProvider).value ?? const [];
+    if (requests.isEmpty) return const SizedBox.shrink();
+    final colors = context.theme.colors;
+    final page = _page.clamp(0, requests.length - 1);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 8,
+        children: [
+          PSheetSectionLabel(
+            label: 'manageTab.lobby.pending.title'.tr(
+              namedArgs: {'count': '${requests.length}'},
+            ),
+          ),
+          SizedBox(
+            height: 64,
+            child: PageView.builder(
+              controller: _controller,
+              itemCount: requests.length,
+              onPageChanged: (i) => setState(() => _page = i),
+              itemBuilder: (context, i) {
+                final r = requests[i];
+                return FTappable(
+                  onPress: () =>
+                      showLobbyPublicPreviewSheet(context, r.lobbyId),
+                  child: Container(
+                    padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 4, 0),
+                    decoration: BoxDecoration(
+                      color: colors.card,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: colors.border),
+                    ),
+                    child: Row(
+                      spacing: 10,
+                      children: [
+                        r.sport.getIcon(size: 10),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 2,
+                            children: [
+                              Text(
+                                r.lobbyName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.theme.typography.body.sm
+                                    .copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              Text(
+                                'manageTab.lobby.pending.waiting'.tr(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.theme.typography.body.xs
+                                    .copyWith(color: colors.mutedForeground),
+                              ),
+                            ],
+                          ),
+                        ),
+                        FButton(
+                          size: .sm,
+                          variant: .ghost,
+                          onPress: () => _cancel(r),
+                          child: Text('manageTab.lobby.pending.cancel'.tr()),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          if (requests.length > 1)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 6,
+              children: [
+                for (var i = 0; i < requests.length; i++)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: i == page ? 16 : 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: i == page ? colors.primary : colors.border,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+              ],
+            ),
         ],
       ),
     );

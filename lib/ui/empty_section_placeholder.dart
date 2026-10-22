@@ -7,11 +7,16 @@ class PEmptySectionPlaceholder extends StatelessWidget {
   final String? title;
   final String subtitle;
 
+  /// Optional next steps under the copy (e.g. "Chỉnh bộ lọc", "Thử lại") —
+  /// an empty state should point somewhere, not just describe the void.
+  final List<Widget> actions;
+
   const PEmptySectionPlaceholder({
     super.key,
     this.hero,
     this.title,
     required this.subtitle,
+    this.actions = const [],
   });
 
   @override
@@ -41,6 +46,15 @@ class PEmptySectionPlaceholder extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
+          if (actions.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: actions,
+            ),
+          ],
         ],
       ),
     );

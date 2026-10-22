@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../core/format.dart';
+import '../core/model/enum.dart';
 import '../ui/main.dart';
 import 'model.dart';
 
@@ -122,6 +123,15 @@ class CourseCard extends StatelessWidget {
                   spacing: 6,
                   runSpacing: 6,
                   children: [
+                    // The hubs list every sport now, so say which one.
+                    if (course.sportId > 0 &&
+                        course.sportId < Sport.values.length)
+                      _MetaPill(
+                        leading: Sport.values[course.sportId].getIcon(size: 6),
+                        label: Sport.values[course.sportId].getLocalizedName(
+                          context,
+                        ),
+                      ),
                     if (!coachSide && course.coachName != null)
                       _MetaPill(
                         icon: FLucideIcons.graduationCap,
@@ -303,14 +313,18 @@ class _CourseRoleBadge extends StatelessWidget {
 }
 
 class _MetaPill extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final String label;
   final bool highlighted;
 
+  /// Replaces [icon] — the sport pill shows the sport's own glyph.
+  final Widget? leading;
+
   const _MetaPill({
-    required this.icon,
+    this.icon,
     required this.label,
     this.highlighted = false,
+    this.leading,
   });
 
   @override
@@ -333,7 +347,7 @@ class _MetaPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         spacing: 4,
         children: [
-          Icon(icon, size: 11, color: pbBlueDeep),
+          leading ?? Icon(icon, size: 11, color: pbBlueDeep),
           Flexible(
             child: Text(
               label,

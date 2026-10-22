@@ -9,8 +9,10 @@ coaching courses. Unlike Discover, this is about entities the user is already a 
 
 ## Layout
 
-- `main.dart` — `ManageTab`: `FScaffold` + `FTabs` over 3 player subtabs (`lobby`, `schedule`,
-  `course`). `ManageTab.withInitialTab(0|1|2)` deep-links lobby/schedule/course (see `Manage*Route`
+- `main.dart` — `ManageTab`: `FScaffold` + a `PRailTabs` chip rail over 4 player subtabs (`lobby`,
+  `schedule`, `course`, `freeplay`). `ManageTab.withInitialTab(0|1|2|3)` deep-links
+  lobby/schedule/course/freeplay — freeplay (`playerFreeplayIndex`) was appended last so 0–2 kept
+  their meaning (see `Manage*Route`
   in `router.dart`).
 - `schedule_section/main.dart` — calendar view of the user's activities. Uses `lib/ui/calendar.dart`.
 - Index 2 is **courses**, and it lives in [`lib/course/`](../course/), not here — the same code
@@ -33,10 +35,11 @@ coaching courses. Unlike Discover, this is about entities the user is already a 
   venue is the activity's venue and is not editable here; "Huỷ buổi" becomes "Gỡ vé", which cancels
   the listing and leaves the lobby's session alone).
 - `lobby_section/freeplay_section/main.dart` is unrelated to either: it is the *player's* own seat
-  requests, surfaced inside the lobby hub.
+  requests — `PlayerFreeplaySubtab`, Manage's 4th rail tab ("Kèo lẻ"). It used to be a capped
+  strip above the lobby list.
 - `lobby_section/` — the bulk of this tab:
   - `feed/main.dart` — `LobbySubtab`: the list of the user's lobbies (`userLobbiesControllerProvider`)
-    — a direct `lobby` query filtered by the **context sport** (`sport_id == Sport.index`) and an
+    — a direct `lobby` query (**every sport**; each card badges its sport on the avatar) with an
     inner join on `lobby_member` for the current user, plus a per-lobby member count. `+` opens
     `lobby_form_sheet.dart` to create a lobby (`create_lobby_with_location` RPC). Captain marked with
     a crown.

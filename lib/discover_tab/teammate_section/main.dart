@@ -7,15 +7,17 @@ import 'package:material_ui/material_ui.dart';
 import '../../auth/guest_prompt.dart';
 import '../../core/model/lobby_feed_item.dart';
 import '../../logger/talker.dart';
-import '../../notifications/notification_service.dart';
+import '../../manage_tab/lobby_section/feed/lobby_form_sheet.dart';
+import '../../router.dart';
 import '../../ui/main.dart';
 import '../filter.dart';
 import '../lobby_feed_card.dart';
+import '../lobby_join_button.dart';
 import 'feed_controller.dart';
 
 /// Guards [TeammateSubtab]'s auto-open-filter effect so it only ever fires
-/// once per app process — `_builtIndices` in `discover_tab/main.dart` tears
-/// down and remounts this widget every time the user leaves and returns to
+/// once per app process — `discover_tab/main.dart` only builds the active
+/// subtab, so this widget is torn down and remounted every time the user leaves and returns to
 /// this subtab, and `widget.openFilter` stays `true` for the whole life of
 /// the `DiscoverTab` instance it came from, so without this latch switching
 /// tabs away and back would reopen the sheet every time.
@@ -48,10 +50,6 @@ class TeammateSubtab extends HookConsumerWidget {
 
     return Column(
       children: [
-        PSectionHeader(
-          title: 'home.teammate'.tr(),
-          suffix: const FilterWidget(),
-        ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
@@ -59,10 +57,16 @@ class TeammateSubtab extends HookConsumerWidget {
               await ref.read(teammateFeedProvider.future);
             },
             child: feed.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => _empty(context),
-              data: (items) =>
-                  items.isEmpty ? _empty(context) : _LobbyList(items: items),
+              loading: () => const Center(child: FCircularProgress()),
+              // Distinct from "no results": a failed load used to look exactly
+              // like an empty city, with nothing to try.
+              error: (e, st) {
+                talker.handle(e, st, 'teammate feed failed');
+                return _error(context, ref);
+              },
+              data: (items) => items.isEmpty
+                  ? _empty(context, ref)
+                  : _LobbyList(items: items),
             ),
           ),
         ),
@@ -70,109 +74,64 @@ class TeammateSubtab extends HookConsumerWidget {
     );
   }
 
-  Widget _empty(BuildContext context) => ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          PEmptySectionPlaceholder(
-            hero: Icon(
-              FLucideIcons.searchX,
-              size: 64,
-              color: context.theme.colors.mutedForeground,
-            ),
-            title: 'homeTab.empty.title'.tr(),
-            subtitle: 'homeTab.empty.message'.tr(),
-          ),
-        ],
-      );
-}
-
-class _JoinButton extends ConsumerWidget {
-  final String lobbyId;
-  final bool alreadyRequested;
-
-  const _JoinButton({required this.lobbyId, required this.alreadyRequested});
-
-  void _onError(BuildContext context, Object e, StackTrace st, String log) {
-    talker.handle(e, st, log);
-    showFToast(
-      context: context,
-      icon: const Icon(FLucideIcons.circleX),
-      variant: .destructive,
-      title: Text('error'.tr()),
-      description: Text('errorGeneric'.tr()),
-      alignment: .bottomCenter,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final requested = ref.watch(
-      joinRequestStateProvider.select((m) => m[lobbyId] ?? alreadyRequested),
-    );
-
-    // Once requested, the CTA becomes a "sent" indicator plus an undo button
-    // that cancels the pending join request.
-    if (requested) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 8,
-        children: [
-          Text(
-            'homeTab.teammate.sent'.tr(),
-            style: context.theme.typography.body.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+  Widget _empty(BuildContext context, WidgetRef ref) => ListView(
+    physics: const AlwaysScrollableScrollPhysics(),
+    children: [
+      PEmptySectionPlaceholder(
+        hero: Icon(
+          FLucideIcons.searchX,
+          size: 64,
+          color: context.theme.colors.mutedForeground,
+        ),
+        title: 'homeTab.teammate.emptyTitle'.tr(),
+        subtitle: 'homeTab.teammate.emptyMessage'.tr(),
+        actions: [
           FButton(
             size: .sm,
             variant: .outline,
-            prefix: const Icon(FLucideIcons.undo2),
+            prefix: const Icon(FLucideIcons.slidersHorizontal),
+            onPress: () => showFilterSheet(context),
+            child: Text('homeTab.teammate.adjustFilter'.tr()),
+          ),
+          FButton(
+            size: .sm,
+            prefix: const Icon(FLucideIcons.plus),
             onPress: () async {
-              try {
-                await ref
-                    .read(joinRequestStateProvider.notifier)
-                    .unrequest(lobbyId);
-              } catch (e, st) {
-                if (context.mounted) {
-                  _onError(context, e, st, 'Lobby join cancel failed');
-                }
-              }
+              if (!ensureSignedIn(context, ref)) return;
+              final lobby = await showLobbyFormSheet(context: context, ref: ref);
+              if (!context.mounted || lobby == null) return;
+              LobbyDetailRoute(id: lobby.id!, $extra: lobby.name).go(context);
             },
-            child: Text('homeTab.teammate.undo'.tr()),
+            child: Text('homeTab.teammate.createLobby'.tr()),
           ),
         ],
-      );
-    }
-
-    return FButton(
-      size: .sm,
-      variant: .primary,
-      onPress: () async {
-        // Guests can't send a join request (RLS/NOT NULL) — prompt sign-in
-        // instead of letting the tap fail silently.
-        if (!ensureSignedIn(context, ref)) return;
-        try {
-          await ref.read(joinRequestStateProvider.notifier).request(lobbyId);
-          // First meaningful action → soft-ask for push permission (no-op if
-          // already decided / guest). See lib/notifications/.
-          if (context.mounted) {
-            await ref
-                .read(notificationServiceProvider)
-                .maybePromptAndRegister(context, ref);
-          }
-        } catch (e, st) {
-          if (context.mounted) {
-            _onError(context, e, st, 'Lobby join request failed');
-          }
-        }
-      },
-      child: Text(
-        'homeTab.teammate.join'.tr(),
-        style: const TextStyle(fontWeight: FontWeight.w800),
       ),
-    );
-  }
+    ],
+  );
+
+  Widget _error(BuildContext context, WidgetRef ref) => ListView(
+    physics: const AlwaysScrollableScrollPhysics(),
+    children: [
+      PEmptySectionPlaceholder(
+        hero: Icon(
+          FLucideIcons.wifiOff,
+          size: 64,
+          color: context.theme.colors.mutedForeground,
+        ),
+        title: 'homeTab.loadError.title'.tr(),
+        subtitle: 'homeTab.loadError.message'.tr(),
+        actions: [
+          FButton(
+            size: .sm,
+            variant: .outline,
+            prefix: const Icon(FLucideIcons.rotateCw),
+            onPress: () => ref.invalidate(teammateFeedProvider),
+            child: Text('homeTab.loadError.retry'.tr()),
+          ),
+        ],
+      ),
+    ],
+  );
 }
 
 class _LobbyList extends ConsumerWidget {
@@ -191,7 +150,8 @@ class _LobbyList extends ConsumerWidget {
         final item = items[index];
         return LobbyFeedCard(
           item: item,
-          action: _JoinButton(
+          joinFromPreview: true,
+          action: LobbyJoinButton(
             lobbyId: item.id,
             alreadyRequested: item.alreadyRequested,
           ),

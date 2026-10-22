@@ -7,7 +7,11 @@ import 'package:material_ui/material_ui.dart';
 
 import '../core/model/enum.dart';
 import '../core/model/lobby_public_preview.dart';
+import '../core/model/mmr_tier.dart';
+import '../router.dart';
 import '../ui/main.dart';
+import 'lobby_feed_card.dart' show matchFactorSpecs;
+import 'lobby_join_button.dart';
 import 'lobby_public_preview_controller.dart';
 
 /// Same OSM user-agent convention as the Location subtab's map
@@ -15,21 +19,46 @@ import 'lobby_public_preview_controller.dart';
 /// usage policy.
 const _tileUserAgent = 'passe.vn.passe';
 
-/// A public, read-only preview of a lobby — reachable by guests and
-/// non-members straight from a Discover card tap. Deliberately NOT the
-/// member-oriented `LobbyDetailPage`/`LobbyDetailRoute` "hub".
-Future<void> showLobbyPublicPreviewSheet(BuildContext context, String lobbyId) {
+/// A public preview of a lobby — reachable by guests and non-members
+/// straight from a Discover card tap. Deliberately NOT the member-oriented
+/// `LobbyDetailPage`/`LobbyDetailRoute` "hub".
+///
+/// [joinAlreadyRequested] non-null pins a "Xin vào" footer (the Teammates
+/// feed passes its baseline request state): the sheet is where a player
+/// decides, so the decision has to be makeable here, not back on the card.
+/// [fitScore] / [matchFactors] carry the card's match readout in.
+Future<void> showLobbyPublicPreviewSheet(
+  BuildContext context,
+  String lobbyId, {
+  bool? joinAlreadyRequested,
+  double? fitScore,
+  List<String> matchFactors = const [],
+}) {
   return showPSheet(
     context: context,
     maxHeightRatio: 1.0,
-    builder: (_) => LobbyPublicPreviewSheet(lobbyId: lobbyId),
+    builder: (_) => LobbyPublicPreviewSheet(
+      lobbyId: lobbyId,
+      joinAlreadyRequested: joinAlreadyRequested,
+      fitScore: fitScore,
+      matchFactors: matchFactors,
+    ),
   );
 }
 
 class LobbyPublicPreviewSheet extends ConsumerWidget {
   final String lobbyId;
+  final bool? joinAlreadyRequested;
+  final double? fitScore;
+  final List<String> matchFactors;
 
-  const LobbyPublicPreviewSheet({super.key, required this.lobbyId});
+  const LobbyPublicPreviewSheet({
+    super.key,
+    required this.lobbyId,
+    this.joinAlreadyRequested,
+    this.fitScore,
+    this.matchFactors = const [],
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,27 +67,56 @@ class LobbyPublicPreviewSheet extends ConsumerWidget {
     return previewAsync.when(
       loading: () => const SizedBox(
         height: 240,
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: FCircularProgress()),
       ),
       error: (_, _) => _PreviewMessage(
-        icon: FLucideIcons.circleX,
-        message: 'errorGeneric'.tr(),
+        icon: FLucideIcons.wifiOff,
+        title: 'lobby.preview.loadError'.tr(),
+        message: 'homeTab.loadError.message'.tr(),
+        onRetry: () => ref.invalidate(lobbyPublicPreviewProvider(lobbyId)),
       ),
       data: (preview) => preview == null
           ? _PreviewMessage(
               icon: FLucideIcons.searchX,
               message: 'lobby.preview.notFound'.tr(),
             )
-          : _PreviewContent(preview: preview),
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Flexible(
+                  child: _PreviewContent(
+                    preview: preview,
+                    fitScore: fitScore,
+                    matchFactors: matchFactors,
+                  ),
+                ),
+                if (joinAlreadyRequested != null) ...[
+                  const SizedBox(height: 12),
+                  LobbyJoinButton(
+                    lobbyId: lobbyId,
+                    alreadyRequested: joinAlreadyRequested!,
+                    expand: true,
+                  ),
+                ],
+              ],
+            ),
     );
   }
 }
 
 class _PreviewMessage extends StatelessWidget {
   final IconData icon;
+  final String? title;
   final String message;
+  final VoidCallback? onRetry;
 
-  const _PreviewMessage({required this.icon, required this.message});
+  const _PreviewMessage({
+    required this.icon,
+    this.title,
+    required this.message,
+    this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +124,7 @@ class _PreviewMessage extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         PSheetTitle(
-          label: '',
+          label: title ?? '',
           trailing: FButton.icon(
             variant: .ghost,
             onPress: () => Navigator.of(context).pop(),
@@ -87,8 +145,17 @@ class _PreviewMessage extends StatelessWidget {
                 ),
                 Text(
                   message,
+                  textAlign: TextAlign.center,
                   style: TextStyle(color: context.theme.colors.mutedForeground),
                 ),
+                if (onRetry != null)
+                  FButton(
+                    size: .sm,
+                    variant: .outline,
+                    prefix: const Icon(FLucideIcons.rotateCw),
+                    onPress: onRetry,
+                    child: Text('homeTab.loadError.retry'.tr()),
+                  ),
               ],
             ),
           ),
@@ -100,8 +167,14 @@ class _PreviewMessage extends StatelessWidget {
 
 class _PreviewContent extends StatelessWidget {
   final LobbyPublicPreview preview;
+  final double? fitScore;
+  final List<String> matchFactors;
 
-  const _PreviewContent({required this.preview});
+  const _PreviewContent({
+    required this.preview,
+    this.fitScore,
+    this.matchFactors = const [],
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -154,6 +227,11 @@ class _PreviewContent extends StatelessWidget {
               ],
             ),
           ),
+
+          if (fitScore != null)
+            _FitSummary(score: fitScore!, factors: matchFactors),
+
+          _People(preview: preview),
 
           // Homeground(s) + map
           if (preview.homegroundName != null) ...[
@@ -209,7 +287,7 @@ class _PreviewContent extends StatelessWidget {
                   children: preview.playtime
                       .map(
                         (ts) => _PreviewChip(
-                          icon: Icons.schedule_rounded,
+                          icon: FLucideIcons.clock,
                           label:
                               '${ts.dayChunk.getShortName(context)} ${ts.dayOfWeek.getShortName(context)}',
                         ),
@@ -219,32 +297,9 @@ class _PreviewContent extends StatelessWidget {
               ],
             ),
 
-          // MMR
-          PMatchBoard(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'homeTab.challenger.mmr'.tr().toUpperCase(),
-                  style: context.theme.typography.body.xs.copyWith(
-                    color: Colors.white.withValues(alpha: 0.62),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1,
-                  ),
-                ),
-                Text(
-                  preview.hasProvisionalMmr
-                      ? '${preview.mmr} · ${'homeTab.challenger.provisional'.tr()}'
-                      : '${preview.mmr}',
-                  style: context.theme.typography.body.sm.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // MMR — shown for every non-private lobby (the RPC nulls it
+          // otherwise), Teammates and Challenger alike.
+          if (preview.mmr case final mmr?) _MmrTile(mmr: mmr, preview: preview),
 
           // Description
           if (preview.description != null &&
@@ -527,6 +582,240 @@ class _PreviewChip extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The card's FitScore, restated where the decision is made.
+class _FitSummary extends StatelessWidget {
+  final double score;
+  final List<String> factors;
+
+  const _FitSummary({required this.score, required this.factors});
+
+  @override
+  Widget build(BuildContext context) {
+    final specs = matchFactorSpecs(factors);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 8,
+      children: [
+        PSheetSectionLabel(
+          label: 'lobby.preview.fit'.tr(
+            namedArgs: {'score': score.toStringAsFixed(1)},
+          ),
+        ),
+        if (specs.isNotEmpty)
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final (label, icon) in specs)
+                _PreviewChip(icon: icon, label: label),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+/// Captain + a strip of member faces, each tapping through to /user/:id.
+/// Identities only come back for signed-in viewers; a guest gets one line
+/// saying why the faces are missing instead of an unexplained gap.
+class _People extends ConsumerWidget {
+  final LobbyPublicPreview preview;
+
+  const _People({required this.preview});
+
+  static const _avatarRadius = 18.0;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final captain = preview.captain;
+    final faces = preview.membersPreview;
+    final extra = preview.memberCount - faces.length;
+
+    if (captain == null && faces.isEmpty) {
+      return Text(
+        'lobby.preview.signInForMembers'.tr(),
+        style: context.theme.typography.body.sm.copyWith(
+          color: colors.mutedForeground,
+        ),
+      );
+    }
+
+    void open(LobbyPreviewPerson p) => UserRoute(id: p.id).push(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 8,
+      children: [
+        PSheetSectionLabel(label: 'lobby.preview.members'.tr()),
+        if (captain != null)
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => open(captain),
+            child: Row(
+              spacing: 10,
+              children: [
+                PUserAvatar(
+                  userId: captain.id,
+                  username: captain.username,
+                  generatedAvatar: captain.generatedAvatar,
+                  radius: _avatarRadius,
+                ),
+                Flexible(
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: captain.username,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        TextSpan(
+                          text: ' #${captain.tagNumber}',
+                          style: TextStyle(color: colors.mutedForeground),
+                        ),
+                      ],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.theme.typography.body.sm,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.secondary,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    'lobby.preview.captain'.tr(),
+                    style: context.theme.typography.body.xs.copyWith(
+                      fontWeight: FontWeight.w700,
+                      height: 1.0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (faces.length > 1 || extra > 0)
+          Row(
+            spacing: 6,
+            children: [
+              for (final p in faces.where((p) => p.id != captain?.id))
+                PUserAvatar(
+                  userId: p.id,
+                  username: p.username,
+                  generatedAvatar: p.generatedAvatar,
+                  radius: _avatarRadius,
+                  onTap: () => open(p),
+                ),
+              if (extra > 0)
+                CircleAvatar(
+                  radius: _avatarRadius,
+                  backgroundColor: colors.secondary,
+                  child: Text(
+                    '+$extra',
+                    style: context.theme.typography.body.xs.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.secondaryForeground,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+/// MMR as a level, not a bare number: the tier word, a 5-step meter, and how
+/// much evidence stands behind it. Below the provisional threshold the number
+/// is mostly the members' self-declared seeds, so it says "Ước Lượng" and
+/// explains itself on tap rather than passing as earned.
+class _MmrTile extends StatelessWidget {
+  final int mmr;
+  final LobbyPublicPreview preview;
+
+  const _MmrTile({required this.mmr, required this.preview});
+
+  @override
+  Widget build(BuildContext context) {
+    final tier = MmrTier.fromMmr(mmr);
+    final evidence = preview.ratedMatchCount == 0
+        ? 'lobby.preview.noRatedMatches'.tr()
+        : 'lobby.preview.ratedMatches'.tr(
+            namedArgs: {'count': '${preview.ratedMatchCount}'},
+          );
+    final colors = context.theme.colors;
+    final footnote = context.theme.typography.body.xs.copyWith(
+      color: colors.mutedForeground,
+    );
+
+    return PStatTile(
+      label: 'homeTab.challenger.mmr'.tr(),
+      icon: FLucideIcons.swords,
+      value: '$mmr',
+      meter: (tier.level, MmrTier.values.length),
+      footer: preview.hasProvisionalMmr
+          ? FTappable(
+              onPress: () => showFToast(
+                context: context,
+                icon: const Icon(FLucideIcons.info),
+                title: Text('homeTab.challenger.provisional'.tr()),
+                description: Text('lobby.preview.provisionalHelp'.tr()),
+                alignment: .bottomCenter,
+              ),
+              child: Row(
+                spacing: 8,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: colors.border),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 4,
+                      children: [
+                        Text(
+                          'homeTab.challenger.provisional'.tr(),
+                          style: footnote.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: colors.foreground,
+                            height: 1.0,
+                          ),
+                        ),
+                        Icon(
+                          FLucideIcons.info,
+                          size: 12,
+                          color: colors.mutedForeground,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: Text(
+                      evidence,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: footnote,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Text(evidence, style: footnote),
     );
   }
 }

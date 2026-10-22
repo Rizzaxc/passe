@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -8,6 +9,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../auth/auth_controller.dart';
 import '../../onboarding/onboarding_controller.dart';
 import '../../router.dart';
+import '../../ui/category_rail.dart';
 import '../../ui/lobby_avatar.dart';
 import 'activity/main.dart';
 import 'activity/planner_tab.dart';
@@ -97,15 +99,6 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
   late int _currentIndex;
   final _tourTargets = LobbyHubTourTargets();
 
-  // Which tabs are actually inflated right now. FTabs' content viewport has
-  // a ~250px cache extent on either side of the active page, so the
-  // neighboring tab would otherwise get fully built — and fire its own
-  // RPCs (Feed/Planner both hit Supabase on build) — even though it's not
-  // on screen. Rendering everything but the active + just-left index as a
-  // cheap SizedBox defeats that, matching lib/discover_tab/main.dart's
-  // `_DiscoverViewState`.
-  late final Set<int> _builtIndices;
-  Timer? _settleTimer;
   bool _didOpenActivityPlanner = false;
   bool _activityPlannerSheetOpen = false;
   bool _didOpenJoinRequests = false;
@@ -118,30 +111,11 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
-    _builtIndices = {_currentIndex};
   }
 
-  @override
-  void dispose() {
-    _settleTimer?.cancel();
-    super.dispose();
-  }
-
-  void _onTabChanged(int index) {
-    _settleTimer?.cancel();
-    setState(() {
-      _currentIndex = index;
-      _builtIndices.add(index);
-    });
-    _settleTimer = Timer(const Duration(milliseconds: 300), () {
-      if (!mounted) return;
-      setState(() {
-        _builtIndices
-          ..clear()
-          ..add(_currentIndex);
-      });
-    });
-  }
+  // PRailTabs only ever builds the active tab, so the old cache-extent
+  // workaround (`_builtIndices` + a settle timer) is gone.
+  void _onTabChanged(int index) => setState(() => _currentIndex = index);
 
   void _maybeOpenActivityPlanner(bool canManage) {
     if (!widget.openActivityPlanner || !canManage || _didOpenActivityPlanner) {
@@ -259,52 +233,37 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
     _maybeOpenChallengersSheet(canManage);
     _maybeScheduleTour(userId, onboardingDone);
 
-    final sections = <FTabEntry>[
-      FTabEntry(
-        label: SizedBox(
-          key: _tourTargets.feed,
-          width: 44,
-          height: 32,
-          child: const Icon(FLucideIcons.messageCircle),
+    final sections = [
+      PRailTab(
+        icon: FLucideIcons.messageCircle,
+        label: 'lobby.tabs.feed'.tr(),
+        anchorKey: _tourTargets.feed,
+        build: () => LobbyFeedTab(
+          lobbyId: widget.lobbyId,
+          isLeader: canManage,
+          captainId: infoAsync.value?.lobby.captainId,
         ),
-        child: _builtIndices.contains(0)
-            ? LobbyFeedTab(
-                lobbyId: widget.lobbyId,
-                isLeader: canManage,
-                captainId: infoAsync.value?.lobby.captainId,
-              )
-            : const SizedBox.shrink(),
       ),
-      FTabEntry(
-        label: SizedBox(
-          key: _tourTargets.planner,
-          width: 44,
-          height: 32,
-          child: const Icon(FLucideIcons.activity),
+      PRailTab(
+        icon: FLucideIcons.activity,
+        label: 'lobby.tabs.planner'.tr(),
+        anchorKey: _tourTargets.planner,
+        build: () => LobbyPlannerTab(
+          lobbyId: widget.lobbyId,
+          isLeader: canManage,
+          highlightActivityId: widget.highlightActivityId,
+          highlightChallengeId: widget.highlightChallengeId,
         ),
-        child: _builtIndices.contains(1)
-            ? LobbyPlannerTab(
-                lobbyId: widget.lobbyId,
-                isLeader: canManage,
-                highlightActivityId: widget.highlightActivityId,
-                highlightChallengeId: widget.highlightChallengeId,
-              )
-            : const SizedBox.shrink(),
       ),
-      FTabEntry(
-        label: SizedBox(
-          key: _tourTargets.history,
-          width: 44,
-          height: 32,
-          child: const Icon(FLucideIcons.clock),
+      PRailTab(
+        icon: FLucideIcons.clock,
+        label: 'lobby.tabs.history'.tr(),
+        anchorKey: _tourTargets.history,
+        build: () => HistoryView(
+          lobbyId: widget.lobbyId,
+          lobbyName: lobbyName,
+          highlightActivityId: widget.highlightActivityId,
         ),
-        child: _builtIndices.contains(2)
-            ? HistoryView(
-                lobbyId: widget.lobbyId,
-                lobbyName: lobbyName,
-                highlightActivityId: widget.highlightActivityId,
-              )
-            : const SizedBox.shrink(),
       ),
     ];
 
@@ -336,20 +295,15 @@ class _LobbyDetailPageState extends ConsumerState<LobbyDetailPage> {
               },
             ),
 
-            // Tabs — horizontal padding matches the 14-px inset the
-            // card content uses, so the tab indicator's edges line up
-            // with the content underneath.
+            // Chip rail — horizontal padding matches the 14-px inset the
+            // card content uses, so the rail lines up with the content.
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: FTabs(
-                  expands: true,
-                  contentPhysics: const NeverScrollableScrollPhysics(),
-                  control: FTabControl.lifted(
-                    index: _currentIndex,
-                    onChange: _onTabChanged,
-                  ),
-                  children: sections,
+                child: PRailTabs(
+                  tabs: sections,
+                  index: _currentIndex,
+                  onChanged: _onTabChanged,
                 ),
               ),
             ),

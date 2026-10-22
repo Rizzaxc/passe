@@ -6,7 +6,6 @@ import 'package:material_ui/material_ui.dart';
 import '../../freeplay/card.dart';
 import '../../freeplay/repository.dart';
 import '../../ui/main.dart';
-import '../filter.dart';
 
 class FreeplaySubtab extends ConsumerWidget {
   const FreeplaySubtab({super.key});
@@ -16,10 +15,6 @@ class FreeplaySubtab extends ConsumerWidget {
     final feed = ref.watch(freeplayFeedProvider);
     return Column(
       children: [
-        PSectionHeader(
-          title: 'freeplay.title'.tr(),
-          suffix: const FilterWidget(),
-        ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
@@ -27,7 +22,7 @@ class FreeplaySubtab extends ConsumerWidget {
               await ref.read(freeplayFeedProvider.future);
             },
             child: feed.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: FCircularProgress()),
               error: (_, _) => const _Empty(),
               data: (items) => items.isEmpty
                   ? const _Empty()

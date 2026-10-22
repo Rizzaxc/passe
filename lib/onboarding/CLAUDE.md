@@ -14,8 +14,10 @@ Two phases:
    follow-up chain below runs later (accept) or is skipped entirely until they sign up (decline —
    `OnboardingStatus.guestDeclined`). `router.dart`'s `redirect` sends any user here until
    `OnboardingState.coreDone` (the sport pick, not the opt-in), then on to whichever tab
-   `router.dart`'s `resolveInitialTabDestination` picks — Discover for a guest, otherwise Feed or
-   Manage depending on unread state (see `router.dart`'s own comments).
+   `router.dart`'s `resolveLandingLocation` picks — Discover ▸ Teammates for a guest **and for a
+   signed-in player who isn't in any lobby yet** (`hasAnyLobbyProvider`; an empty Manage list is a
+   dead end), otherwise Feed or Manage depending on unread state. The profile sheet also asks for
+   the player's **city**, which seeds Discover's filter (it used to silently default to HCMC).
 2. **Follow-up chain** (`follow_up.dart`'s `runOnboardingFollowUps`, fired once from
    `ScaffoldWithNavBar.initState` in `lib/main.dart`) — runs as sheets/overlays over the *real*,
    already sport-scoped shell, in order:

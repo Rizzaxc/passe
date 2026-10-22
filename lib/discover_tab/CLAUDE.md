@@ -1,14 +1,15 @@
 # Discover Tab
 
 Read the root [`CLAUDE.md`](../../CLAUDE.md) first for project-wide conventions (build_runner,
-navigation, the `selectedSportStateProvider` context sport, forui/theme, identity rules). This file
+navigation, the `selectedSportStateProvider` Discover sport, forui/theme, identity rules). This file
 covers what's specific to the Discover screen.
 
 ## Purpose
 
-Discover is a surface with five implemented subtabs sharing one filter, all scoped to the
-context sport (`selectedSportStateProvider`). Challenger is client-gated off by default, so normal
-builds show four. Each feed returns `[]` when no sport is selected.
+Discover is a surface with five subtabs sharing one filter, all scoped to the **Discover sport**
+(`selectedSportStateProvider`) — the only sport-scoped surface left in the app. Challenger always ships (as the friendly, referee-free mode);
+`ClientFeatureFlags.challengerFlow` only gates the refereed extras. Each feed returns `[]` when no
+sport is selected.
 
 The social surface (**Feed**) is a separate, first-positioned main tab — see
 [`lib/feed_tab/CLAUDE.md`](../feed_tab/CLAUDE.md). It used to live here behind a header pill toggle;
@@ -17,21 +18,41 @@ another screen), so `DiscoverTab` is back to being single-purpose.
 
 ## Layout
 
-- `main.dart` — `DiscoverTab`: `FScaffold` + `_DiscoverView` (four tabs by default).
-  - Default indices are `0` freeplay, `1` teammate, `2` professional, `3` location. When Challenger
-    is explicitly enabled it is inserted at `2`, shifting professional/location to `3`/`4`.
-    `DiscoverTab`'s named index getters keep the `Discover*Route` classes independent of that shift.
-- Appbar suffixes: `NotificationIconButton`, `SportSelector`. (`DaAppbarButton` — the đá-balance
+- `main.dart` — `DiscoverTab`: `FScaffold` + `_DiscoverView`. **Not `FTabs`**: a labelled,
+  horizontally scrolling `PCategoryRail` (`lib/ui/category_rail.dart`) picks the subtab, and one
+  `FilterSummaryChip` sits under it for every subtab. Five icon-only tabs from three icon sets read
+  as noise, and the filter used to be a separate icon on every subtab header.
+  - Order: `0` teammate (the default), `1` challenger, `2` freeplay, `3` professional, `4`
+    location. Always use the named constants (`DiscoverTab.teammateIndex` / `challengerIndex` /
+    `freeplayIndex` / `professionalIndex` / `locationIndex`), never a literal.
+  - Only the active subtab is built (each fires its own feed RPC on build); an `AnimatedSwitcher`
+    keeps the outgoing one alive just for the fade. Switch subtabs from inside Discover through
+    `discoverSubtabRequestProvider`, not the `Discover*Route`s.
+  - Subtabs no longer render their own title header — the rail chip is the title. Location keeps
+    only its list/map `PPillToggle`; professional keeps its per-role section headers.
+- Appbar suffix: `NotificationIconButton` only (the corner `SportSelector` is deleted app-wide). (`DaAppbarButton` — the đá-balance
   pill — is hidden app-wide; the currency system is deferred/unbuilt, see root CLAUDE.md ▸ Activity
   & Currency System. The widget still exists in `lib/currency/` for when that ships.)
-- `filter.dart` / `filter_controller.dart` — the **shared filter** across all four subtabs.
+- `filter.dart` / `filter_controller.dart` — the **shared filter** across all subtabs:
+  `FilterSummaryChip` (one-line summary from the pure `describeFilter`, plus a dot while
+  `filterIsActiveProvider` is true), `showFilterSheet`, and `FilterSheet` (title "Bộ lọc", an
+  "Đặt lại" reset back to the profile seed, 400 ms search debounce, a toast when the 6-ward /
+  3-timeslot cap drops the oldest pick). **The sport lives here**: a `PSportPicker` row at the top
+  of the sheet sets `selectedSportStateProvider`, and the summary chip leads with that sport's icon
+  and name. "Đặt lại" deliberately leaves the sport alone. A `name#tag` search no longer
+  jumps to `FriendsScreen`; friend search lives in `lib/social/`.
 - `lobby_feed_card.dart` — `LobbyFeedCard`, the shared card for the lobby-shaped subtabs.
   **Design rule: the teammate and challenger cards must stay visually identical** — same name,
   member-count badge, homeground, playtime/vibe chips, FitScore. The *only* permitted differences
   are (a) the **MMR block** (`lobbyMmr` + favorability, challenger-only) and (b) the **CTA** passed
   via `action`. Keep both feeds returning the same columns (incl. `member_count`) so the card
-  renders consistently. Teammate CTA: "Xin vào" → once requested, shows a "Đã gửi" indicator + an
-  **undo** button (`RequestedLobbyIds.unrequest`). Challenger CTA: "Thách đấu" (disabled placeholder).
+  renders consistently. Playtime chips the player is filtering for are marked matched (✓, mint) and
+  sorted first, then 3 shown + "+N"; `timeslot_compat_score` is an uncapped point total, so it is
+  deliberately **not** shown as an "x/y". FitScore factor labels are translation keys
+  (`lobby.matchFactor.<code>`, `matchFactorSpec`). A "Xem chi tiết ›" hint says the card opens the
+  preview. Teammate CTA: `LobbyJoinButton` (`lobby_join_button.dart`) — "Xin vào" → a "Đã gửi
+  yêu cầu" toast + the push soft-ask with a join-specific reason → "Đã gửi" + **undo**
+  (`JoinRequestState.unrequest`). Challenger CTA: "Thách đấu".
 - `teammate_section/`, `challenger_section/`, `professional_section/`, `location_section/` — one
   `main.dart` (UI) + `feed_controller.dart` (`@riverpod` data) each.
 - `freeplay_section/main.dart` is the thinnest of the five: the models, providers, card and detail
@@ -42,6 +63,19 @@ another screen), so `DiscoverTab` is back to being single-purpose.
   anon-granted, **refuses `private` lobbies**, collapsing not-found and private into one answer so a
   guessed uuid can't probe existence). Opened by tapping a `LobbyFeedCard`, and by the owner chip on
   a lobby-owned freeplay listing. It is *not* `LobbyDetailPage` — that one is for members.
+  - **It's where the decision happens, so you can act in it:** the Teammates card passes
+    `joinAlreadyRequested`, which pins a full-width `LobbyJoinButton` footer, plus `fitScore` /
+    `matchFactors` for a FitScore line.
+  - **Who's in it:** `captain` + up to 6 `members_preview` (captain, coordinators, members), each
+    tapping to `UserRoute`. Returned **only to signed-in callers** and never anyone in a block
+    relationship with the caller (`fn_is_blocked`); guests see a "sign in to see members" line
+    and keep the aggregate bars. Schema: `schema/lobby_public_preview_members.sql`.
+  - **MMR** is a `PStatTile` (`lib/ui/stat_tile.dart`): the numeral alone (no tier word —
+    level words only appear in the skill picker, with their explanations), a 5-segment
+    `PLevelSlider` meter placed by `MmrTier` (`lib/core/model/mmr_tier.dart`, bands halfway between
+    the elo seeds), and how many refereed matches back it — "Ước
+    Lượng" (tap for why) below `provisionalMatchThreshold`. Shown for every non-private lobby,
+    Teammates and Challenger alike; the RPC nulls `mmr` for private visibility.
 
 ## Shared filter
 
@@ -80,7 +114,7 @@ freezed) — edit them by hand, no build_runner.
 ### Freeplay subtab
 
 - Shows single **drop-in seats** in the next 7 days: one row per open session, cheapest path from
-  "I'm free tonight" to actually playing. Index `0` — the first thing Discover shows.
+  "I'm free tonight" to actually playing. Index `2` (`DiscoverTab.freeplayIndex`), after Teammates and Challenger.
 - Data: `home_freeplay_data(p_sport_id, p_timeslots, p_city, p_districts, p_search, p_page_size,
   p_page_number)`. **Granted to `anon`** — a signed-out visitor sees the feed (the seat request
   itself is authenticated-only).
@@ -139,9 +173,10 @@ freezed) — edit them by hand, no build_runner.
 
 ### Challenger subtab
 
-- **Disabled by default in the client.** `ClientFeatureFlags.challengerFlow` gates the Discover
-  subtab and the related lobby/activity/pro/notification continuation UI. Enable an explicit test
-  build with `--dart-define=ENABLE_CHALLENGER_FLOW=true`; do not put it in a default ship command.
+- **The subtab always ships** as the friendly (referee-free) mode. `ClientFeatureFlags.challengerFlow`
+  gates only the **refereed** extras (hiring an official, pro-mode result entry, the related
+  notification kinds). Enable those for an explicit test build with
+  `--dart-define=ENABLE_CHALLENGER_FLOW=true`; do not put it in a default ship command.
 - Shows lobbies that have **published a challenge offer** (team vs team, with stated terms — see
   root CLAUDE.md ▸ Challenger System for the full flow).
 - Requires `open_to_challengers boolean DEFAULT false NOT NULL` **plus** `challenge_offer_time` /
@@ -220,7 +255,7 @@ freezed) — edit them by hand, no build_runner.
 ### Location subtab
 
 - Shows venues/courts from the `location` table, filtered by `city_cluster`, `district`, and the
-  context sport (see below).
+  Discover sport (see below).
 - **List/Map toggle** (`PPillToggle`, local `_VenueView` state — not persisted) in the header
   suffix next to the filter icon. List = interactive `FCard`s; Map = embedded `flutter_map`
   (OpenStreetMap tiles, no API key). Tapping a card **or** a map marker opens the venue detail sheet
@@ -326,8 +361,14 @@ freezed) — edit them by hand, no build_runner.
 - **No mock fallback**: teammate, challenger and professional subtabs read real DB data — loading
   shows a spinner, empty/error shows `PEmptySectionPlaceholder`. (Synthetic `mocked_` content is
   seeded in the DB via `schema/mocked_seed.sql`, not hard-coded in the widgets.)
-- The "request to join" optimistic state lives in `RequestedLobbyIdsProvider` (a `Set<String>`),
-  which rolls back on failure — it is **not** refetched from the server.
+- The "request to join" optimistic state lives in `joinRequestStateProvider` (`JoinRequestState`,
+  a per-lobby `Map<String, bool>` override over the feed's `already_requested` baseline), which
+  rolls back on failure. Manage ▸ Lobby's "Đang chờ duyệt" strip
+  (`my_pending_requests_controller.dart`) watches it, so a request or undo on either side shows up
+  on the other without a refresh.
+- Loading uses forui's `FCircularProgress`, not Material's spinner. The Teammates feed shows a
+  distinct error state with "Thử lại" (a failed load used to look identical to "no results"), and
+  its empty state offers "Chỉnh bộ lọc" / "Tạo lobby" through `PEmptySectionPlaceholder.actions`.
 - Every feed implements scroll-to-refresh via `RefreshIndicator` + `ref.invalidate(feedProvider)`
   then `await ref.read(feedProvider.future)`. Keep this on any new feed.
 - All feed RPCs/queries carry the mandatory `.timeout(const Duration(seconds: 5))`.

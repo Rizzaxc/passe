@@ -72,9 +72,6 @@ class UserLobbiesController extends _$UserLobbiesController {
     final user = ref.watch(authControllerProvider).value;
     if (user == null || user.id == null) return [];
 
-    final sport = ref.watch(selectedSportStateProvider).value;
-    if (sport == null) return [];
-
     // Housekeeping (expiring past unconfirmed activities) runs server-side on a
     // pg_cron schedule ('expire_past_activities' job) — it must NOT run as a
     // mutation on this read path.
@@ -84,7 +81,6 @@ class UserLobbiesController extends _$UserLobbiesController {
         .select(
           'id, name, searchable_id, sport_id, captain_id, details, mmr, lobby_homeground(is_primary, location(name)), lobby_member!inner(user_id, role)',
         )
-        .eq('sport_id', sport.index)
         .eq('lobby_member.user_id', user.id!)
         .timeout(const Duration(seconds: 5));
 
@@ -244,8 +240,9 @@ class LobbyFormController extends _$LobbyFormController {
   @override
   LobbyFormState build(String? lobbyId) {
     _lobbyId = lobbyId;
-    // Default to the context sport; if it isn't resolved yet, leave it as
-    // `others` so commit() blocks rather than silently creating a Soccer lobby.
+    // Preselect Discover's sport (it's shown, and changeable, in the form's
+    // sport picker); `others` if unresolved, so commit() refuses rather than
+    // silently creating a Soccer lobby.
     final sport = ref.read(selectedSportStateProvider).value ?? Sport.others;
     return LobbyFormState(
       lobby: Lobby(name: '', sport: sport),
@@ -412,8 +409,7 @@ class LobbyFormController extends _$LobbyFormController {
         ref.invalidate(userLobbiesControllerProvider);
       } else {
         // Block creating a lobby with no real sport (Sport.others = index 0):
-        // the whole app is scoped to a context sport, and a sportless lobby
-        // corrupts every sport-filtered feed. Previously this silently fell back
+        // a sportless lobby corrupts every sport-filtered Discover feed. Previously this silently fell back
         // to Soccer.
         if (state.lobby.sport == Sport.others) {
           throw const LobbySportNotSelected();

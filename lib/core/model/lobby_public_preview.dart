@@ -70,6 +70,32 @@ class LobbyIndustryStat {
   }
 }
 
+/// A person shown on the preview — the captain, or one face in the member
+/// strip. Only returned to signed-in viewers, minus anyone either side has
+/// blocked (`schema/lobby_public_preview_members.sql`).
+class LobbyPreviewPerson {
+  final String id;
+  final String username;
+  final String tagNumber;
+  final String? generatedAvatar;
+
+  const LobbyPreviewPerson({
+    required this.id,
+    required this.username,
+    required this.tagNumber,
+    this.generatedAvatar,
+  });
+
+  factory LobbyPreviewPerson.fromJson(Map<String, dynamic> json) {
+    return LobbyPreviewPerson(
+      id: json['id'] as String,
+      username: json['username'] as String? ?? '',
+      tagNumber: json['tag_number'] as String? ?? '0000',
+      generatedAvatar: json['generated_avatar'] as String?,
+    );
+  }
+}
+
 /// The response shape of the `get_lobby_public_preview` RPC — everything the
 /// Discover card's public preview sheet shows for a lobby, reachable by
 /// guests and non-members alike. Hand-written (not freezed), matching
@@ -85,13 +111,19 @@ class LobbyPublicPreview {
   final double? homegroundLat;
   final double? homegroundLon;
   final List<LobbyHomeground> homegrounds;
-  final int mmr;
+  /// Null when the lobby's visibility hides it (private) — MMR visibility
+  /// follows the lobby, not the viewer.
+  final int? mmr;
   final int ratedMatchCount;
   final LobbyGenderBreakdown gender;
   final Map<AgeGroup, int> ageGroupCounts;
   final int ageGroupUnknownCount;
   final List<LobbyNetworkStat> topNetworks;
   final List<LobbyIndustryStat> topIndustries;
+
+  /// Both empty/null for guests — identities need a signed-in viewer.
+  final LobbyPreviewPerson? captain;
+  final List<LobbyPreviewPerson> membersPreview;
 
   const LobbyPublicPreview({
     required this.id,
@@ -111,6 +143,8 @@ class LobbyPublicPreview {
     required this.ageGroupUnknownCount,
     required this.topNetworks,
     required this.topIndustries,
+    this.captain,
+    this.membersPreview = const [],
   });
 
   /// Below this many rated matches, [mmr] is still essentially the
@@ -162,7 +196,7 @@ class LobbyPublicPreview {
                 .map(LobbyHomeground.fromJson)
                 .toList()
           : const [],
-      mmr: (json['mmr'] as num?)?.toInt() ?? 1000,
+      mmr: (json['mmr'] as num?)?.toInt(),
       ratedMatchCount: (json['rated_match_count'] as num?)?.toInt() ?? 0,
       gender: json['gender_breakdown'] is Map<String, dynamic>
           ? LobbyGenderBreakdown.fromJson(
@@ -181,6 +215,15 @@ class LobbyPublicPreview {
           ? (json['top_industries'] as List)
                 .whereType<Map<String, dynamic>>()
                 .map(LobbyIndustryStat.fromJson)
+                .toList()
+          : const [],
+      captain: json['captain'] is Map<String, dynamic>
+          ? LobbyPreviewPerson.fromJson(json['captain'] as Map<String, dynamic>)
+          : null,
+      membersPreview: json['members_preview'] is List
+          ? (json['members_preview'] as List)
+                .whereType<Map<String, dynamic>>()
+                .map(LobbyPreviewPerson.fromJson)
                 .toList()
           : const [],
     );

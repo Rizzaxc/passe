@@ -6,8 +6,10 @@ import 'package:material_ui/material_ui.dart';
 
 import '../core/model/enum.dart';
 import '../core/model/user_details.dart';
+import '../core/model/user_location.dart';
 import '../core/state/selected_sport_state.dart';
 import '../core/timeslot_picker.dart';
+import '../discover_tab/filter.dart';
 import '../profile_tab/profile_controller.dart';
 import '../profile_tab/sport_profile/elo_seed_field.dart';
 import '../profile_tab/sport_profile/sport_profile_controller.dart';
@@ -122,11 +124,41 @@ class ProfileStep extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
+          // City seeds Discover's filter. Without it everyone defaulted to
+          // HCMC, so a Hà Nội player's first Teammates list was the wrong city.
+          FSelectTileGroup<City>(
+            label: Text('onboarding.profile.city'.tr()),
+            control: FMultiValueControl.managedRadio(
+              initial: details.location?.city == City.none
+                  ? null
+                  : details.location?.city,
+              onChange: (selected) async {
+                final city = selected.firstOrNull;
+                if (city == null || city == details.location?.city) return;
+                await ref
+                    .read(profileControllerProvider.notifier)
+                    .updateDetailsAndFlush(
+                      details.copyWith(
+                        location: UserLocation(city: city, districts: const []),
+                      ),
+                    );
+                ref.invalidate(filterStateProvider);
+              },
+            ),
+            children: [
+              for (final city in [City.hochiminh, City.hanoi])
+                FSelectTile.suffix(
+                  prefix: const Icon(FLucideIcons.mapPin),
+                  title: Text(city.getLocalizedName(context)),
+                  value: city,
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
           _PlaytimeField(details: details),
           if (sport != Sport.others) ...[
             const SizedBox(height: 12),
-            // Each level gets its own explanatory line instead of leaving
-            // the pick to the bare enum label.
+            // The intro says why; the field itself explains the level picked.
             Text(
               'onboarding.profile.skillIntro'.tr(),
               style: context.theme.typography.body.sm.copyWith(
@@ -134,31 +166,6 @@ class ProfileStep extends ConsumerWidget {
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 8),
-            for (final seed in EloSeed.values)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '${seed.getLocalizedName(context)}: ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: colors.foreground,
-                        ),
-                      ),
-                      TextSpan(
-                        text: 'onboarding.profile.skillLevels.${seed.name}'
-                            .tr(),
-                      ),
-                    ],
-                  ),
-                  style: context.theme.typography.body.sm.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
-              ),
             const SizedBox(height: 8),
             EloSeedField(
               value: eloSeed,

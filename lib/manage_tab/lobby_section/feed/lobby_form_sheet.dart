@@ -128,6 +128,23 @@ class _LobbyFormSheetState extends ConsumerState<LobbyFormSheet> {
               onRemove: notifier.removeAvatar,
             ),
 
+            // Sport — explicit, now that there's no app-wide context sport.
+            // Fixed once the lobby exists: feeds, ratings and activities are
+            // all keyed to it.
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 8,
+              children: [
+                PSheetSectionLabel(label: 'createLobby.sport'.tr()),
+                PSportPicker(
+                  value: lobby.sport == Sport.others ? null : lobby.sport,
+                  onChanged: widget.lobbyId == null
+                      ? (sport) => notifier.updateDraft(sport: sport)
+                      : null,
+                ),
+              ],
+            ),
+
             // Name
             FTextFormField(
               hint: 'createLobby.lobbyNameHint'.tr(),

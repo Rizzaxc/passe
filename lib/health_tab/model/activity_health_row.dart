@@ -49,6 +49,9 @@ abstract class ActivityHealthRow with _$ActivityHealthRow {
     @JsonKey(name: 'avatar_generated') String? avatarGenerated,
     // Freeplay: freeplay_host.avatar_url directly.
     @JsonKey(name: 'freeplay_avatar_url') String? freeplayAvatarUrl,
+    // The list spans every sport now — the recap card badges each row with
+    // its sport. Null from an older RPC shape.
+    @JsonKey(name: 'sport_id') int? sportId,
   }) = _ActivityHealthRow;
 
   factory ActivityHealthRow.fromJson(Map<String, dynamic> json) =>

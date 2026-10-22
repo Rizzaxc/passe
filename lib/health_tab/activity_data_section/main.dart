@@ -4,8 +4,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/model/enum.dart';
-import '../../core/state/selected_sport_state.dart';
-import '../../ui/main.dart';
 import '../health_data_controller.dart';
 import '../health_data_service.dart';
 import '../health_sync_service.dart';
@@ -19,28 +17,16 @@ class ActivityDataSubtab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sport = ref.watch(selectedSportStateProvider).value;
     final detected = ref.watch(detectedWorkoutsProvider);
     final recaps = ref.watch(activityHealthListProvider);
-    final sportCounts = ref.watch(activityHealthSportCountsProvider);
 
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(activityHealthListProvider);
         ref.invalidate(detectedWorkoutsProvider);
-        ref.invalidate(activityHealthSportCountsProvider);
         await ref.read(activityHealthListProvider.future);
       },
-      child: (sport == null || sport == Sport.others)
-          ? ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                PEmptySectionPlaceholder(
-                  subtitle: 'health.activityData.selectSport'.tr(),
-                ),
-              ],
-            )
-          : ListView(
+      child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(vertical: 12),
               children: [
@@ -71,22 +57,7 @@ class ActivityDataSubtab extends ConsumerWidget {
                     child: Center(child: Text('health.error'.tr())),
                   ),
                   data: (rows) {
-                    if (rows.isEmpty) {
-                      final hint = sportCounts.maybeWhen(
-                        data: (counts) => _bestOtherSport(counts, sport),
-                        orElse: () => null,
-                      );
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (hint != null) ...[
-                            _OtherSportHint(sport: hint.$1, count: hint.$2),
-                            const SizedBox(height: 10),
-                          ],
-                          const _SampleRecapCard(),
-                        ],
-                      );
-                    }
+                    if (rows.isEmpty) return const _SampleRecapCard();
                     return Column(
                       children: [
                         for (final r in rows) ...[
@@ -127,18 +98,6 @@ class _SectionLabel extends StatelessWidget {
 String _dateLabel(BuildContext context, DateTime dt) =>
     DateFormat.MMMEd(context.locale.toString()).format(dt.toLocal());
 
-/// The other sport with the most reports, excluding [current] — so a user
-/// viewing an empty recap list for one sport can be pointed at reports
-/// filed under a different one instead of it looking identical to "never
-/// synced". `null` when there's nothing else to point at.
-(Sport, int)? _bestOtherSport(Map<Sport, int> counts, Sport current) {
-  (Sport, int)? best;
-  for (final entry in counts.entries) {
-    if (entry.key == current || entry.value <= 0) continue;
-    if (best == null || entry.value > best.$2) best = (entry.key, entry.value);
-  }
-  return best;
-}
 
 // ─── Detected workout card ──────────────────────────────────────────────────
 
@@ -253,49 +212,6 @@ class _DetectedCardState extends ConsumerState<_DetectedCard> {
               ],
             ),
         ],
-      ),
-    );
-  }
-}
-
-// ─── Other-sport hint (shown above the sample card when empty) ────────────────
-
-/// Points at reports filed under a different sport when the context sport's
-/// recap list is empty but another sport has real data. Tapping switches the
-/// context sport directly rather than making the user go find the selector.
-class _OtherSportHint extends ConsumerWidget {
-  final Sport sport;
-  final int count;
-  const _OtherSportHint({required this.sport, required this.count});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.theme.colors;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () =>
-          ref.read(selectedSportStateProvider.notifier).change(sport),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colors.secondary,
-          borderRadius: context.theme.style.borderRadius.md,
-        ),
-        child: Row(
-          spacing: 8,
-          children: [
-            Icon(FLucideIcons.arrowRightLeft, size: 16, color: colors.primary),
-            Expanded(
-              child: Text(
-                'health.activityData.otherSportHint'.plural(
-                  count,
-                  namedArgs: {'sport': sport.getLocalizedName(context)},
-                ),
-                style: context.theme.typography.body.sm,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -482,7 +398,10 @@ class _RecapCard extends StatelessWidget {
             Row(
               spacing: 12,
               children: [
-                SourceAvatar(row: row),
+                // The sport, not the lobby: the list spans every sport, and
+                // which lobby/coach it was with is the subtitle line (and the
+                // recap sheet's source row) already.
+                _SportAvatar(sportId: row.sportId, row: row),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,6 +426,8 @@ class _RecapCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                // The session's headline number, readable without opening it.
+                if (row.effortScore != null) _EffortBadge(score: row.effortScore!),
                 Icon(
                   FLucideIcons.chevronRight,
                   size: 18,
@@ -577,4 +498,72 @@ class _RecapCard extends StatelessWidget {
   String _distance(double meters) => meters >= 1000
       ? '${(meters / 1000).toStringAsFixed(1)} km'
       : '${meters.round()} m';
+}
+
+/// A recap's leading glyph: its sport in a soft circle. Falls back to the
+/// source avatar only for rows from an RPC old enough to lack `sport_id`.
+class _SportAvatar extends StatelessWidget {
+  final int? sportId;
+  final ActivityHealthRow row;
+
+  const _SportAvatar({required this.sportId, required this.row});
+
+  static const _size = 36.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final id = sportId;
+    if (id == null || id <= 0 || id >= Sport.values.length) {
+      return SourceAvatar(row: row, size: _size);
+    }
+    return Container(
+      width: _size,
+      height: _size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: context.theme.colors.secondary,
+        shape: BoxShape.circle,
+      ),
+      // getIcon takes a radius: 11 → a 22-pt glyph inside the 36-pt disc.
+      child: Sport.values[id].getIcon(size: 11),
+    );
+  }
+}
+
+/// Effort Score (0–100) as a compact pill beside the card's chevron.
+class _EffortBadge extends StatelessWidget {
+  final double score;
+
+  const _EffortBadge({required this.score});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Semantics(
+      label: '${'health.recap.effort'.tr()} ${score.round()}',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: colors.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 3,
+          children: [
+            Icon(FLucideIcons.zap, size: 13, color: colors.primary),
+            Text(
+              '${score.round()}',
+              style: context.theme.typography.body.sm.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w800,
+                height: 1.0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

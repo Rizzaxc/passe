@@ -3,8 +3,6 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../core/model/enum.dart';
-import '../core/state/selected_sport_state.dart';
 import '../router.dart';
 import '../ui/main.dart';
 import 'course_card.dart';
@@ -19,15 +17,8 @@ class CourseHubSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(myCoursesProvider);
-    // A course is bound to one sport for its whole life (`course.sport_id`),
-    // so the hub is scoped to the context sport the same way the Manage ▸
-    // Lobby list is (`lobby_controller.dart`'s `sport_id == Sport.index`
-    // filter) — without this, a course with a coach who happens to teach
-    // several sports (`professional.sports`) showed up regardless of which
-    // sport was selected, which read as "the same coach thread" bleeding
-    // across sports even though messaging that coach under a different
-    // sport correctly starts a brand new, separate course.
-    final sport = ref.watch(selectedSportStateProvider).value;
+    // Every sport: each card carries a sport pill (`CourseCard`) instead
+    // of the hub hiding other sports' courses behind a context sport.
 
     ref.listen(myCoursesProvider, (_, next) {
       if (next is AsyncError && context.mounted) {
@@ -68,9 +59,7 @@ class CourseHubSection extends ConsumerWidget {
               onRefresh: () => ref.refresh(myCoursesProvider.future),
             ),
             data: (all) {
-              final courses = sport == null || sport == Sport.others
-                  ? const <CourseSummary>[]
-                  : all.where((c) => c.sportId == sport.index).toList();
+              final courses = all;
               return courses.isEmpty
                   ? _CourseListState(
                       icon: FLucideIcons.graduationCap,
@@ -103,10 +92,6 @@ class ProCoursesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(proCoursesProvider);
-    // Same context-sport scoping as the player-side hub above — a coach who
-    // teaches several sports shouldn't see a badminton student's course
-    // while soccer is selected.
-    final sport = ref.watch(selectedSportStateProvider).value;
 
     ref.listen(proCoursesProvider, (_, next) {
       if (next is AsyncError && context.mounted) {
@@ -140,9 +125,7 @@ class ProCoursesSection extends ConsumerWidget {
               onRefresh: () => ref.refresh(proCoursesProvider.future),
             ),
             data: (all) {
-              final courses = (sport == null || sport == Sport.others
-                      ? const <CourseSummary>[]
-                      : all.where((c) => c.sportId == sport.index))
+              final courses = all
                   .where(
                     (course) => endedOnly
                         ? course.status == CourseStatus.ended

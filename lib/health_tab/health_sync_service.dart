@@ -106,7 +106,6 @@ class HealthSyncController extends _$HealthSyncController {
 
       ref.invalidate(dailyHealthTrendProvider);
       ref.invalidate(activityHealthListProvider);
-      ref.invalidate(activityHealthSportCountsProvider);
       ref.invalidate(detectedWorkoutsProvider);
       ref.invalidate(vitalityScoreSummaryProvider);
 
@@ -373,7 +372,6 @@ class HealthSyncController extends _$HealthSyncController {
     if (!ref.mounted) return true;
     ref.invalidate(detectedWorkoutsProvider);
     ref.invalidate(activityHealthListProvider);
-    ref.invalidate(activityHealthSportCountsProvider);
     return true;
   }
 

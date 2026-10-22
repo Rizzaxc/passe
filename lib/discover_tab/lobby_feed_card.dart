@@ -1,11 +1,14 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../core/format.dart';
 import '../core/model/enum.dart';
 import '../core/model/lobby_feed_item.dart';
+import '../core/model/timeslot.dart';
 import '../ui/main.dart';
+import 'filter.dart';
 import 'lobby_public_preview_sheet.dart';
 
 /// Score floor of `calculate_profile_compat_score` — the neutral baseline a
@@ -18,22 +21,40 @@ import 'lobby_public_preview_sheet.dart';
 /// FitScore at all rather than rendering a number with nothing backing it.
 const double _fitScoreFloor = 2.5;
 
-class LobbyFeedCard extends StatelessWidget {
+class LobbyFeedCard extends ConsumerWidget {
   final LobbyFeedItem item;
   final Widget action;
   final bool showCompat;
+
+  /// Pin a "Xin vào" footer to the preview sheet this card opens — the
+  /// Teammates feed. Challenger's CTA is a challenge, not a join request.
+  final bool joinFromPreview;
 
   const LobbyFeedCard({
     super.key,
     required this.item,
     required this.action,
     this.showCompat = true,
+    this.joinFromPreview = false,
   });
 
+  static const _maxTimeslots = 3;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final score = item.profileCompatScore;
+
+    // Slots that line up with what the player is filtering for go first and
+    // read as matched, so schedule fit is visible on the card itself rather
+    // than only as an unexplained "Lịch chơi khớp" tag.
+    final wanted = ref.watch(filterStateProvider.select((f) => f.schedule));
+    final matched = {for (final t in item.playtime) if (wanted.contains(t)) t};
+    final slots = [
+      ...item.playtime.where(matched.contains),
+      ...item.playtime.where((t) => !matched.contains(t)),
+    ];
+    final hiddenSlots = slots.length - _maxTimeslots;
     final isGoodFit = score > _fitScoreFloor;
     final hasFit = showCompat && isGoodFit;
     final frameColor = hasFit ? pbMint : pbAmber;
@@ -47,7 +68,13 @@ class LobbyFeedCard extends StatelessWidget {
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => showLobbyPublicPreviewSheet(context, item.id),
+      onTap: () => showLobbyPublicPreviewSheet(
+        context,
+        item.id,
+        joinAlreadyRequested: joinFromPreview ? item.alreadyRequested : null,
+        fitScore: hasFit ? score : null,
+        matchFactors: hasFit ? item.matchFactors : const [],
+      ),
       child: POffsetFrame(
         offsetColor: frameColor,
         borderRadius: radius,
@@ -106,10 +133,7 @@ class LobbyFeedCard extends StatelessWidget {
                                   child: Text(
                                     item.homegroundName!,
                                     style: context.theme.typography.body.xs
-                                        .copyWith(
-                                          color: colors.mutedForeground,
-                                          fontSize: 11,
-                                        ),
+                                        .copyWith(color: colors.mutedForeground),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -137,16 +161,21 @@ class LobbyFeedCard extends StatelessWidget {
                     ],
                   ],
                 ),
-                if (item.playtime.isNotEmpty)
+                if (item.description != null &&
+                    item.description!.trim().isNotEmpty)
+                  _LobbyDescription(description: item.description!),
+                if (slots.isNotEmpty)
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
-                    children: item.playtime.take(3).map((ts) {
-                      return _TimeslotChip(
-                        label:
-                            '${ts.dayChunk.getShortName(context)} ${ts.dayOfWeek.getShortName(context)}',
-                      );
-                    }).toList(),
+                    children: [
+                      for (final ts in slots.take(_maxTimeslots))
+                        _TimeslotChip(
+                          label: _slotLabel(context, ts),
+                          matched: matched.contains(ts),
+                        ),
+                      if (hiddenSlots > 0) _TimeslotChip(label: '+$hiddenSlots'),
+                    ],
                   ),
                 if (hasFit)
                   _LobbyMatchBoard(
@@ -154,11 +183,36 @@ class LobbyFeedCard extends StatelessWidget {
                     showCompat: showCompat,
                     isGoodFit: isGoodFit,
                   ),
-                if (item.description != null &&
-                    item.description!.trim().isNotEmpty)
-                  _LobbyDescriptionBoard(description: item.description!),
+
                 if (item.offerTime != null) _OfferStrip(item: item),
-                Align(alignment: Alignment.centerRight, child: action),
+                Row(
+                  children: [
+                    // The whole card opens the preview; this says so.
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'lobby.preview.open'.tr(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.theme.typography.body.sm.copyWith(
+                                color: colors.mutedForeground,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            FLucideIcons.chevronRight,
+                            size: 16,
+                            color: colors.mutedForeground,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    action,
+                  ],
+                ),
               ],
             ),
           ),
@@ -354,7 +408,7 @@ class _LobbyMatchBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     final score = item.profileCompatScore;
     final hasMmr = item.lobbyMmr != null;
-    final vibes = _matchFactorSpecs(item.matchFactors);
+    final vibes = matchFactorSpecs(item.matchFactors);
 
     final fitBlock = _StatBlock(
       label: 'FITSCORE',
@@ -524,41 +578,25 @@ class _StatBlock extends StatelessWidget {
   }
 }
 
-/// The lobby's optional description, truncated to a few lines. Deliberately
-/// styled as its own `PMatchBoard` panel — same header treatment as
-/// [_LobbyMatchBoard]'s FITSCORE label — so it reads as a peer section, not
-/// a demoted caption.
-class _LobbyDescriptionBoard extends StatelessWidget {
+/// The lobby's optional description: two lines of muted body copy, no
+/// panel, no caps label. It used to be a second navy `PMatchBoard`, which
+/// shouted as loud as the FitScore board and made a described card read as
+/// two stacked banners. It's a tagline, so it sits quietly under the header.
+class _LobbyDescription extends StatelessWidget {
   final String description;
 
-  const _LobbyDescriptionBoard({required this.description});
+  const _LobbyDescription({required this.description});
 
   @override
   Widget build(BuildContext context) {
-    return PMatchBoard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 6,
-        children: [
-          Text(
-            'lobby.description'.tr().toUpperCase(),
-            style: context.theme.typography.body.xs.copyWith(
-              color: Colors.white.withValues(alpha: 0.62),
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.1,
-            ),
-          ),
-          Text(
-            description,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: context.theme.typography.body.sm.copyWith(
-              color: Colors.white.withValues(alpha: 0.92),
-              height: 1.35,
-            ),
-          ),
-        ],
+    final colors = context.theme.colors;
+    return Text(
+      description.trim(),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: context.theme.typography.body.sm.copyWith(
+        color: colors.mutedForeground,
+        height: 1.4,
       ),
     );
   }
@@ -606,19 +644,26 @@ class _FavorabilityBadge extends StatelessWidget {
 // Network/industry icons match the ones the profile tab uses for the same
 // concepts (`lib/profile_tab/main.dart`'s network/industry tiles) so the same
 // idea reads as the same glyph everywhere in the app.
-(String, IconData)? _matchFactorSpec(String code) => switch (code) {
-  'skill' => ('Trình độ phù hợp', FLucideIcons.trophy),
-  'network' => ('Chung mạng lưới', FLucideIcons.network),
-  'industry' => ('Cùng ngành nghề', FLucideIcons.briefcaseBusiness),
-  'age' => ('Cùng nhóm tuổi', FLucideIcons.cake),
-  'gender' => ('Thân thiện với nữ', FLucideIcons.venus),
-  'playtime' => ('Lịch chơi khớp', FLucideIcons.calendar),
-  'location' => ('Vị trí thuận tiện', FLucideIcons.mapPin),
-  _ => null,
-};
+/// Public so the preview sheet can render the same factor language.
+(String, IconData)? matchFactorSpec(String code) {
+  final icon = switch (code) {
+    'skill' => FLucideIcons.trophy,
+    'network' => FLucideIcons.network,
+    'industry' => FLucideIcons.briefcaseBusiness,
+    'age' => FLucideIcons.cake,
+    'gender' => FLucideIcons.venus,
+    'playtime' => FLucideIcons.calendar,
+    'location' => FLucideIcons.mapPin,
+    _ => null,
+  };
+  return icon == null ? null : ('lobby.matchFactor.$code'.tr(), icon);
+}
 
-List<(String, IconData)> _matchFactorSpecs(List<String> codes) => [
-  for (final code in codes) ?_matchFactorSpec(code),
+String _slotLabel(BuildContext context, Timeslot ts) =>
+    '${ts.dayChunk.getShortName(context)} ${ts.dayOfWeek.getShortName(context)}';
+
+List<(String, IconData)> matchFactorSpecs(List<String> codes) => [
+  for (final code in codes) ?matchFactorSpec(code),
 ];
 
 /// The real matched-factor tags, as plain icon+label pairs with no
@@ -676,17 +721,24 @@ class _FitScoreVibes extends StatelessWidget {
   }
 }
 
+/// One playtime slot. `matched` = it's one the player filtered for. The
+/// "+N" overflow chip passes neither an icon-worthy slot nor a match.
 class _TimeslotChip extends StatelessWidget {
   final String label;
+  final bool matched;
 
-  const _TimeslotChip({required this.label});
+  const _TimeslotChip({required this.label, this.matched = false});
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: pbInk.withValues(alpha: 0.055),
-        border: Border.all(color: pbInk.withValues(alpha: 0.12)),
+        color: matched
+            ? pbMint.withValues(alpha: 0.35)
+            : pbInk.withValues(alpha: 0.055),
+        border: Border.all(
+          color: matched ? pbMint : pbInk.withValues(alpha: 0.12),
+        ),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
@@ -695,13 +747,18 @@ class _TimeslotChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           spacing: 4,
           children: [
-            const Icon(Icons.schedule_rounded, size: 11, color: pbBlueDeep),
+            if (!label.startsWith('+'))
+              Icon(
+                matched ? FLucideIcons.check : FLucideIcons.clock,
+                size: 12,
+                color: pbBlueDeep,
+              ),
             Text(
               label,
               style: context.theme.typography.body.xs.copyWith(
-                fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: pbInk,
+                height: 1.0,
               ),
             ),
           ],

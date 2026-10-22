@@ -23,6 +23,8 @@ enum Sport {
     return context.tr('sport.$name');
   }
 
+  /// [size] is a **radius** (`SportIcons` uses `Size.fromRadius`): the icon
+  /// renders `2 × size` points square. `size: 10` ≈ a 20-pt glyph.
   Widget getIcon({double size = 12}) => switch (this) {
     Sport.soccer => SportIcons.soccer(size: size),
     Sport.basketball => SportIcons.basketball(size: size),

@@ -9,7 +9,6 @@ import '../../core/map_directions.dart';
 import '../../core/model/enum.dart';
 import '../../core/model/location.dart';
 import '../../ui/main.dart';
-import '../filter.dart';
 import 'feed_controller.dart';
 
 /// Which view the venue subtab is showing. Held locally (not persisted) — a
@@ -47,28 +46,23 @@ class _LocationSubtabState extends ConsumerState<LocationSubtab> {
 
     return Column(
       children: [
-        PSectionHeader(
-          title: 'home.location'.tr(),
-          suffix: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 8,
-            children: [
-              PPillToggle<_VenueView>(
-                value: _view,
-                onChanged: (v) => setState(() => _view = v),
-                options: const [
-                  PPillOption(value: _VenueView.list, icon: FLucideIcons.list),
-                  PPillOption(value: _VenueView.map, icon: FLucideIcons.map),
-                ],
-              ),
-              const FilterWidget(),
+        // The subtab's name lives on Discover's chip rail now; only the
+        // list/map switch is local to venues.
+        Align(
+          alignment: Alignment.centerRight,
+          child: PPillToggle<_VenueView>(
+            value: _view,
+            onChanged: (v) => setState(() => _view = v),
+            options: const [
+              PPillOption(value: _VenueView.list, icon: FLucideIcons.list),
+              PPillOption(value: _VenueView.map, icon: FLucideIcons.map),
             ],
           ),
         ),
         const SizedBox(height: 4),
         Expanded(
           child: feed.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: FCircularProgress()),
             error: (_, _) => _ErrorOrRefreshList(
               onRefresh: _refresh,
               child: PEmptySectionPlaceholder(

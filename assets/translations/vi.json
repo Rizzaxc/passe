@@ -96,14 +96,20 @@
       "searchHint": "Nhập từ khoá/ SearchID...",
       "sport": "Môn",
       "city": "Thành phố",
-      "district": "Quận/ Huyện",
+      "district": "Phường/ Xã",
       "any": "Tất cả",
       "schedule": "Thời gian",
       "scheduleHint": "Để trống",
       "close": "Đóng",
       "coach": {
         "body": "Tinh chỉnh tiêu chí tìm kiếm để có kết quả phù hợp hơn"
-      }
+      },
+      "title": "Bộ lọc",
+      "reset": "Đặt lại",
+      "done": "Xong",
+      "wardCount": "{count} phường/xã",
+      "districtCapped": "Tối đa 6 phường/xã — đã bỏ lựa chọn cũ nhất",
+      "scheduleCapped": "Tối đa 3 khung giờ — đã bỏ lựa chọn cũ nhất"
     },
     "empty": {
       "title": "Không có kết quả phù hợp",
@@ -115,9 +121,15 @@
     },
     "teammate": {
       "title": "Đồng đội",
-      "join": "Xin Vào",
-      "sent": "Đã Gửi",
-      "undo": "Hoàn Tác"
+      "join": "Xin vào",
+      "sent": "Đã gửi",
+      "undo": "Hoàn tác",
+      "emptyTitle": "Chưa có lobby phù hợp",
+      "emptyMessage": "Thử mở rộng khu vực hoặc khung giờ — hoặc tự lập lobby và rủ bạn bè.",
+      "adjustFilter": "Chỉnh bộ lọc",
+      "createLobby": "Tạo lobby",
+      "sentToast": "Đã gửi yêu cầu",
+      "sentToastBody": "Đội trưởng sẽ duyệt — bạn sẽ nhận thông báo khi có kết quả."
     },
     "challenger": {
       "title": "Đối thủ",
@@ -128,7 +140,7 @@
       "sportMismatch": "Hai lobby khác môn thể thao",
       "sendFailed": "Không thể gửi lời thách đấu",
       "mmr": "MMR",
-      "provisional": "tạm tính",
+      "provisional": "Ước Lượng",
       "costPerTeam": "{}đ/đội",
       "confirmTitle": "Xác Nhận Thách Đấu",
       "confirmBody": "Bạn đang thách đấu với tư cách {}. Nếu {} chấp nhận, cả hai lobby sẽ có một buổi thi đấu theo đúng điều kiện dưới đây.",
@@ -344,6 +356,11 @@
     },
     "venue": {
       "title": "Sân tập & Tụ Điểm"
+    },
+    "loadError": {
+      "title": "Không tải được dữ liệu",
+      "message": "Kiểm tra kết nối mạng rồi thử lại.",
+      "retry": "Thử lại"
     }
   },
   "manageTab": {
@@ -367,18 +384,32 @@
       "participants": "{current}/{max} người chơi",
       "scheduledFor": "Đã lên lịch cho {time}",
       "createNew": "Tạo Lobby Mới",
-      "createFirst": "Tạo Lobby Đầu Tiên",
+      "createFirst": "Tạo lobby",
       "navigate": "Vào Phòng Chơi",
       "navigateMessage": "Đang mở Lobby {lobbyTitle}...",
       "createMessage": "Tính năng tạo lobby sắp ra mắt!",
       "empty": {
-        "title": "Không tìm thấy lobby {sport}",
-        "message": "Tạo lobby {sport} để bắt đầu chơi với người khác. Bạn có đang chọn nhầm môn?"
+        "title": "Bạn chưa tham gia lobby nào",
+        "message": "Xin vào một lobby có sẵn hoặc tự lập lobby và rủ bạn bè.",
+        "findLobby": "Tìm lobby"
       },
       "guest": {
         "title": "Bạn chưa đăng nhập",
         "message": "Đăng nhập để tạo và quản lý lobby của bạn."
+      },
+      "pending": {
+        "title": "Đang chờ duyệt · {count}",
+        "waiting": "Đang chờ đội trưởng duyệt",
+        "cancel": "Huỷ yêu cầu"
       }
+    },
+    "rail": {
+      "lobby": "Lobby",
+      "schedule": "Lịch",
+      "courses": "Khoá học",
+      "listings": "Kèo của tôi",
+      "requests": "Yêu cầu",
+      "history": "Lịch sử"
     }
   },
   "lobby": {
@@ -406,7 +437,16 @@
       "ageGroup": "Nhóm tuổi thành viên",
       "gender": "Giới tính · {declared}/{total} đã khai báo",
       "networks": "Mạng lưới nổi bật",
-      "industries": "Ngành nghề nổi bật"
+      "industries": "Ngành nghề nổi bật",
+      "open": "Xem chi tiết",
+      "loadError": "Không tải được lobby",
+      "fit": "Độ hợp · FitScore {score}/5",
+      "members": "Thành viên",
+      "captain": "Đội trưởng",
+      "signInForMembers": "Đăng nhập để xem đội trưởng và các thành viên.",
+      "ratedMatches": "Dựa trên {count} trận có trọng tài",
+      "provisionalHelp": "Lobby chưa đủ trận có trọng tài — MMR đang được ước lượng từ trình độ tự khai của thành viên. Cần thêm trận để xếp hạng chính xác.",
+      "noRatedMatches": "Chưa có trận có trọng tài"
     },
     "visibility": {
       "private": "Nội Bộ",
@@ -558,6 +598,20 @@
       "notFound": "Invite Link không hợp lệ",
       "expired": "Invite Link đã hết hạn",
       "revoked": "Invite Link đã bị xóa"
+    },
+    "matchFactor": {
+      "skill": "Trình độ phù hợp",
+      "network": "Chung mạng lưới",
+      "industry": "Cùng ngành nghề",
+      "age": "Cùng nhóm tuổi",
+      "gender": "Thân thiện với nữ",
+      "playtime": "Lịch chơi khớp",
+      "location": "Vị trí thuận tiện"
+    },
+    "tabs": {
+      "feed": "Bảng tin",
+      "planner": "Lịch chơi",
+      "history": "Lịch sử"
     }
   },
   "createLobby": {
@@ -567,7 +621,7 @@
     "lobbyNameHint": "Nhập tên cho Lobby của bạn",
     "description": "Mô Tả",
     "descriptionHint": "Mô tả phòng chơi của bạn (không bắt buộc)",
-    "sport": "Môn Thể Thao",
+    "sport": "Môn",
     "sportLocked": "Không thể thay đổi môn thể thao",
     "visibility": "Độ Riêng tư",
     "public": "Công Khai",
@@ -646,12 +700,13 @@
   "eloSeed": {
     "label": "Trình Độ",
     "description": "Dùng để xếp hạng ban đầu. Chơi cùng người khác để cập nhật Elo.",
-    "beginner": "Mới Chơi",
-    "casual": "Tập Chơi",
+    "beginner": "Mới chơi",
+    "casual": "Yếu",
     "fair": "Trung Bình",
     "good": "Khá",
-    "advanced": "Cao",
-    "lockedHint": "Trình độ ban đầu đã được lưu"
+    "advanced": "Cứng",
+    "lockedHint": "Trình độ ban đầu đã được lưu",
+    "pickHint": "Kéo hoặc chạm vào thanh để chọn trình độ."
   },
   "sport": {
     "others": "Khác",
@@ -740,7 +795,8 @@
       "title": "Bật thông báo?",
       "rationale": "Cho phép thông báo để nhận thông tin về lịch hoạt động, các lời mời hoặc trao đổi với HLV?",
       "allow": "Cho phép",
-      "later": "Để sau"
+      "later": "Để sau",
+      "joinReason": "Bật thông báo để biết ngay khi đội trưởng duyệt yêu cầu của bạn."
     },
     "time": {
       "justNow": "Vừa xong",
@@ -861,7 +917,8 @@
     "paymentInfoDeleteConfirmTitle": "Xoá thông tin thanh toán này?",
     "paymentInfoDeleteConfirmBody": "Thao tác này sẽ xoá khỏi hồ sơ của bạn và không thể hoàn tác.",
     "paymentInfoDeleteCancel": "Huỷ",
-    "paymentInfoDeleteConfirmAction": "Xoá"
+    "paymentInfoDeleteConfirmAction": "Xoá",
+    "sportProfiles": "Hồ sơ theo môn"
   },
   "lobbyHub": {
     "tour": {
@@ -1135,7 +1192,8 @@
       "empty": "Các yêu cầu và buổi đã nhận sẽ xuất hiện ở đây.",
       "history": "Lịch sử kèo",
       "loadFailed": "Không tải được lịch sử",
-      "noHistory": "Chưa có lịch sử"
+      "noHistory": "Chưa có lịch sử",
+      "find": "Tìm kèo lẻ"
     },
     "freeplayExpose": {
       "title": "Mở chỗ trống",
@@ -1327,14 +1385,15 @@
       "calories": "Calo",
       "distance": "Quãng đường",
       "steps": "bước",
-      "effort": "Nỗ lực",
+      "effort": "Điểm nỗ lực",
       "hrCurve": "Nhịp tim",
       "zones": "Vùng nhịp tim",
       "estimated": "(ước tính)",
       "tab": {
         "stats": "Chỉ số",
         "chart": "Biểu đồ"
-      }
+      },
+      "stepsLabel": "Số bước"
     },
     "zone": {
       "easy": "Nhẹ",
@@ -1385,7 +1444,7 @@
     },
     "sport": {
       "title": "Chọn môn thể thao",
-      "body": "Passe hoạt động theo từng môn. Chọn môn bạn muốn bắt đầu — có thể đổi bất cứ lúc nào ở thanh trên cùng.",
+      "body": "Chọn môn bạn chơi nhiều nhất để bắt đầu tìm đồng đội — có thể đổi bất cứ lúc nào trong bộ lọc ở Khám phá.",
       "hint": "Chọn một môn để bắt đầu"
     },
     "profile": {
@@ -1403,7 +1462,8 @@
         "good": "Chơi thường xuyên, thể hiện tốt hơn mức trung bình.",
         "advanced": "Thi đấu nghiêm túc, muốn gặp đối thủ ngang tầm."
       },
-      "done": "OK"
+      "done": "OK",
+      "city": "Thành phố"
     },
     "guest": {
       "title": "Xem hướng dẫn các tính năng của app?",
@@ -1874,7 +1934,8 @@
       "offApp": "Thanh toán trực tiếp với huấn luyện viên."
     },
     "unavailable": "Không tải được khoá học, hoặc bạn không còn quyền truy cập.",
-    "backToHub": "Về danh sách khoá học"
+    "backToHub": "Về danh sách khoá học",
+    "pickCoachSport": "Học môn nào với HLV này?"
   },
   "challenge": {
     "party": {
@@ -2151,6 +2212,15 @@
     "cancel": {
       "cta": "Rút lời thách đấu",
       "errorTooLate": "Trận đã chốt, không rút được nữa."
+    }
+  },
+  "discover": {
+    "rail": {
+      "freeplay": "Kèo lẻ",
+      "teammate": "Đồng đội",
+      "challenger": "Thách đấu",
+      "professional": "HLV",
+      "location": "Sân"
     }
   }
 }

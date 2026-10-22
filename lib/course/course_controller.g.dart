@@ -421,7 +421,7 @@ final class CourseActionControllerProvider
 }
 
 String _$courseActionControllerHash() =>
-    r'af3e19239b0049f0fa7d1b0b896f36fddeec022c';
+    r'ff3155f90e957f7a8d62f67ab1de95f7eb9a9f68';
 
 /// Every write in the course subsystem. One controller rather than several so
 /// callers only have to invalidate one thing after a mutation.

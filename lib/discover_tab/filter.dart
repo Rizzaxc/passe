@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -9,19 +11,14 @@ import '../core/model/enum.dart';
 import '../core/state/selected_sport_state.dart';
 import '../core/timeslot_picker.dart';
 import '../core/user_preferences.dart';
-import '../social/friends_screen.dart';
 import '../ui/district_select.dart';
 import '../ui/search_field.dart';
 import '../ui/sheet.dart';
+import '../ui/sport_picker.dart';
 import 'filter_controller.dart';
 
-export 'filter_controller.dart' show FilterData, filterStateProvider;
-
-/// Matches `name#1234` or bare `#1234` — `tag_number` is always exactly 4
-/// digits (`character varying(4)`, zero-padded — see `schema/passe.sql`'s
-/// `user` table default), so requiring the full 4 digits doubles as "the
-/// user finished typing a tag", with no separate submit/debounce needed.
-final _userTagPattern = RegExp(r'^[^#]*#\d{4}$');
+export 'filter_controller.dart'
+    show FilterData, filterIsActiveProvider, filterStateProvider;
 
 /// Persisted "has anyone ever seen the filter-fields coach mark" flag —
 /// shown once, the very first time [FilterSheet] opens for a user,
@@ -37,24 +34,109 @@ class _FilterCoachMarkPrefs {
   static Future<void> markSeen() => UserPreferences.instance.setBool(_key, true);
 }
 
-class FilterWidget extends ConsumerWidget {
-  /// When true, the sheet also shows a coach/referee role toggle (professional
-  /// subtab only). Other subtabs don't use the `role` filter field.
+/// Opens the shared [FilterSheet]. Discover renders this once, under its
+/// category rail, instead of a filter icon on every subtab's header.
+void showFilterSheet(BuildContext context, {bool showRoleFilter = false}) {
+  showPSheet(
+    context: context,
+    builder: (_) => FilterSheet(showRoleFilter: showRoleFilter),
+  );
+}
+
+/// The always-visible filter state for Discover: the sport and city being
+/// browsed, with a dot once anything else (wards, timeslots, search) differs
+/// from the profile seed. Tapping opens the sheet.
+class FilterSummaryChip extends ConsumerWidget {
   final bool showRoleFilter;
 
-  const FilterWidget({super.key, this.showRoleFilter = false});
+  const FilterSummaryChip({super.key, this.showRoleFilter = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FButton.icon(
+    final filter = ref.watch(filterStateProvider);
+    final active = ref.watch(filterIsActiveProvider);
+    final sport = ref.watch(selectedSportStateProvider).value;
+    final colors = context.theme.colors;
+
+    // Sport + city only. Wards, timeslots and search are behind the dot:
+    // spelling them all out overflowed the chip into an unreadable "…".
+    final summary = [
+      if (sport != null && sport != Sport.others)
+        sport.getLocalizedName(context),
+      filter.city.getLocalizedName(context),
+    ].join(' · ');
+
+    return Semantics(
+      button: true,
+      label: 'homeTab.filter.title'.tr(),
+      child: FTappable(
+        onPress: () => showFilterSheet(context, showRoleFilter: showRoleFilter),
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: colors.secondary,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            spacing: 8,
+            children: [
+              // Discover is the only sport-scoped surface left, so the sport
+              // leads the summary rather than hiding in a corner selector.
+              if (sport != null && sport != Sport.others)
+                sport.getIcon(size: 9)
+              else
+                Icon(
+                  FLucideIcons.slidersHorizontal,
+                  size: 16,
+                  color: colors.secondaryForeground,
+                ),
+              Expanded(
+                child: Text(
+                  summary,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.theme.typography.body.sm.copyWith(
+                    color: colors.secondaryForeground,
+                    height: 1.0,
+                  ),
+                ),
+              ),
+              if (active)
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: colors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              Icon(
+                FLucideIcons.chevronDown,
+                size: 16,
+                color: colors.mutedForeground,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Resets the filter to the profile seed. Hidden while there is nothing to
+/// reset, so it never reads as a dead control.
+class FilterResetButton extends ConsumerWidget {
+  const FilterResetButton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!ref.watch(filterIsActiveProvider)) return const SizedBox.shrink();
+    return FButton(
+      size: .sm,
       variant: .ghost,
-      onPress: () {
-        showPSheet(
-          context: context,
-          builder: (_) => FilterSheet(showRoleFilter: showRoleFilter),
-        );
-      },
-      child: Icon(FLucideIcons.listFilter),
+      onPress: ref.read(filterStateProvider.notifier).reset,
+      child: Text('homeTab.filter.reset'.tr()),
     );
   }
 }
@@ -112,6 +194,7 @@ class FilterSheet extends ConsumerStatefulWidget {
 class _FilterSheetState extends ConsumerState<FilterSheet> {
   late TextEditingController _searchController;
   final ScrollController _scrollController = ScrollController();
+  Timer? _searchDebounce;
 
   final _confirmKey = GlobalKey(debugLabel: 'filter.confirm');
 
@@ -167,25 +250,26 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  /// A `username#tag` (or bare `#tag`) search isn't a Discover query at all
-  /// — it's a person lookup, so it hands off to the dedicated friend search
-  /// (`FriendsScreen`) instead of running through the lobby/pro/location
-  /// RPCs, which don't know what to do with a `#`.
+  // Every keystroke used to refetch the active feed; wait for a pause.
   void _onSearchChanged(String value) {
-    ref.read(filterStateProvider.notifier).setFilter(value);
-    if (!_userTagPattern.hasMatch(value.trim())) return;
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) ref.read(filterStateProvider.notifier).setFilter(value);
+    });
+  }
 
-    final navigator = Navigator.of(context);
-    navigator.pop();
-    navigator.push(
-      MaterialPageRoute(
-        builder: (_) => FriendsScreen(initialQuery: value.trim()),
-      ),
+  void _toastCapped(String key) {
+    showFToast(
+      context: context,
+      icon: const Icon(FLucideIcons.info),
+      title: Text(key.tr()),
+      alignment: .bottomCenter,
     );
   }
 
@@ -193,9 +277,20 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
   Widget build(BuildContext context) {
     final filter = ref.watch(filterStateProvider);
     final notifier = ref.read(filterStateProvider.notifier);
-    
-    final selectedSportAsync = ref.watch(selectedSportStateProvider);
-    final selectedSport = selectedSportAsync.value ?? Sport.soccer;
+
+    // "Đặt lại" resets the provider, not this sheet's text field — pull the
+    // field back in line, and drop any keystroke still waiting to apply.
+    ref.listen(filterStateProvider.select((f) => f.search), (_, search) {
+      if (search == _searchController.text) return;
+      if (_searchDebounce?.isActive ?? false) return;
+      _searchController.text = search;
+    });
+    ref.listen(filterIsActiveProvider, (_, active) {
+      if (!active) {
+        _searchDebounce?.cancel();
+        _searchController.text = ref.read(filterStateProvider).search;
+      }
+    });
 
     return SingleChildScrollView(
       controller: _scrollController,
@@ -204,6 +299,10 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
         spacing: 20,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          PSheetTitle(
+            label: 'homeTab.filter.title'.tr(),
+            trailing: const FilterResetButton(),
+          ),
           // Role section (professional subtab only). Each role is toggled
           // independently. While refereeing is iced there is only one role to
           // choose from, so the whole section is pointless — hide it.
@@ -232,64 +331,26 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
               ],
             ),
 
-          // Search section
+          // Sport. Discover is the one sport-scoped surface in the app; the
+          // rest of the app shows every sport, so this is the only picker.
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 8,
+            children: [
+              PSheetSectionLabel(label: context.tr('homeTab.filter.sport')),
+              const _SportChoice(),
+            ],
+          ),
+
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                spacing: 8,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: PSheetSectionLabel(
-                      label: context.tr('homeTab.filter.search'),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: PSheetSectionLabel(
-                      label: context.tr('homeTab.filter.sport'),
-                    ),
-                  ),
-                ],
-              ),
+              PSheetSectionLabel(label: context.tr('homeTab.filter.search')),
               const SizedBox(height: 8),
-              Row(
-                spacing: 8,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: PSearchField(
-                      hint: context.tr('homeTab.filter.searchHint'),
-                      controller: _searchController,
-                      onChange: _onSearchChanged,
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: FSelect<Sport>.rich(
-                      hint: context.tr('homeTab.filter.sport'),
-                      format: (s) => s.getLocalizedName(context),
-                      autoHide: true,
-                      control: FSelectControl.lifted(
-                        value: selectedSport,
-                        onChange: (s) {
-                          if (s != null) {
-                            ref.read(selectedSportStateProvider.notifier).change(s);
-                          }
-                        },
-                      ),
-                      children: [
-                        for (final s in Sport.values.where((s) => s != Sport.others))
-                          FSelectItem<Sport>(
-                            prefix: s.getIcon(size: 16),
-                            title: Text(s.getLocalizedName(context)),
-                            value: s,
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
+              PSearchField(
+                hint: context.tr('homeTab.filter.searchHint'),
+                controller: _searchController,
+                onChange: _onSearchChanged,
               ),
             ],
           ),
@@ -326,7 +387,11 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 key: ValueKey(filter.city),
                 city: filter.city,
                 selected: filter.districts,
-                onChanged: (districts) => notifier.setDistricts(districts),
+                onChanged: (districts) {
+                  if (notifier.setDistricts(districts)) {
+                    _toastCapped('homeTab.filter.districtCapped');
+                  }
+                },
               ),
             ],
           ),
@@ -473,7 +538,9 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                     final updated = [...filter.schedule];
                     if (!updated.contains(timeslot)) {
                       updated.add(timeslot);
-                      notifier.setSchedule(updated);
+                      if (notifier.setSchedule(updated) && context.mounted) {
+                        _toastCapped('homeTab.filter.scheduleCapped');
+                      }
                     }
                   },
                   child: const Icon(FLucideIcons.plus),
@@ -484,11 +551,27 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
           FButton(
             key: _confirmKey,
             onPress: () => Navigator.of(context).pop(),
-            child: Icon(FLucideIcons.check),
+            child: Text('homeTab.filter.done'.tr()),
           ),
           const SizedBox(height: 8),
         ],
       ),
+    );
+  }
+}
+
+/// Writing [selectedSportStateProvider] refetches every Discover feed. Not
+/// part of "Đặt lại": the sport is which game you're browsing, not a
+/// narrowing criterion.
+class _SportChoice extends ConsumerWidget {
+  const _SportChoice();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PSportPicker(
+      value: ref.watch(selectedSportStateProvider).value,
+      onChanged: (sport) =>
+          ref.read(selectedSportStateProvider.notifier).change(sport),
     );
   }
 }

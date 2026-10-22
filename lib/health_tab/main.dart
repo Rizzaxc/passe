@@ -3,7 +3,6 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../core/sport_selector.dart';
 import '../ui/main.dart';
 import 'achievements_section/achievements_controller.dart';
 import 'achievements_section/main.dart';
@@ -59,18 +58,6 @@ class _HealthTabState extends ConsumerState<HealthTab> {
     });
   }
 
-  List<FTabEntry> _buildTabEntries({required bool hasUnseenAchievements}) {
-    return [
-      for (final section in _sections)
-        FTabEntry(
-          label: section.icon == FLucideIcons.trophy && hasUnseenAchievements
-              ? _DottedIcon(icon: section.icon)
-              : Icon(section.icon, key: const ValueKey('icon')),
-          child: section.child,
-        ),
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     final healthStatus = ref.watch(healthControllerProvider);
@@ -85,7 +72,6 @@ class _HealthTabState extends ConsumerState<HealthTab> {
           // Sync button (device → Supabase) only makes sense once linked.
           if (isLinked) const _SyncButton(),
           const NotificationIconButton(),
-          const SportSelector(),
         ],
       ),
       // No tab-level RefreshIndicator: pull-to-refresh (Supabase reads) lives in
@@ -112,16 +98,20 @@ class _HealthTabState extends ConsumerState<HealthTab> {
             return const HealthNotLinkedView();
           }
 
-          return FTabs(
-            expands: true,
-            contentPhysics: const NeverScrollableScrollPhysics(),
-            control: FTabControl.lifted(
-              index: _currentIndex,
-              onChange: _onTabChanged,
-            ),
-            children: _buildTabEntries(
-              hasUnseenAchievements: hasUnseenAchievements,
-            ),
+          return PRailTabs(
+            index: _currentIndex,
+            onChanged: _onTabChanged,
+            tabs: [
+              for (final section in _sections)
+                PRailTab(
+                  icon: section.icon,
+                  label: section.titleKey.tr(),
+                  build: () => section.child,
+                  dot:
+                      section.icon == FLucideIcons.trophy &&
+                      hasUnseenAchievements,
+                ),
+            ],
           );
         },
       ),
@@ -129,38 +119,6 @@ class _HealthTabState extends ConsumerState<HealthTab> {
   }
 }
 
-/// A tab icon with an unread dot in the top-right (newly-unlocked achievements).
-class _DottedIcon extends StatelessWidget {
-  final IconData icon;
-  const _DottedIcon({required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      key: const ValueKey('icon'),
-      children: [
-        Icon(icon),
-        Positioned(
-          right: -3,
-          top: -3,
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: pbBlue,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: context.theme.colors.background,
-                width: 1.5,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 /// Header action that pushes device data into Supabase. Shows a spinner while
 /// syncing and toasts the result. Distinct from pull-to-refresh, which only

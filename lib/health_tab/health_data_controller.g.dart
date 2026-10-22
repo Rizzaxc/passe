@@ -170,14 +170,14 @@ final class DailyHealthTrendProvider
 
 String _$dailyHealthTrendHash() => r'cb104f97ac7d8904dbd334818df76d48184f5c16';
 
-/// Captured activity recaps for the context sport (RPC). Returns `[]` when no
-/// sport is selected.
+/// Captured activity recaps across every sport (RPC; `p_sport_id: null`).
+/// Health isn't sport-scoped — each row carries its own `sportId`.
 
 @ProviderFor(activityHealthList)
 final activityHealthListProvider = ActivityHealthListProvider._();
 
-/// Captured activity recaps for the context sport (RPC). Returns `[]` when no
-/// sport is selected.
+/// Captured activity recaps across every sport (RPC; `p_sport_id: null`).
+/// Health isn't sport-scoped — each row carries its own `sportId`.
 
 final class ActivityHealthListProvider
     extends
@@ -189,8 +189,8 @@ final class ActivityHealthListProvider
     with
         $FutureModifier<List<ActivityHealthRow>>,
         $FutureProvider<List<ActivityHealthRow>> {
-  /// Captured activity recaps for the context sport (RPC). Returns `[]` when no
-  /// sport is selected.
+  /// Captured activity recaps across every sport (RPC; `p_sport_id: null`).
+  /// Health isn't sport-scoped — each row carries its own `sportId`.
   ActivityHealthListProvider._()
     : super(
         from: null,
@@ -218,61 +218,7 @@ final class ActivityHealthListProvider
 }
 
 String _$activityHealthListHash() =>
-    r'0aa3deec00ee3d4baa2cf4f37f20a0b6e90afa25';
-
-/// Report counts by sport (RPC), so an empty recap list for the context sport
-/// can hint that reports exist under a different sport instead of looking
-/// identical to "never synced". Keyed by `Sport.index`; unrecognized ids
-/// (there shouldn't be any) are dropped.
-
-@ProviderFor(activityHealthSportCounts)
-final activityHealthSportCountsProvider = ActivityHealthSportCountsProvider._();
-
-/// Report counts by sport (RPC), so an empty recap list for the context sport
-/// can hint that reports exist under a different sport instead of looking
-/// identical to "never synced". Keyed by `Sport.index`; unrecognized ids
-/// (there shouldn't be any) are dropped.
-
-final class ActivityHealthSportCountsProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<Map<Sport, int>>,
-          Map<Sport, int>,
-          FutureOr<Map<Sport, int>>
-        >
-    with $FutureModifier<Map<Sport, int>>, $FutureProvider<Map<Sport, int>> {
-  /// Report counts by sport (RPC), so an empty recap list for the context sport
-  /// can hint that reports exist under a different sport instead of looking
-  /// identical to "never synced". Keyed by `Sport.index`; unrecognized ids
-  /// (there shouldn't be any) are dropped.
-  ActivityHealthSportCountsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'activityHealthSportCountsProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$activityHealthSportCountsHash();
-
-  @$internal
-  @override
-  $FutureProviderElement<Map<Sport, int>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<Map<Sport, int>> create(Ref ref) {
-    return activityHealthSportCounts(ref);
-  }
-}
-
-String _$activityHealthSportCountsHash() =>
-    r'93b9a0c1cb303c0099f3c2eb6ed3545f676f20e1';
+    r'bef1c0c8d85e1cb7585ed62a214523f040f35cc3';
 
 /// Candidate activities the user never confirmed but for which the wearable
 /// shows exercise evidence — the reconciliation inbox. Re-checks the device per

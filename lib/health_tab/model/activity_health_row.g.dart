@@ -40,6 +40,7 @@ _ActivityHealthRow _$ActivityHealthRowFromJson(Map json) => _ActivityHealthRow(
   avatarUsername: json['avatar_username'] as String?,
   avatarGenerated: json['avatar_generated'] as String?,
   freeplayAvatarUrl: json['freeplay_avatar_url'] as String?,
+  sportId: (json['sport_id'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$ActivityHealthRowToJson(_ActivityHealthRow instance) =>
@@ -73,4 +74,5 @@ Map<String, dynamic> _$ActivityHealthRowToJson(_ActivityHealthRow instance) =>
       'avatar_username': ?instance.avatarUsername,
       'avatar_generated': ?instance.avatarGenerated,
       'freeplay_avatar_url': ?instance.freeplayAvatarUrl,
+      'sport_id': ?instance.sportId,
     };

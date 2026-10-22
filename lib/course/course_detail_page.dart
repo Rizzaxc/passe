@@ -130,27 +130,29 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
             if (course.pendingOfferId != null)
               _PendingOfferCard(course: course),
             Expanded(
-              child: FTabs(
-                expands: true,
-                contentPhysics: const NeverScrollableScrollPhysics(),
-                control: FTabControl.lifted(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: PRailTabs(
                   index: _tab,
-                  onChange: (i) => setState(() => _tab = i),
+                  onChanged: (i) => setState(() => _tab = i),
+                  tabs: [
+                    PRailTab(
+                      icon: FLucideIcons.messageCircle,
+                      label: 'course.tab.feed'.tr(),
+                      build: () => _FeedTab(course: course),
+                    ),
+                    PRailTab(
+                      icon: FLucideIcons.activity,
+                      label: 'course.tab.planner'.tr(),
+                      build: () => _PlannerTab(course: course),
+                    ),
+                    PRailTab(
+                      icon: FLucideIcons.clock,
+                      label: 'course.tab.history'.tr(),
+                      build: () => _HistoryTab(course: course),
+                    ),
+                  ],
                 ),
-                children: [
-                  FTabEntry(
-                    label: Text('course.tab.feed'.tr()),
-                    child: _FeedTab(course: course),
-                  ),
-                  FTabEntry(
-                    label: Text('course.tab.planner'.tr()),
-                    child: _PlannerTab(course: course),
-                  ),
-                  FTabEntry(
-                    label: Text('course.tab.history'.tr()),
-                    child: _HistoryTab(course: course),
-                  ),
-                ],
               ),
             ),
           ],

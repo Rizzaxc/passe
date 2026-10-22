@@ -23,8 +23,8 @@ compatibility scores used by the Home feeds.
 - Per-field push screens: `age_group_selection_screen`, `location_selection_screen`,
   `playtime_selection_screen`, `industry_selection_screen`, `network_selection_screen`,
   `change_username_screen`, `change_password_screen`.
-- `sport_profile/` — the per-sport profile editor (`sport_profile_screen.dart` switches on the
-  context sport to `SoccerProfileWidget` / `Basketball…` / `Badminton…` / `Tennis…` /
+- `sport_profile/` — the per-sport profile editor. Profile lists one tile per sport (showing its
+  declared level); `SportProfileScreen(sport:)` switches on that sport to `SoccerProfileWidget` / `Basketball…` / `Badminton…` / `Tennis…` /
   `Pickleball…`, each with its own `*ProfileController`, backed by a `<sport>_profile` table). ELO is
   seeded via `elo_seed_field.dart` (`EloSeed` enum → `fn_seed_initial_elo`).
 - Host mode replaces the player profile with the Host's public profile. Its editable

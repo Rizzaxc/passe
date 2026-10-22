@@ -97,14 +97,20 @@
       "searchHint": "Enter keyword/ SearchID...",
       "sport": "Sport",
       "city": "City",
-      "district": "District",
+      "district": "Ward",
       "any": "Any",
       "schedule": "Schedule",
       "scheduleHint": "Leave blank",
       "close": "Close",
       "coach": {
         "body": "Fine tune your search params for better results"
-      }
+      },
+      "title": "Filters",
+      "reset": "Reset",
+      "done": "Done",
+      "wardCount": "{count} wards",
+      "districtCapped": "Up to 6 wards — the oldest pick was removed",
+      "scheduleCapped": "Up to 3 timeslots — the oldest pick was removed"
     },
     "empty": {
       "title": "No results found",
@@ -118,7 +124,13 @@
       "title": "Teammates",
       "join": "Join",
       "sent": "Sent",
-      "undo": "Undo"
+      "undo": "Undo",
+      "emptyTitle": "No matching lobbies yet",
+      "emptyMessage": "Try a wider area or more timeslots — or start a lobby and invite friends.",
+      "adjustFilter": "Adjust filters",
+      "createLobby": "Create lobby",
+      "sentToast": "Request sent",
+      "sentToastBody": "The captain will review it — you'll get a notification with the answer."
     },
     "challenger": {
       "title": "Challengers",
@@ -129,7 +141,7 @@
       "sportMismatch": "The two lobbies play different sports",
       "sendFailed": "Couldn't send the challenge",
       "mmr": "MMR",
-      "provisional": "provisional",
+      "provisional": "Estimated",
       "costPerTeam": "{}đ/team",
       "confirmTitle": "Confirm Challenge",
       "confirmBody": "You're challenging as {}. If {} accepts, both lobbies get a session on the terms below.",
@@ -342,6 +354,11 @@
       "details": {
         "bio": "Bio"
       }
+    },
+    "loadError": {
+      "title": "Couldn't load this",
+      "message": "Check your connection and try again.",
+      "retry": "Retry"
     }
   },
   "manageTab": {
@@ -365,18 +382,32 @@
       "participants": "{current}/{max} players",
       "scheduledFor": "Scheduled for {time}",
       "createNew": "Create New Lobby",
-      "createFirst": "Create Your First Lobby",
+      "createFirst": "Create lobby",
       "navigate": "Navigate to Lobby",
       "navigateMessage": "Opening {lobbyTitle} lobby...",
       "createMessage": "Lobby creation coming soon!",
       "empty": {
-        "title": "No {sport} lobbies found",
-        "message": "Create a {sport} lobby to start playing with others. Looking for a different sport? Check the sport selector at the top."
+        "title": "You're not in any lobby yet",
+        "message": "Ask to join an existing lobby, or start your own and invite friends.",
+        "findLobby": "Find a lobby"
       },
       "guest": {
         "title": "You're not signed in",
         "message": "Sign in to create and manage your lobbies."
+      },
+      "pending": {
+        "title": "Awaiting approval · {count}",
+        "waiting": "Waiting for the captain",
+        "cancel": "Cancel request"
       }
+    },
+    "rail": {
+      "lobby": "Lobbies",
+      "schedule": "Schedule",
+      "courses": "Courses",
+      "listings": "My listings",
+      "requests": "Requests",
+      "history": "History"
     }
   },
   "lobby": {
@@ -404,7 +435,16 @@
       "gender": "Gender · {declared}/{total} declared",
       "ageGroup": "Age groups",
       "networks": "Top networks",
-      "industries": "Top industries"
+      "industries": "Top industries",
+      "open": "View details",
+      "loadError": "Couldn't load this lobby",
+      "fit": "Fit · FitScore {score}/5",
+      "members": "Members",
+      "captain": "Captain",
+      "signInForMembers": "Sign in to see the captain and members.",
+      "ratedMatches": "Based on {count} refereed matches",
+      "provisionalHelp": "Not enough refereed matches yet — this MMR is estimated from members' self-declared skill. More matches make it accurate.",
+      "noRatedMatches": "No refereed matches yet"
     },
     "visibility": {
       "private": "Private",
@@ -556,6 +596,20 @@
       "notFound": "This invite link is invalid",
       "expired": "This invite link has expired",
       "revoked": "This invite link has been removed"
+    },
+    "matchFactor": {
+      "skill": "Similar skill",
+      "network": "Shared network",
+      "industry": "Same industry",
+      "age": "Same age group",
+      "gender": "Women-friendly",
+      "playtime": "Schedules match",
+      "location": "Convenient location"
+    },
+    "tabs": {
+      "feed": "Feed",
+      "planner": "Planner",
+      "history": "History"
     }
   },
   "createLobby": {
@@ -646,12 +700,13 @@
   "eloSeed": {
     "label": "Skill Level",
     "description": "Used to seed your initial matchmaking. Play with others to update your Elo.",
-    "beginner": "Beginner",
-    "casual": "Casual",
-    "fair": "Fair",
+    "beginner": "Newcomer",
+    "casual": "Weak",
+    "fair": "Average",
     "good": "Good",
-    "advanced": "Advanced",
-    "lockedHint": "Elo seed is locked after first commit"
+    "advanced": "Strong",
+    "lockedHint": "Elo seed is locked after first commit",
+    "pickHint": "Drag or tap the bar to pick your level."
   },
   "sport": {
     "others": "Others",
@@ -740,7 +795,8 @@
       "title": "Turn on notifications?",
       "rationale": "Allow notifications for activity updates, invitations and conversations with coaches?",
       "allow": "Allow",
-      "later": "Later"
+      "later": "Later",
+      "joinReason": "Turn on notifications to hear the moment the captain approves your request."
     },
     "time": {
       "justNow": "Just now",
@@ -861,7 +917,8 @@
     "paymentInfoDeleteConfirmTitle": "Remove this payment info?",
     "paymentInfoDeleteConfirmBody": "This will remove it from your profile. This can't be undone.",
     "paymentInfoDeleteCancel": "Cancel",
-    "paymentInfoDeleteConfirmAction": "Remove"
+    "paymentInfoDeleteConfirmAction": "Remove",
+    "sportProfiles": "Sport profiles"
   },
   "lobbyHub": {
     "tour": {
@@ -1139,7 +1196,8 @@
       "empty": "Requests and accepted sessions will appear here.",
       "history": "Drop-in History",
       "loadFailed": "Unable to load history",
-      "noHistory": "No history yet"
+      "noHistory": "No history yet",
+      "find": "Find a drop-in"
     },
     "freeplayExpose": {
       "title": "Open spare seats",
@@ -1332,14 +1390,15 @@
       "calories": "Calories",
       "distance": "Distance",
       "steps": "steps",
-      "effort": "Effort",
+      "effort": "Effort Score",
       "hrCurve": "Heart rate",
       "zones": "Zones",
       "estimated": "(estimated)",
       "tab": {
         "stats": "Stats",
         "chart": "Chart"
-      }
+      },
+      "stepsLabel": "Steps"
     },
     "zone": {
       "easy": "Easy",
@@ -1390,7 +1449,7 @@
     },
     "sport": {
       "title": "Choose a sport",
-      "body": "Passe works one sport at a time. Pick the one you want to start with — you can switch anytime from the top bar.",
+      "body": "Pick the sport you play most to start finding teammates — you can switch anytime in Discover's filter.",
       "hint": "Pick a sport to get started"
     },
     "profile": {
@@ -1408,7 +1467,8 @@
         "good": "Play consistently and perform above the average level.",
         "advanced": "Play competitively and want evenly matched opponents."
       },
-      "done": "OK"
+      "done": "OK",
+      "city": "City"
     },
     "guest": {
       "title": "Want a quick look at how Passe works?",
@@ -1879,7 +1939,8 @@
       "offApp": "Payment is settled directly with the coach."
     },
     "unavailable": "This course couldn't be loaded, or you no longer have access to it.",
-    "backToHub": "Back to my courses"
+    "backToHub": "Back to my courses",
+    "pickCoachSport": "Which sport with this coach?"
   },
   "challenge": {
     "party": {
@@ -2156,6 +2217,15 @@
     "cancel": {
       "cta": "Withdraw challenge",
       "errorTooLate": "The match is locked in; it can't be withdrawn now."
+    }
+  },
+  "discover": {
+    "rail": {
+      "freeplay": "Drop-in",
+      "teammate": "Teammates",
+      "challenger": "Challenge",
+      "professional": "Coaches",
+      "location": "Venues"
     }
   }
 }

@@ -41,7 +41,7 @@ final class FilterStateProvider
   }
 }
 
-String _$filterStateHash() => r'26e027f876ecb128164eac41ee67e5f587b38916';
+String _$filterStateHash() => r'940cc5060b7526b8bb9b57007580dd7b422baa7d';
 
 abstract class _$FilterState extends $Notifier<FilterData> {
   FilterData build();
@@ -60,3 +60,51 @@ abstract class _$FilterState extends $Notifier<FilterData> {
     return element.handleCreate(ref, build);
   }
 }
+
+/// True when the user has narrowed the filter away from their profile seed.
+/// Drives the dot on Discover's filter summary chip and the reset action.
+
+@ProviderFor(filterIsActive)
+final filterIsActiveProvider = FilterIsActiveProvider._();
+
+/// True when the user has narrowed the filter away from their profile seed.
+/// Drives the dot on Discover's filter summary chip and the reset action.
+
+final class FilterIsActiveProvider extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// True when the user has narrowed the filter away from their profile seed.
+  /// Drives the dot on Discover's filter summary chip and the reset action.
+  FilterIsActiveProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'filterIsActiveProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$filterIsActiveHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return filterIsActive(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$filterIsActiveHash() => r'd58690bd8a5f555009c7559e10babb52d82bc0e9';

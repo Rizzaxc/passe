@@ -40,6 +40,9 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
   String? _locationId;
   Map<String, String?>? _freeVenue;
   final Set<EloSeed> _skills = {EloSeed.casual};
+  // Chosen in the form: there's no app-wide context sport to inherit. Seeded
+  // from Discover's sport (shown, and changeable, in the picker below).
+  Sport? _sport;
   bool _saving = false;
 
   @override
@@ -50,6 +53,8 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
     _date = now.isBefore(todayAtDefaultStart)
         ? now
         : now.add(const Duration(days: 1));
+    final discoverSport = ref.read(selectedSportStateProvider).value;
+    _sport = discoverSport == Sport.others ? null : discoverSport;
     _loadSavedVenue();
   }
 
@@ -97,7 +102,7 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
   }
 
   Future<void> _save() async {
-    final sport = ref.read(selectedSportStateProvider).value;
+    final sport = _sport;
     final capacity = int.tryParse(_capacity.text);
     final male = double.tryParse(_malePrice.text.replaceAll(',', '.'));
     final female = double.tryParse(_femalePrice.text.replaceAll(',', '.'));
@@ -181,6 +186,11 @@ class _CreateFreeplayFormState extends ConsumerState<_CreateFreeplayForm> {
             onPress: () => Navigator.pop(context),
             child: const Icon(FLucideIcons.x),
           ),
+        ),
+        PSheetSectionLabel(label: 'createLobby.sport'.tr()),
+        PSportPicker(
+          value: _sport,
+          onChanged: (sport) => setState(() => _sport = sport),
         ),
         PSheetSectionLabel(label: 'freeplay.hostManage.time'.tr()),
         Row(

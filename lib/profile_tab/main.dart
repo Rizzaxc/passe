@@ -15,10 +15,8 @@ import '../core/model/enum.dart';
 import '../core/model/user_avatar.dart';
 import '../core/model/user_contact.dart';
 import '../core/model/user_details.dart';
-import '../core/sport_selector.dart';
 import '../core/state/host_mode_state.dart';
 import '../core/state/pro_mode_state.dart';
-import '../core/state/selected_sport_state.dart';
 import '../freeplay/host_profile_controller.dart';
 import '../freeplay/model.dart';
 import '../freeplay/repository.dart';
@@ -40,6 +38,7 @@ import 'payment_info_controller.dart';
 import 'payment_info_selection_screen.dart';
 import 'playtime_selection_screen.dart';
 import 'profile_controller.dart';
+import 'sport_profile/sport_profile_controller.dart';
 import 'sport_profile/sport_profile_screen.dart';
 import 'terms_privacy_sheet.dart';
 import 'user_contact_controller.dart';
@@ -257,7 +256,7 @@ class ProfileTab extends ConsumerWidget {
     return FScaffold(
       header: FHeader(
         title: Text('nav.profile'.tr()),
-        suffixes: [const NotificationIconButton(), const SportSelector()],
+        suffixes: [const NotificationIconButton()],
       ),
       child: userAsync.when(
         data: (user) {
@@ -795,24 +794,29 @@ class ProfileTab extends ConsumerWidget {
     );
   }
 
+  /// One tile per sport, each showing its declared level — Profile isn't
+  /// scoped to a context sport, so every sport's profile is one tap away.
   Widget _buildSportInfoSection(BuildContext context, WidgetRef ref) {
-    final sportAsync = ref.watch(selectedSportStateProvider);
-    final sport = sportAsync.maybeWhen(
-      data: (s) => s,
-      orElse: () => Sport.others,
-    );
-    final sportName = sport.getLocalizedName(context);
-
+    final colors = context.theme.colors;
     return FTileGroup(
+      label: Text('profile.sportProfiles'.tr()),
       children: [
-        FTile(
-          prefix: sport.getIcon(size: 8),
-          title: Text('profile.sportProfile'.tr(args: [sportName])),
-          suffix: const Icon(FLucideIcons.chevronRight),
-          onPress: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const SportProfileScreen()),
+        for (final sport in Sport.values.where((s) => s != Sport.others))
+          FTile(
+            prefix: sport.getIcon(size: 10),
+            title: Text(sport.getLocalizedName(context)),
+            details: Text(
+              readSportEloSeed(ref, sport)?.getLocalizedName(context) ??
+                  'notSet'.tr(),
+              style: TextStyle(color: colors.mutedForeground),
+            ),
+            suffix: const Icon(FLucideIcons.chevronRight),
+            onPress: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => SportProfileScreen(sport: sport),
+              ),
+            ),
           ),
-        ),
       ],
     );
   }

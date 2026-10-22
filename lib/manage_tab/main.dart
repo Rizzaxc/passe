@@ -3,7 +3,6 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../core/sport_selector.dart';
 import '../core/state/host_mode_state.dart';
 import '../core/state/pro_mode_state.dart';
 import '../course/course_hub.dart';
@@ -15,6 +14,7 @@ import '../professional/pro_mode/pro_schedule_main.dart';
 import '../ui/main.dart';
 import 'freeplay_section/main.dart';
 import 'lobby_section/feed/main.dart';
+import 'lobby_section/freeplay_section/main.dart';
 import 'schedule_section/main.dart';
 
 /// Route-level guard for professional booking-request notifications.
@@ -116,6 +116,9 @@ class ManageTab extends StatefulWidget {
   static const scheduleIndex = 1;
   static const playerCourseIndex = 2;
 
+  /// Appended last so the 0/1/2 deep-link contract above doesn't move.
+  static const playerFreeplayIndex = 3;
+
   final int initialIndex;
 
   // Set from a professional_booking_requested notification tap — threaded
@@ -140,20 +143,39 @@ class ManageTab extends StatefulWidget {
     );
   }
 
-  static const manageSections = <FTabEntry>[
-    FTabEntry(child: LobbySubtab(), label: Icon(FLucideIcons.users)),
-    FTabEntry(child: ScheduleSection(), label: Icon(FLucideIcons.calendarDays)),
-    FTabEntry(
-      child: CourseHubSection(),
-      label: Icon(FLucideIcons.graduationCap),
+  static List<PRailTab> get manageSections => [
+    PRailTab(
+      icon: FLucideIcons.users,
+      label: 'manageTab.rail.lobby'.tr(),
+      build: () => const LobbySubtab(),
+    ),
+    PRailTab(
+      icon: FLucideIcons.calendarDays,
+      label: 'manageTab.rail.schedule'.tr(),
+      build: () => const ScheduleSection(),
+    ),
+    PRailTab(
+      icon: FLucideIcons.graduationCap,
+      label: 'manageTab.rail.courses'.tr(),
+      build: () => const CourseHubSection(),
+    ),
+    PRailTab(
+      icon: FLucideIcons.ticket,
+      label: 'discover.rail.freeplay'.tr(),
+      build: () => const PlayerFreeplaySubtab(),
     ),
   ];
 
-  static const hostManageSections = <FTabEntry>[
-    FTabEntry(child: HostFreeplaySection(), label: Icon(FLucideIcons.ticket)),
-    FTabEntry(
-      child: ScheduleSection(dataSource: ScheduleDataSource.host),
-      label: Icon(FLucideIcons.calendarDays),
+  static List<PRailTab> get hostManageSections => [
+    PRailTab(
+      icon: FLucideIcons.ticket,
+      label: 'manageTab.rail.listings'.tr(),
+      build: () => const HostFreeplaySection(),
+    ),
+    PRailTab(
+      icon: FLucideIcons.calendarDays,
+      label: 'manageTab.rail.schedule'.tr(),
+      build: () => const ScheduleSection(dataSource: ScheduleDataSource.host),
     ),
   ];
 
@@ -161,42 +183,47 @@ class ManageTab extends StatefulWidget {
   // already returns the coach's approved course sessions, so a parallel
   // professional calendar would create two structures for the same data.
   // Referees keep the booking-specific schedule/requests/history surfaces.
-  static List<FTabEntry> proManageSections(
+  static List<PRailTab> proManageSections(
     String professionalId, {
     String? highlightBookingId,
     bool isCoach = false,
   }) => [
     if (isCoach)
-      const FTabEntry(
-        child: ProCoursesSection(),
-        label: Icon(FLucideIcons.graduationCap),
+      PRailTab(
+        icon: FLucideIcons.graduationCap,
+        label: 'manageTab.rail.courses'.tr(),
+        build: () => const ProCoursesSection(),
       )
     else
-      FTabEntry(
-        child: ProPendingRequestsSection(
+      PRailTab(
+        icon: FLucideIcons.inbox,
+        label: 'manageTab.rail.requests'.tr(),
+        build: () => ProPendingRequestsSection(
           professionalId: professionalId,
           highlightBookingId: highlightBookingId,
         ),
-        label: const Icon(FLucideIcons.inbox),
       ),
-    FTabEntry(
-      child: isCoach
+    PRailTab(
+      icon: FLucideIcons.calendarDays,
+      label: 'manageTab.rail.schedule'.tr(),
+      build: () => isCoach
           ? const ScheduleSection()
           : ProScheduleSection(professionalId: professionalId),
-      label: const Icon(FLucideIcons.calendarDays),
     ),
     // History means different things per role: a coach's past work is ended
     // courses, and `ProBookingHistorySection` reads `referee_booking` — which
     // a coach can never have a row in, so it would sit permanently empty.
     if (isCoach)
-      const FTabEntry(
-        child: ProCoursesSection(endedOnly: true),
-        label: Icon(FLucideIcons.history),
+      PRailTab(
+        icon: FLucideIcons.history,
+        label: 'manageTab.rail.history'.tr(),
+        build: () => const ProCoursesSection(endedOnly: true),
       )
     else
-      FTabEntry(
-        child: ProBookingHistorySection(professionalId: professionalId),
-        label: const Icon(FLucideIcons.history),
+      PRailTab(
+        icon: FLucideIcons.history,
+        label: 'manageTab.rail.history'.tr(),
+        build: () => ProBookingHistorySection(professionalId: professionalId),
       ),
   ];
 
@@ -243,13 +270,12 @@ class _ManageTabState extends State<ManageTab> {
         return FScaffold(
           header: FHeader(
             title: Text('nav.manage'.tr()),
-            suffixes: [const NotificationIconButton(), const SportSelector()],
+            suffixes: [const NotificationIconButton()],
           ),
-          child: FTabs(
-            expands: true,
-            contentPhysics: const NeverScrollableScrollPhysics(),
-            control: FTabControl.lifted(index: index, onChange: _onTabChanged),
-            children: sections,
+          child: PRailTabs(
+            tabs: sections,
+            index: index,
+            onChanged: _onTabChanged,
           ),
         );
       },

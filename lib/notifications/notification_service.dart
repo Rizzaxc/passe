@@ -12,8 +12,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/state/has_lobby_state.dart';
 import '../core/user_preferences.dart';
 import '../logger/talker.dart';
+import '../manage_tab/lobby_section/feed/lobby_controller.dart';
+import '../manage_tab/lobby_section/feed/my_pending_requests_controller.dart';
 import '../notification/notification_center_controller.dart';
 import '../notification/notification_unread_count_controller.dart';
 import '../router.dart';
@@ -56,6 +59,16 @@ class NotificationService with WidgetsBindingObserver {
   SupabaseClient get _supabase => Supabase.instance.client;
 
   bool _started = false;
+
+  /// "Để sau" on the soft-ask: when it was last tapped, and how many times.
+  /// iOS has no record of a soft-ask decline (the OS dialog never ran, so it
+  /// stays notDetermined), which made the sheet reappear on every single
+  /// "Xin vào". Now: back off for [_softAskSnooze], and stop after
+  /// [_softAskMaxDeclines] declines.
+  static const _softAskDeclinedAtKey = 'PUSH_SOFT_ASK_DECLINED_AT';
+  static const _softAskDeclineCountKey = 'PUSH_SOFT_ASK_DECLINE_COUNT';
+  static const _softAskSnooze = Duration(days: 14);
+  static const _softAskMaxDeclines = 2;
 
   static const _androidPermissionAskedKey =
       'android_notification_permission_asked';
@@ -156,6 +169,15 @@ class NotificationService with WidgetsBindingObserver {
     // screen visit, on both platforms.
     _ref.invalidate(notificationUnreadCountProvider);
     _ref.invalidate(notificationCenterControllerProvider);
+    // A join request was answered: the new lobby (or the request's removal)
+    // should be on Manage ▸ Lobby without a pull-to-refresh.
+    final kind = message.data['kind'];
+    if (kind == 'lobby_join_request_approved' ||
+        kind == 'lobby_join_request_denied') {
+      _ref.invalidate(userLobbiesControllerProvider);
+      _ref.invalidate(myPendingRequestsProvider);
+      _ref.invalidate(hasAnyLobbyProvider);
+    }
     // The OS foreground presentation (iOS) / a manually-drawn tray entry
     // (Android, below) can be easy to miss while eyes are already on the
     // screen — this in-app toast is the reliable, always-visible cue, and is
@@ -247,11 +269,14 @@ class NotificationService with WidgetsBindingObserver {
   /// prompt. Call at the first moment a notification becomes meaningful — after
   /// the user joins/creates a lobby, sends a befriend request, or books a pro.
   /// Never triggers the OS dialog cold (an iOS denial is permanent), never
-  /// re-prompts after a denial, and no-ops for guests.
+  /// re-prompts after a denial, and no-ops for guests. [reason] replaces the
+  /// generic rationale with one about the action the user just took — the
+  /// moment they're most likely to say yes is when it's about *this* request.
   Future<void> maybePromptAndRegister(
     BuildContext context,
-    WidgetRef ref,
-  ) async {
+    WidgetRef ref, {
+    String? reason,
+  }) async {
     if (ref.read(currentUserIdProvider) == null) return; // guest / signed-out
 
     final settings = await _messaging.getNotificationSettings();
@@ -280,9 +305,27 @@ class NotificationService with WidgetsBindingObserver {
       return;
     }
 
+    final prefs = UserPreferences.instance;
+    final declines = await prefs.getInt(_softAskDeclineCountKey) ?? 0;
+    if (declines >= _softAskMaxDeclines) return;
+    final declinedAt = DateTime.tryParse(
+      await prefs.getString(_softAskDeclinedAtKey) ?? '',
+    );
+    if (declinedAt != null &&
+        DateTime.now().difference(declinedAt) < _softAskSnooze) {
+      return;
+    }
+
     if (!context.mounted) return;
-    final accepted = await _showSoftAsk(context);
-    if (accepted != true) return;
+    final accepted = await _showSoftAsk(context, reason: reason);
+    if (accepted != true) {
+      await prefs.setInt(_softAskDeclineCountKey, declines + 1);
+      await prefs.setString(
+        _softAskDeclinedAtKey,
+        DateTime.now().toIso8601String(),
+      );
+      return;
+    }
 
     final result = await _messaging.requestPermission();
     if (Platform.isAndroid) {
@@ -294,7 +337,7 @@ class NotificationService with WidgetsBindingObserver {
     }
   }
 
-  Future<bool?> _showSoftAsk(BuildContext context) {
+  Future<bool?> _showSoftAsk(BuildContext context, {String? reason}) {
     return showPSheet<bool>(
       context: context,
       builder: (sheetContext) {
@@ -306,7 +349,7 @@ class NotificationService with WidgetsBindingObserver {
             PSheetTitle(label: 'notification.permission.title'.tr()),
             const SizedBox(height: 12),
             Text(
-              'notification.permission.rationale'.tr(),
+              reason ?? 'notification.permission.rationale'.tr(),
               style: typography.body.md,
             ),
             const SizedBox(height: 24),

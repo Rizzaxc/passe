@@ -1,15 +1,12 @@
-import 'dart:async';
-
-import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:riverpod/legacy.dart';
 
-import '../core/sport_selector.dart';
 import '../ui/main.dart';
 import 'challenger_section/main.dart';
+import 'filter.dart';
 import 'freeplay_section/main.dart';
 import 'location_section/main.dart';
 import 'professional_section/main.dart';
@@ -26,9 +23,9 @@ import 'teammate_section/main.dart';
 /// the correct, expected nav).
 final discoverSubtabRequestProvider = StateProvider<int?>((ref) => null);
 
-/// Discover — four shipped subtabs sharing one filter, all scoped to
-/// the context sport. Challenger is inserted only for explicitly enabled
-/// builds. Feed (the social surface) moved out to its own main tab — see
+/// Discover — five subtabs, switched by a labelled chip rail, sharing one
+/// filter whose summary sits under the rail. All scoped to the context
+/// sport. Feed (the social surface) moved out to its own main tab — see
 /// `lib/feed_tab/` — so this is back to being a single-purpose screen.
 class DiscoverTab extends ConsumerWidget {
   final int initialIndex;
@@ -50,7 +47,11 @@ class DiscoverTab extends ConsumerWidget {
   /// REFEREED variant's extra affordances (hiring an official, pro-mode result
   /// entry) — not whether a lobby can challenge another at all.
   static const tabCount = 5;
-  static const challengerIndex = 2;
+  // Teammates first (the default landing), Freeplay third. Always go through
+  // these names — never a literal index — so a reorder is a one-place change.
+  static const teammateIndex = 0;
+  static const challengerIndex = 1;
+  static const freeplayIndex = 2;
   static const professionalIndex = 3;
   static int get locationIndex => tabCount - 1;
 
@@ -64,14 +65,16 @@ class DiscoverTab extends ConsumerWidget {
     return FScaffold(
       header: FHeader(
         title: Text('nav.discover'.tr()),
-        suffixes: [const NotificationIconButton(), const SportSelector()],
+        suffixes: [const NotificationIconButton()],
       ),
       child: _DiscoverView(initialIndex: initialIndex, openFilter: openFilter),
     );
   }
 }
 
-/// Shipped subtabs over a shared filter, plus opt-in Challenger.
+/// Chip rail + filter summary over the active subtab. Replaced a 5-icon
+/// `FTabs`: five unlabelled icons from three icon sets read as noise, and the
+/// filter was a separate icon on every subtab header.
 class _DiscoverView extends ConsumerStatefulWidget {
   final int initialIndex;
   final bool openFilter;
@@ -83,83 +86,39 @@ class _DiscoverView extends ConsumerStatefulWidget {
 }
 
 class _DiscoverViewState extends ConsumerState<_DiscoverView> {
-  late int _currentIndex;
-  // Which subtabs are actually inflated right now. TabBarView's sliver
-  // viewport has a default 250px cache extent on both sides of the visible
-  // page, so — since each subtab is a full-screen-width page — the tab next
-  // to the active one gets fully built (including firing its own feed RPC)
-  // even though none of it is on screen. Rendering everything but the
-  // active + just-left index as a cheap SizedBox defeats that, while still
-  // keeping both pages alive for the slide transition itself.
-  late final Set<int> _builtIndices;
-  Timer? _settleTimer;
+  late int _currentIndex = widget.initialIndex;
 
-  // Instance getter (not `static const`) because the teammate entry needs
-  // `widget.openFilter` threaded in.
-  List<({Widget icon, Widget child})> get _sections => [
-    (icon: const Icon(FLucideIcons.ticket), child: const FreeplaySubtab()),
-    (
-      icon: const Icon(CupertinoIcons.person_2_fill),
-      child: TeammateSubtab(openFilter: widget.openFilter),
+  List<PRailTab> get _tabs => [
+    PRailTab(
+      icon: FLucideIcons.users,
+      label: 'discover.rail.teammate'.tr(),
+      build: () => TeammateSubtab(openFilter: widget.openFilter),
     ),
-    (
-      icon: const FaIcon(FontAwesomeIcons.fireFlameCurved),
-      child: const ChallengerSubtab(),
+    PRailTab(
+      icon: FLucideIcons.swords,
+      label: 'discover.rail.challenger'.tr(),
+      build: () => const ChallengerSubtab(),
     ),
-    (
-      icon: const FaIcon(FontAwesomeIcons.flagCheckered),
-      child: const ProfessionalSubtab(),
+    PRailTab(
+      icon: FLucideIcons.ticket,
+      label: 'discover.rail.freeplay'.tr(),
+      build: () => const FreeplaySubtab(),
     ),
-    (
-      icon: const FaIcon(FontAwesomeIcons.locationDot),
-      child: const LocationSubtab(),
+    PRailTab(
+      icon: FLucideIcons.graduationCap,
+      label: 'discover.rail.professional'.tr(),
+      build: () => const ProfessionalSubtab(),
+    ),
+    PRailTab(
+      icon: FLucideIcons.mapPin,
+      label: 'discover.rail.location'.tr(),
+      build: () => const LocationSubtab(),
     ),
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-    _builtIndices = {_currentIndex};
-  }
-
-  @override
-  void dispose() {
-    _settleTimer?.cancel();
-    super.dispose();
-  }
-
   void _onTabChanged(int index) {
-    _settleTimer?.cancel();
-    setState(() {
-      _currentIndex = index;
-      _builtIndices.add(index);
-    });
-    // Drop the outgoing subtab once its slide-out animation has had time to
-    // finish, rather than instantly — so the transition still shows real
-    // content sliding out instead of blank space.
-    _settleTimer = Timer(const Duration(milliseconds: 300), () {
-      if (!mounted) return;
-      setState(() {
-        _builtIndices
-          ..clear()
-          ..add(_currentIndex);
-      });
-    });
-  }
-
-  List<FTabEntry> _buildTabEntries() {
-    final sections = _sections;
-    assert(sections.length == DiscoverTab.tabCount);
-    return List.generate(sections.length, (index) {
-      final section = sections[index];
-      final built = _builtIndices.contains(index);
-
-      return FTabEntry(
-        label: KeyedSubtree(key: const ValueKey('icon'), child: section.icon),
-        child: built ? section.child : const SizedBox.shrink(),
-      );
-    });
+    if (index == _currentIndex) return;
+    setState(() => _currentIndex = index);
   }
 
   @override
@@ -167,17 +126,19 @@ class _DiscoverViewState extends ConsumerState<_DiscoverView> {
     ref.listen<int?>(discoverSubtabRequestProvider, (_, requested) {
       if (requested == null) return;
       ref.read(discoverSubtabRequestProvider.notifier).state = null;
-      if (requested != _currentIndex) _onTabChanged(requested);
+      _onTabChanged(requested);
     });
 
-    return FTabs(
-      expands: true,
-      contentPhysics: const NeverScrollableScrollPhysics(),
-      control: FTabControl.lifted(
-        index: _currentIndex,
-        onChange: _onTabChanged,
+    final tabs = _tabs;
+    assert(tabs.length == DiscoverTab.tabCount);
+
+    return PRailTabs(
+      tabs: tabs,
+      index: _currentIndex,
+      onChanged: _onTabChanged,
+      header: FilterSummaryChip(
+        showRoleFilter: _currentIndex == DiscoverTab.professionalIndex,
       ),
-      children: _buildTabEntries(),
     );
   }
 }

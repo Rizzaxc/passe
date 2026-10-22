@@ -73,22 +73,27 @@ class _RecapSheetState extends ConsumerState<_RecapSheet> {
 
           _SourceSubsection(row: row, rootContext: widget.rootContext),
 
-          FTabs(
-            control: FTabControl.lifted(
-              index: _tab,
-              onChange: (i) => setState(() => _tab = i),
-            ),
-            children: [
-              FTabEntry(
-                label: Text('health.recap.tab.stats'.tr()),
-                child: _StatsTab(row: row),
+          // Same chip rail as every screen's sub-navigation; the sheet sizes
+          // to its content, so the active page sits directly under it rather
+          // than in PRailTabs' expanding page area.
+          PCategoryRail(
+            selectedIndex: _tab,
+            onSelected: (i) => setState(() => _tab = i),
+            items: [
+              PCategoryItem(
+                icon: FLucideIcons.chartColumn,
+                label: 'health.recap.tab.stats'.tr(),
               ),
-              FTabEntry(
-                label: Text('health.recap.tab.chart'.tr()),
-                child: _ChartTab(row: row, curve: curve, estimated: estimated),
+              PCategoryItem(
+                icon: FLucideIcons.activity,
+                label: 'health.recap.tab.chart'.tr(),
               ),
             ],
           ),
+          if (_tab == 0)
+            _StatsTab(row: row)
+          else
+            _ChartTab(row: row, curve: curve, estimated: estimated),
         ],
       ),
     );
@@ -255,7 +260,9 @@ class _StatsTab extends StatelessWidget {
       if (row.steps != null && row.steps! > 0)
         _StatRow(
           icon: FLucideIcons.footprints,
-          label: 'health.recap.steps'.tr(),
+          // `health.recap.steps` is the lowercase unit on the card ("1 200
+          // bước"); as a row label it needs the capitalised form.
+          label: 'health.recap.stepsLabel'.tr(),
           value: '${row.steps}',
         ),
       if (row.distanceMeters != null && row.distanceMeters! > 0)
@@ -269,6 +276,7 @@ class _StatsTab extends StatelessWidget {
           icon: FLucideIcons.zap,
           label: 'health.recap.effort'.tr(),
           value: row.effortScore!.round().toString(),
+          unit: '/100',
         ),
     ];
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../auth/auth_controller.dart';
@@ -27,6 +28,14 @@ class FilterData {
         ? const {ProfessionalRole.coach, ProfessionalRole.referee}
         : const {ProfessionalRole.coach},
   });
+
+  /// Equality over the fields that change what a feed returns —
+  /// `visibleRoles` is a client-side view toggle, not a criterion.
+  bool sameCriteriaAs(FilterData other) =>
+      search == other.search &&
+      city == other.city &&
+      setEquals(districts, other.districts) &&
+      listEquals(schedule, other.schedule);
 
   FilterData copyWith({
     String? search,
@@ -64,11 +73,23 @@ class FilterState extends _$FilterState {
             .toSet() ??
         {};
 
-    return FilterData(
+    final seed = FilterData(
       city: city,
       districts: districts,
       schedule: List.of(playtime),
     );
+    _seed = seed;
+    return seed;
+  }
+
+  /// The profile-seeded starting point — what [reset] returns to and what
+  /// [isActive] compares against.
+  late FilterData _seed;
+
+  /// Back to the profile seed, keeping the professional role toggle (that
+  /// one is a view preference, not a search criterion).
+  void reset() {
+    state = _seed.copyWith(visibleRoles: state.visibleRoles);
   }
 
   void setFilter(String value) {
@@ -81,18 +102,30 @@ class FilterState extends _$FilterState {
     }
   }
 
-  void setDistricts(Set<District> districts) {
-    while (districts.length > 6) {
+  static const maxDistricts = 6;
+  static const maxTimeslots = 3;
+
+  /// Returns true when the cap forced the oldest pick out, so the caller can
+  /// say so instead of the selection silently changing under the user.
+  bool setDistricts(Set<District> districts) {
+    var dropped = false;
+    while (districts.length > maxDistricts) {
       districts.remove(districts.first);
+      dropped = true;
     }
     state = state.copyWith(districts: districts);
+    return dropped;
   }
 
-  void setSchedule(List<Timeslot> schedule) {
-    while (schedule.length > 3) {
+  /// See [setDistricts] for the return value.
+  bool setSchedule(List<Timeslot> schedule) {
+    var dropped = false;
+    while (schedule.length > maxTimeslots) {
       schedule.removeAt(0);
+      dropped = true;
     }
     state = state.copyWith(schedule: schedule);
+    return dropped;
   }
 
   /// Checks/unchecks one role's checkbox. Only the professional subtab
@@ -110,4 +143,12 @@ class FilterState extends _$FilterState {
 
   /// TODO: Send filter settings to server
   Future<void> onCommit() async {}
+}
+
+/// True when the user has narrowed the filter away from their profile seed.
+/// Drives the dot on Discover's filter summary chip and the reset action.
+@riverpod
+bool filterIsActive(Ref ref) {
+  final state = ref.watch(filterStateProvider);
+  return !state.sameCriteriaAs(ref.read(filterStateProvider.notifier)._seed);
 }

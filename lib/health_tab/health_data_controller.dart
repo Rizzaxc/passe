@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../auth/auth_controller.dart';
 import '../core/model/activity.dart';
 import '../core/model/enum.dart';
-import '../core/state/selected_sport_state.dart';
 import 'health_data_service.dart';
 import 'model/activity_health_row.dart';
 import 'model/daily_health_summary.dart';
@@ -141,43 +140,20 @@ Future<List<DailyHealthSummary>> dailyHealthTrend(Ref ref) async {
       .toList();
 }
 
-/// Captured activity recaps for the context sport (RPC). Returns `[]` when no
-/// sport is selected.
+/// Captured activity recaps across every sport (RPC; `p_sport_id: null`).
+/// Health isn't sport-scoped — each row carries its own `sportId`.
 @riverpod
 Future<List<ActivityHealthRow>> activityHealthList(Ref ref) async {
   final userId = ref.watch(currentUserIdProvider);
-  final sport = ref.watch(selectedSportStateProvider).value;
-  if (userId == null || sport == null || sport == Sport.others) return [];
+  if (userId == null) return [];
 
   final rows = await Supabase.instance.client
-      .rpc('activity_health_data', params: {'p_sport_id': sport.index})
+      .rpc('activity_health_data', params: {'p_sport_id': null})
       .timeout(const Duration(seconds: 5));
 
   return (rows as List)
       .map((r) => ActivityHealthRow.fromJson(r as Map<String, dynamic>))
       .toList();
-}
-
-/// Report counts by sport (RPC), so an empty recap list for the context sport
-/// can hint that reports exist under a different sport instead of looking
-/// identical to "never synced". Keyed by `Sport.index`; unrecognized ids
-/// (there shouldn't be any) are dropped.
-@riverpod
-Future<Map<Sport, int>> activityHealthSportCounts(Ref ref) async {
-  final userId = ref.watch(currentUserIdProvider);
-  if (userId == null) return {};
-
-  final rows = await Supabase.instance.client
-      .rpc('activity_health_sport_counts')
-      .timeout(const Duration(seconds: 5));
-
-  final counts = <Sport, int>{};
-  for (final r in rows as List) {
-    final sportId = (r['sport_id'] as num).toInt();
-    if (sportId < 0 || sportId >= Sport.values.length) continue;
-    counts[Sport.values[sportId]] = (r['report_count'] as num).toInt();
-  }
-  return counts;
 }
 
 /// Candidate activities the user never confirmed but for which the wearable

@@ -18,21 +18,24 @@ part 'user_profile_detail_controller.g.dart';
 /// whichever user is being viewed. [contact] is gated by `user_contact`'s own
 /// RLS (friends / public / freeplay-host), so an empty result here just means
 /// "not visible to me", not "not set" — never fetched from `auth.uid()`'s own
-/// row, it's whatever the *viewed* [userId] is willing to expose. [sportProfile]
-/// is `SoccerProfile` / `BasketballProfile` / `BadmintonProfile` /
-/// `TennisProfile` / `PickleballProfile` depending on [Sport], or `null` for
-/// `Sport.others` or when the user has no row for that sport yet.
+/// row, it's whatever the *viewed* [userId] is willing to expose.
+/// [sportProfiles] maps each sport the user has a row for to its
+/// `SoccerProfile` / `BasketballProfile` / `BadmintonProfile` /
+/// `TennisProfile` / `PickleballProfile` (five small selects, in parallel).
 class UserProfileDetail {
   final List<Network> networks;
   final List<Industry> industries;
   final UserContact contact;
-  final Object? sportProfile;
+  /// Every sport this user has filled in, in `Sport` order — profiles
+  /// aren't scoped to a context sport any more. Sports they never set up are
+  /// simply absent.
+  final Map<Sport, Object> sportProfiles;
 
   const UserProfileDetail({
     required this.networks,
     required this.industries,
     required this.contact,
-    this.sportProfile,
+    this.sportProfiles = const {},
   });
 }
 
@@ -122,24 +125,24 @@ Future<Object?> _fetchSportProfile(
 }
 
 @riverpod
-Future<UserProfileDetail> userProfileDetail(
-  Ref ref,
-  String userId,
-  Sport sport,
-) async {
+Future<UserProfileDetail> userProfileDetail(Ref ref, String userId) async {
   final supabase = Supabase.instance.client;
+  final sports = Sport.values.where((s) => s != Sport.others).toList();
   try {
     final results = await Future.wait([
       _fetchNetworks(supabase, userId),
       _fetchIndustries(supabase, userId),
       _fetchContact(supabase, userId),
-      _fetchSportProfile(supabase, userId, sport),
+      for (final sport in sports) _fetchSportProfile(supabase, userId, sport),
     ]);
     return UserProfileDetail(
       networks: results[0] as List<Network>,
       industries: results[1] as List<Industry>,
       contact: results[2] as UserContact,
-      sportProfile: results[3],
+      sportProfiles: {
+        for (var i = 0; i < sports.length; i++)
+          if (results[3 + i] case final Object profile) sports[i]: profile,
+      },
     );
   } catch (e, st) {
     talker.handle(e, st, 'Error fetching user profile detail');

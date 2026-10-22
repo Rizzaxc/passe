@@ -10,14 +10,15 @@ Complex operations are done at SQL functions and called using Supabase
 
 ## Flow
 
-User will choose a "context sport" (frontend variable). The app will help them
-find teammates, parties ("lobby"), organize play, hire coaches/ referees etc
+The app helps players find teammates, parties ("lobby"), organize play, hire coaches/ referees etc.
+Only **Discover** is scoped to one sport at a time (the *Discover sport*, picked in its filter);
+every other screen shows all sports.
 
 5 Main Tabs (in bottom-nav order):
 
 - Feed: a TikTok-style, one-post-per-screen vertical feed of ephemeral photo posts from you, your
   friends and your lobby mates (cross-sport). First tab — the social/discovery entry point.
-- Discover: 4 subtabs sharing one filter, all scoped to the context sport
+- Discover: 5 subtabs sharing one filter, all scoped to the Discover sport
     - Teammates: find people/ lobbies to play with
     - Challengers: put up your lobby for challengers or look for them
     - Neutrals: hire coaches, referees, etc for your sport
@@ -51,9 +52,14 @@ gotchas — read it before touching that screen:
 Domain vocabulary — use these terms (not synonyms) in code, issues, and docs. This is the project's
 primary glossary until a `CONTEXT.md` exists (see `docs/agents/domain.md`).
 
-- **Context sport** (a.k.a. *selected sport*) — the single sport the whole app is scoped to at any
-  moment, held in `selectedSportStateProvider` and changed via the appbar `SportSelector`. `Sport`
-  enum: `others` (sentinel/“not chosen”), `soccer`, `basketball`, `badminton`, `tennis`, `pickleball`.
+- **Discover sport** (formerly *context sport*) — the one sport Discover's feeds are scoped to,
+  held in `selectedSportStateProvider` and picked in Discover's filter sheet (`PSportPicker`). It
+  is **not** app-wide any more: the appbar `SportSelector` is deleted, and Manage, Health,
+  Profile, `/user/:id` and the course hubs show every sport (each row carrying its own sport
+  badge). Flows that create something sport-bound (a lobby, a freeplay listing, a coach inquiry)
+  ask for the sport explicitly — Discover's sport is at most a visible, editable preselection.
+  `Sport` enum: `others` (sentinel/“not chosen”), `soccer`, `basketball`, `badminton`, `tennis`,
+  `pickleball`. `Sport.getIcon(size:)` takes a **radius** (renders `2 × size` pt).
 - **Lobby** — a party/group of players (the core social unit). Has a name, a sport, an optional
   *homeground*, a `visibility`, and members. Table: `lobby`.
 - **Captain** — the lobby owner (`lobby.captain_id`). Captain-only actions: schedule activities,
@@ -340,9 +346,10 @@ JSON — parse with `double.tryParse`. Complex reads go through Postgres functio
   read the id via `currentUserIdProvider`. `PasseUser.isGuest` distinguishes guests; the auth
   controller caches the user to SharedPreferences with a 24h offline TTL. See the identity rule in
   Coding Guidelines above.
-- **Context sport**: the app-wide "selected sport" is `selectedSportStateProvider`
-  (`AsyncValue<Sport>`, persisted to SharedPreferences). Almost every feed `.watch`es it and bails
-  (returns `[]`) when it's null/`Sport.others`. The appbar `SportSelector` widget changes it.
+- **Discover sport**: `selectedSportStateProvider` (`AsyncValue<Sport>`, persisted to
+  SharedPreferences) scopes **only** Discover's feeds, which `.watch` it and bail (return `[]`) when
+  it's null/`Sport.others`. It's changed in Discover's filter sheet and seeded by onboarding's sport
+  step. Don't scope a new non-Discover surface by it — show every sport and badge each row.
 - **State persistence**: wrap SharedPreferences through the `UserPreferences` singleton
   (`UserPreferences.instance`), never `SharedPreferences` directly. Persisted providers use a
   `static const _prefKey` / `_stateKey` convention.

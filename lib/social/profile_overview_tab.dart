@@ -9,7 +9,6 @@ import '../core/model/network.dart';
 import '../core/model/sport_profile.dart';
 import '../core/model/timeslot.dart';
 import '../core/model/user_details.dart';
-import '../core/state/selected_sport_state.dart';
 import '../core/zalo_link.dart';
 import '../ui/main.dart';
 import 'user_profile_detail_controller.dart';
@@ -30,14 +29,12 @@ class ProfileOverviewTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sportAsync = ref.watch(selectedSportStateProvider);
-    final sport = sportAsync.maybeWhen(data: (s) => s, orElse: () => Sport.others);
-    final detailAsync = ref.watch(userProfileDetailProvider(userId, sport));
+    final detailAsync = ref.watch(userProfileDetailProvider(userId));
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(userProfileDetailProvider(userId, sport));
-        await ref.read(userProfileDetailProvider(userId, sport).future);
+        ref.invalidate(userProfileDetailProvider(userId));
+        await ref.read(userProfileDetailProvider(userId).future);
       },
       child: ListView(
         // Extra bottom padding — this page has no bottom nav bar to absorb
@@ -66,7 +63,26 @@ class ProfileOverviewTab extends ConsumerWidget {
                   industries: detail.industries,
                 ),
                 const SizedBox(height: 20),
-                _SportProfileSection(sport: sport, profile: detail.sportProfile),
+                // Every sport they've filled in; one "nothing yet" group if none.
+                if (detail.sportProfiles.isEmpty)
+                  FTileGroup(
+                    label: Text('profile.sportProfiles'.tr()),
+                    children: [
+                      FTile(
+                        title: Text(
+                          'profile.noSportProfile'.tr(),
+                          style: TextStyle(
+                            color: context.theme.colors.mutedForeground,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  for (final entry in detail.sportProfiles.entries) ...[
+                    _SportProfileSection(sport: entry.key, profile: entry.value),
+                    const SizedBox(height: 20),
+                  ],
               ],
             ),
           ),

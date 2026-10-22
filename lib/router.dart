@@ -11,6 +11,7 @@ import 'auth/reset_password_screen.dart';
 import 'auth/welcome_screen.dart';
 import 'core/model/passe_user.dart';
 import 'core/model/professional_feed_item.dart';
+import 'core/state/has_lobby_state.dart';
 import 'course/course_detail_page.dart';
 import 'currency/wallet_home_screen.dart';
 import 'currency/wallet_intro_screen.dart';
@@ -44,6 +45,35 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
 );
 final supabase = Supabase.instance.client;
+
+/// The tab a cold start / post-onboarding transition lands on. A guest, and
+/// a signed-in player who isn't in any lobby yet, get Discover ▸ Teammates —
+/// finding a lobby is the only useful next step, and an empty Manage list is
+/// a dead end. Otherwise Feed when there's something new there, else Manage.
+/// `AsyncLoading` claims `/splash` rather than guessing (see the router's
+/// `gateOnboarding` for why a guess can loop). `AsyncError` fails toward
+/// Manage: a failed lobby read must not strand a real member on Discover.
+String resolveLandingLocation({
+  required bool isGuest,
+  required AsyncValue<bool> hasLobby,
+  required AsyncValue<bool> feedUnread,
+}) {
+  final teammates = const DiscoverTeammateRoute().location;
+  if (isGuest) return teammates;
+  switch (hasLobby) {
+    case AsyncData(value: false):
+      return teammates;
+    case AsyncLoading():
+      return const SplashRoute().location;
+    default:
+  }
+  return switch (feedUnread) {
+    AsyncData(value: true) => const FeedRoute().location,
+    AsyncData(value: false) => const ManageRoute().location,
+    AsyncLoading() => const SplashRoute().location,
+    AsyncError() => const ManageRoute().location,
+  };
+}
 
 @riverpod
 GoRouter router(Ref ref) {
@@ -97,6 +127,15 @@ GoRouter router(Ref ref) {
     feedUnread.value = next;
   }, fireImmediately: true);
 
+  // Same mirroring, for "does this user belong to any lobby yet" — a
+  // signed-in player with none lands on Discover ▸ Teammates, not an empty
+  // Manage list.
+  final hasLobby = ValueNotifier<AsyncValue<bool>>(const AsyncLoading());
+  ref.onDispose(hasLobby.dispose);
+  ref.listen(hasAnyLobbyProvider, (_, next) {
+    hasLobby.value = next;
+  }, fireImmediately: true);
+
   // The destination a cold start actually asked for, when it isn't the
   // literal `/splash` route — e.g. `restorationScopeId: 'router'` restoring
   // iOS's last-visited route straight into `/manage/lobby`, or a future
@@ -114,7 +153,7 @@ GoRouter router(Ref ref) {
     navigatorKey: _rootNavigatorKey,
     observers: [TalkerRouteObserver(talker)],
     restorationScopeId: 'router',
-    refreshListenable: Listenable.merge([user, onboarding, feedUnread]),
+    refreshListenable: Listenable.merge([user, onboarding, feedUnread, hasLobby]),
     initialLocation: const SplashRoute().location,
     // debugLogDiagnostics: true,
     routes: $appRoutes,
@@ -144,25 +183,13 @@ GoRouter router(Ref ref) {
         pendingDestination = state.uri.toString();
       }
 
-      // The tab a cold start / post-onboarding transition actually lands on.
-      // A guest always gets Discover (there's nothing personal to show yet).
-      // A signed-in user gets Feed when they have something new there,
-      // otherwise Manage — Discover is deliberately *not* the signed-in
-      // default anymore. `AsyncLoading` claims `/splash` rather than
-      // guessing, same posture as `gateOnboarding`'s own loading branch
-      // below (and for the same reason: never let two fallbacks race and
-      // produce a `/splash <-> /discover` redirect loop go_router throws
-      // on). `AsyncError` fails toward Manage ("nothing known to be
-      // unread"), not Discover.
-      String resolveInitialTabDestination({required bool isGuest}) {
-        if (isGuest) return DiscoverRoute().location;
-        return switch (feedUnread.value) {
-          AsyncData(value: true) => const FeedRoute().location,
-          AsyncData(value: false) => const ManageRoute().location,
-          AsyncLoading() => const SplashRoute().location,
-          AsyncError() => const ManageRoute().location,
-        };
-      }
+      // See [resolveLandingLocation].
+      String resolveInitialTabDestination({required bool isGuest}) =>
+          resolveLandingLocation(
+            isGuest: isGuest,
+            hasLobby: hasLobby.value,
+            feedUnread: feedUnread.value,
+          );
 
       // Only reachable once `user.value` is `AsyncData` with a real identity
       // (guest or signed-in) — the auth branches below gate that. Returns
@@ -576,7 +603,7 @@ class DiscoverFreeplayRoute extends GoRouteData with $DiscoverFreeplayRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      DiscoverTab.withInitialTab(0);
+      DiscoverTab.withInitialTab(DiscoverTab.freeplayIndex);
 }
 
 @immutable
@@ -618,7 +645,10 @@ class DiscoverTeammateRoute extends GoRouteData with $DiscoverTeammateRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      DiscoverTab.withInitialTab(1, openFilter: openFilter);
+      DiscoverTab.withInitialTab(
+        DiscoverTab.teammateIndex,
+        openFilter: openFilter,
+      );
 }
 
 @immutable

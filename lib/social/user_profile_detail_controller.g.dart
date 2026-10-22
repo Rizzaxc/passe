@@ -24,7 +24,7 @@ final class UserProfileDetailProvider
         $FutureProvider<UserProfileDetail> {
   UserProfileDetailProvider._({
     required UserProfileDetailFamily super.from,
-    required (String, Sport) super.argument,
+    required String super.argument,
   }) : super(
          retry: null,
          name: r'userProfileDetailProvider',
@@ -40,7 +40,7 @@ final class UserProfileDetailProvider
   String toString() {
     return r'userProfileDetailProvider'
         ''
-        '$argument';
+        '($argument)';
   }
 
   @$internal
@@ -51,8 +51,8 @@ final class UserProfileDetailProvider
 
   @override
   FutureOr<UserProfileDetail> create(Ref ref) {
-    final argument = this.argument as (String, Sport);
-    return userProfileDetail(ref, argument.$1, argument.$2);
+    final argument = this.argument as String;
+    return userProfileDetail(ref, argument);
   }
 
   @override
@@ -66,14 +66,10 @@ final class UserProfileDetailProvider
   }
 }
 
-String _$userProfileDetailHash() => r'ba0373b7808d306f42a79f4bd6671f85c5dc16c4';
+String _$userProfileDetailHash() => r'8f46fe49e102cde54b60c091f12ffc9b67f256c8';
 
 final class UserProfileDetailFamily extends $Family
-    with
-        $FunctionalFamilyOverride<
-          FutureOr<UserProfileDetail>,
-          (String, Sport)
-        > {
+    with $FunctionalFamilyOverride<FutureOr<UserProfileDetail>, String> {
   UserProfileDetailFamily._()
     : super(
         retry: null,
@@ -83,8 +79,8 @@ final class UserProfileDetailFamily extends $Family
         isAutoDispose: true,
       );
 
-  UserProfileDetailProvider call(String userId, Sport sport) =>
-      UserProfileDetailProvider._(argument: (userId, sport), from: this);
+  UserProfileDetailProvider call(String userId) =>
+      UserProfileDetailProvider._(argument: userId, from: this);
 
   @override
   String toString() => r'userProfileDetailProvider';

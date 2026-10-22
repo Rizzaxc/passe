@@ -115,11 +115,27 @@ class _Sections extends StatelessWidget {
         ClientFeatureFlags.refereeFlow &&
         visibleRoles.contains(ProfessionalRole.referee);
 
-    // Each role can now be hidden independently (checkboxes, not a single
-    // either/or toggle), so the filter needs to stay reachable from
-    // whichever section(s) are actually on screen — every visible role
-    // header gets its own suffix, not just the first one.
-    const filterSuffix = FilterWidget(showRoleFilter: true);
+    // Coaches only (the shipped build: referees are iced): a plain vertical
+    // list under the rail's "HLV" chip — no section header, no carousel. The
+    // per-role carousels only earn their keep when two roles share the screen.
+    if (!showReferees) {
+      return ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(0, 4, 0, 24),
+        itemCount: coaches.isEmpty ? 1 : coaches.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemBuilder: (context, i) => coaches.isEmpty
+            ? PEmptySectionPlaceholder(
+                hero: Icon(
+                  FLucideIcons.graduationCap,
+                  size: 64,
+                  color: context.theme.colors.mutedForeground,
+                ),
+                subtitle: 'homeTab.professional.empty.message'.tr(),
+              )
+            : ProfessionalCard(item: coaches[i]),
+      );
+    }
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -129,14 +145,12 @@ class _Sections extends StatelessWidget {
           _Section(
             title: 'homeTab.professional.filter.coach'.tr(),
             items: coaches,
-            filterSuffix: filterSuffix,
           ),
         if (showCoaches && showReferees) const SizedBox(height: 24),
         if (showReferees)
           _Section(
             title: 'homeTab.professional.filter.referee'.tr(),
             items: referees,
-            filterSuffix: filterSuffix,
           ),
       ],
     );
@@ -144,16 +158,13 @@ class _Sections extends StatelessWidget {
 }
 
 // A single role section: header (tappable + "see all") + carousel + dots.
-// This header is this screen's equivalent of the teammate/challenger/
-// location subtabs' single PSectionHeader — there are two of them (one per
-// role) instead of one, so [filterSuffix] (the subtab-wide filter) is on
-// every visible one, same as PSectionHeader's own title+suffix shape.
+// Only used when referees are enabled and two roles share the screen; the
+// coaches-only build is a plain vertical list (see `_Sections`).
 class _Section extends StatefulWidget {
   final String title;
   final List<ProfessionalFeedItem> items;
-  final Widget? filterSuffix;
 
-  const _Section({required this.title, required this.items, this.filterSuffix});
+  const _Section({required this.title, required this.items});
 
   @override
   State<_Section> createState() => _SectionState();
@@ -266,7 +277,6 @@ class _SectionState extends State<_Section> {
                   ),
                 ),
               ),
-              ?widget.filterSuffix,
             ],
           ),
         ),
