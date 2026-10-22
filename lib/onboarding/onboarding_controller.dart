@@ -42,7 +42,6 @@ class OnboardingState extends _$OnboardingState {
       _debugForceConsumed = true;
       return (
         coreDone: false,
-        storyDone: false,
         profileDone: false,
         coachMarksDone: false,
         getStartedDone: false,
@@ -66,7 +65,6 @@ class OnboardingState extends _$OnboardingState {
         await OnboardingPrefs.readStoredSportId() == Sport.others.index) {
       status = (
         coreDone: false,
-        storyDone: status.storyDone,
         profileDone: status.profileDone,
         coachMarksDone: status.coachMarksDone,
         getStartedDone: status.getStartedDone,
@@ -131,17 +129,15 @@ class OnboardingState extends _$OnboardingState {
             alreadySetUp = true;
           } else if ((hasGender || hasCustomAvatar) && ref.mounted) {
             // Old-account evidence, but no sport to restore — skip the rest
-            // of the guide (story/profile-nudge/coach-marks/get-started)
+            // of the guide (profile-nudge/coach-marks/get-started)
             // while still routing through the one-screen sport pick itself,
             // rather than leaving the context sport unset.
-            await OnboardingPrefs.markStoryDone();
             await OnboardingPrefs.markProfileDone();
             await OnboardingPrefs.markCoachMarksDone();
             await OnboardingPrefs.markGetStartedDone();
             if (ref.mounted) {
               status = (
                 coreDone: status.coreDone,
-                storyDone: true,
                 profileDone: true,
                 coachMarksDone: true,
                 getStartedDone: true,
@@ -154,17 +150,15 @@ class OnboardingState extends _$OnboardingState {
 
       if (ref.mounted && alreadySetUp) {
         await OnboardingPrefs.markCoreDone();
-        // A pre-existing install also never had a story sheet/profile
+        // A pre-existing install also never had a profile
         // nudge/coach-mark pass, but showing those retroactively to an
         // established user would be intrusive, not helpful — treat the
         // whole thing as done, not just the sport gate.
-        await OnboardingPrefs.markStoryDone();
         await OnboardingPrefs.markProfileDone();
         await OnboardingPrefs.markCoachMarksDone();
         await OnboardingPrefs.markGetStartedDone();
         status = (
           coreDone: true,
-          storyDone: true,
           profileDone: true,
           coachMarksDone: true,
           getStartedDone: true,
@@ -182,26 +176,10 @@ class OnboardingState extends _$OnboardingState {
     final current = state.value;
     state = AsyncData((
       coreDone: true,
-      storyDone: current?.storyDone ?? false,
       profileDone: current?.profileDone ?? false,
       coachMarksDone: current?.coachMarksDone ?? false,
       getStartedDone: current?.getStartedDone ?? false,
       guestDeclined: current?.guestDeclined ?? false,
-    ));
-  }
-
-  Future<void> completeStory() async {
-    await OnboardingPrefs.markStoryDone();
-    if (!ref.mounted) return;
-    final current = state.value;
-    if (current == null) return;
-    state = AsyncData((
-      coreDone: current.coreDone,
-      storyDone: true,
-      profileDone: current.profileDone,
-      coachMarksDone: current.coachMarksDone,
-      getStartedDone: current.getStartedDone,
-      guestDeclined: current.guestDeclined,
     ));
   }
 
@@ -212,7 +190,6 @@ class OnboardingState extends _$OnboardingState {
     if (current == null) return;
     state = AsyncData((
       coreDone: current.coreDone,
-      storyDone: current.storyDone,
       profileDone: true,
       coachMarksDone: current.coachMarksDone,
       getStartedDone: current.getStartedDone,
@@ -227,7 +204,6 @@ class OnboardingState extends _$OnboardingState {
     if (current == null) return;
     state = AsyncData((
       coreDone: current.coreDone,
-      storyDone: current.storyDone,
       profileDone: current.profileDone,
       coachMarksDone: true,
       getStartedDone: current.getStartedDone,
@@ -242,10 +218,24 @@ class OnboardingState extends _$OnboardingState {
     if (current == null) return;
     state = AsyncData((
       coreDone: current.coreDone,
-      storyDone: current.storyDone,
       profileDone: current.profileDone,
       coachMarksDone: current.coachMarksDone,
       getStartedDone: true,
+      guestDeclined: current.guestDeclined,
+    ));
+  }
+
+  /// Re-arms the nav tour + get-started sheet for a replay from Profile.
+  Future<void> resetGuide() async {
+    await OnboardingPrefs.resetGuide();
+    if (!ref.mounted) return;
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData((
+      coreDone: current.coreDone,
+      profileDone: current.profileDone,
+      coachMarksDone: false,
+      getStartedDone: false,
       guestDeclined: current.guestDeclined,
     ));
   }
@@ -256,7 +246,6 @@ class OnboardingState extends _$OnboardingState {
     final current = state.value;
     state = AsyncData((
       coreDone: current?.coreDone ?? false,
-      storyDone: current?.storyDone ?? false,
       profileDone: current?.profileDone ?? false,
       coachMarksDone: current?.coachMarksDone ?? false,
       getStartedDone: current?.getStartedDone ?? false,
@@ -270,7 +259,7 @@ class OnboardingState extends _$OnboardingState {
 /// sport pick every feed depends on). Not persisted — a killed app just
 /// restarts at the beginning (the router redirects back to `/onboarding`
 /// since [OnboardingState]'s `coreDone` is still false). The rest of the
-/// guide (story, profile, feature intro, get-started choices) runs *after*
+/// guide (profile, feature intro, get-started choices) runs *after*
 /// this, as sheets/coach-marks layered over the real shell — see
 /// `follow_up.dart`.
 enum OnboardingStep { guestOptIn, sport }

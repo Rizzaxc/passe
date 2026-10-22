@@ -60,7 +60,7 @@ class ProfileStep extends ConsumerWidget {
         children: [
           PSheetTitle(
             label: 'onboarding.profile.title'.tr(),
-            trailing: const OnboardingStepBadge(step: 2, total: 4),
+            trailing: const OnboardingStepBadge(step: 1, total: 3),
           ),
           const SizedBox(height: 4),
           Text(

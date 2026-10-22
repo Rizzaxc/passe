@@ -15,6 +15,11 @@ coaching courses. Unlike Discover, this is about entities the user is already a 
   their meaning (see `Manage*Route`
   in `router.dart`).
 - `schedule_section/main.dart` — calendar view of the user's activities. Uses `lib/ui/calendar.dart`.
+  Each card opens its source hub: lobby → `LobbyDetailRoute`, course session → `CourseDetailRoute`
+  (push), freeplay → `FreeplayDetailRoute`. The ids come straight from `my_schedule_data`'s
+  `lobby_id`/`course_id` columns (`schema/schedule_source_ids.sql`) — a student can't SELECT a
+  coach-proposed course session from `activity` directly, so a client-side lookup left those cards
+  untappable.
 - Index 2 is **courses**, and it lives in [`lib/course/`](../course/), not here — the same code
   serves both sides of the relationship (`CourseHubSection` for a student, `ProCoursesSection` for a
   coach in pro mode), so it isn't manage-tab-specific. `coaching_section/` is **deleted**: it read

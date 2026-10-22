@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../auth/auth_controller.dart';
 import '../auth/guest_prompt.dart';
+import '../core/feature_flags.dart';
 import '../manage_tab/lobby_section/feed/lobby_form_sheet.dart';
 import '../manage_tab/lobby_section/invite_link/redeem_code_sheet.dart';
 import '../router.dart';
@@ -42,6 +44,7 @@ class _GetStartedContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
+    final isGuest = ref.watch(authControllerProvider).value?.isGuest ?? true;
 
     // Unlike the other actions, this one waits for the pushed sheet's
     // result before popping — canceling lobby creation should return the
@@ -102,7 +105,10 @@ class _GetStartedContent extends ConsumerWidget {
         children: [
           PSheetTitle(
             label: 'onboarding.getStarted.title'.tr(),
-            trailing: const OnboardingStepBadge(step: 4, total: 4),
+            // Signed in: profile → tour → this. A guest has no profile step.
+            trailing: isGuest
+                ? const OnboardingStepBadge(step: 2, total: 2)
+                : const OnboardingStepBadge(step: 3, total: 3),
           ),
           const SizedBox(height: 4),
           Padding(
@@ -173,12 +179,19 @@ class _GetStartedContent extends ConsumerWidget {
               FTile(
                 prefix: const Icon(FLucideIcons.graduationCap),
                 title: Text(
-                  'onboarding.getStarted.coach.title'.tr(),
+                  // Referee hiring is iced behind its flag; don't promise it.
+                  (ClientFeatureFlags.refereeFlow
+                          ? 'onboarding.getStarted.coach.title'
+                          : 'onboarding.getStarted.coach.titleNoReferee')
+                      .tr(),
                   softWrap: true,
                   overflow: TextOverflow.visible,
                 ),
                 subtitle: Text(
-                  'onboarding.getStarted.coach.subtitle'.tr(),
+                  (ClientFeatureFlags.refereeFlow
+                          ? 'onboarding.getStarted.coach.subtitle'
+                          : 'onboarding.getStarted.coach.subtitleNoReferee')
+                      .tr(),
                   softWrap: true,
                   overflow: TextOverflow.visible,
                 ),

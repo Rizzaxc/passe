@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/feature_flags.dart';
 import 'onboarding_controller.dart';
 import 'onboarding_step_badge.dart';
 
@@ -24,8 +25,8 @@ class NavCoachKeys {
 }
 
 /// Runs the one-time feature-intro coach-mark pass over the real bottom nav.
-/// No-op unless the story sheet (and, for signed-in users, the profile
-/// sheet — guests never get one, see `follow_up.dart`) have already run,
+/// No-op unless (for signed-in users) the profile sheet has already run —
+/// guests never get one, see `follow_up.dart` —
 /// the pass hasn't already run itself, and every target has actually laid
 /// out (a `null` `currentContext` means the shell's first frame hasn't
 /// happened yet — call again on a later frame).
@@ -37,7 +38,7 @@ class NavCoachKeys {
 /// still on screen.
 Future<void> maybeShowCoachMarks(BuildContext context, WidgetRef ref) async {
   final status = ref.read(onboardingStateProvider).value;
-  if (status == null || !status.coreDone || !status.storyDone) return;
+  if (status == null || !status.coreDone) return;
   final isGuest = ref.read(authControllerProvider).value?.isGuest ?? false;
   if (!isGuest && !status.profileDone) return;
   if (status.coachMarksDone) return;
@@ -53,7 +54,10 @@ Future<void> maybeShowCoachMarks(BuildContext context, WidgetRef ref) async {
 
   final labelKeys = [
     'onboarding.coach.feed',
-    'onboarding.coach.discover',
+    // Referee hiring is iced behind its flag; don't promise it.
+    ClientFeatureFlags.refereeFlow
+        ? 'onboarding.coach.discover'
+        : 'onboarding.coach.discoverNoReferee',
     'onboarding.coach.manage',
     'onboarding.coach.health',
     'onboarding.coach.profile',
@@ -111,12 +115,18 @@ Future<void> maybeShowCoachMarks(BuildContext context, WidgetRef ref) async {
   TutorialCoachMark(
     targets: targets,
     textSkip: 'onboarding.coach.skip'.tr(),
+    // The tip text sits just above the nav bar; the default bottom-right
+    // Skip landed on top of it.
+    alignSkip: Alignment.topRight,
     onFinish: () => complete(),
     onSkip: () {
       complete();
       return true;
     },
-  ).show(context: context);
+  // Root overlay: the Profile ▸ "Hướng dẫn" replay calls this from inside a
+  // tab, whose nearest Overlay is the tab's own Navigator — the dim layer
+  // then stops above the nav bar and the spotlit nav icons never show.
+  ).show(context: context, rootOverlay: true);
 
   return completer.future;
 }

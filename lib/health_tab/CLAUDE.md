@@ -5,13 +5,17 @@ Read the root [`CLAUDE.md`](../../CLAUDE.md) first. This file covers the health 
 ## Purpose
 
 Integrates the user's wearables (Apple Health / Health Connect) to capture data during activities
-and gamify engagement (goals/achievements). The whole tab is **gated on a link status**: until the
-user grants health permissions, every subtab is replaced by the "not linked" CTA.
+and gamify engagement (goals/achievements). The device-backed subtabs are **gated on a link
+status**: until the user grants health permissions, a signed-in user sees a compact link prompt
+(`HealthLinkPromptCard`) above the **achievements** subtab — social badges progress from Feed posts
+and reactions alone, so hiding them behind a wearable hid progress the user was already making.
+A guest gets the full-screen `HealthNotLinkedView`.
 
 ## Layout
 
 - `main.dart` — `HealthTab`: watches `healthControllerProvider` (`AsyncValue<HealthLinkStatus>`).
-  When `notLinked`, renders `HealthNotLinkedView` instead of the tabs. Otherwise an `FTabs` over 3
+  When `notLinked`, renders `HealthLinkPromptCard` + `AchievementsSubtab` (guests:
+  `HealthNotLinkedView`) instead of the tabs. Otherwise an `FTabs` over 3
   subtabs. `HealthTab.withInitialTab(0|1|2)` (user_health / activity_data / achievements). Header
   carries a **Sync button** (`_SyncButton`, only when linked) that runs the device→Supabase sync.
 - `health_controller.dart` — `HealthController`: the link-status state machine (`loading`, `linked`,
@@ -32,7 +36,8 @@ user grants health permissions, every subtab is replaced by the "not linked" CTA
   `HrThresholdController.save()` (a `bool`-state notifier) directly `UPDATE`s
   `max_heart_rate`/`lt1_bpm`/`lt2_bpm` on the caller's `user_health_link` row (RLS-scoped, no RPC
   needed) and invalidates `hrThresholdsProvider`.
-- `not_linked_view.dart` — the permission-request CTA.
+- `not_linked_view.dart` — the permission-request CTAs: full-screen `HealthNotLinkedView` (guests)
+  and the compact `HealthLinkPromptCard`; both share the link button and unavailable notice.
 - `user_health_section/` — body-trends dashboard (`main.dart`) + `health_metric.dart`
   (`HealthMetric` enum + `DashboardMetrics`, a locally-persisted customizable visible set).
   `main.dart` also has the **HR Zone** card (`_HrZoneSection`) — shows resolved max

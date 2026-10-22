@@ -636,7 +636,21 @@
       "history": "Lịch sử"
     },
     "searchID": "Mã lobby",
-    "editTitle": "Sửa lobby"
+    "editTitle": "Sửa lobby",
+    "matchFactorSheet": {
+      "title": "Vì sao khớp",
+      "cta": "Cập nhật trong Hồ sơ",
+      "why": {
+        "skill": "Trình độ bạn khai trong hồ sơ môn này gần với mức trung bình của lobby.",
+        "network": "Lobby có người cùng trường hoặc công ty với bạn.",
+        "industry": "Lobby có người làm cùng ngành nghề với bạn.",
+        "age": "Thành viên lobby phần lớn cùng nhóm tuổi với bạn.",
+        "gender": "Lobby có nhiều thành viên nữ, phù hợp với giới tính bạn khai.",
+        "playtime": "Lịch chơi của lobby trùng với lịch rảnh trong hồ sơ của bạn.",
+        "location": "Sân nhà của lobby nằm trong khu vực bạn chọn."
+      },
+      "footer": "Hồ sơ càng đầy đủ, Passe ghép lobby càng chính xác."
+    }
   },
   "createLobby": {
     "title": "Tạo lobby",
@@ -944,19 +958,25 @@
     "paymentInfoDeleteConfirmBody": "Thao tác này sẽ xoá khỏi hồ sơ của bạn và không thể hoàn tác.",
     "paymentInfoDeleteCancel": "Huỷ",
     "paymentInfoDeleteConfirmAction": "Xoá",
-    "sportProfiles": "Hồ sơ theo môn"
+    "sportProfiles": "Hồ sơ theo môn",
+    "guide": {
+      "title": "Hướng dẫn sử dụng",
+      "subtitle": "Xem lại giới thiệu các tab và gợi ý bắt đầu",
+      "replay": "Xem lại hướng dẫn"
+    },
+    "industryAndNetworkDescription": "Passe ưu tiên lobby có người cùng trường, công ty hoặc ngành nghề với bạn — thẻ lobby sẽ ghi \"Chung mạng lưới\" hoặc \"Cùng ngành nghề\"."
   },
   "lobbyHub": {
     "tour": {
       "skip": "Bỏ qua",
       "infoTitle": "Thông tin lobby",
-      "infoBody": "Mở menu này để xem danh sách thành viên, vai trò, cài đặt lobby, link mời, yêu cầu tham gia",
+      "infoBody": "Mở menu này để xem danh sách thành viên, vai trò, cài đặt lobby, link mời, yêu cầu tham gia và lời mời thách đấu.",
       "feedTitle": "Feed",
       "feedBody": "Luồng chung của lobby dành cho cập nhật, bình chọn, ảnh buổi chơi, ghi chú nhanh và quản lý tiền trong lobby.",
       "plannerTitle": "Hoạt động",
       "plannerBody": "Lên lịch và xem mọi buổi chơi sắp tới tại đây. Xác nhận Tham gia, Có thể hoặc Vắng ở mỗi buổi — lựa chọn Tham gia được tính vào ngưỡng xác nhận và sẽ khóa khi buổi chơi đủ người. Buổi đã chơi cũng là mốc để gắn dữ liệu tập luyện đồng bộ trong tab Sức khoẻ.",
       "historyTitle": "Lịch sử",
-      "historyBody": "Tổng kết và xem lại các buổi đã qua. Buổi chơi có yêu cầu chi phí sẽ được tự động chia tiền cho các thành viên Tham gia, và bạn có thể Đòi tiền từ đây",
+      "historyBody": "Xem lại các buổi đã chơi và kết quả trận. Ở buổi bạn đã tham gia, bấm \"Đòi tiền\" để chia chi phí cho những người đã đến.",
       "healthTitle": "Từ buổi chơi đến Sức khoẻ",
       "healthBody": "Khi đã kết nối với Apple Health hoặc Google Health Connect (yêu cầu có wearable), các chỉ số như nhịp tim, mức gắng sức và calories có thể được gắn với buổi bạn đã chơi, giúp bạn theo dõi số liệu và đóng góp vào mục tiêu và thành tích trong Sức khoẻ."
     },
@@ -1307,10 +1327,12 @@
     "title": "Health",
     "notLinked": {
       "title": "Kết nối Dữ liệu Sức khỏe",
-      "description": "Liên kết Apple Health hoặc Google Fit để theo dõi xu hướng sức khỏe, chỉ số trong hoạt động và gặt hái mục tiêu.",
+      "description": "Liên kết Apple Health hoặc Health Connect để theo dõi xu hướng sức khỏe, chỉ số trong hoạt động và gặt hái mục tiêu.",
       "linkButton": "Kết nối Health",
       "notAvailableIOS": "Dịch vụ sức khỏe không khả dụng. Vui lòng chạy trên thiết bị thật có cài đặt ứng dụng Health.",
-      "notAvailableAndroid": "Health Connect không khả dụng. Vui lòng cài đặt Health Connect từ Play Store."
+      "notAvailableAndroid": "Health Connect không khả dụng. Vui lòng cài đặt Health Connect từ Play Store.",
+      "promptTitle": "Kết nối thiết bị đeo",
+      "promptBody": "Mở khoá xu hướng sức khoẻ và số liệu từng buổi chơi. Thành tích xã hội bên dưới vẫn tính mà không cần thiết bị."
     },
     "userHealth": {
       "title": "Cơ thể"
@@ -1470,20 +1492,6 @@
     "back": "Quay lại",
     "skip": "Bỏ qua",
     "done": "Bắt đầu",
-    "story": {
-      "s1": {
-        "title": "Hẹn phủi, dễ như hẹn cà phê",
-        "body": "Passe kết nối bạn với đồng đội, đối thủ và sân bãi quanh bạn — theo đúng môn bạn chơi."
-      },
-      "s2": {
-        "title": "Lobby là đội của bạn",
-        "body": "Lập lobby, rủ bạn bè, lên lịch, tổng kết chi phí và theo dõi quá trình thi đấu của đội."
-      },
-      "s3": {
-        "title": "Càng chơi càng hợp",
-        "body": "Trình độ, lịch rảnh và các mối quan hệ của bạn giúp Passe ghép đôi ngày một chính xác hơn."
-      }
-    },
     "sport": {
       "title": "Chọn môn thể thao",
       "body": "Chọn môn bạn chơi nhiều nhất để bắt đầu tìm đồng đội — có thể đổi bất cứ lúc nào trong bộ lọc ở Khám phá.",
@@ -1517,12 +1525,13 @@
       "title": "Nhanh thôi!",
       "feed": "Feed — ảnh mới nhất từ bạn bè và lobby của bạn.",
       "discover": "Khám phá — tìm đồng đội, đối thủ, HLV và sân bãi.",
-      "manage": "Quản lý — lobby, lịch chơi và lịch sử trận đấu.",
+      "manage": "Quản lý — lobby, lịch chơi, khoá học với HLV và lịch sử trận đấu.",
       "health": "Sức khỏe — kết nối thiết bị đeo và mở khóa thành tích.",
       "profile": "Hồ sơ — chỉnh trình độ, lịch rảnh và mạng lưới.",
       "next": "Tiếp",
       "skip": "Bỏ qua",
-      "finish": "Xong"
+      "finish": "Xong",
+      "discoverNoReferee": "Khám phá — tìm đồng đội, đối thủ, HLV và sân bãi."
     },
     "getStarted": {
       "title": "Bạn muốn làm gì trước?",
@@ -1542,7 +1551,9 @@
       },
       "coach": {
         "title": "Thuê HLV / trọng tài",
-        "subtitle": "Tiến bộ hơn mỗi ngày"
+        "subtitle": "Tiến bộ hơn mỗi ngày",
+        "titleNoReferee": "Tìm HLV",
+        "subtitleNoReferee": "Tiến bộ hơn mỗi ngày"
       },
       "wearable": {
         "title": "Kết nối thiết bị đeo",
@@ -2173,12 +2184,14 @@
     "feed": {
       "reviewCta": "Duyệt",
       "emptyTitle": "Chưa có lời mời nào",
-      "emptySubtitle": "Chưa đội nào trong khu vực đăng trận. Thử đổi bộ lọc, hoặc tự đăng lời mời.",
+      "emptySubtitle": "Chưa đội nào trong khu vực đăng trận. Thử đổi bộ lọc, hoặc tự đăng lời mời cho lobby của bạn.",
       "favorability": {
         "harder": "Khó",
         "even": "Ngang tài",
         "easier": "Dễ"
-      }
+      },
+      "emptySubtitleMember": "Chưa đội nào trong khu vực đăng trận. Thử đổi bộ lọc, hoặc nhờ đội trưởng đăng lời mời.",
+      "postOffer": "Đăng lời mời"
     },
     "offer": {
       "title": "Lời mời thách đấu",
@@ -2293,5 +2306,10 @@
       "location": "Sân"
     }
   },
-  "cancel": "Huỷ"
+  "cancel": "Huỷ",
+  "mode": {
+    "coach": "Chế độ HLV",
+    "referee": "Chế độ trọng tài",
+    "host": "Chế độ chủ sân"
+  }
 }

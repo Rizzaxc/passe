@@ -27,6 +27,11 @@ void _openActivity(BuildContext context, ScheduleEvent event) {
     FreeplayDetailRoute(id: event.activityId).push(context);
     return;
   }
+  final courseId = event.courseId;
+  if (courseId != null) {
+    CourseDetailRoute(id: courseId).push(context);
+    return;
+  }
   final lobbyId = event.lobbyId;
   if (lobbyId == null) return;
   LobbyDetailRoute(
@@ -490,9 +495,7 @@ class _EventRow extends StatelessWidget {
     };
 
     return FTappable(
-      onPress: event.lobbyId == null && event.tone != ScheduleEventTone.freeplay
-          ? null
-          : () => _openActivity(context, event),
+      onPress: event.isOpenable ? () => _openActivity(context, event) : null,
       child: Container(
         decoration: BoxDecoration(
           color: colors.card,
@@ -754,9 +757,7 @@ class _EventBlock extends StatelessWidget {
     };
 
     return FTappable(
-      onPress: event.lobbyId == null && event.tone != ScheduleEventTone.freeplay
-          ? null
-          : () => _openActivity(context, event),
+      onPress: event.isOpenable ? () => _openActivity(context, event) : null,
       child: Container(
         decoration: BoxDecoration(
           color: accent.withValues(alpha: 0.10),

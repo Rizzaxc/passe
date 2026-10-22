@@ -21,15 +21,24 @@ Two phases:
 2. **Follow-up chain** (`follow_up.dart`'s `runOnboardingFollowUps`, fired once from
    `ScaffoldWithNavBar.initState` in `lib/main.dart`) — runs as sheets/overlays over the *real*,
    already sport-scoped shell, in order:
-   `story_sheet.dart` (what Passe is) → `profile_sheet.dart` (signed-in only; gender/age/playtime/
-   skill) → `coach_marks.dart` (bottom-nav feature tour) → `get_started_sheet.dart` (closing choice:
+   `profile_sheet.dart` (signed-in only; gender/age/city/playtime/skill) → `coach_marks.dart`
+   (bottom-nav feature tour) → `get_started_sheet.dart` (closing choice:
    **create a lobby with people you already know** as the hero action, plus "Có mã mời?" (paste an
    invite link/code — the stand-in for a deferred deep link) / find teammates / add a friend /
    hire a coach / connect a wearable as secondary tiles — see the "why a hero action" note
    below). Each step is gated on its own
    persisted flag (`onboarding_prefs.dart`), so the chain is idempotent and safe to re-invoke.
-   `onboarding_step_badge.dart` is the shared "X/4" pill each step's header shows so the sequence
-   reads as bounded rather than sheets popping up unannounced.
+   `onboarding_step_badge.dart` is the shared "X/N" pill each step's header shows so the sequence
+   reads as bounded rather than sheets popping up unannounced. There is **no post-auth "what is
+   Passe" story sheet** any more: the pre-auth welcome pages already tell that story, and telling it
+   twice was noise, so `story_sheet.dart` and its `storyDone` flag were deleted.
+   **Replayable:** Profile ▸ "Hướng dẫn sử dụng" (and a "Xem lại hướng dẫn" button on the guest
+   Profile) calls `replayOnboardingGuide`, which clears `coachMarksDone`/`getStartedDone`
+   (`OnboardingPrefs.resetGuide`), re-runs the tour + get-started sheet, and re-arms the lobby-hub
+   tour (`LobbyHubTourPrefs.forget`) and the filter hint for their next visit. It ignores a guest's
+   earlier decline. The profile sheet isn't replayed — it's an editor that already lives in
+   Profile. Copy that names referees (nav tour Discover line, get-started coach tile) has a
+   `…NoReferee` variant picked while `ClientFeatureFlags.refereeFlow` is off.
 3. `get_started_sheet.dart` is deliberately the *last* step, after the coach-mark tour rather than
    before it: the tour is passive orientation ("here's what's in each tab"), the get-started sheet
    is the one *actionable* close — a new user's Feed (first tab) has no posts until they have
@@ -46,7 +55,8 @@ Two phases:
    empty (this app hit exactly that empty state live while testing the Teammates subtab). Creating a
    lobby with people the user already knows succeeds unconditionally regardless of local density, so
    it's styled as the prominent `_HeroAction` card in `get_started_sheet.dart` rather than another
-   `FTile` — it's the one path onboarding can always deliver on. `Thuê HLV / trọng tài` stays a
+   `FTile` — it's the one path onboarding can always deliver on. `Tìm HLV` (`Thuê HLV / trọng tài`
+   while referees are flagged on) stays a
    normal-weight secondary tile rather than a liquidity risk, since Neutrals supply (coaches/
    referees) is expected to be seeded ahead of user launch.
 
@@ -54,11 +64,11 @@ Two phases:
 whole guide on every launch for manual testing; off by default, opt in with
 `flutter run --dart-define=FORCE_ONBOARDING=true`.
 
-6. **The progress badges track real sub-progress, not a fixed macro step number.** Story sheet's
-   badge is `currentPage + 1 / 3` (live with the `PageView`); the coach-mark tour's badge is
-   `i + 1 / keys.length` per target — a badge that doesn't move while the content underneath it
-   visibly changes reads as broken. Profile and get-started sheets have no internal sub-progress, so
-   they keep a plain step-in-the-4-stage-sequence number.
+6. **The progress badges track real sub-progress, not a fixed macro step number.** The coach-mark
+   tour's badge is `i + 1 / keys.length` per target — a badge that doesn't move while the content
+   underneath it visibly changes reads as broken. Profile and get-started sheets have no internal
+   sub-progress, so they keep a plain step-in-sequence number: profile 1/3, get-started 3/3 (2/2
+   for a guest, who has no profile step).
 7. **`get_started_sheet.dart`'s "Tìm đồng đội" tile opens straight into the filter sheet**, not a
    bare list — `DiscoverTeammateRoute(openFilter: true)` → `DiscoverTab` → `TeammateSubtab.openFilter`
    (guarded by the module-level `_autoFilterConsumed` latch in `teammate_section/main.dart` so
@@ -88,7 +98,7 @@ Intended plan for when this is prioritized:
 - **Activation event candidate**: first `friendship` accepted, first `lobby_member` join, or first
   `wall_post` — something plausibly correlated with a return visit, not just onboarding completion
   itself. Needs real cohort data to pick between these once events exist.
-- **Step-boundary events**: emit at `completeCore`/`completeStory`/`completeProfile`/
+- **Step-boundary events**: emit at `completeCore`/`completeProfile`/
   `completeCoachMarks`/`completeGetStarted` in `onboarding_controller.dart` — these are already the
   single choke points every step's completion passes through, so instrumentation slots in there
   without touching the UI layer.

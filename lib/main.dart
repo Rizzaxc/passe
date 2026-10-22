@@ -228,7 +228,7 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
                 ),
                 FBottomNavigationBarItem(
                   key: NavCoachKeys.discover,
-                  icon: Icon(FLucideIcons.house),
+                  icon: Icon(FLucideIcons.compass),
                   label: _NavLabel('nav.discover'.tr(), group: _navLabelGroup),
                 ),
                 FBottomNavigationBarItem(

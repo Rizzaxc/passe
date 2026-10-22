@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../core/mode_aware_title.dart';
 import '../core/state/host_mode_state.dart';
 import '../core/state/pro_mode_state.dart';
 import '../course/course_hub.dart';
@@ -269,7 +270,7 @@ class _ManageTabState extends State<ManageTab> {
 
         return FScaffold(
           header: FHeader(
-            title: Text('nav.manage'.tr()),
+            title: ModeAwareTitle('nav.manage'.tr()),
             suffixes: [const NotificationIconButton()],
           ),
           child: PRailTabs(

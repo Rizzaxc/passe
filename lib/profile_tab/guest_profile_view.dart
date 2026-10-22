@@ -1,15 +1,17 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:forui/forui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../auth/auth_screen.dart';
+import '../onboarding/follow_up.dart';
 import '../ui/main.dart';
 
-class GuestProfileView extends StatelessWidget {
+class GuestProfileView extends ConsumerWidget {
   const GuestProfileView({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -65,6 +67,15 @@ class GuestProfileView extends StatelessWidget {
                 const AuthForm(),
               ],
             ),
+          ),
+          const SizedBox(height: 16),
+          // A guest has no settings list to hold the "Hướng dẫn" tile the
+          // signed-in Profile shows, so the replay sits under sign-in.
+          FButton(
+            variant: .ghost,
+            prefix: const Icon(FLucideIcons.lifeBuoy),
+            onPress: () => replayOnboardingGuide(context, ref),
+            child: Text('profile.guide.replay'.tr()),
           ),
         ],
       ),

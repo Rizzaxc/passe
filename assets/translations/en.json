@@ -634,7 +634,21 @@
       "history": "History"
     },
     "searchID": "Lobby code",
-    "editTitle": "Edit lobby"
+    "editTitle": "Edit lobby",
+    "matchFactorSheet": {
+      "title": "Why it matches",
+      "cta": "Update in Profile",
+      "why": {
+        "skill": "The level on your profile for this sport is close to the lobby average.",
+        "network": "Someone in this lobby went to your school or works at your company.",
+        "industry": "Someone in this lobby works in your industry.",
+        "age": "Most members are in your age group.",
+        "gender": "The lobby has many women members, matching the gender on your profile.",
+        "playtime": "The lobby's schedule overlaps the free time on your profile.",
+        "location": "The lobby's home ground is in the area you picked."
+      },
+      "footer": "The more complete your profile, the better Passe matches you."
+    }
   },
   "createLobby": {
     "title": "Create a lobby",
@@ -944,19 +958,25 @@
     "paymentInfoDeleteConfirmBody": "This will remove it from your profile. This can't be undone.",
     "paymentInfoDeleteCancel": "Cancel",
     "paymentInfoDeleteConfirmAction": "Remove",
-    "sportProfiles": "Sport profiles"
+    "sportProfiles": "Sport profiles",
+    "guide": {
+      "title": "App guide",
+      "subtitle": "Replay the tab tour and getting-started tips",
+      "replay": "Replay the guide"
+    },
+    "industryAndNetworkDescription": "Passe favours lobbies with people from your school, company or industry — the lobby card will say \"Shared network\" or \"Same industry\"."
   },
   "lobbyHub": {
     "tour": {
       "skip": "Skip tour",
       "infoTitle": "Lobby information",
-      "infoBody": "Open this menu for the roster, roles, lobby settings, invite link, join requests, and challenge controls available to you.",
+      "infoBody": "Open this menu for the roster, roles, lobby settings, invite link, join requests and challenge offers.",
       "feedTitle": "Feed",
       "feedBody": "The lobby's shared stream for updates, polls, session photos, quick notes, and money bookkeeping.",
       "plannerTitle": "Activities & RSVP",
       "plannerBody": "See every upcoming session here. RSVP Going, Maybe, or Can't go—Going counts toward the confirmation threshold and may lock once the session is official. A played session also anchors synced workout metrics in Health.",
       "historyTitle": "History",
-      "historyBody": "Review past sessions and recorded challenge results. Rated matches and their outcome appear here after the referee submits the result.",
+      "historyBody": "Review past sessions and match results. On a session you played, tap \"Request Money\" to split the cost among the people who came.",
       "healthTitle": "From play to Health",
       "healthBody": "When a wearable is linked, activity metrics such as heart rate, effort, and calories can be attached to your played sessions and contribute to Health goals and achievements."
     },
@@ -1311,10 +1331,12 @@
     "title": "Health",
     "notLinked": {
       "title": "Connect Your Health Data",
-      "description": "Link Apple Health or Google Fit to track your fitness metrics, monitor activity trends, and earn achievements.",
+      "description": "Link Apple Health or Health Connect to track your fitness metrics, monitor activity trends, and earn achievements.",
       "linkButton": "Link Health Service",
       "notAvailableIOS": "Health services are not available. Please run on a physical device with the Health app installed.",
-      "notAvailableAndroid": "Health Connect is not available. Please install Health Connect from the Play Store."
+      "notAvailableAndroid": "Health Connect is not available. Please install Health Connect from the Play Store.",
+      "promptTitle": "Connect a wearable",
+      "promptBody": "Unlock health trends and per-session metrics. The social achievements below count without a device."
     },
     "userHealth": {
       "title": "Body"
@@ -1475,20 +1497,6 @@
     "back": "Back",
     "skip": "Skip",
     "done": "Get started",
-    "story": {
-      "s1": {
-        "title": "Playing sports, as easy as scheduling coffee",
-        "body": "Passe connects you with teammates, rivals and venues nearby — scoped to the sport you play."
-      },
-      "s2": {
-        "title": "Your lobby is your team",
-        "body": "Form a lobby, invite friends, schedule sessions and track match history — all in one place."
-      },
-      "s3": {
-        "title": "The more you play, the better the matches",
-        "body": "Your skill level, free time and network help Passe match you more accurately over time."
-      }
-    },
     "sport": {
       "title": "Choose a sport",
       "body": "Pick the sport you play most to start finding teammates — you can switch anytime in Discover's filter.",
@@ -1522,12 +1530,13 @@
       "title": "Quick tour",
       "feed": "Feed — the latest photos from your friends and lobby.",
       "discover": "Discover — find teammates, rivals, coaches/referees and venues.",
-      "manage": "Manage — your lobbies, schedule and match history.",
+      "manage": "Manage — your lobbies, schedule, coaching courses and match history.",
       "health": "Health — link a wearable and unlock achievements.",
       "profile": "Profile — edit your skill level, free time and network.",
       "next": "Next",
       "skip": "Skip",
-      "finish": "Done"
+      "finish": "Done",
+      "discoverNoReferee": "Discover — find teammates, rivals, coaches and venues."
     },
     "getStarted": {
       "title": "What do you want to do first?",
@@ -1547,7 +1556,9 @@
       },
       "coach": {
         "title": "Hire a coach or referee",
-        "subtitle": "Book someone to train or officiate"
+        "subtitle": "Book someone to train or officiate",
+        "titleNoReferee": "Find a coach",
+        "subtitleNoReferee": "Train with a coach for your sport"
       },
       "wearable": {
         "title": "Connect a wearable",
@@ -2178,12 +2189,14 @@
     "feed": {
       "reviewCta": "Review",
       "emptyTitle": "No offers yet",
-      "emptySubtitle": "No lobby nearby has posted a fixture. Try widening the filter, or post one yourself.",
+      "emptySubtitle": "No team nearby has posted a match. Try another filter, or post an offer for your lobby.",
       "favorability": {
         "harder": "Tougher",
         "even": "Even",
         "easier": "Easier"
-      }
+      },
+      "emptySubtitleMember": "No team nearby has posted a match. Try another filter, or ask your captain to post an offer.",
+      "postOffer": "Post an offer"
     },
     "offer": {
       "title": "Challenge offers",
@@ -2298,5 +2311,10 @@
       "location": "Venues"
     }
   },
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "mode": {
+    "coach": "Coach mode",
+    "referee": "Referee mode",
+    "host": "Host mode"
+  }
 }

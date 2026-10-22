@@ -7,7 +7,6 @@ import '../core/user_preferences.dart';
 /// contexts without a `ref`.
 typedef OnboardingStatus = ({
   bool coreDone,
-  bool storyDone,
   bool profileDone,
   bool coachMarksDone,
   bool getStartedDone,
@@ -18,7 +17,6 @@ class OnboardingPrefs {
   OnboardingPrefs._();
 
   static const completedKey = 'ONBOARDING_COMPLETED';
-  static const storyKey = 'ONBOARDING_STORY_DONE';
   static const profileKey = 'ONBOARDING_PROFILE_DONE';
   static const coachMarksKey = 'ONBOARDING_COACHMARKS_DONE';
   static const getStartedKey = 'ONBOARDING_GET_STARTED_DONE';
@@ -33,14 +31,12 @@ class OnboardingPrefs {
 
   static Future<OnboardingStatus> read() async {
     final coreDone = await _prefs.getBool(completedKey) ?? false;
-    final storyDone = await _prefs.getBool(storyKey) ?? false;
     final profileDone = await _prefs.getBool(profileKey) ?? false;
     final coachMarksDone = await _prefs.getBool(coachMarksKey) ?? false;
     final getStartedDone = await _prefs.getBool(getStartedKey) ?? false;
     final guestDeclined = await _prefs.getBool(guestDeclinedKey) ?? false;
     return (
       coreDone: coreDone,
-      storyDone: storyDone,
       profileDone: profileDone,
       coachMarksDone: coachMarksDone,
       getStartedDone: getStartedDone,
@@ -49,8 +45,6 @@ class OnboardingPrefs {
   }
 
   static Future<void> markCoreDone() => _prefs.setBool(completedKey, true);
-
-  static Future<void> markStoryDone() => _prefs.setBool(storyKey, true);
 
   static Future<void> markProfileDone() => _prefs.setBool(profileKey, true);
 
@@ -62,6 +56,15 @@ class OnboardingPrefs {
 
   static Future<void> markGuestDeclined() =>
       _prefs.setBool(guestDeclinedKey, true);
+
+  /// Clears the replayable steps (nav tour + get-started sheet) so the
+  /// Profile ▸ "Hướng dẫn" entry can run them again. Leaves `coreDone`
+  /// (the sport pick gate) and `profileDone` alone — the profile sheet is
+  /// an editor that already lives in Profile, not something to re-teach.
+  static Future<void> resetGuide() async {
+    await _prefs.setBool(coachMarksKey, false);
+    await _prefs.setBool(getStartedKey, false);
+  }
 
   /// Freshly reads this device's persisted `SELECTED_SPORT` sport id under
   /// the *current* namespace — deliberately bypassing
@@ -97,7 +100,6 @@ class OnboardingPrefs {
   /// real, editable profile sheet regardless of guest history.
   static Future<void> bridgeGuestFlagsToCurrentUser() async {
     await _prefs.adoptGuestValue(completedKey);
-    await _prefs.adoptGuestValue(storyKey);
     await _prefs.adoptGuestValue(profileKey);
     await _prefs.adoptGuestValue(coachMarksKey);
     await _prefs.adoptGuestValue(getStartedKey);

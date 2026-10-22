@@ -10,6 +10,10 @@ enum ScheduleEventTone { sport, coach, freeplay }
 class ScheduleEvent {
   final String activityId;
   final String? lobbyId;
+
+  /// Set for a coaching session (`activity.course_id`); the card opens the
+  /// course page. Exclusive with [lobbyId] (`activity_source_exclusivity`).
+  final String? courseId;
   final String title;
   final String meta;
   final ScheduleEventTone tone;
@@ -19,6 +23,7 @@ class ScheduleEvent {
   const ScheduleEvent({
     required this.activityId,
     this.lobbyId,
+    this.courseId,
     required this.title,
     required this.meta,
     required this.tone,
@@ -35,6 +40,11 @@ class ScheduleEvent {
   bool isCompletedAt(DateTime now) => !(endAt ?? startAt).isAfter(now);
 
   DateTime get effectiveEndAt => endAt ?? startAt.add(const Duration(hours: 1));
+
+  /// Whether tapping the card has somewhere to go: a lobby or course hub, or
+  /// the freeplay detail page (keyed by the activity id itself).
+  bool get isOpenable =>
+      lobbyId != null || courseId != null || tone == ScheduleEventTone.freeplay;
 }
 
 /// Horizontal placement for one event in a calendar overlap group.
@@ -142,33 +152,15 @@ class ScheduleEvents extends _$ScheduleEvents {
         )
         .timeout(const Duration(seconds: 5));
 
-    final activityIds = <String>{
-      for (final raw in response as List)
-        if (raw case {'id': final String id}) id,
-    };
-    final lobbyIdsByActivity = <String, String>{};
-    if (activityIds.isNotEmpty) {
-      final activityRows = await Supabase.instance.client
-          .from('activity')
-          .select('id, lobby_id')
-          .inFilter('id', activityIds.toList())
-          .timeout(const Duration(seconds: 5));
-      for (final row in activityRows as List) {
-        final activityId = row['id'] as String?;
-        final lobbyId = row['lobby_id'] as String?;
-        if (activityId != null && lobbyId != null) {
-          lobbyIdsByActivity[activityId] = lobbyId;
-        }
-      }
-    }
-
     final byDate = <DateTime, List<ScheduleEvent>>{};
     void put(DateTime date, ScheduleEvent ev) {
       final key = DateTime(date.year, date.month, date.day);
       (byDate[key] ??= []).add(ev);
     }
 
-    for (final raw in response) {
+    // `lobby_id`/`course_id` come from the RPC itself: a student can't SELECT
+    // a coach-proposed course session directly (schema/schedule_source_ids.sql).
+    for (final raw in response as List) {
       final row = raw;
       final activityId = row['id'] as String;
       final start = DateTime.parse(row['start_time'] as String).toLocal();
@@ -177,7 +169,8 @@ class ScheduleEvents extends _$ScheduleEvents {
 
       final ev = ScheduleEvent(
         activityId: activityId,
-        lobbyId: lobbyIdsByActivity[activityId],
+        lobbyId: row['lobby_id'] as String?,
+        courseId: row['course_id'] as String?,
         title: (row['title'] as String?) ?? '',
         meta: (row['meta'] as String?) ?? '',
         tone: switch (row['tone'] as String?) {

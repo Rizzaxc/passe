@@ -49,6 +49,14 @@ class LobbyHubTourPrefs {
     };
     await _prefs.setDeviceStringList(_shownUserIdsKey, ids.toList()..sort());
   }
+
+  /// Profile ▸ "Hướng dẫn" re-arms the tour for the next lobby visit.
+  static Future<void> forget(String userId) async {
+    final ids = <String>{
+      ...?await _prefs.getDeviceStringList(_shownUserIdsKey),
+    }..remove(userId);
+    await _prefs.setDeviceStringList(_shownUserIdsKey, ids.toList()..sort());
+  }
 }
 
 // Protects against two lobby routes racing before either tour has completed.

@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/icon/main.dart';
+import '../core/mode_aware_title.dart';
 import '../core/model/enum.dart';
 import '../core/model/user_avatar.dart';
 import '../core/model/user_contact.dart';
@@ -21,6 +22,7 @@ import '../freeplay/host_profile_controller.dart';
 import '../freeplay/model.dart';
 import '../freeplay/repository.dart';
 import '../logger/talker.dart';
+import '../onboarding/follow_up.dart';
 import '../professional/controller.dart';
 import '../professional/pro_mode/service_editor_main.dart';
 import '../social/friends_screen.dart';
@@ -256,7 +258,7 @@ class ProfileTab extends ConsumerWidget {
 
     return FScaffold(
       header: FHeader(
-        title: Text('nav.profile'.tr()),
+        title: ModeAwareTitle('nav.profile'.tr()),
         suffixes: [const NotificationIconButton()],
       ),
       child: userAsync.when(
@@ -356,6 +358,10 @@ class ProfileTab extends ConsumerWidget {
 
                   // Section 3b: Friends
                   _buildSocialSection(context, ref),
+                  const SizedBox(height: 24),
+
+                  // Section 3c: replay the onboarding guide
+                  _buildGuideSection(context, ref),
                   const SizedBox(height: 24),
 
                   // Section 4: Sport-Specific Info
@@ -619,6 +625,22 @@ class ProfileTab extends ConsumerWidget {
     );
   }
 
+  /// The nav tour and get-started sheet otherwise run exactly once, right
+  /// after signup — the moment a new user is least able to absorb them.
+  Widget _buildGuideSection(BuildContext context, WidgetRef ref) {
+    return FTileGroup(
+      children: [
+        FTile(
+          prefix: const Icon(FLucideIcons.lifeBuoy),
+          title: Text('profile.guide.title'.tr()),
+          subtitle: Text('profile.guide.subtitle'.tr()),
+          suffix: const Icon(FLucideIcons.chevronRight),
+          onPress: () => replayOnboardingGuide(context, ref),
+        ),
+      ],
+    );
+  }
+
   Widget _buildGeneralInfoSection(
     BuildContext context,
     WidgetRef ref,
@@ -780,6 +802,9 @@ class ProfileTab extends ConsumerWidget {
       children: [
         FTileGroup(
           label: Text('profile.industryAndNetworkLabel'.tr()),
+          // Without this the section reads as résumé trivia; it's actually a
+          // matchmaking input the lobby card names back ("Chung mạng lưới").
+          description: Text('profile.industryAndNetworkDescription'.tr()),
           children: [
             FTile(
               prefix: Icon(FLucideIcons.briefcaseBusiness),

@@ -38,6 +38,39 @@ void main() {
     });
   });
 
+  group('ScheduleEvent openable', () {
+    ScheduleEvent make({
+      String? lobbyId,
+      String? courseId,
+      ScheduleEventTone tone = ScheduleEventTone.sport,
+    }) => ScheduleEvent(
+      activityId: 'a',
+      lobbyId: lobbyId,
+      courseId: courseId,
+      title: '',
+      meta: '',
+      tone: tone,
+      startAt: DateTime(2026, 8, 8, 18),
+      endAt: null,
+    );
+
+    test('a course session opens its course', () {
+      expect(
+        make(courseId: 'course-1', tone: ScheduleEventTone.coach).isOpenable,
+        isTrue,
+      );
+    });
+
+    test('lobby and freeplay rows stay openable', () {
+      expect(make(lobbyId: 'lobby-1').isOpenable, isTrue);
+      expect(make(tone: ScheduleEventTone.freeplay).isOpenable, isTrue);
+    });
+
+    test('a row with no hub has nowhere to go', () {
+      expect(make(tone: ScheduleEventTone.coach).isOpenable, isFalse);
+    });
+  });
+
   group('overlapping schedule event layout', () {
     ScheduleEvent event(String id, int startHour, int endHour) => ScheduleEvent(
       activityId: id,

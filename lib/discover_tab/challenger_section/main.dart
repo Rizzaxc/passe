@@ -6,6 +6,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/format.dart';
 import '../../core/model/challenge.dart';
 import '../../logger/talker.dart';
+import '../../manage_tab/lobby_section/challenge/friendly_offer_sheet.dart';
+import '../../manage_tab/lobby_section/lobby_detail_controller.dart';
 import '../../router.dart';
 import '../../ui/main.dart';
 import '../lobby_public_preview_sheet.dart';
@@ -61,15 +63,7 @@ class ChallengerSubtab extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   children: [
                     if (offers.isEmpty)
-                      PEmptySectionPlaceholder(
-                        hero: Icon(
-                          FLucideIcons.swords,
-                          size: 64,
-                          color: context.theme.colors.mutedForeground,
-                        ),
-                        title: 'challenge.feed.emptyTitle'.tr(),
-                        subtitle: 'challenge.feed.emptySubtitle'.tr(),
-                      )
+                      const _EmptyFeed()
                     else
                       for (final o in offers) _OfferCard(offer: o),
                   ],
@@ -331,6 +325,45 @@ class _ContextLobbyPicker extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// No fixtures nearby. The copy used to say "tự đăng lời mời" with nothing
+/// to tap; a captain/coordinator of the "challenging as" lobby now gets the
+/// same offer board the lobby info sheet opens. A plain member can't post,
+/// so their copy points at the captain instead of promising a button.
+class _EmptyFeed extends ConsumerWidget {
+  const _EmptyFeed();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lobbyId = ref.watch(contextLobbyProvider).value?.id;
+    final canManage = lobbyId != null &&
+        (ref.watch(myLobbyPermissionProvider(lobbyId)).value?.canManage ??
+            false);
+
+    return PEmptySectionPlaceholder(
+      hero: Icon(
+        FLucideIcons.swords,
+        size: 64,
+        color: context.theme.colors.mutedForeground,
+      ),
+      title: 'challenge.feed.emptyTitle'.tr(),
+      subtitle: canManage
+          ? 'challenge.feed.emptySubtitle'.tr()
+          : 'challenge.feed.emptySubtitleMember'.tr(),
+      actions: [
+        if (canManage)
+          FButton(
+            prefix: const Icon(FLucideIcons.megaphone),
+            onPress: () async {
+              await showFriendlyOfferSheet(context, lobbyId);
+              ref.invalidate(friendlyOfferFeedProvider);
+            },
+            child: Text('challenge.feed.postOffer'.tr()),
+          ),
+      ],
     );
   }
 }

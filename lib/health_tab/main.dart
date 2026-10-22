@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../auth/auth_controller.dart';
 import '../ui/main.dart';
 import 'achievements_section/achievements_controller.dart';
 import 'achievements_section/main.dart';
@@ -95,7 +96,23 @@ class _HealthTabState extends ConsumerState<HealthTab> {
         ),
         data: (status) {
           if (status != HealthLinkStatus.linked) {
-            return const HealthNotLinkedView();
+            // A guest has no achievements to show either way.
+            if (ref.watch(currentUserIdProvider) == null) {
+              return const HealthNotLinkedView();
+            }
+            // Social badges progress from posts and reactions alone, so
+            // achievements stay visible without a wearable; only the
+            // device-backed subtabs (trends, activity data) wait on a link.
+            return const Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: HealthLinkPromptCard(),
+                ),
+                Expanded(child: AchievementsSubtab()),
+              ],
+            );
           }
 
           return PRailTabs(
