@@ -165,6 +165,12 @@ class _PreviewMessage extends StatelessWidget {
   }
 }
 
+String _districtLabel(BuildContext context, String? raw) {
+  if (raw == null || raw.trim().isEmpty) return '';
+  final district = VietnamLocationData.instance.findDistrictByStoredValue(raw);
+  return district?.getLocalizedFullName(context) ?? raw;
+}
+
 class _PreviewContent extends StatelessWidget {
   final LobbyPublicPreview preview;
   final double? fitScore;
@@ -258,9 +264,20 @@ class _PreviewContent extends StatelessWidget {
                         child: Text(
                           preview.homegrounds.length > 1
                               ? preview.homegrounds
-                                    .map((h) => h.name)
+                                    .map(
+                                      (h) => [
+                                        h.name,
+                                        _districtLabel(context, h.district),
+                                      ].where((s) => s.isNotEmpty).join(' · '),
+                                    )
                                     .join(', ')
-                              : preview.homegroundName!,
+                              : [
+                                  preview.homegroundName!,
+                                  _districtLabel(
+                                    context,
+                                    preview.homegroundDistrict,
+                                  ),
+                                ].where((s) => s.isNotEmpty).join(' · '),
                           style: context.theme.typography.body.sm,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,

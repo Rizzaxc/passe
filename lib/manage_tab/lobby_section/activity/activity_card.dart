@@ -146,7 +146,12 @@ class ActivityCard extends ConsumerWidget {
     final lat = upcoming.locationLat;
     final lon = upcoming.locationLon;
     final name = upcoming.locationName ?? '';
-    final district = upcoming.locationDistrict;
+    final district = upcoming.locationDistrict == null
+        ? null
+        : VietnamLocationData.instance
+              .findDistrictByStoredValue(upcoming.locationDistrict!)
+              ?.getLocalizedFullName(context) ??
+          upcoming.locationDistrict;
     final address = district == null ? name : '$name, $district';
 
     await openMapDirections(
@@ -256,6 +261,12 @@ class ActivityCard extends ConsumerWidget {
     final costLabel = _costLabel();
     final costWordsLabel = _costWordsLabel();
     final deadlineLabel = isPast ? null : _deadlineLabel();
+    final district = upcoming.locationDistrict == null
+        ? null
+        : VietnamLocationData.instance
+                  .findDistrictByStoredValue(upcoming.locationDistrict!)
+                  ?.getLocalizedFullName(context) ??
+              upcoming.locationDistrict;
 
     // Light select-watch on the already-fetched lobby feed (shared with the
     // Feed tab and every other card via the same lobbyId-keyed provider) —
@@ -363,7 +374,7 @@ class ActivityCard extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (upcoming.locationDistrict != null) ...[
+                      if (district != null) ...[
                         AutoSizeText(
                           ' · ',
                           maxLines: 1,
@@ -376,7 +387,7 @@ class ActivityCard extends ConsumerWidget {
                         ),
                         Flexible(
                           child: AutoSizeText(
-                            upcoming.locationDistrict!,
+                            district,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,

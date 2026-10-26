@@ -441,7 +441,7 @@
     "preview": {
       "notFound": "Lobby này không còn tồn tại",
       "ageGroup": "Nhóm tuổi thành viên",
-      "gender": "Giới tính · {declared}/{total} đã khai báo",
+      "gender": "Giới tính · {declared}/{total}",
       "networks": "Mạng lưới nổi bật",
       "industries": "Ngành nghề nổi bật",
       "open": "Xem chi tiết",
@@ -2309,7 +2309,7 @@
   "cancel": "Huỷ",
   "mode": {
     "coach": "Chế độ HLV",
-    "referee": "Chế độ trọng tài",
-    "host": "Chế độ chủ sân"
+    "referee": "Chế độ Trọng tài",
+    "host": "Chế độ Host"
   }
 }

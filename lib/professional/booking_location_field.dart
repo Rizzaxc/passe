@@ -146,8 +146,8 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
               children: [
                 FTile(
                   title: Text(_selectedOther!.name),
-                  subtitle: _selectedOther!.displayAddress.isNotEmpty
-                      ? Text(_selectedOther!.displayAddress)
+                  subtitle: _selectedOther!.displayAddressFor(context).isNotEmpty
+                      ? Text(_selectedOther!.displayAddressFor(context))
                       : null,
                   suffix: GestureDetector(
                     onTap: _clearOther,
@@ -240,9 +240,9 @@ class _BookingLocationFieldState extends ConsumerState<BookingLocationField> {
                                     style: context.theme.typography.body.sm
                                         .copyWith(fontWeight: FontWeight.w700),
                                   ),
-                                  if (court.displayAddress.isNotEmpty)
+                                  if (court.displayAddressFor(context).isNotEmpty)
                                     Text(
-                                      court.displayAddress,
+                                      court.displayAddressFor(context),
                                       style: context.theme.typography.body.xs
                                           .copyWith(
                                             color: colors.mutedForeground,

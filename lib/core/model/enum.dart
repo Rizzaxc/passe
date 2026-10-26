@@ -273,6 +273,36 @@ class VietnamLocationData {
     return null;
   }
 
+  /// Resolve the value stored in `location.district` to its user-facing
+  /// administrative unit. The ward backfill stores [District.id], while a
+  /// few older/user-submitted rows may still contain a bare or prefixed ward
+  /// name. Names come from the 2025 commune-level reorganization lists in
+  /// Nghị quyết 1685/NQ-UBTVQH15 (Hồ Chí Minh City) and
+  /// Nghị quyết 1656/NQ-UBTVQH15 (Hà Nội); do not infer labels from slugs.
+  District? findDistrictByStoredValue(String value, {City? city}) {
+    final raw = value.trim();
+    if (raw.isEmpty) return null;
+
+    final candidates = city == null
+        ? getAllDistricts().values.expand((districts) => districts)
+        : getDistrictsByCity(city);
+    for (final district in candidates) {
+      if (district.id == raw) return district;
+    }
+
+    final query = removeDiacritics(raw).toLowerCase();
+    for (final district in candidates) {
+      final names = <String>{
+        district.name,
+        '${district.type.prefix} ${district.name}',
+      };
+      if (names.any((name) => removeDiacritics(name).toLowerCase() == query)) {
+        return district;
+      }
+    }
+    return null;
+  }
+
   /// Search a city's districts by ward name or legacy district name
   /// (diacritic/case-insensitive substring match). Empty query returns all.
   List<District> searchDistricts(City city, String query) =>

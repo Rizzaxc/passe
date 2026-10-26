@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -115,6 +117,37 @@ abstract class Location with _$Location {
         if (city != null) city,
       ].whereType<String>().join(', ');
 
+  /// The stored district is normally a canonical id (for example,
+  /// `hcm_tanmy`). Resolve it through the verified ward data before showing it
+  /// to a user. Unknown values remain unchanged because guessing would be
+  /// worse than exposing the source value.
+  String? displayDistrict(BuildContext context) {
+    return displayDistrictWith((key) => context.tr(key));
+  }
+
+  String? displayDistrictWith(String Function(String key) tr) {
+    final raw = district?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    final resolved = VietnamLocationData.instance
+        .findDistrictByStoredValue(raw);
+    return resolved == null
+        ? raw
+        : '${tr('district.${resolved.type.name}')} ${resolved.name}';
+  }
+
+  /// Human-readable address with the canonical district rendered as its
+  /// official ward/commune name.
+  String displayAddressFor(BuildContext context) {
+    final localizedDistrict = displayDistrict(context);
+    return fullAddress ??
+        [
+          if (streetNumber != null) streetNumber,
+          if (streetName != null) streetName,
+          localizedDistrict,
+          if (city != null) city,
+        ].whereType<String>().join(', ');
+  }
+
   /// Cached result of [_parseTags], keyed by instance identity — computed
   /// once per instance instead of on every getter access (each venue card
   /// reads `sports`/`amenityKeys` multiple times per build, and the raw
@@ -188,11 +221,9 @@ abstract class Location with _$Location {
         : null;
     final where = (streetName?.trim().isNotEmpty ?? false)
         ? streetName!.trim()
-        : (district?.trim().isNotEmpty ?? false)
-        // `district` may hold a canonical ward id (`hcm_ankhanh`) rather than
-        // a human label after the ward backfill; those are not showable, so
-        // fall back rather than print an id at the user.
-        ? (district!.contains('_') ? null : district!.trim())
+        : (displayDistrictWith(tr)?.trim().isNotEmpty ?? false)
+        // Resolve canonical ward ids before rendering the description.
+        ? displayDistrictWith(tr)
         : null;
 
     if (kind == null && where == null) return tr('homeTab.location.unnamed');

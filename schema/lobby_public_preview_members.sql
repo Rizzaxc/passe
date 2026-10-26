@@ -37,7 +37,8 @@ DECLARE
 BEGIN
     SELECT l.id, l.name, l.sport_id, l.description, l.playtime, l.visibility,
            l.mmr, l.rated_match_count, l.captain_id,
-           loc.name AS homeground_name, loc.lat, loc.lon
+           loc.name AS homeground_name, loc.district AS homeground_district,
+           loc.lat, loc.lon
       INTO v_lobby
       FROM public.lobby l
       LEFT JOIN public.lobby_homeground plhg ON plhg.lobby_id = l.id AND plhg.is_primary
@@ -99,7 +100,8 @@ BEGIN
       ) t;
 
     SELECT coalesce(jsonb_agg(jsonb_build_object(
-               'id', gloc.id, 'name', gloc.name, 'lat', gloc.lat, 'lon', gloc.lon
+               'id', gloc.id, 'name', gloc.name, 'district', gloc.district,
+               'lat', gloc.lat, 'lon', gloc.lon
            ) ORDER BY gh.is_primary DESC, gh.created_at), '[]'::jsonb) INTO v_homegrounds
       FROM public.lobby_homeground gh
       JOIN public.location gloc ON gloc.id = gh.location_id
@@ -152,6 +154,7 @@ BEGIN
         'member_count', v_members,
         'playtime', v_lobby.playtime,
         'homeground_name', v_lobby.homeground_name,
+        'homeground_district', v_lobby.homeground_district,
         'homeground_lat', v_lobby.lat,
         'homeground_lon', v_lobby.lon,
         'homegrounds', v_homegrounds,

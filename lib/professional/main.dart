@@ -899,9 +899,9 @@ class _CourtRow extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              if (court.displayAddress.isNotEmpty)
+              if (court.displayAddressFor(context).isNotEmpty)
                 Text(
-                  court.displayAddress,
+                  court.displayAddressFor(context),
                   softWrap: true,
                   style: context.theme.typography.body.xs.copyWith(
                     color: context.theme.colors.mutedForeground,

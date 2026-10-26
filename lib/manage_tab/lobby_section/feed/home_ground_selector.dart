@@ -216,7 +216,7 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
       final locAddr = [
         loc.streetNumber?.toString(),
         loc.streetName,
-        loc.district,
+        loc.displayDistrict(context),
         loc.city,
       ].where((s) => s != null && s.isNotEmpty).join(', ');
       return Column(
@@ -284,7 +284,7 @@ class _HomeGroundFieldState extends ConsumerState<HomeGroundField> {
             final locAddr = [
               loc.streetNumber,
               loc.streetName,
-              loc.district,
+              loc.displayDistrict(context),
               loc.city,
             ].where((s) => s != null && s.isNotEmpty).join(', ');
             return Column(

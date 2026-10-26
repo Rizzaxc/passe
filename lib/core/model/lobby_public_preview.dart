@@ -108,6 +108,7 @@ class LobbyPublicPreview {
   final int memberCount;
   final List<Timeslot> playtime;
   final String? homegroundName;
+  final String? homegroundDistrict;
   final double? homegroundLat;
   final double? homegroundLon;
   final List<LobbyHomeground> homegrounds;
@@ -133,6 +134,7 @@ class LobbyPublicPreview {
     required this.memberCount,
     required this.playtime,
     this.homegroundName,
+    this.homegroundDistrict,
     this.homegroundLat,
     this.homegroundLon,
     this.homegrounds = const [],
@@ -188,6 +190,7 @@ class LobbyPublicPreview {
       memberCount: (json['member_count'] as num?)?.toInt() ?? 0,
       playtime: playtime,
       homegroundName: json['homeground_name'] as String?,
+      homegroundDistrict: json['homeground_district'] as String?,
       homegroundLat: (json['homeground_lat'] as num?)?.toDouble(),
       homegroundLon: (json['homeground_lon'] as num?)?.toDouble(),
       homegrounds: json['homegrounds'] is List

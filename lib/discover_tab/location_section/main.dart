@@ -161,7 +161,7 @@ class _VenueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final address = location.displayAddress;
+    final address = location.displayAddressFor(context);
     final amenities = location.amenityKeys;
     // Unnamed venues get a description built from their own tags rather than
     // one shared placeholder — see `Location.describe`. Still rendered in the
@@ -255,7 +255,7 @@ class _VenueCard extends StatelessWidget {
                   FButton(
                     size: .sm,
                     variant: .secondary,
-                    onPress: _hasDirectionsTarget(location)
+                    onPress: _hasDirectionsTarget(context, location)
                         ? () => _openDirections(context, location)
                         : null,
                     child: Row(
@@ -497,7 +497,7 @@ class _VenueDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final address = location.displayAddress;
+    final address = location.displayAddressFor(context);
     final sports = location.sports;
     final amenities = location.amenityKeys;
     final coord = location.coord;
@@ -592,7 +592,7 @@ class _VenueDetailSheet extends StatelessWidget {
             ),
           ],
           FButton(
-            onPress: _hasDirectionsTarget(location)
+            onPress: _hasDirectionsTarget(context, location)
                 ? () => _openDirections(context, location)
                 : null,
             child: Row(
@@ -636,11 +636,11 @@ class _VenueDetailSheet extends StatelessWidget {
 
 // ── Directions handoff ─────────────────────────────────────────────────────
 
-bool _hasDirectionsTarget(Location location) =>
+bool _hasDirectionsTarget(BuildContext context, Location location) =>
     mapDirectionsDestination(
       lat: location.lat,
       lon: location.lon,
-      address: location.displayAddress,
+      address: location.displayAddressFor(context),
       label: location.name,
     ) !=
     null;
@@ -652,7 +652,7 @@ Future<void> _openDirections(BuildContext context, Location location) async {
     context,
     lat: location.lat,
     lon: location.lon,
-    address: location.displayAddress,
+    address: location.displayAddressFor(context),
     label: location.name,
   );
 }
