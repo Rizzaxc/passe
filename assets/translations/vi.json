@@ -1,4 +1,9 @@
 {
+  "distance": {
+    "away": "Cách bạn {distance}",
+    "enable": "Xem khoảng cách",
+    "denied": "Chưa có quyền vị trí. Bật trong Cài đặt để xem khoảng cách."
+  },
   "timeslot": {
     "dayOfWeek": {
       "label": "Ngày Trong Tuần",
@@ -514,13 +519,13 @@
     },
     "memberRole": {
       "member": "Thành Viên",
-      "coordinator": "Đội phó"
+      "coordinator": "Điều phối"
     },
     "coordinator": {
-      "makeAction": "Đặt làm Đội phó",
-      "removeAction": "Bỏ Vai Trò Đội phó",
-      "setSuccess": "Đã đặt {username} làm Đội phó",
-      "removeSuccess": "Đã bỏ vai trò Đội phó của {username}",
+      "makeAction": "Đặt làm Điều phối",
+      "removeAction": "Bỏ Vai Trò Điều phối",
+      "setSuccess": "Đã đặt {username} làm Điều phối",
+      "removeSuccess": "Đã bỏ vai trò Điều phối của {username}",
       "failed": "Cập nhật vai trò thất bại. Vui lòng thử lại."
     },
     "joinRequests": {
@@ -560,7 +565,7 @@
       "error": "Có lỗi xảy ra. Vui lòng thử lại."
     },
     "challenges": {
-      "title": "Lời thách đấu",
+      "title": "Phản hồi Thách đấu",
       "empty": "Chưa có lời thách đấu nào.",
       "incoming": "Đang chờ bạn phản hồi",
       "outgoing": "Đã gửi · đang chờ",
@@ -614,7 +619,7 @@
       "regenerateConfirmBody": "Link cũ sẽ ngừng hoạt động. Ai chưa dùng link cũ sẽ cần link mới.",
       "removeConfirmTitle": "Xoá link mời?",
       "removeConfirmBody": "Không ai vào lobby bằng link này được nữa.",
-      "managersOnly": "Chỉ đội trưởng hoặc điều phối viên tạo được link mời. Bạn vẫn có thể mời bạn bè trực tiếp bên dưới.",
+      "managersOnly": "Chỉ đội trưởng hoặc Điều phối tạo được link mời. Bạn vẫn có thể mời bạn bè trực tiếp bên dưới.",
       "redeemTitle": "Nhập mã mời",
       "redeemBody": "Dán link mời hoặc nhập mã bạn được gửi.",
       "redeemHint": "passe.vn/invite/… hoặc mã",
@@ -1082,9 +1087,9 @@
       "refereeBooked": "Đã có trọng tài — trận sẽ được tính điểm",
       "refereeMissing": "Chưa có trọng tài — trận sẽ không tính điểm",
       "quorumError": "Chưa đủ thành viên xác nhận tham gia",
-      "managerOnly": "Chỉ đội trưởng hoặc điều phối viên mới xác nhận được",
+      "managerOnly": "Chỉ đội trưởng hoặc Điều phối mới xác nhận được",
       "confirmError": "Không thể xác nhận trận đấu",
-      "offerManagerOnly": "Chỉ đội trưởng hoặc điều phối viên mới đặt được",
+      "offerManagerOnly": "Chỉ đội trưởng hoặc Điều phối mới đặt được",
       "offerCostError": "Chi phí không hợp lệ",
       "offerUpdateError": "Không thể cập nhật lời mời thách đấu"
     },
@@ -1369,7 +1374,7 @@
     },
     "standaloneWorkout": {
       "title": "Nhận diện buổi tập độc lập",
-      "description": "Nhận diện các buổi bạn không lên lịch trong Passe (ví dụ một trận đấu tự phát) để chúng xuất hiện trong mục \"Buổi tập được phát hiện\" cho bạn xem xét."
+      "description": "Nhận diện các buổi bạn không lên lịch trong Passe (nhưng được wearable ghi nhận) để chúng xuất hiện trong mục \"Buổi tập được phát hiện\" cho bạn xem xét."
     },
     "activityData": {
       "title": "Hoạt động",
@@ -2139,9 +2144,9 @@
       "accept": "Nhận lời",
       "decline": "Từ chối",
       "errorAlreadyAnswered": "Lời thách đấu này đã được trả lời rồi.",
-      "errorManagerOnly": "Chỉ đội trưởng hoặc điều phối viên mới trả lời được.",
+      "errorManagerOnly": "Chỉ đội trưởng hoặc Điều phối mới trả lời được.",
       "errorGeneric": "Không trả lời được lời thách đấu.",
-      "settingsRow": "Lời thách đấu"
+      "settingsRow": "Phản hồi Thách đấu"
     },
     "report": {
       "title": "Khai kết quả",
@@ -2163,7 +2168,7 @@
       "submitAgain": "Cập nhật kết quả",
       "errorTooEarly": "Trận đấu chưa kết thúc.",
       "errorClosed": "Trận này không còn nhận khai kết quả.",
-      "errorManagerOnly": "Chỉ đội trưởng hoặc điều phối viên mới khai được.",
+      "errorManagerOnly": "Chỉ đội trưởng hoặc Điều phối mới khai được.",
       "errorGeneric": "Không khai được kết quả.",
       "outcome": {
         "awaiting_opponent": "Đã ghi nhận. Đang chờ đối thủ khai.",
@@ -2179,7 +2184,7 @@
       "filed": "Bạn đã khai: {outcome}",
       "reportCta": "Khai kết quả",
       "reportCtaAgain": "Sửa kết quả đã khai",
-      "reportManagerOnly": "Đội trưởng hoặc điều phối viên sẽ khai kết quả trận này."
+      "reportManagerOnly": "Đội trưởng hoặc Điều phối sẽ khai kết quả trận này."
     },
     "feed": {
       "reviewCta": "Duyệt",
@@ -2191,11 +2196,11 @@
         "easier": "Dễ"
       },
       "emptySubtitleMember": "Chưa đội nào trong khu vực đăng trận. Thử đổi bộ lọc, hoặc nhờ đội trưởng đăng lời mời.",
-      "postOffer": "Đăng lời mời"
+      "postOffer": "Đăng Thách đấu"
     },
     "offer": {
       "title": "Lời mời thách đấu",
-      "settingsRow": "Đăng lời mời",
+      "settingsRow": "Đăng Thách đấu",
       "explainer": "Bạn có thể đăng tối đa 3 trận cùng lúc. Đội khác sẽ thấy ở mục Thách đấu.",
       "emptySlot": "Đăng lời mời {slot}",
       "closesAt": "Đóng nhận lời: {when}",
@@ -2206,7 +2211,7 @@
       "withdrawTitle": "Gỡ lời mời?",
       "withdrawBody": "Lời mời sẽ không còn hiển thị ở mục Thách đấu.",
       "withdrawBodyWithChallengers": "{count} đội đang chờ trận này. Gỡ lời mời sẽ huỷ luôn lời thách đấu của họ.",
-      "formTitleNew": "Đăng lời mời",
+      "formTitleNew": "Đăng Thách đấu",
       "formTitleEdit": "Sửa lời mời",
       "editWarning": "{count} đội đang chờ trận này. Lưu thay đổi sẽ huỷ lời thách đấu của họ.",
       "whenWhere": "Thời gian & địa điểm",
@@ -2229,7 +2234,7 @@
       "termsHintRequired": "Bắt buộc với luật riêng",
       "publish": "Đăng lời mời",
       "published": "Đã đăng lời mời",
-      "errorManagerOnly": "Chỉ đội trưởng hoặc điều phối viên mới đăng được.",
+      "errorManagerOnly": "Chỉ đội trưởng hoặc Điều phối mới đăng được.",
       "errorPastKickoff": "Giờ đấu phải ở tương lai.",
       "errorExpiryOrder": "Thời điểm đóng nhận lời phải trước giờ đấu.",
       "errorExpiryPast": "Thời điểm đóng nhận lời đã qua.",
@@ -2262,7 +2267,7 @@
       "errorSelf": "Không thể tự thách đấu đội mình.",
       "errorThresholdTooBig": "Số người cần lớn hơn quân số đội bạn.",
       "errorThresholdTooSmall": "Cần ít nhất 1 người.",
-      "errorManagerOnly": "Chỉ đội trưởng hoặc điều phối viên mới gửi được.",
+      "errorManagerOnly": "Chỉ đội trưởng hoặc Điều phối mới gửi được.",
       "errorGeneric": "Không gửi được lời thách đấu."
     },
     "verdictSheet": {
@@ -2289,7 +2294,7 @@
       "errorAlready": "Bạn đã báo rồi.",
       "errorWindowClosed": "Đã hết thời gian phản hồi.",
       "errorNoClaim": "Không có báo cáo nào để phản hồi.",
-      "errorManagerOnly": "Chỉ đội trưởng hoặc điều phối viên mới thao tác được.",
+      "errorManagerOnly": "Chỉ đội trưởng hoặc Điều phối mới thao tác được.",
       "errorGeneric": "Không thực hiện được."
     },
     "cancel": {

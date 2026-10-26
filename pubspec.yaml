@@ -86,6 +86,7 @@ dependencies:
   number_to_vietnamese_words: ^1.0.1+1
   material_ui: any
   cupertino_ui: any
+  geolocator: ^14.0.1
 dev_dependencies:
   supabase: ^2.7.0
   flutter_test:

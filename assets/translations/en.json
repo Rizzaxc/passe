@@ -1,4 +1,9 @@
 {
+  "distance": {
+    "away": "{distance} away",
+    "enable": "Show distance from me",
+    "denied": "Location access is off. Enable it in Settings to see distances."
+  },
   "timeslot": {
     "dayOfWeek": {
       "label": "Day Of Week",

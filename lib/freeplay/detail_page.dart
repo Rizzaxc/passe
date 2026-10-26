@@ -178,7 +178,11 @@ class _BodyState extends ConsumerState<_Body> {
     final now = DateTime.now();
     final ended = !now.isBefore(a.endTime);
     final viewerHostId = ref.watch(linkedFreeplayHostProvider).value?.id;
-    final isHost = viewerHostId == a.hostId;
+    // For a lobby listing hostId is the lobby id: its members are owners too.
+    final isLobbyMember =
+        a.isLobbyOwned &&
+        (ref.watch(isLobbyMemberProvider(a.hostId)).value ?? false);
+    final isHost = viewerHostId == a.hostId || isLobbyMember;
     final chatWritable =
         a.myRequestId != null &&
         ((pending && !ended) ||

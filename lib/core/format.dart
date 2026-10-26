@@ -39,3 +39,15 @@ String formatVnd(num amount) {
 /// their surrounding labels communicate who pays or receives.
 String formatVndWords(num amount) =>
     '${amount.abs().round().toVietnameseWords()} đồng';
+
+/// Straight-line distance for display: meters under 1 km (rounded to 10 m so
+/// a drifting fix doesn't flicker), one decimal under 100 km, whole km beyond.
+String formatDistanceMeters(double meters) {
+  if (meters < 1000) {
+    final rounded = (meters / 10).round() * 10;
+    return '${rounded < 10 ? 10 : rounded} m';
+  }
+  final km = meters / 1000;
+  final fmt = NumberFormat(km < 100 ? '#,##0.0' : '#,##0', Intl.defaultLocale);
+  return '${fmt.format(km)} km';
+}

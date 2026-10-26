@@ -75,7 +75,25 @@ final linkedFreeplayHostProvider = FutureProvider<FreeplayHost?>((ref) async {
       : FreeplayHost.fromJson(rows.first as Map<String, dynamic>);
 });
 
-final freeplayHostProfileProvider = FutureProvider.autoDispose
+/// Whether the viewer belongs to [lobbyId]. A lobby-owned listing's members
+/// RSVP to the activity instead of requesting a seat (the server rejects it).
+final isLobbyMemberProvider = FutureProvider.autoDispose.family<bool, String>((
+  ref,
+  lobbyId,
+) async {
+  final userId = ref.watch(currentUserIdProvider);
+  if (userId == null) return false;
+  final row = await Supabase.instance.client
+      .from('lobby_member')
+      .select('user_id')
+      .eq('lobby_id', lobbyId)
+      .eq('user_id', userId)
+      .maybeSingle()
+      .timeout(_rpcTimeout);
+  return row != null;
+});
+
+final freeplayHostProfileProvider =FutureProvider.autoDispose
     .family<FreeplayHost?, String>((ref, id) async {
       final response = await Supabase.instance.client
           .rpc('freeplay_host_profile_data', params: {'p_host_id': id})

@@ -286,6 +286,15 @@ class _PreviewContent extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (preview.hasCoord)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: PDistanceLabel(
+                      lat: preview.homegroundLat,
+                      lon: preview.homegroundLon,
+                      promptable: true,
+                    ),
+                  ),
                 if (preview.hasCoord) _HomeGroundMap(preview: preview),
               ],
             ),

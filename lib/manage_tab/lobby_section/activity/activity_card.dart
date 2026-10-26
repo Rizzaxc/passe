@@ -15,6 +15,7 @@ import '../../../../core/format.dart';
 import '../../../../core/model/enum.dart';
 import '../../../../feed_tab/compose_post_sheet.dart';
 import '../../../../ui/dialog.dart';
+import '../../../../ui/distance_label.dart';
 import '../../../../ui/theme.dart';
 import '../../../../ui/user_avatar.dart';
 import '../../../core/map_directions.dart';
@@ -149,9 +150,9 @@ class ActivityCard extends ConsumerWidget {
     final district = upcoming.locationDistrict == null
         ? null
         : VietnamLocationData.instance
-              .findDistrictByStoredValue(upcoming.locationDistrict!)
-              ?.getLocalizedFullName(context) ??
-          upcoming.locationDistrict;
+                  .findDistrictByStoredValue(upcoming.locationDistrict!)
+                  ?.getLocalizedFullName(context) ??
+              upcoming.locationDistrict;
     final address = district == null ? name : '$name, $district';
 
     await openMapDirections(
@@ -401,6 +402,16 @@ class ActivityCard extends ConsumerWidget {
                     ],
                   ),
                 ],
+                if (upcoming.locationLat != null &&
+                    upcoming.locationLon != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 20),
+                    child: PDistanceLabel(
+                      lat: upcoming.locationLat,
+                      lon: upcoming.locationLon,
+                      promptable: true,
+                    ),
+                  ),
                 if (costLabel != null ||
                     deadlineLabel != null ||
                     upcoming.recurrenceDayOfWeek != null) ...[
@@ -471,9 +482,7 @@ class ActivityCard extends ConsumerWidget {
                 // Spare seats offered to people outside the lobby. Manage-tier
                 // only, and never on a challenge fixture — you can't sell a
                 // seat into a team-vs-team match.
-                if (!isPast &&
-                    isLeader &&
-                    upcoming.challenge == null) ...[
+                if (!isPast && isLeader && upcoming.challenge == null) ...[
                   const SizedBox(height: 10),
                   _FreeplayBlock(lobbyId: lobbyId, upcoming: upcoming),
                 ],
@@ -1264,10 +1273,7 @@ class _RsvpBtn extends StatelessWidget {
     final brand = context.theme.brand;
     final (fg, bg) = switch (tone) {
       'green' => (brand.green, brand.green.withValues(alpha: 0.12)),
-      'primary' => (
-        colors.primary,
-        colors.primary.withValues(alpha: 0.08),
-      ),
+      'primary' => (colors.primary, colors.primary.withValues(alpha: 0.08)),
       'destructive' => (
         colors.destructive,
         colors.destructive.withValues(alpha: 0.10),
@@ -1557,7 +1563,6 @@ class _Tag extends StatelessWidget {
   }
 }
 
-
 // ─── Freeplay exposure ─────────────────────────────────────────
 // A non-private lobby can offer its spare seats on the Discover ▸ Kèo feed.
 // The listing is owned by the lobby (the activity keeps `lobby_id`, there is no
@@ -1580,7 +1585,8 @@ class _FreeplayBlock extends ConsumerWidget {
     if (listing == null || listing.cancelled) {
       // Nothing advertised. Private lobbies never get the offer — the whole
       // point is that strangers can find the seat.
-      if (exposure == null || !exposure.canExpose) return const SizedBox.shrink();
+      if (exposure == null || !exposure.canExpose)
+        return const SizedBox.shrink();
       return FButton(
         variant: .outline,
         prefix: const Icon(FLucideIcons.ticket, size: 16),
@@ -1599,9 +1605,14 @@ class _FreeplayBlock extends ConsumerWidget {
       );
     }
 
-    final pending = ref.watch(freeplayRequestsProvider(activityId)).value
-        ?.where((request) => request.status == FreeplayRequestStatus.pending)
-        .length ??
+    final pending =
+        ref
+            .watch(freeplayRequestsProvider(activityId))
+            .value
+            ?.where(
+              (request) => request.status == FreeplayRequestStatus.pending,
+            )
+            .length ??
         0;
     return Container(
       padding: const EdgeInsets.all(12),
@@ -1678,7 +1689,6 @@ class _FreeplayBlock extends ConsumerWidget {
     );
   }
 }
-
 
 /// The friendly-challenge strip on an activity card.
 ///
@@ -1810,9 +1820,7 @@ class _FriendlyChallengeBlock extends ConsumerWidget {
 
             Text(
               c.status.getLocalizedLabel(context, weAreHome: c.weAreHome),
-              style: typography.body.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
+              style: typography.body.xs.copyWith(color: colors.mutedForeground),
             ),
 
             if (terms.isNotEmpty)
@@ -1831,8 +1839,7 @@ class _FriendlyChallengeBlock extends ConsumerWidget {
               Text(
                 'challenge.block.filed'.tr(
                   namedArgs: {
-                    'outcome':
-                        c.myOutcome?.getLocalizedName(context) ?? '—',
+                    'outcome': c.myOutcome?.getLocalizedName(context) ?? '—',
                   },
                 ),
                 style: typography.body.xs.copyWith(color: colors.primary),

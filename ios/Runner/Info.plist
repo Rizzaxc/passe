@@ -64,6 +64,8 @@
 		<string>This app needs access to your health data to track your activity metrics during sports sessions.</string>
 		<key>NSHealthUpdateUsageDescription</key>
 		<string>This app needs permission to save workout data to Apple Health.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Passe uses your location to show how far venues and lobby homegrounds are from you.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Passe needs access to your photo library so you can pick photos and videos to share on your wall and lobby feed.</string>
 		<key>ITSAppUsesNonExemptEncryption</key>

@@ -4,6 +4,7 @@ export 'calendar.dart';
 export 'card.dart';
 export 'category_rail.dart';
 export 'dialog.dart';
+export 'distance_label.dart';
 export 'district_select.dart';
 export 'dual_button.dart';
 export 'empty_section_placeholder.dart';

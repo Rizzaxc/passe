@@ -229,6 +229,7 @@ class _VenueCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
+                        PDistanceLabel(lat: location.lat, lon: location.lon),
                       ],
                     ),
                   ),
@@ -559,6 +560,11 @@ class _VenueDetailSheet extends StatelessWidget {
                 ),
               ),
             ),
+          PDistanceLabel(
+            lat: location.lat,
+            lon: location.lon,
+            promptable: true,
+          ),
           if (address.isNotEmpty) ...[
             PSheetSectionLabel(label: 'homeTab.location.address'.tr()),
             Row(

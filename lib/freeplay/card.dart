@@ -161,6 +161,12 @@ class FreeplayActivitySummaryCard extends StatelessWidget {
                               ),
                             ),
                           ],
+                          const SizedBox(height: 2),
+                          PDistanceLabel(
+                            lat: activity.locationLat,
+                            lon: activity.locationLon,
+                            promptable: showAddress,
+                          ),
                         ],
                       ),
                     ),
