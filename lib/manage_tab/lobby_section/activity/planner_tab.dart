@@ -7,8 +7,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../ui/main.dart';
 import '../schedule_activity_controller.dart';
-import '../schedule_activity_sheet.dart';
 import 'activity_card.dart';
+import 'planner_add_sheet.dart';
 import 'planner_empty_state.dart';
 import 'upcoming_controller.dart';
 
@@ -92,12 +92,11 @@ class _LobbyPlannerTabState extends ConsumerState<LobbyPlannerTab> {
             suffix: widget.isLeader
                 ? FButton.icon(
                     variant: .ghost,
-                    onPress: atCap
-                        ? null
-                        : () => showScheduleActivitySheet(
-                            context,
-                            widget.lobbyId,
-                          ),
+                    onPress: () => showPlannerAddSheet(
+                      context,
+                      widget.lobbyId,
+                      atCap: atCap,
+                    ),
                     child: const Icon(FLucideIcons.plus),
                   )
                 : null,

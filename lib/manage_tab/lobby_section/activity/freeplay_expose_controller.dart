@@ -36,7 +36,10 @@ class LobbyExposureContext {
 }
 
 @riverpod
-Future<LobbyExposureContext> lobbyExposureContext(Ref ref, String lobbyId) async {
+Future<LobbyExposureContext> lobbyExposureContext(
+  Ref ref,
+  String lobbyId,
+) async {
   final row = await Supabase.instance.client
       .from('lobby')
       .select('visibility, lobby_homeground(is_primary, location(id, name))')

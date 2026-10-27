@@ -40,16 +40,17 @@ class LobbyDetailController extends _$LobbyDetailController {
 
     final data = Map<String, dynamic>.from(row as Map)
       ..remove('lobby_homeground');
-    final ghRows = ((row['lobby_homeground'] as List?) ?? [])
-        .cast<Map<String, dynamic>>()
-        .toList()
-      ..sort((a, b) {
-        if (a['is_primary'] == true) return -1;
-        if (b['is_primary'] == true) return 1;
-        return (a['created_at'] as String? ?? '').compareTo(
-          b['created_at'] as String? ?? '',
-        );
-      });
+    final ghRows =
+        ((row['lobby_homeground'] as List?) ?? [])
+            .cast<Map<String, dynamic>>()
+            .toList()
+          ..sort((a, b) {
+            if (a['is_primary'] == true) return -1;
+            if (b['is_primary'] == true) return 1;
+            return (a['created_at'] as String? ?? '').compareTo(
+              b['created_at'] as String? ?? '',
+            );
+          });
     final homeGrounds = [
       for (final g in ghRows)
         LobbyHomeground(

@@ -287,12 +287,16 @@ class _PreviewContent extends StatelessWidget {
                   ),
                 ),
                 if (preview.hasCoord)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: PDistanceLabel(
-                      lat: preview.homegroundLat,
-                      lon: preview.homegroundLon,
-                      promptable: true,
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: PDistanceLabel(
+                        lat: preview.homegroundLat,
+                        lon: preview.homegroundLon,
+                        promptable: true,
+                        style: PDistanceStyle.pill,
+                      ),
                     ),
                   ),
                 if (preview.hasCoord) _HomeGroundMap(preview: preview),

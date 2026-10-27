@@ -24,10 +24,7 @@ class MembersSection extends ConsumerWidget {
       ),
       error: (_, _) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Text(
-          'errorGeneric'.tr(),
-          style: TextStyle(color: Colors.red),
-        ),
+        child: Text('errorGeneric'.tr(), style: TextStyle(color: Colors.red)),
       ),
       data: (members) => _MembersRow(members: members),
     );
@@ -42,9 +39,7 @@ class _MembersRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (members.isEmpty) {
-      return PEmptySectionPlaceholder(
-        subtitle: 'lobby.detail.noMembers'.tr(),
-      );
+      return PEmptySectionPlaceholder(subtitle: 'lobby.detail.noMembers'.tr());
     }
 
     return SizedBox(

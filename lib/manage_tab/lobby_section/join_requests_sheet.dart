@@ -49,8 +49,10 @@ class _JoinRequestsSheet extends ConsumerWidget {
             ),
             error: (_, _) => Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('errorGeneric'.tr(),
-                  style: TextStyle(color: colors.destructive)),
+              child: Text(
+                'errorGeneric'.tr(),
+                style: TextStyle(color: colors.destructive),
+              ),
             ),
             data: (requests) => requests.isEmpty
                 ? Padding(
@@ -58,8 +60,9 @@ class _JoinRequestsSheet extends ConsumerWidget {
                     child: Center(
                       child: Text(
                         'lobby.joinRequests.empty'.tr(),
-                        style: context.theme.typography.body.sm
-                            .copyWith(color: colors.mutedForeground),
+                        style: context.theme.typography.body.sm.copyWith(
+                          color: colors.mutedForeground,
+                        ),
                       ),
                     ),
                   )
@@ -74,10 +77,7 @@ class _JoinRequestsSheet extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         for (var i = 0; i < requests.length; i++) ...[
-                          _RequestRow(
-                            request: requests[i],
-                            lobbyId: lobbyId,
-                          ),
+                          _RequestRow(request: requests[i], lobbyId: lobbyId),
                           if (i < requests.length - 1)
                             Divider(
                               height: 1,
@@ -186,18 +186,27 @@ class _RequestRowState extends ConsumerState<_RequestRow> {
           else ...[
             FButton.icon(
               variant: .ghost,
-              onPress: () => _act(() => ref
-                  .read(joinRequestsControllerProvider(widget.lobbyId).notifier)
-                  .decline(r.id)),
-              child: Icon(FLucideIcons.x, size: 16, color: colors.mutedForeground),
+              onPress: () => _act(
+                () => ref
+                    .read(
+                      joinRequestsControllerProvider(widget.lobbyId).notifier,
+                    )
+                    .decline(r.id),
+              ),
+              child: Icon(
+                FLucideIcons.x,
+                size: 16,
+                color: colors.mutedForeground,
+              ),
             ),
             const SizedBox(width: 4),
             FButton.icon(
               variant: .secondary,
               onPress: () => _act(() async {
                 await ref
-                    .read(joinRequestsControllerProvider(widget.lobbyId)
-                        .notifier)
+                    .read(
+                      joinRequestsControllerProvider(widget.lobbyId).notifier,
+                    )
                     .accept(r.id);
                 ref.invalidate(lobbyMembersControllerProvider(widget.lobbyId));
               }),

@@ -98,9 +98,7 @@ class _LobbyInvitePreviewPageState
 
   @override
   Widget build(BuildContext context) {
-    final previewAsync = ref.watch(
-      lobbyInvitePreviewProvider(widget.recordId),
-    );
+    final previewAsync = ref.watch(lobbyInvitePreviewProvider(widget.recordId));
 
     // Already resolved to accepted elsewhere (e.g. the notification card's
     // own inline Accept) by the time this loads, or resolves to accepted
@@ -402,7 +400,8 @@ class _PublicInfo extends StatelessWidget {
         if (preview.mmr != null)
           _InfoRow(
             icon: FLucideIcons.trophy,
-            text: 'lobby.inviteReview.mmr'.tr(
+            text:
+                'lobby.inviteReview.mmr'.tr(
                   namedArgs: {'value': '${preview.mmr}'},
                 ) +
                 (preview.isMmrCalibrated

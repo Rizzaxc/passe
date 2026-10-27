@@ -56,7 +56,10 @@ class DiscoverTab extends ConsumerWidget {
   static int get locationIndex => tabCount - 1;
 
   /// Deep-links a Discover subtab using one of the indices above.
-  factory DiscoverTab.withInitialTab(int initialIndex, {bool openFilter = false}) {
+  factory DiscoverTab.withInitialTab(
+    int initialIndex, {
+    bool openFilter = false,
+  }) {
     return DiscoverTab(initialIndex: initialIndex, openFilter: openFilter);
   }
 

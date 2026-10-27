@@ -31,7 +31,8 @@ class _FilterCoachMarkPrefs {
   static Future<bool> hasSeen() async =>
       await UserPreferences.instance.getBool(_key) ?? false;
 
-  static Future<void> markSeen() => UserPreferences.instance.setBool(_key, true);
+  static Future<void> markSeen() =>
+      UserPreferences.instance.setBool(_key, true);
 }
 
 /// Opens the shared [FilterSheet]. Discover renders this once, under its
@@ -531,9 +532,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 child: FButton(
                   variant: .outline,
                   onPress: () async {
-                    final timeslot = await showTimeslotPicker(
-                      context: context,
-                    );
+                    final timeslot = await showTimeslotPicker(context: context);
                     if (timeslot == null) return;
                     final updated = [...filter.schedule];
                     if (!updated.contains(timeslot)) {

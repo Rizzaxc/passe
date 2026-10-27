@@ -45,16 +45,13 @@ class ChallengerSubtab extends ConsumerWidget {
                 await ref.read(friendlyOfferFeedProvider.future);
               },
               child: feed.when(
-                loading: () =>
-                    const Center(child: FCircularProgress()),
+                loading: () => const Center(child: FCircularProgress()),
                 error: (e, st) {
                   talker.handle(e, st, 'friendly offer feed failed');
                   return ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: [
-                      PEmptySectionPlaceholder(
-                        subtitle: 'errorGeneric'.tr(),
-                      ),
+                      PEmptySectionPlaceholder(subtitle: 'errorGeneric'.tr()),
                     ],
                   );
                 },
@@ -84,6 +81,11 @@ class _OfferCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final ctxLobbyId = ref.watch(contextLobbyProvider).value?.id;
+    final canManage =
+        ctxLobbyId != null &&
+        (ref.watch(myLobbyPermissionProvider(ctxLobbyId)).value?.canManage ??
+            false);
 
     final terms = <String>[
       offer.ruleset.getLocalizedName(context, param: offer.rulesetParam),
@@ -159,10 +161,7 @@ class _OfferCard extends ConsumerWidget {
                   ),
                   tone: offer.isLowTrust ? colors.destructive : null,
                 ),
-                _Meta(
-                  icon: FLucideIcons.users,
-                  label: '${offer.memberCount}',
-                ),
+                _Meta(icon: FLucideIcons.users, label: '${offer.memberCount}'),
               ],
             ),
 
@@ -195,14 +194,46 @@ class _OfferCard extends ConsumerWidget {
               terms.join(' · '),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: typography.body.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
+              style: typography.body.xs.copyWith(color: colors.mutedForeground),
             ),
 
+            // The gathering deadline is the clock the challenger actually
+            // races: their members must commit before it, not before kickoff.
+            Row(
+              spacing: 6,
+              children: [
+                Icon(
+                  FLucideIcons.hourglass,
+                  size: 14,
+                  color: colors.mutedForeground,
+                ),
+                Expanded(
+                  child: Text(
+                    'challenge.send.gatherBy'.tr(
+                      namedArgs: {'when': formatMatchDateTime(offer.expiresAt)},
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: typography.body.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            // Sending commits a roster, which is manage-tier — say so on the
+            // card rather than after the whole confirm sheet is filled in.
+            if (!canManage && !offer.alreadyChallenged)
+              Text(
+                'challenge.send.managerOnlyHint'.tr(),
+                style: typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
             FButton(
               size: .sm,
-              onPress: offer.alreadyChallenged
+              onPress: offer.alreadyChallenged || !canManage
                   ? null
                   : () => showConfirmFriendlyChallengeSheet(context, offer),
               child: Text(
@@ -275,6 +306,7 @@ class _Meta extends StatelessWidget {
     );
   }
 }
+
 class _ContextLobbyPicker extends ConsumerWidget {
   const _ContextLobbyPicker();
 
@@ -339,7 +371,8 @@ class _EmptyFeed extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lobbyId = ref.watch(contextLobbyProvider).value?.id;
-    final canManage = lobbyId != null &&
+    final canManage =
+        lobbyId != null &&
         (ref.watch(myLobbyPermissionProvider(lobbyId)).value?.canManage ??
             false);
 

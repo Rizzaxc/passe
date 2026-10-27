@@ -30,7 +30,8 @@ class JoinRequestsController extends _$JoinRequestsController {
     final response = await supabase
         .from('lobby_befriend_record')
         .select(
-            'id, initiator_user_id, user!lobby_befriend_record_initiator_user_id_fkey(username, tag_number, details)')
+          'id, initiator_user_id, user!lobby_befriend_record_initiator_user_id_fkey(username, tag_number, details)',
+        )
         .eq('target_lobby_id', lobbyId)
         .eq('interaction_type', 'request')
         .eq('status', 'pending')

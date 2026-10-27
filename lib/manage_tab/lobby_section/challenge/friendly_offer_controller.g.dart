@@ -53,7 +53,7 @@ final class FriendlyOfferControllerProvider
 }
 
 String _$friendlyOfferControllerHash() =>
-    r'55e43d4131fd7e5613f94c9b855093de5faf710b';
+    r'5297c43e60ce25e5c5ad629af003e6e8e424d3bb';
 
 final class FriendlyOfferControllerFamily extends $Family
     with

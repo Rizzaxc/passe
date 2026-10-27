@@ -229,10 +229,10 @@ class _VenueCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        PDistanceLabel(lat: location.lat, lon: location.lon),
                       ],
                     ),
                   ),
+                  PDistanceLabel(lat: location.lat, lon: location.lon),
                   Icon(
                     FLucideIcons.chevronRight,
                     size: 16,
@@ -516,6 +516,15 @@ class _VenueDetailSheet extends StatelessWidget {
               child: const Icon(FLucideIcons.x),
             ),
           ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: PDistanceLabel(
+              lat: location.lat,
+              lon: location.lon,
+              promptable: true,
+              style: PDistanceStyle.pill,
+            ),
+          ),
           if (coord != null)
             ClipRRect(
               borderRadius: context.theme.style.borderRadius.md,
@@ -560,11 +569,6 @@ class _VenueDetailSheet extends StatelessWidget {
                 ),
               ),
             ),
-          PDistanceLabel(
-            lat: location.lat,
-            lon: location.lon,
-            promptable: true,
-          ),
           if (address.isNotEmpty) ...[
             PSheetSectionLabel(label: 'homeTab.location.address'.tr()),
             Row(

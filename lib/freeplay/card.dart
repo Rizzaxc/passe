@@ -141,13 +141,24 @@ class FreeplayActivitySummaryCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            activity.venueName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.theme.typography.body.sm.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                          Row(
+                            spacing: 8,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  activity.venueName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: context.theme.typography.body.sm
+                                      .copyWith(fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              if (!showAddress)
+                                PDistanceLabel(
+                                  lat: activity.locationLat,
+                                  lon: activity.locationLon,
+                                ),
+                            ],
                           ),
                           if (showAddress &&
                               activity.streetAddress.isNotEmpty) ...[
@@ -161,12 +172,15 @@ class FreeplayActivitySummaryCard extends StatelessWidget {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 2),
-                          PDistanceLabel(
-                            lat: activity.locationLat,
-                            lon: activity.locationLon,
-                            promptable: showAddress,
-                          ),
+                          if (showAddress) ...[
+                            const SizedBox(height: 6),
+                            PDistanceLabel(
+                              lat: activity.locationLat,
+                              lon: activity.locationLon,
+                              promptable: true,
+                              style: PDistanceStyle.pill,
+                            ),
+                          ],
                         ],
                       ),
                     ),

@@ -9,6 +9,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../logger/talker.dart';
 import '../manage_tab/lobby_section/activity/activity_at_risk_response_controller.dart';
+import '../manage_tab/lobby_section/challenge/friendly_offer_controller.dart';
 import '../manage_tab/lobby_section/join_requests_controller.dart';
 import '../manage_tab/lobby_section/lobby_invite_response_controller.dart';
 import '../notifications/notification_kind.dart';
@@ -292,6 +293,9 @@ class _NotificationRow extends ConsumerWidget {
             item.kind == NotificationKind.activityAtRiskMember)
         ? item.data['target_id'] as String?
         : null;
+    final expiredOfferId = item.kind == NotificationKind.challengeOfferExpired
+        ? item.data['offer_id'] as String?
+        : null;
     final radius = BorderRadius.circular(14);
     final frameColor = item.isUnread
         ? pbBlueDeep.withValues(alpha: 0.28)
@@ -453,6 +457,16 @@ class _NotificationRow extends ConsumerWidget {
                       activityId: atRiskActivityId,
                       isOrganizer:
                           item.kind == NotificationKind.activityAtRiskOrganizer,
+                    ),
+                  ),
+                ] else if (expiredOfferId != null &&
+                    item.data['lobby_id'] is String) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _RenewOfferAction(
+                      offerId: expiredOfferId,
+                      lobbyId: item.data['lobby_id'] as String,
                     ),
                   ),
                 ],
@@ -890,9 +904,10 @@ class _ActivityAtRiskActions extends ConsumerWidget {
             color: colors.mutedForeground,
           ),
         ),
-        ActivityAtRiskStatus.pending => isOrganizer
-            ? _ActivityAtRiskOrganizerButtons(activityId: activityId)
-            : _ActivityAtRiskMemberButtons(activityId: activityId),
+        ActivityAtRiskStatus.pending =>
+          isOrganizer
+              ? _ActivityAtRiskOrganizerButtons(activityId: activityId)
+              : _ActivityAtRiskMemberButtons(activityId: activityId),
       },
     );
   }
@@ -971,6 +986,73 @@ class _ActivityAtRiskOrganizerButtonsState
           ),
         ),
       ],
+    );
+  }
+}
+
+/// "Đăng lại tuần sau" on an expired challenge offer — the one-tap re-post
+/// the push promises (`renew_challenge_offer`: same terms, a week later).
+/// Deliberately not an auto-renew; a human affirms every live offer.
+class _RenewOfferAction extends ConsumerStatefulWidget {
+  final String offerId;
+  final String lobbyId;
+
+  const _RenewOfferAction({required this.offerId, required this.lobbyId});
+
+  @override
+  ConsumerState<_RenewOfferAction> createState() => _RenewOfferActionState();
+}
+
+class _RenewOfferActionState extends ConsumerState<_RenewOfferAction> {
+  bool _loading = false;
+  bool _done = false;
+
+  Future<void> _renew() async {
+    setState(() => _loading = true);
+    try {
+      await ref
+          .read(friendlyOfferControllerProvider(widget.lobbyId).notifier)
+          .renew(widget.offerId);
+      if (mounted) setState(() => _done = true);
+    } catch (e, st) {
+      talker.handle(e, st, 'renew challenge offer failed');
+      if (mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FLucideIcons.circleX),
+          variant: .destructive,
+          title: Text(friendlyOfferErrorMessage(e)),
+          alignment: .bottomCenter,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const SizedBox(width: 18, height: 18, child: FCircularProgress());
+    }
+    if (_done) {
+      return AutoSizeText(
+        'challenge.offer.renewed'.tr(),
+        maxLines: 1,
+        style: context.theme.typography.body.xs.copyWith(
+          color: context.theme.colors.mutedForeground,
+        ),
+      );
+    }
+    return FButton(
+      variant: .secondary,
+      size: .xs,
+      onPress: _renew,
+      child: AutoSizeText(
+        'challenge.offer.renewCta'.tr(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 }

@@ -182,9 +182,7 @@ class _ExposeSheetState extends ConsumerState<_ExposeSheet> {
             ],
           ),
           if (_needsVenue(exposure)) ...[
-            PSheetSectionLabel(
-              label: 'lobbyHub.freeplayExpose.venue'.tr(),
-            ),
+            PSheetSectionLabel(label: 'lobbyHub.freeplayExpose.venue'.tr()),
             HomeGroundField(
               value: _locationId,
               prefixIcon: FLucideIcons.mapPin,
@@ -205,9 +203,7 @@ class _ExposeSheetState extends ConsumerState<_ExposeSheet> {
             control: FTextFieldControl.managed(controller: _capacity),
             onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
           ),
-          PSheetSectionLabel(
-            label: 'lobbyHub.freeplayExpose.price'.tr(),
-          ),
+          PSheetSectionLabel(label: 'lobbyHub.freeplayExpose.price'.tr()),
           Row(
             spacing: 10,
             children: [

@@ -3,7 +3,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/model/challenge.dart';
-import '../activity/upcoming_controller.dart';
 import 'friendly_challenge_controller.dart';
 
 part 'challenger_chooser_controller.g.dart';
@@ -40,6 +39,13 @@ class PendingChallenger {
   /// All-time verdict tallies, keyed by [LobbyRecommendationKind.dbValue].
   final Map<LobbyRecommendationKind, int> recommendations;
 
+  /// When home must have answered; the sweep lapses the challenge after it.
+  final DateTime? homeDecideBy;
+
+  /// Another live session of ours overlaps this fixture. A warning, not a
+  /// block — three offer slots make an overlap easy to miss.
+  final bool hasClash;
+
   const PendingChallenger({
     required this.challengeId,
     required this.offerId,
@@ -59,6 +65,8 @@ class PendingChallenger {
     required this.note,
     required this.createdAt,
     required this.recommendations,
+    required this.homeDecideBy,
+    required this.hasClash,
   });
 
   /// Baseline is 40 and negative is the signal — worth calling out rather than
@@ -109,6 +117,8 @@ class PendingChallenger {
       note: m['note'] as String?,
       createdAt: at('created_at'),
       recommendations: counts,
+      homeDecideBy: at('home_decide_by'),
+      hasClash: m['has_clash'] as bool? ?? false,
     );
   }
 }
@@ -150,9 +160,7 @@ class RespondFriendlyChallengeController
           )
           .timeout(const Duration(seconds: 5));
 
-      ref.invalidate(pendingChallengersControllerProvider(lobbyId));
-      ref.invalidate(friendlyChallengesControllerProvider(lobbyId));
-      ref.invalidate(lobbyUpcomingActivitiesControllerProvider(lobbyId));
+      invalidateFriendlyChallengeSurfaces(ref, lobbyId);
     } finally {
       state = null;
     }
@@ -167,6 +175,12 @@ String respondFriendlyChallengeErrorMessage(Object e) {
   }
   if (msg.contains('not a manager')) {
     return 'challenge.chooser.errorManagerOnly'.tr();
+  }
+  if (msg.contains('decision window has closed')) {
+    return 'challenge.chooser.errorWindowClosed'.tr();
+  }
+  if (msg.contains('share a manager')) {
+    return 'challenge.chooser.errorSharedManager'.tr();
   }
   return 'challenge.chooser.errorGeneric'.tr();
 }

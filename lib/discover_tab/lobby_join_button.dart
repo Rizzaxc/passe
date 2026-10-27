@@ -62,7 +62,8 @@ class LobbyJoinButton extends ConsumerWidget {
             reason: 'notification.permission.joinReason'.tr(),
           );
     } catch (e, st) {
-      if (context.mounted) _onError(context, e, st, 'Lobby join request failed');
+      if (context.mounted)
+        _onError(context, e, st, 'Lobby join request failed');
     }
   }
 
@@ -79,7 +80,9 @@ class LobbyJoinButton extends ConsumerWidget {
         prefix: const Icon(FLucideIcons.undo2),
         onPress: () async {
           try {
-            await ref.read(joinRequestStateProvider.notifier).unrequest(lobbyId);
+            await ref
+                .read(joinRequestStateProvider.notifier)
+                .unrequest(lobbyId);
           } catch (e, st) {
             if (context.mounted) {
               _onError(context, e, st, 'Lobby join cancel failed');

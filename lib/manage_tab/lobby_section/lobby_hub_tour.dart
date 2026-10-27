@@ -52,9 +52,8 @@ class LobbyHubTourPrefs {
 
   /// Profile ▸ "Hướng dẫn" re-arms the tour for the next lobby visit.
   static Future<void> forget(String userId) async {
-    final ids = <String>{
-      ...?await _prefs.getDeviceStringList(_shownUserIdsKey),
-    }..remove(userId);
+    final ids = <String>{...?await _prefs.getDeviceStringList(_shownUserIdsKey)}
+      ..remove(userId);
     await _prefs.setDeviceStringList(_shownUserIdsKey, ids.toList()..sort());
   }
 }

@@ -74,7 +74,7 @@ final class LobbyUpcomingActivitiesControllerProvider
 }
 
 String _$lobbyUpcomingActivitiesControllerHash() =>
-    r'0282c698029cdc1d33f2fb34dcc7335795bcfc10';
+    r'4f68ea2eb37db2e866aaa5da4dbbb94bcabea3e2';
 
 /// Every current/future activity for a lobby, sorted soonest-first. A lobby
 /// can legitimately have several live at once (an organic session and a

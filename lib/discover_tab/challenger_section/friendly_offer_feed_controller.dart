@@ -241,6 +241,9 @@ String friendlyChallengeErrorMessage(Object e) {
   if (msg.contains('cannot challenge itself')) {
     return 'challenge.send.errorSelf'.tr();
   }
+  if (msg.contains('share a manager')) {
+    return 'challenge.send.errorSharedManager'.tr();
+  }
   if (msg.contains('larger than the lobby')) {
     return 'challenge.send.errorThresholdTooBig'.tr();
   }

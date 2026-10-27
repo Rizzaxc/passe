@@ -23,6 +23,28 @@ Future<void> showFriendlyOfferSheet(BuildContext context, String lobbyId) {
   );
 }
 
+/// "Đăng thách đấu" entry from the planner: straight into the form when
+/// there's nothing to manage yet, the board once offers exist.
+Future<void> openChallengeComposer(BuildContext context, String lobbyId) async {
+  final container = ProviderScope.containerOf(context);
+  ChallengeOfferBoard? board;
+  try {
+    board = await container
+        .read(friendlyOfferControllerProvider(lobbyId).future)
+        .timeout(const Duration(seconds: 5));
+  } catch (_) {}
+  if (!context.mounted) return;
+  if (board == null || board.open.isNotEmpty || board.nextFreeSlot == null) {
+    return showFriendlyOfferSheet(context, lobbyId);
+  }
+  return showFriendlyOfferFormSheet(
+    context,
+    lobbyId: lobbyId,
+    slot: board.nextFreeSlot!,
+    board: board,
+  );
+}
+
 class _OfferBoardSheet extends ConsumerWidget {
   final String lobbyId;
   const _OfferBoardSheet({required this.lobbyId});
@@ -48,14 +70,17 @@ class _OfferBoardSheet extends ConsumerWidget {
               child: const Icon(FLucideIcons.x),
             ),
           ),
-          Text(
-            'challenge.offer.explainer'.tr(),
-            style: typography.body.sm.copyWith(color: colors.mutedForeground),
-          ),
+          if (async.value?.open.isNotEmpty ?? false)
+            Text(
+              'challenge.offer.explainer'.tr(),
+              style: typography.body.sm.copyWith(color: colors.mutedForeground),
+            )
+          else
+            const _HowItWorks(),
           async.when(
             loading: () => const Padding(
               padding: EdgeInsets.all(32),
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(child: FCircularProgress()),
             ),
             error: (_, _) => Padding(
               padding: const EdgeInsets.all(16),
@@ -69,16 +94,65 @@ class _OfferBoardSheet extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 10,
               children: [
-                for (var slot = 1; slot <= ChallengeOfferBoard.maxSlots; slot++)
+                for (final o in board.open)
                   _SlotCard(
                     lobbyId: lobbyId,
-                    slot: slot,
-                    offer: board.bySlot(slot),
+                    slot: o.slot,
+                    offer: o,
+                    board: board,
+                  ),
+                if (board.nextFreeSlot case final free?)
+                  _SlotCard(
+                    lobbyId: lobbyId,
+                    slot: free,
+                    offer: null,
                     board: board,
                   ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// First-use explanation, shown until the lobby has an offer open.
+class _HowItWorks extends StatelessWidget {
+  const _HowItWorks();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    const icons = [
+      FLucideIcons.megaphone,
+      FLucideIcons.search,
+      FLucideIcons.swords,
+    ];
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.secondary,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 10,
+        children: [
+          for (var i = 0; i < icons.length; i++)
+            Row(
+              spacing: 10,
+              children: [
+                Icon(icons[i], size: 16, color: colors.primary),
+                Expanded(
+                  child: Text(
+                    'challenge.offer.step${i + 1}'.tr(),
+                    style: typography.body.sm,
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -124,9 +198,7 @@ class _SlotCard extends ConsumerWidget {
               Icon(FLucideIcons.plus, size: 16, color: colors.mutedForeground),
               Expanded(
                 child: Text(
-                  'challenge.offer.emptySlot'.tr(
-                    namedArgs: {'slot': '$slot'},
-                  ),
+                  'challenge.offer.formTitleNew'.tr(),
                   style: typography.body.sm.copyWith(
                     color: colors.mutedForeground,
                   ),
@@ -152,77 +224,54 @@ class _SlotCard extends ConsumerWidget {
         '${o.bountyKind.getLocalizedName(context)}: ${formatVnd(o.bountyAmount!)}',
     ];
 
-    return PCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 8,
-        children: [
-          Row(
-            spacing: 6,
-            children: [
-              Icon(FLucideIcons.calendar, size: 14, color: colors.primary),
-              Expanded(
-                child: Text(
-                  formatMatchDateTime(o.kickoff),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: typography.body.sm.copyWith(
-                    fontWeight: FontWeight.bold,
+    return FTappable(
+      onPress: () => showFriendlyOfferFormSheet(
+        context,
+        lobbyId: lobbyId,
+        slot: slot,
+        board: board,
+        existing: o,
+      ),
+      child: PCard(
+        child: Row(
+          spacing: 8,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 2,
+                children: [
+                  Text(
+                    formatMatchDateTime(o.kickoff),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: typography.body.sm.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
+                  Text(
+                    [o.locationName ?? '—', ...terms].join(' · '),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: typography.body.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ],
               ),
-              if (o.liveChallengeCount > 0)
-                _Badge(count: o.liveChallengeCount),
-            ],
-          ),
-          Text(
-            o.locationName ?? '—',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: typography.body.sm.copyWith(color: colors.mutedForeground),
-          ),
-          Text(
-            terms.join(' · '),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: typography.body.xs.copyWith(color: colors.mutedForeground),
-          ),
-          // When the advert stops taking challengers. Distinct from kickoff so
-          // the lobby knows whether it has a match while there is still time to
-          // find another one.
-          Text(
-            'challenge.offer.closesAt'.tr(
-              namedArgs: {'when': formatMatchDateTime(o.expiresAt)},
             ),
-            style: typography.body.xs.copyWith(color: colors.mutedForeground),
-          ),
-          Row(
-            spacing: 8,
-            children: [
-              Expanded(
-                child: FButton(
-                  size: .sm,
-                  variant: .secondary,
-                  onPress: () => _withdraw(context, ref, o),
-                  child: Text('challenge.offer.withdraw'.tr()),
-                ),
+            if (o.liveChallengeCount > 0) _Badge(count: o.liveChallengeCount),
+            FButton.icon(
+              variant: .ghost,
+              onPress: () => _withdraw(context, ref, o),
+              child: Icon(
+                FLucideIcons.trash2,
+                size: 16,
+                color: colors.mutedForeground,
               ),
-              Expanded(
-                child: FButton(
-                  size: .sm,
-                  onPress: () => showFriendlyOfferFormSheet(
-                    context,
-                    lobbyId: lobbyId,
-                    slot: slot,
-                    board: board,
-                    existing: o,
-                  ),
-                  child: Text('challenge.offer.edit'.tr()),
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -378,8 +427,10 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
       _ruleset = e.ruleset;
       if (e.rulesetParam != null) _rulesetParam.text = '${e.rulesetParam}';
       _handicapSide = e.handicapSide;
-      if (e.handicapAmount != null) _handicapAmount.text = '${e.handicapAmount}';
-      if (e.venueCost != null) _venueCost.text = e.venueCost!.round().toString();
+      if (e.handicapAmount != null)
+        _handicapAmount.text = '${e.handicapAmount}';
+      if (e.venueCost != null)
+        _venueCost.text = e.venueCost!.round().toString();
       _costSplit = e.costSplit;
       _bountyKind = e.bountyKind;
       if (e.bountyAmount != null) {
@@ -403,31 +454,19 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
     super.dispose();
   }
 
-  /// Mirrors the server default so the form never shows a blank where a real
-  /// value will end up.
-  DateTime? get _effectiveExpiry =>
-      _expiresAt ?? _kickoff?.subtract(const Duration(hours: 24));
-
-  Future<DateTime?> _pickDateTime(DateTime? seed, {DateTime? notBefore}) async {
+  /// Mirrors `publish_challenge_offer`'s default exactly — kickoff − 36h,
+  /// clamped to at least an hour from now on a short-notice offer — so the
+  /// form never previews a closing time the server won't actually use.
+  DateTime? get _effectiveExpiry {
+    if (_expiresAt != null) return _expiresAt;
+    final kickoff = _kickoff;
+    if (kickoff == null) return null;
     final now = DateTime.now();
-    final first = notBefore ?? now;
-    final date = await showDatePicker(
-      context: context,
-      useRootNavigator: true,
-      initialDate: seed ?? now.add(const Duration(days: 1)),
-      firstDate: DateTime(first.year, first.month, first.day),
-      lastDate: now.add(const Duration(days: 90)),
-    );
-    if (date == null || !mounted) return null;
-    final time = await showTimePicker(
-      context: context,
-      useRootNavigator: true,
-      initialTime: TimeOfDay.fromDateTime(
-        seed ?? date.copyWith(hour: 18, minute: 0),
-      ),
-    );
-    if (time == null) return null;
-    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    final standard = kickoff.subtract(const Duration(hours: 36));
+    final shortNotice = now.add(const Duration(hours: 1));
+    final latest = kickoff.subtract(const Duration(minutes: 1));
+    final clamped = shortNotice.isBefore(latest) ? shortNotice : latest;
+    return standard.isAfter(clamped) ? standard : clamped;
   }
 
   void _toast(String message, {bool bad = true}) {
@@ -456,6 +495,9 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
     final expiry = _effectiveExpiry;
     if (expiry != null && !expiry.isBefore(kickoff)) {
       return _toast('challenge.offer.errorExpiryOrder'.tr());
+    }
+    if (expiry != null && !expiry.isAfter(DateTime.now())) {
+      return _toast('challenge.offer.errorExpiryPast'.tr());
     }
 
     int? param;
@@ -544,6 +586,17 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
             ),
           ),
 
+          // The planner opens this form directly, so the feature explanation
+          // lives here for a first offer.
+          if (widget.existing == null && widget.board.open.isEmpty)
+            const _HowItWorks(),
+
+          // Lobbies already on this fixture committed their players to it.
+          // A clarification shouldn't cost them that, so offer the one edit
+          // that doesn't: adding to the note.
+          if (replacing && widget.existing!.ruleset != ChallengeRuleset.custom)
+            _AmendBox(lobbyId: widget.lobbyId, offer: widget.existing!),
+
           // Editing an offer that already has challengers on it lapses them.
           // Said before the form, not after the save.
           if (replacing)
@@ -575,8 +628,21 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
                 : formatMatchDateTime(_kickoff!),
             filled: _kickoff != null,
             onTap: () async {
-              final picked = await _pickDateTime(_kickoff);
-              if (picked != null) setState(() => _kickoff = picked);
+              final picked = await showChallengeDateTimePicker(
+                context,
+                title: 'challenge.offer.kickoff'.tr(),
+                seed: _kickoff,
+              );
+              if (picked == null) return;
+              setState(() {
+                _kickoff = picked;
+                // A hand-picked closing time that no longer precedes the new
+                // kickoff falls back to the default rather than silently
+                // failing the submit.
+                if (_expiresAt != null && !_expiresAt!.isBefore(picked)) {
+                  _expiresAt = null;
+                }
+              });
             },
           ),
           ChallengeFieldTile(
@@ -587,7 +653,11 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
                 : formatMatchDateTime(_effectiveExpiry!),
             filled: _expiresAt != null,
             onTap: () async {
-              final picked = await _pickDateTime(_effectiveExpiry);
+              final picked = await showChallengeDateTimePicker(
+                context,
+                title: 'challenge.offer.closes'.tr(),
+                seed: _effectiveExpiry,
+              );
               if (picked != null) setState(() => _expiresAt = picked);
             },
           ),
@@ -695,12 +765,98 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
           FButton(
             onPress: _busy ? null : _submit,
             child: _busy
-                ? const SizedBox(
-                    height: 16,
-                    width: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
+                ? const FCircularProgress()
                 : Text('challenge.offer.publish'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Bổ sung ghi chú": append a line to an offer's note without re-publishing,
+/// so the lobbies already on it keep their place (`amend_challenge_offer`).
+class _AmendBox extends ConsumerStatefulWidget {
+  final String lobbyId;
+  final ChallengeOfferSlot offer;
+
+  const _AmendBox({required this.lobbyId, required this.offer});
+
+  @override
+  ConsumerState<_AmendBox> createState() => _AmendBoxState();
+}
+
+class _AmendBoxState extends ConsumerState<_AmendBox> {
+  final _text = TextEditingController();
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final append = _text.text.trim();
+    if (append.isEmpty) return;
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(friendlyOfferControllerProvider(widget.lobbyId).notifier)
+          .amend(widget.offer.id, append);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.check),
+        title: Text('challenge.offer.amended'.tr()),
+        alignment: .bottomCenter,
+      );
+    } catch (e, st) {
+      talker.handle(e, st, 'amend friendly offer failed');
+      if (!mounted) return;
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: Text(friendlyOfferErrorMessage(e)),
+        alignment: .bottomCenter,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return PCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 8,
+        children: [
+          Text(
+            'challenge.offer.amendTitle'.tr(),
+            style: typography.body.sm.copyWith(fontWeight: FontWeight.bold),
+          ),
+          Text(
+            'challenge.offer.amendHint'.tr(
+              namedArgs: {'count': '${widget.offer.liveChallengeCount}'},
+            ),
+            style: typography.body.xs.copyWith(color: colors.mutedForeground),
+          ),
+          FTextField.multiline(
+            control: FTextFieldControl.managed(controller: _text),
+            maxLength: challengeOfferAmendMaxLength,
+            maxLines: 2,
+          ),
+          FButton(
+            variant: .secondary,
+            onPress: _busy ? null : _submit,
+            child: _busy
+                ? const FCircularProgress()
+                : Text('challenge.offer.amendCta'.tr()),
           ),
         ],
       ),
@@ -734,10 +890,7 @@ class _ChipRow<T> extends StatelessWidget {
             behavior: HitTestBehavior.opaque,
             onTap: () => onSelected(v),
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 7,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
                 color: v == selected

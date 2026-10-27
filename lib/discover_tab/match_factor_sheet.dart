@@ -48,9 +48,10 @@ class _MatchFactorSheet extends ConsumerWidget {
   /// a sport to open its per-sport profile, so without one it falls back to
   /// Profile too.
   Widget? _destination() => switch (code) {
-    'skill' => sport == null || sport == Sport.others
-        ? null
-        : SportProfileScreen(sport: sport!),
+    'skill' =>
+      sport == null || sport == Sport.others
+          ? null
+          : SportProfileScreen(sport: sport!),
     'network' => const NetworkSelectionScreen(),
     'industry' => const IndustrySelectionScreen(),
     'age' => const AgeGroupSelectionScreen(),
@@ -72,9 +73,7 @@ class _MatchFactorSheet extends ConsumerWidget {
       if (screen == null) {
         const ProfileRoute().go(context);
       } else {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => screen));
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
       }
     }
 

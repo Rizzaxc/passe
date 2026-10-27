@@ -399,19 +399,14 @@ class ActivityCard extends ConsumerWidget {
                           ),
                         ),
                       ],
+                      const SizedBox(width: 8),
+                      PDistanceLabel(
+                        lat: upcoming.locationLat,
+                        lon: upcoming.locationLon,
+                      ),
                     ],
                   ),
                 ],
-                if (upcoming.locationLat != null &&
-                    upcoming.locationLon != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4, left: 20),
-                    child: PDistanceLabel(
-                      lat: upcoming.locationLat,
-                      lon: upcoming.locationLon,
-                      promptable: true,
-                    ),
-                  ),
                 if (costLabel != null ||
                     deadlineLabel != null ||
                     upcoming.recurrenceDayOfWeek != null) ...[
@@ -1714,6 +1709,13 @@ class _FriendlyChallengeBlock extends ConsumerWidget {
   /// Mirrors `claim_no_show`'s window: opens 30 minutes after kick-off,
   /// because late is not absent, and closes at the final whistle, after which
   /// the result sheet is the right instrument. The RPC re-checks both.
+  /// When an unanswered report (or no-show claim) settles on its own —
+  /// mirrors sweep pass (d)'s `end_time + 24h`.
+  DateTime get _reportDeadline =>
+      (endTime ?? startTime.add(const Duration(minutes: 90))).add(
+        const Duration(hours: 24),
+      );
+
   bool get _noShowWindowOpen {
     final now = DateTime.now();
     final end = endTime ?? startTime.add(const Duration(minutes: 90));
@@ -1894,29 +1896,59 @@ class _FriendlyChallengeBlock extends ConsumerWidget {
 
             if (c.status == FriendlyChallengeStatus.noShowClaimed) ...[
               Text(
-                c.noShowClaimedBy == lobbyId
-                    ? 'challenge.noShow.waitingOnThem'.tr()
-                    : 'challenge.noShow.accused'.tr(),
+                (c.noShowClaimedBy == lobbyId
+                        ? 'challenge.noShow.waitingOnThem'
+                        : 'challenge.noShow.accused')
+                    .tr(
+                      namedArgs: {
+                        'deadline': formatMatchDateTime(_reportDeadline),
+                      },
+                    ),
                 style: typography.body.xs.copyWith(color: colors.destructive),
               ),
-              // Only the accused can answer, and only for ten minutes — the
-              // sweep settles it as a walkover otherwise.
+              // Only the accused answers. Silence until the reporting deadline
+              // settles it as a walkover, the same as any one-sided report.
               if (canManage && c.noShowClaimedBy != lobbyId)
-                FButton(
-                  size: .sm,
-                  variant: .destructive,
-                  onPress: () => _act(
-                    context,
-                    ref,
-                    () => ref
-                        .read(
-                          friendlyChallengeActionsControllerProvider(
-                            lobbyId,
-                          ).notifier,
-                        )
-                        .counterNoShow(c.id),
-                  ),
-                  child: Text('challenge.noShow.counterCta'.tr()),
+                Row(
+                  spacing: 8,
+                  children: [
+                    Expanded(
+                      child: FButton(
+                        size: .sm,
+                        variant: .secondary,
+                        onPress: () => _act(
+                          context,
+                          ref,
+                          () => ref
+                              .read(
+                                friendlyChallengeActionsControllerProvider(
+                                  lobbyId,
+                                ).notifier,
+                              )
+                              .concedeNoShow(c.id),
+                        ),
+                        child: Text('challenge.noShow.concedeCta'.tr()),
+                      ),
+                    ),
+                    Expanded(
+                      child: FButton(
+                        size: .sm,
+                        variant: .destructive,
+                        onPress: () => _act(
+                          context,
+                          ref,
+                          () => ref
+                              .read(
+                                friendlyChallengeActionsControllerProvider(
+                                  lobbyId,
+                                ).notifier,
+                              )
+                              .counterNoShow(c.id),
+                        ),
+                        child: Text('challenge.noShow.counterCta'.tr()),
+                      ),
+                    ),
+                  ],
                 ),
             ],
 

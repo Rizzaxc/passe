@@ -49,7 +49,10 @@ class LobbyFeedCard extends ConsumerWidget {
     // read as matched, so schedule fit is visible on the card itself rather
     // than only as an unexplained "Lịch chơi khớp" tag.
     final wanted = ref.watch(filterStateProvider.select((f) => f.schedule));
-    final matched = {for (final t in item.playtime) if (wanted.contains(t)) t};
+    final matched = {
+      for (final t in item.playtime)
+        if (wanted.contains(t)) t,
+    };
     final slots = [
       ...item.playtime.where(matched.contains),
       ...item.playtime.where((t) => !matched.contains(t)),
@@ -133,7 +136,9 @@ class LobbyFeedCard extends ConsumerWidget {
                                   child: Text(
                                     item.homegroundName!,
                                     style: context.theme.typography.body.xs
-                                        .copyWith(color: colors.mutedForeground),
+                                        .copyWith(
+                                          color: colors.mutedForeground,
+                                        ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -174,7 +179,8 @@ class LobbyFeedCard extends ConsumerWidget {
                           label: _slotLabel(context, ts),
                           matched: matched.contains(ts),
                         ),
-                      if (hiddenSlots > 0) _TimeslotChip(label: '+$hiddenSlots'),
+                      if (hiddenSlots > 0)
+                        _TimeslotChip(label: '+$hiddenSlots'),
                     ],
                   ),
                 if (hasFit)
@@ -452,7 +458,9 @@ class _LobbyMatchBoard extends StatelessWidget {
                   if (item.hasProvisionalMmr)
                     TextSpan(
                       text: ' ?',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                      ),
                     ),
                 ],
               ),
@@ -518,7 +526,8 @@ class _LobbyMatchBoard extends StatelessWidget {
           statRow,
           // Only needed as its own row when the stat row above was already
           // spoken for by both columns.
-          if (mmrBlock != null && vibes.isNotEmpty) _FitScoreVibes(factors: vibes),
+          if (mmrBlock != null && vibes.isNotEmpty)
+            _FitScoreVibes(factors: vibes),
         ],
       ),
     );
@@ -561,13 +570,21 @@ class _StatBlock extends StatelessWidget {
       spacing: 4,
       children: [
         if (labelIcon == null)
-          Text(label, textAlign: alignEnd ? TextAlign.end : TextAlign.start, style: labelStyle)
+          Text(
+            label,
+            textAlign: alignEnd ? TextAlign.end : TextAlign.start,
+            style: labelStyle,
+          )
         else
           Row(
             mainAxisSize: MainAxisSize.min,
             spacing: 4,
             children: [
-              Icon(labelIcon, size: 10, color: Colors.white.withValues(alpha: 0.6)),
+              Icon(
+                labelIcon,
+                size: 10,
+                color: Colors.white.withValues(alpha: 0.6),
+              ),
               Text(label, style: labelStyle),
             ],
           ),

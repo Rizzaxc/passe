@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/model/activity.dart';
+import '../../../core/model/challenge.dart';
 import '../../../core/model/enum.dart';
 
 part 'upcoming_controller.g.dart';
@@ -97,6 +98,15 @@ class ChallengeContext {
       costPerTeam: double.tryParse(embed['agreed_cost']?.toString() ?? ''),
     );
   }
+
+  /// A declined / lapsed / withdrawn friendly challenge keeps its activity
+  /// row (its members RSVP'd), so every reader has to drop it here — it must
+  /// never render as a session that is still on.
+  bool get isDead => FriendlyChallengeStatus.fromDb(status)?.isDead ?? false;
+
+  /// Played or disputed: the fixture lives on as its `lobby_match` row.
+  bool get isSettled =>
+      FriendlyChallengeStatus.fromDb(status)?.isSettled ?? false;
 }
 
 /// One current/future activity for a lobby, either a one-off or a single
@@ -245,7 +255,9 @@ class LobbyUpcomingActivitiesController
 
     final list = <UpcomingActivity>[];
     for (final row in rows) {
-      list.add(UpcomingActivity.fromRow(row, lobbyId));
+      final upcoming = UpcomingActivity.fromRow(row, lobbyId);
+      if (upcoming.challenge?.isDead ?? false) continue;
+      list.add(upcoming);
     }
     list.sort((a, b) => a.nextStart.compareTo(b.nextStart));
     return list;

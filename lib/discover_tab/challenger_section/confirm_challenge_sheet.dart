@@ -114,6 +114,33 @@ class _ConfirmSheetState extends ConsumerState<_ConfirmSheet> {
             ),
           ),
 
+          // Who is sending. The "challenging as" lobby is picked in a
+          // dropdown above the feed, easy to forget by the time this opens —
+          // and it's that lobby's roster being committed.
+          if (ctx != null)
+            Row(
+              spacing: 8,
+              children: [
+                Icon(
+                  FLucideIcons.shield,
+                  size: 14,
+                  color: colors.mutedForeground,
+                ),
+                Expanded(
+                  child: Text(
+                    'challenge.send.challengingAs'.tr(
+                      namedArgs: {'name': ctx.name},
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: typography.body.sm.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
           // The terms, restated. They are not negotiable — the home lobby
           // published them and the server snapshots them onto the challenge —
           // so the honest framing is "here is what you are agreeing to".
@@ -123,11 +150,7 @@ class _ConfirmSheetState extends ConsumerState<_ConfirmSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 6,
               children: [
-                _Term(
-                  icon: FLucideIcons.shield,
-                  text: o.lobbyName,
-                  bold: true,
-                ),
+                _Term(icon: FLucideIcons.shield, text: o.lobbyName, bold: true),
                 _Term(
                   icon: FLucideIcons.calendar,
                   text: formatMatchDateTime(o.kickoff),
@@ -146,7 +169,8 @@ class _ConfirmSheetState extends ConsumerState<_ConfirmSheet> {
                 if (o.handicapSide != ChallengeHandicapSide.none)
                   _Term(
                     icon: FLucideIcons.scale,
-                    text: o.handicapSide.getLocalizedLabel(
+                    text:
+                        o.handicapSide.getLocalizedLabel(
                           context,
                           weAreHome: false,
                           amount: o.handicapAmount,
@@ -168,10 +192,7 @@ class _ConfirmSheetState extends ConsumerState<_ConfirmSheet> {
                         '${formatVnd(o.bountyAmount!)}',
                   ),
                 if ((o.termsNote ?? '').trim().isNotEmpty)
-                  _Term(
-                    icon: FLucideIcons.messageSquare,
-                    text: o.termsNote!,
-                  ),
+                  _Term(icon: FLucideIcons.messageSquare, text: o.termsNote!),
               ],
             ),
           ),
@@ -195,10 +216,7 @@ class _ConfirmSheetState extends ConsumerState<_ConfirmSheet> {
               Expanded(
                 child: Text(
                   'challenge.send.thresholdValue'.tr(
-                    namedArgs: {
-                      'n': '$threshold',
-                      'total': '$memberCount',
-                    },
+                    namedArgs: {'n': '$threshold', 'total': '$memberCount'},
                   ),
                   textAlign: TextAlign.center,
                   style: typography.body.md.copyWith(
@@ -239,7 +257,10 @@ class _ConfirmSheetState extends ConsumerState<_ConfirmSheet> {
                 Expanded(
                   child: Text(
                     'challenge.send.whatHappensNext'.tr(
-                      namedArgs: {'n': '$threshold'},
+                      namedArgs: {
+                        'n': '$threshold',
+                        'when': formatMatchDateTime(o.expiresAt),
+                      },
                     ),
                     style: typography.body.sm,
                   ),
@@ -253,11 +274,7 @@ class _ConfirmSheetState extends ConsumerState<_ConfirmSheet> {
                 ? null
                 : () => _send(ctx.id, memberCount),
             child: busy
-                ? const SizedBox(
-                    height: 16,
-                    width: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
+                ? const FCircularProgress()
                 : Text('challenge.send.confirm'.tr()),
           ),
         ],

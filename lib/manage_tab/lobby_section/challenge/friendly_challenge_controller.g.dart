@@ -188,7 +188,7 @@ final class ReportMatchResultControllerProvider
 }
 
 String _$reportMatchResultControllerHash() =>
-    r'999f97f72cd4ccf1b0296399973a2715514f1159';
+    r'3d9faff1dd8eee7b03cfc41314c58cdc089f6237';
 
 /// One lobby's blind result report.
 ///
@@ -251,34 +251,37 @@ abstract class _$ReportMatchResultController extends $Notifier<bool> {
   }
 }
 
-/// The in-match no-show claim, its counter, and withdrawing a challenge.
+/// The in-match no-show claim, the accused's two answers, and withdrawing a
+/// challenge.
 ///
-/// The claim window is live rather than post-match on purpose: the team
-/// standing on an empty pitch should be able to go home knowing where it
-/// stands, not wait a day for the reporting window. The accused gets 10
-/// minutes; the sweep settles it as a walkover if nobody answers, and as a
-/// dispute if they do.
+/// The claim files the claimant's report on the spot. The accused then has the
+/// ordinary reporting window (until 24h after the final whistle) — not ten
+/// minutes in the middle of a match they may be playing. Countering makes it a
+/// dispute, conceding settles the walkover at once, and silence settles it as
+/// a walkover at the deadline.
 
 @ProviderFor(FriendlyChallengeActionsController)
 final friendlyChallengeActionsControllerProvider =
     FriendlyChallengeActionsControllerFamily._();
 
-/// The in-match no-show claim, its counter, and withdrawing a challenge.
+/// The in-match no-show claim, the accused's two answers, and withdrawing a
+/// challenge.
 ///
-/// The claim window is live rather than post-match on purpose: the team
-/// standing on an empty pitch should be able to go home knowing where it
-/// stands, not wait a day for the reporting window. The accused gets 10
-/// minutes; the sweep settles it as a walkover if nobody answers, and as a
-/// dispute if they do.
+/// The claim files the claimant's report on the spot. The accused then has the
+/// ordinary reporting window (until 24h after the final whistle) — not ten
+/// minutes in the middle of a match they may be playing. Countering makes it a
+/// dispute, conceding settles the walkover at once, and silence settles it as
+/// a walkover at the deadline.
 final class FriendlyChallengeActionsControllerProvider
     extends $NotifierProvider<FriendlyChallengeActionsController, bool> {
-  /// The in-match no-show claim, its counter, and withdrawing a challenge.
+  /// The in-match no-show claim, the accused's two answers, and withdrawing a
+  /// challenge.
   ///
-  /// The claim window is live rather than post-match on purpose: the team
-  /// standing on an empty pitch should be able to go home knowing where it
-  /// stands, not wait a day for the reporting window. The accused gets 10
-  /// minutes; the sweep settles it as a walkover if nobody answers, and as a
-  /// dispute if they do.
+  /// The claim files the claimant's report on the spot. The accused then has the
+  /// ordinary reporting window (until 24h after the final whistle) — not ten
+  /// minutes in the middle of a match they may be playing. Countering makes it a
+  /// dispute, conceding settles the walkover at once, and silence settles it as
+  /// a walkover at the deadline.
   FriendlyChallengeActionsControllerProvider._({
     required FriendlyChallengeActionsControllerFamily super.from,
     required String super.argument,
@@ -327,15 +330,16 @@ final class FriendlyChallengeActionsControllerProvider
 }
 
 String _$friendlyChallengeActionsControllerHash() =>
-    r'bd626086c61d54bcc687171849cd74ba9a286a88';
+    r'72c558721378767ff8ff7cd334004ea7cdbdf26d';
 
-/// The in-match no-show claim, its counter, and withdrawing a challenge.
+/// The in-match no-show claim, the accused's two answers, and withdrawing a
+/// challenge.
 ///
-/// The claim window is live rather than post-match on purpose: the team
-/// standing on an empty pitch should be able to go home knowing where it
-/// stands, not wait a day for the reporting window. The accused gets 10
-/// minutes; the sweep settles it as a walkover if nobody answers, and as a
-/// dispute if they do.
+/// The claim files the claimant's report on the spot. The accused then has the
+/// ordinary reporting window (until 24h after the final whistle) — not ten
+/// minutes in the middle of a match they may be playing. Countering makes it a
+/// dispute, conceding settles the walkover at once, and silence settles it as
+/// a walkover at the deadline.
 
 final class FriendlyChallengeActionsControllerFamily extends $Family
     with
@@ -355,13 +359,14 @@ final class FriendlyChallengeActionsControllerFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// The in-match no-show claim, its counter, and withdrawing a challenge.
+  /// The in-match no-show claim, the accused's two answers, and withdrawing a
+  /// challenge.
   ///
-  /// The claim window is live rather than post-match on purpose: the team
-  /// standing on an empty pitch should be able to go home knowing where it
-  /// stands, not wait a day for the reporting window. The accused gets 10
-  /// minutes; the sweep settles it as a walkover if nobody answers, and as a
-  /// dispute if they do.
+  /// The claim files the claimant's report on the spot. The accused then has the
+  /// ordinary reporting window (until 24h after the final whistle) — not ten
+  /// minutes in the middle of a match they may be playing. Countering makes it a
+  /// dispute, conceding settles the walkover at once, and silence settles it as
+  /// a walkover at the deadline.
 
   FriendlyChallengeActionsControllerProvider call(String lobbyId) =>
       FriendlyChallengeActionsControllerProvider._(
@@ -373,13 +378,14 @@ final class FriendlyChallengeActionsControllerFamily extends $Family
   String toString() => r'friendlyChallengeActionsControllerProvider';
 }
 
-/// The in-match no-show claim, its counter, and withdrawing a challenge.
+/// The in-match no-show claim, the accused's two answers, and withdrawing a
+/// challenge.
 ///
-/// The claim window is live rather than post-match on purpose: the team
-/// standing on an empty pitch should be able to go home knowing where it
-/// stands, not wait a day for the reporting window. The accused gets 10
-/// minutes; the sweep settles it as a walkover if nobody answers, and as a
-/// dispute if they do.
+/// The claim files the claimant's report on the spot. The accused then has the
+/// ordinary reporting window (until 24h after the final whistle) — not ten
+/// minutes in the middle of a match they may be playing. Countering makes it a
+/// dispute, conceding settles the walkover at once, and silence settles it as
+/// a walkover at the deadline.
 
 abstract class _$FriendlyChallengeActionsController extends $Notifier<bool> {
   late final _$args = ref.$arg as String;

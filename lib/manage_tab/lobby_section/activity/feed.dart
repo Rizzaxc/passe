@@ -60,6 +60,10 @@ enum UpdateKind {
   // lobby's court. Purely informational — there is nothing for them to do but
   // wait, which is exactly what it says.
   challengeAwaitingHome('challenge_awaiting_home', Icons.hourglass_empty),
+  // Posted by send_friendly_challenge on the CHALLENGER's feed: the manager
+  // just committed the roster to a fixture, and the handshake waits on the
+  // members' own RSVPs — the durable copy of the push that asks for them.
+  challengeGathering('challenge_gathering', Icons.groups_outlined),
   other('other', Icons.campaign_outlined);
 
   final String db;

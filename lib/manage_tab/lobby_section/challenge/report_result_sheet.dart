@@ -90,9 +90,51 @@ class _ReportResultSheetState extends ConsumerState<_ReportResultSheet> {
     return out.isEmpty ? null : out;
   }
 
+  /// Why the entered sets can't be filed as they stand, or null when they can.
+  ///
+  /// A half-filled row used to be dropped silently, and a scoreline that
+  /// contradicted the chosen outcome was filed as-is — it then fails to match
+  /// the opponent's sets and quietly costs the match its scoreline.
+  String? _setsProblem(MatchOutcome outcome) {
+    if (!_showSets) return null;
+    var won = 0;
+    var lost = 0;
+    for (final (a, b) in _sets) {
+      final usText = a.text.trim();
+      final themText = b.text.trim();
+      if (usText.isEmpty && themText.isEmpty) continue;
+      final us = int.tryParse(usText);
+      final them = int.tryParse(themText);
+      if (us == null || them == null || us < 0 || them < 0) {
+        return 'challenge.report.errorSetIncomplete'.tr();
+      }
+      if (us > them) won++;
+      if (them > us) lost++;
+    }
+    if (won == 0 && lost == 0) return null;
+    final consistent = switch (outcome) {
+      MatchOutcome.weWon => won > lost,
+      MatchOutcome.weLost => lost > won,
+      MatchOutcome.draw => won == lost,
+      _ => true,
+    };
+    return consistent ? null : 'challenge.report.errorSetsContradict'.tr();
+  }
+
   Future<void> _submit() async {
     final outcome = _outcome;
     if (outcome == null) return;
+    final problem = _setsProblem(outcome);
+    if (problem != null) {
+      showFToast(
+        context: context,
+        icon: const Icon(FLucideIcons.circleX),
+        variant: .destructive,
+        title: Text(problem),
+        alignment: .bottomCenter,
+      );
+      return;
+    }
     try {
       final result = await ref
           .read(reportMatchResultControllerProvider(widget.lobbyId).notifier)
@@ -194,9 +236,7 @@ class _ReportResultSheetState extends ConsumerState<_ReportResultSheet> {
               _SetRow(index: i, controllers: _sets[i]),
             FButton(
               variant: .secondary,
-              onPress: _sets.length >= 7
-                  ? null
-                  : () => setState(_addSet),
+              onPress: _sets.length >= 7 ? null : () => setState(_addSet),
               prefix: const Icon(FLucideIcons.plus),
               child: Text('challenge.report.addSet'.tr()),
             ),
@@ -244,11 +284,7 @@ class _ReportResultSheetState extends ConsumerState<_ReportResultSheet> {
           FButton(
             onPress: (_outcome == null || busy) ? null : _submit,
             child: busy
-                ? const SizedBox(
-                    height: 16,
-                    width: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
+                ? const FCircularProgress()
                 : Text(
                     c.iHaveReported
                         ? 'challenge.report.submitAgain'.tr()
@@ -308,16 +344,12 @@ class _FormatRecap extends StatelessWidget {
           if (handicap != null)
             Text(
               handicap,
-              style: typography.body.sm.copyWith(
-                color: colors.mutedForeground,
-              ),
+              style: typography.body.sm.copyWith(color: colors.mutedForeground),
             ),
           if ((challenge.termsNote ?? '').trim().isNotEmpty)
             Text(
               challenge.termsNote!,
-              style: typography.body.sm.copyWith(
-                color: colors.mutedForeground,
-              ),
+              style: typography.body.sm.copyWith(color: colors.mutedForeground),
             ),
         ],
       ),

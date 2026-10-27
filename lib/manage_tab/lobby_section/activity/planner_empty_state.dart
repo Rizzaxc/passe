@@ -5,10 +5,9 @@ import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../../../core/feature_flags.dart';
 import '../../../../ui/button_styles.dart';
 import '../../../logger/talker.dart';
-import '../challenge_offer_sheet.dart';
+import '../challenge/friendly_offer_sheet.dart';
 import '../invite_member_sheet.dart';
 import '../members/controller.dart';
 import '../schedule_activity_sheet.dart';
@@ -117,9 +116,7 @@ class PlannerEmptyState extends ConsumerWidget {
               alone
                   ? 'lobbyHub.planner.aloneHint'.tr()
                   : isLeader
-                  ? ClientFeatureFlags.challengerFlow
-                        ? 'lobbyHub.planner.leaderChallengeHint'.tr()
-                        : 'lobbyHub.planner.leaderHint'.tr()
+                  ? 'lobbyHub.planner.leaderChallengeHint'.tr()
                   : 'lobbyHub.planner.memberHint'.tr(),
               style: TextStyle(
                 fontSize: 12.5,
@@ -132,7 +129,7 @@ class PlannerEmptyState extends ConsumerWidget {
             const SizedBox(height: 16),
             if (isLeader)
               Column(
-                spacing: 8,
+                spacing: 10,
                 children: [
                   if (alone)
                     SizedBox(
@@ -143,42 +140,57 @@ class PlannerEmptyState extends ConsumerWidget {
                           context.theme.buttonStyles.primary.base,
                         ),
                         onPress: () => showInviteMemberSheet(context, lobbyId),
-                        child: _CTALabel(
-                          icon: const Icon(FLucideIcons.userPlus, size: 16),
-                          label: 'lobbyHub.planner.inviteFirst'.tr(),
+                        prefix: const Icon(FLucideIcons.userPlus, size: 16),
+                        child: Text(
+                          'lobbyHub.planner.inviteFirst'.tr(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FButton(
-                      size: .sm,
-                      variant: alone ? .outline : .primary,
-                      style: alone
-                          ? const .context()
-                          : FButtonStyleExtension.accentBlueStyle(
-                              context.theme.buttonStyles.primary.base,
-                            ),
-                      onPress: () =>
-                          showScheduleActivitySheet(context, lobbyId),
-                      child: _CTALabel(
-                        icon: const Icon(
-                          Icons.calendar_month_outlined,
-                          size: 16,
+                  Row(
+                    spacing: 10,
+                    children: [
+                      Expanded(
+                        child: FButton(
+                          size: .sm,
+                          variant: alone ? .outline : .primary,
+                          style: alone
+                              ? const .context()
+                              : FButtonStyleExtension.accentBlueStyle(
+                                  context.theme.buttonStyles.primary.base,
+                                ),
+                          onPress: () =>
+                              showScheduleActivitySheet(context, lobbyId),
+                          prefix: const Icon(
+                            Icons.calendar_month_outlined,
+                            size: 16,
+                          ),
+                          child: Text(
+                            'lobbyHub.planner.schedule'.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        label: 'lobbyHub.planner.schedule'.tr(),
                       ),
-                    ),
+                      Expanded(
+                        child: FButton(
+                          size: .sm,
+                          style: FButtonStyleExtension.accentGreenStyle(
+                            context.theme.buttonStyles.primary.base,
+                          ),
+                          onPress: () =>
+                              openChallengeComposer(context, lobbyId),
+                          prefix: const Icon(FLucideIcons.swords, size: 16),
+                          child: Text(
+                            'challenge.findOpponent.challenge'.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  // Was "Mời Thách Đấu" — challenging by SearchID from inside
-                  // your own lobby is retired (challenges start from Discover,
-                  // against a lobby that actually opted in). What replaces it
-                  // is the other half of that flow: opting *this* lobby in.
-                  if (ClientFeatureFlags.challengerFlow)
-                    ChallengeOfferControl(
-                      lobbyId: lobbyId,
-                      canManage: isLeader,
-                    ),
                 ],
               )
             else
@@ -221,25 +233,4 @@ class PlannerEmptyState extends ConsumerWidget {
       ),
     );
   }
-}
-
-/// Compact icon + label used inside the empty state's "Lên Lịch" button.
-/// Color comes from whatever the enclosing [FButton]'s style resolves to.
-class _CTALabel extends StatelessWidget {
-  final Widget icon;
-  final String label;
-
-  const _CTALabel({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    spacing: 6,
-    children: [
-      icon,
-      Flexible(
-        child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-      ),
-    ],
-  );
 }

@@ -60,6 +60,32 @@ coaching courses. Unlike Discover, this is about entities the user is already a 
     `_FreeplayBlock` — see "Freeplay exposure" below.
   - `history/` — past matches (`lobby_match_history_data` RPC, now both-sided — see root CLAUDE.md ▸
     Challenger System), `match.dart` / `view.dart`.
+  - Planner entry points for challenging: a swords button next to "+" in the Planner title and a
+    second CTA in the empty-state hero, both opening `challenge/friendly_offer_sheet.dart` directly
+    (its first-use `_HowItWorks` steps carry the explanation). Info-sheet rows remain as secondary copies.
+  - **Friendly-challenge hand-offs** (`schema/friendly_challenge_followups.sql`,
+    `friendly_challenge_dead_fixture_fix.sql`):
+    - **A dead fixture keeps its row.** A declined/lapsed/withdrawn challenge's activity stays as a
+      record, so every reader drops it via `ChallengeContext.isDead`: Planner, History, the lobby
+      list and `my_schedule_data`.
+    - **History shows each settled match once.** History also drops an `isSettled` challenge's
+      activity, because the `lobby_match` row carries only home's `activity_id`.
+    - **Two clocks.** An offer's `expires_at` (default kickoff − 36h) closes only the gathering
+      phase. Home answers by `lobby_challenge.home_decide_by` (kickoff − 24h,
+      `fn_home_decide_by`), which the chooser shows grouped per fixture.
+    - **Sending notifies the roster.** It auto-RSVPs the sender, pushes the rest of the roster
+      (`activity_scheduled`) and posts a `challenge_gathering` feed item. Accepting auto-RSVPs the
+      accepting manager.
+    - **A no-show claim is the claimant's report.** The accused answers within the normal 24h:
+      counter (dispute), `concede_no_show`, or report. Silence settles it as a walkover.
+    - **Lobbies sharing a manager can't meet.** Any shared captain or coordinator blocks it
+      (`fn_lobbies_share_manager`).
+    - **Offer amendments are append-only.** `amend_challenge_offer` adds to the note without
+      lapsing anyone; any other edit re-publishes.
+    - **Per-side cost.** Each side's activity carries its own share of the pitch fee
+      (`fn_challenge_side_cost`).
+    - **Shared refresh after transitions.** Use `invalidateFriendlyChallengeSurfaces` after any
+      transition.
   - `challenge_offer_sheet.dart` / `challenge_offer_controller.dart` — the "Nhận Thách Đấu" opt-in
     offer (when/where/cost), `schedule_activity_sheet.dart`, `lobby_info_sheet.dart`,
     `lobby_banner.dart` — sheets/widgets pushed from the detail page. (`invite_challenge_sheet.dart`

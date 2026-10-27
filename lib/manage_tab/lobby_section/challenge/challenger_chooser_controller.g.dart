@@ -187,7 +187,7 @@ final class RespondFriendlyChallengeControllerProvider
 }
 
 String _$respondFriendlyChallengeControllerHash() =>
-    r'2986f6ea3c7b873b9154668142be1ce6c2bc336f';
+    r'0d8e7a6655a67440f84191931d0f0120cc4c691b';
 
 /// Home's answer. Accepting is not just a yes — it spends the offer slot and
 /// declines every other lobby waiting on it, which is why the sheet says so

@@ -77,7 +77,7 @@ final class LobbyMatchHistoryControllerProvider
 }
 
 String _$lobbyMatchHistoryControllerHash() =>
-    r'cef916934ae6eeb1c28fc52294f8e24aa16e6e2a';
+    r'3ac65504624649cbd9e4b904d47ff87ab66cdefd';
 
 /// Lobby history combines recorded matches with completed activities that do
 /// not have a match record yet. The latter retain their post-session actions

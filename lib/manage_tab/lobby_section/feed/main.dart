@@ -84,7 +84,9 @@ class LobbySubtab extends ConsumerWidget {
                               prefix: const Icon(FLucideIcons.search),
                               onPress: () =>
                                   const DiscoverTeammateRoute().go(context),
-                              child: Text('manageTab.lobby.empty.findLobby'.tr()),
+                              child: Text(
+                                'manageTab.lobby.empty.findLobby'.tr(),
+                              ),
                             ),
                             FButton(
                               size: .sm,
@@ -239,7 +241,9 @@ class ManageLobbyCard extends StatelessWidget {
                           Row(
                             spacing: 8,
                             children: [
-                              Flexible(child: _SportEyebrow(sport: lobby.sport)),
+                              Flexible(
+                                child: _SportEyebrow(sport: lobby.sport),
+                              ),
                               if (isLeader || item.isCoordinator)
                                 _LobbyRoleBadge(
                                   isLeader: isLeader,

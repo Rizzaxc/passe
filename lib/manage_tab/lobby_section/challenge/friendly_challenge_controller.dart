@@ -3,7 +3,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/model/challenge.dart';
+import '../activity/feed_controller.dart';
 import '../activity/upcoming_controller.dart';
+import '../history/match_history_controller.dart';
+import 'challenger_chooser_controller.dart';
+import 'friendly_offer_controller.dart';
 
 part 'friendly_challenge_controller.g.dart';
 
@@ -101,9 +105,12 @@ class FriendlyChallenge {
   /// The window opens at the final whistle. The server is the authority
   /// (`report_match_result` re-checks `end_time`); this only decides whether
   /// to offer the button.
+  /// An open no-show claim is reportable too: the claimant's report is
+  /// already on file, and the accused's report is one way to answer it.
   bool get isReportable =>
       status == FriendlyChallengeStatus.scheduled ||
-      status == FriendlyChallengeStatus.awaitingReports;
+      status == FriendlyChallengeStatus.awaitingReports ||
+      status == FriendlyChallengeStatus.noShowClaimed;
 
   factory FriendlyChallenge.fromJson(Map<String, dynamic> m) {
     DateTime? at(String k) {
@@ -160,6 +167,21 @@ class FriendlyChallenge {
   }
 }
 
+/// Every surface a friendly-challenge transition can change for [lobbyId].
+///
+/// A transition rarely stays on one screen: settling moves the fixture into
+/// History, accepting spends an offer slot and posts to the feed, and the
+/// report sheet is opened FROM History — so refreshing only the Planner left
+/// the screen the manager was looking at stale.
+void invalidateFriendlyChallengeSurfaces(Ref ref, String lobbyId) {
+  ref.invalidate(friendlyChallengesControllerProvider(lobbyId));
+  ref.invalidate(lobbyUpcomingActivitiesControllerProvider(lobbyId));
+  ref.invalidate(lobbyMatchHistoryControllerProvider(lobbyId));
+  ref.invalidate(lobbyFeedControllerProvider(lobbyId));
+  ref.invalidate(friendlyOfferControllerProvider(lobbyId));
+  ref.invalidate(pendingChallengersControllerProvider(lobbyId));
+}
+
 /// Live friendly challenges for a lobby, both directions.
 @riverpod
 class FriendlyChallengesController extends _$FriendlyChallengesController {
@@ -209,8 +231,7 @@ class ReportMatchResultController extends _$ReportMatchResultController {
           )
           .timeout(const Duration(seconds: 5));
 
-      ref.invalidate(friendlyChallengesControllerProvider(lobbyId));
-      ref.invalidate(lobbyUpcomingActivitiesControllerProvider(lobbyId));
+      invalidateFriendlyChallengeSurfaces(ref, lobbyId);
       return result as String? ?? 'awaiting_opponent';
     } finally {
       state = false;
@@ -218,13 +239,14 @@ class ReportMatchResultController extends _$ReportMatchResultController {
   }
 }
 
-/// The in-match no-show claim, its counter, and withdrawing a challenge.
+/// The in-match no-show claim, the accused's two answers, and withdrawing a
+/// challenge.
 ///
-/// The claim window is live rather than post-match on purpose: the team
-/// standing on an empty pitch should be able to go home knowing where it
-/// stands, not wait a day for the reporting window. The accused gets 10
-/// minutes; the sweep settles it as a walkover if nobody answers, and as a
-/// dispute if they do.
+/// The claim files the claimant's report on the spot. The accused then has the
+/// ordinary reporting window (until 24h after the final whistle) — not ten
+/// minutes in the middle of a match they may be playing. Countering makes it a
+/// dispute, conceding settles the walkover at once, and silence settles it as
+/// a walkover at the deadline.
 @riverpod
 class FriendlyChallengeActionsController
     extends _$FriendlyChallengeActionsController {
@@ -237,8 +259,7 @@ class FriendlyChallengeActionsController
       await Supabase.instance.client
           .rpc(rpc, params: {'p_challenge_id': challengeId})
           .timeout(const Duration(seconds: 5));
-      ref.invalidate(friendlyChallengesControllerProvider(lobbyId));
-      ref.invalidate(lobbyUpcomingActivitiesControllerProvider(lobbyId));
+      invalidateFriendlyChallengeSurfaces(ref, lobbyId);
     } finally {
       state = false;
     }
@@ -249,6 +270,11 @@ class FriendlyChallengeActionsController
 
   Future<void> counterNoShow(String challengeId) =>
       _call('counter_no_show', challengeId);
+
+  /// "Right, we didn't make it" — settles the walkover now rather than at the
+  /// reporting deadline.
+  Future<void> concedeNoShow(String challengeId) =>
+      _call('concede_no_show', challengeId);
 
   /// Withdraw before the handshake completes. Allowed only while the challenge
   /// is still gathering players or waiting on the home lobby.
@@ -267,9 +293,6 @@ String friendlyChallengeActionErrorMessage(Object e) {
   }
   if (msg.contains('already made this claim')) {
     return 'challenge.noShow.errorAlready'.tr();
-  }
-  if (msg.contains('window to answer has closed')) {
-    return 'challenge.noShow.errorWindowClosed'.tr();
   }
   if (msg.contains('no claim to answer')) {
     return 'challenge.noShow.errorNoClaim'.tr();

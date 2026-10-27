@@ -510,7 +510,9 @@ class _FriendShortlistCard extends StatelessWidget {
                       padding: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: invited ? colors.mutedForeground : colors.primary,
+                        color: invited
+                            ? colors.mutedForeground
+                            : colors.primary,
                         border: Border.all(color: colors.background, width: 2),
                       ),
                       child: Icon(

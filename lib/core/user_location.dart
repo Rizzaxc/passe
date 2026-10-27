@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -22,14 +25,55 @@ final userPositionProvider =
 bool _granted(LocationPermission p) =>
     p == LocationPermission.whileInUse || p == LocationPermission.always;
 
+/// Whether the "see distance" prompt is worth showing: true only when the
+/// user's action could change the outcome (permission not granted, or the
+/// device's location service is off). Granted-but-no-fix-yet is not a prompt
+/// case — [UserPositionNotifier] keeps retrying on its own.
+final locationNeedsPromptProvider = FutureProvider<bool>((ref) async {
+  // Re-evaluated whenever the position changes (after [request] or a retry).
+  ref.watch(userPositionProvider);
+  try {
+    return !await Geolocator.isLocationServiceEnabled() ||
+        !_granted(await Geolocator.checkPermission());
+  } catch (_) {
+    return false;
+  }
+});
+
 class UserPositionNotifier extends AsyncNotifier<Position?> {
+  static const _maxRetries = 3;
+  int _retries = 0;
+
   @override
   Future<Position?> build() async {
+    // A fix that failed (cold GPS, timeout) must not stick for the session:
+    // retry shortly, and again whenever the app comes back to the foreground
+    // (permission may have been granted in Settings meanwhile).
+    final lifecycle = AppLifecycleListener(
+      onResume: () {
+        if (state.value == null) {
+          _retries = 0;
+          ref.invalidateSelf();
+        }
+      },
+    );
+    ref.onDispose(lifecycle.dispose);
+
     try {
       if (!await Geolocator.isLocationServiceEnabled()) return null;
       if (!_granted(await Geolocator.checkPermission())) return null;
-      return await _fix();
+      final fix = await _fix();
+      _retries = 0;
+      return fix;
     } catch (_) {
+      if (_retries < _maxRetries) {
+        _retries++;
+        final timer = Timer(
+          Duration(seconds: 5 * _retries),
+          ref.invalidateSelf,
+        );
+        ref.onDispose(timer.cancel);
+      }
       return null;
     }
   }

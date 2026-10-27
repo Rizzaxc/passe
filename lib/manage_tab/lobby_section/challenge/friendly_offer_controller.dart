@@ -73,7 +73,8 @@ class ChallengeOfferSlot {
       kickoff: DateTime.parse(m['kickoff'] as String).toLocal(),
       expiresAt: DateTime.parse(m['expires_at'] as String).toLocal(),
       locationId: m['location_id'] as String,
-      locationName: (m['location'] as Map<String, dynamic>?)?['name'] as String?,
+      locationName:
+          (m['location'] as Map<String, dynamic>?)?['name'] as String?,
       venueCost: num_('venue_cost'),
       costSplit:
           ChallengeCostSplit.fromDb(m['cost_split'] as String?) ??
@@ -218,7 +219,32 @@ class FriendlyOfferController extends _$FriendlyOfferController {
         .timeout(const Duration(seconds: 5));
     ref.invalidateSelf();
   }
+
+  /// Adds a line to an open offer's note without re-publishing it, so the
+  /// lobbies already on it are not lapsed. They keep the terms they
+  /// snapshotted; the addition is for whoever looks next.
+  Future<void> amend(String offerId, String append) async {
+    await Supabase.instance.client
+        .rpc(
+          'amend_challenge_offer',
+          params: {'p_offer_id': offerId, 'p_append': append},
+        )
+        .timeout(const Duration(seconds: 5));
+    ref.invalidateSelf();
+  }
+
+  /// Re-posts an expired or withdrawn offer a week later, same terms — the
+  /// action behind the "Lời mời hết hạn" notification.
+  Future<void> renew(String offerId) async {
+    await Supabase.instance.client
+        .rpc('renew_challenge_offer', params: {'p_offer_id': offerId})
+        .timeout(const Duration(seconds: 5));
+    ref.invalidateSelf();
+  }
 }
+
+/// The longest single amendment `amend_challenge_offer` accepts.
+const challengeOfferAmendMaxLength = 140;
 
 /// Maps `publish_challenge_offer`'s guards onto Vietnamese copy.
 String friendlyOfferErrorMessage(Object e) {
@@ -240,6 +266,21 @@ String friendlyOfferErrorMessage(Object e) {
   }
   if (msg.contains('needs a venue')) {
     return 'challenge.offer.errorVenue'.tr();
+  }
+  if (msg.contains('custom ruleset cannot be amended')) {
+    return 'challenge.offer.errorAmendCustom'.tr();
+  }
+  if (msg.contains('amendment is too long') || msg.contains('note is full')) {
+    return 'challenge.offer.errorAmendTooLong'.tr();
+  }
+  if (msg.contains('still open')) {
+    return 'challenge.offer.errorRenewStillOpen'.tr();
+  }
+  if (msg.contains('already renewed')) {
+    return 'challenge.offer.errorRenewDone'.tr();
+  }
+  if (msg.contains('already matched')) {
+    return 'challenge.offer.errorRenewTaken'.tr();
   }
   return 'challenge.offer.errorGeneric'.tr();
 }

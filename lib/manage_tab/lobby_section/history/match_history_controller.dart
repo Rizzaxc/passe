@@ -53,6 +53,15 @@ class LobbyMatchHistoryController extends _$LobbyMatchHistoryController {
         .map((row) => _rowToPastActivity(row, lobbyId))
         .whereType<PastLobbyActivity>()
         .where((activity) => !recordedActivityIds.contains(activity.id))
+        // A settled challenge is already its match row. That row carries
+        // only the HOME activity's id, so the away side's own activity has
+        // to be dropped by status or it shows the same game twice. A dead
+        // challenge never happened and isn't history at all.
+        .where((activity) {
+          final challenge = activity.activity.challenge;
+          return challenge == null ||
+              !(challenge.isDead || challenge.isSettled);
+        })
         .toList();
     final entries = <LobbyHistoryEntry>[...matches, ...completedActivities]
       ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));

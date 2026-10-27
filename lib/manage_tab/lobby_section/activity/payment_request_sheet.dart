@@ -188,9 +188,10 @@ class _PaymentRequestSheetState extends ConsumerState<_PaymentRequestSheet> {
                         // selection-tap area — wins the gesture arena, so the
                         // avatar opens the profile while the rest of the
                         // tile still toggles the split selection.
-                        onTap: () =>
-                            UserRoute(id: c.userId, $extra: c.username)
-                                .push(context),
+                        onTap: () => UserRoute(
+                          id: c.userId,
+                          $extra: c.username,
+                        ).push(context),
                       ),
                       title: Text(
                         c.username,

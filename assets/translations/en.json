@@ -2140,7 +2140,7 @@
     "chooser": {
       "title": "Pick an opponent",
       "explainerOne": "This lobby has its players confirmed and is waiting on you.",
-      "explainerMany": "{count} lobbies have their players confirmed and are waiting on you. Accepting one automatically declines the rest.",
+      "explainerMany": "{count} lobbies have their players confirmed for this fixture. Accepting one automatically declines the others on this fixture.",
       "emptyTitle": "Nobody ready yet",
       "emptySubtitle": "A challenger only appears here once they've confirmed enough of their own players.",
       "trust": "Trust {score}",
@@ -2151,7 +2151,14 @@
       "errorAlreadyAnswered": "This challenge has already been answered.",
       "errorManagerOnly": "Only the captain or a coordinator can answer.",
       "errorGeneric": "Couldn't answer the challenge.",
-      "settingsRow": "Challenges"
+      "settingsRow": "Challenges",
+      "decideBy": "Answer by {when}",
+      "acceptTitle": "Accept this challenge?",
+      "acceptBody": "The match against {name} goes on both lobbies’ schedules.",
+      "acceptBodySiblings": "{count} other lobbies waiting on this fixture will be declined.",
+      "clash": "Overlaps another of your lobby’s sessions.",
+      "errorWindowClosed": "The time to answer this challenge has passed.",
+      "errorSharedManager": "These lobbies share a captain or coordinator, so they can’t play each other."
     },
     "report": {
       "title": "Report the result",
@@ -2181,7 +2188,9 @@
         "mutual_concession": "Both lobbies conceded — recorded as a draw.",
         "no_match": "Both lobbies reported not turning up. Not counted.",
         "disputed": "The reports conflict. Both lobbies take a loss."
-      }
+      },
+      "errorSetIncomplete": "Fill in both scores for each set, or leave the set empty.",
+      "errorSetsContradict": "The set scores don't match the result you picked."
     },
     "block": {
       "homeSide": "Home",
@@ -2203,10 +2212,21 @@
       "emptySubtitleMember": "No team nearby has posted a match. Try another filter, or ask your captain to post an offer.",
       "postOffer": "Post an offer"
     },
+    "findOpponent": {
+      "addTitle": "Add to schedule",
+      "schedule": "Private session",
+      "scheduleHint": "The whole lobby RSVPs",
+      "challenge": "Post a challenge",
+      "challengeHint": "Post a time & venue for other teams to accept",
+      "openCount": "{count}/{max} offers open"
+    },
     "offer": {
       "title": "Challenge offers",
+      "step1": "Post a time, venue and cost for a match you want (up to 3 offers).",
+      "step2": "Other teams see it under Discover › Thách đấu and accept.",
+      "step3": "You pick the opponent and the match lands on both schedules.",
       "settingsRow": "Post an offer",
-      "explainer": "You can advertise up to 3 fixtures at once. Other teams see them under Thách đấu.",
+      "explainer": "Other teams see offers under Discover › Thách đấu; you pick the opponent. Up to 3 offers.",
       "emptySlot": "Post offer {slot}",
       "closesAt": "Closes: {when}",
       "withdraw": "Withdraw",
@@ -2222,7 +2242,7 @@
       "whenWhere": "When & where",
       "kickoff": "Kick-off",
       "closes": "Closes to challengers",
-      "closesHint": "Defaults to 24 hours before kick-off, so you still have time to find someone else.",
+      "closesHint": "Defaults to 36 hours before kick-off. You then have until 24 hours before kick-off to pick an opponent, which still leaves the others time to find another match.",
       "format": "Format",
       "paramSets": "Number of sets",
       "paramRubbers": "Number of rubbers",
@@ -2250,7 +2270,18 @@
       "errorCustomNote": "Custom rules need to be spelled out in the notes.",
       "errorHandicapAmount": "Enter a valid handicap.",
       "errorBountyAmount": "Enter a valid stake.",
-      "errorGeneric": "Couldn't post the offer."
+      "errorGeneric": "Couldn't post the offer.",
+      "amendTitle": "Add to the note",
+      "amendHint": "{count} lobbies are waiting on this fixture. Adding to the note doesn't change the terms, so it doesn't affect them — lobbies already on it keep the terms they accepted.",
+      "amendCta": "Add",
+      "amended": "Note updated",
+      "errorAmendCustom": "A custom format lives in the note, so it can’t be added to — edit the offer instead.",
+      "errorAmendTooLong": "The note is too long.",
+      "renewCta": "Re-post for next week",
+      "renewed": "Re-posted",
+      "errorRenewStillOpen": "This offer is still open.",
+      "errorRenewTaken": "This offer already has an opponent.",
+      "errorRenewDone": "This offer has already been re-posted."
     },
     "send": {
       "title": "Confirm challenge",
@@ -2264,7 +2295,7 @@
       "thresholdValue": "{n} of {total}",
       "noteLabel": "Message the home team",
       "noteHint": "Optional",
-      "whatHappensNext": "The fixture appears in your lobby's planner straight away. Once {n} players confirm, the challenge is sent to the home team.",
+      "whatHappensNext": "The fixture goes on your lobby's planner and your members are notified right away. {n} players need to confirm by {when} before the challenge is sent to the home team.",
       "errorClosed": "This offer is no longer open.",
       "errorExpired": "This offer has closed.",
       "errorSport": "The two lobbies play different sports.",
@@ -2273,7 +2304,11 @@
       "errorThresholdTooBig": "That's more players than your lobby has.",
       "errorThresholdTooSmall": "At least 1 player is needed.",
       "errorManagerOnly": "Only the captain or a coordinator can send this.",
-      "errorGeneric": "Couldn't send the challenge."
+      "errorGeneric": "Couldn't send the challenge.",
+      "gatherBy": "Confirm players by {when}",
+      "challengingAs": "Challenging as {name}",
+      "managerOnlyHint": "Only the captain or a coordinator can send a challenge.",
+      "errorSharedManager": "These lobbies share a captain or coordinator, so they can’t play each other."
     },
     "verdictSheet": {
       "title": "Rate {lobby}",
@@ -2292,15 +2327,15 @@
     "noShow": {
       "claimCta": "Report a no-show",
       "counterCta": "Respond: we're here",
-      "waitingOnThem": "No-show reported. They have 10 minutes to respond.",
-      "accused": "They've reported your lobby as absent. You have 10 minutes to respond.",
+      "waitingOnThem": "No-show reported. If they don't respond by {deadline}, it counts as a win for your lobby.",
+      "accused": "They've reported your lobby as absent. Respond by {deadline} or it counts as a loss.",
       "errorTooEarly": "Too early — give them 30 minutes after kick-off.",
       "errorEnded": "The match has ended — report the result instead.",
       "errorAlready": "You've already reported this.",
-      "errorWindowClosed": "The window to respond has closed.",
       "errorNoClaim": "There's no report to respond to.",
       "errorManagerOnly": "Only the captain or a coordinator can do this.",
-      "errorGeneric": "Couldn't complete that."
+      "errorGeneric": "Couldn't complete that.",
+      "concedeCta": "Right, we weren't there"
     },
     "cancel": {
       "cta": "Withdraw challenge",

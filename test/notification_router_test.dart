@@ -53,6 +53,17 @@ void main() {
     });
   });
 
+  test('friendly result reminder opens History, where the report sheet is', () {
+    expect(
+      resolveNotificationLocation({
+        'kind': 'match_result_pending',
+        'lobby_id': 'lobby-1',
+        'challenge_id': 'challenge-1',
+      }),
+      const LobbyDetailRoute(id: 'lobby-1', tab: 2).location,
+    );
+  });
+
   test('challenge notification routing follows the client feature gate', () {
     final location = resolveNotificationLocation({
       'kind': 'challenge_received',

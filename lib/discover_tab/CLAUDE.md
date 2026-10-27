@@ -177,6 +177,11 @@ freezed) — edit them by hand, no build_runner.
   gates only the **refereed** extras (hiring an official, pro-mode result entry, the related
   notification kinds). Enable those for an explicit test build with
   `--dart-define=ENABLE_CHALLENGER_FLOW=true`; do not put it in a default ship command.
+- Friendly offer cards (`friendly_offer_feed_data`) show the **gathering deadline**
+  (`expires_at`): that's when the challenger's members must have confirmed, not kickoff. "Thách
+  đấu" is disabled with a hint unless the user manages the "challenging as" lobby, and the confirm
+  sheet names that lobby. `send_friendly_challenge` rejects lobbies that share a manager. See
+  `lib/manage_tab/CLAUDE.md` ▸ Friendly-challenge hand-offs.
 - Shows lobbies that have **published a challenge offer** (team vs team, with stated terms — see
   root CLAUDE.md ▸ Challenger System for the full flow).
 - Requires `open_to_challengers boolean DEFAULT false NOT NULL` **plus** `challenge_offer_time` /

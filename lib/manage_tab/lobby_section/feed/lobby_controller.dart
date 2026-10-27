@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../auth/auth_controller.dart';
+import '../../../core/model/challenge.dart';
 import '../../../core/model/enum.dart';
 import '../../../core/model/lobby.dart';
 import '../../../core/model/lobby_homeground.dart';
@@ -157,7 +158,7 @@ class UserLobbiesController extends _$UserLobbiesController {
     // until it's opened.
     final activityRows = await supabase
         .from('activity')
-        .select('lobby_id, start_time')
+        .select('lobby_id, start_time, challenge:lobby_challenge(status)')
         .inFilter('lobby_id', lobbyIds)
         .gt('start_time', DateTime.now().toUtc().toIso8601String())
         .order('start_time')
@@ -166,6 +167,11 @@ class UserLobbiesController extends _$UserLobbiesController {
     final nextActivityMap = <String, DateTime>{};
     for (final row in activityRows as List) {
       final id = row['lobby_id'] as String;
+      // A dead challenge fixture keeps its row but is not a session.
+      final challengeStatus = (row['challenge'] as Map?)?['status'] as String?;
+      if (FriendlyChallengeStatus.fromDb(challengeStatus)?.isDead ?? false) {
+        continue;
+      }
       // Rows arrive start_time-ascending, so the first one seen per
       // lobby is already the soonest.
       nextActivityMap.putIfAbsent(
@@ -249,7 +255,10 @@ class LobbyFormController extends _$LobbyFormController {
     );
   }
 
-  void initFromLobby(Lobby lobby, {List<LobbyHomeground> homeGrounds = const []}) {
+  void initFromLobby(
+    Lobby lobby, {
+    List<LobbyHomeground> homeGrounds = const [],
+  }) {
     _originalHasAvatar = lobby.details?.hasAvatar ?? false;
     state = LobbyFormState(lobby: lobby, homeGrounds: homeGrounds);
   }

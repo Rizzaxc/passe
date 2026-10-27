@@ -2135,7 +2135,7 @@
     "chooser": {
       "title": "Chọn đối thủ",
       "explainerOne": "Đội này đã đủ quân và đang chờ bạn trả lời.",
-      "explainerMany": "{count} đội đã đủ quân và đang chờ bạn. Nhận lời một đội sẽ tự động từ chối các đội còn lại.",
+      "explainerMany": "{count} đội đã đủ quân cho trận này. Nhận lời một đội sẽ tự động từ chối các đội còn lại của trận này.",
       "emptyTitle": "Chưa có đội nào sẵn sàng",
       "emptySubtitle": "Bạn chưa đăng lời mời thách đấu, hoặc chưa có đội nào nhận lời. Hãy đăng lời mời để tìm đối thủ.",
       "trust": "Uy tín {score}",
@@ -2146,7 +2146,14 @@
       "errorAlreadyAnswered": "Lời thách đấu này đã được trả lời rồi.",
       "errorManagerOnly": "Chỉ đội trưởng hoặc Điều phối mới trả lời được.",
       "errorGeneric": "Không trả lời được lời thách đấu.",
-      "settingsRow": "Phản hồi Thách đấu"
+      "settingsRow": "Phản hồi Thách đấu",
+      "decideBy": "Trả lời trước {when}",
+      "acceptTitle": "Nhận lời thách đấu?",
+      "acceptBody": "Trận gặp {name} sẽ vào lịch của cả hai đội.",
+      "acceptBodySiblings": "{count} đội khác đang chờ trận này sẽ bị từ chối.",
+      "clash": "Trùng giờ với một buổi khác của đội bạn.",
+      "errorWindowClosed": "Đã quá hạn trả lời lời thách đấu này.",
+      "errorSharedManager": "Hai đội có chung đội trưởng hoặc Điều phối nên không thể đấu với nhau."
     },
     "report": {
       "title": "Khai kết quả",
@@ -2176,7 +2183,9 @@
         "mutual_concession": "Cả hai đội đều nhận thua — tính hòa.",
         "no_match": "Cả hai đội đều báo không có mặt. Trận không được tính.",
         "disputed": "Hai đội khai khác nhau. Cả hai đội bị tính thua."
-      }
+      },
+      "errorSetIncomplete": "Điền đủ tỉ số cả hai đội cho mỗi ván, hoặc để trống cả ván.",
+      "errorSetsContradict": "Tỉ số các ván không khớp với kết quả đã chọn."
     },
     "block": {
       "homeSide": "Chủ nhà",
@@ -2198,10 +2207,21 @@
       "emptySubtitleMember": "Chưa đội nào trong khu vực đăng trận. Thử đổi bộ lọc, hoặc nhờ đội trưởng đăng lời mời.",
       "postOffer": "Đăng Thách đấu"
     },
+    "findOpponent": {
+      "addTitle": "Thêm vào lịch",
+      "schedule": "Buổi chơi riêng",
+      "scheduleHint": "Cả lobby cùng xác nhận tham gia",
+      "challenge": "Đăng thách đấu",
+      "challengeHint": "Đăng giờ & sân để đội khác nhận lời",
+      "openCount": "{count}/{max} lời mời đang mở"
+    },
     "offer": {
       "title": "Lời mời thách đấu",
+      "step1": "Đăng giờ, sân và chi phí cho trận bạn muốn đá (tối đa 3 lời mời).",
+      "step2": "Đội khác thấy ở Khám phá › Thách đấu và nhận lời.",
+      "step3": "Bạn chọn đối thủ, trận vào lịch của cả hai đội.",
       "settingsRow": "Đăng Thách đấu",
-      "explainer": "Bạn có thể đăng tối đa 3 trận cùng lúc. Đội khác sẽ thấy ở mục Thách đấu.",
+      "explainer": "Đội khác thấy lời mời ở Khám phá › Thách đấu, bạn chọn đối thủ. Tối đa 3 lời mời.",
       "emptySlot": "Đăng lời mời {slot}",
       "closesAt": "Đóng nhận lời: {when}",
       "withdraw": "Gỡ",
@@ -2217,7 +2237,7 @@
       "whenWhere": "Thời gian & địa điểm",
       "kickoff": "Giờ đấu",
       "closes": "Đóng nhận lời",
-      "closesHint": "Mặc định là 24 tiếng trước giờ đấu, để bạn còn kịp tìm đội khác nếu không ai nhận.",
+      "closesHint": "Mặc định là 36 tiếng trước giờ đấu. Sau đó bạn có đến 24 tiếng trước giờ đấu để chọn đối thủ, và đội bị từ chối vẫn kịp tìm trận khác.",
       "format": "Thể thức",
       "paramSets": "Số ván",
       "paramRubbers": "Số trận",
@@ -2245,7 +2265,18 @@
       "errorCustomNote": "Luật riêng cần ghi rõ ở phần ghi chú.",
       "errorHandicapAmount": "Nhập mức chấp hợp lệ.",
       "errorBountyAmount": "Nhập mức cược hợp lệ.",
-      "errorGeneric": "Không đăng được lời mời."
+      "errorGeneric": "Không đăng được lời mời.",
+      "amendTitle": "Bổ sung ghi chú",
+      "amendHint": "{count} đội đang chờ trận này. Bổ sung ghi chú không thay đổi điều kiện nên không ảnh hưởng tới họ — các đội đã nhận lời giữ nguyên điều kiện lúc gửi.",
+      "amendCta": "Bổ sung",
+      "amended": "Đã bổ sung ghi chú",
+      "errorAmendCustom": "Luật riêng nằm ngay trong ghi chú nên không bổ sung được — hãy sửa lời mời.",
+      "errorAmendTooLong": "Ghi chú quá dài.",
+      "renewCta": "Đăng lại tuần sau",
+      "renewed": "Đã đăng lại",
+      "errorRenewStillOpen": "Lời mời này vẫn đang mở.",
+      "errorRenewTaken": "Lời mời này đã có đối thủ.",
+      "errorRenewDone": "Lời mời này đã được đăng lại rồi."
     },
     "send": {
       "title": "Xác nhận thách đấu",
@@ -2259,7 +2290,7 @@
       "thresholdValue": "{n}/{total} người",
       "noteLabel": "Nhắn đội chủ nhà",
       "noteHint": "Không bắt buộc",
-      "whatHappensNext": "Trận sẽ hiện trong lịch của đội bạn ngay. Khi đủ {n} người xác nhận, lời thách đấu mới được gửi sang đội chủ nhà.",
+      "whatHappensNext": "Trận sẽ hiện trong lịch của đội bạn và cả đội được báo ngay. Cần {n} người xác nhận trước {when} thì lời thách đấu mới được gửi sang đội chủ nhà.",
       "errorClosed": "Lời mời này không còn mở.",
       "errorExpired": "Lời mời đã hết hạn.",
       "errorSport": "Hai đội khác môn thể thao.",
@@ -2268,7 +2299,11 @@
       "errorThresholdTooBig": "Số người cần lớn hơn quân số đội bạn.",
       "errorThresholdTooSmall": "Cần ít nhất 1 người.",
       "errorManagerOnly": "Chỉ đội trưởng hoặc Điều phối mới gửi được.",
-      "errorGeneric": "Không gửi được lời thách đấu."
+      "errorGeneric": "Không gửi được lời thách đấu.",
+      "gatherBy": "Gom quân trước {when}",
+      "challengingAs": "Thách đấu với tư cách {name}",
+      "managerOnlyHint": "Chỉ đội trưởng hoặc Điều phối mới gửi được lời thách đấu.",
+      "errorSharedManager": "Hai đội có chung đội trưởng hoặc Điều phối nên không thể đấu với nhau."
     },
     "verdictSheet": {
       "title": "Đánh giá {lobby}",
@@ -2287,15 +2322,15 @@
     "noShow": {
       "claimCta": "Báo đối thủ không đến",
       "counterCta": "Phản hồi: đội mình có mặt",
-      "waitingOnThem": "Đã báo đối thủ vắng mặt. Chờ họ phản hồi trong 10 phút.",
-      "accused": "Đối thủ báo đội mình không có mặt. Bạn có 10 phút để phản hồi.",
+      "waitingOnThem": "Đã báo đối thủ vắng mặt. Nếu họ không phản hồi trước {deadline}, đội mình được tính thắng.",
+      "accused": "Đối thủ báo đội mình không có mặt. Phản hồi trước {deadline}, nếu không sẽ bị tính thua.",
       "errorTooEarly": "Còn sớm — đợi 30 phút sau giờ đấu đã.",
       "errorEnded": "Trận đã kết thúc — khai kết quả thay vì báo vắng mặt.",
       "errorAlready": "Bạn đã báo rồi.",
-      "errorWindowClosed": "Đã hết thời gian phản hồi.",
       "errorNoClaim": "Không có báo cáo nào để phản hồi.",
       "errorManagerOnly": "Chỉ đội trưởng hoặc Điều phối mới thao tác được.",
-      "errorGeneric": "Không thực hiện được."
+      "errorGeneric": "Không thực hiện được.",
+      "concedeCta": "Đúng, đội mình vắng"
     },
     "cancel": {
       "cta": "Rút lời thách đấu",

@@ -2,6 +2,7 @@
 // the old combined activity tab; activity scheduling/management now lives
 // in the Planner tab (planner_tab.dart).
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -26,10 +27,10 @@ class LobbyFeedTab extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final feed = generalFeedItems(
-      ref.watch(lobbyFeedControllerProvider(lobbyId)).value ??
-          const <FeedItem>[],
-    );
+    final feedAsync = ref.watch(lobbyFeedControllerProvider(lobbyId));
+    // Only the first load: a refresh keeps the previous value on screen.
+    final feedLoading = !feedAsync.hasValue && !feedAsync.hasError;
+    final feed = generalFeedItems(feedAsync.value ?? const <FeedItem>[]);
 
     final scrollController = useScrollController();
 
@@ -59,7 +60,9 @@ class LobbyFeedTab extends HookConsumerWidget {
         // Pinned above the list, not inside it: the list jumps to the newest
         // message on load, which scrolled an in-list card (and its dismiss
         // button) out of sight in any lobby with a few items already.
-        if (isLeader)
+        // Its checklist reads the feed (`hasScheduledBefore`), so hold it back
+        // until the feed is known rather than flashing an all-undone state.
+        if (isLeader && !feedLoading)
           LobbyGettingStartedCard(
             lobbyId: lobbyId,
             hasScheduledBefore: hasScheduledBefore,
@@ -77,19 +80,21 @@ class LobbyFeedTab extends HookConsumerWidget {
               }
               await ref.read(lobbyFeedControllerProvider(lobbyId).future);
             },
-            child: ListView(
-              controller: scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              children: [
-                for (final item in feed)
-                  FeedItemWidget(
-                    item: item,
-                    lobbyId: lobbyId,
-                    captainId: captainId,
+            child: feedLoading
+                ? const Center(child: FCircularProgress())
+                : ListView(
+                    controller: scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    children: [
+                      for (final item in feed)
+                        FeedItemWidget(
+                          item: item,
+                          lobbyId: lobbyId,
+                          captainId: captainId,
+                        ),
+                    ],
                   ),
-              ],
-            ),
           ),
         ),
         ChatTriggerBar(

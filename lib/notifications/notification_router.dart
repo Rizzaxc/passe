@@ -81,9 +81,10 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
               tab: 1,
               highlightChallengeId: challengeId,
             ).location,
-    // The sweep that lapses a challenge deletes both sides' activity rows —
-    // nothing to highlight in Planner; the explanatory feed item is what a
-    // tap should land near, so just open the lobby (Feed).
+    // Nothing live to highlight: the refereed sweep deletes both sides'
+    // activity rows, and a lapsed friendly fixture is filtered out of the
+    // Planner (its row is kept only as a record). The explanatory feed item
+    // is what a tap should land near, so just open the lobby (Feed).
     NotificationKind.challengeLapsed =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
     // A played/recorded result is History's domain, not Planner's (Planner
@@ -104,10 +105,12 @@ String? resolveNotificationLocation(Map<String, dynamic>? data) {
     // the lobby info sheet on Feed; the push's action is "đăng lại tuần sau".
     NotificationKind.challengeOfferExpired =>
       lobbyId == null ? null : LobbyDetailRoute(id: lobbyId).location,
-    // Both of these are answered on the fixture itself, in Planner: the result
-    // sheet hangs off the activity card, and so does the 10-minute counter to
-    // a no-show claim.
-    NotificationKind.matchResultPending ||
+    // The reminder fires 12h after the final whistle, when the fixture has
+    // already moved to History — that card carries the result sheet.
+    NotificationKind.matchResultPending =>
+      lobbyId == null ? null : LobbyDetailRoute(id: lobbyId, tab: 2).location,
+    // A no-show claim arrives mid-match, while the fixture is still on the
+    // Planner; its card carries the answer buttons.
     NotificationKind.noShowClaimed =>
       lobbyId == null
           ? null

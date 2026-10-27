@@ -23,6 +23,8 @@
 --   5. friendly_challenge.sql
 --   6. friendly_challenge_sweep.sql
 --   7. challenge_accept_cost_fix.sql
+--   8. friendly_challenge_dead_fixture_fix.sql
+--   9. friendly_challenge_followups.sql
 -- ============================================================================
 
 -- ─── Which state machine a challenge follows ────────────────────────────────
