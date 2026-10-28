@@ -71,6 +71,11 @@ DELETE FROM public.notification_outbox WHERE recipient_user_id::text LIKE '5107%
 DELETE FROM public.activity_confirmation
 WHERE activity_id::text LIKE '51072%' OR user_id::text LIKE '5107%';
 
+-- Wall posts get server-generated uuids (create_wall_post is the write path,
+-- so the sentinel scheme can't reach them). Scoping by author is exact: every
+-- author here is a seeded user. Tags/reactions cascade from the post.
+DELETE FROM public.wall_post WHERE author_id::text LIKE '5107%';
+
 DELETE FROM public.activity WHERE id::text LIKE '51072%';
 
 -- Freeplay rows: freeplay_activity is keyed by activity_id so it goes with the
@@ -110,12 +115,16 @@ BEGIN
             (2, c_soccer, c_hero,    1, v_base + interval '6 days',  interval '2 hours', 4, interval '36 hours', 'per_pax', 50000),
             -- A3/A4: PAST and over-confirmed, so expire_past_activities() leaves
             -- them alone. These are what the health recaps and wall posts hook to.
+            -- A3 sits INSIDE the 7-day window on purpose: create_wall_post only
+            -- accepts an activity that started in the last 7 days and which the
+            -- author RSVP'd `going` to. A4 is deliberately outside it, so the
+            -- health tab has history that the Feed cannot post against.
             (3, c_soccer, c_hero,    1, v_base - interval '5 days',  interval '2 hours', 4, NULL,                'per_pax', 50000),
             (4, c_soccer, c_hero,    1, v_base - interval '12 days', interval '2 hours', 4, NULL,                'per_pax', 50000),
             -- A5: pickleball, organised by ITS captain, not the hero — this is
             -- the member-side RSVP surface.
             (5, c_pickle, v_pic_cap, 5, v_base + interval '3 days' - interval '12 hours', interval '90 minutes', 4, interval '36 hours', 'per_pax', 80000),
-            (6, c_pickle, v_pic_cap, 5, v_base - interval '8 days' - interval '12 hours', interval '90 minutes', 4, NULL, 'per_pax', 80000)
+            (6, c_pickle, v_pic_cap, 5, v_base - interval '3 days' - interval '12 hours', interval '90 minutes', 4, NULL, 'per_pax', 80000)
         ) AS t(idx, lobby_id, organizer, sport_id, start_at, dur, threshold, deadline_lead, ctype, camount)
     LOOP
         v_act := ('51072000-0000-4000-8000-' || lpad(rec.idx::text, 12, '0'))::uuid;
@@ -441,3 +450,73 @@ BEGIN
     END LOOP;
 END
 $shot$;
+
+-- ── 6. Wall posts (Feed, tab 1) ─────────────────────────────────────────────
+-- RUN tool/shot_upload_media.sh FIRST. `wall_post.media` is NOT NULL and
+-- `fn_valid_wall_post_media` only checks that each entry has a non-empty
+-- `path` — it cannot know whether the object exists. A post pointing at a
+-- missing object renders a BROKEN IMAGE, which is worse than an empty tab.
+--
+-- Why this matters beyond the shot: Feed is tab 1, so it is the first thing an
+-- App Review tester sees on opening the app. An empty or broken first screen is
+-- App Completeness exposure, which is the whole reason the demo account exists.
+--
+-- These go through `create_wall_post` as each author rather than being INSERTed
+-- directly, so the real rules apply and the snapshot columns
+-- (source_label/source_start_time/source_venue_name) are filled the same way a
+-- genuine post fills them. The function only accepts an activity that started
+-- in the last 7 days which the AUTHOR RSVP'd `going` to, and allows one post
+-- per author per session — which is exactly why A6 sits 3 days back, not 8.
+--
+-- Authors are mixed on purpose. Feed visibility is self + author's friends +
+-- author's lobby mates + anyone tagged + friends of anyone tagged, so posts by
+-- a friend (user 3) and a pickleball lobby mate (user 58) prove two different
+-- edges of fn_can_see_wall_post, and the feed is cross-sport as designed.
+--
+-- Captions follow the structure seed's naming rule: fictional, not merely
+-- invented, and no brand names.
+
+BEGIN;
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claims = '{"sub":"51070000-0000-4000-8000-000000000001","role":"authenticated"}';
+SELECT public.create_wall_post(
+    '51072000-0000-4000-8000-000000000003'::uuid,
+    '[{"type":"image","path":"51070000-0000-4000-8000-000000000001/shot_soccer1.jpg"}]'::jsonb,
+    'Tối thứ 2 ở sân quen. Cú vô lê cuối trận trượt trong gang tấc 😂',
+    7::smallint,
+    ARRAY['51070000-0000-4000-8000-000000000003',
+          '51070000-0000-4000-8000-000000000005']::uuid[]);
+COMMIT;
+
+BEGIN;
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claims = '{"sub":"51070000-0000-4000-8000-000000000003","role":"authenticated"}';
+SELECT public.create_wall_post(
+    '51072000-0000-4000-8000-000000000003'::uuid,
+    '[{"type":"image","path":"51070000-0000-4000-8000-000000000003/shot_soccer2.jpg"}]'::jsonb,
+    'Đá xong còn kịp ngồi trà đá. Tuần sau chơi tiếp nhé anh em.',
+    7::smallint,
+    ARRAY['51070000-0000-4000-8000-000000000001']::uuid[]);
+COMMIT;
+
+BEGIN;
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claims = '{"sub":"51070000-0000-4000-8000-000000000001","role":"authenticated"}';
+SELECT public.create_wall_post(
+    '51072000-0000-4000-8000-000000000006'::uuid,
+    '[{"type":"image","path":"51070000-0000-4000-8000-000000000001/shot_pickleball1.jpg"}]'::jsonb,
+    'Đổi gió sang pickleball sáng nay. Mới tập mà vui phết.',
+    7::smallint,
+    ARRAY['51070000-0000-4000-8000-000000000058']::uuid[]);
+COMMIT;
+
+BEGIN;
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claims = '{"sub":"51070000-0000-4000-8000-000000000058","role":"authenticated"}';
+SELECT public.create_wall_post(
+    '51072000-0000-4000-8000-000000000006'::uuid,
+    '[{"type":"image","path":"51070000-0000-4000-8000-000000000058/shot_pickleball2.jpg"}]'::jsonb,
+    'Sân sáng cuối tuần, bóng vàng nắng vàng. Ai rảnh mai đánh tiếp không?',
+    7::smallint,
+    ARRAY['51070000-0000-4000-8000-000000000001']::uuid[]);
+COMMIT;
