@@ -56,6 +56,11 @@
 -- Feed items first (they FK activities), then the notification rows the
 -- activity/RSVP triggers emit, then confirmations, then the activities.
 
+-- Payees first: their FK to the feed item may not cascade, and a stale payee
+-- row would re-attach to a regenerated request with the same sentinel id.
+DELETE FROM public.lobby_payment_request_payee
+WHERE feed_item_id::text LIKE '51073%' OR user_id::text LIKE '5107%';
+
 DELETE FROM public.lobby_feed_item WHERE id::text LIKE '51073%';
 
 -- `fn_emit_activity_scheduled` / `fn_emit_activity_confirmed` fire on the
@@ -241,6 +246,80 @@ BEGIN
             rec.payload,
             rec.activity_id,
             now() - rec.age);
+    END LOOP;
+END
+$shot$;
+
+-- ── 4. Bill splitting (shot 4) ──────────────────────────────────────────────
+-- The website's own claim is "Passe chia phần. Ngân hàng chuyển tiền." — this
+-- is the "chia phần" half. The bank half is `user_payment_info`, seeded
+-- separately because it needs a decision about naming a real bank (see below).
+--
+-- Payload and payee shape mirror `fn_sweep_activity_payment_requests` exactly,
+-- so a hand-authored request renders identically to a swept one. Two details
+-- read off the LIVE function, not the checked-in file (which is stale here):
+--   * payees are inserted WITHOUT recipient_id — a BEFORE trigger
+--     (`fn_fill_payment_request_recipient`) fills it from the payload.
+--   * the sweep cannot collide with these rows: it only considers activities
+--     whose end_time is inside the last DAY and which have manager_confirmed_at
+--     set. Ours are 5–12 days old with it null, so nothing will be
+--     double-created, and nothing will pop up mid-shoot.
+--
+-- Two requests, deliberately pointing opposite ways, because the payer view and
+-- the collector view are different screens:
+--   R1 — the hero COLLECTS (he fronted the pitch fee). Mixed payee statuses, so
+--        the sheet shows both "đã trả" and "còn nợ" rather than a uniform list.
+--   R2 — the hero OWES someone else, which is the only way to reach the payer
+--        side (and the QR/transfer surface) from his own account.
+DO $shot$
+DECLARE
+    c_soccer CONSTANT uuid := '51071000-0000-4000-8000-000000000001'::uuid;
+    c_hero   CONSTANT uuid := '51070000-0000-4000-8000-000000000001'::uuid;
+    c_u2     CONSTANT uuid := '51070000-0000-4000-8000-000000000002'::uuid;
+    c_a3     CONSTANT uuid := '51072000-0000-4000-8000-000000000003'::uuid;
+    c_a4     CONSTANT uuid := '51072000-0000-4000-8000-000000000004'::uuid;
+    rec      record;
+    v_fi     uuid;
+    v_u      uuid;
+    i        int;
+BEGIN
+    FOR rec IN
+        SELECT * FROM (VALUES
+            -- idx, source activity, recipient, per-person, age,
+            --   payees paid_direct, payees outstanding
+            (9,  c_a3, c_hero, 50000, interval '4 days 20 hours',
+                 ARRAY[2,3], ARRAY[4,5,7]),
+            (10, c_a4, c_u2,   50000, interval '11 days 20 hours',
+                 ARRAY[4,5],  ARRAY[1,6,8])
+        ) AS t(idx, src_activity, recipient, per_person, age, paid, outstanding)
+    LOOP
+        v_fi := ('51073000-0000-4000-8000-' || lpad(rec.idx::text, 12, '0'))::uuid;
+
+        INSERT INTO public.lobby_feed_item (id, lobby_id, author_id, kind, payload, created_at)
+        VALUES (
+            v_fi, c_soccer, rec.recipient, 'payment_request',
+            jsonb_build_object(
+                'type',               'split',
+                'source_activity_id', rec.src_activity,
+                'recipient_id',       rec.recipient,
+                'cost_type',          'per_pax',
+                'total_amount',       rec.per_person,
+                'per_person_amount',  rec.per_person),
+            now() - rec.age);
+
+        FOREACH i IN ARRAY rec.paid LOOP
+            v_u := ('51070000-0000-4000-8000-' || lpad(i::text, 12, '0'))::uuid;
+            INSERT INTO public.lobby_payment_request_payee
+                (feed_item_id, user_id, amount_owed, status, paid_at)
+            VALUES (v_fi, v_u, rec.per_person, 'paid_direct', now() - rec.age + interval '6 hours');
+        END LOOP;
+
+        FOREACH i IN ARRAY rec.outstanding LOOP
+            v_u := ('51070000-0000-4000-8000-' || lpad(i::text, 12, '0'))::uuid;
+            INSERT INTO public.lobby_payment_request_payee
+                (feed_item_id, user_id, amount_owed, status)
+            VALUES (v_fi, v_u, rec.per_person, 'outstanding');
+        END LOOP;
     END LOOP;
 END
 $shot$;
