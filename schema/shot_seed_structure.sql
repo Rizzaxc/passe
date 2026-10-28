@@ -35,8 +35,9 @@
 --   * soccer elo_seed `fair` (skill rank 2 — deliberately mid, so lobbies can
 --     sit both above and below him)
 --   * captain of one soccer lobby, plain member of one pickleball lobby
---   * networks: VNG Corporation (383, alumni=false -> the ACTIVE tie)
---               DH Bach khoa TP.HCM (193, alumni=true)
+--   * networks: "Cong ty TNHH Tra Da Via He" (990001, alumni=false -> the
+--               ACTIVE tie) and "Dai hoc Ha Vot" (990002, alumni=true).
+--               Both SYNTHETIC and deliberately fictional — see 1b-bis.
 --   * industry: technology (17)
 --
 -- ── Districts: depends on the ward backfill having run ──────────────────────
@@ -93,15 +94,15 @@
 --   lobby                 score  chips
 --   Bình Thạnh United     4.6    network, skill, age, playtime   <- the star card
 --   Sài Gòn Night FC      4.4    network, skill, age, playtime
---   Bách Khoa Alumni FC   3.9    network, age, playtime
+--   Cựu Sinh Viên FC      3.9    network, age, playtime
 --   Phủi Cuối Tuần        3.4    network, age, playtime
---   Trẻ Trâu FC           3.3    skill, playtime
+--   Năng Động FC          3.3    skill, playtime
 --   Hẻm 8 FC              2.5    (none — plain card)
 --
 -- Sài Gòn Night FC was designed for 4.0/{network,skill} but lands at 4.4: 4 of
 -- its 6 members fall in the `mature` bucket via the modulo fallback in 1a and
 -- pick up the +1.5 age component. Left as-is — the wider spread reads better
--- than the planned one. Anh Em VNG FC (the hero's own lobby) also scores 4.6 but
+-- than the planned one. Anh Em Tan Làm (the hero's own lobby) also scores 4.6 but
 -- never appears in his feed; home_teammate_lobby_data excludes
 -- get_my_lobby_ids(). Four chips is also exactly _FitScoreVibes' display cap.
 --
@@ -145,6 +146,15 @@ DELETE FROM public.friendship
 WHERE requester_id::text LIKE '5107%' OR addressee_id::text LIKE '5107%';
 
 DELETE FROM public.user_network     WHERE user_id::text LIKE '5107%';
+-- Synthetic `network` rows. These cannot use the 5107 uuid scheme — network.id
+-- is an integer — so they sit in an out-of-band range well above the real max
+-- (586 at time of writing). Deleted AFTER user_network above, which FKs them.
+DELETE FROM public.network          WHERE id >= 990000;
+-- Synthetic `network` rows. These cannot use the 5107 uuid scheme — network.id
+-- is an integer — so they sit in an out-of-band range well above the real max
+-- (586 at time of writing). Deleted AFTER user_network above, which references
+-- them.
+DELETE FROM public.network          WHERE id >= 990000;
 DELETE FROM public.user_industry    WHERE user_id::text LIKE '5107%';
 DELETE FROM public.user_rating      WHERE user_id::text LIKE '5107%';
 DELETE FROM public.soccer_profile     WHERE user_id::text LIKE '5107%';
@@ -159,8 +169,8 @@ DECLARE
     -- bcrypt('12345678'), identical to schema/demo_coach_seed.sql so every
     -- seeded account shares one memorable demo password.
     c_pw    CONSTANT text := '$2a$10$PznXR5Vz3pMfqVbKwR0bcebFX74Cb6m9o0bRfWiwwH/9eS/uxHHTK';
-    c_vng   CONSTANT bigint := 383;   -- VNG Corporation        (company, city NULL)
-    c_bk    CONSTANT bigint := 193;   -- DH Bach khoa TP.HCM    (university, city 1)
+    c_co    CONSTANT bigint := 990001; -- "Cong ty TNHH Tra Da Via He" (synthetic)
+    c_uni   CONSTANT bigint := 990002; -- "Dai hoc Ha Vot"              (synthetic)
     c_tech  CONSTANT integer := 17;   -- industry: technology
 
     -- Hero's schedule. Every lobby below overlaps it so none is filtered out by
@@ -180,12 +190,12 @@ DECLARE
       'trungkien','nhatminh','vinhphat','dathien','hieunghia','kienvu','locphat','namphong',
       'phongvu','quanle','sonlam','taianh','tuanvu','vuhoang','anhkhoa','binhminh',
       'cuongtran','dungpham','giangho','haidang','khoale','lamvu','manhhung','nghiadao',
-      'oanhvu','phinguyen','quocbao','sangle','thaison','ucduy','vietanh','xuanbac',
+      'oanhvu','phinguyen','quocbao','sangle','thaison','ucduy','vietanh','xuanhieu',
       'yenthe','anhdung','baoquoc','chithanh','danhnam','ducanh','gianghai','hoangvu',
       'khangle','longvu','minhkhoi','ngocson','phattai','quangminh','sinhvu','tanphat',
       'thehung','tiendat','trongnghia','tuananh','vandat','viethoang','xuanhoa','anhquan',
       'bachduong','caolinh','daiduong','dinhnam','giaminh','hungthinh','khaihoan','langiang',
-      'minhduc','nguyenvu','phuongnam','quyenle','songhai','thanhtung','trieuvy','tuongvi',
+      'minhduc','nguyenvu','phuongnam','quyenle','songhai','thanhtung','trieuan','tuongminh',
       'vanhung','xuanthanh'
     ];
 
@@ -258,8 +268,8 @@ BEGIN
                     -- card. Six is also District's per-filter cap
                     -- (FilterController.setDistricts trims above 6).
                     'districts', CASE WHEN i = 1
-                                      THEN '["hcm_binhthanh","hcm_binhloitrung","hcm_binhquoi","hcm_thanhmytay","hcm_dienhong","hcm_xuanhoa"]'::jsonb
-                                      ELSE '["hcm_binhthanh","hcm_binhloitrung"]'::jsonb END
+                                      THEN '["hcm_binhthanh","hcm_dienhong","hcm_saigon","hcm_benthanh","hcm_xuanhoa","hcm_tanthuan"]'::jsonb
+                                      ELSE '["hcm_binhthanh","hcm_dienhong"]'::jsonb END
                 )
             ))
         ON CONFLICT (id) DO UPDATE
@@ -334,6 +344,45 @@ BEGIN
 END
 $shot$;
 
+-- ── 1b-bis. Synthetic networks ──────────────────────────────────────────────
+-- The FitScore gradient needs a SHARED network, and network names render in
+-- frame: the Profile tab, /user/:id, the lobby public preview sheet, and
+-- NetworkSelectionScreen — which is exactly where match_factor_sheet.dart
+-- deep-links from a tapped "Chung mạng lưới" chip. Every row in the real
+-- `network` table is a real organisation, and putting a real employer or
+-- university on a marketing screenshot implies an association it never agreed
+-- to.
+--
+-- So the two ties the hero shares are deliberately, visibly FICTIONAL — a joke
+-- nobody can mistake for a real company ("Đại học Hư Cấu" is literally
+-- "University of Fiction"). `name_fts` is a generated column, so only
+-- name/category/city are supplied.
+INSERT INTO public.network (id, name, category, city) VALUES
+    (990001, 'Công ty TNHH Cà Phê Sữa Đá', 'company',    NULL),
+    (990002, 'Đại học Hư Cấu',             'university', 1)
+ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
+
+-- ── 1b-bis. Synthetic networks ──────────────────────────────────────────────
+-- The FitScore gradient needs a SHARED network, and network names render in
+-- frame: the Profile tab, /user/:id, the lobby public preview sheet, and
+-- NetworkSelectionScreen — which is exactly where match_factor_sheet.dart
+-- deep-links from a tapped "Chung mạng lưới" chip. Every row in the real
+-- `network` table is a real organisation, and putting a real employer or
+-- university on a storefront screenshot implies an association it never agreed
+-- to.
+--
+-- So the two ties the hero shares are deliberately, visibly FICTIONAL. The test
+-- is not "sounds unusual" but "could not exist": a plausible invented name (a
+-- coffee brand, say) can collide with a real business, which defeats the point.
+-- "Đại học Ha Vợt" is a phonetic parody, not an institution — and `vợt`
+-- ("racket") is a quiet joke for a sports app.
+--
+-- `name_fts` is a generated column, so only name/category/city are supplied.
+INSERT INTO public.network (id, name, category, city) VALUES
+    (990001, 'Công ty TNHH Trà Đá Vỉa Hè', 'company',    NULL),
+    (990002, 'Đại học Ha Vợt',             'university', 1)
+ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
+
 -- ── 1c. Affiliations — the network half of the gradient ─────────────────────
 -- Scoring recap (user -> lobby branch of calculate_profile_compat):
 --   >= 3 members sharing ANY of the caller's networks           -> +4 (flat)
@@ -341,52 +390,52 @@ $shot$;
 --   1-2 members sharing, alumni on either side                  -> +2
 DO $shot$
 DECLARE
-    c_vng  CONSTANT bigint  := 383;
-    c_bk   CONSTANT bigint  := 193;
+    c_co   CONSTANT bigint  := 990001;
+    c_uni  CONSTANT bigint  := 990002;
     c_tech CONSTANT integer := 17;
     v_id   uuid;
     i      int;
 BEGIN
-    -- Hero: an ACTIVE employer tie (VNG) and an ALUMNI university tie (Bach khoa).
+    -- Hero: an ACTIVE employer tie and an ALUMNI university tie.
     -- Two ties of different alumni-ness is what lets L2 (+3, needs an active
     -- match on both sides) and L4 (+2, alumni-only) score differently at all.
     v_id := '51070000-0000-4000-8000-000000000001'::uuid;
     INSERT INTO public.user_network (user_id, network_id, alumni) VALUES
-        (v_id, c_vng, false),
-        (v_id, c_bk,  true);
+        (v_id, c_co, false),
+        (v_id, c_uni,  true);
     INSERT INTO public.user_industry (user_id, industry_id) VALUES (v_id, c_tech);
 
     -- Hero's own lobby (2-8): teammates from work. Not scored (you don't get a
     -- FitScore against your own lobby) but it makes the roster coherent.
     FOR i IN 2 .. 8 LOOP
         v_id := ('51070000-0000-4000-8000-' || lpad(i::text, 12, '0'))::uuid;
-        INSERT INTO public.user_network (user_id, network_id, alumni) VALUES (v_id, c_vng, false);
+        INSERT INTO public.user_network (user_id, network_id, alumni) VALUES (v_id, c_co, false);
         INSERT INTO public.user_industry (user_id, industry_id) VALUES (v_id, c_tech);
     END LOOP;
 
-    -- L1 (9-15) — THE STAR CARD. Four colleagues share VNG, so the >=3 branch
+    -- L1 (9-15) — THE STAR CARD. Four colleagues share the employer, so the >=3 branch
     -- fires: +4. Combined with >=half `fair` (+3) and >=half `mature` (+1.5)
     -- that is 8.5 raw -> 4.6/5, the male ceiling.
     FOR i IN 9 .. 12 LOOP
         v_id := ('51070000-0000-4000-8000-' || lpad(i::text, 12, '0'))::uuid;
-        INSERT INTO public.user_network (user_id, network_id, alumni) VALUES (v_id, c_vng, false);
+        INSERT INTO public.user_network (user_id, network_id, alumni) VALUES (v_id, c_co, false);
         INSERT INTO public.user_industry (user_id, industry_id) VALUES (v_id, c_tech);
     END LOOP;
 
     -- L2 (16-21) — exactly ONE shared tie, active on both sides: +3.
     v_id := '51070000-0000-4000-8000-000000000016'::uuid;
-    INSERT INTO public.user_network (user_id, network_id, alumni) VALUES (v_id, c_vng, false);
+    INSERT INTO public.user_network (user_id, network_id, alumni) VALUES (v_id, c_co, false);
 
-    -- L3 (22-28) — three Bach khoa alumni: the >=3 branch again (+4, flat,
+    -- L3 (22-28) — three university alumni: the >=3 branch again (+4, flat,
     -- alumni-ness irrelevant once you clear three).
     FOR i IN 22 .. 24 LOOP
         v_id := ('51070000-0000-4000-8000-' || lpad(i::text, 12, '0'))::uuid;
-        INSERT INTO public.user_network (user_id, network_id, alumni) VALUES (v_id, c_bk, true);
+        INSERT INTO public.user_network (user_id, network_id, alumni) VALUES (v_id, c_uni, true);
     END LOOP;
 
-    -- L4 (29-34) — ONE Bach khoa tie, alumni on both sides, so it stops at +2.
+    -- L4 (29-34) — ONE university tie, alumni on both sides, so it stops at +2.
     v_id := '51070000-0000-4000-8000-000000000029'::uuid;
-    INSERT INTO public.user_network (user_id, network_id, alumni) VALUES (v_id, c_bk, true);
+    INSERT INTO public.user_network (user_id, network_id, alumni) VALUES (v_id, c_uni, true);
 
     -- L5 (35-40) and L6 (41-46) share NOTHING with the hero. L5 still scores on
     -- skill alone; L6 lands on the 2.5 floor and renders as a plain card.
@@ -421,28 +470,39 @@ BEGIN
     FOR rec IN
         SELECT * FROM (VALUES
             -- idx, captain, sport, name, venue, member range, description
-            ( 1,  1, 1, 'Anh Em VNG FC',        'Sân vận động Gia Định',
-                   2,  8, 'Đội bóng anh em trong công ty, đá tối thứ 6 hàng tuần.'),
-            ( 2,  9, 1, 'Bình Thạnh United',    'Sân bóng đá Phan Chu Trinh',
+            --
+            -- Venues are PUBLIC facilities only (district stadiums and
+            -- district-run sports halls) — never a privately-branded court.
+            -- A marketing screenshot naming a real business reads as an
+            -- endorsement it hasn't agreed to.
+            ( 1,  1, 1, 'Anh Em Tan Làm',      'Sân vận động Gia Định',
+                   2,  8, 'Đội bóng anh em cùng chỗ làm, đá tối thứ 6 hàng tuần.'),
+            ( 2,  9, 1, 'Bình Thạnh United',   'Sân vận động Gia Định',
                   10, 15, 'Team phủi Bình Thạnh, vui là chính nhưng đá nghiêm túc.'),
-            ( 3, 16, 1, 'Sài Gòn Night FC',     'Sân cỏ nhân tạo Thiên Trường',
+            ( 3, 16, 1, 'Sài Gòn Night FC',    'Sân vận động Hoa Lư',
                   17, 21, 'Đá đêm sau giờ làm. Ai rảnh tối là vào.'),
-            ( 4, 22, 1, 'Bách Khoa Alumni FC',  'Sân banh số 8',
-                  23, 28, 'Cựu sinh viên Bách Khoa, duy trì kèo đều từ 2019.'),
-            ( 5, 29, 1, 'Phủi Cuối Tuần',       'Sân Bóng Đá Cỏ Nhân Tạo Mini Thành Phát',
+            ( 4, 22, 1, 'Cựu Sinh Viên FC',    'Sân vận động Tao Đàn',
+                  23, 28, 'Hội cựu sinh viên, duy trì kèo đều từ 2019.'),
+            ( 5, 29, 1, 'Phủi Cuối Tuần',      'Sân vận động Thống Nhất',
                   30, 34, 'Chỉ đá cuối tuần, không áp lực thành tích.'),
-            ( 6, 35, 1, 'Trẻ Trâu FC',          'Sân vận động Thống Nhất',
+            ( 6, 35, 1, 'Năng Động FC',        'Sân vận động Thống Nhất',
                   36, 40, 'Anh em sinh viên, đá nhanh khoẻ, thiếu người thường xuyên.'),
-            ( 7, 41, 1, 'Hẻm 8 FC',             'Sân bóng đá Phan Chu Trinh',
+            ( 7, 41, 1, 'Hẻm 8 FC',            'Sân vận động Hoa Lư',
                   42, 46, 'Đội xóm, đá cho vui, ai tới cũng được.'),
-            ( 8, 57, 5, 'Pickle Bình Thạnh',    'Liber Pickleball',
+            -- Pickleball: district sports HALLS. No public venue in HCMC
+            -- declares pickleball (every tagged one is a private club), and
+            -- these declare no sport at all — which Location.matchesSport
+            -- treats as valid for any sport, so they are honest homegrounds
+            -- rather than a mislabelled pitch. Indoor halls are also where
+            -- pickleball is actually played here.
+            ( 8, 57, 5, 'Pickle Bình Thạnh',   'Trung Tâm TDTT Quận Bình Thạnh',
                   58, 61, 'Nhóm pickleball Bình Thạnh, đánh đôi là chính.'),
-            ( 9, 62, 5, 'Smash Sài Gòn',        'Pickleball 426',
+            ( 9, 62, 5, 'Smash Sài Gòn',       'Nhà Thi Đấu Hồ Xuân Hương',
                   63, 66, 'Đánh đôi trình độ khá, giao lưu hàng tuần.'),
-            (10, 67, 5, 'Pickle Sớm Mai',       'Sân Pickleball Thành Thái',
+            (10, 67, 5, 'Pickle Sớm Mai',      'Trung tâm Thể dục Thể thao Quận 10',
                   68, 71, 'Đánh sáng sớm trước giờ đi làm.'),
-            (11, 72, 5, 'CLB Pickle Quận 3',    'CLB Pickleball Ho Xuan Huong',
-                  73, 76, 'CLB quận 3, mở cho người mới.')
+            (11, 72, 5, 'CLB Pickle Quận 7',   'Nhà thi đấu đa năng Quận 7',
+                  73, 76, 'CLB quận 7, mở cho người mới.')
         ) AS t(idx, captain_idx, sport_id, lname, venue, m_from, m_to, descr)
     LOOP
         v_lobby := ('51071000-0000-4000-8000-' || lpad(rec.idx::text, 12, '0'))::uuid;
@@ -455,7 +515,12 @@ BEGIN
         WHERE l.name = rec.venue
           AND l.city_cluster = 1
           AND l.district <> ''
-          AND l.sport_ids @> ARRAY[rec.sport_id]::bigint[]
+          AND l.is_verified
+          -- Mirrors Location.matchesSport exactly: a venue matches when it
+          -- declares this sport, OR declares no sport at all (which is NOT
+          -- the same as "supports nothing" — see location_sport_tags.sql).
+          AND (l.sport_ids @> ARRAY[rec.sport_id]::bigint[]
+               OR NOT l.has_declared_sport)
         LIMIT 1;
 
         IF v_loc IS NULL THEN
