@@ -73,6 +73,10 @@ WHERE activity_id::text LIKE '51072%' OR user_id::text LIKE '5107%';
 
 DELETE FROM public.activity WHERE id::text LIKE '51072%';
 
+-- Freeplay rows: freeplay_activity is keyed by activity_id so it goes with the
+-- activity delete above, but the host profile is its own row.
+DELETE FROM public.freeplay_host WHERE id::text LIKE '51074%';
+
 -- ── 1. Activities ───────────────────────────────────────────────────────────
 DO $shot$
 DECLARE
@@ -250,6 +254,18 @@ BEGIN
 END
 $shot$;
 
+-- user_payment_info IS DELIBERATELY NOT SEEDED. DO NOT ADD IT.
+--   The QR sheet builds a LIVE image from
+--   img.vietqr.io/image/<bin>-<account>-compact2.png. A fictional bin renders a
+--   broken QR; a real bin renders a genuinely SCANNABLE one encoding that bank
+--   plus whatever account number is seeded -- and a screenshot of a scannable
+--   QR is a transfer target. If that number ever collided with a real account,
+--   someone scanning the storefront image could send money to a stranger.
+--   Decision: seed nothing. payRecipient (lib/core/payment/pay_recipient.dart)
+--   already degrades to a toast when a recipient has no payment info, so the
+--   split card still renders in full -- amounts, payees, paid/outstanding --
+--   and only the pay action no-ops. Real details can be entered by hand at
+--   capture time if a transfer surface is ever genuinely wanted in frame.
 -- ── 4. Bill splitting (shot 4) ──────────────────────────────────────────────
 -- The website's own claim is "Passe chia phần. Ngân hàng chuyển tiền." — this
 -- is the "chia phần" half. The bank half is `user_payment_info`, seeded
@@ -320,6 +336,108 @@ BEGIN
                 (feed_item_id, user_id, amount_owed, status)
             VALUES (v_fi, v_u, rec.per_person, 'outstanding');
         END LOOP;
+    END LOOP;
+END
+$shot$;
+
+-- ── 5. Freeplay listings (shot 10, player side) ─────────────────────────────
+-- Discover ▸ Kèo is now a first-class subtab. The hero is a BUYER here, so
+-- every listing belongs to someone he is not a member of — otherwise the seat
+-- CTA is replaced by owner controls and the shot becomes the wrong screen.
+--
+-- A listing is an `activity` plus a 1:1 `freeplay_activity` row. Two ownership
+-- shapes exist and both are seeded, because the feed renders them identically
+-- but resolves identity differently (`coalesce(h.display_name, l.name)`):
+--   * LOBBY-owned: the activity keeps `lobby_id`, `freeplay_host_id` stays
+--     NULL, and there is deliberately NO phantom `freeplay_host` row — see
+--     schema/lobby_freeplay_exposure.sql. Capacity means seats for OUTSIDERS,
+--     counted independently of member RSVPs.
+--   * HOST-owned: a real `freeplay_host` row, `freeplay_host_id` set and
+--     `lobby_id` NULL (activity_source_exclusivity forbids both).
+--
+-- No `freeplay_request` rows are seeded: a pending seat request would put the
+-- hero in a mid-handshake state, and the shot wants the browse/join CTA live.
+-- Host display name follows the structure seed's rule — fictional, not merely
+-- invented.
+DO $shot$
+DECLARE
+    c_host_u  CONSTANT uuid := '51070000-0000-4000-8000-000000000047'::uuid;
+    c_host    CONSTANT uuid := '51074000-0000-4000-8000-000000000001'::uuid;
+    rec       record;
+    v_act     uuid;
+    v_loc     uuid;
+    v_lobby   uuid;
+    v_today   date;
+    v_start   timestamptz;
+BEGIN
+    -- The one host-owned listing needs a host profile.
+    INSERT INTO public.freeplay_host (id, user_id, display_name, bio, status)
+    VALUES (c_host, c_host_u, 'Sân Chiều Thứ Bảy',
+            'Giữ sân cố định chiều thứ 7, nhận thêm người lẻ cho đủ đội.', 'active')
+    ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, bio = EXCLUDED.bio;
+
+    FOR rec IN
+        SELECT * FROM (VALUES
+            -- idx, owning lobby idx (NULL = host-owned), sport, ISO dow, hour, minute,
+            --   dur, capacity, male price, female price, skills, description
+            --
+            -- Days/times are NOT arbitrary. Discover's filter preloads the
+            -- hero's own playtime (DiscoverFilterController.build reads
+            -- user.details.playtime), and home_freeplay_data filters the
+            -- listing's OWN start_time against it, deriving the chunk as
+            -- <9 early, <14 midday, <18 noon, else night — all in ICT. The
+            -- hero's playtime is mon/wed/fri night + sat noon, so a listing
+            -- outside those slots is invisible on the default filter. An
+            -- earlier pass put these on Thu/Sun and the feed came back EMPTY.
+            (1, 2,    1, 5, 19, 30, interval '2 hours', 4, 60000, 40000,
+                ARRAY['casual','fair'],
+                'Thiếu 4 người cho kèo tối thứ 6, sân cỏ nhân tạo, có đèn.'),
+            (2, 3,    1, 3, 19, 30, interval '2 hours', 3, 70000, 50000,
+                ARRAY['fair','good'],
+                'Kèo tối thứ 4 hàng tuần, cần thêm 3 chân. Đá vui, không ăn thua.'),
+            (3, NULL, 1, 6, 16,  0, interval '2 hours', 6, 50000, 50000,
+                ARRAY['beginner','casual'],
+                'Sân giữ cố định chiều thứ 7, nhận người lẻ. Ai mới chơi cũng được.')
+        ) AS t(idx, lobby_idx, sport_id, dow, hh, mi, dur, capacity, m_price, f_price, skills, descr)
+    LOOP
+        v_act := ('51072000-0000-4000-8000-' || lpad((100 + rec.idx)::text, 12, '0'))::uuid;
+
+        -- Next occurrence of rec.dow at rec.hh:rec.mi ICT, strictly future.
+        v_today := (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
+        v_start := ((v_today + (((rec.dow - extract(isodow FROM v_today)::int) + 7) % 7))
+                     + make_time(rec.hh, rec.mi, 0)) AT TIME ZONE 'Asia/Ho_Chi_Minh';
+        IF v_start <= now() THEN
+            v_start := v_start + interval '7 days';
+        END IF;
+
+        IF rec.lobby_idx IS NULL THEN
+            v_lobby := NULL;
+            -- Host-owned: borrow a real public venue for the address fields.
+            SELECT id INTO v_loc FROM public.location
+            WHERE city_cluster = 1 AND is_verified AND name = 'Sân vận động Hoa Lư' LIMIT 1;
+        ELSE
+            v_lobby := ('51071000-0000-4000-8000-' || lpad(rec.lobby_idx::text, 12, '0'))::uuid;
+            SELECT location_id INTO v_loc FROM public.lobby_homeground
+            WHERE lobby_id = v_lobby AND is_primary;
+        END IF;
+
+        INSERT INTO public.activity (
+            id, user_id, sport_id, lobby_id, freeplay_host_id, location_id, start_time, end_time)
+        VALUES (
+            v_act,
+            CASE WHEN rec.lobby_idx IS NULL
+                 THEN c_host_u
+                 ELSE (SELECT captain_id FROM public.lobby WHERE id = v_lobby) END,
+            rec.sport_id, v_lobby,
+            CASE WHEN rec.lobby_idx IS NULL THEN c_host ELSE NULL END,
+            v_loc, v_start, v_start + rec.dur);
+
+        INSERT INTO public.freeplay_activity (
+            activity_id, description, capacity, male_price, female_price,
+            recommended_skills, venue_name, city_cluster, ward)
+        SELECT v_act, rec.descr, rec.capacity, rec.m_price, rec.f_price, rec.skills,
+               l.name, l.city_cluster, l.district
+        FROM public.location l WHERE l.id = v_loc;
     END LOOP;
 END
 $shot$;
