@@ -128,7 +128,11 @@ class WallFeedController extends _$WallFeedController {
 
   SupabaseClient get _supabase => Supabase.instance.client;
   int _generation = 0;
-  int _nextPage = 1;
+
+  /// `wall_feed_data` is 1-BASED, like every other paginated feed RPC
+  /// (see schema/wall_feed_pagination_one_based.sql). The first page is 1,
+  /// so the next one to fetch starts at 2.
+  int _nextPage = 2;
   int? _sportId;
   bool _hasMore = true;
   bool _loadingMore = false;
@@ -143,7 +147,7 @@ class WallFeedController extends _$WallFeedController {
   Future<List<WallPost>> build() async {
     final generation = ++_generation;
     _sportId = ref.watch(feedSportFilterProvider);
-    _nextPage = 1;
+    _nextPage = 2;
     _hasMore = true;
     _loadingMore = false;
     _loadMoreFailed = false;
@@ -157,7 +161,7 @@ class WallFeedController extends _$WallFeedController {
       return const [];
     }
 
-    final posts = await _fetchPage(0, sportId: _sportId);
+    final posts = await _fetchPage(1, sportId: _sportId);
     if (generation == _generation) {
       _hasMore = posts.length == _pageSize;
     }
