@@ -121,6 +121,26 @@
 -- FK-safe order. lobby_before_delete raises if non-captain members remain, so
 -- those go first; lobby delete then cascades the captain row and feed/match.
 
+-- Timeline-owned rows first. schema/shot_seed_timeline.sql creates activities,
+-- posts, payment rows, a freeplay host and health/course rows that all FK back
+-- to the cast below, so this file cannot drop its own users while any of them
+-- survive. Re-running structure therefore clears timeline too -- re-apply
+-- shot_seed_timeline.sql afterwards. (Found the hard way: the user delete
+-- failed on freeplay_host_user_id_fkey.)
+DELETE FROM public.wall_post                   WHERE author_id::text LIKE '5107%';
+DELETE FROM public.lobby_payment_request_payee WHERE user_id::text   LIKE '5107%';
+DELETE FROM public.lobby_feed_item             WHERE id::text LIKE '51073%'
+                                                   OR author_id::text LIKE '5107%';
+DELETE FROM public.activity_confirmation       WHERE user_id::text   LIKE '5107%';
+-- activity before freeplay_host: activity.freeplay_host_id references it.
+DELETE FROM public.activity                    WHERE id::text LIKE '51072%'
+                                                   OR user_id::text LIKE '5107%';
+DELETE FROM public.freeplay_host               WHERE user_id::text   LIKE '5107%';
+DELETE FROM public.user_achievement            WHERE user_id::text   LIKE '5107%';
+DELETE FROM public.daily_health_summary        WHERE user_id::text   LIKE '5107%';
+DELETE FROM public.user_health_link            WHERE user_id::text   LIKE '5107%';
+DELETE FROM public.course_member               WHERE user_id::text   LIKE '5107%';
+
 DELETE FROM public.lobby_member lm
 USING public.lobby l
 WHERE lm.lobby_id = l.id
@@ -161,14 +181,19 @@ DELETE FROM public.soccer_profile     WHERE user_id::text LIKE '5107%';
 DELETE FROM public.pickleball_profile WHERE user_id::text LIKE '5107%';
 
 DELETE FROM public."user" WHERE id::text LIKE '5107%';
+DELETE FROM auth.identities WHERE user_id::text LIKE '5107%';
 DELETE FROM auth.users    WHERE id::text LIKE '5107%';
 
 -- ── 1. Generation ───────────────────────────────────────────────────────────
 DO $shot$
 DECLARE
-    -- bcrypt('12345678'), identical to schema/demo_coach_seed.sql so every
-    -- seeded account shares one memorable demo password.
-    c_pw    CONSTANT text := '$2a$10$PznXR5Vz3pMfqVbKwR0bcebFX74Cb6m9o0bRfWiwwH/9eS/uxHHTK';
+    -- The demo password, hashed HERE rather than pasted as a literal.
+    -- The hash in schema/mocked_seed.sql was copied in at first and does NOT
+    -- decode to '12345678' -- that seed's own header says its accounts "are
+    -- never used to sign in", so nobody had ever checked it. Sign-in failed
+    -- with a correct-looking password. Generating it makes the password and
+    -- the hash impossible to disagree.
+    c_pw    CONSTANT text := extensions.crypt('12345678', extensions.gen_salt('bf'));
     c_co    CONSTANT bigint := 990001; -- "Cong ty TNHH Tra Da Via He" (synthetic)
     c_uni   CONSTANT bigint := 990002; -- "Dai hoc Ha Vot"              (synthetic)
     c_tech  CONSTANT integer := 17;   -- industry: technology
@@ -205,6 +230,7 @@ DECLARE
     i         int;
 
     -- Per-user attributes, resolved in the loop.
+    v_email   text;
     v_gender  text;
     v_age     text;
     v_seed    text;
@@ -218,6 +244,8 @@ BEGIN
     -- ---------------------------------------------------------------------
     FOR i IN 1 .. array_length(v_names, 1) LOOP
         v_id := ('51070000-0000-4000-8000-' || lpad(i::text, 12, '0'))::uuid;
+        v_email := CASE WHEN i = 1 THEN 'shothero@demo.passe'
+                        ELSE 'shotuser' || lpad(i::text, 2, '0') || '@demo.passe' END;
 
         -- Cast composition, tuned for the gradient documented in the header.
         --   `mature` dominates L1/L3/L4 so the age component (+1.5) fires there
@@ -243,12 +271,30 @@ BEGIN
             confirmation_token, recovery_token, email_change_token_new, email_change)
         VALUES (
             '00000000-0000-0000-0000-000000000000', v_id, 'authenticated', 'authenticated',
-            CASE WHEN i = 1 THEN 'shothero@demo.passe'
-                 ELSE 'shotuser' || lpad(i::text, 2, '0') || '@demo.passe' END,
+            v_email,
             c_pw, now(), now(), now(),
             '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb,
             '', '', '', '')
         ON CONFLICT (id) DO NOTHING;
+
+        -- Without this, email sign-in fails for an otherwise perfectly valid
+        -- auth.users row: GoTrue resolves an email login through
+        -- auth.identities, not auth.users directly. democoach1 has one (which
+        -- is why that account could always sign in) and these could not.
+        -- `email` is a GENERATED column derived from identity_data->>'email',
+        -- so it must not appear in the column list.
+        INSERT INTO auth.identities (
+            provider_id, user_id, identity_data, provider,
+            created_at, updated_at)
+        VALUES (
+            v_id::text, v_id,
+            jsonb_build_object(
+                'sub',            v_id::text,
+                'email',          v_email,
+                'email_verified', true,
+                'phone_verified', false),
+            'email', now(), now())
+        ON CONFLICT (provider, provider_id) DO NOTHING;
 
         INSERT INTO public."user" (id, username, tag_number, details)
         VALUES (
