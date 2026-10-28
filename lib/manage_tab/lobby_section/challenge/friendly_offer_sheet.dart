@@ -4,11 +4,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/format.dart';
+import '../../../core/location_repository.dart';
 import '../../../core/model/challenge.dart';
 import '../../../logger/talker.dart';
 import '../../../ui/main.dart';
+import '../feed/home_ground_selector.dart';
 import 'friendly_offer_controller.dart';
-import 'offer_fields.dart';
 
 /// The three fixtures a lobby is advertising.
 ///
@@ -23,8 +24,8 @@ Future<void> showFriendlyOfferSheet(BuildContext context, String lobbyId) {
   );
 }
 
-/// "Đăng thách đấu" entry from the planner: straight into the form when
-/// there's nothing to manage yet, the board once offers exist.
+/// "Đăng thách đấu" entry from the planner: straight into the form for the
+/// next free slot, the board only when all three are taken.
 Future<void> openChallengeComposer(BuildContext context, String lobbyId) async {
   final container = ProviderScope.containerOf(context);
   ChallengeOfferBoard? board;
@@ -34,7 +35,9 @@ Future<void> openChallengeComposer(BuildContext context, String lobbyId) async {
         .timeout(const Duration(seconds: 5));
   } catch (_) {}
   if (!context.mounted) return;
-  if (board == null || board.open.isNotEmpty || board.nextFreeSlot == null) {
+  // Open offers are managed from their own Planner cards now, so the board is
+  // only the fallback for when every slot is taken (or the load failed).
+  if (board == null || board.nextFreeSlot == null) {
     return showFriendlyOfferSheet(context, lobbyId);
   }
   return showFriendlyOfferFormSheet(
@@ -212,12 +215,6 @@ class _SlotCard extends ConsumerWidget {
 
     final terms = <String>[
       o.ruleset.getLocalizedName(context, param: o.rulesetParam),
-      // The publisher IS home, so "us" resolves correctly with weAreHome: true.
-      ?o.handicapSide.getLocalizedLabel(
-        context,
-        weAreHome: true,
-        amount: o.handicapAmount,
-      ),
       if (o.costSplit != ChallengeCostSplit.none)
         o.costSplit.getLocalizedLabel(context, weAreHome: true),
       if (o.bountyKind.isSet && o.bountyAmount != null)
@@ -263,7 +260,12 @@ class _SlotCard extends ConsumerWidget {
             if (o.liveChallengeCount > 0) _Badge(count: o.liveChallengeCount),
             FButton.icon(
               variant: .ghost,
-              onPress: () => _withdraw(context, ref, o),
+              onPress: () => confirmWithdrawChallengeOffer(
+                context,
+                ref,
+                lobbyId: lobbyId,
+                o: o,
+              ),
               child: Icon(
                 FLucideIcons.trash2,
                 size: 16,
@@ -275,56 +277,60 @@ class _SlotCard extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Future<void> _withdraw(
-    BuildContext context,
-    WidgetRef ref,
-    ChallengeOfferSlot o,
-  ) async {
-    // Withdrawing lapses everyone already on the fixture, so the count is
-    // named in the prompt rather than discovered afterwards.
-    final confirmed = await showFDialog<bool>(
-      context: context,
-      builder: (dialogCtx, style, animation) => PConfirmDialog(
-        animation: animation,
-        title: Text('challenge.offer.withdrawTitle'.tr()),
-        body: Text(
-          o.liveChallengeCount > 0
-              ? 'challenge.offer.withdrawBodyWithChallengers'.tr(
-                  namedArgs: {'count': '${o.liveChallengeCount}'},
-                )
-              : 'challenge.offer.withdrawBody'.tr(),
-        ),
-        actions: [
-          FButton(
-            variant: .outline,
-            onPress: () => Navigator.of(dialogCtx).pop(false),
-            child: Text('challenge.offer.cancel'.tr()),
-          ),
-          FButton(
-            variant: .destructive,
-            onPress: () => Navigator.of(dialogCtx).pop(true),
-            child: Text('challenge.offer.withdraw'.tr()),
-          ),
-        ],
+/// Confirm, then withdraw an offer. Shared by the offer board and the offer's
+/// own Planner card. Withdrawing lapses everyone already on the fixture and
+/// retires its session, so the count is named in the prompt.
+Future<void> confirmWithdrawChallengeOffer(
+  BuildContext context,
+  WidgetRef ref, {
+  required String lobbyId,
+  required ChallengeOfferSlot o,
+}) async {
+  // Withdrawing lapses everyone already on the fixture, so the count is
+  // named in the prompt rather than discovered afterwards.
+  final confirmed = await showFDialog<bool>(
+    context: context,
+    builder: (dialogCtx, style, animation) => PConfirmDialog(
+      animation: animation,
+      title: Text('challenge.offer.withdrawTitle'.tr()),
+      body: Text(
+        o.liveChallengeCount > 0
+            ? 'challenge.offer.withdrawBodyWithChallengers'.tr(
+                namedArgs: {'count': '${o.liveChallengeCount}'},
+              )
+            : 'challenge.offer.withdrawBody'.tr(),
       ),
+      actions: [
+        FButton(
+          variant: .outline,
+          onPress: () => Navigator.of(dialogCtx).pop(false),
+          child: Text('challenge.offer.cancel'.tr()),
+        ),
+        FButton(
+          variant: .destructive,
+          onPress: () => Navigator.of(dialogCtx).pop(true),
+          child: Text('challenge.offer.withdraw'.tr()),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+  try {
+    await ref
+        .read(friendlyOfferControllerProvider(lobbyId).notifier)
+        .withdraw(o.id);
+  } catch (e, st) {
+    talker.handle(e, st, 'withdraw friendly offer failed');
+    if (!context.mounted) return;
+    showFToast(
+      context: context,
+      icon: const Icon(FLucideIcons.circleX),
+      variant: .destructive,
+      title: Text(friendlyOfferErrorMessage(e)),
+      alignment: .bottomCenter,
     );
-    if (confirmed != true || !context.mounted) return;
-    try {
-      await ref
-          .read(friendlyOfferControllerProvider(lobbyId).notifier)
-          .withdraw(o.id);
-    } catch (e, st) {
-      talker.handle(e, st, 'withdraw friendly offer failed');
-      if (!context.mounted) return;
-      showFToast(
-        context: context,
-        icon: const Icon(FLucideIcons.circleX),
-        variant: .destructive,
-        title: Text(friendlyOfferErrorMessage(e)),
-        alignment: .bottomCenter,
-      );
-    }
   }
 }
 
@@ -380,6 +386,15 @@ Future<void> showFriendlyOfferFormSheet(
   );
 }
 
+/// How far ahead the date strip reaches for a new offer.
+const _offerHorizonDays = 30;
+
+/// Bounds and default (hours before kickoff) for when the offer stops taking
+/// challengers — the server's own default is 36h.
+const _minCloseLeadHours = 2;
+const _maxCloseLeadHoursCap = 72;
+const _defaultCloseLeadHours = 36.0;
+
 class _OfferFormSheet extends ConsumerStatefulWidget {
   final String lobbyId;
   final int slot;
@@ -398,15 +413,26 @@ class _OfferFormSheet extends ConsumerStatefulWidget {
 }
 
 class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
-  DateTime? _kickoff;
-  DateTime? _expiresAt;
+  // Kickoff is a day on the strip plus a time, as on the session scheduler.
+  late DateTime _date;
+  TimeOfDay _start = const TimeOfDay(hour: 18, minute: 0);
+
+  /// Held as a length rather than an end time so moving kickoff carries the
+  /// end along with it.
+  Duration _matchLength = defaultChallengeMatchLength;
+
+  /// How long before kickoff the offer stops taking challengers.
+  double _closeLeadHours = _defaultCloseLeadHours;
+
   String? _locationId;
-  String? _locationName;
+  // A typed-in venue with no picked suggestion, resolved into a real
+  // location id at submit time (see _submit).
+  Map<String, String?>? _freeAddress;
 
   ChallengeRuleset _ruleset = ChallengeRuleset.standard;
-  final _rulesetParam = TextEditingController();
-  ChallengeHandicapSide _handicapSide = ChallengeHandicapSide.none;
-  final _handicapAmount = TextEditingController();
+
+  /// Sets for best-of, rubbers for a team tie; ignored by other rulesets.
+  int _rulesetParam = 3;
   final _venueCost = TextEditingController();
   ChallengeCostSplit _costSplit = ChallengeCostSplit.none;
   ChallengeBountyKind _bountyKind = ChallengeBountyKind.none;
@@ -420,17 +446,17 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
     super.initState();
     final e = widget.existing;
     if (e != null) {
-      _kickoff = e.kickoff;
-      _expiresAt = e.expiresAt;
+      _date = DateTime(e.kickoff.year, e.kickoff.month, e.kickoff.day);
+      _start = TimeOfDay.fromDateTime(e.kickoff);
+      _matchLength = e.endTime.difference(e.kickoff);
+      _closeLeadHours = (e.kickoff.difference(e.expiresAt).inMinutes / 60.0)
+          .roundToDouble();
       _locationId = e.locationId;
-      _locationName = e.locationName;
       _ruleset = e.ruleset;
-      if (e.rulesetParam != null) _rulesetParam.text = '${e.rulesetParam}';
-      _handicapSide = e.handicapSide;
-      if (e.handicapAmount != null)
-        _handicapAmount.text = '${e.handicapAmount}';
-      if (e.venueCost != null)
+      if (e.rulesetParam != null) _rulesetParam = e.rulesetParam!;
+      if (e.venueCost != null) {
         _venueCost.text = e.venueCost!.round().toString();
+      }
       _costSplit = e.costSplit;
       _bountyKind = e.bountyKind;
       if (e.bountyAmount != null) {
@@ -438,35 +464,91 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
       }
       _termsNote.text = e.termsNote ?? '';
     } else {
+      final now = DateTime.now();
+      _date = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).add(const Duration(days: 1));
       // A lobby nearly always offers matches at the ground it already plays on.
       _locationId = widget.board.homegroundId;
-      _locationName = widget.board.homegroundName;
     }
+    _clampCloseLead();
   }
 
   @override
   void dispose() {
-    _rulesetParam.dispose();
-    _handicapAmount.dispose();
     _venueCost.dispose();
     _bountyAmount.dispose();
     _termsNote.dispose();
     super.dispose();
   }
 
-  /// Mirrors `publish_challenge_offer`'s default exactly — kickoff − 36h,
-  /// clamped to at least an hour from now on a short-notice offer — so the
-  /// form never previews a closing time the server won't actually use.
-  DateTime? get _effectiveExpiry {
-    if (_expiresAt != null) return _expiresAt;
-    final kickoff = _kickoff;
-    if (kickoff == null) return null;
-    final now = DateTime.now();
-    final standard = kickoff.subtract(const Duration(hours: 36));
-    final shortNotice = now.add(const Duration(hours: 1));
-    final latest = kickoff.subtract(const Duration(minutes: 1));
-    final clamped = shortNotice.isBefore(latest) ? shortNotice : latest;
-    return standard.isAfter(clamped) ? standard : clamped;
+  DateTime get _kickoff =>
+      DateTime(_date.year, _date.month, _date.day, _start.hour, _start.minute);
+
+  DateTime get _endTime => _kickoff.add(_matchLength);
+
+  /// Far enough out that an edited offer's own date is still on the strip.
+  int get _horizonDays {
+    final today = DateUtils.dateOnly(DateTime.now());
+    final existing = widget.existing?.kickoff;
+    final needed = existing == null
+        ? 0
+        : DateUtils.dateOnly(existing).difference(today).inDays;
+    return needed > _offerHorizonDays ? needed : _offerHorizonDays;
+  }
+
+  double get _hoursUntilKickoff =>
+      _kickoff.difference(DateTime.now()).inMinutes / 60.0;
+
+  /// Too close to kickoff for any lead on the slider to leave an hour of
+  /// gathering — the server's short-notice default takes over instead.
+  bool get _closeTooSoon => _hoursUntilKickoff < _minCloseLeadHours + 1;
+
+  /// The longest lead the slider offers right now: the cap, further capped
+  /// so the offer still stays open for at least an hour from now.
+  double get _maxCloseLeadHours => (_hoursUntilKickoff - 1).clamp(
+    _minCloseLeadHours.toDouble(),
+    _maxCloseLeadHoursCap.toDouble(),
+  );
+
+  void _clampCloseLead() {
+    _closeLeadHours = _closeLeadHours.clamp(
+      _minCloseLeadHours.toDouble(),
+      _maxCloseLeadHours,
+    );
+  }
+
+  /// The closing time the server will store: the slider's, or — too close to
+  /// kickoff for the slider — `publish_challenge_offer`'s short-notice
+  /// default (at least an hour from now, always before kickoff).
+  DateTime? get _expiresAt => _closeTooSoon
+      ? null
+      : _kickoff.subtract(Duration(minutes: (_closeLeadHours * 60).round()));
+
+  DateTime get _effectiveExpiry {
+    if (_expiresAt case final e?) return e;
+    final shortNotice = DateTime.now().add(const Duration(hours: 1));
+    final latest = _kickoff.subtract(const Duration(minutes: 1));
+    return shortNotice.isBefore(latest) ? shortNotice : latest;
+  }
+
+  void _setKickoff({DateTime? date, TimeOfDay? start}) {
+    setState(() {
+      if (date != null) _date = date;
+      if (start != null) _start = start;
+      _clampCloseLead();
+    });
+  }
+
+  Future<void> _pickStart() async {
+    final picked = await showPTimePicker(
+      context,
+      initial: _start,
+      title: 'challenge.offer.kickoff'.tr(),
+    );
+    if (picked != null) _setKickoff(start: picked);
   }
 
   void _toast(String message, {bool bad = true}) {
@@ -481,47 +563,37 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
 
   Future<void> _submit() async {
     final kickoff = _kickoff;
-    final locationId = _locationId;
-
     // Client-side checks mirror the server's, purely so the manager gets the
     // message on the field rather than as a toast after a round trip. The RPC
     // and the CHECK constraints are the actual authority.
-    if (kickoff == null) return _toast('challenge.offer.errorPickKickoff'.tr());
     if (!kickoff.isAfter(DateTime.now())) {
       return _toast('challenge.offer.errorPastKickoff'.tr());
     }
-    if (locationId == null) return _toast('challenge.offer.errorVenue'.tr());
+    final hasVenue =
+        _locationId != null ||
+        (_freeAddress?['locationName']?.trim().isNotEmpty ?? false);
+    if (!hasVenue) return _toast('challenge.offer.errorVenue'.tr());
 
-    final expiry = _effectiveExpiry;
-    if (expiry != null && !expiry.isBefore(kickoff)) {
-      return _toast('challenge.offer.errorExpiryOrder'.tr());
-    }
-    if (expiry != null && !expiry.isAfter(DateTime.now())) {
+    if (!_effectiveExpiry.isAfter(DateTime.now())) {
       return _toast('challenge.offer.errorExpiryPast'.tr());
     }
 
-    int? param;
-    if (_ruleset.takesParam) {
-      param = int.tryParse(_rulesetParam.text.trim());
-      if (param == null || param <= 0) {
-        return _toast('challenge.offer.errorRulesetParam'.tr());
-      }
-    }
+    final param = _ruleset.takesParam ? _rulesetParam : null;
     if (_ruleset.requiresNote && _termsNote.text.trim().isEmpty) {
       return _toast('challenge.offer.errorCustomNote'.tr());
     }
 
-    int? handicap;
-    if (_handicapSide != ChallengeHandicapSide.none) {
-      handicap = int.tryParse(_handicapAmount.text.trim());
-      if (handicap == null || handicap <= 0) {
-        return _toast('challenge.offer.errorHandicapAmount'.tr());
+    double? venueCost;
+    if (_costSplit != ChallengeCostSplit.none) {
+      venueCost = double.tryParse(_venueCost.text.trim());
+      if (venueCost == null || venueCost <= 0) {
+        return _toast('challenge.offer.errorVenueCost'.tr());
       }
     }
 
     double? bounty;
     if (_bountyKind.isSet) {
-      bounty = double.tryParse(_bountyAmount.text.trim().replaceAll('.', ''));
+      bounty = double.tryParse(_bountyAmount.text.trim());
       if (bounty == null || bounty <= 0) {
         return _toast('challenge.offer.errorBountyAmount'.tr());
       }
@@ -529,23 +601,27 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
 
     setState(() => _busy = true);
     try {
+      final locationId = await resolveLocationId(
+        pickedId: _locationId,
+        freeAddress: _freeAddress,
+      );
+      if (locationId == null) {
+        return _toast('challenge.offer.errorVenue'.tr());
+      }
       await ref
           .read(friendlyOfferControllerProvider(widget.lobbyId).notifier)
           .publish(
             slot: widget.slot,
             kickoff: kickoff,
+            endTime: kickoff.add(_matchLength),
             locationId: locationId,
             expiresAt: _expiresAt,
-            venueCost: double.tryParse(
-              _venueCost.text.trim().replaceAll('.', ''),
-            ),
+            venueCost: venueCost,
             costSplit: _costSplit,
             bountyKind: _bountyKind,
             bountyAmount: bounty,
             ruleset: _ruleset,
             rulesetParam: param,
-            handicapSide: _handicapSide,
-            handicapAmount: handicap,
             termsNote: _termsNote.text.trim().isEmpty
                 ? null
                 : _termsNote.text.trim(),
@@ -573,7 +649,7 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 14,
+        spacing: 20,
         children: [
           PSheetTitle(
             label: widget.existing == null
@@ -619,139 +695,174 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
               ),
             ),
 
-          PSheetSectionLabel(label: 'challenge.offer.whenWhere'.tr()),
-          ChallengeFieldTile(
-            icon: FLucideIcons.calendar,
-            label: 'challenge.offer.kickoff'.tr(),
-            value: _kickoff == null
-                ? 'notSet'.tr()
-                : formatMatchDateTime(_kickoff!),
-            filled: _kickoff != null,
-            onTap: () async {
-              final picked = await showChallengeDateTimePicker(
-                context,
-                title: 'challenge.offer.kickoff'.tr(),
-                seed: _kickoff,
-              );
-              if (picked == null) return;
-              setState(() {
-                _kickoff = picked;
-                // A hand-picked closing time that no longer precedes the new
-                // kickoff falls back to the default rather than silently
-                // failing the submit.
-                if (_expiresAt != null && !_expiresAt!.isBefore(picked)) {
-                  _expiresAt = null;
-                }
-              });
-            },
-          ),
-          ChallengeFieldTile(
-            icon: FLucideIcons.hourglass,
-            label: 'challenge.offer.closes'.tr(),
-            value: _effectiveExpiry == null
-                ? 'notSet'.tr()
-                : formatMatchDateTime(_effectiveExpiry!),
-            filled: _expiresAt != null,
-            onTap: () async {
-              final picked = await showChallengeDateTimePicker(
-                context,
-                title: 'challenge.offer.closes'.tr(),
-                seed: _effectiveExpiry,
-              );
-              if (picked != null) setState(() => _expiresAt = picked);
-            },
-          ),
-          Text(
-            'challenge.offer.closesHint'.tr(),
-            style: typography.body.xs.copyWith(color: colors.mutedForeground),
-          ),
-          ChallengeVenuePicker(
-            selectedName: _locationName,
-            onSelected: (loc) => setState(() {
-              _locationId = loc.id;
-              _locationName = loc.name;
-            }),
+          PFormSection(
+            label: 'challenge.offer.whenWhere'.tr(),
+            children: [
+              PDateStrip(
+                date: _date,
+                maxDays: _horizonDays,
+                onChanged: (d) => _setKickoff(date: d),
+              ),
+              PPickerRow(
+                icon: FLucideIcons.clock,
+                label: 'challenge.offer.kickoff'.tr(),
+                value: formatTimeOfDay(_kickoff),
+                onTap: _pickStart,
+              ),
+              PDurationSlider(
+                label: 'challenge.offer.duration'.tr(),
+                value: _matchLength,
+                min: minChallengeMatchLength,
+                max: maxChallengeMatchLength,
+                caption: 'challenge.offer.endsAt'.tr(
+                  namedArgs: {
+                    // Only the time when it's the same day; a match running
+                    // past midnight says which day.
+                    'when': DateUtils.isSameDay(_endTime, _kickoff)
+                        ? formatTimeOfDay(_endTime)
+                        : formatMatchDateTime(_endTime),
+                  },
+                ),
+                onChanged: (d) => setState(() => _matchLength = d),
+              ),
+              HomeGroundField(
+                value: _locationId,
+                lobbyId: widget.lobbyId,
+                // The section label above names the field, so the pin
+                // stands in for the outer label.
+                prefixIcon: FLucideIcons.mapPin,
+                onChanged: (id) => setState(() {
+                  _locationId = id.isEmpty ? null : id;
+                  _freeAddress = null;
+                }),
+                onFreeAddressChanged: (addr) => setState(() {
+                  _locationId = null;
+                  _freeAddress = addr;
+                }),
+              ),
+            ],
           ),
 
-          PSheetSectionLabel(label: 'challenge.offer.format'.tr()),
-          _ChipRow<ChallengeRuleset>(
-            values: ChallengeRuleset.values,
-            selected: _ruleset,
-            label: (r) => r.getLocalizedName(context),
-            onSelected: (r) => setState(() => _ruleset = r),
-          ),
-          Text(
-            _ruleset.getLocalizedDescription(context),
-            style: typography.body.xs.copyWith(color: colors.mutedForeground),
-          ),
-          if (_ruleset.takesParam)
-            FTextField(
-              label: Text(
-                _ruleset == ChallengeRuleset.bestOfSets
-                    ? 'challenge.offer.paramSets'.tr()
-                    : 'challenge.offer.paramRubbers'.tr(),
+          // When challengers must have committed by — a deadline on the
+          // offer, not part of the match's own time, so it stands apart from
+          // the section above, its own name on the row.
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 8,
+            children: [
+              if (!_closeTooSoon)
+                PLeadSlider(
+                  icon: FLucideIcons.hourglass,
+                  label: 'challenge.offer.deadline'.tr(),
+                  hours: _closeLeadHours,
+                  minHours: _minCloseLeadHours,
+                  maxHours: _maxCloseLeadHours,
+                  caption: 'challenge.offer.closesAt'.tr(
+                    namedArgs: {'when': formatMatchDateTime(_effectiveExpiry)},
+                  ),
+                  onChanged: (h) => setState(() => _closeLeadHours = h),
+                ),
+              Text(
+                _closeTooSoon
+                    ? 'challenge.offer.closesSoonHint'.tr(
+                        namedArgs: {
+                          'time': formatMatchDateTime(_effectiveExpiry),
+                        },
+                      )
+                    : 'challenge.offer.closesHint'.tr(),
+                style: typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                  height: 1.4,
+                ),
               ),
-              control: FTextFieldControl.managed(controller: _rulesetParam),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: false,
-              ),
-            ),
+            ],
+          ),
 
-          PSheetSectionLabel(label: 'challenge.offer.handicap'.tr()),
-          Text(
-            'challenge.offer.handicapHint'.tr(),
-            style: typography.body.xs.copyWith(color: colors.mutedForeground),
-          ),
-          _ChipRow<ChallengeHandicapSide>(
-            values: ChallengeHandicapSide.values,
-            selected: _handicapSide,
-            // The publisher is home, so `weAreHome: true` is a constant here.
-            label: (h) => h == ChallengeHandicapSide.none
-                ? 'challenge.offer.handicapNone'.tr()
-                : h.resolve(weAreHome: true).getLocalizedName(context),
-            onSelected: (h) => setState(() => _handicapSide = h),
-          ),
-          if (_handicapSide != ChallengeHandicapSide.none)
-            FTextField(
-              label: Text('challenge.offer.handicapAmount'.tr()),
-              control: FTextFieldControl.managed(controller: _handicapAmount),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: false,
+          // What the two sides are agreeing to — the rules and the money —
+          // as one block; each row's label already says which it is.
+          PFormSection(
+            label: 'challenge.offer.matchTerms'.tr(),
+            children: [
+              PPickerRow(
+                icon: FLucideIcons.scrollText,
+                label: 'challenge.offer.rules'.tr(),
+                sub: _ruleset.getLocalizedDescription(context),
+                value: _ruleset.getLocalizedName(context),
+                onTap: () async {
+                  final picked = await showPOptionSheet<ChallengeRuleset>(
+                    context,
+                    title: 'challenge.offer.rules'.tr(),
+                    options: ChallengeRuleset.values,
+                    selected: _ruleset,
+                    label: (r) => r.getLocalizedName(context),
+                    description: (r) => r.getLocalizedDescription(context),
+                  );
+                  if (picked != null) setState(() => _ruleset = picked);
+                },
               ),
-            ),
-
-          PSheetSectionLabel(label: 'challenge.offer.money'.tr()),
-          Text(
-            'challenge.offer.moneyHint'.tr(),
-            style: typography.body.xs.copyWith(color: colors.mutedForeground),
-          ),
-          FTextField(
-            label: Text('challenge.offer.venueCost'.tr()),
-            hint: '300000',
-            control: FTextFieldControl.managed(controller: _venueCost),
-            keyboardType: const TextInputType.numberWithOptions(decimal: false),
-          ),
-          _ChipRow<ChallengeCostSplit>(
-            values: ChallengeCostSplit.values,
-            selected: _costSplit,
-            label: (c) => c.getLocalizedNeutralLabel(context),
-            onSelected: (c) => setState(() => _costSplit = c),
-          ),
-          _ChipRow<ChallengeBountyKind>(
-            values: ChallengeBountyKind.values,
-            selected: _bountyKind,
-            label: (b) => b.getLocalizedName(context),
-            onSelected: (b) => setState(() => _bountyKind = b),
-          ),
-          if (_bountyKind.isSet)
-            FTextField(
-              label: Text('challenge.offer.bountyAmount'.tr()),
-              hint: '50000',
-              control: FTextFieldControl.managed(controller: _bountyAmount),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: false,
+              if (_ruleset.takesParam)
+                PStepperRow(
+                  icon: FLucideIcons.hash,
+                  label: _ruleset == ChallengeRuleset.bestOfSets
+                      ? 'challenge.offer.paramSets'.tr()
+                      : 'challenge.offer.paramRubbers'.tr(),
+                  min: 1,
+                  max: 9,
+                  value: _rulesetParam,
+                  onChanged: (v) => setState(() => _rulesetParam = v),
+                ),
+              PPickerRow(
+                icon: FLucideIcons.wallet,
+                label: 'challenge.offer.costSplit'.tr(),
+                value: _costSplit.getLocalizedNeutralLabel(context),
+                onTap: () async {
+                  final picked = await showPOptionSheet<ChallengeCostSplit>(
+                    context,
+                    title: 'challenge.offer.costSplit'.tr(),
+                    options: ChallengeCostSplit.values,
+                    selected: _costSplit,
+                    label: (c) => c.getLocalizedNeutralLabel(context),
+                  );
+                  if (picked != null) setState(() => _costSplit = picked);
+                },
               ),
-            ),
+              // "No pitch fee" has no amount to state.
+              if (_costSplit != ChallengeCostSplit.none)
+                PAmountRow(
+                  controller: _venueCost,
+                  label: 'challenge.offer.venueCost'.tr(),
+                  hint: '300000',
+                ),
+              PPickerRow(
+                icon: FLucideIcons.coins,
+                label: 'challenge.offer.bounty'.tr(),
+                value: _bountyKind.getLocalizedName(context),
+                onTap: () async {
+                  final picked = await showPOptionSheet<ChallengeBountyKind>(
+                    context,
+                    title: 'challenge.offer.bounty'.tr(),
+                    options: ChallengeBountyKind.values,
+                    selected: _bountyKind,
+                    label: (b) => b.getLocalizedName(context),
+                  );
+                  if (picked != null) setState(() => _bountyKind = picked);
+                },
+              ),
+              if (_bountyKind.isSet)
+                PAmountRow(
+                  controller: _bountyAmount,
+                  icon: FLucideIcons.handCoins,
+                  label: 'challenge.offer.bountyAmount'.tr(),
+                ),
+              Text(
+                'challenge.offer.moneyHint'.tr(),
+                style: typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
 
           FTextField.multiline(
             label: Text('challenge.offer.terms'.tr()),
@@ -759,6 +870,7 @@ class _OfferFormSheetState extends ConsumerState<_OfferFormSheet> {
                 ? 'challenge.offer.termsHintRequired'.tr()
                 : 'challenge.offer.termsHint'.tr(),
             control: FTextFieldControl.managed(controller: _termsNote),
+            minLines: 3,
             maxLines: 3,
           ),
 
@@ -844,11 +956,15 @@ class _AmendBoxState extends ConsumerState<_AmendBox> {
             'challenge.offer.amendHint'.tr(
               namedArgs: {'count': '${widget.offer.liveChallengeCount}'},
             ),
-            style: typography.body.xs.copyWith(color: colors.mutedForeground),
+            style: typography.body.xs.copyWith(
+              color: colors.mutedForeground,
+              height: 1.4,
+            ),
           ),
           FTextField.multiline(
             control: FTextFieldControl.managed(controller: _text),
             maxLength: challengeOfferAmendMaxLength,
+            minLines: 2,
             maxLines: 2,
           ),
           FButton(
@@ -860,61 +976,6 @@ class _AmendBoxState extends ConsumerState<_AmendBox> {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// A wrapped row of single-select chips.
-class _ChipRow<T> extends StatelessWidget {
-  final List<T> values;
-  final T selected;
-  final String Function(T) label;
-  final ValueChanged<T> onSelected;
-
-  const _ChipRow({
-    required this.values,
-    required this.selected,
-    required this.label,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final v in values)
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => onSelected(v),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                color: v == selected
-                    ? colors.primary.withValues(alpha: 0.12)
-                    : null,
-                border: Border.all(
-                  color: v == selected ? colors.primary : colors.border,
-                  width: v == selected ? 1.5 : 1,
-                ),
-              ),
-              child: Text(
-                label(v),
-                style: context.theme.typography.body.sm.copyWith(
-                  color: v == selected
-                      ? colors.primary
-                      : colors.mutedForeground,
-                  fontWeight: v == selected
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                ),
-              ),
-            ),
-          ),
-      ],
     );
   }
 }

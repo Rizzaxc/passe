@@ -42,13 +42,17 @@ class PCategoryRail extends StatefulWidget {
 class _PCategoryRailState extends State<PCategoryRail> {
   late List<GlobalKey> _keys = _makeKeys();
 
-  List<GlobalKey> _makeKeys() =>
-      List.generate(widget.items.length, (i) => GlobalKey(debugLabel: 'rail.$i'));
+  List<GlobalKey> _makeKeys() => List.generate(
+    widget.items.length,
+    (i) => GlobalKey(debugLabel: 'rail.$i'),
+  );
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _reveal(animate: false));
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _reveal(animate: false),
+    );
   }
 
   @override
@@ -56,7 +60,9 @@ class _PCategoryRailState extends State<PCategoryRail> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.items.length != widget.items.length) _keys = _makeKeys();
     if (oldWidget.selectedIndex != widget.selectedIndex) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _reveal(animate: true));
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _reveal(animate: true),
+      );
     }
   }
 

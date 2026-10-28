@@ -5,9 +5,9 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:share_plus/share_plus.dart';
 
-import '../../core/format.dart';
 import '../../core/location_repository.dart';
 import '../../ui/dialog.dart';
+import '../../ui/form_rows.dart';
 import '../../ui/sheet.dart';
 import 'activity/upcoming_controller.dart';
 import 'feed/home_ground_selector.dart';
@@ -48,6 +48,12 @@ const _maxDeadlineLeadHours = 72;
 /// Default lead time used when the user first turns the deadline on.
 const _defaultDeadlineLeadHours = 48.0;
 
+/// Session length bounds on the duration slider. A session being edited
+/// that's already longer keeps its length; the ceiling stretches to it.
+const _minSessionLength = Duration(minutes: 30);
+const _maxSessionLength = Duration(hours: 4);
+const _defaultSessionLength = Duration(hours: 2);
+
 class _ScheduleActivitySheet extends ConsumerStatefulWidget {
   final String lobbyId;
   final UpcomingActivity? existing;
@@ -63,7 +69,10 @@ class _ScheduleActivitySheetState
     extends ConsumerState<_ScheduleActivitySheet> {
   late DateTime _date;
   TimeOfDay _start = const TimeOfDay(hour: 18, minute: 0);
-  TimeOfDay _end = const TimeOfDay(hour: 20, minute: 0);
+
+  /// Held as a length, not an end time: moving the start carries the end
+  /// along, and a session that runs past midnight needs no special case.
+  Duration _length = _defaultSessionLength;
 
   // Seeded from the lobby's primary homeground when the lobby info resolves;
   // HomeGroundField below renders the picker UI around this id.
@@ -101,7 +110,7 @@ class _ScheduleActivitySheetState
   final _scrollController = ScrollController();
 
   /// Editing an occurrence that's already part of a series locks the
-  /// recurring toggle ON — see the `locked` doc on `_SwitchRow`.
+  /// recurring toggle ON — see the `locked` doc on `PSwitchRow`.
   bool get _seriesLocked => widget.existing?.isRecurring ?? false;
 
   @override
@@ -134,9 +143,7 @@ class _ScheduleActivitySheetState
     final end = existing.nextEnd?.toLocal();
     _date = DateTime(start.year, start.month, start.day);
     _start = TimeOfDay(hour: start.hour, minute: start.minute);
-    _end = end != null
-        ? TimeOfDay(hour: end.hour, minute: end.minute)
-        : _addHours(_start, 2);
+    if (end != null && end.isAfter(start)) _length = end.difference(start);
     _locationId = existing.locationId;
     _recurring = existing.isRecurring;
     _costEnabled = existing.costType != null && existing.costAmount != null;
@@ -192,34 +199,40 @@ class _ScheduleActivitySheetState
     });
   }
 
-  Future<TimeOfDay?> _pickTime(TimeOfDay initial, String title) {
-    return showPSheet<TimeOfDay>(
-      context: context,
-      builder: (_) => _TimePickerSheet(initial: initial, title: title),
-    );
-  }
-
   Future<void> _pickStart() async {
-    final picked = await _pickTime(_start, 'lobbyHub.schedule.start'.tr());
+    final picked = await showPTimePicker(
+      context,
+      initial: _start,
+      title: 'lobbyHub.schedule.start'.tr(),
+    );
     if (picked != null) {
       setState(() {
         _start = picked;
-        if (_toMinutes(_end) <= _toMinutes(_start)) {
-          _end = _addHours(_start, 2);
-        }
         _recomputeDeadline();
       });
     }
   }
 
-  Future<void> _pickEnd() async {
-    final picked = await _pickTime(_end, 'lobbyHub.schedule.end'.tr());
-    if (picked != null) setState(() => _end = picked);
-  }
+  /// The slider's ceiling: [_maxSessionLength], or longer when the session
+  /// being edited already is.
+  Duration get _lengthCeiling =>
+      _length > _maxSessionLength ? _length : _maxSessionLength;
 
-  int _toMinutes(TimeOfDay t) => t.hour * 60 + t.minute;
-  TimeOfDay _addHours(TimeOfDay t, int hours) =>
-      TimeOfDay(hour: (t.hour + hours) % 24, minute: t.minute);
+  DateTime get _endInstant => _startInstant.add(_length);
+
+  /// "Kết thúc lúc 20:30", naming the day when it runs past midnight.
+  String get _endsAtCaption {
+    final end = _endInstant;
+    final time = _fmtTime(TimeOfDay.fromDateTime(end));
+    final sameDay = end.day == _date.day;
+    return 'lobbyHub.schedule.endsAt'.tr(
+      namedArgs: {
+        'time': sameDay
+            ? time
+            : '$time ${_fmtDate(DateTime(end.year, end.month, end.day))}',
+      },
+    );
+  }
 
   DateTime get _startInstant =>
       DateTime(_date.year, _date.month, _date.day, _start.hour, _start.minute);
@@ -327,13 +340,7 @@ class _ScheduleActivitySheetState
 
   Future<void> _submit() async {
     final start = _startInstant;
-    final end = DateTime(
-      _date.year,
-      _date.month,
-      _date.day,
-      _end.hour,
-      _end.minute,
-    );
+    final end = _endInstant;
 
     // A one-off activity scheduled in the past would insert successfully
     // (the DB has no such constraint) but then never surface anywhere: the
@@ -348,20 +355,6 @@ class _ScheduleActivitySheetState
         icon: const Icon(FLucideIcons.circleAlert),
         variant: .destructive,
         title: Text('lobbyHub.schedule.pastError'.tr()),
-        alignment: .bottomCenter,
-      );
-      return;
-    }
-
-    // Sessions run within one day (end is built on the same date), so an
-    // end at or before the start can only be a mis-pick — it used to save
-    // a negative-length activity.
-    if (!end.isAfter(start)) {
-      showFToast(
-        context: context,
-        icon: const Icon(FLucideIcons.circleAlert),
-        variant: .destructive,
-        title: Text('lobbyHub.schedule.endBeforeStart'.tr()),
         alignment: .bottomCenter,
       );
       return;
@@ -494,7 +487,8 @@ class _ScheduleActivitySheetState
         if (info != null) info.lobby.name,
         if (info != null) info.lobby.sport.getLocalizedName(context),
       ].join(' · '),
-      '${_fmtDate(_date)} ${_fmtTime(_start)}–${_fmtTime(_end)}'
+      '${_fmtDate(_date)} ${_fmtTime(_start)}–'
+          '${_fmtTime(TimeOfDay.fromDateTime(end))}'
           '${venue == null || venue.isEmpty ? '' : ' @ $venue'}',
       if (code != null)
         'lobbyHub.schedule.shareJoin'.tr(
@@ -552,25 +546,27 @@ class _ScheduleActivitySheetState
           ),
 
           // ── Time & place section ────────────────────────────
-          _Section(
+          PFormSection(
             label: 'lobbyHub.schedule.whenWhere'.tr(),
             children: [
-              _DateStrip(
+              PDateStrip(
                 date: _date,
                 maxDays: _maxScheduleHorizonDays,
                 onChanged: _setDate,
               ),
-              _PickerRow(
+              PPickerRow(
                 icon: FLucideIcons.clock,
                 label: 'lobbyHub.schedule.start'.tr(),
                 value: _fmtTime(_start),
                 onTap: _pickStart,
               ),
-              _PickerRow(
-                icon: FLucideIcons.clock,
-                label: 'lobbyHub.schedule.end'.tr(),
-                value: _fmtTime(_end),
-                onTap: _pickEnd,
+              PDurationSlider(
+                label: 'lobbyHub.schedule.duration'.tr(),
+                value: _length,
+                min: _minSessionLength,
+                max: _lengthCeiling,
+                caption: _endsAtCaption,
+                onChanged: (d) => setState(() => _length = d),
               ),
               HomeGroundField(
                 value: _locationId,
@@ -591,7 +587,7 @@ class _ScheduleActivitySheetState
                   _freeAddress = addr;
                 }),
               ),
-              _SwitchRow(
+              PSwitchRow(
                 icon: FLucideIcons.repeat,
                 label: 'lobbyHub.schedule.repeatWeekly'.tr(),
                 sub: _seriesLocked
@@ -609,10 +605,10 @@ class _ScheduleActivitySheetState
           ),
 
           // ── Cost section ─────────────────────────────────────
-          _Section(
+          PFormSection(
             label: 'lobbyHub.schedule.cost'.tr(),
             children: [
-              _SwitchRow(
+              PSwitchRow(
                 icon: FLucideIcons.wallet,
                 label: 'lobbyHub.schedule.hasCost'.tr(),
                 sub: _costEnabled
@@ -626,18 +622,21 @@ class _ScheduleActivitySheetState
                   value: _costType,
                   onChanged: (v) => setState(() => _costType = v),
                 ),
-                _AmountRow(controller: _amountController, suffix: 'đ'),
+                PAmountRow(
+                  controller: _amountController,
+                  label: 'lobbyHub.common.amount'.tr(),
+                ),
               ],
             ],
           ),
 
           // ── Confirmation section ────────────────────────────
-          _Section(
+          PFormSection(
             label: 'lobbyHub.schedule.attendance'.tr(),
             children: [
               // Off means no quorum: nothing freezes RSVPs and nothing
               // auto-cancels the session at kickoff.
-              _SwitchRow(
+              PSwitchRow(
                 icon: FLucideIcons.userCheck,
                 label: 'lobbyHub.schedule.requireQuorum'.tr(),
                 sub: _thresholdEnabled
@@ -650,7 +649,12 @@ class _ScheduleActivitySheetState
                 }),
               ),
               if (_thresholdEnabled) ...[
-                _ThresholdRow(
+                PStepperRow(
+                  icon: FLucideIcons.users,
+                  label: 'lobbyHub.schedule.threshold'.tr(),
+                  sub: 'lobbyHub.schedule.thresholdHint'.tr(),
+                  min: 1,
+                  max: 30,
                   value: _confirmationThreshold,
                   onChanged: (v) => setState(() {
                     _thresholdTouched = true;
@@ -670,8 +674,10 @@ class _ScheduleActivitySheetState
               if (_thresholdEnabled &&
                   !_tooSoonForDeadline &&
                   !_deadlineManuallyOff)
-                _DeadlineLeadSlider(
+                PLeadSlider(
+                  label: 'lobbyHub.schedule.lockBefore'.tr(),
                   hours: _deadlineLeadHours,
+                  minHours: _minDeadlineLeadHours,
                   maxHours: _maxAllowedDeadlineLeadHours,
                   onChanged: (h) => setState(() {
                     _deadlineLeadHours = h;
@@ -734,164 +740,7 @@ class _ScheduleActivitySheetState
   String _weekdayLong(int weekday) => _weekdayLongNames[weekday - 1];
 }
 
-// ── Generic section wrapper ─────────────────────────────────────
-
-class _Section extends StatelessWidget {
-  final String label;
-  final List<Widget> children;
-
-  const _Section({required this.label, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        PSheetSectionLabel(label: label),
-        const SizedBox(height: 8),
-        ...List.generate(children.length, (i) {
-          if (i == 0) return children[i];
-          return Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: children[i],
-          );
-        }),
-      ],
-    );
-  }
-}
-
-// ── Reusable rows ───────────────────────────────────────────────
-
-class _PickerRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-
-  const _PickerRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return FTappable(
-      onPress: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.border),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: colors.secondaryForeground),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: context.theme.typography.body.sm.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            Flexible(
-              child: Text(
-                value,
-                style: context.theme.typography.body.sm.copyWith(
-                  color: colors.secondaryForeground,
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.end,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Icon(
-              FLucideIcons.chevronRight,
-              size: 16,
-              color: colors.mutedForeground,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SwitchRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String? sub;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  /// True locks the switch on and non-interactive — used for the "Lặp lại
-  /// hằng tuần" toggle when editing an occurrence already part of a series,
-  /// where turning it off has no defined behavior (cancelling stops a
-  /// series entirely; there's no separate "stop repeating" action).
-  final bool locked;
-
-  const _SwitchRow({
-    required this.icon,
-    required this.label,
-    this.sub,
-    required this.value,
-    required this.onChanged,
-    this.locked = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.border),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: colors.secondaryForeground),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: context.theme.typography.body.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (sub != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    sub!,
-                    style: context.theme.typography.body.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Opacity(
-            opacity: locked ? 0.5 : 1,
-            child: FSwitch(value: value, onChange: locked ? null : onChanged),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// ── Rows specific to scheduling ─────────────────────────────────
 
 class _CostTypePicker extends StatelessWidget {
   final ActivityCostType value;
@@ -961,158 +810,6 @@ class _CostTypeOption extends StatelessWidget {
                   : colors.secondaryForeground,
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AmountRow extends StatelessWidget {
-  final TextEditingController controller;
-  final String suffix;
-
-  const _AmountRow({required this.controller, required this.suffix});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: FTextField(
-                label: Text('lobbyHub.common.amount'.tr()),
-                hint: '50000',
-                control: FTextFieldControl.managed(controller: controller),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: false,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Padding(
-              padding: const EdgeInsets.only(top: 24),
-              child: Text(
-                suffix,
-                style: context.theme.typography.body.sm.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.secondaryForeground,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 5),
-        AnimatedBuilder(
-          animation: controller,
-          builder: (_, _) {
-            final amount = num.tryParse(controller.text.trim());
-            return Text(
-              amount == null || amount < 0
-                  ? 'lobbyHub.common.enterAmountReading'.tr()
-                  : formatVndWords(amount),
-              style: context.theme.typography.body.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _ThresholdRow extends StatelessWidget {
-  final int value;
-  final ValueChanged<int> onChanged;
-
-  const _ThresholdRow({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.border),
-      ),
-      child: Row(
-        children: [
-          Icon(FLucideIcons.users, size: 18, color: colors.secondaryForeground),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'lobbyHub.schedule.threshold'.tr(),
-                  style: context.theme.typography.body.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  'lobbyHub.schedule.thresholdHint'.tr(),
-                  style: context.theme.typography.body.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _StepperButton(
-            icon: FLucideIcons.minus,
-            onTap: value > 1 ? () => onChanged(value - 1) : null,
-          ),
-          SizedBox(
-            width: 28,
-            child: Text(
-              '$value',
-              textAlign: TextAlign.center,
-              style: context.theme.typography.body.lg.copyWith(
-                fontWeight: FontWeight.w800,
-                color: colors.foreground,
-              ),
-            ),
-          ),
-          _StepperButton(
-            icon: FLucideIcons.plus,
-            onTap: value < 30 ? () => onChanged(value + 1) : null,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StepperButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onTap;
-
-  const _StepperButton({required this.icon, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final enabled = onTap != null;
-    return FTappable(
-      onPress: onTap,
-      child: Container(
-        width: 30,
-        height: 30,
-        decoration: BoxDecoration(
-          color: enabled ? colors.secondary : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        alignment: Alignment.center,
-        child: Icon(
-          icon,
-          size: 14,
-          color: enabled ? colors.foreground : colors.mutedForeground,
         ),
       ),
     );
@@ -1203,183 +900,5 @@ class _DeadlineRow extends StatelessWidget {
     final hh = d.hour.toString().padLeft(2, '0');
     final mm = d.minute.toString().padLeft(2, '0');
     return '$wd, ${d.day}/${d.month} $hh:$mm';
-  }
-}
-
-/// Lets the organizer pick how many hours before kickoff confirmations lock
-/// in, between [_minDeadlineLeadHours] and whatever's currently reachable
-/// (capped at [_maxDeadlineLeadHours], and further capped by how far away
-/// the session actually is via [maxHours]).
-class _DeadlineLeadSlider extends StatelessWidget {
-  final double hours;
-  final double maxHours;
-  final ValueChanged<double> onChanged;
-
-  const _DeadlineLeadSlider({
-    required this.hours,
-    required this.maxHours,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final range = maxHours - _minDeadlineLeadHours;
-    final fraction = range <= 0
-        ? 0.0
-        : ((hours - _minDeadlineLeadHours) / range).clamp(0.0, 1.0);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'lobbyHub.schedule.lockBefore'.tr(),
-                style: context.theme.typography.body.sm.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                _fmtLead(hours),
-                style: context.theme.typography.body.sm.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          FSlider(
-            enabled: range > 0,
-            control: FSliderControl.liftedContinuous(
-              value: FSliderValue(max: fraction),
-              onChange: (v) {
-                if (range <= 0) return;
-                final picked = (_minDeadlineLeadHours + v.max * range)
-                    .roundToDouble();
-                onChanged(picked);
-              },
-            ),
-            tooltipBuilder: (_, v) =>
-                Text(_fmtLead(_minDeadlineLeadHours + v * range)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static String _fmtLead(double h) {
-    final rounded = h.round();
-    if (rounded % 24 == 0) {
-      final days = rounded ~/ 24;
-      return 'lobbyHub.schedule.leadDays'.tr(namedArgs: {'count': '$days'});
-    }
-    return 'lobbyHub.schedule.leadHours'.tr(namedArgs: {'count': '$rounded'});
-  }
-}
-
-// ── Date strip & time picker ────────────────────────────────────
-
-/// Inline forui line calendar over today … today + [maxDays] — the whole
-/// scheduling horizon fits one swipe, so a modal date picker was an extra
-/// step for nothing.
-class _DateStrip extends StatelessWidget {
-  final DateTime date;
-  final int maxDays;
-  final ValueChanged<DateTime> onChanged;
-
-  const _DateStrip({
-    required this.date,
-    required this.maxDays,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    // forui calendars work in UTC-midnight dates; convert at the edges.
-    final today = DateTime.utc(now.year, now.month, now.day);
-    final last = today.add(Duration(days: maxDays));
-    final selected = DateTime.utc(date.year, date.month, date.day);
-
-    return SizedBox(
-      height: 72,
-      child: FLineCalendar(
-        control: .lifted(
-          date: selected,
-          onChange: (d) {
-            if (d != null) onChanged(DateTime(d.year, d.month, d.day));
-          },
-        ),
-        scrollControl: .managed(
-          start: today,
-          end: last,
-          today: today,
-          initialDate: selected,
-        ),
-        selectable: (d) => !d.isBefore(today) && !d.isAfter(last),
-      ),
-    );
-  }
-}
-
-/// forui wheel time picker in a sheet, replacing Material's dial.
-class _TimePickerSheet extends StatefulWidget {
-  final TimeOfDay initial;
-  final String title;
-
-  const _TimePickerSheet({required this.initial, required this.title});
-
-  @override
-  State<_TimePickerSheet> createState() => _TimePickerSheetState();
-}
-
-class _TimePickerSheetState extends State<_TimePickerSheet> {
-  late FTime _time = FTime(widget.initial.hour, widget.initial.minute);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 16,
-      children: [
-        PSheetTitle(
-          label: widget.title,
-          trailing: FButton.icon(
-            variant: .ghost,
-            onPress: () => Navigator.of(context).pop(),
-            child: const Icon(FLucideIcons.x),
-          ),
-        ),
-        SizedBox(
-          height: 180,
-          child: FTimePicker(
-            hour24: true,
-            minuteInterval: 5,
-            control: .lifted(
-              time: _time,
-              onChange: (t) => setState(() => _time = t),
-            ),
-          ),
-        ),
-        FButton(
-          onPress: () => Navigator.of(
-            context,
-          ).pop(TimeOfDay(hour: _time.hour, minute: _time.minute)),
-          child: Text('done'.tr()),
-        ),
-        const SizedBox(height: 8),
-      ],
-    );
   }
 }

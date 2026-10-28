@@ -60,9 +60,29 @@ coaching courses. Unlike Discover, this is about entities the user is already a 
     `_FreeplayBlock` — see "Freeplay exposure" below.
   - `history/` — past matches (`lobby_match_history_data` RPC, now both-sided — see root CLAUDE.md ▸
     Challenger System), `match.dart` / `view.dart`.
-  - Planner entry points for challenging: a swords button next to "+" in the Planner title and a
-    second CTA in the empty-state hero, both opening `challenge/friendly_offer_sheet.dart` directly
-    (its first-use `_HowItWorks` steps carry the explanation). Info-sheet rows remain as secondary copies.
+  - Planner entry points for challenging: the Planner "+" chooser (`planner_add_sheet.dart`) and a
+    second CTA in the empty-state hero, both opening the offer form for the next free slot
+    (`openChallengeComposer`; its first-use `_HowItWorks` steps carry the explanation).
+  - **An open offer is a Planner session** (`schema/friendly_challenge_offer_activity.sql`):
+    - **Publishing creates home's activity.** It's linked by `activity.challenge_offer_id`, the
+      publisher is RSVP'd, and a `challenge_offered` feed item is posted. No push is sent.
+    - **The card manages the offer.** `activity_card.dart`'s `_ChallengeOfferBlock` handles
+      choosing an opponent, editing and withdrawing. It replaced the two offer/chooser rows that
+      used to be in `lobby_info_sheet.dart`.
+    - **Members can back out while it's unmatched.** `activity_is_confirmed` returns false, so the
+      `going` RSVP lock doesn't apply.
+    - **The offer states its end** (`lobby_challenge_offer.end_time`,
+      `schema/challenge_offer_end_time.sql`). Both sides' sessions, the accept fallback, renew
+      and the chooser's clash check read it; nothing assumes 90 minutes any more. The form
+      takes a duration (30 min–3 h slider) and its closing time as a lead before kickoff
+      (2–72 h slider, default 36 h), mirroring the session scheduler.
+    - **Accepting reuses the same row.** It sets `challenge_id`, so RSVPs carry over. Re-publishing
+      a slot moves the row, clearing RSVPs only if the time or venue changed.
+    - **Triggers retire the activity.** When the offer is withdrawn, or expires with nobody left
+      waiting, triggers on the offer/challenge status delete it.
+    - **Fixtures are excluded from plain-session handling.** `UpcomingActivity.isChallengeFixture`
+      keeps them out of the 7-session cap and hides the plain edit/cancel/freeplay actions. Freeplay
+      on a fixture is also refused server-side.
   - **Friendly-challenge hand-offs** (`schema/friendly_challenge_followups.sql`,
     `friendly_challenge_dead_fixture_fix.sql`):
     - **A dead fixture keeps its row.** A declined/lapsed/withdrawn challenge's activity stays as a
@@ -210,9 +230,17 @@ coaching courses. Unlike Discover, this is about entities the user is already a 
   *off* below 4 members. It used to be a fixed 4 with the stepper floored at 2, so every 1–3
   member lobby's first session was auto-cancelled at kickoff by the threshold sweep. Off means
   `confirmation_threshold` and `confirmation_deadline` are both null. `schedule()` also
-  auto-RSVPs the organizer `going` (first occurrence only; best-effort). The sheet uses forui's
-  `FLineCalendar` (the 7-day horizon) and `FTimePicker` rather than Material's pickers, rejects
-  end ≤ start, and a new session's toast offers "Chia sẻ" (time, venue, invite link).
+  auto-RSVPs the organizer `going` (first occurrence only; best-effort). The sheet picks a day
+  on a 7-day `FLineCalendar`, a start time, and a **duration** (30 min–4 h slider, default 2 h)
+  rather than an end time, so a session can run past midnight and moving the start moves the
+  end. A new session's toast offers "Chia sẻ" (time, venue, invite link).
+- **Scheduling forms share one row vocabulary** (`lib/ui/form_rows.dart`: `PFormSection`,
+  `PPickerRow`, `PSwitchRow`, `PStepperRow`, `PDateStrip`, `PDurationSlider`, `PLeadSlider`,
+  `PAmountRow`, `showPTimePicker`, `showPOptionSheet`). Every input is one card row: icon and
+  label (plus an optional muted sub-line) on the left, the control on the right. A choice that
+  needs more than a word is a `PPickerRow` opening `showPOptionSheet`, not a chip row. The
+  session scheduler and the friendly challenge-offer form are built from it; a new form that
+  schedules something should be too.
 
 ## Gotchas
 

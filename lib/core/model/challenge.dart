@@ -19,9 +19,9 @@ import 'package:flutter/widgets.dart';
 /// showing the away team a win when they lost, the bug is in the RPC, not in
 /// the widget, and fixing it in the widget will break the home team instead.
 ///
-/// Structural terms — who pays, who is spotted a handicap, who claimed a
-/// no-show — *are* absolute (`home`/`away`), deliberately: an offer card being
-/// browsed by a stranger genuinely wants to say "chủ nhà được chấp 2 bàn".
+/// Structural terms — who pays, who claimed a no-show — *are* absolute
+/// (`home`/`away`), deliberately: an offer card being browsed by a stranger
+/// genuinely wants to say "chủ nhà trả tiền sân".
 /// Those are resolved to "us"/"them" by [ChallengeParty.resolve], which is the
 /// only place that mapping is allowed to live.
 
@@ -168,51 +168,6 @@ enum ChallengeRuleset {
 
   String getLocalizedDescription(BuildContext context) =>
       context.tr('challenge.ruleset.description.$name');
-}
-
-/// Which side is spotted a head start. Orthogonal to [ChallengeRuleset] —
-/// a handicap composes with any format, and it is what lets a much stronger
-/// lobby post a fixture a weaker one can meaningfully accept.
-enum ChallengeHandicapSide {
-  none('none'),
-  home('home'),
-  away('away');
-
-  /// The value this enum has in Postgres.
-  final String dbValue;
-
-  const ChallengeHandicapSide(this.dbValue);
-
-  static ChallengeHandicapSide? fromDb(String? v) {
-    for (final e in ChallengeHandicapSide.values) {
-      if (e.dbValue == v) return e;
-    }
-    return null;
-  }
-
-  ChallengeParty resolve({required bool weAreHome}) => switch (this) {
-    ChallengeHandicapSide.none => ChallengeParty.nobody,
-    ChallengeHandicapSide.home =>
-      weAreHome ? ChallengeParty.us : ChallengeParty.them,
-    ChallengeHandicapSide.away =>
-      weAreHome ? ChallengeParty.them : ChallengeParty.us,
-  };
-
-  /// e.g. "Đội mình được chấp 2".
-  String? getLocalizedLabel(
-    BuildContext context, {
-    required bool weAreHome,
-    required int? amount,
-  }) {
-    if (this == ChallengeHandicapSide.none || amount == null) return null;
-    return context.tr(
-      'challenge.handicap.spotted',
-      namedArgs: {
-        'party': resolve(weAreHome: weAreHome).getLocalizedName(context),
-        'amount': '$amount',
-      },
-    );
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

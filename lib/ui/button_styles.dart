@@ -10,17 +10,17 @@ import 'theme.dart';
 extension FButtonStyleExtension on FButtonStyle {
   /// Accent blue button style using pbBlue color
   static FButtonStyle accentBlueStyle(FButtonStyle base) {
-    final baseBorderRadius = (base.decoration.base as BoxDecoration?)?.borderRadius;
+    final baseBorderRadius =
+        (base.decoration.base as BoxDecoration?)?.borderRadius;
 
     return FButtonStyle(
       decoration: .from(
-        BoxDecoration(
-          borderRadius: baseBorderRadius,
-          color: pbBlue,
-        ),
+        BoxDecoration(borderRadius: baseBorderRadius, color: pbBlue),
         variants: {
           [.disabled]: .boxDelta(color: pbBlue.withValues(alpha: 0.5)),
-          [.hovered, .pressed]: .boxDelta(color: Color.lerp(pbBlue, Colors.black, 0.1)),
+          [.hovered, .pressed]: .boxDelta(
+            color: Color.lerp(pbBlue, Colors.black, 0.1),
+          ),
         },
       ),
       focusedOutlineStyle: base.focusedOutlineStyle,
@@ -42,7 +42,9 @@ extension FButtonStyleExtension on FButtonStyle {
             iconStyle: IconThemeData(color: Colors.white, size: 20),
           ),
           variants: {
-            [.disabled]: .delta(iconStyle: .delta(color: Colors.white.withValues(alpha: 0.5))),
+            [.disabled]: .delta(
+              iconStyle: .delta(color: Colors.white.withValues(alpha: 0.5)),
+            ),
           },
         ),
         padding: base.contentStyle.padding,
@@ -62,17 +64,17 @@ extension FButtonStyleExtension on FButtonStyle {
 
   /// Accent green button style using pbGreen color
   static FButtonStyle accentGreenStyle(FButtonStyle base) {
-    final baseBorderRadius = (base.decoration.base as BoxDecoration?)?.borderRadius;
+    final baseBorderRadius =
+        (base.decoration.base as BoxDecoration?)?.borderRadius;
 
     return FButtonStyle(
       decoration: .from(
-        BoxDecoration(
-          borderRadius: baseBorderRadius,
-          color: pbGreen,
-        ),
+        BoxDecoration(borderRadius: baseBorderRadius, color: pbGreen),
         variants: {
           [.disabled]: .boxDelta(color: pbGreen.withValues(alpha: 0.5)),
-          [.hovered, .pressed]: .boxDelta(color: Color.lerp(pbGreen, Colors.black, 0.1)),
+          [.hovered, .pressed]: .boxDelta(
+            color: Color.lerp(pbGreen, Colors.black, 0.1),
+          ),
         },
       ),
       focusedOutlineStyle: base.focusedOutlineStyle,
@@ -94,7 +96,9 @@ extension FButtonStyleExtension on FButtonStyle {
             iconStyle: IconThemeData(color: Colors.white, size: 20),
           ),
           variants: {
-            [.disabled]: .delta(iconStyle: .delta(color: Colors.white.withValues(alpha: 0.5))),
+            [.disabled]: .delta(
+              iconStyle: .delta(color: Colors.white.withValues(alpha: 0.5)),
+            ),
           },
         ),
         padding: base.contentStyle.padding,
@@ -133,7 +137,13 @@ FButtonSizeStyles _ghostSizes({
   required FStyle style,
   required FColors colors,
 }) {
-  FVariants<FTappableVariantConstraint, FTappableVariant, Decoration, DecorationDelta> decoration() => .from(
+  FVariants<
+    FTappableVariantConstraint,
+    FTappableVariant,
+    Decoration,
+    DecorationDelta
+  >
+  decoration() => .from(
     BoxDecoration(borderRadius: BorderRadius.circular(9999)),
     variants: {
       [.disabled]: const .boxDelta(),
@@ -175,39 +185,50 @@ FButtonSizeStyles _ghostSizes({
     iconPadding: const EdgeInsets.all(9),
   );
 
-  return FButtonSizeStyles(FVariants(
-    md,
-    variants: {
-      [.xs]: make(
-        textStyle: typography.body.xs,
-        contentConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-        contentSpacing: 4,
-        iconConstraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-        iconSize: typography.body.sm.fontSize ?? 16,
-        iconPadding: const EdgeInsets.all(5),
-      ),
-      [.sm]: make(
-        textStyle: typography.body.sm,
-        contentConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        contentSpacing: 4,
-        iconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-        iconSize: typography.body.md.fontSize ?? 18,
-        iconPadding: const EdgeInsets.all(7),
-      ),
-      [.md]: md,
-      [.lg]: make(
-        textStyle: typography.body.sm,
-        contentConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-        contentSpacing: 6,
-        iconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-        iconSize: typography.body.lg.fontSize ?? 20,
-        iconPadding: const EdgeInsets.all(10),
-      ),
-    },
-  ));
+  return FButtonSizeStyles(
+    FVariants(
+      md,
+      variants: {
+        [.xs]: make(
+          textStyle: typography.body.xs,
+          contentConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 9,
+          ),
+          contentSpacing: 4,
+          iconConstraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+          iconSize: typography.body.sm.fontSize ?? 16,
+          iconPadding: const EdgeInsets.all(5),
+        ),
+        [.sm]: make(
+          textStyle: typography.body.sm,
+          contentConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
+          contentSpacing: 4,
+          iconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          iconSize: typography.body.md.fontSize ?? 18,
+          iconPadding: const EdgeInsets.all(7),
+        ),
+        [.md]: md,
+        [.lg]: make(
+          textStyle: typography.body.sm,
+          contentConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 16,
+          ),
+          contentSpacing: 6,
+          iconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          iconSize: typography.body.lg.fontSize ?? 20,
+          iconPadding: const EdgeInsets.all(10),
+        ),
+      },
+    ),
+  );
 }
 
 FButtonStyles buttonStyles({
@@ -237,7 +258,9 @@ FButtonStyles buttonStyles({
         decoration: (radius) => .from(
           BoxDecoration(borderRadius: radius, color: colors.secondary),
           variants: {
-            [.hovered, .pressed]: .boxDelta(color: colors.hover(colors.secondary)),
+            [.hovered, .pressed]: .boxDelta(
+              color: colors.hover(colors.secondary),
+            ),
             [.disabled]: .boxDelta(color: colors.disable(colors.secondary)),
           },
         ),
@@ -251,7 +274,9 @@ FButtonStyles buttonStyles({
         decoration: (radius) => .from(
           BoxDecoration(borderRadius: radius, color: colors.destructive),
           variants: {
-            [.hovered, .pressed]: .boxDelta(color: colors.hover(colors.destructive)),
+            [.hovered, .pressed]: .boxDelta(
+              color: colors.hover(colors.destructive),
+            ),
             [.disabled]: .boxDelta(color: colors.disable(colors.destructive)),
           },
         ),

@@ -42,7 +42,10 @@ class PConfirmDialog extends StatelessWidget {
               padding: touch
                   ? const EdgeInsets.only(left: 8, right: 8, bottom: 9)
                   : const EdgeInsets.only(left: 8, right: 8, bottom: 5),
-              child: DefaultTextStyle.merge(style: style.titleTextStyle, child: title),
+              child: DefaultTextStyle.merge(
+                style: style.titleTextStyle,
+                child: title,
+              ),
             ),
             if (body case final body?)
               Flexible(
@@ -50,16 +53,25 @@ class PConfirmDialog extends StatelessWidget {
                   padding: touch
                       ? const EdgeInsets.only(left: 8, right: 8, bottom: 20)
                       : const EdgeInsets.only(left: 8, right: 8, bottom: 16),
-                  child: DefaultTextStyle.merge(style: style.bodyTextStyle, child: body),
+                  child: DefaultTextStyle.merge(
+                    style: style.bodyTextStyle,
+                    child: body,
+                  ),
                 ),
               ),
             switch (direction) {
               Axis.horizontal => Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 spacing: touch ? 10 : 8,
-                children: touch ? [for (final action in actions) Expanded(child: action)] : actions,
+                children: touch
+                    ? [for (final action in actions) Expanded(child: action)]
+                    : actions,
               ),
-              Axis.vertical => Column(mainAxisSize: MainAxisSize.min, spacing: touch ? 10 : 8, children: actions),
+              Axis.vertical => Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: touch ? 10 : 8,
+                children: actions,
+              ),
             },
           ],
         ),

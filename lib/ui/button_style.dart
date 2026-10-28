@@ -12,10 +12,7 @@ FButtonStyle buttonStyle({
   required Color foregroundColor,
 }) => FButtonStyle(
   decoration: .from(
-    BoxDecoration(
-      borderRadius: style.borderRadius.md,
-      color: color,
-    ),
+    BoxDecoration(borderRadius: style.borderRadius.md, color: color),
     variants: {
       [.disabled]: .boxDelta(color: colors.disable(color)),
       [.hovered, .pressed]: .boxDelta(color: colors.hover(color)),
@@ -60,9 +57,7 @@ FButtonContentStyle _buttonContentStyle({
     },
   ),
   circularProgressStyle: .from(
-    FCircularProgressStyle(
-      iconStyle: IconThemeData(color: enabled, size: 20),
-    ),
+    FCircularProgressStyle(iconStyle: IconThemeData(color: enabled, size: 20)),
     variants: {
       [.disabled]: .delta(iconStyle: .delta(color: disabled)),
     },

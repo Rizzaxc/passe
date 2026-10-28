@@ -89,12 +89,6 @@ class _OfferCard extends ConsumerWidget {
 
     final terms = <String>[
       offer.ruleset.getLocalizedName(context, param: offer.rulesetParam),
-      // The viewer of this feed is always the prospective AWAY side.
-      ?offer.handicapSide.getLocalizedLabel(
-        context,
-        weAreHome: false,
-        amount: offer.handicapAmount,
-      ),
       if (offer.costSplit != ChallengeCostSplit.none)
         offer.costSplit.getLocalizedLabel(context, weAreHome: false),
     ];

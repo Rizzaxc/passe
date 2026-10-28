@@ -25,6 +25,8 @@
 --   7. challenge_accept_cost_fix.sql
 --   8. friendly_challenge_dead_fixture_fix.sql
 --   9. friendly_challenge_followups.sql
+--  10. friendly_challenge_offer_activity.sql
+--  11. friendly_offer_feed_hide_shared_manager.sql
 -- ============================================================================
 
 -- ─── Which state machine a challenge follows ────────────────────────────────

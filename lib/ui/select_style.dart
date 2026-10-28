@@ -1,4 +1,3 @@
-
 import 'package:forui/forui.dart';
 
 // ignore_for_file: unnecessary_ignore
@@ -55,8 +54,24 @@ FSelectStyle selectStyle({
   required FTypography typography,
   required FStyle style,
 }) => FSelectStyle(
-  fieldStyles: .inherit(colors: colors, typography: typography, style: style, touch: true),
-  searchStyle: .inherit(colors: colors, typography: typography, style: style, touch: true),
-  contentStyle: .inherit(colors: colors, icons: FIcons.lucide(), typography: typography, style: style, touch: true),
+  fieldStyles: .inherit(
+    colors: colors,
+    typography: typography,
+    style: style,
+    touch: true,
+  ),
+  searchStyle: .inherit(
+    colors: colors,
+    typography: typography,
+    style: style,
+    touch: true,
+  ),
+  contentStyle: .inherit(
+    colors: colors,
+    icons: FIcons.lucide(),
+    typography: typography,
+    style: style,
+    touch: true,
+  ),
   emptyTextStyle: typography.body.sm,
 );

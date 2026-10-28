@@ -154,6 +154,19 @@ class UpcomingActivity {
   /// linked by the same `challenge_id`.
   final ChallengeContext? challenge;
 
+  /// Home's fixture for an open friendly challenge offer — created when the
+  /// offer is published so members can see and RSVP to it. Still set after an
+  /// opponent is accepted, when [challenge] is set as well.
+  final String? offerId;
+
+  /// Not yet matched: the card manages the offer instead of a session.
+  bool get isOpenOffer => offerId != null && challenge == null;
+
+  /// Any team-vs-team fixture. Its time, venue and cancellation belong to the
+  /// offer/challenge, so the plain session edit and cancel actions don't apply,
+  /// and it doesn't count toward the plain-session cap.
+  bool get isChallengeFixture => offerId != null || challenge != null;
+
   /// A challenge activity is official only once RSVP quorum is met *and* a
   /// manager confirms; this is the second half. Null on ordinary activities.
   final DateTime? managerConfirmedAt;
@@ -173,6 +186,7 @@ class UpcomingActivity {
     required this.confirmationDeadline,
     required this.referee,
     this.challenge,
+    this.offerId,
     this.managerConfirmedAt,
   });
 
@@ -196,6 +210,7 @@ class UpcomingActivity {
           : null,
       referee: AttachedProfessional.fromEmbed(row['referee']),
       challenge: ChallengeContext.fromEmbed(row['challenge'], lobbyId),
+      offerId: row['challenge_offer_id'] as String?,
       managerConfirmedAt: row['manager_confirmed_at'] != null
           ? DateTime.parse(row['manager_confirmed_at'] as String).toLocal()
           : null,
@@ -208,6 +223,7 @@ class UpcomingActivity {
       ..remove('referee')
       ..remove('challenge')
       ..remove('challenge_id')
+      ..remove('challenge_offer_id')
       ..remove('manager_confirmed_at')
       ..remove('recurrence_day_of_week')
       ..remove('series_id')

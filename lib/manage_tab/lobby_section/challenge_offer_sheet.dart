@@ -4,10 +4,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/format.dart';
+import '../../core/location_repository.dart';
 import '../../logger/talker.dart';
 import '../../ui/main.dart';
 import 'challenge/offer_fields.dart';
 import 'challenge_offer_controller.dart';
+import 'feed/home_ground_selector.dart';
 
 /// Opens the "Nhận Thách Đấu" terms sheet. Publishing an offer needs a kickoff,
 /// a venue and a cost per team; editing a live offer reuses the same sheet and
@@ -139,7 +141,9 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
   final _costController = TextEditingController();
   DateTime? _kickoff;
   String? _locationId;
-  String? _locationName;
+  // A typed-in venue with no picked suggestion, resolved into a real
+  // location id at submit time (see _submit).
+  Map<String, String?>? _freeAddress;
   bool _busy = false;
   bool _seeded = false;
 
@@ -158,13 +162,11 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
     if (offer.isLive) {
       _kickoff = offer.kickoff;
       _locationId = offer.locationId;
-      _locationName = offer.locationName;
       if (offer.costPerTeam != null) {
         _costController.text = offer.costPerTeam!.round().toString();
       }
     } else {
       _locationId = offer.homegroundId;
-      _locationName = offer.homegroundName;
     }
   }
 
@@ -209,7 +211,6 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
 
   Future<void> _submit() async {
     final kickoff = _kickoff;
-    final locationId = _locationId;
     final cost = double.tryParse(
       _costController.text.trim().replaceAll('.', ''),
     );
@@ -218,15 +219,23 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
     if (!kickoff.isAfter(DateTime.now())) {
       return _toast('lobbyHub.challenge.futureTime'.tr());
     }
-    if (locationId == null) {
-      return _toast('lobbyHub.challenge.chooseVenue'.tr());
-    }
+    final hasVenue =
+        _locationId != null ||
+        (_freeAddress?['locationName']?.trim().isNotEmpty ?? false);
+    if (!hasVenue) return _toast('lobbyHub.challenge.chooseVenue'.tr());
     if (cost == null || cost < 0) {
       return _toast('lobbyHub.challenge.enterCost'.tr());
     }
 
     setState(() => _busy = true);
     try {
+      final locationId = await resolveLocationId(
+        pickedId: _locationId,
+        freeAddress: _freeAddress,
+      );
+      if (locationId == null) {
+        return _toast('lobbyHub.challenge.chooseVenue'.tr());
+      }
       await ref
           .read(challengeOfferControllerProvider(widget.lobbyId).notifier)
           .publish(kickoff: kickoff, locationId: locationId, costPerTeam: cost);
@@ -301,11 +310,17 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
             onTap: _pickKickoff,
           ),
 
-          ChallengeVenuePicker(
-            selectedName: _locationName,
-            onSelected: (loc) => setState(() {
-              _locationId = loc.id;
-              _locationName = loc.name;
+          HomeGroundField(
+            value: _locationId,
+            lobbyId: widget.lobbyId,
+            prefixIcon: FLucideIcons.mapPin,
+            onChanged: (id) => setState(() {
+              _locationId = id.isEmpty ? null : id;
+              _freeAddress = null;
+            }),
+            onFreeAddressChanged: (addr) => setState(() {
+              _locationId = null;
+              _freeAddress = addr;
             }),
           ),
 
@@ -322,9 +337,7 @@ class _ChallengeOfferSheetState extends ConsumerState<_ChallengeOfferSheet> {
                       _costController.text.trim().replaceAll('.', ''),
                     );
                     return Text(
-                      cost == null || cost < 0
-                          ? 'lobbyHub.common.enterAmountReading'.tr()
-                          : formatVndWords(cost),
+                      cost == null || cost < 0 ? '' : formatVndWords(cost),
                     );
                   },
                 ),

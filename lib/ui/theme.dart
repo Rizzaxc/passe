@@ -66,8 +66,16 @@ FThemeData get pbThemeLight {
       style: style,
     ),
     tabsStyle: tabsStyle(colors: colors, typography: typography, style: style),
-    selectMenuTileStyle: CustomFSelectMenuTileStyle.selectMenuTileStyle(colors: colors, typography: typography, style: style),
-    selectStyle: selectStyle(colors: colors, typography: typography, style: style),
+    selectMenuTileStyle: CustomFSelectMenuTileStyle.selectMenuTileStyle(
+      colors: colors,
+      typography: typography,
+      style: style,
+    ),
+    selectStyle: selectStyle(
+      colors: colors,
+      typography: typography,
+      style: style,
+    ),
     extensions: [PasseColors(green: pbGreen, blue: pbBlue)],
   );
 }
@@ -105,7 +113,11 @@ FThemeData get pbThemeDark {
     touch: true,
     typography: typography,
     style: style,
-    selectStyle: selectStyle(colors: colors, typography: typography, style: style),
+    selectStyle: selectStyle(
+      colors: colors,
+      typography: typography,
+      style: style,
+    ),
     extensions: [PasseColors(green: pbGreen, blue: pbBlue)],
   );
 }
@@ -215,31 +227,29 @@ FTypography _typography({
   return FTypography(display: typeface, body: typeface);
 }
 
-FStyle _style({required FColors colors, required FTypography typography}) =>
-    FStyle(
-      sizes: FSizes.inherit(touch: true),
-      formFieldStyle: FFormFieldStyle.inherit(
-        colors: colors,
-        typography: typography,
-        touch: true,
-      ),
-      focusedOutlineStyle: FFocusedOutlineStyle(
-        color: colors.primary,
-        borderRadius: const BorderRadius.all(Radius.circular(12)),
-      ),
-      iconStyle: IconThemeData(color: colors.primary, size: 24),
-      tappableStyle: FTappableStyle(),
-      borderRadius: const FBorderRadius(md: BorderRadius.all(Radius.circular(12))),
-      borderWidth: 1,
-      pagePadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      shadow: const [
-        BoxShadow(
-          color: Color(0x0d000000),
-          offset: Offset(0, 1),
-          blurRadius: 2.5,
-        ),
-      ],
-    );
+FStyle _style({
+  required FColors colors,
+  required FTypography typography,
+}) => FStyle(
+  sizes: FSizes.inherit(touch: true),
+  formFieldStyle: FFormFieldStyle.inherit(
+    colors: colors,
+    typography: typography,
+    touch: true,
+  ),
+  focusedOutlineStyle: FFocusedOutlineStyle(
+    color: colors.primary,
+    borderRadius: const BorderRadius.all(Radius.circular(12)),
+  ),
+  iconStyle: IconThemeData(color: colors.primary, size: 24),
+  tappableStyle: FTappableStyle(),
+  borderRadius: const FBorderRadius(md: BorderRadius.all(Radius.circular(12))),
+  borderWidth: 1,
+  pagePadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+  shadow: const [
+    BoxShadow(color: Color(0x0d000000), offset: Offset(0, 1), blurRadius: 2.5),
+  ],
+);
 
 // FThemeData get roseLight {
 //   const colors = FColors(

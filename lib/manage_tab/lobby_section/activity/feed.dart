@@ -64,6 +64,10 @@ enum UpdateKind {
   // just committed the roster to a fixture, and the handshake waits on the
   // members' own RSVPs — the durable copy of the push that asks for them.
   challengeGathering('challenge_gathering', Icons.groups_outlined),
+  // Posted by publish_challenge_offer on the HOME lobby's feed: the lobby is
+  // advertising a fixture, and its Planner now has a card members can RSVP to.
+  // Deliberately the only signal — publishing sends no push.
+  challengeOffered('challenge_offered', Icons.campaign_outlined),
   other('other', Icons.campaign_outlined);
 
   final String db;

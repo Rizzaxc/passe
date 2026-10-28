@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/model/challenge.dart';
+import 'friendly_challenge_controller.dart';
 
 part 'friendly_offer_controller.g.dart';
 
@@ -15,6 +16,9 @@ class ChallengeOfferSlot {
   final String id;
   final int slot;
   final DateTime kickoff;
+
+  /// When the match ends — the fixture's session runs kickoff → here.
+  final DateTime endTime;
   final DateTime expiresAt;
   final String locationId;
   final String? locationName;
@@ -25,8 +29,6 @@ class ChallengeOfferSlot {
   final double? bountyAmount;
   final ChallengeRuleset ruleset;
   final int? rulesetParam;
-  final ChallengeHandicapSide handicapSide;
-  final int? handicapAmount;
   final String? termsNote;
 
   /// How many lobbies are on this fixture right now — deliberating or already
@@ -38,6 +40,7 @@ class ChallengeOfferSlot {
     required this.id,
     required this.slot,
     required this.kickoff,
+    required this.endTime,
     required this.expiresAt,
     required this.locationId,
     required this.locationName,
@@ -47,8 +50,6 @@ class ChallengeOfferSlot {
     required this.bountyAmount,
     required this.ruleset,
     required this.rulesetParam,
-    required this.handicapSide,
-    required this.handicapAmount,
     required this.termsNote,
     required this.liveChallengeCount,
   });
@@ -66,11 +67,17 @@ class ChallengeOfferSlot {
     }
 
     final challenges = (m['lobby_challenge'] as List?) ?? const [];
+    final kickoff = DateTime.parse(m['kickoff'] as String).toLocal();
+    final end = m['end_time'] as String?;
 
     return ChallengeOfferSlot(
       id: m['id'] as String,
       slot: (m['slot'] as num).toInt(),
-      kickoff: DateTime.parse(m['kickoff'] as String).toLocal(),
+      kickoff: kickoff,
+      // Offers predating the column were all given 90 minutes server-side.
+      endTime: end == null
+          ? kickoff.add(defaultChallengeMatchLength)
+          : DateTime.parse(end).toLocal(),
       expiresAt: DateTime.parse(m['expires_at'] as String).toLocal(),
       locationId: m['location_id'] as String,
       locationName:
@@ -87,10 +94,6 @@ class ChallengeOfferSlot {
           ChallengeRuleset.fromDb(m['ruleset'] as String?) ??
           ChallengeRuleset.standard,
       rulesetParam: (m['ruleset_param'] as num?)?.toInt(),
-      handicapSide:
-          ChallengeHandicapSide.fromDb(m['handicap_side'] as String?) ??
-          ChallengeHandicapSide.none,
-      handicapAmount: (m['handicap_amount'] as num?)?.toInt(),
       termsNote: m['terms_note'] as String?,
       liveChallengeCount: challenges.length,
     );
@@ -139,9 +142,10 @@ class FriendlyOfferController extends _$FriendlyOfferController {
     final rows = await supabase
         .from('lobby_challenge_offer')
         .select(
-          'id, slot, kickoff, expires_at, location_id, venue_cost, cost_split, '
-          'bounty_kind, bounty_amount, ruleset, ruleset_param, handicap_side, '
-          'handicap_amount, terms_note, location(name), '
+          'id, slot, kickoff, end_time, expires_at, location_id, venue_cost, '
+          'cost_split, '
+          'bounty_kind, bounty_amount, ruleset, ruleset_param, terms_note, '
+          'location(name), '
           'lobby_challenge!lobby_challenge_offer_id_fkey(id, status)',
         )
         .eq('lobby_id', lobbyId)
@@ -177,6 +181,7 @@ class FriendlyOfferController extends _$FriendlyOfferController {
   Future<void> publish({
     required int slot,
     required DateTime kickoff,
+    required DateTime endTime,
     required String locationId,
     DateTime? expiresAt,
     double? venueCost,
@@ -185,8 +190,6 @@ class FriendlyOfferController extends _$FriendlyOfferController {
     double? bountyAmount,
     ChallengeRuleset ruleset = ChallengeRuleset.standard,
     int? rulesetParam,
-    ChallengeHandicapSide handicapSide = ChallengeHandicapSide.none,
-    int? handicapAmount,
     String? termsNote,
   }) async {
     await Supabase.instance.client
@@ -196,6 +199,7 @@ class FriendlyOfferController extends _$FriendlyOfferController {
             'p_lobby_id': lobbyId,
             'p_slot': slot,
             'p_kickoff': kickoff.toUtc().toIso8601String(),
+            'p_end_time': endTime.toUtc().toIso8601String(),
             'p_location': locationId,
             'p_expires_at': expiresAt?.toUtc().toIso8601String(),
             'p_venue_cost': venueCost,
@@ -204,20 +208,22 @@ class FriendlyOfferController extends _$FriendlyOfferController {
             'p_bounty_amount': bountyAmount,
             'p_ruleset': ruleset.dbValue,
             'p_ruleset_param': rulesetParam,
-            'p_handicap_side': handicapSide.dbValue,
-            'p_handicap_amount': handicapAmount,
             'p_terms_note': termsNote,
           },
         )
         .timeout(const Duration(seconds: 5));
-    ref.invalidateSelf();
+    // Publishing, withdrawing or renewing creates, moves or retires the
+    // offer's Planner session and posts to the feed.
+    invalidateFriendlyChallengeSurfaces(ref, lobbyId);
   }
 
   Future<void> withdraw(String offerId) async {
     await Supabase.instance.client
         .rpc('withdraw_challenge_offer', params: {'p_offer_id': offerId})
         .timeout(const Duration(seconds: 5));
-    ref.invalidateSelf();
+    // Publishing, withdrawing or renewing creates, moves or retires the
+    // offer's Planner session and posts to the feed.
+    invalidateFriendlyChallengeSurfaces(ref, lobbyId);
   }
 
   /// Adds a line to an open offer's note without re-publishing it, so the
@@ -230,7 +236,9 @@ class FriendlyOfferController extends _$FriendlyOfferController {
           params: {'p_offer_id': offerId, 'p_append': append},
         )
         .timeout(const Duration(seconds: 5));
-    ref.invalidateSelf();
+    // Publishing, withdrawing or renewing creates, moves or retires the
+    // offer's Planner session and posts to the feed.
+    invalidateFriendlyChallengeSurfaces(ref, lobbyId);
   }
 
   /// Re-posts an expired or withdrawn offer a week later, same terms — the
@@ -239,9 +247,21 @@ class FriendlyOfferController extends _$FriendlyOfferController {
     await Supabase.instance.client
         .rpc('renew_challenge_offer', params: {'p_offer_id': offerId})
         .timeout(const Duration(seconds: 5));
-    ref.invalidateSelf();
+    // Publishing, withdrawing or renewing creates, moves or retires the
+    // offer's Planner session and posts to the feed.
+    invalidateFriendlyChallengeSurfaces(ref, lobbyId);
   }
 }
+
+/// What a new offer's match length starts at, and what the server assumes
+/// for an offer published without one.
+const defaultChallengeMatchLength = Duration(minutes: 90);
+
+/// The shortest length the offer form's slider offers.
+const minChallengeMatchLength = Duration(minutes: 30);
+
+/// The longest match `publish_challenge_offer` accepts.
+const maxChallengeMatchLength = Duration(hours: 3);
 
 /// The longest single amendment `amend_challenge_offer` accepts.
 const challengeOfferAmendMaxLength = 140;
@@ -260,6 +280,12 @@ String friendlyOfferErrorMessage(Object e) {
   }
   if (msg.contains('close in the past')) {
     return 'challenge.offer.errorExpiryPast'.tr();
+  }
+  if (msg.contains('end after kickoff')) {
+    return 'challenge.offer.errorEndOrder'.tr();
+  }
+  if (msg.contains('match is too long')) {
+    return 'challenge.offer.errorTooLong'.tr();
   }
   if (msg.contains('three offer slots')) {
     return 'challenge.offer.errorSlot'.tr();

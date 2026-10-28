@@ -171,7 +171,10 @@ class _FixtureGroup extends StatelessWidget {
                   namedArgs: {'count': '${challengers.length}'},
                 )
               : 'challenge.chooser.explainerOne'.tr(),
-          style: typography.body.xs.copyWith(color: colors.mutedForeground),
+          style: typography.body.xs.copyWith(
+            color: colors.mutedForeground,
+            height: 1.4,
+          ),
         ),
         for (final c in challengers)
           _ChallengerRow(

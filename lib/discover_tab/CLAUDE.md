@@ -180,7 +180,10 @@ freezed) — edit them by hand, no build_runner.
 - Friendly offer cards (`friendly_offer_feed_data`) show the **gathering deadline**
   (`expires_at`): that's when the challenger's members must have confirmed, not kickoff. "Thách
   đấu" is disabled with a hint unless the user manages the "challenging as" lobby, and the confirm
-  sheet names that lobby. `send_friendly_challenge` rejects lobbies that share a manager. See
+  sheet names that lobby. `send_friendly_challenge` rejects lobbies that share a manager, and the
+  feed hides those offers up front (`fn_shared_manager_lobby_ids`, SECURITY DEFINER because
+  `lobby_member` RLS can't see the offering lobby's coordinators;
+  `schema/friendly_offer_feed_hide_shared_manager.sql`). See
   `lib/manage_tab/CLAUDE.md` ▸ Friendly-challenge hand-offs.
 - Shows lobbies that have **published a challenge offer** (team vs team, with stated terms — see
   root CLAUDE.md ▸ Challenger System for the full flow).

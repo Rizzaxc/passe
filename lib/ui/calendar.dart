@@ -48,7 +48,9 @@ class PCalendar extends StatelessWidget {
                 date: date,
                 isSelected: _isSameDay(date, selectedDate),
                 isToday: _isSameDay(date, today),
-                onTap: onDateSelected != null ? () => onDateSelected!(date) : null,
+                onTap: onDateSelected != null
+                    ? () => onDateSelected!(date)
+                    : null,
               ),
             ),
           ],
@@ -107,7 +109,9 @@ class _PCalendarTile extends StatelessWidget {
             Text(
               'timeslot.dayOfWeek.shortName.$weekdayKey'.tr(),
               style: typography.body.xs.copyWith(
-                color: isSelected ? colors.primaryForeground : colors.mutedForeground,
+                color: isSelected
+                    ? colors.primaryForeground
+                    : colors.mutedForeground,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -118,7 +122,9 @@ class _PCalendarTile extends StatelessWidget {
                 color: isSelected ? colors.primaryForeground : colors.primary,
                 fontWeight: FontWeight.w500,
                 decoration: isToday ? TextDecoration.underline : null,
-                decorationColor: isSelected ? colors.primaryForeground : colors.primary,
+                decorationColor: isSelected
+                    ? colors.primaryForeground
+                    : colors.primary,
               ),
             ),
           ],

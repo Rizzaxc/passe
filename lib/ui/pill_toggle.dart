@@ -71,8 +71,9 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final iconColor =
-        selected ? colors.primaryForeground : colors.mutedForeground;
+    final iconColor = selected
+        ? colors.primaryForeground
+        : colors.mutedForeground;
 
     return GestureDetector(
       onTap: onTap,

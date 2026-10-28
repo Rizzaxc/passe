@@ -73,9 +73,10 @@ class ScheduleActivityController extends _$ScheduleActivityController {
       final lobbyInfo = ref.read(lobbyDetailControllerProvider(lobbyId)).value;
       if (lobbyInfo == null) return;
 
+      // Challenge fixtures have their own cap (three offer slots).
       final currentCount = (await ref.read(
         lobbyUpcomingActivitiesControllerProvider(lobbyId).future,
-      )).length;
+      )).where((a) => !a.isChallengeFixture).length;
       if (currentCount >= maxConcurrentActivities) {
         throw StateError(
           'lobbyHub.schedule.limitReached'.tr(

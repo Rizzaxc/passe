@@ -105,9 +105,7 @@ class _PDualButtonState extends State<PDualButton> {
       }
     }
 
-    return .delta(
-      decoration: .delta([.all(.boxDelta(borderRadius: radius))]),
-    );
+    return .delta(decoration: .delta([.all(.boxDelta(borderRadius: radius))]));
   }
 
   Widget _wrapFlex(Widget child, int flex) =>
@@ -134,7 +132,9 @@ class _PDualButtonState extends State<PDualButton> {
       SizedBox(
         width: widget.axis == Axis.horizontal ? 1 : null,
         height: widget.axis == Axis.vertical ? 1 : null,
-        child: FDivider(axis: widget.axis == Axis.horizontal ? .vertical : .horizontal),
+        child: FDivider(
+          axis: widget.axis == Axis.horizontal ? .vertical : .horizontal,
+        ),
       ),
       _wrapFlex(secondBtn, 100 - widget.flex),
     ];

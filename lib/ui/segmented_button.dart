@@ -59,7 +59,9 @@ class PSegmentedButton<T> extends StatelessWidget {
         ),
       ]),
       contentStyle: .delta(
-        padding: .value(const EdgeInsets.symmetric(horizontal: 10, vertical: 6)),
+        padding: .value(
+          const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        ),
       ),
     );
   }

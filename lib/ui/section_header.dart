@@ -1,7 +1,6 @@
 import 'package:forui/forui.dart';
 import 'package:material_ui/material_ui.dart';
 
-
 class PSectionHeader extends StatelessWidget {
   final String title;
   final Widget? suffix;

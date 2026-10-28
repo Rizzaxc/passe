@@ -246,6 +246,7 @@ class _ReportResultSheetState extends ConsumerState<_ReportResultSheet> {
             label: Text('challenge.report.noteLabel'.tr()),
             hint: 'challenge.report.noteHint'.tr(),
             control: FTextFieldControl.managed(controller: _note),
+            minLines: 3,
             maxLines: 3,
           ),
 
@@ -297,8 +298,7 @@ class _ReportResultSheetState extends ConsumerState<_ReportResultSheet> {
   }
 }
 
-/// The agreed format, restated. Handicap included, resolved to "us"/"them"
-/// through [ChallengeHandicapSide.resolve] — never shown as home/away.
+/// The agreed format, restated.
 class _FormatRecap extends StatelessWidget {
   final FriendlyChallenge challenge;
   const _FormatRecap({required this.challenge});
@@ -307,11 +307,6 @@ class _FormatRecap extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
-    final handicap = challenge.handicapSide.getLocalizedLabel(
-      context,
-      weAreHome: challenge.weAreHome,
-      amount: challenge.handicapAmount,
-    );
 
     return PCard(
       child: Column(
@@ -341,11 +336,6 @@ class _FormatRecap extends StatelessWidget {
               ),
             ],
           ),
-          if (handicap != null)
-            Text(
-              handicap,
-              style: typography.body.sm.copyWith(color: colors.mutedForeground),
-            ),
           if ((challenge.termsNote ?? '').trim().isNotEmpty)
             Text(
               challenge.termsNote!,

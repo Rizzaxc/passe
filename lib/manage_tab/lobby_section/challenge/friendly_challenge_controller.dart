@@ -15,8 +15,8 @@ part 'friendly_challenge_controller.g.dart';
 /// this lobby.
 ///
 /// Everything here is already in THIS lobby's frame: [myReport] is flipped by
-/// the RPC, and [weAreHome] is what the structural terms ([costSplit],
-/// [handicapSide]) resolve against. Never flip a result in widget code — see
+/// the RPC, and [weAreHome] is what the structural terms ([costSplit])
+/// resolve against. Never flip a result in widget code — see
 /// the header of `lib/core/model/challenge.dart`.
 class FriendlyChallenge {
   final String id;
@@ -40,8 +40,6 @@ class FriendlyChallenge {
   final double? bountyAmount;
   final ChallengeRuleset ruleset;
   final int? rulesetParam;
-  final ChallengeHandicapSide handicapSide;
-  final int? handicapAmount;
   final String? termsNote;
   final String? note;
 
@@ -81,8 +79,6 @@ class FriendlyChallenge {
     required this.bountyAmount,
     required this.ruleset,
     required this.rulesetParam,
-    required this.handicapSide,
-    required this.handicapAmount,
     required this.termsNote,
     required this.note,
     required this.activityId,
@@ -149,10 +145,6 @@ class FriendlyChallenge {
           ChallengeRuleset.fromDb(m['ruleset'] as String?) ??
           ChallengeRuleset.standard,
       rulesetParam: (m['ruleset_param'] as num?)?.toInt(),
-      handicapSide:
-          ChallengeHandicapSide.fromDb(m['handicap_side'] as String?) ??
-          ChallengeHandicapSide.none,
-      handicapAmount: (m['handicap_amount'] as num?)?.toInt(),
       termsNote: m['terms_note'] as String?,
       note: m['note'] as String?,
       activityId: m['activity_id'] as String?,

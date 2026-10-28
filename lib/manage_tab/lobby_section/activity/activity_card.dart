@@ -28,7 +28,11 @@ import '../../../professional/pending_activity_booking_state.dart';
 import '../../../router.dart';
 import '../../freeplay_section/manage_sheet.dart';
 import '../../freeplay_section/requests_sheet.dart';
+import '../challenge/challenger_chooser_controller.dart';
+import '../challenge/challenger_chooser_sheet.dart';
 import '../challenge/friendly_challenge_controller.dart';
+import '../challenge/friendly_offer_controller.dart';
+import '../challenge/friendly_offer_sheet.dart';
 import '../challenge/report_result_sheet.dart';
 import '../challenges_controller.dart';
 import '../invite_member_sheet.dart';
@@ -466,6 +470,14 @@ class ActivityCard extends ConsumerWidget {
                 // refereed block above this also renders when `isPast`: the
                 // result window opens at the final whistle, which is exactly
                 // when the card has moved over to History.
+                // An open challenge offer: the lobby's own fixture, before an
+                // opponent is chosen. Managing the offer lives here now rather
+                // than two rows deep in the lobby info sheet.
+                if (upcoming.isOpenOffer && !isPast)
+                  _ChallengeOfferBlock(
+                    lobbyId: lobbyId,
+                    offerId: upcoming.offerId!,
+                  ),
                 if (upcoming.activity.id != null)
                   _FriendlyChallengeBlock(
                     lobbyId: lobbyId,
@@ -477,7 +489,7 @@ class ActivityCard extends ConsumerWidget {
                 // Spare seats offered to people outside the lobby. Manage-tier
                 // only, and never on a challenge fixture — you can't sell a
                 // seat into a team-vs-team match.
-                if (!isPast && isLeader && upcoming.challenge == null) ...[
+                if (!isPast && isLeader && !upcoming.isChallengeFixture) ...[
                   const SizedBox(height: 10),
                   _FreeplayBlock(lobbyId: lobbyId, upcoming: upcoming),
                 ],
@@ -588,7 +600,12 @@ class ActivityCard extends ConsumerWidget {
                               ),
                               const SizedBox(width: 6),
                             ],
-                            if (!isPast && isLeader) ...[
+                            // A fixture's time, venue and cancellation belong
+                            // to its offer/challenge — editing the activity
+                            // directly would desync the two.
+                            if (!isPast &&
+                                isLeader &&
+                                !upcoming.isChallengeFixture) ...[
                               // Opens the full schedule form (time, location,
                               // recurrence, cost, confirmation) — covers a
                               // location-less activity too, so there's no
@@ -650,7 +667,9 @@ class ActivityCard extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    if (!isPast && isLeader) ...[
+                    if (!isPast &&
+                        isLeader &&
+                        !upcoming.isChallengeFixture) ...[
                       const SizedBox(width: 6),
                       GestureDetector(
                         onTap: () => _confirmCancel(context, ref),
@@ -1765,11 +1784,6 @@ class _FriendlyChallengeBlock extends ConsumerWidget {
 
     final terms = <String>[
       c.ruleset.getLocalizedName(context, param: c.rulesetParam),
-      ?c.handicapSide.getLocalizedLabel(
-        context,
-        weAreHome: c.weAreHome,
-        amount: c.handicapAmount,
-      ),
       if (c.costSplit != ChallengeCostSplit.none)
         c.costSplit.getLocalizedLabel(context, weAreHome: c.weAreHome),
     ];
@@ -1975,6 +1989,167 @@ class _FriendlyChallengeBlock extends ConsumerWidget {
                   color: colors.mutedForeground,
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The open-offer strip on home's fixture card: what's being offered, how the
+/// search is going, and the manager's three moves — pick an opponent, edit,
+/// withdraw. Replaces the offer/challenger rows that used to sit in the lobby
+/// info sheet, where nobody looked.
+class _ChallengeOfferBlock extends ConsumerWidget {
+  final String lobbyId;
+  final String offerId;
+
+  const _ChallengeOfferBlock({required this.lobbyId, required this.offerId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    final canManage =
+        ref.watch(myLobbyPermissionProvider(lobbyId)).value?.canManage ?? false;
+    final board = ref.watch(friendlyOfferControllerProvider(lobbyId)).value;
+    final ready =
+        (ref.watch(pendingChallengersControllerProvider(lobbyId)).value ??
+                const <PendingChallenger>[])
+            .where((c) => c.offerId == offerId)
+            .length;
+
+    ChallengeOfferSlot? offer;
+    for (final o in board?.open ?? const <ChallengeOfferSlot>[]) {
+      if (o.id == offerId) offer = o;
+    }
+
+    final terms = <String>[
+      if (offer != null) ...[
+        offer.ruleset.getLocalizedName(context, param: offer.rulesetParam),
+        if (offer.costSplit != ChallengeCostSplit.none)
+          offer.costSplit.getLocalizedLabel(context, weAreHome: true),
+      ],
+    ];
+
+    // Where the search stands. A closed offer still has a card while someone
+    // it already reached is waiting on our answer.
+    final String progress;
+    if (ready > 0) {
+      progress = 'challenge.offerBlock.ready'.tr(
+        namedArgs: {'count': '$ready'},
+      );
+    } else if (offer == null) {
+      progress = 'challenge.offerBlock.closed'.tr();
+    } else if (offer.liveChallengeCount > 0) {
+      progress = 'challenge.offerBlock.gathering'.tr(
+        namedArgs: {'count': '${offer.liveChallengeCount}'},
+      );
+    } else {
+      progress = 'challenge.offerBlock.none'.tr();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: colors.secondary.withValues(alpha: 0.35),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 6,
+          children: [
+            Row(
+              spacing: 6,
+              children: [
+                Icon(FLucideIcons.swords, size: 14, color: colors.primary),
+                Expanded(
+                  child: Text(
+                    'challenge.offerBlock.title'.tr(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: typography.body.sm.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (terms.isNotEmpty)
+              Text(
+                terms.join(' · '),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+            if (offer != null)
+              Text(
+                'challenge.offerBlock.closesAt'.tr(
+                  namedArgs: {'when': formatMatchDateTime(offer.expiresAt)},
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: typography.body.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+            Text(
+              progress,
+              style: typography.body.xs.copyWith(
+                color: ready > 0 ? colors.primary : colors.mutedForeground,
+                fontWeight: ready > 0 ? FontWeight.bold : null,
+              ),
+            ),
+            if (canManage) ...[
+              if (ready > 0)
+                FButton(
+                  size: .sm,
+                  onPress: () => showChallengerChooserSheet(context, lobbyId),
+                  child: Text(
+                    'challenge.offerBlock.choose'.tr(
+                      namedArgs: {'count': '$ready'},
+                    ),
+                  ),
+                ),
+              if (offer != null && board != null)
+                Row(
+                  spacing: 8,
+                  children: [
+                    Expanded(
+                      child: FButton(
+                        size: .sm,
+                        variant: .secondary,
+                        onPress: () => showFriendlyOfferFormSheet(
+                          context,
+                          lobbyId: lobbyId,
+                          slot: offer!.slot,
+                          board: board,
+                          existing: offer,
+                        ),
+                        child: Text('challenge.offer.edit'.tr()),
+                      ),
+                    ),
+                    Expanded(
+                      child: FButton(
+                        size: .sm,
+                        variant: .outline,
+                        onPress: () => confirmWithdrawChallengeOffer(
+                          context,
+                          ref,
+                          lobbyId: lobbyId,
+                          o: offer!,
+                        ),
+                        child: Text('challenge.offer.withdraw'.tr()),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
           ],
         ),
       ),

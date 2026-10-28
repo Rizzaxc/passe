@@ -78,8 +78,10 @@ class _LobbyPlannerTabState extends ConsumerState<LobbyPlannerTab> {
     final activitiesAsync = ref.watch(
       lobbyUpcomingActivitiesControllerProvider(widget.lobbyId),
     );
+    // Challenge fixtures have their own cap (three offer slots).
     final atCap =
-        (activitiesAsync.value?.length ?? 0) >=
+        (activitiesAsync.value?.where((a) => !a.isChallengeFixture).length ??
+            0) >=
         ScheduleActivityController.maxConcurrentActivities;
 
     return Column(

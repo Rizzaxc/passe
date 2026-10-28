@@ -764,6 +764,7 @@
     "othersAlertDescription": "Please select a specific sport to see relevant content."
   },
   "notSet": "Not set",
+  "durationMinutes": "{count}m",
   "done": "Done",
   "error": "Error",
   "errorGeneric": "Something went wrong. Please try again later.",
@@ -1031,6 +1032,8 @@
       "noDeadline": "No deadline",
       "deadline": "Confirmation deadline",
       "lockBefore": "Close confirmations before",
+      "duration": "Duration",
+      "endsAt": "Ends at {time}",
       "leadDays": "{count} days",
       "leadHours": "{count} hours",
       "limitReached": "This lobby already has {count} upcoming activities",
@@ -2070,9 +2073,6 @@
         "custom": "The two lobbies agree their own format. Spell it out in the note."
       }
     },
-    "handicap": {
-      "spotted": "{party} spotted {amount}"
-    },
     "result": {
       "win": "Won",
       "loss": "Lost",
@@ -2151,7 +2151,6 @@
       "errorAlreadyAnswered": "This challenge has already been answered.",
       "errorManagerOnly": "Only the captain or a coordinator can answer.",
       "errorGeneric": "Couldn't answer the challenge.",
-      "settingsRow": "Challenges",
       "decideBy": "Answer by {when}",
       "acceptTitle": "Accept this challenge?",
       "acceptBody": "The match against {name} goes on both lobbies’ schedules.",
@@ -2222,10 +2221,9 @@
     },
     "offer": {
       "title": "Challenge offers",
-      "step1": "Post a time, venue and cost for a match you want (up to 3 offers).",
+      "step1": "Post the time, venue and costs for the match you want (up to 3 offers). It shows up on your lobby's Planner straight away so members can RSVP.",
       "step2": "Other teams see it under Discover › Thách đấu and accept.",
       "step3": "You pick the opponent and the match lands on both schedules.",
-      "settingsRow": "Post an offer",
       "explainer": "Other teams see offers under Discover › Thách đấu; you pick the opponent. Up to 3 offers.",
       "emptySlot": "Post offer {slot}",
       "closesAt": "Closes: {when}",
@@ -2241,19 +2239,26 @@
       "editWarning": "{count} lobbies are on this fixture. Saving changes cancels their challenges.",
       "whenWhere": "When & where",
       "kickoff": "Kick-off",
+      "duration": "Duration",
+      "endsAt": "Ends at {when}",
+      "deadline": "Taking challengers",
+      "errorEndOrder": "The match must end after kick-off.",
+      "errorTooLong": "A match can't run longer than 3 hours.",
       "closes": "Closes to challengers",
       "closesHint": "Defaults to 36 hours before kick-off. You then have until 24 hours before kick-off to pick an opponent, which still leaves the others time to find another match.",
+      "closesSoonHint": "Kick-off is close, so the offer closes {time}.",
       "format": "Format",
       "paramSets": "Number of sets",
       "paramRubbers": "Number of rubbers",
-      "handicap": "Handicap",
-      "handicapNone": "No handicap",
-      "handicapHint": "A handicap lets two mismatched teams play a game that still means something.",
-      "handicapAmount": "Handicap size",
       "money": "Cost & stake",
-      "venueCost": "Pitch fee (VND)",
-      "bountyAmount": "Stake (VND)",
+      "venueCost": "Total pitch fee",
+      "bountyAmount": "Stake",
       "moneyHint": "The app never moves money. These are terms the two teams settle between themselves.",
+      "matchTerms": "Match terms",
+      "rules": "Rules",
+      "costSplit": "Pitch fee",
+      "bounty": "Stakes",
+      "errorVenueCost": "Enter the pitch fee.",
       "terms": "Extra notes",
       "termsHint": "Optional",
       "termsHintRequired": "Required for custom rules",
@@ -2268,7 +2273,6 @@
       "errorPickKickoff": "Pick a kick-off time first.",
       "errorRulesetParam": "Enter a valid number for this format.",
       "errorCustomNote": "Custom rules need to be spelled out in the notes.",
-      "errorHandicapAmount": "Enter a valid handicap.",
       "errorBountyAmount": "Enter a valid stake.",
       "errorGeneric": "Couldn't post the offer.",
       "amendTitle": "Add to the note",
@@ -2340,6 +2344,15 @@
     "cancel": {
       "cta": "Withdraw challenge",
       "errorTooLate": "The match is locked in; it can't be withdrawn now."
+    },
+    "offerBlock": {
+      "title": "Looking for an opponent",
+      "closesAt": "Open until {when}",
+      "ready": "{count} lobbies are ready — waiting on your pick",
+      "closed": "No longer taking challengers",
+      "gathering": "{count} lobbies are gathering players",
+      "none": "No lobby has answered yet",
+      "choose": "Pick an opponent ({count})"
     }
   },
   "discover": {

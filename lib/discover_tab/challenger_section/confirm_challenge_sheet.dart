@@ -4,7 +4,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/format.dart';
-import '../../core/model/challenge.dart';
 import '../../logger/talker.dart';
 import '../../ui/main.dart';
 import 'feed_controller.dart';
@@ -166,17 +165,6 @@ class _ConfirmSheetState extends ConsumerState<_ConfirmSheet> {
                 ),
                 // Everything below resolves from the AWAY side: this sheet is
                 // only ever opened by the prospective challenger.
-                if (o.handicapSide != ChallengeHandicapSide.none)
-                  _Term(
-                    icon: FLucideIcons.scale,
-                    text:
-                        o.handicapSide.getLocalizedLabel(
-                          context,
-                          weAreHome: false,
-                          amount: o.handicapAmount,
-                        ) ??
-                        '',
-                  ),
                 if (o.venueCost != null && o.venueCost! > 0)
                   _Term(
                     icon: FLucideIcons.wallet,
@@ -238,6 +226,7 @@ class _ConfirmSheetState extends ConsumerState<_ConfirmSheet> {
             label: Text('challenge.send.noteLabel'.tr()),
             hint: 'challenge.send.noteHint'.tr(),
             control: FTextFieldControl.managed(controller: _note),
+            minLines: 2,
             maxLines: 2,
           ),
 

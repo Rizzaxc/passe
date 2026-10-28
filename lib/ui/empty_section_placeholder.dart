@@ -1,7 +1,6 @@
 import 'package:forui/forui.dart';
 import 'package:material_ui/material_ui.dart';
 
-
 class PEmptySectionPlaceholder extends StatelessWidget {
   final Widget? hero;
   final String? title;
@@ -27,14 +26,13 @@ class PEmptySectionPlaceholder extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (hero != null) ...[
-            hero!,
-            const SizedBox(height: 16),
-          ],
+          if (hero != null) ...[hero!, const SizedBox(height: 16)],
           if (title != null) ...[
             Text(
               title!,
-              style: context.theme.typography.body.xl2.copyWith(fontWeight: .bold),
+              style: context.theme.typography.body.xl2.copyWith(
+                fontWeight: .bold,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),

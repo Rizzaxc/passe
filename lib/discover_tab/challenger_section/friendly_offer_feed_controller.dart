@@ -39,8 +39,6 @@ class FriendlyOffer {
   final double? bountyAmount;
   final ChallengeRuleset ruleset;
   final int? rulesetParam;
-  final ChallengeHandicapSide handicapSide;
-  final int? handicapAmount;
   final String? termsNote;
 
   /// 'harder' | 'even' | 'easier', stated from the CHALLENGER's point of view
@@ -72,8 +70,6 @@ class FriendlyOffer {
     required this.bountyAmount,
     required this.ruleset,
     required this.rulesetParam,
-    required this.handicapSide,
-    required this.handicapAmount,
     required this.termsNote,
     required this.favorability,
     required this.recommendations,
@@ -128,10 +124,6 @@ class FriendlyOffer {
           ChallengeRuleset.fromDb(m['ruleset'] as String?) ??
           ChallengeRuleset.standard,
       rulesetParam: (m['ruleset_param'] as num?)?.toInt(),
-      handicapSide:
-          ChallengeHandicapSide.fromDb(m['handicap_side'] as String?) ??
-          ChallengeHandicapSide.none,
-      handicapAmount: (m['handicap_amount'] as num?)?.toInt(),
       termsNote: m['terms_note'] as String?,
       favorability: m['favorability'] as String? ?? 'even',
       recommendations: counts,

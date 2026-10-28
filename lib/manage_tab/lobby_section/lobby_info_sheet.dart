@@ -14,10 +14,6 @@ import '../../router.dart';
 import '../../ui/dialog.dart';
 import '../../ui/sheet.dart';
 import '../../ui/user_avatar.dart';
-import 'challenge/challenger_chooser_controller.dart';
-import 'challenge/challenger_chooser_sheet.dart';
-import 'challenge/friendly_offer_controller.dart';
-import 'challenge/friendly_offer_sheet.dart';
 import 'challenge_offer_sheet.dart';
 import 'challenges_controller.dart';
 import 'challenges_sheet.dart';
@@ -226,18 +222,6 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
 
   String? _challengeBadge(WidgetRef ref, String lobbyId) {
     final count = ref.watch(incomingChallengeCountProvider(lobbyId)).value;
-    if (count == null || count == 0) return null;
-    return count.toString();
-  }
-
-  String? _offerBadge(WidgetRef ref, String lobbyId) {
-    final board = ref.watch(friendlyOfferControllerProvider(lobbyId)).value;
-    if (board == null || board.open.isEmpty) return null;
-    return '${board.open.length}/${ChallengeOfferBoard.maxSlots}';
-  }
-
-  String? _friendlyChallengerBadge(WidgetRef ref, String lobbyId) {
-    final count = ref.watch(pendingChallengerCountProvider(lobbyId)).value;
     if (count == null || count == 0) return null;
     return count.toString();
   }
@@ -664,36 +648,10 @@ class _LobbyInfoSheetState extends ConsumerState<_LobbyInfoSheet> {
                         indent: 50,
                         color: colors.border.withValues(alpha: 0.5),
                       ),
-                      // The three fixtures this lobby advertises. Not behind
-                      // `challengerFlow` — that flag now gates only the
-                      // refereed variant's extras.
-                      _SettingsRow(
-                        icon: FLucideIcons.megaphone,
-                        label: 'challenge.offer.settingsRow'.tr(),
-                        badge: _offerBadge(ref, widget.lobbyId),
-                        onTap: () =>
-                            showFriendlyOfferSheet(context, widget.lobbyId),
-                      ),
-                      Divider(
-                        height: 1,
-                        indent: 50,
-                        color: colors.border.withValues(alpha: 0.5),
-                      ),
-                      // Friendly mode's handshake lands here: challengers
-                      // that have already committed their own players and are
-                      // waiting on our answer.
-                      _SettingsRow(
-                        icon: FLucideIcons.swords,
-                        label: 'challenge.chooser.settingsRow'.tr(),
-                        badge: _friendlyChallengerBadge(ref, widget.lobbyId),
-                        onTap: () =>
-                            showChallengerChooserSheet(context, widget.lobbyId),
-                      ),
-                      Divider(
-                        height: 1,
-                        indent: 50,
-                        color: colors.border.withValues(alpha: 0.5),
-                      ),
+                      // Challenge offers aren't here any more: each open offer
+                      // is a card on the Planner (posted from its "+"), and a
+                      // ready challenger surfaces on that card, in the feed
+                      // and by push.
                       if (ClientFeatureFlags.challengerFlow) ...[
                         _SettingsRow(
                           icon: FLucideIcons.handshake,

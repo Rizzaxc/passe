@@ -107,7 +107,10 @@ class PCard extends StatelessWidget {
     this.style = const .context(),
     this.clipBehavior = .none,
     super.key,
-  }) : assert(title != null || subtitle != null || child != null, 'Provide at least one of title, subtitle, child.');
+  }) : assert(
+         title != null || subtitle != null || child != null,
+         'Provide at least one of title, subtitle, child.',
+       );
 
   @override
   Widget build(BuildContext context) => FCard(
@@ -119,14 +122,26 @@ class PCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (title case final title?) DefaultTextStyle.merge(style: cardStyle.titleTextStyle, child: title),
+          if (title case final title?)
+            DefaultTextStyle.merge(
+              style: cardStyle.titleTextStyle,
+              child: title,
+            ),
           if (subtitle case final subtitle?)
             Padding(
               padding: EdgeInsets.only(top: title != null ? 2 : 0),
-              child: DefaultTextStyle.merge(style: cardStyle.subtitleTextStyle, child: subtitle),
+              child: DefaultTextStyle.merge(
+                style: cardStyle.subtitleTextStyle,
+                child: subtitle,
+              ),
             ),
           if (child case final child?)
-            Padding(padding: EdgeInsets.only(top: (title != null || subtitle != null) ? 6 : 0), child: child),
+            Padding(
+              padding: EdgeInsets.only(
+                top: (title != null || subtitle != null) ? 6 : 0,
+              ),
+              child: child,
+            ),
         ],
       ),
     ),

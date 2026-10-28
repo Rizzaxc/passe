@@ -637,7 +637,7 @@
     },
     "tabs": {
       "feed": "Bảng tin",
-      "planner": "Lịch chơi",
+      "planner": "Hoạt động",
       "history": "Lịch sử"
     },
     "searchID": "Mã lobby",
@@ -764,6 +764,7 @@
     "othersAlertDescription": "Bạn cần chọn một môn thể thao để xem các nội dung phù hợp. Bấm vào biểu tượng ở góc phải màn hình để điều chỉnh."
   },
   "notSet": "Chưa Thiết Lập",
+  "durationMinutes": "{count}p",
   "done": "Xong",
   "error": "Lỗi",
   "errorGeneric": "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
@@ -990,7 +991,7 @@
       "note": "Ghi chú",
       "member": "Thành viên lobby",
       "attended": "Đã tham gia",
-      "enterAmountReading": "Nhập số tiền để xem cách đọc",
+      "enterAmountReading": "Nhập số tiền",
       "cancel": "Đóng",
       "coach": "HLV"
     },
@@ -1031,6 +1032,8 @@
       "noDeadline": "Không có hạn chót",
       "deadline": "Hạn chót xác nhận",
       "lockBefore": "Khóa xác nhận trước",
+      "duration": "Thời lượng",
+      "endsAt": "Kết thúc lúc {time}",
       "leadDays": "{count} ngày",
       "leadHours": "{count} giờ",
       "limitReached": "Lobby đã đạt giới hạn {count} hoạt động sắp tới",
@@ -2044,29 +2047,26 @@
     },
     "bounty": {
       "none": "Không cược",
-      "perGoalDiff": "Cược theo bàn cách biệt",
+      "perGoalDiff": "Cược theo cách biệt",
       "fixedPerTeam": "Cược cố định mỗi đội"
     },
     "ruleset": {
-      "standard": "Luật thường",
-      "bestOfSets": "Đấu nhiều ván",
+      "standard": "Luật thông thường",
+      "bestOfSets": "Best Of X",
       "kingOfTheHill": "Đội thắng giữ sân",
-      "teamTie": "Đối kháng nhiều trận",
+      "teamTie": "Đối kháng theo đội",
       "custom": "Luật riêng",
       "withParam": {
         "bestOfSets": "Best of {n} ván",
         "teamTie": "Đối kháng {n} trận"
       },
       "description": {
-        "standard": "Đá theo luật thông thường của môn này.",
+        "standard": "Thi đấu theo luật thông thường của môn này.",
         "bestOfSets": "Đội nào thắng trước quá bán số ván thì thắng. Đây là thể thức duy nhất có tỉ số từng ván.",
-        "kingOfTheHill": "Đá nhiều ván ngắn, đội thắng ở lại sân. Đội giữ sân lâu hơn là đội thắng.",
-        "teamTie": "Chia thành nhiều trận đơn/đôi riêng, tổng kết quả quyết định đội thắng.",
+        "kingOfTheHill": "Đấu nhiều trận ngắn, đội thắng ở lại sân. Đội giữ sân lâu hơn là đội thắng.",
+        "teamTie": "Mỗi phe chia nhiều đội, đấu lần lượt. Đội thắng là đội thắng nhiều trận hơn.",
         "custom": "Hai đội tự thỏa thuận thể thức. Ghi rõ ở phần ghi chú."
       }
-    },
-    "handicap": {
-      "spotted": "{party} được chấp {amount}"
     },
     "result": {
       "win": "Thắng",
@@ -2079,7 +2079,7 @@
       "referee": "Trọng tài ghi nhận",
       "agreed": "Hai đội cùng xác nhận",
       "oneSided": "Chỉ một đội khai — kết quả đó được ghi nhận",
-      "forfeit": "Xử thắng do đối phương không đến — đội thắng chỉ nhận nửa điểm MMR",
+      "forfeit": "Xử thắng do đối phương không đến — đội thắng nhận một nửa MMR",
       "mutualConcession": "Cả hai đội đều nhận thua — tính hòa",
       "disputed": "Hai đội khai khác nhau — cả hai đội bị tính thua"
     },
@@ -2146,7 +2146,6 @@
       "errorAlreadyAnswered": "Lời thách đấu này đã được trả lời rồi.",
       "errorManagerOnly": "Chỉ đội trưởng hoặc Điều phối mới trả lời được.",
       "errorGeneric": "Không trả lời được lời thách đấu.",
-      "settingsRow": "Phản hồi Thách đấu",
       "decideBy": "Trả lời trước {when}",
       "acceptTitle": "Nhận lời thách đấu?",
       "acceptBody": "Trận gặp {name} sẽ vào lịch của cả hai đội.",
@@ -2209,21 +2208,20 @@
     },
     "findOpponent": {
       "addTitle": "Thêm vào lịch",
-      "schedule": "Buổi chơi riêng",
-      "scheduleHint": "Cả lobby cùng xác nhận tham gia",
-      "challenge": "Đăng thách đấu",
+      "schedule": "Lên Lịch",
+      "scheduleHint": "Hoạt động nội bộ",
+      "challenge": "Đăng Thách đấu",
       "challengeHint": "Đăng giờ & sân để đội khác nhận lời",
       "openCount": "{count}/{max} lời mời đang mở"
     },
     "offer": {
       "title": "Lời mời thách đấu",
-      "step1": "Đăng giờ, sân và chi phí cho trận bạn muốn đá (tối đa 3 lời mời).",
+      "step1": "Đăng giờ, sân và chi phí cho trận bạn muốn đá (tối đa 3 lời mời). Trận hiện ngay trong Lịch của đội để mọi người xác nhận.",
       "step2": "Đội khác thấy ở Khám phá › Thách đấu và nhận lời.",
-      "step3": "Bạn chọn đối thủ, trận vào lịch của cả hai đội.",
-      "settingsRow": "Đăng Thách đấu",
+      "step3": "Bạn chọn đối thủ; trận sẽ vào lịch của cả hai đội.",
       "explainer": "Đội khác thấy lời mời ở Khám phá › Thách đấu, bạn chọn đối thủ. Tối đa 3 lời mời.",
       "emptySlot": "Đăng lời mời {slot}",
-      "closesAt": "Đóng nhận lời: {when}",
+      "closesAt": "{when}",
       "withdraw": "Gỡ",
       "edit": "Sửa",
       "cancel": "Huỷ",
@@ -2235,20 +2233,27 @@
       "formTitleEdit": "Sửa lời mời",
       "editWarning": "{count} đội đang chờ trận này. Lưu thay đổi sẽ huỷ lời thách đấu của họ.",
       "whenWhere": "Thời gian & địa điểm",
-      "kickoff": "Giờ đấu",
-      "closes": "Đóng nhận lời",
-      "closesHint": "Mặc định là 36 tiếng trước giờ đấu. Sau đó bạn có đến 24 tiếng trước giờ đấu để chọn đối thủ, và đội bị từ chối vẫn kịp tìm trận khác.",
+      "kickoff": "Thời gian",
+      "duration": "Thời lượng",
+      "endsAt": "Kết thúc lúc {when}",
+      "deadline": "Deadline",
+      "errorEndOrder": "Giờ kết thúc phải sau giờ đấu.",
+      "errorTooLong": "Trận đấu không được dài quá 3 tiếng.",
+      "closes": "Hạn chót",
+      "closesHint": "Kèo tự huỷ nếu không có đối thủ sau deadline.",
+      "closesSoonHint": "Trận sắp diễn ra nên lời mời đóng lúc {time}.",
       "format": "Thể thức",
       "paramSets": "Số ván",
       "paramRubbers": "Số trận",
-      "handicap": "Chấp",
-      "handicapNone": "Không chấp",
-      "handicapHint": "Chấp giúp hai đội chênh lệch trình độ vẫn đá được với nhau.",
-      "handicapAmount": "Chấp bao nhiêu",
       "money": "Chi phí & cược",
-      "venueCost": "Tiền sân (VNĐ)",
-      "bountyAmount": "Mức cược (VNĐ)",
+      "venueCost": "Tổng tiền sân",
+      "bountyAmount": "Mức cược",
       "moneyHint": "App không thu tiền. Đây là thỏa thuận giữa hai đội, tự thanh toán với nhau.",
+      "matchTerms": "Điều khoản trận",
+      "rules": "Luật",
+      "costSplit": "Tiền sân",
+      "bounty": "Cược",
+      "errorVenueCost": "Nhập tiền sân.",
       "terms": "Ghi chú thêm",
       "termsHint": "Không bắt buộc",
       "termsHintRequired": "Bắt buộc với luật riêng",
@@ -2263,7 +2268,6 @@
       "errorPickKickoff": "Chọn giờ đấu đã.",
       "errorRulesetParam": "Nhập số hợp lệ cho thể thức này.",
       "errorCustomNote": "Luật riêng cần ghi rõ ở phần ghi chú.",
-      "errorHandicapAmount": "Nhập mức chấp hợp lệ.",
       "errorBountyAmount": "Nhập mức cược hợp lệ.",
       "errorGeneric": "Không đăng được lời mời.",
       "amendTitle": "Bổ sung ghi chú",
@@ -2335,6 +2339,15 @@
     "cancel": {
       "cta": "Rút lời thách đấu",
       "errorTooLate": "Trận đã chốt, không rút được nữa."
+    },
+    "offerBlock": {
+      "title": "Đang tìm đối thủ",
+      "closesAt": "Nhận lời đến {when}",
+      "ready": "{count} đội đã đủ quân — chờ bạn chọn",
+      "closed": "Đã đóng nhận lời",
+      "gathering": "{count} đội đang gom quân",
+      "none": "Chưa có đội nào nhận lời",
+      "choose": "Chọn đối thủ ({count})"
     }
   },
   "discover": {
