@@ -13,20 +13,33 @@ account for App Review. That's why the shot list below is 10 surfaces and not
 
 ## 0. Before you touch the simulator
 
+The seeds run as `postgres` and bypass RLS deliberately. Credentials come from
+`secret/db.env` (git-ignored). Set the connection up once per shell:
+
+```bash
+set -a && . ./secret/db.env && set +a
+export PGPASSWORD="$SUPABASE_DB_PASSWORD"
+DB="-h aws-0-ap-southeast-1.pooler.supabase.com -p 5432 \
+    -U postgres.qlezbnjfuabcxlsxxnrw -d postgres -v ON_ERROR_STOP=1"
+```
+
+Then:
+
 ```bash
 # 1. Structure (cast, lobbies, affiliations). Slow-moving; already live.
 #    Only re-run if the seeded data is gone.
-psql "$DB" -f schema/shot_seed_structure.sql
+psql $DB -f schema/shot_seed_structure.sql
 
 # 2. Media. Idempotent (x-upsert), safe to re-run.
 sh tool/shot_upload_media.sh
 
 # 3. Timeline. RE-RUN THIS EVERY CAPTURE DAY — see "Why it decays" below.
-psql "$DB" -f schema/shot_seed_timeline.sql
+psql $DB -f schema/shot_seed_timeline.sql
 ```
 
-Connection string comes from `secret/db.env`; the seeds run as `postgres` and
-bypass RLS deliberately.
+Note `$DB` is a bare argument list, not a URL — do **not** quote it as
+`psql "$DB"`, which makes psql read it as a single database name and fall back
+to a local socket.
 
 ### Why the timeline decays
 
