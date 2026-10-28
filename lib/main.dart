@@ -143,6 +143,11 @@ class Passe extends HookConsumerWidget {
     return MaterialApp.router(
       title: 'Passe',
       restorationScopeId: 'app',
+      // Release and profile modes are not supported on the iOS Simulator, so
+      // store screenshots have to be captured from a debug build — and the
+      // debug ribbon would sit in the corner of every one of them. This flag
+      // only affects debug builds; release builds never draw it either way.
+      debugShowCheckedModeBanner: false,
       builder: (_, child) => FTheme(
         data: ui.pbThemeLight,
         child: ui.PKeyboardDismiss(
