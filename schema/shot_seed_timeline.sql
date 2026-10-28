@@ -76,6 +76,13 @@ WHERE activity_id::text LIKE '51072%' OR user_id::text LIKE '5107%';
 -- author here is a seeded user. Tags/reactions cascade from the post.
 DELETE FROM public.wall_post WHERE author_id::text LIKE '5107%';
 
+-- Health + course + achievements. All keyed to seeded users, so scoping by
+-- user id is exact.
+DELETE FROM public.user_achievement     WHERE user_id::text LIKE '5107%';
+DELETE FROM public.daily_health_summary WHERE user_id::text LIKE '5107%';
+DELETE FROM public.user_health_link     WHERE user_id::text LIKE '5107%';
+DELETE FROM public.course_member        WHERE user_id::text LIKE '5107%';
+
 DELETE FROM public.activity WHERE id::text LIKE '51072%';
 
 -- Freeplay rows: freeplay_activity is keyed by activity_id so it goes with the
@@ -520,3 +527,128 @@ SELECT public.create_wall_post(
     7::smallint,
     ARRAY['51070000-0000-4000-8000-000000000001']::uuid[]);
 COMMIT;
+
+-- ── 7. Coaching course (shot 6) ─────────────────────────────────────────────
+-- The hero enrols in an EXISTING democoach course rather than a new synthetic
+-- one: schema/demo_coach_seed.sql already dresses those coaches with
+-- availability, rosters, reviews and a thread, so joining one inherits all of
+-- it instead of re-faking it. "One enrolled coach per sport" is a partial
+-- unique index, so this only works because the hero has no other soccer course.
+DO $shot$
+DECLARE
+    c_hero   CONSTANT uuid := '51070000-0000-4000-8000-000000000001'::uuid;
+    c_course CONSTANT uuid := 'e8032b9c-3e36-45f1-9f37-2b94e612126f'::uuid; -- Kỹ thuật nền tảng bóng đá
+    c_pro    CONSTANT uuid := '85e2282d-a7bd-4631-9e1e-ae987b3059d5'::uuid;
+    v_act    uuid := '51072000-0000-4000-8000-000000000201'::uuid;
+    v_today  date := (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
+    v_start  timestamptz;
+BEGIN
+    INSERT INTO public.course_member (course_id, user_id, status, professional_id, sport_id, joined_at)
+    VALUES (c_course, c_hero, 'enrolled', c_pro, 1, now() - interval '26 days')
+    ON CONFLICT (course_id, user_id) DO UPDATE SET status = EXCLUDED.status;
+
+    -- Next Tuesday 18:00 ICT: a coach-proposed session is born `approved`
+    -- (only the coach approves), so it reads as a confirmed upcoming lesson.
+    v_start := ((v_today + (((2 - extract(isodow FROM v_today)::int) + 7) % 7))
+                 + make_time(18, 0, 0)) AT TIME ZONE 'Asia/Ho_Chi_Minh';
+    IF v_start <= now() THEN v_start := v_start + interval '7 days'; END IF;
+
+    INSERT INTO public.activity (
+        id, user_id, sport_id, course_id, proposal_status, proposed_by,
+        location_id, start_time, end_time)
+    SELECT v_act,
+           (SELECT linked_user_id FROM public.professional WHERE id = c_pro),
+           1, c_course, 'approved',
+           (SELECT linked_user_id FROM public.professional WHERE id = c_pro),
+           (SELECT location_id FROM public.lobby_homeground
+             WHERE lobby_id = '51071000-0000-4000-8000-000000000001'::uuid AND is_primary),
+           v_start, v_start + interval '90 minutes'
+    ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO public.activity_confirmation (activity_id, user_id, attendance)
+    VALUES (v_act, c_hero, 'going') ON CONFLICT DO NOTHING;
+END
+$shot$;
+
+-- ── 8. Health (shots 7 and 8) ───────────────────────────────────────────────
+-- The Health tab is gated on LINK STATUS, not on data: HealthController calls
+-- requestAuthorization and renders HealthNotLinkedView unless it comes back
+-- granted. Seeding `user_health_link` is necessary but NOT sufficient — the
+-- capture device must also grant HealthKit once (see docs/app_store_shots.md).
+--
+-- Seeding the rollup tables directly is safe against the sync engine:
+-- _syncDailySummaries BREAKS on the first day the device can't read, so an
+-- empty simulator store stops immediately rather than overwriting these rows
+-- with zeroes.
+--
+-- Achievements are seeded directly because `user_achievement` has NO triggers —
+-- verified, not assumed — so shot 8 does not depend on the HealthKit injector.
+-- Nothing maintains user.xp/level from that table either, so both are set here.
+DO $shot$
+DECLARE
+    c_hero CONSTANT uuid := '51070000-0000-4000-8000-000000000001'::uuid;
+    d      date;
+    v_xp   bigint := 0;
+    rec    record;
+BEGIN
+    INSERT INTO public.user_health_link (user_id, platform, linked_at, last_sync_at,
+                                         max_heart_rate, lt1_bpm, lt2_bpm)
+    VALUES (c_hero, 'apple_health', now() - interval '92 days', now() - interval '20 minutes',
+            191, 148, 171)
+    ON CONFLICT (user_id) DO UPDATE
+      SET last_sync_at = EXCLUDED.last_sync_at,
+          max_heart_rate = EXCLUDED.max_heart_rate,
+          lt1_bpm = EXCLUDED.lt1_bpm, lt2_bpm = EXCLUDED.lt2_bpm;
+
+    -- 90 days of daily rollups. Values wander deterministically off the day
+    -- number rather than random() so a re-run reproduces the same charts and
+    -- the trend lines stay smooth instead of spiking.
+    FOR i IN 0 .. 89 LOOP
+        d := ((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date - i);
+        INSERT INTO public.daily_health_summary (
+            user_id, date, steps, distance_meters, active_calories,
+            total_activity_minutes, activity_count,
+            resting_heart_rate, hrv_sdnn_ms, sleep_minutes, weight_kg, synced_at)
+        VALUES (
+            c_hero, d,
+            7200 + ((i * 137) % 4200),
+            (7200 + ((i * 137) % 4200)) * 0.72,
+            380 + ((i * 53) % 260),
+            28 + ((i * 17) % 44),
+            CASE WHEN i % 3 = 0 THEN 1 ELSE 0 END,
+            -- A gentle downward trend in resting HR over 90 days reads as
+            -- "getting fitter", which is the story the Health tab sells.
+            62 + (i / 18) + ((i * 7) % 4),
+            48 + ((i * 11) % 22) - (i / 30),
+            372 + ((i * 29) % 96),
+            71.4 + (i * 0.012) + (((i * 13) % 7) * 0.05),
+            now() - interval '20 minutes')
+        ON CONFLICT (user_id, date) DO UPDATE
+          SET steps = EXCLUDED.steps, distance_meters = EXCLUDED.distance_meters,
+              active_calories = EXCLUDED.active_calories,
+              total_activity_minutes = EXCLUDED.total_activity_minutes,
+              activity_count = EXCLUDED.activity_count,
+              resting_heart_rate = EXCLUDED.resting_heart_rate,
+              hrv_sdnn_ms = EXCLUDED.hrv_sdnn_ms,
+              sleep_minutes = EXCLUDED.sleep_minutes, weight_kg = EXCLUDED.weight_kg,
+              synced_at = EXCLUDED.synced_at;
+    END LOOP;
+
+    -- Badges: a believable mix of early + mid-tier, not a full set.
+    FOR rec IN
+        SELECT a.id, a.xp_reward, ord
+        FROM (VALUES ('first_session',1),('first_10k_day',2),('distance_50k',3),
+                     ('active_days_30',4),('first_post',5),('first_hard_hour',6)) AS v(code, ord)
+        JOIN public.achievement a ON a.code = v.code
+    LOOP
+        INSERT INTO public.user_achievement (user_id, achievement_id, period_key, xp_granted, earned_at)
+        VALUES (c_hero, rec.id, 'all', rec.xp_reward, now() - (rec.ord * interval '9 days'))
+        ON CONFLICT DO NOTHING;
+        v_xp := v_xp + rec.xp_reward;
+    END LOOP;
+
+    UPDATE public."user"
+       SET xp = v_xp, level = GREATEST(1, (v_xp / 250) + 1)
+     WHERE id = c_hero;
+END
+$shot$;
