@@ -211,14 +211,6 @@ class _CourseAvatar extends StatelessWidget {
     this.generatedAvatar,
   });
 
-  String get _initials {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty || parts.first.isEmpty) return '?';
-    if (parts.length == 1) return parts.first.characters.first.toUpperCase();
-    return '${parts.first.characters.first}${parts.last.characters.first}'
-        .toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     final id = userId;
@@ -230,24 +222,25 @@ class _CourseAvatar extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       alignment: Alignment.center,
-      // Same avatar resolver as every other user-facing surface
-      // (`PUserAvatar`) — the rounded-square frame stays as this card's
-      // identity chip, with the real (circular) avatar mounted inside it,
-      // same composition as the coach profile's own avatar.
-      child: id == null
-          ? Text(
-              _initials,
-              style: context.theme.typography.body.lg.copyWith(
-                color: ended ? context.theme.colors.mutedForeground : pbInk,
-                fontWeight: FontWeight.w900,
-                height: 1,
-              ),
-            )
-          : PUserAvatar(
+      // A real uploaded photo is mounted inside the frame via the shared
+      // resolver (`PUserAvatar`), same composition as the coach profile's own
+      // avatar. Without one we show a neutral coaching glyph rather than
+      // `AvatarPlus`'s procedural cartoon: this card is a professional
+      // surface, and a generated cartoon face reads as placeholder art next
+      // to a real coach's name. `generatedAvatar == ''` is PUserAvatar's
+      // sentinel for "has a custom photo in the user_avatar bucket" — any
+      // other value (a seed string, or null) means there is no real photo.
+      child: (id != null && generatedAvatar == '')
+          ? PUserAvatar(
               userId: id,
               username: name,
               generatedAvatar: generatedAvatar,
               radius: 29,
+            )
+          : Icon(
+              FLucideIcons.graduationCap,
+              size: 26,
+              color: ended ? context.theme.colors.mutedForeground : pbInk,
             ),
     );
   }
