@@ -809,6 +809,7 @@ DECLARE
     v_mod  int;
     v_hard int;
     v_avg  int;
+    v_j    bigint;
     t      timestamptz;
     i      int;
 BEGIN
@@ -823,12 +824,19 @@ BEGIN
         ORDER BY a.start_time
     LOOP
         v_secs := rec.dur;
+        -- Per-session jitter, derived from the activity id so it is stable
+        -- across re-runs. Without it two sessions of the same length came out
+        -- byte-identical -- same bpm, kcal, steps, distance and effort -- which
+        -- is the single most obvious tell that a recap list is fabricated.
+        v_j := (('x' || substr(md5(rec.id::text), 1, 8))::bit(32)::bigint % 100);
+        IF v_j < 0 THEN v_j := -v_j; END IF;
+
         -- A plausible pickup-football split: mostly moderate, a real but
-        -- minority hard block, the rest easy.
-        v_hard := (v_secs * 18) / 100;
-        v_mod  := (v_secs * 47) / 100;
+        -- minority hard block, the rest easy. The hard share moves 13-23%.
+        v_hard := (v_secs * (13 + (v_j % 11))) / 100;
+        v_mod  := (v_secs * (42 + (v_j % 9))) / 100;
         v_easy := v_secs - v_hard - v_mod;
-        v_avg  := CASE rec.sport_id WHEN 1 THEN 148 ELSE 132 END;
+        v_avg  := CASE rec.sport_id WHEN 1 THEN 141 ELSE 126 END + (v_j % 13);
 
         INSERT INTO public.activity_health_metrics (
             user_id, activity_id, steps, distance_meters, active_calories,
@@ -838,11 +846,11 @@ BEGIN
             training_load, effort_score, workout_type, recorded_at, dismissed)
         VALUES (
             c_hero, rec.id,
-            (v_secs / 60) * 78,
-            (v_secs / 60) * 58.0,
-            (v_secs / 60) * 8.4,
-            v_avg, v_avg + 31, 94,
-            44.0, 38.5,
+            (v_secs / 60) * (68 + (v_j % 19)),
+            (v_secs / 60) * (48.0 + (v_j % 23)),
+            (v_secs / 60) * (7.1 + ((v_j % 17) / 10.0)),
+            v_avg, v_avg + 24 + (v_j % 11), 88 + (v_j % 9),
+            38.0 + (v_j % 17), 33.0 + (v_j % 13),
             v_easy, v_mod, v_hard,
             (v_secs / 60) * 1.9,
             LEAST(99.0, 46.0 + (v_hard::numeric / NULLIF(v_secs,0)) * 180),
