@@ -74,10 +74,18 @@ WHERE activity_id::text LIKE '51072%' OR user_id::text LIKE '5107%';
 -- Wall posts get server-generated uuids (create_wall_post is the write path,
 -- so the sentinel scheme can't reach them). Scoping by author is exact: every
 -- author here is a seeded user. Tags/reactions cascade from the post.
+-- Challenge rows. The offer's own trigger retires its Planner fixture, and the
+-- activity delete below clears anything left; challenges cascade from the offer.
+DELETE FROM public.lobby_challenge
+ WHERE initiator_lobby_id::text LIKE '51071%' OR target_lobby_id::text LIKE '51071%';
+DELETE FROM public.lobby_challenge_offer WHERE lobby_id::text LIKE '51071%';
+
 DELETE FROM public.wall_post WHERE author_id::text LIKE '5107%';
 
 -- Health + course + achievements. All keyed to seeded users, so scoping by
 -- user id is exact.
+DELETE FROM public.activity_hr_sample     WHERE activity_id::text LIKE '51072%';
+DELETE FROM public.activity_health_metrics WHERE user_id::text LIKE '5107%';
 DELETE FROM public.user_achievement     WHERE user_id::text LIKE '5107%';
 DELETE FROM public.daily_health_summary WHERE user_id::text LIKE '5107%';
 DELETE FROM public.user_health_link     WHERE user_id::text LIKE '5107%';
@@ -689,5 +697,176 @@ BEGIN
     UPDATE public."user"
        SET xp = v_xp, level = GREATEST(1, (v_xp / 250) + 1)
      WHERE id = c_hero;
+END
+$shot$;
+
+-- ── 9. Friendly challenges (shot 5) ─────────────────────────────────────────
+-- Written LAST on purpose: this area took 5 commits in 7 days while the rest of
+-- the seed was being built (friendly_challenge_followups.sql alone is 1128
+-- lines), so anything written against an older shape would have rotted.
+--
+-- Challenger ships as the FRIENDLY, referee-free mode. `challengerFlow` now
+-- gates only the refereed variant, so everything below is reachable in the
+-- default build with no dart-define. Nothing here creates a referee_booking.
+--
+-- Every row goes through the real RPCs as a real manager, never a raw INSERT:
+-- `publish_challenge_offer` also creates the home side's Planner fixture,
+-- RSVPs the publisher and posts a `challenge_offered` feed item, and
+-- `send_friendly_challenge` auto-RSVPs the sender and posts
+-- `challenge_gathering`. Hand-inserting the rows would skip all of that and
+-- leave a half-built fixture that reads wrong on the card.
+--
+-- Shape: three OTHER lobbies advertise fixtures, which is what Discover ▸
+-- Thách đấu shows the hero; then the hero's own lobby advertises one and takes
+-- an incoming challenger, which is what the in-lobby chooser shows. Kickoffs
+-- sit on Fri/Sat evenings so they read as real weekend fixtures.
+--
+-- `fn_lobbies_share_manager` blocks two lobbies with a shared captain or
+-- coordinator from meeting — every seeded lobby has its own captain, so this
+-- pairing is legal.
+
+-- Bình Thạnh United (captain = user 9)
+BEGIN;
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claims = '{"sub":"51070000-0000-4000-8000-000000000009","role":"authenticated"}';
+SELECT public.publish_challenge_offer(
+  '51071000-0000-4000-8000-000000000002'::uuid, 1::smallint,
+  ((date_trunc('day', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+    + (((5 - extract(isodow FROM (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)::int) + 7) % 7 + 7)
+    + make_time(19, 30, 0)) AT TIME ZONE 'Asia/Ho_Chi_Minh'),
+  (SELECT location_id FROM public.lobby_homeground
+    WHERE lobby_id = '51071000-0000-4000-8000-000000000002' AND is_primary),
+  now() + interval '4 days',
+  600000, 'split_even', 'none', NULL, 'standard', NULL, 'none', NULL,
+  'Sân 7 cỏ nhân tạo, chia đôi tiền sân. Đá đẹp, không tiểu xảo.',
+  'friendly',
+  ((date_trunc('day', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+    + (((5 - extract(isodow FROM (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)::int) + 7) % 7 + 7)
+    + make_time(21, 30, 0)) AT TIME ZONE 'Asia/Ho_Chi_Minh'));
+COMMIT;
+
+-- Sài Gòn Night FC (captain = user 16)
+BEGIN;
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claims = '{"sub":"51070000-0000-4000-8000-000000000016","role":"authenticated"}';
+SELECT public.publish_challenge_offer(
+  '51071000-0000-4000-8000-000000000003'::uuid, 1::smallint,
+  ((date_trunc('day', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+    + (((6 - extract(isodow FROM (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)::int) + 7) % 7 + 7)
+    + make_time(17, 0, 0)) AT TIME ZONE 'Asia/Ho_Chi_Minh'),
+  (SELECT location_id FROM public.lobby_homeground
+    WHERE lobby_id = '51071000-0000-4000-8000-000000000003' AND is_primary),
+  now() + interval '5 days',
+  700000, 'loser_pays', 'none', NULL, 'standard', NULL, 'none', NULL,
+  'Kèo chiều thứ 7. Đội thua trả tiền sân, vui là chính.',
+  'friendly',
+  ((date_trunc('day', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+    + (((6 - extract(isodow FROM (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)::int) + 7) % 7 + 7)
+    + make_time(19, 0, 0)) AT TIME ZONE 'Asia/Ho_Chi_Minh'));
+COMMIT;
+
+-- Cựu Sinh Viên FC (captain = user 22)
+BEGIN;
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claims = '{"sub":"51070000-0000-4000-8000-000000000022","role":"authenticated"}';
+SELECT public.publish_challenge_offer(
+  '51071000-0000-4000-8000-000000000004'::uuid, 1::smallint,
+  ((date_trunc('day', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+    + (((5 - extract(isodow FROM (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)::int) + 7) % 7 + 14)
+    + make_time(20, 0, 0)) AT TIME ZONE 'Asia/Ho_Chi_Minh'),
+  (SELECT location_id FROM public.lobby_homeground
+    WHERE lobby_id = '51071000-0000-4000-8000-000000000004' AND is_primary),
+  now() + interval '9 days',
+  500000, 'split_even', 'none', NULL, 'standard', NULL, 'none', NULL,
+  'Anh em cựu sinh viên giao lưu, trình độ vừa phải.',
+  'friendly',
+  ((date_trunc('day', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+    + (((5 - extract(isodow FROM (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)::int) + 7) % 7 + 14)
+    + make_time(22, 0, 0)) AT TIME ZONE 'Asia/Ho_Chi_Minh'));
+COMMIT;
+
+-- ── 10. Per-activity health metrics (Health ▸ recap) ────────────────────────
+-- Section 8 fills the DAILY rollups, which is what the trends charts read. The
+-- recap subtab reads `activity_health_metrics` (via the activity_health_data
+-- RPC) plus `activity_hr_sample` for the curve, and those were empty — so the
+-- recap list rendered as an empty state next to a fully populated trends tab.
+--
+-- Only the hero's PAST sessions that he actually attended get a row: the sync
+-- engine captures a confirmed activity the device can be queried for, so a
+-- metrics row against a session he was `out` for would be a shape the app
+-- cannot produce. Checked against activity_confirmation rather than assumed.
+--
+-- The three HR zones are easy/moderate/hard and must sum to roughly the
+-- session's duration; they are derived from it rather than typed in, so a
+-- re-anchored session keeps a coherent recap. `dismissed` stays false — true
+-- is the tombstone for a detected workout the user waved away.
+DO $shot$
+DECLARE
+    c_hero CONSTANT uuid := '51070000-0000-4000-8000-000000000001'::uuid;
+    rec    record;
+    v_secs int;
+    v_easy int;
+    v_mod  int;
+    v_hard int;
+    v_avg  int;
+    t      timestamptz;
+    i      int;
+BEGIN
+    FOR rec IN
+        SELECT a.id, a.start_time, a.end_time, a.sport_id,
+               GREATEST(EXTRACT(EPOCH FROM (a.end_time - a.start_time))::int, 1800) AS dur
+        FROM public.activity a
+        JOIN public.activity_confirmation ac
+          ON ac.activity_id = a.id AND ac.user_id = c_hero AND ac.attendance = 'going'
+        WHERE a.id::text LIKE '51072%'
+          AND a.end_time < now()
+        ORDER BY a.start_time
+    LOOP
+        v_secs := rec.dur;
+        -- A plausible pickup-football split: mostly moderate, a real but
+        -- minority hard block, the rest easy.
+        v_hard := (v_secs * 18) / 100;
+        v_mod  := (v_secs * 47) / 100;
+        v_easy := v_secs - v_hard - v_mod;
+        v_avg  := CASE rec.sport_id WHEN 1 THEN 148 ELSE 132 END;
+
+        INSERT INTO public.activity_health_metrics (
+            user_id, activity_id, steps, distance_meters, active_calories,
+            avg_heart_rate, max_heart_rate, min_heart_rate,
+            hrv_sdnn_ms, hrv_rmssd_ms,
+            hr_zone_easy_seconds, hr_zone_moderate_seconds, hr_zone_hard_seconds,
+            training_load, effort_score, workout_type, recorded_at, dismissed)
+        VALUES (
+            c_hero, rec.id,
+            (v_secs / 60) * 78,
+            (v_secs / 60) * 58.0,
+            (v_secs / 60) * 8.4,
+            v_avg, v_avg + 31, 94,
+            44.0, 38.5,
+            v_easy, v_mod, v_hard,
+            (v_secs / 60) * 1.9,
+            LEAST(99.0, 46.0 + (v_hard::numeric / NULLIF(v_secs,0)) * 180),
+            CASE rec.sport_id WHEN 1 THEN 'soccer' ELSE 'pickleball' END,
+            rec.end_time + interval '6 minutes', false)
+        ON CONFLICT DO NOTHING;
+
+        -- One sample a minute is plenty for the curve and keeps the seed small;
+        -- the real capture downsamples too. Deterministic, so a re-run redraws
+        -- the same curve rather than a different one.
+        i := 0;
+        t := rec.start_time;
+        WHILE t < rec.end_time LOOP
+            INSERT INTO public.activity_hr_sample (activity_id, "timestamp", bpm)
+            VALUES (
+                rec.id, t,
+                (v_avg
+                  + 22 * sin(i::numeric / 7.0)
+                  + 9  * sin(i::numeric / 2.3)
+                  - CASE WHEN i < 5 THEN 28 ELSE 0 END)::smallint)
+            ON CONFLICT DO NOTHING;
+            t := t + interval '1 minute';
+            i := i + 1;
+        END LOOP;
+    END LOOP;
 END
 $shot$;
