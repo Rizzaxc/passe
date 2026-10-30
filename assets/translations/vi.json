@@ -1229,8 +1229,12 @@
         "comeEarly": "Đến sớm khởi động",
         "late": "Đến muộn",
         "note": "Ghi chú",
+        "bringGear": "Mang đồ nghề cho đội",
+        "needLift": "Cần đi nhờ xe",
+        "offerLift": "Cho đi nhờ xe",
         "paid": "Đã chuyển tiền sân",
         "skip": "Vắng buổi này",
+        "cheer": "Tiếp lửa cho đội",
         "remindCaptain": "Đã nhắc đội trưởng"
       }
     },

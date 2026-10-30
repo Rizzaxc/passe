@@ -250,7 +250,15 @@ BEGIN
             (6, 1, 'poll', NULL, interval '22 hours',
                  jsonb_build_object(
                    'question', 'Tuần sau đá thứ 6 hay thứ 7?',
-                   'options', jsonb_build_array('Thứ 6, 19:30', 'Thứ 7, 17:00'),
+                   -- Options are OBJECTS with a `label`, not bare strings:
+                   -- feed.dart does `(raw as Map<String, dynamic>)['label']`.
+                   -- The payload CHECK only requires the `options` key to
+                   -- exist, so the DB happily accepts bare strings and the
+                   -- client then throws mid-iteration -- which wipes out the
+                   -- ENTIRE feed, not just the poll card.
+                   'options', jsonb_build_array(
+                       jsonb_build_object('label', 'Thứ 6, 19:30'),
+                       jsonb_build_object('label', 'Thứ 7, 17:00')),
                    'total_members', 8,
                    'deadline', 'Trong 24 giờ')),
             (7, 2, 'personal', NULL, interval '9 hours',
