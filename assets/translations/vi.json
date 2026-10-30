@@ -1332,7 +1332,7 @@
     "retry": "Thử lại"
   },
   "health": {
-    "title": "Health",
+    "title": "Sức khỏe",
     "notLinked": {
       "title": "Kết nối Dữ liệu Sức khỏe",
       "description": "Liên kết Apple Health hoặc Health Connect để theo dõi xu hướng sức khỏe, chỉ số trong hoạt động và gặt hái mục tiêu.",
