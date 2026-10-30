@@ -126,7 +126,7 @@ so the distances shown are truthful.
 | 2 | Discover ▸ Đồng đội | Discover, first subtab | FitScore cards in a believable spread |
 | 3 | Manage ▸ Lobby ▸ Feed | same lobby, Feed tab | 8-item action stream: update, 5 personal actions, a poll |
 | 4 | Lobby Feed ▸ payment request card | scroll the Feed | "Chia tiền": 5 payees, 2 paid / 3 outstanding |
-| 5 | Discover ▸ Thách đấu | Discover subtab 2 | Friendly challenge — **seeded last, see below** |
+| 5 | Discover ▸ Thách đấu | Discover subtab 2 | 3 open friendly fixtures with terms (cost split, ruleset) |
 | 6 | Manage ▸ Khoá học | Manage rail, index 2 | Enrolled course + approved lesson |
 | 7 | Health ▸ chỉ số | Health tab | 90 days of trends; resting HR 69 → 62 |
 | 8 | Health ▸ thành tích | Health, 3rd subtab | 6 badges, 810 XP, level 4 |
@@ -143,6 +143,12 @@ Spare Apple slots (11–12 if wanted): Feed (tab 1) and Discover ▸ Sân bãi.
 - Star card chips: network, skill, age, playtime (4 = the display cap).
 - Feed: 4 posts, 3 authors, cross-sport.
 - Freeplay: 3 listings — Wed 19:30, Fri 19:30, Sat 16:00.
+- Challenges: 3 open offers — Bình Thạnh United (Fri 19:30, chia đôi), Sài Gòn
+  Night FC (Sat 17:00, đội thua trả), Cựu Sinh Viên FC (Fri 20:00, chia đôi).
+  All **friendly** mode: no referee anywhere, nothing behind a dart-define.
+- Health recaps: 3 sessions (2 soccer, 1 pickleball) with per-minute HR curves.
+  The trends tab and the recap tab are fed by *different* tables — if one is
+  full and the other empty, it is section 8 vs section 10 of the timeline seed.
 
 ---
 
