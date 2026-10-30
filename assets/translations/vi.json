@@ -2028,7 +2028,34 @@
     },
     "unavailable": "Không tải được khoá học, hoặc bạn không còn quyền truy cập.",
     "backToHub": "Về danh sách khoá học",
-    "pickCoachSport": "Học môn nào với HLV này?"
+    "pickCoachSport": "Học môn nào với HLV này?",
+    "approve": "Duyệt",
+    "reject": "Từ chối",
+    "awaitingApproval": "Chờ HLV duyệt",
+    "nextUp": "Buổi tiếp theo",
+    "durationMinutes": {
+      "other": "{} phút"
+    },
+    "offerTargetSessions": {
+      "other": "{} buổi dự kiến"
+    },
+    "coachReport": "Nhận xét của HLV",
+    "reportFor": "Nhận xét cho {username}",
+    "reviewPrompt": "Khoá học đã xong. Chia sẻ cảm nhận về {coach}?",
+    "stats": {
+      "title": "Tiến độ",
+      "held": "Đã học",
+      "attended": "Có mặt",
+      "missed": "Vắng",
+      "rate": "Chuyên cần",
+      "students": "Học viên",
+      "reports": "Nhận xét"
+    },
+    "filter": {
+      "reported": "Có nhận xét",
+      "unreported": "Chưa nhận xét",
+      "empty": "Không có buổi nào khớp bộ lọc này"
+    }
   },
   "challenge": {
     "party": {

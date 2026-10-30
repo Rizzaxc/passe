@@ -90,6 +90,7 @@ DELETE FROM public.user_achievement     WHERE user_id::text LIKE '5107%';
 DELETE FROM public.daily_health_summary WHERE user_id::text LIKE '5107%';
 DELETE FROM public.user_health_link     WHERE user_id::text LIKE '5107%';
 DELETE FROM public.course_member        WHERE user_id::text LIKE '5107%';
+DELETE FROM public.conversation_member  WHERE user_id::text LIKE '5107%';
 
 DELETE FROM public.activity WHERE id::text LIKE '51072%';
 
@@ -562,6 +563,17 @@ BEGIN
     INSERT INTO public.course_member (course_id, user_id, status, professional_id, sport_id, joined_at)
     VALUES (c_course, c_hero, 'enrolled', c_pro, 1, now() - interval '26 days')
     ON CONFLICT (course_id, user_id) DO UPDATE SET status = EXCLUDED.status;
+
+    -- The thread's membership too. `fn_course_add_member` writes both rows on
+    -- the real enrol path; a bare course_member row leaves the hero outside
+    -- `conversation_member` (the messaging visibility floor), so
+    -- `conversation_data` raises "conversation not found" and the Feed tab
+    -- shows a load error over a closed composer. Same joined_at, so the
+    -- floor hides only what predates the enrolment.
+    INSERT INTO public.conversation_member (conversation_id, user_id, joined_at)
+    SELECT cv.id, c_hero, now() - interval '26 days'
+    FROM public.conversation cv WHERE cv.course_id = c_course
+    ON CONFLICT (conversation_id, user_id) DO UPDATE SET left_at = NULL;
 
     -- Next Tuesday 18:00 ICT: a coach-proposed session is born `approved`
     -- (only the coach approves), so it reads as a confirmed upcoming lesson.

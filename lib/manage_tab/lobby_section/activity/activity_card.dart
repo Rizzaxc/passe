@@ -26,6 +26,7 @@ import '../../../freeplay/repository.dart';
 import '../../../logger/talker.dart';
 import '../../../professional/pending_activity_booking_state.dart';
 import '../../../router.dart';
+import '../../../ui/quick_action.dart';
 import '../../freeplay_section/manage_sheet.dart';
 import '../../freeplay_section/requests_sheet.dart';
 import '../challenge/challenger_chooser_controller.dart';
@@ -585,7 +586,7 @@ class ActivityCard extends ConsumerWidget {
                         child: Row(
                           children: [
                             if (!alreadyNoted) ...[
-                              _QuickAction(
+                              PQuickAction(
                                 icon: Icons.sticky_note_2_outlined,
                                 label: 'lobbyHub.activity.note'.tr(),
                                 onTap: () => _openActivityNote(context, ref),
@@ -593,7 +594,7 @@ class ActivityCard extends ConsumerWidget {
                               const SizedBox(width: 6),
                             ],
                             if (upcoming.locationName != null) ...[
-                              _QuickAction(
+                              PQuickAction(
                                 icon: Icons.navigation_outlined,
                                 label: 'lobbyHub.activity.directions'.tr(),
                                 onTap: () => _openDirections(context),
@@ -610,13 +611,13 @@ class ActivityCard extends ConsumerWidget {
                               // recurrence, cost, confirmation) — covers a
                               // location-less activity too, so there's no
                               // separate "add location" entry point.
-                              _QuickAction(
+                              PQuickAction(
                                 icon: Icons.calendar_month_outlined,
                                 label: 'lobbyHub.activity.edit'.tr(),
                                 onTap: () => _openReschedule(context),
                               ),
                               const SizedBox(width: 6),
-                              _QuickAction(
+                              PQuickAction(
                                 icon: Icons.school_outlined,
                                 label: 'lobbyHub.activity.bookPro'.tr(),
                                 onTap: () => _bookCoach(context, ref),
@@ -624,7 +625,7 @@ class ActivityCard extends ConsumerWidget {
                               const SizedBox(width: 6),
                             ],
                             if (!isPast)
-                              _QuickAction(
+                              PQuickAction(
                                 icon: Icons.person_add_alt_1_outlined,
                                 label: 'lobbyHub.activity.invite'.tr(),
                                 onTap: () =>
@@ -634,7 +635,7 @@ class ActivityCard extends ConsumerWidget {
                                 status?.myAttendance == Attendance.going &&
                                 !alreadyLate) ...[
                               const SizedBox(width: 6),
-                              _QuickAction(
+                              PQuickAction(
                                 icon: Icons.access_time_rounded,
                                 label: 'lobbyHub.activity.late'.tr(),
                                 onTap: () => _postLate(context, ref),
@@ -643,7 +644,7 @@ class ActivityCard extends ConsumerWidget {
                             if (isPast &&
                                 status?.myAttendance == Attendance.going) ...[
                               const SizedBox(width: 6),
-                              _QuickAction(
+                              PQuickAction(
                                 icon: Icons.add_photo_alternate_outlined,
                                 label: 'lobbyHub.activity.postFeed'.tr(),
                                 onTap: () => showComposePostSheet(
@@ -653,7 +654,7 @@ class ActivityCard extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              _QuickAction(
+                              PQuickAction(
                                 icon: Icons.local_cafe_outlined,
                                 label: 'lobbyHub.activity.requestMoney'.tr(),
                                 onTap: () => showPaymentRequestSheet(
@@ -1341,53 +1342,6 @@ class _RsvpBtn extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Quick action chip ─────────────────────────────────────────
-
-class _QuickAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _QuickAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colors.border.withValues(alpha: 0.6)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 13, color: colors.mutedForeground),
-            const SizedBox(width: 5),
-            AutoSizeText(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-                color: colors.secondaryForeground,
-              ),
-            ),
-          ],
         ),
       ),
     );

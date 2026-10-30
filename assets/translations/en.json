@@ -2029,7 +2029,36 @@
     },
     "unavailable": "This course couldn't be loaded, or you no longer have access to it.",
     "backToHub": "Back to my courses",
-    "pickCoachSport": "Which sport with this coach?"
+    "pickCoachSport": "Which sport with this coach?",
+    "approve": "Approve",
+    "reject": "Reject",
+    "awaitingApproval": "Awaiting coach",
+    "nextUp": "Next up",
+    "durationMinutes": {
+      "one": "{} min",
+      "other": "{} min"
+    },
+    "offerTargetSessions": {
+      "one": "{} planned session",
+      "other": "{} planned sessions"
+    },
+    "coachReport": "Coach's report",
+    "reportFor": "Report for {username}",
+    "reviewPrompt": "This course is done. How was {coach}?",
+    "stats": {
+      "title": "Progress",
+      "held": "Held",
+      "attended": "Attended",
+      "missed": "Missed",
+      "rate": "Attendance",
+      "students": "Students",
+      "reports": "Reports"
+    },
+    "filter": {
+      "reported": "With report",
+      "unreported": "Needs report",
+      "empty": "No sessions match this filter"
+    }
   },
   "challenge": {
     "party": {

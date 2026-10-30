@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import '../auth/auth_controller.dart';
 import '../core/format.dart';
 import '../core/map_directions.dart';
+import '../core/model/enum.dart';
 import '../logger/talker.dart';
 import '../messaging/conversation_view.dart';
 import '../router.dart';
@@ -15,12 +16,13 @@ import 'course_controller.dart';
 import 'course_sheets.dart';
 import 'model.dart';
 
-/// The other party's identity, for the header/title and the identity strip.
-/// A student always has one coach ([CourseDetail.coachName]/[coachUserId]);
-/// a coach may have several students, so before the course has a real
-/// [CourseDetail.name] this falls back to whoever is earliest in the (already
-/// live-members-only) roster — same "who's actually asking" logic
-/// `course_card.dart`'s hub-list fallback uses.
+/// The other party's identity, for the header's title fallback and its
+/// tappable subline. A student always has one coach
+/// ([CourseDetail.coachName]/[coachUserId]); a coach may have several
+/// students, so before the course has a real [CourseDetail.name] this falls
+/// back to whoever is earliest in the (already live-members-only) roster —
+/// same "who's actually asking" logic `course_card.dart`'s hub-list fallback
+/// uses.
 class _CourseParty {
   final String? userId;
   final String name;
@@ -48,11 +50,12 @@ String _courseDisplayName(CourseDetail course) =>
     course.name ?? _otherParty(course).name;
 
 /// One course: **Feed** (the shared thread + pending proposals), **Planner**
-/// (approved upcoming sessions + RSVP) and **History** (finished sessions and
-/// the viewer's own private reports).
+/// (approved upcoming sessions + RSVP) and **History** (progress, finished
+/// sessions and the viewer's own private reports).
 ///
-/// Mirrors the lobby detail page's three-tab shape deliberately — the two
-/// screens do the same job for different groups.
+/// Mirrors the lobby detail page deliberately — same slim identity header,
+/// same chip rail, same card language — because the two screens do the same
+/// job for different groups.
 class CourseDetailPage extends ConsumerStatefulWidget {
   final String id;
 
@@ -68,88 +71,95 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(courseDetailProvider(widget.id));
-
+    final colors = context.theme.colors;
     final course = async.value;
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(
-          course == null ? 'course.title'.tr() : _courseDisplayName(course),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        prefixes: [FHeaderAction.back(onPress: () => context.pop())],
-        suffixes: [
-          if (course != null)
-            FHeaderAction(
-              icon: const Icon(FLucideIcons.info),
-              onPress: () => showCourseInfoSheet(context, course),
-            ),
-        ],
-      ),
-      // All 3 tabs are visible to anyone with course access, inquiring
-      // students included — an inquiring student can already see scheduled
-      // sessions via the feed's system messages, so hiding Planner/History
-      // outright bought no real privacy, just an inconsistent, confusing
-      // surface. Actions (propose, RSVP, write a report/review) stay gated
-      // on `canManage` inside each tab instead.
-      child: async.when(
-        loading: () => const Center(child: FCircularProgress()),
-        // Also where a push lands for a course the viewer no longer has
-        // access to (left without attending, declined inquiry) — give them
-        // a way out instead of a dead end.
-        error: (_, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 12,
-              children: [
-                Text('course.unavailable'.tr(), textAlign: TextAlign.center),
-                FButton(
-                  variant: .outline,
-                  onPress: () =>
-                      ref.invalidate(courseDetailProvider(widget.id)),
-                  child: Text('course.retry'.tr()),
-                ),
-                FButton(
-                  onPress: () => const ManageCourseRoute().go(context),
-                  child: Text('course.backToHub'.tr()),
-                ),
-              ],
-            ),
-          ),
-        ),
-        data: (course) => Column(
+
+    return Scaffold(
+      backgroundColor: colors.background,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Only the header text distinguished one coach's course from
-            // another before this — juggling several looked identical past
-            // the title. This strip is the persistent visual anchor, visible
-            // on every tab, not just glimpsed in a chat bubble.
-            _CourseIdentityBar(course: course),
-            if (course.pendingOfferId != null)
-              _PendingOfferCard(course: course),
+            _CourseHeader(
+              course: course,
+              onBackTap: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  const ManageCourseRoute().go(context);
+                }
+              },
+            ),
+            // All 3 tabs are visible to anyone with course access, inquiring
+            // students included — an inquiring student can already see
+            // scheduled sessions via the feed's system messages, so hiding
+            // Planner/History outright bought no real privacy, just an
+            // inconsistent, confusing surface. Actions (propose, RSVP, write
+            // a report/review) stay gated on `canManage` inside each tab.
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: PRailTabs(
-                  index: _tab,
-                  onChanged: (i) => setState(() => _tab = i),
-                  tabs: [
-                    PRailTab(
-                      icon: FLucideIcons.messageCircle,
-                      label: 'course.tab.feed'.tr(),
-                      build: () => _FeedTab(course: course),
+              child: async.when(
+                loading: () => const Center(child: FCircularProgress()),
+                // Also where a push lands for a course the viewer no longer
+                // has access to (left without attending, declined inquiry) —
+                // give them a way out instead of a dead end.
+                error: (_, _) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 12,
+                      children: [
+                        Text(
+                          'course.unavailable'.tr(),
+                          textAlign: TextAlign.center,
+                        ),
+                        FButton(
+                          variant: .outline,
+                          onPress: () =>
+                              ref.invalidate(courseDetailProvider(widget.id)),
+                          child: Text('course.retry'.tr()),
+                        ),
+                        FButton(
+                          onPress: () => const ManageCourseRoute().go(context),
+                          child: Text('course.backToHub'.tr()),
+                        ),
+                      ],
                     ),
-                    PRailTab(
-                      icon: FLucideIcons.activity,
-                      label: 'course.tab.planner'.tr(),
-                      build: () => _PlannerTab(course: course),
-                    ),
-                    PRailTab(
-                      icon: FLucideIcons.clock,
-                      label: 'course.tab.history'.tr(),
-                      build: () => _HistoryTab(course: course),
+                  ),
+                ),
+                data: (course) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (course.pendingOfferId != null)
+                      _PendingOfferCard(course: course),
+                    // Chip rail — same 14-px inset as the lobby hub, so the
+                    // rail and the cards under it line up.
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: PRailTabs(
+                          index: _tab,
+                          onChanged: (i) => setState(() => _tab = i),
+                          tabs: [
+                            PRailTab(
+                              icon: FLucideIcons.messageCircle,
+                              label: 'course.tab.feed'.tr(),
+                              build: () => _FeedTab(course: course),
+                            ),
+                            PRailTab(
+                              icon: FLucideIcons.activity,
+                              label: 'course.tab.planner'.tr(),
+                              build: () => _PlannerTab(course: course),
+                            ),
+                            PRailTab(
+                              icon: FLucideIcons.clock,
+                              label: 'course.tab.history'.tr(),
+                              build: () => _HistoryTab(course: course),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -162,75 +172,170 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
   }
 }
 
-class _CourseIdentityBar extends StatelessWidget {
+// ─── Header ────────────────────────────────────────────────────
+
+/// The lobby hub's header shape (`_LobbyHeader`): an oversize identity tile
+/// + the course name, with back and the info-sheet trigger side by side.
+/// Unlike a lobby, a course is defined by *who* it's with, so a tappable
+/// subline names the other party (coach for a student, the first student
+/// for a coach) and the sport — the one thing that tells two of the same
+/// coach's courses apart at a glance.
+class _CourseHeader extends StatelessWidget {
+  static const _tileSize = 56.0;
+
+  final CourseDetail? course;
+  final VoidCallback onBackTap;
+
+  const _CourseHeader({required this.course, required this.onBackTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final course = this.course;
+    final ended = course?.status == CourseStatus.ended;
+
+    return Container(
+      color: colors.background,
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+      child: Row(
+        children: [
+          Container(
+            width: _tileSize,
+            height: _tileSize,
+            decoration: BoxDecoration(
+              color: ended ? colors.muted : pbAmber,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: colors.border),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              FLucideIcons.graduationCap,
+              size: 26,
+              color: ended ? colors.mutedForeground : pbInk,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 4,
+              children: [
+                Text(
+                  course == null
+                      ? 'course.title'.tr()
+                      : _courseDisplayName(course),
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: colors.foreground,
+                    letterSpacing: -0.3,
+                    height: 1.15,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
+                ),
+                if (course != null) _PartySubline(course: course),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: onBackTap,
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 19,
+              color: colors.secondaryForeground,
+            ),
+            padding: const EdgeInsets.all(7),
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          ),
+          IconButton(
+            onPressed: course == null
+                ? null
+                : () => showCourseInfoSheet(context, course),
+            icon: Icon(
+              Icons.more_horiz_rounded,
+              size: 22,
+              color: colors.secondaryForeground,
+            ),
+            padding: const EdgeInsets.all(7),
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PartySubline extends StatelessWidget {
   final CourseDetail course;
 
-  const _CourseIdentityBar({required this.course});
+  const _PartySubline({required this.course});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final party = _otherParty(course);
-    final content = Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Row(
-        children: [
-          if (party.userId case final id?)
-            PUserAvatar(
-              userId: id,
-              username: party.name,
-              generatedAvatar: party.generatedAvatar,
-              radius: 16,
-            )
-          else
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: colors.muted,
-              child: Icon(
-                FLucideIcons.user,
-                size: 16,
-                color: colors.mutedForeground,
-              ),
-            ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              party.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.theme.typography.body.sm.copyWith(
-                fontWeight: FontWeight.w700,
-                color: colors.foreground,
-              ),
-            ),
-          ),
-          if (course.isCoach)
-            Text(
-              'course.status.${(course.members.firstOrNull?.status ?? CourseMemberStatus.inquiring).name}'
-                  .tr(),
-              style: context.theme.typography.body.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-        ],
-      ),
+    final sport = course.sportId > 0 && course.sportId < Sport.values.length
+        ? Sport.values[course.sportId]
+        : null;
+    final status = course.isCoach
+        ? 'course.status.${(course.members.firstOrNull?.status ?? CourseMemberStatus.inquiring).name}'
+              .tr()
+        : null;
+    final muted = context.theme.typography.body.xs.copyWith(
+      color: colors.mutedForeground,
+      fontWeight: FontWeight.w600,
     );
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: colors.border)),
-      ),
-      child: party.userId == null
-          ? content
-          : FTappable(
-              onPress: () => UserRoute(
-                id: party.userId!,
-                $extra: party.name,
-              ).push(context),
-              child: content,
+
+    final row = Row(
+      children: [
+        if (party.userId case final id?)
+          PUserAvatar(
+            userId: id,
+            username: party.name,
+            generatedAvatar: party.generatedAvatar,
+            radius: 9,
+          )
+        else
+          Icon(FLucideIcons.user, size: 14, color: colors.mutedForeground),
+        const SizedBox(width: 6),
+        // One Text.rich so name, sport and status ellipsize together.
+        Flexible(
+          child: Text.rich(
+            TextSpan(
+              text: party.name,
+              style: muted.copyWith(
+                color: colors.secondaryForeground,
+                fontWeight: FontWeight.w700,
+              ),
+              children: [
+                if (sport != null)
+                  TextSpan(
+                    text: ' · ${sport.getLocalizedName(context)}',
+                    style: muted,
+                  ),
+                if (status != null) TextSpan(text: ' · $status', style: muted),
+              ],
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+
+    if (party.userId == null) return row;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () =>
+          UserRoute(id: party.userId!, $extra: party.name).push(context),
+      child: row,
     );
   }
 }
+
+// ─── Enrollment offer ──────────────────────────────────────────
 
 /// Everything a student needs to decide, right where they land after the
 /// `course_enrollment_offer` push routes them here — there was previously no
@@ -246,70 +351,114 @@ class _PendingOfferCard extends ConsumerWidget {
     final busy = ref.watch(courseActionControllerProvider);
     final offerId = course.pendingOfferId;
     if (offerId == null) return const SizedBox.shrink();
+    final radius = BorderRadius.circular(14);
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.08),
-        border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 6,
-        children: [
-          Text(
-            'course.offerReceivedTitle'.tr(),
-            style: context.theme.typography.body.sm.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+      child: POffsetFrame(
+        offsetColor: pbCoral,
+        borderRadius: radius,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: colors.card,
+            border: Border.all(color: pbInk.withValues(alpha: 0.16)),
+            borderRadius: radius,
           ),
-          Text(
-            course.offerName ?? '',
-            style: context.theme.typography.body.md.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (course.offerDescription?.trim().isNotEmpty == true)
-            Text(
-              course.offerDescription!,
-              style: context.theme.typography.body.sm.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-          if (course.offerTargetSessionCount != null)
-            Text(
-              'course.sessionProgress'.tr(
-                namedArgs: {
-                  'held': '0',
-                  'target': '${course.offerTargetSessionCount}',
-                },
-              ),
-              style: context.theme.typography.body.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-          const SizedBox(height: 4),
-          Row(
-            spacing: 8,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 10,
             children: [
-              Expanded(
-                child: FButton(
-                  variant: .outline,
-                  onPress: busy ? null : () => _respond(context, ref, false),
-                  child: Text('course.declineOffer'.tr()),
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: pbCoral.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      FLucideIcons.mailOpen,
+                      size: 18,
+                      color: _courseCrimson,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 2,
+                      children: [
+                        Text(
+                          'course.offerReceivedTitle'.tr().toUpperCase(),
+                          style: context.theme.typography.body.xs.copyWith(
+                            color: _courseCrimson,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                        Text(
+                          course.offerName ?? '',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.theme.typography.body.md.copyWith(
+                            color: pbInk,
+                            fontWeight: FontWeight.w800,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: FButton(
-                  onPress: busy ? null : () => _respond(context, ref, true),
-                  child: Text('course.acceptOffer'.tr()),
+              if (course.offerDescription?.trim().isNotEmpty == true)
+                Text(
+                  course.offerDescription!,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.theme.typography.body.sm.copyWith(
+                    color: colors.mutedForeground,
+                  ),
                 ),
+              if (course.offerTargetSessionCount != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _CourseTag(
+                    icon: FLucideIcons.target,
+                    text: 'course.offerTargetSessions'.plural(
+                      course.offerTargetSessionCount!,
+                    ),
+                  ),
+                ),
+              Row(
+                spacing: 8,
+                children: [
+                  Expanded(
+                    child: FButton(
+                      variant: .outline,
+                      size: .sm,
+                      onPress: busy
+                          ? null
+                          : () => _respond(context, ref, false),
+                      child: Text('course.declineOffer'.tr()),
+                    ),
+                  ),
+                  Expanded(
+                    child: FButton(
+                      size: .sm,
+                      onPress: busy ? null : () => _respond(context, ref, true),
+                      prefix: const Icon(FLucideIcons.check, size: 16),
+                      child: Text('course.acceptOffer'.tr()),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -355,8 +504,11 @@ class _PendingOfferCard extends ConsumerWidget {
   }
 }
 
-/// The thread, plus the coach's approve/reject queue above it — a pending
-/// proposal is a thing to act on, not just a message to read.
+// ─── Feed ──────────────────────────────────────────────────────
+
+/// The thread, plus the approve/reject queue above it — a pending proposal
+/// is a thing to act on, not just a message to read. The queue is capped so
+/// a backlog of proposals can't push the thread off screen.
 class _FeedTab extends ConsumerWidget {
   final CourseDetail course;
 
@@ -368,27 +520,47 @@ class _FeedTab extends ConsumerWidget {
     final hasInquirer = course.members.any(
       (m) => m.status == CourseMemberStatus.inquiring,
     );
+    final proposals = course.pendingProposals;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (course.pendingProposals.isNotEmpty)
+        if (proposals.isNotEmpty) ...[
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                PSectionHeader(title: 'course.pendingProposals'.tr()),
-                for (final session in course.pendingProposals)
-                  _ProposalRow(course: course, session: session),
-              ],
+            padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
+            child: _OverlineLabel(
+              text: 'course.pendingProposals'.tr(),
+              count: proposals.length,
             ),
           ),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.32,
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              itemCount: proposals.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, i) =>
+                  _ProposalCard(course: course, session: proposals[i]),
+            ),
+          ),
+        ],
         Expanded(
           child: conversationId == null
-              ? Center(child: Text('course.noThread'.tr()))
+              ? Center(
+                  child: PEmptySectionPlaceholder(
+                    hero: Icon(
+                      FLucideIcons.messagesSquare,
+                      size: 48,
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                    subtitle: 'course.noThread'.tr(),
+                  ),
+                )
               : Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  padding: const EdgeInsets.only(top: 8),
                   child: ConversationView(
                     conversationId: conversationId,
                     // A course is a group thread even when it currently has
@@ -543,14 +715,17 @@ class _EnrollInquirerChip extends ConsumerWidget {
   }
 }
 
-class _ProposalRow extends ConsumerWidget {
+/// A pending session proposal: when, where, who asked, and — for whoever
+/// can act on it — the decision right on the card.
+class _ProposalCard extends ConsumerWidget {
   final CourseDetail course;
   final CourseSession session;
 
-  const _ProposalRow({required this.course, required this.session});
+  const _ProposalCard({required this.course, required this.session});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
     final controller = ref.watch(courseActionControllerProvider.notifier);
     final busy = ref.watch(courseActionControllerProvider);
     // withdraw_course_proposal is proposer-only server-side; only show the
@@ -558,49 +733,104 @@ class _ProposalRow extends ConsumerWidget {
     // (including another inquiring/enrolled student who isn't the proposer)
     // just reads the row.
     final isMine = session.proposedBy == ref.watch(currentUserIdProvider);
+    final proposer = course.members
+        .where((m) => m.userId == session.proposedBy)
+        .firstOrNull;
 
-    return FTile(
-      title: Text(
-        formatMatchDateTime(session.startTime),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border),
       ),
-      subtitle: session.note == null
-          ? null
-          : Text(session.note!, maxLines: 2, overflow: TextOverflow.ellipsis),
-      suffix: course.isCoach
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FButton.icon(
-                  variant: .ghost,
-                  onPress: busy
-                      ? null
-                      : () => _approve(context, ref, controller, true),
-                  child: const Icon(FLucideIcons.check),
-                ),
-                FButton.icon(
-                  variant: .ghost,
-                  onPress: busy
-                      ? null
-                      : () => _approve(context, ref, controller, false),
-                  child: const Icon(FLucideIcons.x),
-                ),
-              ],
-            )
-          : isMine
-          ? FButton(
-              variant: .outline,
-              size: .sm,
-              onPress: busy
-                  ? null
-                  : () => controller.withdrawProposal(
-                      session.activityId,
-                      courseId: course.courseId,
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Amber edge — "waiting on a decision", vs. the crimson strip
+            // of an approved session.
+            const SizedBox(width: 3, child: ColoredBox(color: pbAmber)),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(11, 10, 12, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 8,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _DateBlock(date: session.startTime),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _SessionSummary(
+                            course: course,
+                            session: session,
+                          ),
+                        ),
+                      ],
                     ),
-              child: Text('course.withdraw'.tr()),
-            )
-          : null,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: course.isCoach && proposer != null
+                              ? _UserChip(
+                                  userId: proposer.userId,
+                                  username: proposer.username,
+                                  generatedAvatar: proposer.generatedAvatar,
+                                )
+                              : Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: _CourseTag(
+                                    icon: FLucideIcons.hourglass,
+                                    text: 'course.awaitingApproval'.tr(),
+                                    tone: _TagTone.amber,
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (course.isCoach) ...[
+                          FButton(
+                            variant: .outline,
+                            size: .sm,
+                            onPress: busy
+                                ? null
+                                : () =>
+                                      _approve(context, ref, controller, false),
+                            child: Text('course.reject'.tr()),
+                          ),
+                          const SizedBox(width: 6),
+                          FButton(
+                            size: .sm,
+                            onPress: busy
+                                ? null
+                                : () =>
+                                      _approve(context, ref, controller, true),
+                            prefix: const Icon(FLucideIcons.check, size: 14),
+                            child: Text('course.approve'.tr()),
+                          ),
+                        ] else if (isMine)
+                          FButton(
+                            variant: .outline,
+                            size: .sm,
+                            onPress: busy
+                                ? null
+                                : () => controller.withdrawProposal(
+                                    session.activityId,
+                                    courseId: course.courseId,
+                                  ),
+                            child: Text('course.withdraw'.tr()),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -631,13 +861,54 @@ class _ProposalRow extends ConsumerWidget {
   }
 }
 
+/// Time range, venue and note — the compact body shared by proposal and
+/// past-session cards (the planner's own card keeps the big date header).
+class _SessionSummary extends StatelessWidget {
+  final CourseDetail course;
+  final CourseSession session;
+
+  const _SessionSummary({required this.course, required this.session});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 4,
+      children: [
+        Text(
+          _timeRangeLabel(session),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.theme.typography.body.md.copyWith(
+            color: _courseCrimson,
+            fontWeight: FontWeight.w800,
+            height: 1.2,
+          ),
+        ),
+        if (session.venueName != null)
+          _CourseSessionDetailRow(
+            icon: FLucideIcons.mapPin,
+            text: session.venueName!,
+            onPress: _hasCourseSessionDirections(session)
+                ? () => _openCourseSessionDirections(context, session)
+                : null,
+          ),
+        if (session.note != null)
+          _CourseSessionDetailRow(
+            icon: FLucideIcons.stickyNote,
+            text: session.note!,
+            maxLines: 2,
+          ),
+      ],
+    );
+  }
+}
+
+// ─── Planner ───────────────────────────────────────────────────
+
 /// Mirrors the lobby hub's Planner tab shape: a section header with an
 /// always-reachable "+" rather than a full-width button buried in the list,
-/// and a card-style empty state instead of a bare placeholder line. Unlike
-/// the lobby version there's no "member has no button" branch to handle —
-/// this tab only mounts for `course.canManage` (coach or enrolled student,
-/// see course_detail_page.dart's tab gating), and both of those may propose
-/// a session, so the CTA is unconditional here.
+/// and a card-style empty state instead of a bare placeholder line.
 class _PlannerTab extends ConsumerWidget {
   final CourseDetail course;
 
@@ -646,9 +917,9 @@ class _PlannerTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final upcoming = course.upcoming;
-    // Both tabs now show to every viewer with course access, including an
-    // inquiring student — but only the coach and an enrolled student may
-    // actually schedule/propose.
+    // Every viewer with course access sees this tab, including an inquiring
+    // student — but only the coach and an enrolled student may actually
+    // schedule/propose.
     final canPropose = course.status == CourseStatus.active && course.canManage;
 
     return Column(
@@ -671,23 +942,48 @@ class _PlannerTab extends ConsumerWidget {
           child: RefreshIndicator(
             onRefresh: () =>
                 ref.refresh(courseDetailProvider(course.courseId).future),
+            // Cards carry their own 4-px side margin, same as the lobby's
+            // ActivityCard, so the list itself is not inset.
             child: upcoming.isEmpty
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                    padding: const EdgeInsets.fromLTRB(4, 0, 4, 32),
                     children: [
-                      _PlannerEmptyState(
-                        course: course,
-                        canPropose: canPropose,
+                      _CourseEmptyCard(
+                        icon: FLucideIcons.calendarDays,
+                        title: 'course.noUpcoming'.tr(),
+                        // An inquiring student with no pending offer has
+                        // course access but nothing to do here yet, and
+                        // previously nothing said why — this tab just looked
+                        // permanently empty/broken to them.
+                        subtitle:
+                            !canPropose &&
+                                !course.isCoach &&
+                                course.pendingOfferId == null
+                            ? 'course.waitingForCoach'.tr(
+                                namedArgs: {'coach': course.coachName ?? ''},
+                              )
+                            : null,
+                        actionLabel: !canPropose
+                            ? null
+                            : course.isCoach
+                            ? 'course.scheduleSession'.tr()
+                            : 'course.proposeSession'.tr(),
+                        onAction: canPropose
+                            ? () => showProposeSessionSheet(context, course)
+                            : null,
                       ),
                     ],
                   )
                 : ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                    padding: const EdgeInsets.only(bottom: 32),
                     itemCount: upcoming.length,
-                    itemBuilder: (context, i) =>
-                        _SessionCard(course: course, session: upcoming[i]),
+                    itemBuilder: (context, i) => _SessionCard(
+                      course: course,
+                      session: upcoming[i],
+                      isNext: i == 0,
+                    ),
                   ),
           ),
         ),
@@ -696,92 +992,23 @@ class _PlannerTab extends ConsumerWidget {
   }
 }
 
-class _PlannerEmptyState extends StatelessWidget {
-  final CourseDetail course;
-  final bool canPropose;
-
-  const _PlannerEmptyState({required this.course, required this.canPropose});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.border),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  FLucideIcons.calendarDays,
-                  size: 22,
-                  color: colors.primary,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'course.noUpcoming'.tr(),
-              textAlign: TextAlign.center,
-              style: context.theme.typography.body.md.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            // An inquiring student with no pending offer has course access
-            // but nothing to do here yet, and previously nothing said why —
-            // this tab just looked permanently empty/broken to them.
-            if (!canPropose &&
-                !course.isCoach &&
-                course.pendingOfferId == null) ...[
-              const SizedBox(height: 6),
-              Text(
-                'course.waitingForCoach'.tr(
-                  namedArgs: {'coach': course.coachName ?? ''},
-                ),
-                textAlign: TextAlign.center,
-                style: context.theme.typography.body.sm.copyWith(
-                  color: colors.mutedForeground,
-                ),
-              ),
-            ],
-            if (canPropose) ...[
-              const SizedBox(height: 12),
-              FButton(
-                size: .sm,
-                onPress: () => showProposeSessionSheet(context, course),
-                child: Text(
-                  course.isCoach
-                      ? 'course.scheduleSession'.tr()
-                      : 'course.proposeSession'.tr(),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _SessionCard extends ConsumerWidget {
   final CourseDetail course;
   final CourseSession session;
 
-  const _SessionCard({required this.course, required this.session});
+  /// The soonest upcoming session — tagged so it stands out from the rest.
+  final bool isNext;
+
+  /// History's reading of the same card, as the lobby's History reuses its
+  /// `ActivityCard`: RSVP and edit give way to attendance and reports.
+  final bool isPast;
+
+  const _SessionCard({
+    required this.course,
+    required this.session,
+    this.isNext = false,
+    this.isPast = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -789,23 +1016,18 @@ class _SessionCard extends ConsumerWidget {
     final controller = ref.watch(courseActionControllerProvider.notifier);
     final busy = ref.watch(courseActionControllerProvider);
     final start = session.startTime.toLocal();
-    final end = session.endTime?.toLocal();
-    final weekdays = [
-      'lobbyHub.schedule.weekdaysShort.monday'.tr(),
-      'lobbyHub.schedule.weekdaysShort.tuesday'.tr(),
-      'lobbyHub.schedule.weekdaysShort.wednesday'.tr(),
-      'lobbyHub.schedule.weekdaysShort.thursday'.tr(),
-      'lobbyHub.schedule.weekdaysShort.friday'.tr(),
-      'lobbyHub.schedule.weekdaysShort.saturday'.tr(),
-      'lobbyHub.schedule.weekdaysShort.sunday'.tr(),
-    ];
-    final dateLabel =
-        '${weekdays[start.weekday - 1]}, '
-        '${start.day}/${start.month}';
-    final startLabel = formatTimeOfDay(start);
-    final timeLabel = end == null
-        ? startLabel
-        : '$startLabel – ${formatTimeOfDay(end)}';
+    final dateLabel = '${_weekdayShort(start)}, ${start.day}/${start.month}';
+    final duration = session.endTime?.difference(session.startTime);
+    final hasDirections = _hasCourseSessionDirections(session);
+    final canEdit = !isPast && course.isCoach && !session.hasStarted;
+    final going = session.goingCount > 0;
+    final attended = session.myAttended;
+    final reports = isPast
+        ? course.reports
+              .where((r) => r.activityId == session.activityId)
+              .toList()
+        : const <SessionReport>[];
+    final canReport = isPast && course.isCoach;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(4, 0, 4, 12),
@@ -831,24 +1053,53 @@ class _SessionCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  dateLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.theme.typography.body.xl3.copyWith(
-                    color: const Color(0xFF09090B),
-                    fontWeight: FontWeight.w800,
-                    height: 1.05,
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        dateLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF09090B),
+                          letterSpacing: -0.5,
+                          height: 1.05,
+                        ),
+                      ),
+                    ),
+                    if (isNext && !isPast) ...[
+                      const SizedBox(width: 8),
+                      _CourseTag(
+                        icon: FLucideIcons.sparkles,
+                        text: 'course.nextUp'.tr(),
+                        tone: _TagTone.crimson,
+                      ),
+                    ],
+                    if (isPast && !course.isCoach && attended != null) ...[
+                      const SizedBox(width: 8),
+                      _CourseTag(
+                        icon: attended ? FLucideIcons.check : FLucideIcons.x,
+                        text: attended
+                            ? 'course.attendance.present'.tr()
+                            : 'course.attendance.absent'.tr(),
+                        tone: attended ? _TagTone.green : _TagTone.orange,
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  timeLabel,
+                  _timeRangeLabel(session),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: context.theme.typography.body.md.copyWith(
-                    color: _courseCrimson,
+                  style: const TextStyle(
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
+                    color: _courseCrimson,
+                    letterSpacing: -0.2,
                     height: 1.2,
                   ),
                 ),
@@ -858,9 +1109,21 @@ class _SessionCard extends ConsumerWidget {
                     icon: FLucideIcons.mapPin,
                     text: session.venueName!,
                     subtitle: session.streetAddress,
-                    onPress: _hasCourseSessionDirections(session)
-                        ? () => _openCourseSessionDirections(context, session)
-                        : null,
+                  ),
+                ],
+                if (duration != null && duration.inMinutes > 0) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      _CourseTag(
+                        icon: FLucideIcons.timer,
+                        text: 'course.durationMinutes'.plural(
+                          duration.inMinutes,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
                 if (session.note != null) ...[
@@ -868,37 +1131,61 @@ class _SessionCard extends ConsumerWidget {
                   _CourseSessionDetailRow(
                     icon: FLucideIcons.stickyNote,
                     text: session.note!,
-                    maxLines: 2,
+                    maxLines: 3,
                   ),
                 ],
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(
-                      FLucideIcons.circleCheck,
-                      size: 14,
-                      color: session.goingCount > 0
-                          ? _courseGreen
-                          : colors.mutedForeground,
-                    ),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        'course.goingCount'.plural(session.goingCount),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.theme.typography.body.sm.copyWith(
-                          color: session.goingCount > 0
-                              ? _courseGreen
-                              : colors.secondaryForeground,
-                          fontWeight: FontWeight.w700,
+                if (!isPast) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        going ? Icons.check_circle : Icons.check_circle_outline,
+                        size: 14,
+                        color: going ? _courseGreen : colors.mutedForeground,
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          'course.goingCount'.plural(session.goingCount),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.theme.typography.body.sm.copyWith(
+                            color: going
+                                ? _courseGreen
+                                : colors.secondaryForeground,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
+                    ],
+                  ),
+                ],
+                // The coach's present/absent marks, then the private
+                // write-ups this viewer is entitled to.
+                if (isPast && course.isCoach && session.roster.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'course.attendance.title'.tr().toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: colors.mutedForeground,
+                      letterSpacing: 0.7,
                     ),
-                  ],
-                ),
+                  ),
+                  for (final entry in session.roster)
+                    _AttendanceRow(
+                      course: course,
+                      session: session,
+                      entry: entry,
+                    ),
+                ],
+                for (final report in reports) ...[
+                  const SizedBox(height: 10),
+                  _ReportBlock(course: course, report: report),
+                ],
                 // RSVP closes at kickoff (server-side too).
-                if (course.canManage && !session.hasStarted) ...[
+                if (!isPast && course.canManage && !session.hasStarted) ...[
                   const SizedBox(height: 10),
                   _CourseRsvpControl(
                     value: session.myAttendance ?? '',
@@ -910,27 +1197,72 @@ class _SessionCard extends ConsumerWidget {
                     ),
                   ),
                 ],
-                // A started session can't be moved or cancelled any more.
-                if (course.isCoach && !session.hasStarted) ...[
+                // Same quick-action strip as the lobby's activity card. A
+                // started session can't be moved or cancelled any more.
+                if (hasDirections || canEdit || canReport) ...[
                   const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Semantics(
-                      button: true,
-                      label: 'course.sessionActions'.tr(),
-                      child: FButton.icon(
-                        variant: .outline,
-                        size: .sm,
-                        onPress: busy
-                            ? null
-                            : () => showSessionActionsSheet(
-                                context,
-                                course,
-                                session,
-                              ),
-                        child: const Icon(FLucideIcons.ellipsis, size: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const ClampingScrollPhysics(),
+                          child: Row(
+                            children: [
+                              if (canReport) ...[
+                                PQuickAction(
+                                  icon: Icons.edit_note_outlined,
+                                  label: 'course.writeReport'.tr(),
+                                  onTap: () => showSessionReportSheet(
+                                    context,
+                                    course,
+                                    session,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              if (hasDirections)
+                                PQuickAction(
+                                  icon: Icons.navigation_outlined,
+                                  label: 'lobbyHub.activity.directions'.tr(),
+                                  onTap: () => _openCourseSessionDirections(
+                                    context,
+                                    session,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                      // The lobby card's trailing "…": edit/cancel live in a
+                      // sheet rather than as more chips in the strip.
+                      if (canEdit) ...[
+                        const SizedBox(width: 6),
+                        Semantics(
+                          button: true,
+                          label: 'course.sessionActions'.tr(),
+                          child: GestureDetector(
+                            onTap: busy
+                                ? null
+                                : () => showSessionActionsSheet(
+                                    context,
+                                    course,
+                                    session,
+                                  ),
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              alignment: Alignment.center,
+                              child: Icon(
+                                Icons.more_horiz_rounded,
+                                size: 18,
+                                color: colors.secondaryForeground,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ],
@@ -942,13 +1274,775 @@ class _SessionCard extends ConsumerWidget {
   }
 }
 
+// ─── History ───────────────────────────────────────────────────
+
+/// The lobby hub's History shape: a record card, a strip of filter pills,
+/// then every finished session drawn with the Planner's own card in its past
+/// reading — attendance and the private reports the viewer is entitled to. A
+/// student sees only their own reports; the coach sees all of them and can
+/// write the ones still missing.
+class _HistoryTab extends ConsumerStatefulWidget {
+  final CourseDetail course;
+
+  const _HistoryTab({required this.course});
+
+  @override
+  ConsumerState<_HistoryTab> createState() => _HistoryTabState();
+}
+
+enum _HistoryFilter { all, attended, missed, reported, unreported }
+
+class _HistoryTabState extends ConsumerState<_HistoryTab> {
+  _HistoryFilter _filter = _HistoryFilter.all;
+
+  List<_HistoryFilter> get _filters => widget.course.isCoach
+      ? const [
+          _HistoryFilter.all,
+          _HistoryFilter.unreported,
+          _HistoryFilter.reported,
+        ]
+      : const [
+          _HistoryFilter.all,
+          _HistoryFilter.attended,
+          _HistoryFilter.missed,
+          _HistoryFilter.reported,
+        ];
+
+  bool _hasReport(CourseSession s) =>
+      widget.course.reports.any((r) => r.activityId == s.activityId);
+
+  /// A coach still owes a report when someone attended and has none yet.
+  bool _owesReport(CourseSession s) => s.roster.any(
+    (e) =>
+        e.attended &&
+        !widget.course.reports.any(
+          (r) => r.activityId == s.activityId && r.studentId == e.userId,
+        ),
+  );
+
+  List<CourseSession> _apply(List<CourseSession> past) => switch (_filter) {
+    _HistoryFilter.all => past,
+    _HistoryFilter.attended => past.where((s) => s.myAttended == true).toList(),
+    _HistoryFilter.missed => past.where((s) => s.myAttended == false).toList(),
+    _HistoryFilter.reported => past.where(_hasReport).toList(),
+    _HistoryFilter.unreported => past.where(_owesReport).toList(),
+  };
+
+  static String _label(_HistoryFilter f) => switch (f) {
+    _HistoryFilter.all => 'lobbyHub.history.all'.tr(),
+    _HistoryFilter.attended => 'course.attendance.present'.tr(),
+    _HistoryFilter.missed => 'course.attendance.absent'.tr(),
+    _HistoryFilter.reported => 'course.filter.reported'.tr(),
+    _HistoryFilter.unreported => 'course.filter.unreported'.tr(),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final course = widget.course;
+    final past = course.past;
+    final filtered = _apply(past);
+
+    return RefreshIndicator(
+      onRefresh: () =>
+          ref.refresh(courseDetailProvider(course.courseId).future),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
+              child: _ProgressCard(course: course),
+            ),
+          ),
+          if (course.canReview)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
+                child: _ReviewPrompt(course: course),
+              ),
+            ),
+          if (past.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 8, 4, 32),
+                child: _CourseEmptyCard(
+                  icon: FLucideIcons.history,
+                  title: 'course.noHistory'.tr(),
+                ),
+              ),
+            )
+          else ...[
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 44,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 6,
+                  ),
+                  itemCount: _filters.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 6),
+                  itemBuilder: (_, i) {
+                    final f = _filters[i];
+                    return _FilterPill(
+                      label: _label(f),
+                      active: _filter == f,
+                      onTap: () => setState(() => _filter = f),
+                    );
+                  },
+                ),
+              ),
+            ),
+            if (filtered.isEmpty)
+              SliverToBoxAdapter(
+                child: PEmptySectionPlaceholder(
+                  subtitle: 'course.filter.empty'.tr(),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.only(top: 6, bottom: 20),
+                sliver: SliverList.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (context, i) => _SessionCard(
+                    course: course,
+                    session: filtered[i],
+                    isPast: true,
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The lobby History's filter pill.
+class _FilterPill extends StatelessWidget {
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _FilterPill({
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: active ? _courseCrimson : context.theme.colors.secondary,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+            color: active
+                ? const Color(0xFFFFF1F2)
+                : context.theme.colors.secondaryForeground,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgressCard extends StatelessWidget {
+  final CourseDetail course;
+
+  const _ProgressCard({required this.course});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.theme.colors;
+    final target = course.targetSessionCount;
+    final held = course.heldSessionCount;
+    final progress = target == null || target == 0
+        ? null
+        : (held / target).clamp(0.0, 1.0);
+
+    final List<Widget> stats;
+    if (course.isCoach) {
+      final students = course.members
+          .where((m) => m.status == CourseMemberStatus.enrolled)
+          .length;
+      stats = [
+        _HStat(
+          value: target == null ? '$held' : '$held/$target',
+          label: 'course.stats.held'.tr(),
+          color: c.foreground,
+        ),
+        _HStat(
+          value: '$students',
+          label: 'course.stats.students'.tr(),
+          color: pbBlueDeep,
+        ),
+        _HStat(
+          value: '${course.reports.length}',
+          label: 'course.stats.reports'.tr(),
+          color: _courseGreen,
+        ),
+      ];
+    } else {
+      final attended = course.past.where((s) => s.myAttended == true).length;
+      final missed = course.past.where((s) => s.myAttended == false).length;
+      final marked = attended + missed;
+      stats = [
+        _HStat(
+          value: target == null ? '$held' : '$held/$target',
+          label: 'course.stats.held'.tr(),
+          color: c.foreground,
+        ),
+        _HStat(
+          value: '$attended',
+          label: 'course.stats.attended'.tr(),
+          color: _courseGreen,
+        ),
+        _HStat(
+          value: '$missed',
+          label: 'course.stats.missed'.tr(),
+          color: _courseOrange,
+        ),
+        _HStat(
+          value: marked == 0 ? '–' : '${(attended * 100 / marked).round()}%',
+          label: 'course.stats.rate'.tr(),
+          color: _courseCrimson,
+        ),
+      ];
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: c.card,
+        border: Border.all(color: c.border),
+        borderRadius: context.theme.style.borderRadius.md,
+        boxShadow: context.theme.style.shadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'course.stats.title'.tr().toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: c.mutedForeground,
+                    letterSpacing: 0.7,
+                  ),
+                ),
+              ),
+              if (course.status == CourseStatus.ended)
+                _CourseTag(
+                  icon: FLucideIcons.flag,
+                  text: 'course.ended'.tr(),
+                  tone: _TagTone.green,
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const ClampingScrollPhysics(),
+            child: Row(spacing: 18, children: stats),
+          ),
+          if (progress != null) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 6,
+                      backgroundColor: c.border,
+                      color: pbBlueDeep,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  '${(progress * 100).round()}%',
+                  style: context.theme.typography.body.xs.copyWith(
+                    color: pbBlueDeep,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HStat extends StatelessWidget {
+  final String value;
+  final String label;
+  final Color color;
+
+  const _HStat({required this.value, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: color,
+            letterSpacing: -0.4,
+            height: 1.0,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: context.theme.colors.mutedForeground,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReviewPrompt extends StatelessWidget {
+  final CourseDetail course;
+
+  const _ReviewPrompt({required this.course});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: pbAmber.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: pbAmber.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          const Icon(FLucideIcons.star, size: 20, color: pbInk),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'course.reviewPrompt'.tr(
+                namedArgs: {'coach': course.coachName ?? ''},
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: context.theme.typography.body.sm.copyWith(
+                color: colors.foreground,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          FButton(
+            size: .sm,
+            onPress: () => showCourseReviewSheet(context, course),
+            child: Text('course.writeReview'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A coach's private write-up, quoted. The coach sees whom it's for; a
+/// student only ever receives their own, so it's labelled as the coach's.
+class _ReportBlock extends StatelessWidget {
+  final CourseDetail course;
+  final SessionReport report;
+
+  const _ReportBlock({required this.course, required this.report});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final student = course.members
+        .where((m) => m.userId == report.studentId)
+        .firstOrNull;
+    final label = course.isCoach && student != null
+        ? 'course.reportFor'.tr(namedArgs: {'username': student.username})
+        : 'course.coachReport'.tr();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(width: 3, child: ColoredBox(color: pbBlueDeep)),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 4,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          FLucideIcons.quote,
+                          size: 12,
+                          color: pbBlueDeep,
+                        ),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.theme.typography.body.xs.copyWith(
+                              color: pbBlueDeep,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(report.body, style: context.theme.typography.body.sm),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Shared bits ───────────────────────────────────────────────
+
+String _weekdayShort(DateTime d) => [
+  'lobbyHub.schedule.weekdaysShort.monday',
+  'lobbyHub.schedule.weekdaysShort.tuesday',
+  'lobbyHub.schedule.weekdaysShort.wednesday',
+  'lobbyHub.schedule.weekdaysShort.thursday',
+  'lobbyHub.schedule.weekdaysShort.friday',
+  'lobbyHub.schedule.weekdaysShort.saturday',
+  'lobbyHub.schedule.weekdaysShort.sunday',
+][d.weekday - 1].tr();
+
+String _timeRangeLabel(CourseSession session) {
+  final start = formatTimeOfDay(session.startTime.toLocal());
+  final end = session.endTime;
+  return end == null ? start : '$start – ${formatTimeOfDay(end.toLocal())}';
+}
+
+/// A compact calendar-leaf: weekday over day/month.
+class _DateBlock extends StatelessWidget {
+  final DateTime date;
+
+  const _DateBlock({required this.date});
+
+  @override
+  Widget build(BuildContext context) {
+    final d = date.toLocal();
+    return Container(
+      width: 52,
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: _courseCrimsonTint,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _weekdayShort(d).toUpperCase(),
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: _courseCrimson,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 1),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '${d.day}/${d.month}',
+              maxLines: 1,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: pbInk,
+                letterSpacing: -0.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small uppercase label with an optional count pill — the lobby feed's
+/// day-divider voice, used to head a group inside a tab.
+class _OverlineLabel extends StatelessWidget {
+  final String text;
+  final int? count;
+
+  const _OverlineLabel({required this.text, this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Row(
+      children: [
+        Flexible(
+          child: Text(
+            text.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: colors.mutedForeground,
+              letterSpacing: 0.7,
+            ),
+          ),
+        ),
+        if (count != null) ...[
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            decoration: BoxDecoration(
+              color: colors.secondary,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: colors.secondaryForeground,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+enum _TagTone { neutral, crimson, green, orange, amber }
+
+/// The lobby activity card's `_Tag` pill, in the tones a course needs.
+class _CourseTag extends StatelessWidget {
+  final String text;
+  final IconData? icon;
+  final _TagTone tone;
+
+  const _CourseTag({
+    required this.text,
+    this.icon,
+    this.tone = _TagTone.neutral,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final (fg, bg) = switch (tone) {
+      _TagTone.crimson => (_courseCrimson, _courseCrimsonTint),
+      _TagTone.green => (_courseGreen, _courseGreenTint),
+      _TagTone.orange => (_courseOrange, _courseOrange.withValues(alpha: 0.1)),
+      _TagTone.amber => (pbInk, pbAmber.withValues(alpha: 0.22)),
+      _TagTone.neutral => (colors.secondaryForeground, colors.secondary),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 11, color: fg),
+            const SizedBox(width: 3),
+          ],
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: fg,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Avatar + name, tappable through to the user's page.
+class _UserChip extends StatelessWidget {
+  final String userId;
+  final String username;
+  final String? generatedAvatar;
+
+  const _UserChip({
+    required this.userId,
+    required this.username,
+    this.generatedAvatar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => UserRoute(id: userId, $extra: username).push(context),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PUserAvatar(
+            userId: userId,
+            username: username,
+            generatedAvatar: generatedAvatar,
+            radius: 11,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              username,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.theme.typography.body.sm.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CourseEmptyCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  const _CourseEmptyCard({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.fromLTRB(16, 22, 16, 20),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: _courseCrimsonTint,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 22, color: _courseCrimson),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: context.theme.typography.body.md.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              subtitle!,
+              textAlign: TextAlign.center,
+              style: context.theme.typography.body.sm.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+          ],
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 14),
+            Center(
+              child: FButton(
+                size: .sm,
+                mainAxisSize: MainAxisSize.min,
+                onPress: onAction,
+                prefix: const Icon(FLucideIcons.plus, size: 16),
+                child: Text(actionLabel!),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 // Same ad-hoc pair the lobby activity card uses
 // (`manage_tab/lobby_section/activity/activity_card.dart`), so a course
 // session and a lobby session read as the same kind of object. The green half
 // is the brand token; only the crimson and the tint are local.
 const _courseCrimson = Color(0xFFDC143C);
+const _courseCrimsonTint = Color(0xFFFFEBED);
 const _courseGreen = pbGreen;
 const _courseGreenTint = Color(0xFFEEF2E4);
+// The lobby history's loss orange, for a missed session.
+const _courseOrange = Color(0xFFF97316);
 
 bool _hasCourseSessionDirections(CourseSession session) =>
     mapDirectionsDestination(
@@ -1026,9 +2120,11 @@ class _CourseSessionDetailRow extends StatelessWidget {
         ),
         if (onPress != null) ...[
           const SizedBox(width: 6),
+          // The lobby's "Chỉ Đường" glyph, so every directions affordance
+          // on this page reads the same.
           Icon(
-            FLucideIcons.navigation,
-            size: 14,
+            Icons.navigation_outlined,
+            size: 15,
             color: context.theme.colors.mutedForeground,
           ),
         ],
@@ -1159,144 +2255,6 @@ class _CourseRsvpButton extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Finished sessions, and the private reports the viewer is entitled to.
-/// A student sees only their own; the coach sees all of them and can write
-/// the ones still missing.
-class _HistoryTab extends ConsumerWidget {
-  final CourseDetail course;
-
-  const _HistoryTab({required this.course});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final past = course.past;
-
-    return RefreshIndicator(
-      onRefresh: () =>
-          ref.refresh(courseDetailProvider(course.courseId).future),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        children: [
-          if (course.canReview)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: FButton(
-                onPress: () => showCourseReviewSheet(context, course),
-                child: Text('course.writeReview'.tr()),
-              ),
-            ),
-          if (past.isEmpty)
-            PEmptySectionPlaceholder(subtitle: 'course.noHistory'.tr())
-          else
-            for (final session in past)
-              _PastSessionTile(course: course, session: session),
-        ],
-      ),
-    );
-  }
-}
-
-class _PastSessionTile extends StatelessWidget {
-  final CourseDetail course;
-  final CourseSession session;
-
-  const _PastSessionTile({required this.course, required this.session});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final reports = course.reports
-        .where((r) => r.activityId == session.activityId)
-        .toList();
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          FTile(
-            title: Text(
-              formatMatchDateTime(session.startTime),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: session.venueName == null
-                ? null
-                : Text(
-                    session.venueName!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-            onPress: _hasCourseSessionDirections(session)
-                ? () => _openCourseSessionDirections(context, session)
-                : null,
-            suffix: course.isCoach
-                ? FButton(
-                    variant: .outline,
-                    size: .sm,
-                    onPress: () =>
-                        showSessionReportSheet(context, course, session),
-                    child: Text('course.writeReport'.tr()),
-                  )
-                : null,
-          ),
-          if (!course.isCoach && session.myAttended != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4, left: 12, right: 12),
-              child: Text(
-                session.myAttended!
-                    ? 'course.attendance.youAttended'.tr()
-                    : 'course.attendance.youMissed'.tr(),
-                style: context.theme.typography.body.xs.copyWith(
-                  color: colors.mutedForeground,
-                ),
-              ),
-            ),
-          if (course.isCoach && session.roster.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 6, left: 12, right: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'course.attendance.title'.tr(),
-                    style: context.theme.typography.body.xs.copyWith(
-                      color: colors.mutedForeground,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  for (final entry in session.roster)
-                    _AttendanceRow(
-                      course: course,
-                      session: session,
-                      entry: entry,
-                    ),
-                ],
-              ),
-            ),
-          for (final report in reports)
-            Padding(
-              padding: const EdgeInsets.only(top: 6, left: 12, right: 12),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: colors.muted,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  report.body,
-                  style: context.theme.typography.body.sm,
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }

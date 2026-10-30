@@ -16,6 +16,7 @@ export 'level_slider.dart';
 export 'lobby_avatar.dart';
 export 'logo.dart';
 export 'pill_toggle.dart';
+export 'quick_action.dart';
 export 'search_field.dart';
 export 'section_header.dart';
 export 'segmented_button.dart';
