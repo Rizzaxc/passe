@@ -1,0 +1,22 @@
+// Static-assets-only Worker serving the Flutter web build at app.passe.vn.
+// Separate from website/ (the Astro site on passe.vn) on purpose: the two
+// deploy independently and the Flutter build never enters Astro's pipeline.
+// Deploy with tool/web/deploy.sh, not `wrangler deploy` directly — the
+// script builds build/web first and refuses a non-live .env.
+{
+	"$schema": "../../website/node_modules/wrangler/config-schema.json",
+	"name": "passe-app",
+	"compatibility_date": "2026-08-07",
+	"assets": {
+		"directory": "../../build/web",
+		// go_router uses path URLs (/invite/CODE, /user/:id): every unknown
+		// path serves index.html and the router takes it from there.
+		"not_found_handling": "single-page-application",
+	},
+	"routes": [
+		{
+			"pattern": "app.passe.vn",
+			"custom_domain": true,
+		},
+	],
+}

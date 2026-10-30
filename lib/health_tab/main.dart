@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/app_platform.dart';
 import '../ui/main.dart';
 import 'achievements_section/achievements_controller.dart';
 import 'achievements_section/main.dart';
@@ -61,6 +62,21 @@ class _HealthTabState extends ConsumerState<HealthTab> {
 
   @override
   Widget build(BuildContext context) {
+    // No HealthKit / Health Connect on web: keep the tab (shell branch
+    // indices and nav coach keys stay put) but show what it does instead.
+    if (AppPlatform.isWeb) {
+      return FScaffold(
+        header: FHeader(
+          title: Text('health.title'.tr()),
+          suffixes: const [NotificationIconButton()],
+        ),
+        child: const SingleChildScrollView(
+          padding: EdgeInsets.all(24),
+          child: GetAppPanel(feature: WebGatedFeature.health),
+        ),
+      );
+    }
+
     final healthStatus = ref.watch(healthControllerProvider);
     final isLinked = healthStatus.value == HealthLinkStatus.linked;
     final hasUnseenAchievements =

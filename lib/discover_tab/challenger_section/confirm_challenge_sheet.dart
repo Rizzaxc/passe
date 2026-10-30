@@ -22,6 +22,7 @@ Future<void> showConfirmFriendlyChallengeSheet(
   BuildContext context,
   FriendlyOffer offer,
 ) {
+  if (guardWeb(context, WebGatedFeature.challenge)) return Future.value();
   return showPSheet(
     context: context,
     maxHeightRatio: 1.0,

@@ -18,6 +18,7 @@ Optional store buttons are controlled at build time:
 ```text
 PUBLIC_APP_STORE_URL=https://apps.apple.com/...
 PUBLIC_PLAY_STORE_URL=https://play.google.com/store/apps/details?id=passe.vn.passe
+PUBLIC_WEB_APP_URL=https://app.passe.vn   # default; the invite page's "Tham gia trên web" target
 ```
 
 ## Verified links

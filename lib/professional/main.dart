@@ -934,6 +934,9 @@ Future<void> _messageCoach(
   ProfessionalFeedItem item,
 ) async {
   if (ref.read(currentUserIdProvider) == null) {
+    // A guest can't have an existing thread to reopen, so on web this is
+    // always a new inquiry — gate it before sending them off to sign in.
+    if (guardWeb(context, WebGatedFeature.coachInquiry)) return;
     const ProfileRoute().go(context);
     return;
   }

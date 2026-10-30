@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
@@ -10,6 +9,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/app_platform.dart';
 import '../core/model/passe_user.dart';
 import '../core/model/user_details.dart';
 import '../core/user_preferences.dart';
@@ -260,7 +260,27 @@ class AuthController extends _$AuthController {
   ///
   /// No `.timeout` is applied: this is an interactive flow gated on the user,
   /// not a background RPC.
-  Future<void> signInWithGoogle() async {
+  ///
+  /// On web there's no native account picker (google_sign_in v7's
+  /// `authenticate()` is unsupported there), so this falls back to Supabase's
+  /// OAuth redirect: the page navigates away to Google and comes back to
+  /// [webReturnPath] with a PKCE code that supabase_flutter exchanges during
+  /// `initialize`. The future completes when the redirect starts, not on
+  /// sign-in.
+  Future<void> signInWithGoogle({String? webReturnPath}) async {
+    if (AppPlatform.isWeb) {
+      try {
+        await supabase.auth.signInWithOAuth(
+          OAuthProvider.google,
+          redirectTo: Uri.base.resolve(webReturnPath ?? '/').toString(),
+        );
+      } catch (e, st) {
+        talker.handle(e, st);
+        rethrow;
+      }
+      return;
+    }
+
     try {
       await _ensureGoogleInitialized();
 
@@ -305,7 +325,7 @@ class AuthController extends _$AuthController {
     // pairing with `signInWithIdToken`. Guard it out here so the button
     // (also hidden on those platforms in `SocialAuthSection`) can never be
     // reached via some other path either.
-    if (!Platform.isIOS && !Platform.isMacOS) {
+    if (!AppPlatform.isApple) {
       throw const AuthException(
         'Sign in with Apple is only available on iOS and macOS.',
       );

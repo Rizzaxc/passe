@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
 import '../core/achievement_evaluator.dart';
+import '../core/app_platform.dart';
 import '../core/model/activity.dart';
 import '../logger/talker.dart';
 import 'achievements_section/model/achievement_celebration.dart';
@@ -50,6 +51,9 @@ class HealthSyncController extends _$HealthSyncController {
   /// revoked permissions, so it is safe to fire unconditionally at launch.
   Future<HealthSyncResult> syncNow() async {
     if (state == HealthSyncPhase.syncing) return const HealthSyncResult();
+    // No HealthKit / Health Connect on web — the Health tab is a get-app
+    // placeholder there.
+    if (AppPlatform.isWeb) return const HealthSyncResult(skipped: true);
 
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return const HealthSyncResult(skipped: true);

@@ -29,6 +29,7 @@ void showComposePostSheet(
   String? lobbyId,
   String? activityId,
 }) {
+  if (guardWeb(context, WebGatedFeature.composePost)) return;
   Navigator.of(context, rootNavigator: true).push(
     MaterialPageRoute(
       fullscreenDialog: true,

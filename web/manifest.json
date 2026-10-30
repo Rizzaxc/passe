@@ -3,11 +3,10 @@
     "short_name": "Passe",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
-    "prefer_related_applications": false,
+    "background_color": "#FFFFFF",
+    "theme_color": "#3090F2",
+    "description": "Passe — tìm đồng đội, lập lobby và hẹn chơi thể thao phong trào.",
+        "prefer_related_applications": false,
     "icons": [
         {
             "src": "icons/Icon-192.png",

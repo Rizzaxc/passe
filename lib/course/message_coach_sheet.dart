@@ -24,15 +24,18 @@ Future<void> showMessageCoachSheet(
   required String professionalId,
   required int sportId,
   required String coachName,
-}) => showPSheet(
-  context: context,
-  maxHeightRatio: 1,
-  builder: (_) => _MessageCoachSheet(
-    professionalId: professionalId,
-    sportId: sportId,
-    coachName: coachName,
-  ),
-);
+}) {
+  if (guardWeb(context, WebGatedFeature.coachInquiry)) return Future.value();
+  return showPSheet(
+    context: context,
+    maxHeightRatio: 1,
+    builder: (_) => _MessageCoachSheet(
+      professionalId: professionalId,
+      sportId: sportId,
+      coachName: coachName,
+    ),
+  );
+}
 
 class _MessageCoachSheet extends ConsumerStatefulWidget {
   final String professionalId;

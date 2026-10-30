@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:health/health.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/app_platform.dart';
 import '../core/model/activity.dart';
 import '../core/model/enum.dart';
 import '../logger/talker.dart';
@@ -259,8 +258,8 @@ class HealthDataService extends _$HealthDataService {
         avgHeartRate: avgHr,
         maxHeartRate: maxHr,
         minHeartRate: minHr,
-        hrvSdnnMs: Platform.isIOS ? avgHrv : null,
-        hrvRmssdMs: Platform.isIOS ? null : avgHrv,
+        hrvSdnnMs: AppPlatform.isIOS ? avgHrv : null,
+        hrvRmssdMs: AppPlatform.isIOS ? null : avgHrv,
         hrZoneEasySeconds: easy,
         hrZoneModerateSeconds: moderate,
         hrZoneHardSeconds: hard,
@@ -342,7 +341,7 @@ class HealthDataService extends _$HealthDataService {
       final distance = _sumNumericValues(results[1].data);
       final activeCalories = _sumNumericValues(results[2].data);
       final additionalCalories = _sumNumericValues(results[3].data);
-      final totalCalories = Platform.isIOS
+      final totalCalories = AppPlatform.isIOS
           ? _sumNullable(activeCalories, additionalCalories)
           : additionalCalories;
 
@@ -371,8 +370,8 @@ class HealthDataService extends _$HealthDataService {
         activeCalories: activeCalories,
         totalCalories: totalCalories,
         restingHeartRate: restingHr,
-        hrvSdnnMs: Platform.isIOS ? hrv : null,
-        hrvRmssdMs: Platform.isIOS ? null : hrv,
+        hrvSdnnMs: AppPlatform.isIOS ? hrv : null,
+        hrvRmssdMs: AppPlatform.isIOS ? null : hrv,
         weightKg: weight,
         syncedAt: DateTime.now().toUtc(),
       );

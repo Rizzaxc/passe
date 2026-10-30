@@ -26,6 +26,13 @@ Future<Lobby?> showLobbyFormSheet({
   Lobby? existingLobby,
   List<LobbyHomeground> existingHomeGrounds = const [],
 }) {
+  final editing = lobbyId != null || existingLobby != null;
+  if (guardWeb(
+    context,
+    editing ? WebGatedFeature.editLobby : WebGatedFeature.createLobby,
+  )) {
+    return Future.value();
+  }
   return showPSheet<Lobby>(
     context: context,
     builder: (_) => LobbyFormSheet(

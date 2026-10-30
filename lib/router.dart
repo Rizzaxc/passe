@@ -9,6 +9,7 @@ import 'auth/auth_screen.dart';
 import 'auth/forgot_password_screen.dart';
 import 'auth/reset_password_screen.dart';
 import 'auth/welcome_screen.dart';
+import 'core/app_platform.dart';
 import 'core/model/passe_user.dart';
 import 'core/model/professional_feed_item.dart';
 import 'core/pending_destination.dart';
@@ -75,6 +76,12 @@ String resolveLandingLocation({
     AsyncError() => const ManageRoute().location,
   };
 }
+
+/// The router's [PendingDestination], exposed so the web Google sign-in can
+/// carry it through Supabase's full-page OAuth redirect (`redirectTo`) — the
+/// in-memory value doesn't survive the page reload otherwise.
+@Riverpod(keepAlive: true)
+PendingDestination pendingDestination(Ref ref) => PendingDestination();
 
 @riverpod
 GoRouter router(Ref ref) {
@@ -150,7 +157,7 @@ GoRouter router(Ref ref) {
   // included). Also spent when the user leaves `/onboarding`, so a deep link
   // (`passe.vn/invite/CODE`) survives a brand-new user's sport pick — see
   // [PendingDestination].
-  final pendingDestination = PendingDestination();
+  final pendingDestination = ref.read(pendingDestinationProvider);
 
   final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -161,6 +168,17 @@ GoRouter router(Ref ref) {
     // debugLogDiagnostics: true,
     routes: $appRoutes,
     redirect: (context, state) {
+      // Back from Supabase's web OAuth redirect: supabase_flutter already
+      // exchanged the PKCE `?code=` from `Uri.base` during `initialize`, so
+      // drop it rather than let it ride along on the restored destination.
+      if (AppPlatform.isWeb && state.uri.queryParameters.containsKey('code')) {
+        final params = {...state.uri.queryParameters}..remove('code');
+        return Uri(
+          path: state.uri.path,
+          queryParameters: params.isEmpty ? null : params,
+        ).toString();
+      }
+
       final isSplash = state.uri.path == const SplashRoute().location;
       final isOnboarding = state.uri.path == const OnboardingRoute().location;
       // Password-recovery screens carry their own flag: unlike the rest of

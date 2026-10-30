@@ -96,6 +96,7 @@ class TeammateSubtab extends HookConsumerWidget {
             size: .sm,
             prefix: const Icon(FLucideIcons.plus),
             onPress: () async {
+              if (guardWeb(context, WebGatedFeature.createLobby)) return;
               if (!ensureSignedIn(context, ref)) return;
               await createLobbyAndOpen(context, ref);
             },

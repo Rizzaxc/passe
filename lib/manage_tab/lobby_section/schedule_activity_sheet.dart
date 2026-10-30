@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/location_repository.dart';
 import '../../ui/dialog.dart';
 import '../../ui/form_rows.dart';
+import '../../ui/get_app_sheet.dart';
 import '../../ui/sheet.dart';
 import 'activity/upcoming_controller.dart';
 import 'feed/home_ground_selector.dart';
@@ -29,6 +30,7 @@ Future<void> showScheduleActivitySheet(
   String lobbyId, {
   UpcomingActivity? existing,
 }) async {
+  if (guardWeb(context, WebGatedFeature.scheduleActivity)) return;
   await showPSheet<void>(
     context: context,
     builder: (_) =>

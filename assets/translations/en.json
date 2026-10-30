@@ -2369,5 +2369,53 @@
     "coach": "Coach mode",
     "referee": "Referee mode",
     "host": "Host mode"
+  },
+  "webGate": {
+    "availableInApp": "The web version is a quick preview — this feature is in the Passe app for iOS and Android.",
+    "getApp": "Get the app",
+    "createLobby": {
+      "title": "Create a lobby",
+      "body": "Start a group for one sport, invite friends and pick a homeground so your crew can meet up easily."
+    },
+    "editLobby": {
+      "title": "Manage lobby",
+      "body": "Edit the lobby's name, photo, homeground and playtime, and manage members and coordinators."
+    },
+    "scheduleActivity": {
+      "title": "Schedule an activity",
+      "body": "Set a time, venue and how many players are needed; members RSVP and the session locks in once enough are going."
+    },
+    "composePost": {
+      "title": "Post",
+      "body": "Share 1–4 photos from a session in the last 7 days and tag teammates; posts disappear after 1, 3 or 7 days."
+    },
+    "joinLobby": {
+      "title": "Request to join",
+      "body": "Ask to join a lobby. Once the captain or a coordinator approves, you're a member."
+    },
+    "challenge": {
+      "title": "Challenge",
+      "body": "Your lobby accepts another lobby's match terms and plays them; refereed matches count toward ELO."
+    },
+    "coachInquiry": {
+      "title": "Message a coach",
+      "body": "Open a course with a coach: chat, get an enrollment offer and schedule training sessions."
+    },
+    "freeplaySeat": {
+      "title": "Request a freeplay seat",
+      "body": "Ask for a spot in someone's open session and chat with the host before you show up."
+    },
+    "hostFreeplay": {
+      "title": "Host a freeplay",
+      "body": "Post an open session for strangers to request seats in, then approve each request."
+    },
+    "coachMode": {
+      "title": "Coach mode",
+      "body": "For coaches and referees: manage courses, students, teaching schedule and service profile."
+    },
+    "health": {
+      "title": "Health",
+      "body": "Link Apple Health or Health Connect to log heart rate, training load and calories for each session, plus goals and achievements."
+    }
   }
 }

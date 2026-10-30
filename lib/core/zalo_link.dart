@@ -1,9 +1,9 @@
-import 'dart:io';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:forui/forui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'app_platform.dart';
 
 /// Opens a Zalo chat with [zalo] (phone number) via zalo.me's universal link
 /// — the Zalo app intercepts it if installed and routes straight to that
@@ -20,7 +20,7 @@ Future<void> openZaloChat(BuildContext context, String zalo) async {
   final installed = await canLaunchUrl(Uri.parse('zalosdk://'));
 
   if (!installed) {
-    final storeUri = Platform.isIOS
+    final storeUri = AppPlatform.isIOS
         ? Uri.parse('https://apps.apple.com/app/id579523206')
         : Uri.parse(
             'https://play.google.com/store/apps/details?id=com.zing.zalo',

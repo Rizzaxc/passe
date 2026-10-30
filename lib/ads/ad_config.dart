@@ -1,6 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import '../core/app_platform.dart';
 
 /// Central source of AdMob unit ids.
 ///
@@ -29,7 +29,7 @@ class AdConfig {
     required String androidTest,
     required String iosTest,
   }) {
-    if (Platform.isAndroid) {
+    if (AppPlatform.isAndroid) {
       final v = dotenv.maybeGet(androidKey);
       return (v == null || v.isEmpty) ? androidTest : v;
     }

@@ -14,6 +14,10 @@ if (!isValidShape) {
 const appStoreUrl = import.meta.env.PUBLIC_APP_STORE_URL;
 const playStoreUrl = import.meta.env.PUBLIC_PLAY_STORE_URL;
 const inviteUrl = `https://passe.vn/invite/${encodeURIComponent(code)}`;
+// The Flutter web build (tool/web/) redeems the same code via its own
+// /invite/:code route, sign-in included — no install needed to join.
+const webAppUrl = import.meta.env.PUBLIC_WEB_APP_URL ?? 'https://app.passe.vn';
+const webJoinUrl = `${webAppUrl}/invite/${encodeURIComponent(code)}`;
 ---
 
 <BaseLayout
@@ -36,14 +40,15 @@ const inviteUrl = `https://passe.vn/invite/${encodeURIComponent(code)}`;
           <>
             <h1>Bạn có một kèo đang chờ.</h1>
             <p>
-              Mở liên kết này trên điện thoại đã cài Passe để xem lobby và tham gia. Passe sẽ giữ
-              nguyên mã mời trong suốt quá trình đăng nhập.
+              Mở liên kết này trên điện thoại đã cài Passe, hoặc tham gia ngay trên web. Passe sẽ
+              giữ nguyên mã mời trong suốt quá trình đăng nhập.
             </p>
             <div class="invite-code">
               <span>Mã mời</span>
               <strong>{code}</strong>
             </div>
             <div class="actions">
+              <a class="button" href={webJoinUrl}>Tham gia trên web</a>
               {appStoreUrl && <a class="button" href={appStoreUrl}>Tải cho iPhone</a>}
               {playStoreUrl && <a class="button" href={playStoreUrl}>Tải cho Android</a>}
               <button class="button secondary" id="copy-invite" data-url={inviteUrl}>Sao chép liên kết</button>

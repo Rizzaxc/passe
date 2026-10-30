@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../auth/guest_prompt.dart';
 import '../logger/talker.dart';
 import '../notifications/notification_service.dart';
+import '../ui/get_app_sheet.dart';
 import 'teammate_section/feed_controller.dart';
 
 /// "Xin vào" for a lobby you're not in — on the Teammates card and pinned to
@@ -39,6 +40,7 @@ class LobbyJoinButton extends ConsumerWidget {
   }
 
   Future<void> _request(BuildContext context, WidgetRef ref) async {
+    if (guardWeb(context, WebGatedFeature.joinLobby)) return;
     // Guests can't send a join request (RLS/NOT NULL) — prompt sign-in
     // instead of letting the tap fail silently.
     if (!ensureSignedIn(context, ref)) return;

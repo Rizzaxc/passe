@@ -243,6 +243,41 @@ class _SnapshotCard extends StatelessWidget {
 
 // ─── Trend chart ──────────────────────────────────────────────────────────────
 
+/// Trailing mean over the last [window] days (by x, so gap days shrink the
+/// sample rather than stretching the window). Early points average whatever
+/// history exists.
+List<FlSpot> _rollingMean(List<FlSpot> spots, {required int window}) {
+  final out = <FlSpot>[];
+  var start = 0;
+  var sum = 0.0;
+  for (var i = 0; i < spots.length; i++) {
+    sum += spots[i].y;
+    while (spots[i].x - spots[start].x >= window) {
+      sum -= spots[start].y;
+      start++;
+    }
+    out.add(FlSpot(spots[i].x, sum / (i - start + 1)));
+  }
+  return out;
+}
+
+/// The y-axis range for [spots]: the data's span plus 10% headroom each side,
+/// widened to at least [minSpan] around its midpoint, never below zero (every
+/// metric is non-negative).
+(double?, double?) _paddedRange(List<FlSpot> spots, double minSpan) {
+  if (spots.isEmpty) return (null, null);
+  var lo = spots.first.y;
+  var hi = lo;
+  for (final s in spots) {
+    if (s.y < lo) lo = s.y;
+    if (s.y > hi) hi = s.y;
+  }
+  final span = ((hi - lo) * 1.2).clamp(minSpan, double.infinity);
+  final mid = (lo + hi) / 2;
+  final minY = (mid - span / 2).clamp(0.0, double.infinity);
+  return (minY, minY + span);
+}
+
 class _TrendChartCard extends StatelessWidget {
   final List<DailyHealthSummary> days;
   final List<HealthMetric> metrics;
@@ -273,12 +308,16 @@ class _TrendChartCard extends StatelessWidget {
     // and surface a "not enough data" chip instead of blanking the card.
     final reliable = spots.length >= 2;
     final maxX = (days.length - 1).clamp(1, double.infinity).toDouble();
+    // Daily values (HRV and sleep especially) swing 15–25% day to day, so
+    // the line is a trailing 7-day mean and the raw days sit behind it as
+    // faint dots.
     final displaySpots = reliable
-        ? spots
+        ? _rollingMean(spots, window: 7)
         : [
             FlSpot(0, spots.isNotEmpty ? spots.first.y : 0),
             FlSpot(maxX, spots.isNotEmpty ? spots.first.y : 0),
           ];
+    final (minY, maxY) = _paddedRange(spots, selected.minChartSpan);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -319,7 +358,22 @@ class _TrendChartCard extends StatelessWidget {
                     lineTouchData: const LineTouchData(enabled: false),
                     minX: 0,
                     maxX: maxX,
+                    minY: minY,
+                    maxY: maxY,
                     lineBarsData: [
+                      if (reliable)
+                        LineChartBarData(
+                          spots: spots,
+                          barWidth: 0,
+                          color: Colors.transparent,
+                          dotData: FlDotData(
+                            getDotPainter: (_, _, _, _) => FlDotCirclePainter(
+                              radius: 1.5,
+                              color: colors.primary.withValues(alpha: 0.3),
+                              strokeWidth: 0,
+                            ),
+                          ),
+                        ),
                       LineChartBarData(
                         spots: displaySpots,
                         isCurved: reliable,

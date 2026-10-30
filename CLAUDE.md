@@ -295,11 +295,19 @@ JSON — parse with `double.tryParse`. Complex reads go through Postgres functio
 - `flutter analyze` is the lint gate (`flutter_lints`). Suppress a single line with
   `// ignore: rule_name` only when genuinely warranted.
 - Run the app with `flutter run`; tests with `flutter test`.
-- **This is strictly an iOS + Android app.** Never attempt to build or run for web, Windows, macOS,
-  or Linux (`flutter run -d chrome/windows/macos/linux`) — those targets aren't supported and
-  aren't a meaningful way to verify a change here, even as a smoke test. Verify changes on an
-  iOS/Android device or simulator/emulator, or by reasoning through the code/`flutter analyze`
-  when a device isn't available.
+- **iOS + Android are the product; web is a showcase.** Never build or run for Windows, macOS or
+  Linux. A **web** build (`flutter build web`, `rps web:build` / `rps web:deploy` →
+  `tool/web/deploy.sh`, served at `app.passe.vn` by a static-assets Worker in
+  `tool/web/wrangler.jsonc`) exists to show the app off and do quick ops — not parity. On web:
+  guest / email / Google (Supabase OAuth *redirect*, not the native picker; no Apple) sign-in;
+  Discover is display-only; RSVP, accept/decline, course/freeplay messaging, invite-link redeem
+  and the whole Profile tab work; no push, ads or Health. Mobile-only actions stay visible and
+  call `guardWeb(context, WebGatedFeature.x)` (`lib/ui/get_app_sheet.dart`), which opens a sheet
+  explaining that feature — **gate any new mobile-only entry point the same way** (and add its
+  `webGate.<x>` copy). Never read `Platform.isX` from `dart:io` (throws on web) — use
+  `AppPlatform` (`lib/core/app_platform.dart`). `PWebFrame` caps web at 1024px. Verify mobile
+  changes on a device/simulator as before; `flutter run -d chrome` is only for web-specific work.
+  Re-running `flutter_native_splash:create` rewrites `web/index.html` — keep its cropperjs tags.
 - **Environment**: client config is loaded from `.env` via `flutter_dotenv` (`dotenv.load()` in
   `main`) and is bundled as a Flutter asset (`pubspec.yaml` `assets:`), so only genuinely
   client-safe values belong in it — `ENV` (one of `local | test | live`), `SUPABASE_URL`, the

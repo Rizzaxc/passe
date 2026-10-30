@@ -2364,5 +2364,53 @@
     "coach": "Chế độ HLV",
     "referee": "Chế độ Trọng tài",
     "host": "Chế độ Host"
+  },
+  "webGate": {
+    "availableInApp": "Bản web chỉ để xem nhanh — tính năng này có trên ứng dụng Passe cho iOS và Android.",
+    "getApp": "Tải ứng dụng",
+    "createLobby": {
+      "title": "Tạo lobby",
+      "body": "Lập nhóm chơi cho một môn, mời bạn bè vào và chọn sân nhà để cả nhóm hẹn nhau dễ hơn."
+    },
+    "editLobby": {
+      "title": "Quản lý lobby",
+      "body": "Sửa tên, ảnh, sân nhà và lịch chơi của lobby, quản lý thành viên và coordinator."
+    },
+    "scheduleActivity": {
+      "title": "Lên lịch hoạt động",
+      "body": "Đặt giờ, sân và số người cần để chốt buổi; thành viên RSVP và buổi chơi tự chốt khi đủ người."
+    },
+    "composePost": {
+      "title": "Đăng bài",
+      "body": "Chia sẻ 1–4 ảnh từ buổi chơi trong 7 ngày qua, tag đồng đội; bài tự biến mất sau 1, 3 hoặc 7 ngày."
+    },
+    "joinLobby": {
+      "title": "Xin vào lobby",
+      "body": "Gửi yêu cầu tham gia một lobby. Captain hoặc coordinator duyệt là bạn thành member."
+    },
+    "challenge": {
+      "title": "Thách đấu",
+      "body": "Lobby của bạn nhận điều kiện trận của lobby khác và đấu với họ; trận có trọng tài sẽ được tính ELO."
+    },
+    "coachInquiry": {
+      "title": "Nhắn tin coach",
+      "body": "Mở một course với huấn luyện viên: trao đổi, nhận đề nghị đăng ký và lên lịch các buổi tập."
+    },
+    "freeplaySeat": {
+      "title": "Xin chỗ freeplay",
+      "body": "Xin một suất trong buổi chơi mở của người khác và trao đổi với host trước khi đến sân."
+    },
+    "hostFreeplay": {
+      "title": "Mở buổi freeplay",
+      "body": "Đăng một buổi chơi mở để người lạ xin chỗ, rồi duyệt từng yêu cầu."
+    },
+    "coachMode": {
+      "title": "Chế độ huấn luyện viên",
+      "body": "Dành cho coach và trọng tài: quản lý course, học viên, lịch dạy và hồ sơ dịch vụ."
+    },
+    "health": {
+      "title": "Sức khoẻ",
+      "body": "Kết nối Apple Health hoặc Health Connect để ghi nhịp tim, tải tập luyện và calo của từng buổi chơi, cùng mục tiêu và thành tích."
+    }
   }
 }

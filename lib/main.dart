@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -19,6 +20,7 @@ import 'package:talker_riverpod_logger/talker_riverpod_logger_observer.dart';
 import 'package:talker_riverpod_logger/talker_riverpod_logger_settings.dart';
 
 import 'ads/ad_service.dart';
+import 'core/app_platform.dart';
 import 'firebase_options.dart';
 import 'health_tab/health_sync_service.dart';
 import 'logger/talker.dart';
@@ -29,6 +31,10 @@ import 'router.dart';
 import 'ui/main.dart' as ui;
 
 Future<void> main() async {
+  // Web: real paths (`/invite/CODE`, `/user/:id`) instead of `#/…`, so
+  // shared links and the Supabase OAuth `redirectTo` land on a route.
+  // No-op on iOS/Android.
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
 
   LicenseRegistry.addLicense(() async* {
@@ -64,8 +70,13 @@ Future<void> main() async {
 
   // Firebase + FCM. The background handler must be registered before runApp;
   // it is a no-op (the OS renders the notification block) but FCM requires it.
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  // Web has no push (and no Firebase web config), so it skips both.
+  if (!AppPlatform.isWeb) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
 
   await EasyLocalization.ensureInitialized();
 
@@ -123,10 +134,12 @@ Future<void> main() async {
       );
       // Google AdMob. Deferred past the first frame — see initMobileAds doc.
       // Test unit ids are used until real ones land in .env (see
-      // lib/ads/ad_config.dart).
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        unawaited(initMobileAds());
-      });
+      // lib/ads/ad_config.dart). AdMob has no web SDK.
+      if (!AppPlatform.isWeb) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          unawaited(initMobileAds());
+        });
+      }
     },
   );
 }
@@ -148,12 +161,14 @@ class Passe extends HookConsumerWidget {
       // debug ribbon would sit in the corner of every one of them. This flag
       // only affects debug builds; release builds never draw it either way.
       debugShowCheckedModeBanner: false,
-      builder: (_, child) => FTheme(
-        data: ui.pbThemeLight,
-        child: ui.PKeyboardDismiss(
-          child: DefaultTextStyle(
-            style: ui.pbThemeLight.typography.body.md,
-            child: FToaster(child: child!),
+      builder: (_, child) => ui.PWebFrame(
+        child: FTheme(
+          data: ui.pbThemeLight,
+          child: ui.PKeyboardDismiss(
+            child: DefaultTextStyle(
+              style: ui.pbThemeLight.typography.body.md,
+              child: FToaster(child: child!),
+            ),
           ),
         ),
       ),

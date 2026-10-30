@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:forui/forui.dart';
@@ -7,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
+import '../core/app_platform.dart';
 import '../core/icon/main.dart';
 import '../core/legal_links.dart';
 import '../router.dart';
@@ -311,11 +310,15 @@ class SocialAuthSection extends ConsumerWidget {
               icon: const SizedBox(width: 24, height: 24, child: PasseIcons.googleLogo),
               label: 'auth.googleContinue'.tr(),
               onTap: () => handleAuthAction(
-                () => ref.read(authControllerProvider.notifier).signInWithGoogle(),
+                () => ref
+                    .read(authControllerProvider.notifier)
+                    .signInWithGoogle(
+                      webReturnPath: ref.read(pendingDestinationProvider).value,
+                    ),
                 'auth.googleLoginFailed'.tr(),
               ),
             ),
-            if (Platform.isIOS || Platform.isMacOS)
+            if (AppPlatform.isApple)
               buildRow(
                 icon: FaIcon(FontAwesomeIcons.apple, color: context.theme.colors.foreground),
                 label: 'auth.appleContinue'.tr(),

@@ -46,6 +46,11 @@ class WelcomeScreen extends HookConsumerWidget {
 
     return FScaffold(
       childPad: false,
+      // The auth page inside the PageView already pads itself by the keyboard
+      // inset (see AuthContent). Letting this outer scaffold shrink for it as
+      // well compensates twice, and forui feeds the raw viewInsets into
+      // layout, so a transient bogus inset becomes negative constraints.
+      resizeToAvoidBottomInset: false,
       child: Column(
         children: [
           // Brand lockup rides above the story, and steps aside for the auth

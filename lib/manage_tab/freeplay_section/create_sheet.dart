@@ -14,12 +14,14 @@ import '../../logger/talker.dart';
 import '../../ui/main.dart';
 import '../lobby_section/feed/home_ground_selector.dart';
 
-Future<void> showCreateFreeplaySheet(BuildContext context, WidgetRef ref) =>
-    showPSheet(
-      context: context,
-      maxHeightRatio: 1,
-      builder: (_) => const _CreateFreeplayForm(),
-    );
+Future<void> showCreateFreeplaySheet(BuildContext context, WidgetRef ref) {
+  if (guardWeb(context, WebGatedFeature.hostFreeplay)) return Future.value();
+  return showPSheet(
+    context: context,
+    maxHeightRatio: 1,
+    builder: (_) => const _CreateFreeplayForm(),
+  );
+}
 
 class _CreateFreeplayForm extends ConsumerStatefulWidget {
   const _CreateFreeplayForm();

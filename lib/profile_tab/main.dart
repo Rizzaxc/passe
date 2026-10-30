@@ -10,6 +10,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/app_platform.dart';
 import '../core/icon/main.dart';
 import '../core/mode_aware_title.dart';
 import '../core/model/enum.dart';
@@ -309,6 +310,13 @@ class ProfileTab extends ConsumerWidget {
                             details: FSwitch(
                               value: hostModeActive,
                               onChange: (v) {
+                                if (v &&
+                                    guardWeb(
+                                      context,
+                                      WebGatedFeature.hostFreeplay,
+                                    )) {
+                                  return;
+                                }
                                 ref.read(hostModeStateProvider.notifier).set(v);
                                 if (v) {
                                   ref
@@ -325,6 +333,13 @@ class ProfileTab extends ConsumerWidget {
                             details: FSwitch(
                               value: proModeActive,
                               onChange: (v) {
+                                if (v &&
+                                    guardWeb(
+                                      context,
+                                      WebGatedFeature.coachMode,
+                                    )) {
+                                  return;
+                                }
                                 ref.read(proModeStateProvider.notifier).set(v);
                                 if (v) {
                                   ref
@@ -415,6 +430,14 @@ class ProfileTab extends ConsumerWidget {
             resetAspectRatioEnabled: false,
             aspectRatioPickerButtonHidden: true,
           ),
+          // cropperjs (loaded in web/index.html); square only — no circle
+          // crop style on web, the avatar is clipped round when shown anyway.
+          if (context.mounted)
+            WebUiSettings(
+              context: context,
+              presentStyle: WebPresentStyle.dialog,
+              size: const CropperSize(width: 400, height: 400),
+            ),
         ],
       );
       if (cropped == null) return;
@@ -444,7 +467,10 @@ class ProfileTab extends ConsumerWidget {
 
     ImageProvider? imageProvider;
     if (pickedAvatar != null) {
-      imageProvider = FileImage(File(pickedAvatar.path));
+      // On web the picked/cropped XFile's path is a blob: URL, not a file.
+      imageProvider = AppPlatform.isWeb
+          ? NetworkImage(pickedAvatar.path)
+          : FileImage(File(pickedAvatar.path));
     } else if (avatar is PhotoAvatar) {
       final userId = ref.read(authControllerProvider).value?.id;
       if (userId != null) {

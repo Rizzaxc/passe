@@ -51,7 +51,7 @@ final class HealthSyncControllerProvider
 }
 
 String _$healthSyncControllerHash() =>
-    r'67fcb6b0395a3a33a3a90108241d13270be4a668';
+    r'448f4f6a863d0673dd2649bd82f651684e6465c6';
 
 /// The device → Supabase sync engine. Fired once on app launch (non-blocking)
 /// and on the explicit Sync button. Pull-to-refresh does NOT call this — it only

@@ -98,6 +98,7 @@ class _BodyState extends ConsumerState<_Body> {
   );
 
   Future<void> _request() async {
+    if (guardWeb(context, WebGatedFeature.freeplaySeat)) return;
     if (!ensureSignedIn(context, ref) || _busy) return;
     final message = TextEditingController();
     await showFDialog<void>(

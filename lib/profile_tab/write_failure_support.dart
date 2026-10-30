@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
+import 'package:http/http.dart' show ClientException;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../logger/talker.dart';
@@ -12,8 +13,12 @@ import '../router.dart';
 /// True for connectivity-shaped failures (offline, DNS, our own 5s
 /// `.timeout()`) — the app is mostly unusable offline anyway, so callers
 /// should just leave the optimistic value in place rather than toast/resync.
+/// On web there's no `SocketException`: a dropped fetch surfaces as
+/// `http`'s [ClientException] instead.
 bool isNetworkError(Object error) =>
-    error is TimeoutException || error is SocketException;
+    error is TimeoutException ||
+    error is SocketException ||
+    error is ClientException;
 
 /// Shared failure path for write-through profile field writes (every write
 /// is now optimistic and fire-and-forget, so there's no single call site

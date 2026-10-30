@@ -1198,6 +1198,64 @@ bool _$boolConverter(String value) {
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// The router's [PendingDestination], exposed so the web Google sign-in can
+/// carry it through Supabase's full-page OAuth redirect (`redirectTo`) — the
+/// in-memory value doesn't survive the page reload otherwise.
+
+@ProviderFor(pendingDestination)
+final pendingDestinationProvider = PendingDestinationProvider._();
+
+/// The router's [PendingDestination], exposed so the web Google sign-in can
+/// carry it through Supabase's full-page OAuth redirect (`redirectTo`) — the
+/// in-memory value doesn't survive the page reload otherwise.
+
+final class PendingDestinationProvider
+    extends
+        $FunctionalProvider<
+          PendingDestination,
+          PendingDestination,
+          PendingDestination
+        >
+    with $Provider<PendingDestination> {
+  /// The router's [PendingDestination], exposed so the web Google sign-in can
+  /// carry it through Supabase's full-page OAuth redirect (`redirectTo`) — the
+  /// in-memory value doesn't survive the page reload otherwise.
+  PendingDestinationProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pendingDestinationProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pendingDestinationHash();
+
+  @$internal
+  @override
+  $ProviderElement<PendingDestination> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  PendingDestination create(Ref ref) {
+    return pendingDestination(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PendingDestination value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PendingDestination>(value),
+    );
+  }
+}
+
+String _$pendingDestinationHash() =>
+    r'0862b71161c4af9031c27a6c9a6be388f4dd92c7';
 
 @ProviderFor(router)
 final routerProvider = RouterProvider._();
@@ -1238,4 +1296,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'73f4a2e2fe96acc70393a2113d4c87cfd771be3a';
+String _$routerHash() => r'1b3fbf37e875fa8ddb3582115f64328322676ddf';

@@ -11,18 +11,24 @@ part 'health_metric.g.dart';
 /// Connect has no reliable sleep-stage source; see health_controller.dart),
 /// and `activity_count` has no reliable device source.
 enum HealthMetric {
-  restingHr('health.metric.restingHr', 'bpm'),
-  hrv('health.metric.hrv', 'ms'),
-  weight('health.metric.weight', 'kg'),
-  steps('health.metric.steps', ''),
-  distance('health.metric.distance', 'km'),
-  activeCalories('health.metric.activeCalories', 'kcal'),
-  totalCalories('health.metric.totalCalories', 'kcal');
+  restingHr('health.metric.restingHr', 'bpm', 10),
+  hrv('health.metric.hrv', 'ms', 20),
+  weight('health.metric.weight', 'kg', 2),
+  steps('health.metric.steps', '', 4000),
+  distance('health.metric.distance', 'km', 3000),
+  activeCalories('health.metric.activeCalories', 'kcal', 300),
+  totalCalories('health.metric.totalCalories', 'kcal', 500);
 
-  const HealthMetric(this.labelKey, this.unit);
+  const HealthMetric(this.labelKey, this.unit, this.minChartSpan);
 
   final String labelKey;
   final String unit;
+
+  /// Smallest y-axis span the trend chart may zoom to, in raw [value] units
+  /// (distance is metres). Without a floor the chart auto-fits to the data's
+  /// min/max, so normal day-to-day wobble (±2 bpm resting HR) fills the card
+  /// and reads as a dramatic swing.
+  final double minChartSpan;
 
   /// Recovery-leaning default set.
   static const List<HealthMetric> defaults = [restingHr, hrv, weight];

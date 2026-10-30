@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Platform;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -12,6 +11,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/app_platform.dart';
 import '../core/state/has_lobby_state.dart';
 import '../core/user_preferences.dart';
 import '../logger/talker.dart';
@@ -54,7 +54,9 @@ class NotificationService with WidgetsBindingObserver {
   NotificationService(this._ref);
 
   final Ref _ref;
-  final _messaging = FirebaseMessaging.instance;
+  // A getter, not a field: Firebase is never initialised on web (no push
+  // there), and touching `FirebaseMessaging.instance` before init throws.
+  FirebaseMessaging get _messaging => FirebaseMessaging.instance;
   final _local = FlutterLocalNotificationsPlugin();
   SupabaseClient get _supabase => Supabase.instance.client;
 
@@ -73,12 +75,13 @@ class NotificationService with WidgetsBindingObserver {
   static const _androidPermissionAskedKey =
       'android_notification_permission_asked';
 
-  String get _platform => Platform.isIOS ? 'ios' : 'android';
+  String get _platform => AppPlatform.isIOS ? 'ios' : 'android';
 
   /// Wire FCM listeners, foreground display, tap routing, and the auth-driven
   /// token lifecycle. Idempotent.
   Future<void> init() async {
     if (_started) return;
+    if (AppPlatform.isWeb) return; // no FCM on web
     _started = true;
 
     try {
@@ -185,7 +188,7 @@ class NotificationService with WidgetsBindingObserver {
     _showInAppToast(message);
 
     // iOS already draws the banner (presentation options); only Android needs us.
-    if (Platform.isIOS) return;
+    if (AppPlatform.isIOS) return;
     await _local.show(
       id: notification.hashCode,
       title: notification.title,
@@ -278,6 +281,7 @@ class NotificationService with WidgetsBindingObserver {
     String? reason,
   }) async {
     if (ref.read(currentUserIdProvider) == null) return; // guest / signed-out
+    if (AppPlatform.isWeb) return;
 
     final settings = await _messaging.getNotificationSettings();
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
@@ -295,11 +299,11 @@ class NotificationService with WidgetsBindingObserver {
     // meant the soft-ask — and therefore the OS prompt — never fired on
     // Android at all. Track "already asked" ourselves so Android still gets
     // exactly one real prompt, without re-nagging after that.
-    if (Platform.isIOS &&
+    if (AppPlatform.isIOS &&
         settings.authorizationStatus == AuthorizationStatus.denied) {
       return;
     }
-    if (Platform.isAndroid &&
+    if (AppPlatform.isAndroid &&
         await UserPreferences.instance.getBool(_androidPermissionAskedKey) ==
             true) {
       return;
@@ -328,7 +332,7 @@ class NotificationService with WidgetsBindingObserver {
     }
 
     final result = await _messaging.requestPermission();
-    if (Platform.isAndroid) {
+    if (AppPlatform.isAndroid) {
       await UserPreferences.instance.setBool(_androidPermissionAskedKey, true);
     }
     if (result.authorizationStatus == AuthorizationStatus.authorized ||
@@ -372,6 +376,7 @@ class NotificationService with WidgetsBindingObserver {
   /// Register the current device token iff a session is active and the OS
   /// permission is already granted. Safe to call repeatedly.
   Future<void> _registerIfPermitted() async {
+    if (AppPlatform.isWeb) return;
     try {
       if (_ref.read(currentUserIdProvider) == null) return;
       final settings = await _messaging.getNotificationSettings();
@@ -399,6 +404,7 @@ class NotificationService with WidgetsBindingObserver {
   /// Drop this device's token row (call on logout) so the next user of the
   /// device — or a signed-out state — stops receiving this account's pushes.
   Future<void> unregister() async {
+    if (AppPlatform.isWeb) return;
     try {
       final token = await _messaging.getToken();
       if (token == null) return;

@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:health/health.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/auth_controller.dart';
+import '../core/app_platform.dart';
 import '../core/user_preferences.dart';
 import 'model/user_health_link.dart';
 
@@ -15,7 +14,7 @@ part 'health_controller.g.dart';
 /// SDNN there is a silent no-op (the `health` plugin logs "Datatype
 /// HEART_RATE_VARIABILITY_SDNN not found in HC" and returns nothing). iOS
 /// HealthKit is the reverse: SDNN is its native HRV metric.
-HealthDataType get hrvDataType => Platform.isIOS
+HealthDataType get hrvDataType => AppPlatform.isIOS
     ? HealthDataType.HEART_RATE_VARIABILITY_SDNN
     : HealthDataType.HEART_RATE_VARIABILITY_RMSSD;
 
@@ -28,7 +27,7 @@ HealthDataType get hrvDataType => Platform.isIOS
 /// per-category split to trim: `DISTANCE_DELTA` is already one aggregate
 /// covering every activity type.
 List<HealthDataType> healthDistanceDataTypes({bool? isIOS}) =>
-    (isIOS ?? Platform.isIOS)
+    (isIOS ?? AppPlatform.isIOS)
     ? const [HealthDataType.DISTANCE_WALKING_RUNNING]
     : const [HealthDataType.DISTANCE_DELTA];
 
@@ -38,7 +37,7 @@ List<HealthDataType> healthDistanceDataTypes({bool? isIOS}) =>
 /// HealthKit map does not contain that key. Query basal energy instead and add
 /// it to active energy when building a daily summary.
 HealthDataType healthAdditionalEnergyDataType({bool? isIOS}) =>
-    (isIOS ?? Platform.isIOS)
+    (isIOS ?? AppPlatform.isIOS)
     ? HealthDataType.BASAL_ENERGY_BURNED
     : HealthDataType.TOTAL_CALORIES_BURNED;
 
@@ -110,7 +109,7 @@ class HealthController extends _$HealthController {
   /// fails forever with no way back in short of the user manually unlinking
   /// and relinking.
   Future<bool> _checkHealthPermissions() async {
-    if (Platform.isIOS) {
+    if (AppPlatform.isIOS) {
       try {
         await _health.configure();
         final permissions = _healthDataTypes
@@ -206,7 +205,7 @@ class HealthController extends _$HealthController {
       }
 
       // Determine platform
-      final platform = Platform.isIOS
+      final platform = AppPlatform.isIOS
           ? HealthPlatform.appleHealth
           : HealthPlatform.healthConnect;
 

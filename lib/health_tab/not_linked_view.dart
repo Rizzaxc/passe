@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:forui/forui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../core/app_platform.dart';
 import '../ui/main.dart';
 import 'health_controller.dart';
 
@@ -114,7 +113,7 @@ class HealthLinkPromptCard extends ConsumerWidget {
 
 void _listenForAndroidUnavailable(BuildContext context, WidgetRef ref) {
   ref.listen(healthControllerProvider, (previous, next) {
-    if (Platform.isAndroid && next.error != null && previous?.error == null) {
+    if (AppPlatform.isAndroid && next.error != null && previous?.error == null) {
       showFToast(
         context: context,
         icon: const Icon(FLucideIcons.circleX),
@@ -139,7 +138,7 @@ class _UnavailableNotice extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        Platform.isIOS
+        AppPlatform.isIOS
             ? 'health.notLinked.notAvailableIOS'.tr()
             : 'health.notLinked.notAvailableAndroid'.tr(),
         style: theme.typography.body.sm.copyWith(

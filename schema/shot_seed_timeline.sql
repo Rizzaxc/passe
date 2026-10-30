@@ -584,12 +584,27 @@ $shot$;
 -- Achievements are seeded directly because `user_achievement` has NO triggers —
 -- verified, not assumed — so shot 8 does not depend on the HealthKit injector.
 -- Nothing maintains user.xp/level from that table either, so both are set here.
+-- Deterministic noise in [0, 1) for (day, channel): the classic shader hash.
+-- A pg_temp function so the seed leaves nothing behind in the schema; Postgres
+-- never resolves functions from pg_temp implicitly, hence the qualified calls.
+CREATE OR REPLACE FUNCTION pg_temp.fract_hash(p_day int, p_channel int)
+RETURNS double precision LANGUAGE sql IMMUTABLE AS $$
+    SELECT x - floor(x)
+    FROM (SELECT sin(p_day * 12.9898 + p_channel * 78.233) * 43758.5453 AS x) h
+$$;
+
 DO $shot$
 DECLARE
     c_hero CONSTANT uuid := '51070000-0000-4000-8000-000000000001'::uuid;
     d      date;
     v_xp   bigint := 0;
     rec    record;
+    v_play boolean;  -- a session day: the hero plays every third evening
+    v_wkd  boolean;
+    v_hr   double precision;
+    v_hrv  double precision;
+    v_stp  double precision;
+    v_wt   double precision;
 BEGIN
     INSERT INTO public.user_health_link (user_id, platform, linked_at, last_sync_at,
                                          max_heart_rate, lt1_bpm, lt2_bpm)
@@ -600,28 +615,52 @@ BEGIN
           max_heart_rate = EXCLUDED.max_heart_rate,
           lt1_bpm = EXCLUDED.lt1_bpm, lt2_bpm = EXCLUDED.lt2_bpm;
 
-    -- 90 days of daily rollups. Values wander deterministically off the day
-    -- number rather than random() so a re-run reproduces the same charts and
-    -- the trend lines stay smooth instead of spiking.
+    -- 90 days of daily rollups: a slow trend + a weekly rhythm + small noise.
+    -- The noise is a deterministic hash of the day number, not random(), so a
+    -- re-run reproduces the same charts. Each metric's noise is kept well under
+    -- its 90-day trend — the old `(i * k) % n` generator zig-zagged HRV by
+    -- 11 ms every single day against a 3 ms trend, burying the story.
+    -- i is days AGO, so `+ i * slope` makes older days worse (fitter today).
     FOR i IN 0 .. 89 LOOP
-        d := ((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date - i);
+        d      := ((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date - i);
+        v_play := i % 3 = 0;
+        v_wkd  := extract(isodow FROM d) >= 6;
+        -- Resting HR: 63 → 57 bpm, ±1 bpm noise, a touch higher the morning
+        -- after a session.
+        v_hr  := 57 + i * 0.065
+                 + (pg_temp.fract_hash(i, 1) - 0.5) * 2
+                 + CASE WHEN i % 3 = 2 THEN 0.8 ELSE 0 END;
+        -- HRV: 49 → 58 ms, ±3 ms noise, dipping the morning after a session.
+        v_hrv := 58 - i * 0.1
+                 + (pg_temp.fract_hash(i, 2) - 0.5) * 6
+                 - CASE WHEN i % 3 = 2 THEN 3 ELSE 0 END;
+        -- Steps: ~8.5k weekdays, ~11k weekends, +2.5k on a session day.
+        v_stp := 8500
+                 + CASE WHEN v_wkd THEN 2500 ELSE 0 END
+                 + CASE WHEN v_play THEN 2500 ELSE 0 END
+                 + (pg_temp.fract_hash(i, 3) - 0.5) * 1800;
+        -- Weight: 72.6 → 71.4 kg, ±0.15 kg noise.
+        v_wt  := 71.4 + i * 0.013 + (pg_temp.fract_hash(i, 4) - 0.5) * 0.3;
+
         INSERT INTO public.daily_health_summary (
             user_id, date, steps, distance_meters, active_calories,
             total_activity_minutes, activity_count,
             resting_heart_rate, hrv_sdnn_ms, sleep_minutes, weight_kg, synced_at)
         VALUES (
             c_hero, d,
-            7200 + ((i * 137) % 4200),
-            (7200 + ((i * 137) % 4200)) * 0.72,
-            380 + ((i * 53) % 260),
-            28 + ((i * 17) % 44),
-            CASE WHEN i % 3 = 0 THEN 1 ELSE 0 END,
-            -- A gentle downward trend in resting HR over 90 days reads as
-            -- "getting fitter", which is the story the Health tab sells.
-            62 + (i / 18) + ((i * 7) % 4),
-            48 + ((i * 11) % 22) - (i / 30),
-            372 + ((i * 29) % 96),
-            71.4 + (i * 0.012) + (((i * 13) % 7) * 0.05),
+            round(v_stp),
+            round(v_stp * 0.72),
+            round(320 + (v_stp - 8500) * 0.04
+                  + CASE WHEN v_play THEN 380 ELSE 0 END
+                  + (pg_temp.fract_hash(i, 5) - 0.5) * 60),
+            CASE WHEN v_play THEN 95 + round(pg_temp.fract_hash(i, 6) * 20)
+                 ELSE 25 + round(pg_temp.fract_hash(i, 6) * 15) END,
+            CASE WHEN v_play THEN 1 ELSE 0 END,
+            round(v_hr),
+            round(v_hrv::numeric, 1),
+            round(415 + (pg_temp.fract_hash(i, 7) - 0.5) * 50
+                  + CASE WHEN v_wkd THEN 30 ELSE 0 END),
+            round(v_wt::numeric, 1),
             now() - interval '20 minutes')
         ON CONFLICT (user_id, date) DO UPDATE
           SET steps = EXCLUDED.steps, distance_meters = EXCLUDED.distance_meters,

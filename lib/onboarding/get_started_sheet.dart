@@ -11,6 +11,7 @@ import '../manage_tab/lobby_section/feed/lobby_form_sheet.dart';
 import '../manage_tab/lobby_section/invite_link/redeem_code_sheet.dart';
 import '../router.dart';
 import '../social/friends_screen.dart';
+import '../ui/get_app_sheet.dart';
 import '../ui/sheet.dart';
 import 'onboarding_controller.dart';
 import 'onboarding_step_badge.dart';
@@ -51,6 +52,9 @@ class _GetStartedContent extends ConsumerWidget {
     // user to this sheet to pick something else, not dump them out of the
     // guide entirely.
     Future<void> createLobby() async {
+      // Web gate first: no point asking a guest to sign in only to be told
+      // creating lobbies is app-only.
+      if (guardWeb(context, WebGatedFeature.createLobby)) return;
       if (!ensureSignedIn(context, ref)) return;
       final lobby = await showLobbyFormSheet(context: context, ref: ref);
       if (!context.mounted || lobby == null) return;
